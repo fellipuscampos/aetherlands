@@ -1,0 +1,65 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/SettingsPanel.gd" id="SettingsPanel_gd"]
+
+[node name="SettingsPanel" type="PanelContainer"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -90.0
+offset_right = 160.0
+offset_bottom = 90.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+script = ExtResource("SettingsPanel_gd")
+
+[node name="Box" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="Box"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "Configuracoes"
+
+[node name="MusicRow" type="HBoxContainer" parent="Box"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MusicLabel" type="Label" parent="Box/MusicRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(90, 0)
+text = "Musica"
+
+[node name="MusicSlider" type="HSlider" parent="Box/MusicRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 1.0
+step = 0.05
+value = 0.8
+
+[node name="SfxRow" type="HBoxContainer" parent="Box"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SfxLabel" type="Label" parent="Box/SfxRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(90, 0)
+text = "Efeitos"
+
+[node name="SfxSlider" type="HSlider" parent="Box/SfxRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 1.0
+step = 0.05
+value = 1.0
+
+[node name="CloseButton" type="Button" parent="Box"]
+layout_mode = 2
+text = "Fechar"

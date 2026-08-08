@@ -1,0 +1,28 @@
+Audio credits (todos gratuitos / CC0, uso comercial permitido)
+
+music/town_theme.mp3
+	"Town Theme RPG" por cynicmusic.com / pixelsphere.org
+	Fonte: https://opengameart.org/content/town-theme-rpg
+	Licenca: CC0 (credito nao obrigatorio, mas pedido pelo autor)
+
+sfx/click.ogg, sfx/confirm.ogg
+	Kenney "UI Audio" (mouseclick1.ogg, switch1.ogg)
+	Fonte: https://kenney.nl/assets/ui-audio
+	Licenca: CC0
+
+sfx/combat.ogg, sfx/city.ogg
+	Kenney "RPG Audio" (knifeSlice.ogg, bookOpen.ogg)
+	Fonte: https://kenney.nl/assets/rpg-audio
+	Licenca: CC0
+
+sfx/victory.ogg, sfx/defeat.ogg
+	Kenney "Music Jingles" (jingles_STEEL00.ogg, jingles_HIT00.ogg)
+	Fonte: https://kenney.nl/assets/music-jingles
+	Licenca: CC0
+
+	Nota: escolhidos pelo NOME do arquivo (STEEL = metalico/heroico,
+	HIT = impacto/queda), sem poder ouvir o audio neste ambiente. Se soar
+	errado (ex: vitoria parecendo sem graca ou derrota nao "batendo"),
+	e so trocar o arquivo em assets/audio/sfx/victory.ogg ou defeat.ogg
+	por outro jingle da mesma pasta (ha 17 opcoes de cada categoria em
+	music-jingles) sem precisar mexer em codigo.

@@ -1,0 +1,336 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="HUD_gd"]
+[ext_resource type="Script" path="res://scripts/ui/Minimap.gd" id="Minimap_gd"]
+
+[node name="HUD" type="Control"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("HUD_gd")
+
+[node name="TopBar" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+offset_bottom = 48.0
+grow_horizontal = 2
+
+[node name="TopBarRow" type="HBoxContainer" parent="TopBar"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TurnLabel" type="Label" parent="TopBar/TopBarRow"]
+layout_mode = 2
+text = "Turno 1"
+
+[node name="GoldLabel" type="Label" parent="TopBar/TopBarRow"]
+layout_mode = 2
+text = "Ouro: 0"
+
+[node name="StatsLabel" type="Label" parent="TopBar/TopBarRow"]
+layout_mode = 2
+text = "Cidades: 0 | Unidades: 0"
+
+[node name="Spacer" type="Control" parent="TopBar/TopBarRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PauseButton" type="Button" parent="TopBar/TopBarRow"]
+layout_mode = 2
+text = "Menu (Esc)"
+
+[node name="TechButton" type="Button" parent="TopBar/TopBarRow"]
+layout_mode = 2
+text = "Tecnologia"
+
+[node name="DiplomacyButton" type="Button" parent="TopBar/TopBarRow"]
+layout_mode = 2
+text = "Diplomacia"
+
+[node name="HelpButton" type="Button" parent="TopBar/TopBarRow"]
+layout_mode = 2
+text = "? Ajuda"
+
+[node name="SaveButton" type="Button" parent="TopBar/TopBarRow"]
+layout_mode = 2
+text = "Salvar"
+
+[node name="EndTurnButton" type="Button" parent="TopBar/TopBarRow"]
+layout_mode = 2
+text = "Finalizar Turno"
+
+[node name="NotificationStack" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -220.0
+offset_top = 56.0
+offset_right = 220.0
+offset_bottom = 200.0
+grow_horizontal = 2
+mouse_filter = 2
+alignment = 0
+
+[node name="Minimap" type="Control" parent="."]
+layout_mode = 1
+anchor_left = 1.0
+offset_left = -216.0
+offset_top = 56.0
+offset_right = -16.0
+offset_bottom = 236.0
+grow_horizontal = 0
+script = ExtResource("Minimap_gd")
+
+[node name="TileInfoPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -360.0
+offset_top = -450.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="TileInfoBox" type="VBoxContainer" parent="TileInfoPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TileInfoLabel" type="Label" parent="TileInfoPanel/TileInfoBox"]
+layout_mode = 2
+text = "Selecione um tile"
+autowrap_mode = 3
+
+[node name="ProductionRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+visible = false
+
+[node name="ProduceWarriorButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+layout_mode = 2
+text = "Guerreiro"
+
+[node name="ProduceArcherButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+layout_mode = 2
+text = "Arqueiro"
+
+[node name="ProduceCavalryButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+layout_mode = 2
+text = "Cavaleiro"
+
+[node name="ProduceSettlerButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+layout_mode = 2
+text = "Colonizador"
+
+[node name="ProduceCatapultButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+layout_mode = 2
+text = "Catapulta"
+
+[node name="ProduceMageButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+layout_mode = 2
+text = "Mago"
+
+[node name="ProduceGriffinButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+layout_mode = 2
+text = "Grifo"
+
+[node name="ProduceTreantButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+layout_mode = 2
+text = "Ent"
+
+[node name="BuildingsRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+visible = false
+
+[node name="BuildGranaryButton" type="Button" parent="TileInfoPanel/TileInfoBox/BuildingsRow"]
+layout_mode = 2
+text = "Celeiro"
+
+[node name="BuildWorkshopButton" type="Button" parent="TileInfoPanel/TileInfoBox/BuildingsRow"]
+layout_mode = 2
+text = "Oficina"
+
+[node name="BuildMarketButton" type="Button" parent="TileInfoPanel/TileInfoBox/BuildingsRow"]
+layout_mode = 2
+text = "Mercado"
+
+[node name="BuildWallsButton" type="Button" parent="TileInfoPanel/TileInfoBox/BuildingsRow"]
+layout_mode = 2
+text = "Muralhas"
+
+[node name="WorkedTilesLabel" type="Label" parent="TileInfoPanel/TileInfoBox"]
+layout_mode = 2
+autowrap_mode = 3
+visible = false
+text = "Tiles trabalhados:"
+
+[node name="WorkedTilesRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+visible = false
+
+[node name="UnitPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -120.0
+offset_right = 280.0
+offset_bottom = -16.0
+grow_vertical = 0
+
+[node name="UnitBox" type="VBoxContainer" parent="UnitPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="UnitInfoLabel" type="Label" parent="UnitPanel/UnitBox"]
+layout_mode = 2
+text = "Unidade"
+autowrap_mode = 3
+
+[node name="FoundCityButton" type="Button" parent="UnitPanel/UnitBox"]
+layout_mode = 2
+text = "Fundar Cidade"
+visible = false
+
+[node name="HelpPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -190.0
+offset_right = 260.0
+offset_bottom = 190.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+
+[node name="HelpBox" type="VBoxContainer" parent="HelpPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HelpLabel" type="Label" parent="HelpPanel/HelpBox"]
+layout_mode = 2
+text = "Como jogar"
+autowrap_mode = 3
+
+[node name="HelpCloseButton" type="Button" parent="HelpPanel/HelpBox"]
+layout_mode = 2
+text = "Fechar"
+
+[node name="TechPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -200.0
+offset_right = 260.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+
+[node name="TechBox" type="VBoxContainer" parent="TechPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TechTitleLabel" type="Label" parent="TechPanel/TechBox"]
+layout_mode = 2
+text = "Tecnologia"
+horizontal_alignment = 1
+
+[node name="TechCurrentLabel" type="Label" parent="TechPanel/TechBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Pesquisando: nenhuma"
+
+[node name="TechAvailableLabel" type="Label" parent="TechPanel/TechBox"]
+layout_mode = 2
+text = "Disponiveis (clique pra escolher):"
+
+[node name="TechAvailableRow" type="HFlowContainer" parent="TechPanel/TechBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="TechResearchedLabel" type="Label" parent="TechPanel/TechBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Pesquisadas: nenhuma"
+
+[node name="TechCloseButton" type="Button" parent="TechPanel/TechBox"]
+layout_mode = 2
+text = "Fechar"
+
+[node name="DiplomacyPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -180.0
+offset_right = 240.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+
+[node name="DiplomacyBox" type="VBoxContainer" parent="DiplomacyPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DiplomacyTitleLabel" type="Label" parent="DiplomacyPanel/DiplomacyBox"]
+layout_mode = 2
+text = "Diplomacia"
+horizontal_alignment = 1
+
+[node name="DiplomacyRows" type="VBoxContainer" parent="DiplomacyPanel/DiplomacyBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="DiplomacyCloseButton" type="Button" parent="DiplomacyPanel/DiplomacyBox"]
+layout_mode = 2
+text = "Fechar"
+
+[node name="GameOverPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -110.0
+offset_right = 220.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+
+[node name="GameOverBox" type="VBoxContainer" parent="GameOverPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="GameOverLabel" type="Label" parent="GameOverPanel/GameOverBox"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="RestartButton" type="Button" parent="GameOverPanel/GameOverBox"]
+layout_mode = 2
+text = "Jogar Novamente"

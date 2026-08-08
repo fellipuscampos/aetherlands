@@ -1,0 +1,172 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/TitleScreen.gd" id="TitleScreen_gd"]
+[ext_resource type="PackedScene" path="res://scenes/ui/SettingsPanel.tscn" id="SettingsPanel_scn"]
+
+[sub_resource type="ButtonGroup" id="MapSizeGroup"]
+[sub_resource type="ButtonGroup" id="RivalCountGroup"]
+[sub_resource type="ButtonGroup" id="DifficultyGroup"]
+
+[node name="TitleScreen" type="Control"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("TitleScreen_gd")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.04, 0.07, 0.82)
+
+[node name="CenterBox" type="CenterContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="CenterBox"]
+layout_mode = 2
+theme_override_constants/separation = 14
+custom_minimum_size = Vector2(320, 0)
+
+[node name="TitleLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 40
+text = "Aetherlands"
+
+[node name="SubtitleLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "Um 4X medieval de fantasia"
+
+[node name="KingdomNameLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Nome do seu reino:"
+
+[node name="KingdomNameEdit" type="LineEdit" parent="CenterBox/Box"]
+layout_mode = 2
+placeholder_text = "Reino de Aldenmark"
+
+[node name="MapSizeLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Tamanho do mapa:"
+
+[node name="MapSizeRow" type="HBoxContainer" parent="CenterBox/Box"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SmallButton" type="Button" parent="CenterBox/Box/MapSizeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("MapSizeGroup")
+text = "Pequeno"
+
+[node name="MediumButton" type="Button" parent="CenterBox/Box/MapSizeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("MapSizeGroup")
+text = "Medio"
+
+[node name="LargeButton" type="Button" parent="CenterBox/Box/MapSizeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("MapSizeGroup")
+text = "Grande"
+
+[node name="RivalCountLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Reinos rivais:"
+
+[node name="RivalCountRow" type="HBoxContainer" parent="CenterBox/Box"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="OneRivalButton" type="Button" parent="CenterBox/Box/RivalCountRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("RivalCountGroup")
+text = "1"
+
+[node name="TwoRivalsButton" type="Button" parent="CenterBox/Box/RivalCountRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("RivalCountGroup")
+text = "2"
+
+[node name="ThreeRivalsButton" type="Button" parent="CenterBox/Box/RivalCountRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("RivalCountGroup")
+text = "3"
+
+[node name="DifficultyLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Dificuldade:"
+
+[node name="DifficultyRow" type="HBoxContainer" parent="CenterBox/Box"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EasyButton" type="Button" parent="CenterBox/Box/DifficultyRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("DifficultyGroup")
+text = "Facil"
+
+[node name="NormalButton" type="Button" parent="CenterBox/Box/DifficultyRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("DifficultyGroup")
+text = "Normal"
+
+[node name="HardButton" type="Button" parent="CenterBox/Box/DifficultyRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("DifficultyGroup")
+text = "Dificil"
+
+[node name="NewGameButton" type="Button" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Novo Jogo"
+
+[node name="LoadGameButton" type="Button" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Carregar Jogo"
+
+[node name="SettingsButton" type="Button" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Configuracoes"
+
+[node name="QuitButton" type="Button" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Sair"
+
+[node name="StatusLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+modulate = Color(1.0, 0.55, 0.5, 1.0)
+text = ""
+
+[node name="SettingsPanel" parent="." instance=ExtResource("SettingsPanel_scn")]
+layout_mode = 1

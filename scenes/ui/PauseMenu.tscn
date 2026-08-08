@@ -1,0 +1,73 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/PauseMenu.gd" id="PauseMenu_gd"]
+[ext_resource type="PackedScene" path="res://scenes/ui/SettingsPanel.tscn" id="SettingsPanel_scn"]
+
+[node name="PauseMenu" type="Control"]
+process_mode = 3
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+script = ExtResource("PauseMenu_gd")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.04, 0.07, 0.82)
+
+[node name="CenterBox" type="CenterContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="CenterBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+custom_minimum_size = Vector2(280, 0)
+
+[node name="TitleLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 30
+text = "Pausado"
+
+[node name="ResumeButton" type="Button" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Continuar"
+
+[node name="SaveButton" type="Button" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Salvar Jogo"
+
+[node name="LoadButton" type="Button" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Carregar Jogo"
+
+[node name="SettingsButton" type="Button" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Configuracoes"
+
+[node name="MainMenuButton" type="Button" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Voltar ao Menu Principal"
+
+[node name="QuitButton" type="Button" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Sair do Jogo"
+
+[node name="StatusLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+text = ""
+
+[node name="SettingsPanel" parent="." instance=ExtResource("SettingsPanel_scn")]
+layout_mode = 1

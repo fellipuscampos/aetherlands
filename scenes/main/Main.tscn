@@ -1,0 +1,70 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/main/Main.gd" id="Main_gd"]
+[ext_resource type="Script" path="res://scripts/world/HexGrid.gd" id="HexGrid_gd"]
+[ext_resource type="Script" path="res://scripts/camera/RTSCamera.gd" id="RTSCamera_gd"]
+[ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="HUD_scn"]
+[ext_resource type="PackedScene" path="res://scenes/ui/TitleScreen.tscn" id="TitleScreen_scn"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="PauseMenu_scn"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
+sky_top_color = Color(0.25, 0.45, 0.75, 1)
+sky_horizon_color = Color(0.65, 0.75, 0.85, 1)
+ground_bottom_color = Color(0.2, 0.2, 0.2, 1)
+ground_horizon_color = Color(0.65, 0.75, 0.85, 1)
+
+[sub_resource type="Sky" id="Sky1"]
+sky_material = SubResource("SkyMat")
+
+[sub_resource type="Environment" id="Env1"]
+background_mode = 2
+sky = SubResource("Sky1")
+ambient_light_source = 3
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 0.35
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.6
+glow_strength = 1.0
+glow_bloom = 0.05
+glow_hdr_threshold = 1.2
+fog_enabled = true
+fog_light_color = Color(0.65, 0.75, 0.85, 1)
+fog_density = 0.008
+fog_sky_affect = 0.3
+ssao_enabled = true
+ssao_radius = 1.5
+ssao_intensity = 1.2
+
+[node name="Main" type="Node3D"]
+script = ExtResource("Main_gd")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env1")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-50, 35, 0)
+shadow_enabled = true
+light_energy = 1.1
+
+[node name="HexGrid" type="Node3D" parent="."]
+script = ExtResource("HexGrid_gd")
+map_radius = 12
+hex_size = 1.0
+
+[node name="CameraRig" type="Node3D" parent="."]
+script = ExtResource("RTSCamera_gd")
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+position = Vector3(0, 15, 12)
+rotation_degrees = Vector3(-50, 0, 0)
+current = true
+fov = 50
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="HUD" parent="UILayer" instance=ExtResource("HUD_scn")]
+
+[node name="TitleScreen" parent="UILayer" instance=ExtResource("TitleScreen_scn")]
+
+[node name="PauseMenu" parent="UILayer" instance=ExtResource("PauseMenu_scn")]

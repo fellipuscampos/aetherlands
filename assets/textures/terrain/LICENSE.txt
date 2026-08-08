@@ -1,0 +1,13 @@
+Ground037 texture set
+
+Source: ambientCG (https://ambientcg.com/view?id=Ground037)
+License: Creative Commons Zero (CC0 1.0 Universal)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Free to use for any purpose, including commercial projects, no
+attribution required. Files used in this project:
+
+- ground_albedo.jpg  (Ground037_1K-JPG_Color.jpg)
+- ground_normal.jpg  (Ground037_1K-JPG_NormalGL.jpg) — baixado, ainda nao
+  usado no shader (ver README, secao de assets externos).
+- ground_roughness.jpg (Ground037_1K-JPG_Roughness.jpg) — idem.
