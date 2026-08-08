@@ -1,0 +1,18 @@
+# Normaliza quebra de linha pra LF no repositorio (Windows/Git costuma
+# converter pra CRLF na copia local, gerando diffs de linha inteira sem
+# mudanca de conteudo real quando alguem clona em outro SO).
+* text=auto eol=lf
+
+# Binarios: sem isso o Git tenta normalizar quebra de linha neles tambem,
+# o que corrompe o arquivo.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.glb binary
+*.gltf binary
+*.ogg binary
+*.mp3 binary
+*.wav binary
+*.ttf binary
+*.dll binary
+*.fnt binary

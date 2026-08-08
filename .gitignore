@@ -17,3 +17,6 @@ mono_crash.*.json
 .DS_Store
 Thumbs.db
 *.tmp
+*.TMP
+~*
+*~RF*.TMP
