@@ -20,8 +20,9 @@ func _ready() -> void:
 	pause_menu.main_menu_requested.connect(_on_pause_main_menu_requested)
 	hud.visible = false
 
-func _on_new_game_requested(radius: int, kingdom_name: String, rival_count: int, difficulty: String) -> void:
-	GameManager.map_radius = radius
+func _on_new_game_requested(width: int, height: int, kingdom_name: String, rival_count: int, difficulty: String) -> void:
+	GameManager.map_width = width
+	GameManager.map_height = height
 	GameManager.human_kingdom_name = kingdom_name
 	GameManager.rival_count = rival_count
 	GameManager.difficulty = difficulty
@@ -63,7 +64,7 @@ func _enter_gameplay() -> void:
 	hud.visible = true
 
 func _start_game() -> void:
-	hex_grid.generate_map(GameManager.map_radius)
+	hex_grid.generate_map(GameManager.map_width, GameManager.map_height)
 	GameManager.start_new_game(hex_grid)
 	SelectionManager.reset()
 	camera_rig.reset_view()

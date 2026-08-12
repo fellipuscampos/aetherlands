@@ -30,12 +30,37 @@ const RETREAT_HP_FRACTION := 0.35 # abaixo disso, foge pra curar em vez de briga
 const ESCORT_RANGE := 2 # distancia maxima pra um aliado corpo-a-corpo contar como escolta
 const MILITARY_KINDS := ["warrior", "warrior", "archer", "cavalry", "catapult", "mage", "griffin", "treant"] # pesos simples
 
+## Tropa exclusiva de cada civilizacao de fantasia (CivilizationData.race,
+## ver GameManager.RIVAL_CIVS e UnitDatabase.create_unit) — pedido do
+## usuario: "insira outras civilizacoes de fantasia... voce cria tropas
+## especificas pra essas civilizacoes". Escopo desta rodada: so a IA rival
+## usa isso (o jogador nao tem raca ainda), entao o gate fica aqui em vez
+## de em City.can_train()/BuildingDatabase (que sao so pro jogador).
+const RACE_UNIQUE_KIND := {
+	"dwarf": "dwarf_axeguard",
+	"orc": "orc_berserker",
+	"elf": "elf_ranger",
+}
+
+## MILITARY_KINDS + a tropa racial (pesada igual "warrior", duas entradas)
+## quando o jogador tem uma raca com tropa propria — civ sem raca (jogador
+## humano, ou um rival hipotetico sem `race` definida) so usa o elenco
+## comum, sem nenhuma tropa exclusiva aparecer no sorteio.
+static func _military_kinds_for(player: PlayerData) -> Array:
+	var kinds := MILITARY_KINDS.duplicate()
+	var race: String = player.civ.race if player.civ else ""
+	if RACE_UNIQUE_KIND.has(race):
+		var unique: String = RACE_UNIQUE_KIND[race]
+		kinds.append(unique)
+		kinds.append(unique)
+	return kinds
+
 static func decide_production(player: PlayerData) -> void:
 	for city in player.cities:
 		if player.cities.size() < 2:
 			city.set_production("settler")
 		else:
-			var unlocked_kinds = MILITARY_KINDS.filter(func(k): return player.has_unlocked(k))
+			var unlocked_kinds = _military_kinds_for(player).filter(func(k): return player.has_unlocked(k))
 			city.set_production(unlocked_kinds[randi() % unlocked_kinds.size()])
 
 ## Sem nenhuma pesquisa em andamento, escolhe uma tecnologia disponivel ao
@@ -87,14 +112,14 @@ static func _handle_attacker(unit: Unit, hex_grid: HexGrid, player: PlayerData, 
 	if unit.unit_data.attack_range > 1 and not _has_melee_escort_nearby(unit, player):
 		return
 
-	_move_toward(unit, hex_grid, target_coord)
+	move_unit_toward(unit, hex_grid, target_coord)
 
 ## Ataca so se o combate parecer favoravel; cidade indefesa e sempre um
 ## alvo valido (captura garantida, nao tem "combate" pra avaliar).
 static func _engage(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i) -> void:
 	var defender = hex_grid.get_unit_at(target_coord)
 	if defender:
-		if _is_favorable_attack(unit, defender, hex_grid):
+		if is_favorable_attack(unit, defender, hex_grid):
 			CombatResolver.resolve(unit, defender, hex_grid)
 		return
 	var city = hex_grid.get_city_at(target_coord)
@@ -105,8 +130,12 @@ static func _engage(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i) -> vo
 ## Nao ataca se for morrer no proprio ataque. Se o defensor tambem
 ## sobrevive, so vale a pena se a unidade causar proporcionalmente mais
 ## dano do que leva (comparado em % do HP maximo de cada um, pra nao
-## favorecer injustamente unidades com HP maximo diferente).
-static func _is_favorable_attack(attacker: Unit, defender: Unit, hex_grid: HexGrid) -> bool:
+## favorecer injustamente unidades com HP maximo diferente). Publica (sem
+## `_`) porque MonsterAI.gd tambem chama, pro comportamento Cacador
+## (Vivern/Dragao) so atacar quando favoravel — o resto de RivalAI
+## continua privado de proposito (especifico de PlayerData/captura de
+## cidade, fora do escopo de monstro neutro).
+static func is_favorable_attack(attacker: Unit, defender: Unit, hex_grid: HexGrid) -> bool:
 	var result = CombatResolver.predict(attacker, defender, hex_grid)
 	if result.attacker_dies:
 		return false
@@ -164,7 +193,15 @@ static func _nearest_known_target(from: Vector2i, hex_grid: HexGrid, player: Pla
 			best = coord
 	return best
 
-static func _move_toward(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i) -> void:
+## Movimento guloso por distancia hexagonal (nao e A* de verdade — so pega,
+## entre os tiles alcancaveis neste turno, o que mais reduz distancia ate
+## `target_coord`). Publica (sem `_`) porque MonsterAI.gd reusa exatamente
+## este primitivo pro comportamento Invasor/Cacador — o unico "conhecimento
+## de dono" que ele usa e `unit.owner_player` (repassado como `owner` pro
+## compute_reachable, que ja trata `null` corretamente: nenhuma cidade
+## nunca conta como do "dono null", entao um monstro nunca consegue sequer
+## pisar em tile de cidade, ver HexGrid.compute_reachable).
+static func move_unit_toward(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i) -> void:
 	var reachable = hex_grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies)
 	var best_coord = null
 	var best_dist = HexMetrics.axial_distance(unit.coord, target_coord)
@@ -190,7 +227,7 @@ static func _retreat(unit: Unit, hex_grid: HexGrid, player: PlayerData) -> void:
 			nearest_city_coord = city.coord
 	if nearest_city_coord == null or nearest_city_coord == unit.coord:
 		return
-	_move_toward(unit, hex_grid, nearest_city_coord)
+	move_unit_toward(unit, hex_grid, nearest_city_coord)
 
 static func _handle_settler(unit: Unit, hex_grid: HexGrid, player: PlayerData) -> void:
 	if hex_grid.get_city_at(unit.coord) == null and _far_enough_from_cities(unit.coord, player):

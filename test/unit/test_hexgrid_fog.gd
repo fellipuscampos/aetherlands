@@ -116,3 +116,41 @@ func test_enemy_building_only_visible_when_tile_is_currently_visible():
 	hex_grid.recompute_fog(human)
 
 	assert_false(building.visible, "predio inimigo fora de visao atual nao deveria continuar aparecendo")
+
+## Debug: com debug_fog_disabled ligado, recompute_fog() para de calcular
+## visao de verdade e so marca tudo como VISIVEL — pedido do usuario:
+## "adicione opcoes debug onde eu posso tirar a fog do mapa e coisas
+## assim".
+func test_recompute_fog_reveals_everything_when_debug_fog_disabled():
+	hex_grid.debug_fog_disabled = true
+
+	hex_grid.recompute_fog(human)
+
+	for coord in hex_grid.tiles.keys():
+		assert_eq(hex_grid.visibility[coord], HexGrid.Visibility.VISIBLE, "tile %s deveria estar visivel com debug_fog_disabled" % coord)
+
+## Enemy visibility segue o mesmo _apply_fog_to_entities de sempre — com
+## tudo VISIVEL, ate unidade inimiga nunca vista de verdade aparece.
+func test_debug_fog_disabled_reveals_enemy_units_never_actually_seen():
+	var enemy = _make_unit("warrior", rival, Vector2i(4, 0)) # bem longe, fora de qualquer visao real do humano
+	hex_grid.debug_fog_disabled = true
+
+	hex_grid.recompute_fog(human)
+
+	assert_true(enemy.visible, "com debug_fog_disabled, unidade inimiga deveria aparecer mesmo sem nunca ter sido vista de verdade")
+
+## set_debug_fog_disabled() e o metodo publico que a HUD chama (botao de
+## Debug) — liga a flag E reaplica na hora, sem esperar o proximo turno.
+func test_set_debug_fog_disabled_toggles_flag_and_applies_immediately():
+	var original_human_player = GameManager.human_player
+	GameManager.human_player = human
+
+	hex_grid.set_debug_fog_disabled(true)
+
+	assert_true(hex_grid.debug_fog_disabled)
+	assert_eq(hex_grid.visibility[Vector2i(4, 0)], HexGrid.Visibility.VISIBLE, "reveal deveria aplicar na hora, sem esperar o proximo turno")
+
+	hex_grid.set_debug_fog_disabled(false)
+	assert_false(hex_grid.debug_fog_disabled)
+
+	GameManager.human_player = original_human_player

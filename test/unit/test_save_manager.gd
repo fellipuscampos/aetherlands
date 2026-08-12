@@ -20,7 +20,8 @@ var _original_kingdom_name: String
 var _original_state
 var _original_turn_number: int
 var _original_turn_player_index: int
-var _original_map_radius: int
+var _original_map_width: int
+var _original_map_height: int
 var _original_difficulty: String
 
 func before_each():
@@ -31,14 +32,15 @@ func before_each():
 	_original_state = GameManager.state
 	_original_turn_number = TurnManager.turn_number
 	_original_turn_player_index = TurnManager.current_player_index
-	_original_map_radius = GameManager.map_radius
+	_original_map_width = GameManager.map_width
+	_original_map_height = GameManager.map_height
 	_original_difficulty = GameManager.difficulty
 	_created_units = []
 	_created_hex_grids = []
 
 	hex_grid = HexGrid.new()
 	hex_grid._ready()
-	hex_grid.generate_map(3, 12345) # mapa pequeno com semente fixa (determinismo)
+	hex_grid.generate_map(7, 7, 12345) # mapa pequeno com semente fixa (determinismo)
 	_created_hex_grids.append(hex_grid)
 
 	human = PlayerData.new(CivilizationData.new())
@@ -63,7 +65,8 @@ func after_each():
 	GameManager.state = _original_state
 	TurnManager.turn_number = _original_turn_number
 	TurnManager.current_player_index = _original_turn_player_index
-	GameManager.map_radius = _original_map_radius
+	GameManager.map_width = _original_map_width
+	GameManager.map_height = _original_map_height
 	GameManager.difficulty = _original_difficulty
 
 func _make_unit(kind: String, player: PlayerData, coord: Vector2i) -> Unit:
@@ -149,20 +152,23 @@ func test_save_and_load_restores_player_and_map_state():
 		"paz negociada antes de salvar deveria sobreviver ao save/load"
 	)
 
-## Regressao: GameManager.map_radius so era setado na tela de titulo/novo
-## jogo, nunca no load — RTSCamera.reset_view() usa esse valor (nao o
-## hex_grid.map_radius de verdade) pro limite de pan. Carregar um save de
-## raio diferente do jogo atual deixava a camera com o limite errado.
-func test_load_updates_game_manager_map_radius_to_match_loaded_map():
-	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH)) # hex_grid tem raio 3 (before_each)
-	GameManager.map_radius = 99 # simula um raio "preso" de uma partida anterior diferente
+## Regressao: GameManager.map_width/map_height so eram setados na tela de
+## titulo/novo jogo, nunca no load — RTSCamera.reset_view() usa esses
+## valores (nao o hex_grid.map_width/map_height de verdade) pro limite de
+## pan. Carregar um save de mapa diferente do jogo atual deixava a camera
+## com o limite errado.
+func test_load_updates_game_manager_map_size_to_match_loaded_map():
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH)) # hex_grid tem 7x7 (before_each)
+	GameManager.map_width = 99 # simula dimensoes "presas" de uma partida anterior diferente
+	GameManager.map_height = 99
 
 	var loaded_grid := HexGrid.new()
 	loaded_grid._ready()
 	_created_hex_grids.append(loaded_grid)
 	SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
 
-	assert_eq(GameManager.map_radius, 3, "map_radius deveria bater com o raio de verdade do mapa carregado")
+	assert_eq(GameManager.map_width, 7, "map_width deveria bater com a largura de verdade do mapa carregado")
+	assert_eq(GameManager.map_height, 7, "map_height deveria bater com a altura de verdade do mapa carregado")
 
 ## Regressao: dificuldade escolhida na tela de titulo (GameManager.difficulty)
 ## precisa sobreviver ao save/load — senao carregar uma partida "Dificil"
@@ -207,11 +213,39 @@ func test_save_and_load_restores_positioned_building():
 	assert_not_null(placed, "predio deveria ter um modelo 3D recriado no mesmo tile apos carregar")
 	assert_eq(placed.building_id, "granary")
 
+## Territorio dinamico (City.owned_tiles, ver HexGrid.city_territory_tiles)
+## precisa sobreviver ao save/load igual worked_tiles — sem isso, uma
+## cidade que ja cresceu alem do hexagono inicial "encolheria" de volta
+## pro territorio padrao (celula+6 vizinhos) toda vez que a partida fosse
+## carregada.
+func test_save_and_load_restores_grown_city_territory():
+	var city_coord: Vector2i = hex_grid.tiles.keys()[0]
+	var city = hex_grid.found_city(city_coord, human, "Capital")
+	# Simula territorio JA crescido alem do hexagono inicial (pedido do
+	# usuario: expansao dinamica) — nao precisa rodar process_turn de
+	# verdade, so provar que o campo extra sobrevive ao ciclo save/load.
+	var fake_grown_tile := Vector2i(50, 50)
+	city.owned_tiles.append(fake_grown_tile)
+	var expected_owned_tiles = city.owned_tiles.duplicate()
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	var loaded_city: City = GameManager.human_player.cities[0]
+	assert_eq(loaded_city.owned_tiles.size(), expected_owned_tiles.size(), "territorio deveria sobreviver ao save/load com o mesmo numero de tiles")
+	for t in expected_owned_tiles:
+		assert_true(t in loaded_city.owned_tiles, "tile de territorio %s deveria estar presente apos carregar" % t)
+
 ## Regressao: um Covil de Monstro ja derrotado antes de salvar nao deveria
 ## "ressuscitar" ao carregar — generate_map() no load recria TODOS os
-## guardioes originais (mesma semente), entao SaveManager precisa desfazer
-## isso pros coords que o save marca como ja limpos (ver
-## HexGrid.lair_coords / _serialize_cleared_lairs).
+## guardioes originais (mesma semente), entao SaveManager precisa descartar
+## esse povoamento automatico e restaurar o mapa de monstros EXATO que
+## existia no save (ver HexGrid.clear_neutral_units/neutral_units,
+## SaveManager._serialize_neutral_units/_deserialize_neutral_units).
 func test_save_and_load_does_not_respawn_a_cleared_monster_lair():
 	if hex_grid.lair_coords.is_empty():
 		pending("mapa de teste (radius 3) nao gerou nenhum covil nesta semente")
@@ -229,6 +263,106 @@ func test_save_and_load_does_not_respawn_a_cleared_monster_lair():
 	SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
 
 	assert_null(loaded_grid.get_unit_at(lair_coord), "covil ja limpo antes de salvar nao deveria respawnar guardiao ao carregar")
+
+## Regressao (feature nova): um covil DESTRUIDO de verdade (HexGrid.
+## destroy_lair — jogador entrou no tile vazio e recebeu a recompensa de
+## limpeza, ver HexGrid.move_unit/_grant_lair_clear_reward) precisa
+## continuar destruido apos salvar/carregar: generate_map() no load recria
+## TODOS os covis da semente do zero, entao SaveManager precisa reconciliar
+## por cima (ver cleared_lair_coords/_serialize_cleared_lairs), mesmo
+## padrao ja usado pros monstros neutros no teste acima. Tambem confere que
+## a recompensa de ouro nao e concedida DE NOVO so por carregar.
+func test_save_and_load_preserves_a_destroyed_lair():
+	if hex_grid.lair_coords.is_empty():
+		pending("mapa de teste (radius 3) nao gerou nenhum covil nesta semente")
+		return
+	var lair_coord: Vector2i = hex_grid.lair_coords[0]
+	var guardian = hex_grid.get_unit_at(lair_coord)
+	hex_grid.remove_unit(guardian)
+	var soldier = _make_unit("warrior", human, lair_coord)
+	hex_grid.move_unit(soldier, lair_coord, 1.0) # tile vazio: concede recompensa e chama destroy_lair()
+	assert_false(lair_coord in hex_grid.lair_coords, "pre-condicao: covil deveria estar destruido antes de salvar")
+	var gold_after_clear = human.gold
+	hex_grid.remove_unit(soldier) # vaga o tile — so serviu pra disparar a limpeza, o teste e sobre o COVIL, nao sobre onde o soldado ficou
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_false(lair_coord in loaded_grid.lair_coords, "covil destruido antes de salvar nao deveria voltar a existir apos carregar")
+	assert_false(loaded_grid.lairs_by_coord.has(lair_coord), "estrutura visual nao deveria reaparecer apos carregar")
+	assert_null(loaded_grid.get_unit_at(lair_coord), "nenhum guardiao deveria respawnar num covil ja destruido")
+	assert_almost_eq(GameManager.human_player.gold, gold_after_clear, 0.01, "ouro da recompensa de limpeza nao deveria ser concedido de novo ao carregar")
+
+## Regressao critica (pedido do usuario: reforcos de covil NAO deveriam
+## desaparecer ao salvar/carregar): gera um reforco de verdade (monstro
+## extra alem do guardiao original, com hp/kills customizados pra provar
+## que o estado INTEIRO sobrevive, nao so a posicao) e confere que ele
+## continua no mapa, na mesma posicao, com o mesmo hp/kills, depois de uma
+## volta completa por save/load.
+func test_save_and_load_preserves_a_reinforcement_monster_with_its_exact_state():
+	if hex_grid.lair_coords.is_empty():
+		pending("mapa de teste nao gerou nenhum covil nesta semente")
+		return
+	var lair_coord: Vector2i = hex_grid.lair_coords[0]
+	var kind = hex_grid.lair_kind_by_coord[lair_coord]
+	var free_neighbor = hex_grid._find_free_tile_for_lair_spawn(lair_coord)
+	assert_not_null(free_neighbor, "precondicao: covil deveria ter espaco livre pra um reforco")
+
+	var reinforcement = hex_grid.spawn_monster_at(free_neighbor, kind)
+	reinforcement.hp = 3.5
+	reinforcement.kills = 2
+	reinforcement.veterancy_level = 1
+	reinforcement.monster_behavior_state = "invader" # promovido pela MonsterAI antes de salvar
+	reinforcement.movement_left = 1.5
+	var neutral_count_before = hex_grid.neutral_units().size()
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_eq(loaded_grid.neutral_units().size(), neutral_count_before, "numero de monstros neutros deveria sobreviver ao save/load")
+	var restored = loaded_grid.get_unit_at(free_neighbor)
+	assert_not_null(restored, "reforco deveria continuar no mesmo tile apos carregar")
+	assert_eq(restored.unit_data.visual_kind, kind)
+	assert_almost_eq(restored.hp, 3.5, 0.01)
+	assert_eq(restored.kills, 2)
+	assert_eq(restored.veterancy_level, 1)
+	assert_null(restored.owner_player, "monstro restaurado deveria continuar neutro")
+	assert_false(restored.is_camp_boss, "reforco nao e o boss original do covil")
+	assert_eq(restored.monster_behavior_state, "invader", "promocao a Invasor (MonsterAI) deveria sobreviver ao save/load")
+	assert_almost_eq(restored.movement_left, 1.5, 0.01)
+
+	# O guardiao ORIGINAL do covil (nao o reforco criado acima) e sempre um
+	# camp boss — confere que isso tambem sobrevive ao save/load.
+	var restored_guardian = loaded_grid.get_unit_at(lair_coord)
+	assert_not_null(restored_guardian)
+	assert_true(restored_guardian.is_camp_boss, "guardiao original do covil deveria continuar marcado como camp boss apos carregar")
+
+## Regressao critica (determinismo/replay): o `.state` do RNG dedicado de
+## covil (HexGrid.monster_turn_rng) precisa sobreviver ao save/load — sem
+## isso, recarregar reiniciaria a sequencia de sorteios de reforco/patrulha
+## do zero (turno 0), divergindo do que teria acontecido sem o save/load no
+## meio do caminho.
+func test_save_and_load_preserves_monster_turn_rng_state():
+	for i in range(5):
+		hex_grid.process_monster_lairs(i)
+	var state_before_save = hex_grid.monster_turn_rng.state
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_eq(loaded_grid.monster_turn_rng.state, state_before_save, "RNG de covil deveria continuar exatamente de onde parou apos carregar")
 
 func test_load_without_a_save_file_returns_false():
 	SaveManager.delete_save(TEST_SAVE_PATH)

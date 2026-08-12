@@ -23,11 +23,11 @@ func test_yield_for_no_resource_is_zero():
 func test_resource_placement_is_deterministic_for_same_seed():
 	var grid_a := HexGrid.new()
 	grid_a._ready()
-	grid_a.generate_map(5, 999)
+	grid_a.generate_map(11, 11, 999)
 
 	var grid_b := HexGrid.new()
 	grid_b._ready()
-	grid_b.generate_map(5, 999)
+	grid_b.generate_map(11, 11, 999)
 
 	for coord in grid_a.tiles.keys():
 		assert_eq(
@@ -41,7 +41,7 @@ func test_resource_placement_is_deterministic_for_same_seed():
 func test_at_least_one_resource_appears_on_a_large_enough_map():
 	var grid := HexGrid.new()
 	grid._ready()
-	grid.generate_map(10, 42)
+	grid.generate_map(21, 21, 42)
 
 	var found_any := false
 	for coord in grid.tiles.keys():
@@ -53,15 +53,25 @@ func test_at_least_one_resource_appears_on_a_large_enough_map():
 
 	grid.queue_free()
 
-func test_ocean_tiles_never_get_a_resource():
+## Costa (HexTileData.TerrainType.COAST) incluida aqui tambem — e Oceano
+## reclassificado (ver HexGrid._reclassify_coastal_ocean), mesma familia de
+## agua, mesma regra "nunca tem recurso". Sem isso o teste podia rodar sem
+## nenhuma assercao de verdade num mapa pequeno onde TODO Oceano vira Costa
+## (todo o litoral perto de terra, comum em mapas pequenos) — bug de
+## regressao pego ao adicionar Costa (GUT acusa "Risky: Did not assert").
+func test_ocean_and_coast_tiles_never_get_a_resource():
 	var grid := HexGrid.new()
 	grid._ready()
-	grid.generate_map(10, 7)
+	grid.generate_map(21, 21, 7)
 
+	var checked_count := 0
 	for coord in grid.tiles.keys():
 		var data: HexTileData = grid.get_tile(coord)
-		if data.terrain_type == HexTileData.TerrainType.OCEAN:
-			assert_eq(data.resource, "", "oceano nunca deveria ter recurso")
+		if data.terrain_type == HexTileData.TerrainType.OCEAN or data.terrain_type == HexTileData.TerrainType.COAST:
+			checked_count += 1
+			assert_eq(data.resource, "", "oceano/costa nunca deveria ter recurso")
+
+	assert_gt(checked_count, 0, "mapa deveria ter pelo menos um tile de Oceano/Costa pra este teste checar algo de verdade")
 
 	grid.queue_free()
 

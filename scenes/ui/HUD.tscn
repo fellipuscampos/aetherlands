@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="HUD_gd"]
 [ext_resource type="Script" path="res://scripts/ui/Minimap.gd" id="Minimap_gd"]
+[ext_resource type="Script" path="res://scripts/ui/TechTree.gd" id="TechTree_gd"]
 
 [node name="HUD" type="Control"]
 layout_mode = 1
@@ -54,6 +55,11 @@ text = "Diplomacia"
 layout_mode = 2
 text = "? Ajuda"
 
+[node name="DebugButton" type="Button" parent="TopBar/TopBarRow"]
+layout_mode = 2
+text = "Debug"
+visible = false
+
 [node name="SaveButton" type="Button" parent="TopBar/TopBarRow"]
 layout_mode = 2
 text = "Salvar"
@@ -90,8 +96,8 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -360.0
-offset_top = -450.0
+offset_left = -400.0
+offset_top = -620.0
 offset_right = -16.0
 offset_bottom = -16.0
 grow_horizontal = 0
@@ -106,73 +112,129 @@ layout_mode = 2
 text = "Selecione um tile"
 autowrap_mode = 3
 
-[node name="ProductionRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox"]
+[node name="ProductionScroll" type="ScrollContainer" parent="TileInfoPanel/TileInfoBox"]
+layout_mode = 2
+size_flags_vertical = 3
+visible = false
+
+[node name="ProductionScrollBox" type="VBoxContainer" parent="TileInfoPanel/TileInfoBox/ProductionScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="UnitsSectionLabel" type="Label" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "Unidades"
+
+[node name="ProductionRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
 layout_mode = 2
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
-visible = false
 
-[node name="ProduceWarriorButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+[node name="ProduceWarriorButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
 layout_mode = 2
 text = "Guerreiro"
 
-[node name="ProduceArcherButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+[node name="ProduceArcherButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
 layout_mode = 2
 text = "Arqueiro"
 
-[node name="ProduceCavalryButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+[node name="ProduceCavalryButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
 layout_mode = 2
 text = "Cavaleiro"
 
-[node name="ProduceSettlerButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+[node name="ProduceSettlerButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
 layout_mode = 2
 text = "Colonizador"
 
-[node name="ProduceCatapultButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+[node name="ProduceCatapultButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
 layout_mode = 2
 text = "Catapulta"
 
-[node name="ProduceMageButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+[node name="ProduceMageButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
 layout_mode = 2
 text = "Mago"
 
-[node name="ProduceGriffinButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+[node name="ProduceGriffinButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
 layout_mode = 2
 text = "Grifo"
 
-[node name="ProduceTreantButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionRow"]
+[node name="ProduceTreantButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
 layout_mode = 2
 text = "Ent"
 
-[node name="BuildingsRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox"]
+[node name="YieldBuildingsSectionLabel" type="Label" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "Predios de producao"
+
+[node name="BuildingsRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
 layout_mode = 2
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
-visible = false
 
-[node name="BuildGranaryButton" type="Button" parent="TileInfoPanel/TileInfoBox/BuildingsRow"]
+[node name="BuildGranaryButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/BuildingsRow"]
 layout_mode = 2
 text = "Celeiro"
 
-[node name="BuildWorkshopButton" type="Button" parent="TileInfoPanel/TileInfoBox/BuildingsRow"]
+[node name="BuildWorkshopButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/BuildingsRow"]
 layout_mode = 2
 text = "Oficina"
 
-[node name="BuildMarketButton" type="Button" parent="TileInfoPanel/TileInfoBox/BuildingsRow"]
+[node name="BuildMarketButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/BuildingsRow"]
 layout_mode = 2
 text = "Mercado"
 
-[node name="BuildWallsButton" type="Button" parent="TileInfoPanel/TileInfoBox/BuildingsRow"]
+[node name="BuildWallsButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/BuildingsRow"]
 layout_mode = 2
 text = "Muralhas"
 
-[node name="WorkedTilesLabel" type="Label" parent="TileInfoPanel/TileInfoBox"]
+[node name="TrainingBuildingsSectionLabel" type="Label" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "Predios de treino"
+
+[node name="TrainingRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+
+[node name="BuildBarracksButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+layout_mode = 2
+text = "Quartel"
+
+[node name="BuildArcheryRangeButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+layout_mode = 2
+text = "Campo de Tiro"
+
+[node name="BuildStableButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+layout_mode = 2
+text = "Estabulo"
+
+[node name="BuildSiegeWorkshopButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+layout_mode = 2
+text = "Arsenal de Cerco"
+
+[node name="BuildArcaneTowerButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+layout_mode = 2
+text = "Torre Arcana"
+
+[node name="BuildGriffinRoostButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+layout_mode = 2
+text = "Poleiro de Grifos"
+
+[node name="BuildDruidGroveButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+layout_mode = 2
+text = "Bosque Druida"
+
+[node name="WorkedTilesLabel" type="Label" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
 layout_mode = 2
 autowrap_mode = 3
 visible = false
 text = "Tiles trabalhados:"
 
-[node name="WorkedTilesRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox"]
+[node name="WorkedTilesRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
 layout_mode = 2
 theme_override_constants/h_separation = 6
 theme_override_constants/v_separation = 6
@@ -203,16 +265,26 @@ layout_mode = 2
 text = "Fundar Cidade"
 visible = false
 
+[node name="OverlayBackdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.01, 0.01, 0.01, 0.65)
+visible = false
+
 [node name="HelpPanel" type="PanelContainer" parent="."]
 layout_mode = 1
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -260.0
-offset_top = -190.0
-offset_right = 260.0
-offset_bottom = 190.0
+offset_left = -300.0
+offset_top = -230.0
+offset_right = 300.0
+offset_bottom = 230.0
 grow_horizontal = 2
 grow_vertical = 2
 visible = false
@@ -221,14 +293,30 @@ visible = false
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="HelpLabel" type="Label" parent="HelpPanel/HelpBox"]
+[node name="HelpHeader" type="HBoxContainer" parent="HelpPanel/HelpBox"]
 layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HelpTitleLabel" type="Label" parent="HelpPanel/HelpBox/HelpHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PanelTitle"
+text = "Como Jogar"
+
+[node name="HelpCloseButton" type="Button" parent="HelpPanel/HelpBox/HelpHeader"]
+layout_mode = 2
+custom_minimum_size = Vector2(32, 32)
+text = "X"
+
+[node name="HelpScroll" type="ScrollContainer" parent="HelpPanel/HelpBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HelpLabel" type="Label" parent="HelpPanel/HelpBox/HelpScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 text = "Como jogar"
 autowrap_mode = 3
-
-[node name="HelpCloseButton" type="Button" parent="HelpPanel/HelpBox"]
-layout_mode = 2
-text = "Fechar"
 
 [node name="TechPanel" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -236,10 +324,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -260.0
-offset_top = -200.0
-offset_right = 260.0
-offset_bottom = 200.0
+offset_left = -400.0
+offset_top = -330.0
+offset_right = 400.0
+offset_bottom = 330.0
 grow_horizontal = 2
 grow_vertical = 2
 visible = false
@@ -248,33 +336,57 @@ visible = false
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="TechTitleLabel" type="Label" parent="TechPanel/TechBox"]
+[node name="TechHeader" type="HBoxContainer" parent="TechPanel/TechBox"]
 layout_mode = 2
-text = "Tecnologia"
-horizontal_alignment = 1
+theme_override_constants/separation = 8
+
+[node name="TechTitleLabel" type="Label" parent="TechPanel/TechBox/TechHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PanelTitle"
+text = "Arvore de Tecnologia"
+
+[node name="TechCloseButton" type="Button" parent="TechPanel/TechBox/TechHeader"]
+layout_mode = 2
+custom_minimum_size = Vector2(32, 32)
+text = "X"
 
 [node name="TechCurrentLabel" type="Label" parent="TechPanel/TechBox"]
 layout_mode = 2
 autowrap_mode = 3
 text = "Pesquisando: nenhuma"
 
-[node name="TechAvailableLabel" type="Label" parent="TechPanel/TechBox"]
+[node name="TechLegend" type="HBoxContainer" parent="TechPanel/TechBox"]
 layout_mode = 2
-text = "Disponiveis (clique pra escolher):"
+theme_override_constants/separation = 18
 
-[node name="TechAvailableRow" type="HFlowContainer" parent="TechPanel/TechBox"]
+[node name="TechLegendLocked" type="Label" parent="TechPanel/TechBox/TechLegend"]
 layout_mode = 2
-theme_override_constants/h_separation = 6
-theme_override_constants/v_separation = 6
+theme_type_variation = &"MutedLabel"
+text = "◻ Bloqueada"
 
-[node name="TechResearchedLabel" type="Label" parent="TechPanel/TechBox"]
+[node name="TechLegendAvailable" type="Label" parent="TechPanel/TechBox/TechLegend"]
 layout_mode = 2
-autowrap_mode = 3
-text = "Pesquisadas: nenhuma"
+theme_type_variation = &"MutedLabel"
+text = "◻ Disponivel"
 
-[node name="TechCloseButton" type="Button" parent="TechPanel/TechBox"]
+[node name="TechLegendResearching" type="Label" parent="TechPanel/TechBox/TechLegend"]
 layout_mode = 2
-text = "Fechar"
+theme_type_variation = &"MutedLabel"
+text = "◻ Pesquisando"
+
+[node name="TechLegendDone" type="Label" parent="TechPanel/TechBox/TechLegend"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "◻ Pesquisada"
+
+[node name="TechTreeScroll" type="ScrollContainer" parent="TechPanel/TechBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TechTree" type="Control" parent="TechPanel/TechBox/TechTreeScroll"]
+layout_mode = 2
+script = ExtResource("TechTree_gd")
 
 [node name="DiplomacyPanel" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -294,18 +406,78 @@ visible = false
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="DiplomacyTitleLabel" type="Label" parent="DiplomacyPanel/DiplomacyBox"]
+[node name="DiplomacyHeader" type="HBoxContainer" parent="DiplomacyPanel/DiplomacyBox"]
 layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DiplomacyTitleLabel" type="Label" parent="DiplomacyPanel/DiplomacyBox/DiplomacyHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PanelTitle"
 text = "Diplomacia"
-horizontal_alignment = 1
+
+[node name="DiplomacyCloseButton" type="Button" parent="DiplomacyPanel/DiplomacyBox/DiplomacyHeader"]
+layout_mode = 2
+custom_minimum_size = Vector2(32, 32)
+text = "X"
 
 [node name="DiplomacyRows" type="VBoxContainer" parent="DiplomacyPanel/DiplomacyBox"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="DiplomacyCloseButton" type="Button" parent="DiplomacyPanel/DiplomacyBox"]
+[node name="DebugPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -170.0
+offset_right = 160.0
+offset_bottom = 170.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+
+[node name="DebugBox" type="VBoxContainer" parent="DebugPanel"]
 layout_mode = 2
-text = "Fechar"
+theme_override_constants/separation = 10
+
+[node name="DebugHeader" type="HBoxContainer" parent="DebugPanel/DebugBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DebugTitleLabel" type="Label" parent="DebugPanel/DebugBox/DebugHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PanelTitle"
+text = "Debug"
+
+[node name="DebugCloseButton" type="Button" parent="DebugPanel/DebugBox/DebugHeader"]
+layout_mode = 2
+custom_minimum_size = Vector2(32, 32)
+text = "X"
+
+[node name="DebugRevealMapButton" type="Button" parent="DebugPanel/DebugBox"]
+layout_mode = 2
+toggle_mode = true
+text = "Revelar Mapa (sem neblina)"
+
+[node name="DebugGoldButton" type="Button" parent="DebugPanel/DebugBox"]
+layout_mode = 2
+text = "+100 Ouro"
+
+[node name="DebugCompleteResearchButton" type="Button" parent="DebugPanel/DebugBox"]
+layout_mode = 2
+text = "Completar Pesquisa Atual"
+
+[node name="DebugWinButton" type="Button" parent="DebugPanel/DebugBox"]
+layout_mode = 2
+text = "Vencer Agora"
+
+[node name="DebugLoseButton" type="Button" parent="DebugPanel/DebugBox"]
+layout_mode = 2
+text = "Perder Agora"
 
 [node name="GameOverPanel" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -327,6 +499,7 @@ theme_override_constants/separation = 12
 
 [node name="GameOverLabel" type="Label" parent="GameOverPanel/GameOverBox"]
 layout_mode = 2
+theme_type_variation = &"PanelTitle"
 text = ""
 horizontal_alignment = 1
 autowrap_mode = 3

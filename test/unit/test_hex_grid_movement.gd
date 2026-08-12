@@ -88,19 +88,149 @@ func test_is_tile_building_site_reflects_placed_building():
 	hex_grid.place_building(Vector2i(1, 0), "granary", human)
 	assert_true(hex_grid.is_tile_building_site(Vector2i(1, 0)))
 
-## "Limite da cidade" visivel no mapa (pedido do usuario): tinge o
-## territorio da cidade sendo vista — show_city_territory()/
-## clear_city_territory() so guardam o conjunto de coords que
-## _apply_fog_colors() usa pra tingir (rendering em si nao e testado aqui,
-## so o estado que controla o que vai ser tingido).
-func test_show_city_territory_sets_the_highlighted_coords():
-	hex_grid.show_city_territory([Vector2i(0, 0), Vector2i(1, 0)])
-	assert_eq(hex_grid._city_territory_coords, [Vector2i(0, 0), Vector2i(1, 0)])
+## "Limite da cidade sempre visivel, como um contorno do Civilization"
+## (pedido do usuario): fundar uma cidade ja cria um contorno permanente
+## na cor da civilizacao, sem depender de selecao na HUD.
+func test_found_city_creates_a_border():
+	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	assert_true(hex_grid._city_borders.has(city), "fundar deveria criar um contorno pra cidade")
 
-func test_clear_city_territory_empties_the_highlighted_coords():
-	hex_grid.show_city_territory([Vector2i(0, 0)])
-	hex_grid.clear_city_territory()
-	assert_eq(hex_grid._city_territory_coords.size(), 0)
+## Regressao: capturar uma cidade precisa RECONSTRUIR o contorno (cor nova,
+## do novo dono) — senao o territorio capturado continuaria mostrando a
+## cor do dono antigo.
+func test_capture_city_rebuilds_border():
+	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var border_before = hex_grid._city_borders[city]
+
+	hex_grid.capture_city(city, human)
+
+	assert_true(hex_grid._city_borders.has(city))
+	assert_ne(hex_grid._city_borders[city], border_before, "contorno deveria ser reconstruido ao mudar de dono")
+
+func test_city_territory_tiles_includes_city_and_all_neighbors():
+	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	var territory = hex_grid.city_territory_tiles(city)
+
+	assert_true(territory.has(Vector2i(0, 0)))
+	for dir in HexGrid.NEIGHBOR_DIRS:
+		assert_true(territory.has(dir))
+
+func test_city_owning_tile_detects_conflict_with_other_city():
+	var city_a = hex_grid.found_city(Vector2i(0, 0), human, "Cidade A")
+
+	assert_eq(hex_grid.city_owning_tile(Vector2i(0, 0)), city_a)
+	assert_null(hex_grid.city_owning_tile(Vector2i(0, 0), city_a), "excluindo a propria cidade, ninguem mais possui esse tile")
+
+## Territorio agora e dinamico (City.owned_tiles, nao mais sempre "celula +
+## 6 vizinhos") — confirma que a malha de contorno filtra arestas internas
+## corretamente mesmo pra um formato IRREGULAR (aqui, so 2 tiles vizinhos,
+## um "dominó" em vez de um hexagono completo). Cada tile isolado tem 6
+## arestas; a aresta COMPARTILHADA entre os 2 e filtrada dos dois lados
+## (interna), sobrando 5 expostas em cada um = 10 arestas x 6 vertices
+## (2 triangulos por aresta) cada.
+func test_build_city_border_mesh_filters_internal_edges_for_irregular_territory():
+	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	var neighbor_coord: Vector2i = HexGrid.NEIGHBOR_DIRS[0]
+	# Array[Vector2i] explicito (nao um literal [a, b] cru) — atribuir um
+	# Array generico direto a uma propriedade Array[Vector2i] de outro
+	# objeto falha em tempo de execucao no GDScript se o literal nao for
+	# reconhecido como homogeneo em tempo de compilacao.
+	var domino_territory: Array[Vector2i] = [Vector2i(0, 0), neighbor_coord]
+	city.owned_tiles = domino_territory
+	for coord in city.owned_tiles:
+		hex_grid.visibility[coord] = HexGrid.Visibility.VISIBLE
+
+	var mesh = hex_grid._build_city_border_mesh(city)
+
+	assert_eq(mesh.get_surface_count(), 1)
+	var vertex_count = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()
+	assert_eq(vertex_count, 10 * 6, "2 tiles em 'domino': 5 arestas expostas cada (a compartilhada e filtrada dos dois lados) = 10 arestas x 6 vertices")
+
+## Acompanhamento de relevo (pedido do usuario: "nao use uma altura Y fixa
+## para todo o segmento... busque a altura real do terreno"). Reusa a
+## mesma tecnica de _tallest_neighbor_height/_corner_point_safe ja usada
+## pelos rios pra nao atravessar a "parede" de um vizinho bem mais alto.
+func test_border_mesh_snaps_to_tallest_neighbor_not_flat_tile_height():
+	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	var raised_coord = HexGrid.NEIGHBOR_DIRS[0]
+	var raised_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	raised_tile.base_height = 5.0 # bem acima de qualquer bioma padrao, pra nao dar empate por acaso
+	hex_grid.tiles[raised_coord] = raised_tile
+	for coord in city.owned_tiles:
+		hex_grid.visibility[coord] = HexGrid.Visibility.VISIBLE
+	var center_tile: HexTileData = hex_grid.tiles[Vector2i(0, 0)]
+
+	var mesh = hex_grid._build_city_border_mesh(city)
+	var vertices: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+
+	var max_y := -INF
+	for v in vertices:
+		max_y = max(max_y, v.y)
+
+	assert_almost_eq(max_y, 5.0 + HexGrid.BORDER_ABOVE_OFFSET, 0.001, "canto do contorno deveria subir ate a altura do vizinho mais alto")
+	assert_gt(max_y, center_tile.base_height + HexGrid.BORDER_ABOVE_OFFSET, "deveria ser maior que a altura FIXA antiga (base_height cru do proprio tile), provando que agora acompanha o relevo vizinho")
+
+## Nevoa POR SEGMENTO (requisito do usuario): UNSEEN nem gera geometria
+## (oculto sob a nevoa), EXPLORED gera com alfa reduzido e cor dessaturada
+## (nao a cor crua da civ), VISIBLE fica cheio.
+func test_border_mesh_skips_unseen_tiles_and_dims_explored_ones():
+	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	# visibility nunca foi populado neste fixture — todo o territorio comeca UNSEEN.
+	var empty_mesh = hex_grid._build_city_border_mesh(city)
+	assert_eq(empty_mesh.get_surface_count(), 0, "territorio inteiro UNSEEN nao deveria gerar geometria nenhuma")
+
+	# Encolhe pra so 2 tiles: com o hexagono completo (7 tiles) de found_city,
+	# o proprio tile central fica "cercado" pelo resto do territorio (todo
+	# vizinho seu ainda esta em owned_tiles, mesmo fogado) e nunca expoe
+	# nenhuma aresta, independente da propria visibilidade — precisa de um
+	# territorio menor pra garantir que os 2 tiles realmente expoem borda.
+	var explored_coord: Vector2i = HexGrid.NEIGHBOR_DIRS[0]
+	var shrunk_territory: Array[Vector2i] = [Vector2i(0, 0), explored_coord]
+	city.owned_tiles = shrunk_territory
+	hex_grid.visibility[Vector2i(0, 0)] = HexGrid.Visibility.VISIBLE
+	hex_grid.visibility[explored_coord] = HexGrid.Visibility.EXPLORED
+
+	var mesh = hex_grid._build_city_border_mesh(city)
+	var colors: PackedColorArray = mesh.surface_get_arrays(0)[Mesh.ARRAY_COLOR]
+	var civ_color = human.civ.color
+	var full_color := Color(civ_color.r, civ_color.g, civ_color.b, 1.0)
+
+	# SurfaceTool.commit() comprime COLOR pra 8 bits por canal por padrao —
+	# 0.55 vira ~140/255 (0.549...) na malha final, entao a comparacao de
+	# alfa precisa de uma tolerancia maior que is_equal_approx() (feito pra
+	# ruido de ponto flutuante, nao quantizacao de 1/255 ~= 0.0039).
+	var saw_full_alpha := false
+	var saw_reduced_alpha := false
+	for c in colors:
+		if c.is_equal_approx(full_color):
+			saw_full_alpha = true
+		elif abs(c.a - HexGrid.EXPLORED_BORDER_ALPHA) < 0.01:
+			saw_reduced_alpha = true
+	assert_true(saw_full_alpha, "trecho VISIBLE deveria ter alfa 1.0 e cor cheia da civ")
+	assert_true(saw_reduced_alpha, "trecho EXPLORED deveria ter alfa reduzido e cor dessaturada (nao a cor crua da civ)")
+
+## Marcador animado de "em construcao" (pedido do usuario: mostrar que ali
+## tem uma obra rolando) — refresh_construction_markers() reconcilia com
+## City.pending_building_coord de TODAS as cidades, em vez de precisar
+## rastrear manualmente cada lugar que esse campo pode mudar.
+func test_refresh_construction_markers_creates_marker_for_pending_building():
+	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	city.pending_building_coord = Vector2i(1, 0)
+
+	hex_grid.refresh_construction_markers()
+
+	assert_true(hex_grid._construction_markers.has(Vector2i(1, 0)))
+
+func test_refresh_construction_markers_removes_marker_once_no_longer_pending():
+	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	city.pending_building_coord = Vector2i(1, 0)
+	hex_grid.refresh_construction_markers()
+	assert_true(hex_grid._construction_markers.has(Vector2i(1, 0)))
+
+	city.pending_building_coord = City.NO_PENDING_COORD
+	hex_grid.refresh_construction_markers()
+
+	assert_false(hex_grid._construction_markers.has(Vector2i(1, 0)), "marcador deveria sumir quando o predio nao esta mais pendente")
 
 ## Base da previa de trajeto (estilo Civilization) mostrada ao passar o
 ## mouse sobre um tile alcancavel — ver SelectionManager.handle_world_hover().
@@ -178,6 +308,35 @@ func test_flying_unit_ignores_terrain_movement_cost():
 	var reachable = hex_grid.compute_reachable(griffin.coord, griffin.movement_left, griffin.owner_player, griffin.unit_data.flies)
 
 	assert_true(reachable.has(Vector2i(2, 0)), "com custo 1/tile (voando), 2 pontos de movimento deveriam alcancar 2 montanhas")
+
+## Lava (HexTileData.blocks_land_units(), bioma vulcanico novo) e
+## intransitavel pra unidade terrestre, mesma regra do oceano — so
+## unidade que voa consegue atravessar.
+func test_non_flying_unit_cannot_cross_lava():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.LAVA)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, warrior.unit_data.flies)
+
+	assert_false(reachable.has(Vector2i(1, 0)), "unidade terrestre nao deveria atravessar lava")
+
+func test_flying_unit_can_cross_lava():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.LAVA)
+	var griffin = _make_unit("griffin", human, Vector2i(0, 0))
+
+	var reachable = hex_grid.compute_reachable(griffin.coord, griffin.movement_left, griffin.owner_player, griffin.unit_data.flies)
+
+	assert_true(reachable.has(Vector2i(1, 0)), "unidade voadora deveria conseguir atravessar lava")
+
+## Mar Gelado (variante polar do Oceano, "os mares") tambem e agua de
+## verdade — mesma regra de intransitavel pra unidade terrestre.
+func test_non_flying_unit_cannot_cross_frozen_ocean():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.FROZEN_OCEAN)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, warrior.unit_data.flies)
+
+	assert_false(reachable.has(Vector2i(1, 0)), "unidade terrestre nao deveria atravessar Mar Gelado")
 
 func test_tiles_in_range_does_not_include_tiles_beyond_range():
 	var center := Vector2i(0, 0)

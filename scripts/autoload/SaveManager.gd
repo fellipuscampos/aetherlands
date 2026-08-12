@@ -8,7 +8,7 @@ extends Node
 ## depois reaplica hp/movimento/producao por cima.
 
 const SAVE_PATH := "user://savegame.json"
-const SAVE_VERSION := 6 # v6: predios posicionados no mapa (v5: covis de monstro limpos; v4: predios de cidade; v3: dificuldade; v2: lista de rivais + diplomacia + veterania de unidade)
+const SAVE_VERSION := 11 # v11: territorio dinamico de cidade (City.owned_tiles, ver HexGrid.city_territory_tiles) salvo por cidade (v10: covis destruidos (LairStructure/HexGrid.destroy_lair) salvos em cleared_lair_coords (v9: acampamentos barbaros — monstro neutro ganha is_camp_boss/behavior_state/movement_left (v8: monstros neutros (guardiao + reforco/patrulha) e o RNG de turno dos covis salvos por inteiro, no lugar de so a lista de covis ja limpos (v7: mapa retangular (map_width/map_height no lugar de map_radius) (v6: predios posicionados no mapa; v5: covis de monstro limpos; v4: predios de cidade; v3: dificuldade; v2: lista de rivais + diplomacia + veterania de unidade)))))
 
 ## path e parametrizavel so pros testes GUT usarem um arquivo isolado, sem
 ## tocar no save de verdade do jogador — o jogo em si sempre usa SAVE_PATH.
@@ -26,14 +26,23 @@ func save_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 
 	var data := {
 		"version": SAVE_VERSION,
-		"map_radius": hex_grid.map_radius,
+		"map_width": hex_grid.map_width,
+		"map_height": hex_grid.map_height,
 		"map_seed": hex_grid.map_seed,
 		"turn_number": TurnManager.turn_number,
 		"current_player_index": TurnManager.current_player_index,
 		"human_kingdom_name": GameManager.human_player.civ.civ_name,
 		"difficulty": GameManager.difficulty,
 		"explored_coords": _serialize_explored(hex_grid),
-		"cleared_lairs": _serialize_cleared_lairs(hex_grid),
+		"neutral_units": _serialize_neutral_units(hex_grid),
+		"cleared_lair_coords": _serialize_cleared_lairs(hex_grid),
+		# STRING, nao int direto: `RandomNumberGenerator.state` e um inteiro
+		# de 64 bits, mas JSON nao tem tipo inteiro (so "number" = double) —
+		# `JSON.parse_string` devolveria o valor como float, perdendo
+		# precisao acima de 2^53 (~9e15; states de verdade passam disso
+		# facil) e corrompendo o replay. Como string, o valor cru
+		# sobrevive intacto e `int(String)` reconstroi o int64 exato.
+		"monster_rng_state": str(hex_grid.monster_turn_rng.state),
 		"human": _serialize_player(GameManager.human_player, false),
 		"rivals": rivals,
 	}
@@ -60,23 +69,42 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 	if typeof(data) != TYPE_DICTIONARY or data.get("version", 0) != SAVE_VERSION:
 		return false
 
-	hex_grid.generate_map(int(data.map_radius), int(data.map_seed))
-	# generate_map() acima ja respawnou TODO guardiao original (mesma
-	# semente) — desfaz isso pros covis que o save diz que ja foram
-	# limpos, senao um monstro derrotado antes de salvar "ressuscitaria".
-	for c in data.get("cleared_lairs", []):
-		var lair_coord = Vector2i(int(c[0]), int(c[1]))
-		var guardian = hex_grid.get_unit_at(lair_coord)
-		if guardian != null:
-			hex_grid.remove_unit(guardian)
-	# GameManager.map_radius fica desatualizado se o save for de um raio
-	# diferente do jogo atual (ex: carregar um mapa Grande depois de comecar
-	# um Pequeno) — RTSCamera.reset_view() usa esse valor pra calcular o
-	# limite de pan da camera, entao precisa bater com o mapa de verdade.
-	GameManager.map_radius = int(data.map_radius)
+	# GameManager.map_width/map_height/rival_count precisam estar corretos
+	# ANTES de generate_map(): HexGrid._spawn_monster_lairs usa
+	# GameManager.rival_count (via _nearest_player_origin_distance) pra
+	# decidir ameaca/tipo de cada covil — setar isso DEPOIS (como o codigo
+	# fazia antes) e um bug latente: o covil carregado podia sortear um
+	# tipo diferente do que existia no save original, mesma semente e
+	# tudo. RTSCamera.reset_view() tambem depende de map_width/map_height
+	# pro limite de pan bater com o mapa de verdade (se o save for de um
+	# mapa diferente do jogo atual, ex: carregar um Grande depois de
+	# comecar um Pequeno).
+	GameManager.map_width = int(data.map_width)
+	GameManager.map_height = int(data.map_height)
 	GameManager.human_kingdom_name = data.get("human_kingdom_name", "")
 	GameManager.rival_count = data.rivals.size()
 	GameManager.difficulty = data.get("difficulty", "normal")
+
+	hex_grid.generate_map(int(data.map_width), int(data.map_height), int(data.map_seed))
+	# generate_map() acima ja respawnou TODO guardiao original + LairStructure
+	# (mesma semente) — descarta esse povoamento deterministico de partida
+	# NOVA e restaura o mapa de monstros EXATO que existia no momento do save
+	# (guardiao original sobrevivente, reforco, ou o resultado de uma
+	# patrulha — todos indistinguiveis entre si, ver HexGrid.neutral_units).
+	hex_grid.clear_neutral_units()
+	_deserialize_neutral_units(data.get("neutral_units", []), hex_grid)
+	# Mesma logica por cima dos covis que ja tinham sido DESTRUIDOS antes do
+	# save (ver HexGrid.destroy_lair) — generate_map() os respawnou do zero
+	# alguns passos acima, isso desfaz de novo. destroy_lair() e seguro de
+	# chamar aqui mesmo se o coord nao existir mais em lair_coords.
+	for c in data.get("cleared_lair_coords", []):
+		hex_grid.destroy_lair(Vector2i(int(c[0]), int(c[1])))
+	# `.state` (nao so o seed) restaura o RNG de reforco/patrulha exatamente
+	# de onde parou — sem isso, salvar e recarregar no mesmo turno reiniciava
+	# a sequencia de sorteios do zero, quebrando qualquer replay/determinismo
+	# de eventos futuros dos covis.
+	if data.has("monster_rng_state"):
+		hex_grid.monster_turn_rng.state = int(data.monster_rng_state)
 	GameManager.setup_players(hex_grid) # cria human_player + rival_players do tamanho certo, todos em guerra por padrao
 
 	TurnManager.turn_number = int(data.turn_number)
@@ -100,6 +128,7 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 		if hex_grid.tiles.has(coord):
 			hex_grid.visibility[coord] = HexGrid.Visibility.EXPLORED
 	hex_grid.recompute_fog(GameManager.human_player)
+	hex_grid.refresh_construction_markers() # restaura o marcador de obra pra predio que ainda estava em producao ao salvar
 	GameManager.check_game_over()
 	return true
 
@@ -110,17 +139,52 @@ func _serialize_explored(hex_grid: HexGrid) -> Array:
 			out.append([coord.x, coord.y])
 	return out
 
-## hex_grid.lair_coords guarda TODO covil colocado nesta partida (100%
-## deterministico pela semente — ver HexGrid._spawn_monster_lairs); um
-## coord aqui sem unidade mais e um covil ja limpo por algum jogador. Salvo
-## a parte porque generate_map() (chamado no load) respawnaria os
-## guardioes originais de novo, senao.
+## Todo monstro neutro vivo no mapa (guardiao de covil original OU reforco/
+## resultado de patrulha, ver HexGrid.neutral_units) — cobre o mapa de
+## monstros por INTEIRO, nao so quais covis foram limpos, porque
+## generate_map() (chamado no load) so recria deterministicamente o
+## povoamento de uma partida NOVA (guardioes originais, nenhum reforco),
+## nunca o estado real de uma partida em andamento.
+func _serialize_neutral_units(hex_grid: HexGrid) -> Array:
+	var out := []
+	for unit in hex_grid.neutral_units():
+		out.append({
+			"kind": unit.unit_data.visual_kind,
+			"coord": [unit.coord.x, unit.coord.y],
+			"hp": unit.hp,
+			"kills": unit.kills,
+			"veterancy_level": unit.veterancy_level,
+			"is_camp_boss": unit.is_camp_boss,
+			"behavior_state": unit.monster_behavior_state,
+			"movement_left": unit.movement_left,
+		})
+	return out
+
+## Coords de covil ja DESTRUIDOS nesta partida (ver HexGrid.destroy_lair) —
+## ao contrario dos monstros vivos acima, generate_map() no load sempre
+## recria TODO covil do zero a partir da semente, entao precisa dessa
+## lista pra saber quais reverter de novo (ver load_game).
 func _serialize_cleared_lairs(hex_grid: HexGrid) -> Array:
 	var out := []
-	for coord in hex_grid.lair_coords:
-		if hex_grid.get_unit_at(coord) == null:
-			out.append([coord.x, coord.y])
+	for coord in hex_grid.cleared_lair_coords:
+		out.append([coord.x, coord.y])
 	return out
+
+## Espelha _deserialize_player (mesmos campos, mesma ordem de restauracao:
+## spawna primeiro com os dados base do tipo, depois sobrescreve hp/kills/
+## veterancia por cima) — so que via HexGrid.spawn_monster_at (owner_player
+## null) em vez de HexGrid.spawn_unit (dono = jogador). `is_camp_boss`
+## precisa ir NO SPAWN (create_monster usa pra escalar HP/ataque e travar
+## movement_points), o resto so sobrescreve depois igual sempre.
+func _deserialize_neutral_units(saved: Array, hex_grid: HexGrid) -> void:
+	for u in saved:
+		var coord = Vector2i(int(u.coord[0]), int(u.coord[1]))
+		var unit = hex_grid.spawn_monster_at(coord, u.kind, u.get("is_camp_boss", false))
+		unit.hp = float(u.hp)
+		unit.kills = int(u.get("kills", 0))
+		unit.veterancy_level = int(u.get("veterancy_level", 0))
+		unit.monster_behavior_state = u.get("behavior_state", "")
+		unit.movement_left = float(u.get("movement_left", unit.unit_data.movement_points))
 
 func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 	var units := []
@@ -138,6 +202,9 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 		var worked := []
 		for w in city.worked_tiles:
 			worked.append([w.x, w.y])
+		var owned := []
+		for o in city.owned_tiles:
+			owned.append([o.x, o.y])
 		var building_coords_out := {}
 		for id in city.building_coords.keys():
 			var bc: Vector2i = city.building_coords[id]
@@ -150,6 +217,7 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 			"stored_production": city.stored_production,
 			"production_item": city.production_item,
 			"worked_tiles": worked,
+			"owned_tiles": owned,
 			"buildings": city.buildings.keys(),
 			"building_coords": building_coords_out,
 		}
@@ -197,6 +265,14 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 		for w in c.get("worked_tiles", []):
 			worked.append(Vector2i(int(w[0]), int(w[1])))
 		city.worked_tiles = worked
+		# found_city() ja inicializou owned_tiles com celula+6 vizinhos (ver
+		# HexGrid.found_city) — sobrescreve com o territorio EXATO salvo,
+		# que pode ser maior (cidade que ja cresceu, ver City.
+		# _claim_frontier_tile), mesmo padrao de worked_tiles acima.
+		var owned: Array[Vector2i] = []
+		for o in c.get("owned_tiles", []):
+			owned.append(Vector2i(int(o[0]), int(o[1])))
+		city.owned_tiles = owned
 		for id in c.get("buildings", []):
 			city.buildings[id] = true
 		# Recria o modelo 3D de cada predio no tile exato onde foi

@@ -12,7 +12,7 @@ extends RefCounted
 
 ## Calcula o resultado do combate SEM aplicar nada — usado pela RivalAI
 ## pra decidir se vale a pena atacar antes de se comprometer (ver
-## RivalAI._is_favorable_attack). resolve() usa isso tambem, garantindo
+## RivalAI.is_favorable_attack). resolve() usa isso tambem, garantindo
 ## que a IA avalia exatamente a mesma formula que realmente vai rodar,
 ## nao uma aproximacao separada que podia divergir com o tempo.
 static func predict(attacker: Unit, defender: Unit, hex_grid: HexGrid) -> Dictionary:

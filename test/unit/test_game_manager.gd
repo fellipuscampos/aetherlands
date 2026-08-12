@@ -11,7 +11,8 @@ var _original_human_player: PlayerData
 var _original_rival_players: Array[PlayerData]
 var _original_hex_grid: HexGrid
 var _original_rival_count: int
-var _original_map_radius: int
+var _original_map_width: int
+var _original_map_height: int
 var _original_turn_number: int
 var _original_turn_player_index: int
 var _original_difficulty: String
@@ -23,7 +24,8 @@ func before_each():
 	_original_rival_players = GameManager.rival_players
 	_original_hex_grid = GameManager.hex_grid
 	_original_rival_count = GameManager.rival_count
-	_original_map_radius = GameManager.map_radius
+	_original_map_width = GameManager.map_width
+	_original_map_height = GameManager.map_height
 	_original_turn_number = TurnManager.turn_number
 	_original_turn_player_index = TurnManager.current_player_index
 	_original_difficulty = GameManager.difficulty
@@ -35,7 +37,8 @@ func after_each():
 	GameManager.rival_players = _original_rival_players
 	GameManager.hex_grid = _original_hex_grid
 	GameManager.rival_count = _original_rival_count
-	GameManager.map_radius = _original_map_radius
+	GameManager.map_width = _original_map_width
+	GameManager.map_height = _original_map_height
 	TurnManager.turn_number = _original_turn_number
 	TurnManager.current_player_index = _original_turn_player_index
 	GameManager.difficulty = _original_difficulty
@@ -87,6 +90,37 @@ func test_setup_players_gives_each_rival_a_distinct_civ_name():
 	for rival in GameManager.rival_players:
 		assert_false(rival.civ.civ_name in names, "cada rival deveria ter um nome de civ diferente")
 		names.append(rival.civ.civ_name)
+
+	hex_grid.queue_free()
+
+## Cada rival e uma civilizacao de fantasia de verdade (anao/orc/elfo, ver
+## GameManager.RIVAL_CIVS), nao mais uma copia generica do reino do
+## jogador — setup_players() precisa copiar o campo `race` novo pro
+## CivilizationData de cada rival, senao RivalAI nunca desbloquearia a
+## tropa exclusiva de ninguem.
+func test_setup_players_gives_each_rival_the_race_from_rival_civs():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.rival_count = 3
+
+	GameManager.setup_players(hex_grid)
+
+	for i in range(GameManager.rival_players.size()):
+		assert_eq(GameManager.rival_players[i].civ.race, GameManager.RIVAL_CIVS[i].race)
+		assert_ne(GameManager.rival_players[i].civ.race, "", "todo rival do pool atual deveria ter uma raca de fantasia")
+
+	hex_grid.queue_free()
+
+## O jogador humano continua sem raca de fantasia nesta rodada (so os
+## rivais ganharam, ver CivilizationData.race) — escolher a propria raca
+## fica pra depois.
+func test_setup_players_human_has_no_race():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+
+	GameManager.setup_players(hex_grid)
+
+	assert_eq(GameManager.human_player.civ.race, "")
 
 	hex_grid.queue_free()
 
@@ -146,8 +180,42 @@ func test_check_game_over_declares_victory_when_every_rival_is_eliminated():
 
 	assert_eq(GameManager.state, GameManager.GameState.GAME_OVER)
 
+## Debug (HUD.gd, botao "Debug"): forca fim de jogo sem eliminar unidade/
+## cidade nenhuma de verdade, reaproveitando o mesmo _end_game()/sinal
+## EventBus.game_over do fim de jogo real — util pra testar a tela de
+## vitoria/derrota sem jogar uma partida inteira.
+func test_debug_force_game_over_sets_state_and_emits_signal():
+	GameManager.state = GameManager.GameState.PLAYING
+	watch_signals(EventBus)
+
+	GameManager.debug_force_game_over(true)
+
+	assert_eq(GameManager.state, GameManager.GameState.GAME_OVER)
+	assert_signal_emitted_with_parameters(EventBus, "game_over", [true])
+
+## Debug: completa a pesquisa atual na hora, reaproveitando
+## _process_research() de verdade (mesmo efeito colateral de marcar
+## researched_techs e limpar current_research).
+func test_debug_complete_current_research_finishes_the_selected_tech():
+	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player.current_research = "agriculture"
+
+	GameManager.debug_complete_current_research()
+
+	assert_true(GameManager.human_player.researched_techs.has("agriculture"))
+	assert_eq(GameManager.human_player.current_research, "")
+
+func test_debug_complete_current_research_does_nothing_without_a_selected_tech():
+	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player.current_research = ""
+
+	GameManager.debug_complete_current_research() # nao deveria travar nem levantar erro nenhum
+
+	assert_eq(GameManager.human_player.current_research, "")
+
 func test_rival_origin_spreads_rivals_around_the_map():
-	GameManager.map_radius = 12
+	GameManager.map_width = 25
+	GameManager.map_height = 25
 	var origin_0 = GameManager._rival_origin(0, 3)
 	var origin_1 = GameManager._rival_origin(1, 3)
 	var origin_2 = GameManager._rival_origin(2, 3)
@@ -165,8 +233,9 @@ func test_rival_origin_spreads_rivals_around_the_map():
 func test_spawn_starting_forces_never_places_two_civs_on_the_same_tile():
 	var hex_grid := HexGrid.new()
 	hex_grid._ready()
-	hex_grid.generate_map(6, 555) # mapa pequeno, semente fixa
-	GameManager.map_radius = 6
+	hex_grid.generate_map(13, 13, 555) # mapa pequeno, semente fixa
+	GameManager.map_width = 13
+	GameManager.map_height = 13
 	GameManager.rival_count = 3
 
 	GameManager.start_new_game(hex_grid)
@@ -186,5 +255,30 @@ func test_spawn_starting_forces_never_places_two_civs_on_the_same_tile():
 		var capital_coord = rival.cities[0].coord
 		assert_false(start_coords.has(capital_coord), "duas civs nao deveriam comecar na mesma coordenada")
 		start_coords[capital_coord] = true
+
+	hex_grid.queue_free()
+
+## O pipeline inteiro de comecar um jogo novo (gerar mapa + espalhar
+## civs) precisa continuar funcionando no tamanho Medio (84x54, 4536
+## tiles — pedido do usuario com as dimensoes exatas do Civilization),
+## nao so nos mapas pequenos que o resto da suite ja cobre.
+func test_start_new_game_works_at_the_new_medium_map_size():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.map_width = TitleScreen.MAP_SIZES.medium.width
+	GameManager.map_height = TitleScreen.MAP_SIZES.medium.height
+	GameManager.rival_count = 3
+
+	GameManager.start_new_game(hex_grid)
+
+	var human_settler: Unit = null
+	for unit in GameManager.human_player.units:
+		if unit.unit_data.can_found_city:
+			human_settler = unit
+			break
+	assert_true(human_settler != null, "humano deveria comecar com um colonizador mesmo no mapa maior")
+
+	for rival in GameManager.rival_players:
+		assert_eq(rival.cities.size(), 1, "cada rival deveria comecar com exatamente 1 capital mesmo no mapa maior")
 
 	hex_grid.queue_free()

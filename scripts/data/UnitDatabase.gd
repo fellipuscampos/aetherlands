@@ -90,4 +90,40 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "treant"
 			data.regen_fraction = 0.15
 			data.production_cost = 30.0
+		# Tropas raciais exclusivas (ver RivalAI.RACE_UNIQUE_KIND) — cada
+		# civilizacao de fantasia (CivilizationData.race) tem uma, alem do
+		# elenco comum acima. Escopo desta rodada: so a IA rival produz
+		# essas (RivalAI.decide_production), o jogador nao tem raca pra
+		# desbloquear nenhuma delas ainda.
+		"dwarf_axeguard":
+			data.unit_name = "Guarda-Machado Anao"
+			data.movement_points = 1.0 # pernas curtas, mas nao sai do lugar
+			data.attack = 5.0
+			data.defense = 5.0
+			data.max_hp = 16.0
+			data.vision_range = 2
+			data.can_found_city = false
+			data.visual_kind = "dwarf_axeguard"
+			data.production_cost = 24.0
+		"orc_berserker":
+			data.unit_name = "Berserker Orc"
+			data.movement_points = 2.0
+			data.attack = 6.0 # o maior ataque corpo-a-corpo do jogo, de proposito
+			data.defense = 1.0 # sem armadura nenhuma, todo o investimento e ofensivo
+			data.max_hp = 10.0
+			data.vision_range = 2
+			data.can_found_city = false
+			data.visual_kind = "orc_berserker"
+			data.production_cost = 18.0
+		"elf_ranger":
+			data.unit_name = "Patrulheiro Elfico"
+			data.movement_points = 3.0 # o mais agil entre as unidades terrestres
+			data.attack = 3.5
+			data.defense = 1.0
+			data.attack_range = 3 # alcance maior que o Arqueiro comum (2)
+			data.max_hp = 8.0
+			data.vision_range = 4
+			data.can_found_city = false
+			data.visual_kind = "elf_ranger"
+			data.production_cost = 26.0
 	return data

@@ -1,13 +1,28 @@
+class_name TitleScreen
 extends Control
 
 ## Tela de titulo: nome do reino + tamanho do mapa antes de um jogo novo, ou
 ## carregar a partida salva. Main.gd escuta os sinais e decide o que fazer —
-## esta tela nao mexe em HexGrid/GameManager diretamente.
+## esta tela nao mexe em HexGrid/GameManager diretamente. `class_name`
+## exposto pra MAP_SIZES poder ser referenciado por outros scripts/testes
+## (ex: test_game_manager.gd) sem duplicar os numeros.
 
-signal new_game_requested(radius: int, kingdom_name: String, rival_count: int, difficulty: String)
+signal new_game_requested(width: int, height: int, kingdom_name: String, rival_count: int, difficulty: String)
 signal load_game_requested
 
-const MAP_SIZES := {"small": 8, "medium": 12, "large": 16}
+## Mapa retangular de verdade (nao mais losango hexagonal de raio unico —
+## ver HexGrid.generate_map) com as dimensoes EXATAS pedidas pelo
+## usuario: "Pequeno (Small): 74 x 46 celulas, totalizando 3.404
+## hexagonos. Medio/Padrao (Standard): 84 x 54 celulas, totalizando 4.536
+## hexagonos. Grande (Large): 96 x 60 celulas, totalizando 5.760
+## hexagonos." — os proprios numeros do Civilization pro tamanho do mapa
+## (grade retangular la tambem), agora batendo exatamente em vez de so
+## aproximado como a versao anterior baseada em raio.
+const MAP_SIZES := {
+	"small": {"width": 74, "height": 46},
+	"medium": {"width": 84, "height": 54},
+	"large": {"width": 96, "height": 60},
+}
 
 @onready var kingdom_name_edit: LineEdit = $CenterBox/Box/KingdomNameEdit
 @onready var small_button: Button = $CenterBox/Box/MapSizeRow/SmallButton
@@ -31,6 +46,7 @@ var _selected_rival_count := 1
 var _selected_difficulty := "normal"
 
 func _ready() -> void:
+	theme = UITheme.build()
 	small_button.pressed.connect(_on_size_pressed.bind("small"))
 	medium_button.pressed.connect(_on_size_pressed.bind("medium"))
 	large_button.pressed.connect(_on_size_pressed.bind("large"))
@@ -65,8 +81,9 @@ func _on_difficulty_pressed(difficulty: String) -> void:
 	_selected_difficulty = difficulty
 
 func _on_new_game_pressed() -> void:
+	var size: Dictionary = MAP_SIZES[_selected_size]
 	new_game_requested.emit(
-		MAP_SIZES[_selected_size], kingdom_name_edit.text.strip_edges(), _selected_rival_count, _selected_difficulty
+		size.width, size.height, kingdom_name_edit.text.strip_edges(), _selected_rival_count, _selected_difficulty
 	)
 
 func _on_load_game_pressed() -> void:

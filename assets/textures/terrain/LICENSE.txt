@@ -11,3 +11,26 @@ attribution required. Files used in this project:
 - ground_normal.jpg  (Ground037_1K-JPG_NormalGL.jpg) — baixado, ainda nao
   usado no shader (ver README, secao de assets externos).
 - ground_roughness.jpg (Ground037_1K-JPG_Roughness.jpg) — idem.
+
+---
+
+Snow006 (Neve / Gelo Eterno), Ground033 (Deserto), Rock035 (Lava, base
+de pedra vulcanica), Ice003 (Campos de Cristal, base facetada) — pedido
+do usuario: "baixe as texturas corretas de assets pra isso" (biomas
+especiais que antes eram so cor + efeito procedural, sem textura
+nenhuma). Todos CC0, mesma fonte/licenca do Ground037 acima.
+
+- snow_albedo.jpg    (Snow006_1K-JPG_Color.jpg)
+  https://ambientcg.com/view?id=Snow006
+- desert_albedo.jpg  (Ground033_1K-JPG_Color.jpg)
+  https://ambientcg.com/view?id=Ground033
+- lava_albedo.jpg    (Rock035_1K-JPG_Color.jpg) — pedra vulcanica escura
+  resfriada; o tile em si NAO brilha (pedido do usuario, roadmap item 29:
+  "pode apenas ser aquela pedra preta sem o efeito de lava"), so a
+  textura tingida. O brilho de lava de verdade agora vem dos RIOS de
+  lava, uma malha a parte (ver HexGrid._generate_lava_rivers).
+  https://ambientcg.com/view?id=Rock035
+- crystal_albedo.jpg (Ice003_1K-JPG_Color.jpg) — gelo rachado/facetado
+  real, tingido na cor arcana do bioma no shader (o brilho magico
+  tambem e procedural).
+  https://ambientcg.com/view?id=Ice003

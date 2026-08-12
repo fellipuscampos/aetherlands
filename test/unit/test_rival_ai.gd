@@ -1,7 +1,7 @@
 extends GutTest
 
 ## Cobre a melhoria da IA rival: avaliar risco antes de atacar
-## (CombatResolver.predict() + RivalAI._is_favorable_attack), a cura por
+## (CombatResolver.predict() + RivalAI.is_favorable_attack), a cura por
 ## guarnicao que da sentido a recuar (GameManager._heal_if_garrisoned), a
 ## regeneracao passiva do Ent em qualquer lugar (GameManager._apply_regen),
 ## a fog of war propria (so mira em unidades inimigas VISIVEIS agora, mas
@@ -69,14 +69,14 @@ func test_favorable_attack_is_true_for_lethal_hit():
 	var defender = _make_unit("warrior", human, Vector2i(1, 0))
 	defender.hp = 0.5 # qualquer golpe mata
 
-	assert_true(RivalAI._is_favorable_attack(attacker, defender, hex_grid))
+	assert_true(RivalAI.is_favorable_attack(attacker, defender, hex_grid))
 
 func test_favorable_attack_is_false_when_attacker_would_die_to_counter():
 	var attacker = _make_unit("settler", rival, Vector2i(0, 0)) # sem ataque de verdade
 	var defender = _make_unit("warrior", human, Vector2i(1, 0))
 	attacker.hp = 0.5 # qualquer contra-ataque mata
 
-	assert_false(RivalAI._is_favorable_attack(attacker, defender, hex_grid))
+	assert_false(RivalAI.is_favorable_attack(attacker, defender, hex_grid))
 
 func test_garrisoned_unit_heals_up_to_max_hp():
 	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
@@ -217,3 +217,52 @@ func test_ranged_unit_advances_with_melee_escort_nearby():
 	RivalAI._handle_attacker(archer, hex_grid, rival, human, visible)
 
 	assert_ne(archer.coord, Vector2i(0, 0), "com escolta por perto, arqueiro deveria avancar normalmente")
+
+## Civilizacoes de fantasia (CivilizationData.race, ver GameManager.
+## RIVAL_CIVS): cada raca com tropa propria (RivalAI.RACE_UNIQUE_KIND) ve
+## essa tropa no proprio pool de producao, mas so a sua — um anao nunca
+## sorteia Berserker Orc, e uma civ sem raca nenhuma (jogador humano, ou
+## um rival hipotetico sem `race`) nunca sorteia tropa racial nenhuma.
+func test_military_kinds_for_includes_the_racial_unique_unit():
+	var dwarf_civ := CivilizationData.new()
+	dwarf_civ.race = "dwarf"
+	var dwarf_player := PlayerData.new(dwarf_civ)
+
+	assert_true("dwarf_axeguard" in RivalAI._military_kinds_for(dwarf_player))
+
+func test_military_kinds_for_does_not_leak_other_races_unique_unit():
+	var dwarf_civ := CivilizationData.new()
+	dwarf_civ.race = "dwarf"
+	var dwarf_player := PlayerData.new(dwarf_civ)
+
+	var kinds = RivalAI._military_kinds_for(dwarf_player)
+	assert_false("orc_berserker" in kinds)
+	assert_false("elf_ranger" in kinds)
+
+func test_military_kinds_for_has_no_racial_unit_without_a_race():
+	var human_civ := CivilizationData.new() # race = "" (padrao)
+	var human_without_race := PlayerData.new(human_civ)
+
+	var kinds = RivalAI._military_kinds_for(human_without_race)
+	assert_false("dwarf_axeguard" in kinds)
+	assert_false("orc_berserker" in kinds)
+	assert_false("elf_ranger" in kinds)
+
+## Regressao de integracao: com 2+ cidades e tudo desbloqueado, um rival
+## orc eventualmente sorteia Berserker Orc de verdade via decide_production
+## (nao so a lista em si, o fluxo completo tambem).
+func test_decide_production_can_pick_the_racial_unit_for_that_race():
+	var orc_civ := CivilizationData.new()
+	orc_civ.race = "orc"
+	var orc_player := PlayerData.new(orc_civ)
+	var city_a = hex_grid.found_city(Vector2i(0, 0), orc_player, "Cidade A")
+	hex_grid.found_city(Vector2i(5, 0), orc_player, "Cidade B") # 2 cidades: sai do ramo "sempre colonizador"
+
+	var picked_orc_unique := false
+	for i in range(60): # varias rodadas pra reduzir chance de falso-negativo por sorte
+		RivalAI.decide_production(orc_player)
+		if city_a.production_item == "orc_berserker":
+			picked_orc_unique = true
+			break
+
+	assert_true(picked_orc_unique, "rival orc deveria eventualmente sortear a propria tropa exclusiva")

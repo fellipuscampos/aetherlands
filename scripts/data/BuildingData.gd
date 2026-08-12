@@ -19,3 +19,9 @@ extends Resource
 ## unidade guarnicionada na cidade, igual bonus de terreno — ver
 ## CombatResolver.predict().
 @export var defense_bonus: float = 0.0
+
+## Kind de UnitDatabase que este predio libera pra treino (ex: "warrior" pro
+## Quartel) — vazio pra predios de rendimento/defesa (Celeiro, Muralhas...),
+## que nao travam producao de unidade nenhuma. Ver City.can_train() e
+## BuildingDatabase.building_that_trains().
+@export var trains_unit: String = ""

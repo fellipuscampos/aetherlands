@@ -19,8 +19,9 @@ func _draw() -> void:
 	if hex_grid == null or hex_grid.tiles.is_empty():
 		return
 
-	var half_w = hex_grid.hex_size * sqrt(3.0) * hex_grid.map_radius
-	var half_d = hex_grid.hex_size * 1.5 * hex_grid.map_radius
+	var half_extents = hex_grid.get_world_half_extents()
+	var half_w = half_extents.x
+	var half_d = half_extents.y
 	if half_w <= 0.0 or half_d <= 0.0:
 		return
 
@@ -40,7 +41,7 @@ func _draw() -> void:
 		if not unit.visible:
 			continue
 		var px = _project(coord, hex_grid.hex_size, half_w, half_d)
-		draw_circle(px, DOT_UNIT, unit.owner_player.civ.color)
+		draw_circle(px, DOT_UNIT, _unit_dot_color(unit))
 
 	for coord in hex_grid.cities_by_coord.keys():
 		var city: City = hex_grid.cities_by_coord[coord]
@@ -49,6 +50,17 @@ func _draw() -> void:
 		var px = _project(coord, hex_grid.hex_size, half_w, half_d)
 		draw_circle(px, DOT_CITY, city.owner_player.civ.color)
 		draw_arc(px, DOT_CITY + 1.0, 0.0, TAU, 12, Color.WHITE, 1.0)
+
+## Regressao ("quando tiro a neblina crasha o jogo ele travou"): guardiao
+## de Covil de Monstro (owner_player == null, ver MonsterDatabase) nao tem
+## civilizacao nenhuma pra puxar cor. Sem essa guarda, `.civ` numa
+## unidade sem dono e um null dereference que derruba o redesenho do
+## minimapa INTEIRO assim que ela aparecer visivel nele — o que Debug >
+## Revelar Mapa causa de proposito, deixando TODO guardiao visivel de uma
+## vez em vez de so quando escoutado organicamente. Mesma cor de fallback
+## usada em Unit.gd (Unit.MONSTER_COLOR).
+func _unit_dot_color(unit: Unit) -> Color:
+	return unit.owner_player.civ.color if unit.owner_player else Unit.MONSTER_COLOR
 
 func _project(coord: Vector2i, hex_size: float, half_w: float, half_d: float) -> Vector2:
 	var world = HexMetrics.axial_to_world(coord.x, coord.y, hex_size)
@@ -64,8 +76,9 @@ func _pan_to(local_pos: Vector2) -> void:
 	var hex_grid = GameManager.hex_grid
 	if hex_grid == null:
 		return
-	var half_w = hex_grid.hex_size * sqrt(3.0) * hex_grid.map_radius
-	var half_d = hex_grid.hex_size * 1.5 * hex_grid.map_radius
+	var half_extents = hex_grid.get_world_half_extents()
+	var half_w = half_extents.x
+	var half_d = half_extents.y
 	var world_x = (local_pos.x / size.x) * half_w * 2.0 - half_w
 	var world_z = (local_pos.y / size.y) * half_d * 2.0 - half_d
 	EventBus.minimap_clicked.emit(Vector3(world_x, 0.0, world_z))

@@ -148,6 +148,7 @@ func _handle_building_placement_click(coord: Vector2i) -> void:
 		var building_id = placing_building_id
 		city.set_production(building_id)
 		city.pending_building_coord = coord
+		hex_grid.refresh_construction_markers()
 		var building_name = BuildingDatabase.get_building(building_id).display_name
 		EventBus.notify.emit("Construcao de %s iniciada em %s" % [building_name, city.city_name], "confirm")
 	cancel_building_placement()

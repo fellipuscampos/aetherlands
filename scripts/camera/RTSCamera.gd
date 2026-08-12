@@ -6,7 +6,14 @@ extends Node3D
 @export var rotate_speed: float = 90.0
 @export var min_zoom: float = 6.0
 @export var max_zoom: float = 30.0
-@export var pan_bounds: float = 40.0
+## Mapa agora e retangular (largura != altura em geral), entao o limite de
+## pan tambem precisa ser por eixo — um unico `pan_bounds` simetrico
+## deixaria sobrar/faltar espaco dependendo do eixo. Mesma proporcao da
+## formula antiga (`map_radius * 1.8`): como largura/altura antigas eram
+## sempre ~2*raio, `largura * 0.9` cai exatamente no mesmo valor pro caso
+## simetrico, so agora calculado por eixo.
+@export var pan_bounds_x: float = 40.0
+@export var pan_bounds_z: float = 40.0
 
 @onready var camera: Camera3D = $Camera3D
 
@@ -18,14 +25,13 @@ func _ready() -> void:
 	_default_camera_position = camera.position
 	_default_camera_rotation = camera.rotation_degrees
 	_zoom_distance = camera.position.length()
-	# Limite de pan proporcional ao raio real do mapa em vez de um valor fixo
-	# que so fazia sentido para o raio 12 original.
-	pan_bounds = float(GameManager.map_radius) * 1.8
+	pan_bounds_x = float(GameManager.map_width) * 0.9
+	pan_bounds_z = float(GameManager.map_height) * 0.9
 	EventBus.minimap_clicked.connect(_on_minimap_clicked)
 
 func _on_minimap_clicked(world_pos: Vector3) -> void:
-	position.x = clamp(world_pos.x, -pan_bounds, pan_bounds)
-	position.z = clamp(world_pos.z, -pan_bounds, pan_bounds)
+	position.x = clamp(world_pos.x, -pan_bounds_x, pan_bounds_x)
+	position.z = clamp(world_pos.z, -pan_bounds_z, pan_bounds_z)
 
 ## Chamado ao reiniciar a partida: volta a camera pra posicao/zoom inicial
 ## em vez de manter onde o jogador da partida anterior deixou.
@@ -35,7 +41,8 @@ func reset_view() -> void:
 	camera.position = _default_camera_position
 	camera.rotation_degrees = _default_camera_rotation
 	_zoom_distance = _default_camera_position.length()
-	pan_bounds = float(GameManager.map_radius) * 1.8
+	pan_bounds_x = float(GameManager.map_width) * 0.9
+	pan_bounds_z = float(GameManager.map_height) * 0.9
 
 func _process(delta: float) -> void:
 	_handle_pan(delta)
@@ -64,8 +71,8 @@ func _handle_pan(delta: float) -> void:
 	right = right.normalized()
 	var move = (right * input_dir.x + forward * -input_dir.z) * pan_speed * delta
 	position += move
-	position.x = clamp(position.x, -pan_bounds, pan_bounds)
-	position.z = clamp(position.z, -pan_bounds, pan_bounds)
+	position.x = clamp(position.x, -pan_bounds_x, pan_bounds_x)
+	position.z = clamp(position.z, -pan_bounds_z, pan_bounds_z)
 
 func _handle_rotate(delta: float) -> void:
 	var rotate_dir := 0.0

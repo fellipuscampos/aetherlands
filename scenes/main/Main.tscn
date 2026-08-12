@@ -21,20 +21,25 @@ background_mode = 2
 sky = SubResource("Sky1")
 ambient_light_source = 3
 ambient_light_color = Color(1, 1, 1, 1)
-ambient_light_energy = 0.35
+ambient_light_energy = 0.22
 tonemap_mode = 2
 glow_enabled = true
 glow_intensity = 0.6
 glow_strength = 1.0
-glow_bloom = 0.05
-glow_hdr_threshold = 1.2
+glow_bloom = 0.1
+glow_hdr_threshold = 1.4
 fog_enabled = true
 fog_light_color = Color(0.65, 0.75, 0.85, 1)
-fog_density = 0.008
+fog_density = 0.0025
 fog_sky_affect = 0.3
+fog_depth_begin = 25.0
 ssao_enabled = true
 ssao_radius = 1.5
-ssao_intensity = 1.2
+ssao_intensity = 1.4
+adjustment_enabled = true
+adjustment_brightness = 1.0
+adjustment_contrast = 1.12
+adjustment_saturation = 1.3
 
 [node name="Main" type="Node3D"]
 script = ExtResource("Main_gd")
@@ -43,13 +48,16 @@ script = ExtResource("Main_gd")
 environment = SubResource("Env1")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-50, 35, 0)
+rotation_degrees = Vector3(-45, 35, 0)
+light_color = Color(1.0, 0.92, 0.78, 1)
 shadow_enabled = true
+shadow_blur = 1.5
 light_energy = 1.1
 
 [node name="HexGrid" type="Node3D" parent="."]
 script = ExtResource("HexGrid_gd")
-map_radius = 12
+map_width = 25
+map_height = 25
 hex_size = 1.0
 
 [node name="CameraRig" type="Node3D" parent="."]

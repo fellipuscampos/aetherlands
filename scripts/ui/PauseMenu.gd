@@ -12,6 +12,7 @@ extends Control
 signal load_requested
 signal main_menu_requested
 
+@onready var hud: Control = $"../HUD"
 @onready var resume_button: Button = $CenterBox/Box/ResumeButton
 @onready var save_button: Button = $CenterBox/Box/SaveButton
 @onready var load_button: Button = $CenterBox/Box/LoadButton
@@ -22,6 +23,7 @@ signal main_menu_requested
 @onready var status_label: Label = $CenterBox/Box/StatusLabel
 
 func _ready() -> void:
+	theme = UITheme.build()
 	visible = false
 	resume_button.pressed.connect(close)
 	save_button.pressed.connect(_on_save_pressed)
@@ -31,8 +33,16 @@ func _ready() -> void:
 	quit_button.pressed.connect(_on_quit_pressed)
 	EventBus.pause_requested.connect(toggle)
 
+## Regressao: ESC abria o menu de pausa POR CIMA de um overlay da HUD
+## (Tecnologia/Diplomacia/Ajuda) que estivesse aberto, deixando os dois
+## empilhados (o overlay continuava visivel=true por baixo, reaparecendo
+## assim que a pausa fechasse). Fecha o overlay da HUD primeiro, se tiver
+## um aberto — so abre a pausa de verdade se nao tinha nenhum.
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and GameManager.state == GameManager.GameState.PLAYING:
+		if hud.close_topmost_overlay():
+			get_viewport().set_input_as_handled()
+			return
 		toggle()
 		get_viewport().set_input_as_handled()
 

@@ -30,6 +30,16 @@ Settings="*res://scripts/autoload/Settings.gd"
 AudioManager="*res://scripts/autoload/AudioManager.gd"
 SaveManager="*res://scripts/autoload/SaveManager.gd"
 
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+window/size/mode=2
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+
+[rendering]
+
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=1

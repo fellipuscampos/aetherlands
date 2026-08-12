@@ -6,24 +6,24 @@ const HP_BAR_HEIGHT := 0.07
 const HP_BAR_Y := 0.95
 const MOVE_DURATION := 0.35
 
-## Modelos reais (Quaternius "RPG Character Pack", CC0 — ver
-## assets/models/characters/LICENSE.txt). Cavaleiro fica de fora de
-## proposito: nenhum personagem do pacote e montado, e substituir o
-## cavalo+cavaleiro procedural por um humanoide a pe seria uma PIORA (perde
-## a leitura visual de "isso e cavalaria"). Se os arquivos nao existirem,
-## cai automaticamente no corpo procedural — ver _build_visual().
-const CHARACTER_MODEL_PATHS := {
-	"warrior": "res://assets/models/characters/Warrior.gltf",
-	"archer": "res://assets/models/characters/Ranger.gltf",
-	"settler": "res://assets/models/characters/Monk.gltf",
-}
-const CHARACTER_TARGET_HEIGHT := 0.85
-
-## Cor usada pro corpo/base de monstros neutros (owner_player == null, ver
-## MonsterDatabase) — nao tem civ.color pra puxar, entao um vermelho
-## sangue fixo serve tambem pra diferenciar visualmente "isso e hostil a
-## todo mundo" de qualquer unidade de jogador.
+## Cor FALLBACK pro corpo/base de monstro neutro (owner_player == null, ver
+## MonsterDatabase) sem entrada em MONSTER_KIND_COLORS — nao tem civ.color
+## pra puxar, entao um vermelho sangue fixo serve tambem pra diferenciar
+## visualmente "isso e hostil a todo mundo" de qualquer unidade de jogador.
 const MONSTER_COLOR := Color(0.45, 0.08, 0.08)
+
+## Cada tipo de monstro (MonsterDatabase.KIND_DATA) tem sua PROPRIA cor fixa
+## de silhueta — pedido: "Goblins verde viva, Trolls cinza/rocha, Vivern/
+## Dragao vermelho-laranja/roxo, Esqueleto branco/creme" — em vez de todos
+## caindo no mesmo MONSTER_COLOR vermelho-sangue generico. Usado tanto no
+## corpo (_build_procedural_body) quanto na base (_build_base_disc).
+const MONSTER_KIND_COLORS := {
+	"goblin": Color(0.25, 0.75, 0.2),
+	"troll": Color(0.5, 0.5, 0.52),
+	"wyvern": Color(0.85, 0.35, 0.05),
+	"dragon": Color(0.55, 0.1, 0.55),
+	"skeleton": Color(0.92, 0.9, 0.82),
+}
 
 ## Veterania: unidade que vence combate (mata ou sobrevive matando quem a
 ## atacou) acumula kills e sobe de nivel em thresholds fixos, ganhando
@@ -42,6 +42,22 @@ var movement_left: float = 0.0
 var kills: int = 0
 var veterancy_level: int = 0
 
+## true so pro ocupante ORIGINAL de um Covil de Monstro (ver HexGrid.
+## spawn_monster_at/_spawn_monster_lairs) — do lado de MonsterDatabase.
+## create_monster, controla HP/ataque reforcados e movement_points travado
+## em 0. O marcador visual do covil em si (tenda/caverna/etc) NAO depende
+## mais disso — ver LairStructure, uma entidade de terreno separada que
+## sobrevive mesmo depois do camp boss morrer/ser afastado.
+var is_camp_boss: bool = false
+
+## "" = usa o comportamento PADRAO do tipo (MonsterDatabase.KIND_DATA[kind].
+## behavior); "guardian"/"invader"/"hunter" (ver MonsterDatabase.BEHAVIOR_*)
+## sobrescreve por INSTANCIA — usado pela MonsterAI pra promover um grupo
+## ocioso de Goblins Guardioes a Invasores (ver MonsterAI, HexGrid.
+## KIND_DATA["goblin"].invader_promotable). So se aplica a monstro neutro
+## (owner_player == null); unidade de jogador/rival ignora este campo.
+var monster_behavior_state: String = ""
+
 ## Setter dispara a atualizacao visual da barra de vida sozinha — assim
 ## qualquer lugar que faca `unit.hp -= dano` (CombatResolver, etc.) ja
 ## reflete na barra sem precisar lembrar de chamar nada extra.
@@ -53,10 +69,11 @@ var hp: float = 10.0:
 var _hp_bar_fg: MeshInstance3D
 var _hp_bar_bg: MeshInstance3D
 
-func setup(data: UnitData, player: PlayerData, start_coord: Vector2i) -> void:
+func setup(data: UnitData, player: PlayerData, start_coord: Vector2i, camp_boss: bool = false) -> void:
 	unit_data = data
 	owner_player = player
 	coord = start_coord
+	is_camp_boss = camp_boss
 	hp = data.max_hp
 	movement_left = data.movement_points
 	_build_visual()
@@ -115,82 +132,25 @@ func slide_to(target_pos: Vector3) -> void:
 		tween.tween_property(self, "rotation:y", target_angle, MOVE_DURATION * 0.6)
 
 func _build_visual() -> void:
-	var used_model := false
-	if CHARACTER_MODEL_PATHS.has(unit_data.visual_kind):
-		var path: String = CHARACTER_MODEL_PATHS[unit_data.visual_kind]
-		if ResourceLoader.exists(path):
-			_build_character_model(path)
-			used_model = true
-	if not used_model:
-		_build_procedural_body()
-
+	_build_procedural_body()
 	_build_base_disc()
 	_build_hp_bar()
 
-## Instancia o modelo real, escala pra bater com o tamanho das formas
-## procedurais (mede o bounding box de VERDADE em vez de chutar numero —
-## ja errei posicionamento "no papel" duas vezes com os assets do
-## castelo, entao aqui deixo o proprio Godot medir) e toca a animacao
-## "Idle" em loop pra nao ficar parado em T-pose.
-func _build_character_model(path: String) -> void:
-	var scene: PackedScene = load(path)
-	var instance := scene.instantiate() as Node3D
-	add_child(instance)
+## Cor do corpo/base de uma unidade: cor da civilizacao pro jogador, ou —
+## pra monstro neutro (owner_player == null) — a cor FIXA do proprio tipo
+## (MONSTER_KIND_COLORS), caindo no vermelho-sangue generico (MONSTER_
+## COLOR) so se o visual_kind nao tiver entrada la (unidade neutra futura
+## sem cor propria ainda definida).
+func _body_color() -> Color:
+	if owner_player:
+		return owner_player.civ.color
+	return MONSTER_KIND_COLORS.get(unit_data.visual_kind, MONSTER_COLOR)
 
-	var bounds := _combined_aabb(instance)
-	var raw_height = max(bounds.size.y, 0.01)
-	var scale_factor = CHARACTER_TARGET_HEIGHT / raw_height
-	instance.scale = Vector3.ONE * scale_factor
-	instance.position.y = -bounds.position.y * scale_factor
-
-	var anim_player := _find_animation_player(instance)
-	if anim_player and anim_player.has_animation("Idle"):
-		var anim := anim_player.get_animation("Idle")
-		anim.loop_mode = Animation.LOOP_LINEAR
-		anim_player.play("Idle")
-
-## Bounding box combinado (em espaco local de `root`) de todos os
-## VisualInstance3D dentro da hierarquia — soma cada malha ja transformada
-## pelos nodes pais, pra dar a caixa real do personagem inteiro (corpo +
-## arma + o que mais tiver), nao so de uma peca solta.
-func _combined_aabb(root: Node3D) -> AABB:
-	var state := {"aabb": AABB(), "has_any": false}
-	if root is VisualInstance3D:
-		state.aabb = root.get_aabb()
-		state.has_any = true
-	for child in root.get_children():
-		_accumulate_aabb(child, Transform3D.IDENTITY, state)
-	return state.aabb
-
-func _accumulate_aabb(node: Node, parent_transform: Transform3D, state: Dictionary) -> void:
-	var node_transform = parent_transform
-	if node is Node3D:
-		node_transform = parent_transform * node.transform
-	if node is VisualInstance3D:
-		var world_aabb: AABB = node_transform * node.get_aabb()
-		if state.has_any:
-			state.aabb = state.aabb.merge(world_aabb)
-		else:
-			state.aabb = world_aabb
-			state.has_any = true
-	for child in node.get_children():
-		_accumulate_aabb(child, node_transform, state)
-
-func _find_animation_player(node: Node) -> AnimationPlayer:
-	if node is AnimationPlayer:
-		return node
-	for child in node.get_children():
-		var found := _find_animation_player(child)
-		if found:
-			return found
-	return null
-
-## Fallback caso os modelos reais nao tenham sido baixados — formas
-## proceduras simples, cada uma com silhueta diferente pra dar pra
+## Formas proceduras simples, cada uma com silhueta diferente pra dar pra
 ## reconhecer o tipo de unidade a distancia mesmo sem textura/detalhe.
 func _build_procedural_body() -> void:
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = owner_player.civ.color if owner_player else MONSTER_COLOR
+	mat.albedo_color = _body_color()
 
 	match unit_data.visual_kind:
 		"settler":
@@ -270,22 +230,36 @@ func _build_procedural_body() -> void:
 			head.position.y = 0.85
 			add_child(head)
 		"goblin":
+			# Esfera pequena verde — pedido do usuario: silhueta minima,
+			# rasteira, facil de ler como "fraco" a distancia.
 			var body := MeshInstance3D.new()
-			var mesh := CapsuleMesh.new()
-			mesh.radius = 0.14
-			mesh.height = 0.45
+			var mesh := SphereMesh.new()
+			mesh.radius = 0.22
+			mesh.height = 0.44
 			body.mesh = mesh
 			body.material_override = mat
 			body.position.y = 0.22
 			add_child(body)
 		"troll":
+			# Cubo grande e largo cinza-rocha — pedido do usuario: silhueta
+			# "atarracada"/pesada, oposto do resto do bestiario.
 			var body := MeshInstance3D.new()
-			var mesh := CapsuleMesh.new()
-			mesh.radius = 0.3
-			mesh.height = 1.1
+			var mesh := BoxMesh.new()
+			mesh.size = Vector3(0.6, 0.85, 0.5)
 			body.mesh = mesh
 			body.material_override = mat
-			body.position.y = 0.55
+			body.position.y = 0.42
+			add_child(body)
+		"skeleton":
+			# Silhueta bem fina (mais magra que qualquer outro humanoide do
+			# bestiario) branca/creme — pedido do usuario.
+			var body := MeshInstance3D.new()
+			var mesh := CapsuleMesh.new()
+			mesh.radius = 0.11
+			mesh.height = 0.8
+			body.mesh = mesh
+			body.material_override = mat
+			body.position.y = 0.4
 			add_child(body)
 		"wyvern":
 			var body := MeshInstance3D.new()
@@ -307,6 +281,36 @@ func _build_procedural_body() -> void:
 				wing.position = Vector3(side * 0.32, 0.68, 0.0)
 				wing.rotation_degrees = Vector3(0, 0, side * 35)
 				add_child(wing)
+		"dragon":
+			# Mesmo padrao do Vivern (corpo alongado + asas), so numa escala
+			# bem maior — pedido do usuario: "Dragao (Boss Raro)... atributos
+			# massivos", a silhueta precisa ler "muito maior" a distancia,
+			# nao so "outro voador vermelho".
+			var body := MeshInstance3D.new()
+			var mesh := CapsuleMesh.new()
+			mesh.radius = 0.4
+			mesh.height = 1.6
+			body.mesh = mesh
+			body.material_override = mat
+			body.position.y = 0.85
+			add_child(body)
+			for side in [-1.0, 1.0]:
+				var wing := MeshInstance3D.new()
+				var wing_mesh := PrismMesh.new()
+				wing_mesh.size = Vector3(0.95, 0.08, 0.5)
+				wing.mesh = wing_mesh
+				wing.material_override = mat
+				wing.position = Vector3(side * 0.55, 1.15, 0.0)
+				wing.rotation_degrees = Vector3(0, 0, side * 35)
+				add_child(wing)
+			var tail := MeshInstance3D.new()
+			var tail_mesh := PrismMesh.new()
+			tail_mesh.size = Vector3(0.2, 0.2, 0.8)
+			tail.mesh = tail_mesh
+			tail.material_override = mat
+			tail.position = Vector3(0, 0.6, -0.55)
+			tail.rotation_degrees = Vector3(90, 0, 0)
+			add_child(tail)
 		"griffin":
 			var body := MeshInstance3D.new()
 			var body_mesh := CapsuleMesh.new()
@@ -363,6 +367,89 @@ func _build_procedural_body() -> void:
 			foliage.material_override = foliage_mat
 			foliage.position.y = 0.75
 			add_child(foliage)
+		"dwarf_axeguard":
+			# Baixo e largo (silhueta "atarracada" reconhecivel de longe,
+			# oposto do humanoide alto e magro do padrao) + cabeca de
+			# machado numa haste, cor do metal fixa independente do dono.
+			var torso := MeshInstance3D.new()
+			var torso_mesh := BoxMesh.new()
+			torso_mesh.size = Vector3(0.34, 0.4, 0.24)
+			torso.mesh = torso_mesh
+			torso.material_override = mat
+			torso.position.y = 0.24
+			add_child(torso)
+
+			var axe_handle := MeshInstance3D.new()
+			var handle_mesh := CylinderMesh.new()
+			handle_mesh.top_radius = 0.025
+			handle_mesh.bottom_radius = 0.025
+			handle_mesh.height = 0.55
+			axe_handle.mesh = handle_mesh
+			var handle_mat := StandardMaterial3D.new()
+			handle_mat.albedo_color = Color(0.4, 0.28, 0.18)
+			axe_handle.material_override = handle_mat
+			axe_handle.position = Vector3(0.22, 0.45, 0.0)
+			add_child(axe_handle)
+
+			var axe_head := MeshInstance3D.new()
+			var head_mesh := PrismMesh.new()
+			head_mesh.size = Vector3(0.16, 0.18, 0.04)
+			axe_head.mesh = head_mesh
+			var head_mat := StandardMaterial3D.new()
+			head_mat.albedo_color = Color(0.65, 0.66, 0.68)
+			axe_head.material_override = head_mat
+			axe_head.position = Vector3(0.22, 0.68, 0.0)
+			add_child(axe_head)
+		"orc_berserker":
+			# Corpo maior e mais bruto que o padrao (torso avantajado,
+			# corcunda) — silhueta que le "forca bruta" antes mesmo de
+			# reconhecer qualquer arma.
+			var body := MeshInstance3D.new()
+			var body_mesh := CapsuleMesh.new()
+			body_mesh.radius = 0.24
+			body_mesh.height = 0.75
+			body.mesh = body_mesh
+			body.material_override = mat
+			body.position = Vector3(0, 0.42, 0.03)
+			body.rotation_degrees = Vector3(8, 0, 0) # levemente curvado pra frente
+			add_child(body)
+
+			var club := MeshInstance3D.new()
+			var club_mesh := BoxMesh.new()
+			club_mesh.size = Vector3(0.09, 0.5, 0.09)
+			club.mesh = club_mesh
+			var club_mat := StandardMaterial3D.new()
+			club_mat.albedo_color = Color(0.32, 0.24, 0.16)
+			club.material_override = club_mat
+			club.position = Vector3(0.26, 0.5, 0.0)
+			club.rotation_degrees = Vector3(0, 0, -18)
+			add_child(club)
+		"elf_ranger":
+			# Silhueta alta e esguia (mais fina que o Arqueiro comum) + um
+			# arco fino nas costas — leitura de "movel e a distancia", nao
+			# "forte e corpo-a-corpo" como os outros dois novos.
+			var body := MeshInstance3D.new()
+			var body_mesh := CylinderMesh.new()
+			body_mesh.top_radius = 0.03
+			body_mesh.bottom_radius = 0.13
+			body_mesh.height = 0.85
+			body.mesh = body_mesh
+			body.material_override = mat
+			body.position.y = 0.45
+			add_child(body)
+
+			var bow := MeshInstance3D.new()
+			var bow_mesh := CylinderMesh.new()
+			bow_mesh.top_radius = 0.015
+			bow_mesh.bottom_radius = 0.015
+			bow_mesh.height = 0.5
+			bow.mesh = bow_mesh
+			var bow_mat := StandardMaterial3D.new()
+			bow_mat.albedo_color = Color(0.42, 0.3, 0.2)
+			bow.material_override = bow_mat
+			bow.position = Vector3(-0.14, 0.5, -0.05)
+			bow.rotation_degrees = Vector3(0, 0, 12)
+			add_child(bow)
 		_: # "warrior" e qualquer kind desconhecido caem no padrao
 			var body := MeshInstance3D.new()
 			var mesh := CapsuleMesh.new()
@@ -384,8 +471,7 @@ func _build_base_disc() -> void:
 	base_mesh.height = 0.06
 	base.mesh = base_mesh
 	var base_mat := StandardMaterial3D.new()
-	var base_color = owner_player.civ.color if owner_player else MONSTER_COLOR
-	base_mat.albedo_color = base_color.darkened(0.3)
+	base_mat.albedo_color = _body_color().darkened(0.3)
 	base.material_override = base_mat
 	base.position.y = 0.03
 	add_child(base)

@@ -148,6 +148,25 @@ static func is_unit_unlocked(kind: String, researched: Dictionary) -> bool:
 			return researched.has(tech.id)
 	return true
 
+## Tecnologia cujo unlocks_unit bate com `kind`, ou null se nenhuma
+## tecnologia trava esse kind (Colonizador/Guerreiro) — usado so pra
+## mostrar qual pesquisa falta num tooltip (HUD._production_lock_reason)
+## e por City._tech_unlocked_for_building() pra saber se um predio de
+## treino ja pode ser construido. kind == "" tem que devolver null
+## explicitamente ANTES do loop: `TechData.unlocks_unit` tambem default
+## pra "" nas tecnologias que nao desbloqueiam unidade nenhuma
+## (Agricultura, Mineracao...), entao sem essa guarda
+## `tech_that_unlocks("")` "encontraria" a primeira tech de bioma da
+## lista por acidente (ex: exigiria Agricultura pra construir o Celeiro,
+## que nao trava tropa nenhuma — BuildingData.trains_unit == "").
+static func tech_that_unlocks(kind: String) -> TechData:
+	if kind == "":
+		return null
+	for tech in all_techs():
+		if tech.unlocks_unit == kind:
+			return tech
+	return null
+
 ## Soma os bonus de TODAS as tecnologias pesquisadas que afetam este bioma
 ## — varias tecnologias podem mirar o mesmo terreno.
 static func yield_bonus_for(terrain_type: int, researched: Dictionary) -> Dictionary:

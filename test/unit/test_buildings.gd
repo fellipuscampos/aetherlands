@@ -37,3 +37,33 @@ func test_all_buildings_have_unique_ids():
 	for b in BuildingDatabase.all_buildings():
 		assert_false(b.id in ids, "cada predio deveria ter um id unico")
 		ids.append(b.id)
+
+## Predios de treino (Quartel em diante): cada um libera exatamente uma
+## tropa de combate — ver City.can_train().
+func test_building_that_trains_finds_the_matching_training_building():
+	var barracks = BuildingDatabase.building_that_trains("warrior")
+	assert_not_null(barracks)
+	assert_eq(barracks.id, "barracks")
+
+func test_building_that_trains_returns_null_for_kind_without_a_building():
+	assert_null(BuildingDatabase.building_that_trains("settler"), "Colonizador nao deveria exigir predio nenhum")
+
+## Regressao: predios de RENDIMENTO/DEFESA (Celeiro, Muralhas...) nao tem
+## trains_unit preenchido — nao deveriam aparecer como "predio de treino"
+## de kind nenhum.
+func test_yield_buildings_do_not_train_any_unit():
+	for b in BuildingDatabase.all_buildings():
+		if b.id in ["granary", "workshop", "market", "walls"]:
+			assert_eq(b.trains_unit, "", "%s nao deveria travar producao de unidade nenhuma" % b.display_name)
+
+## Cada tropa de combate (todo kind exceto Colonizador) precisa ter
+## exatamente um predio de treino correspondente, senao ficaria impossivel
+## de produzir depois do pivot (nenhum predio libera esse kind).
+func test_every_combat_unit_kind_has_exactly_one_training_building():
+	var combat_kinds = ["warrior", "archer", "cavalry", "catapult", "mage", "griffin", "treant"]
+	for kind in combat_kinds:
+		var matches := 0
+		for b in BuildingDatabase.all_buildings():
+			if b.trains_unit == kind:
+				matches += 1
+		assert_eq(matches, 1, "%s deveria ter exatamente um predio de treino" % kind)

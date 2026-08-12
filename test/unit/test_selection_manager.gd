@@ -152,6 +152,6 @@ func test_clicking_an_invalid_tile_cancels_building_placement():
 	# (so vizinhos entram), entao clicar nela deveria cancelar.
 	SelectionManager.handle_world_click(HexMetrics.axial_to_world(0, 0, hex_grid.hex_size))
 
-	assert_eq(city.production_item, "warrior", "producao nao deveria ter mudado quando o posicionamento e cancelado")
+	assert_eq(city.production_item, "settler", "producao nao deveria ter mudado quando o posicionamento e cancelado")
 	assert_eq(city.pending_building_coord, City.NO_PENDING_COORD)
 	assert_null(SelectionManager.placing_city)

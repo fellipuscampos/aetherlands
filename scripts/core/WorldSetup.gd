@@ -57,7 +57,7 @@ static func _is_valid_spawn(hex_grid: HexGrid, coord: Vector2i) -> bool:
 	if hex_grid.get_unit_at(coord) != null:
 		return false
 	var data: HexTileData = hex_grid.get_tile(coord)
-	return data != null and data.terrain_type != HexTileData.TerrainType.OCEAN
+	return data != null and not data.blocks_land_units()
 
 static func _closest_of_types(hex_grid: HexGrid, origin: Vector2i, types: Array, excluded: Array[Vector2i] = []):
 	var best_coord = null

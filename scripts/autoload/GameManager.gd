@@ -6,7 +6,8 @@ const GARRISON_HEAL_FRACTION := 0.25 # % do HP maximo curado por turno guarnecid
 const SCIENCE_PER_POPULATION := 1.0 # "ciencia" por turno = populacao total das cidades
 
 var state: GameState = GameState.MENU
-var map_radius: int = 12
+var map_width: int = 25
+var map_height: int = 25
 var hex_grid: HexGrid
 
 var players: Array[PlayerData] = []
@@ -22,10 +23,19 @@ const DEFAULT_KINGDOM_NAME := "Reino de Aldenmark"
 ## o pool atual suporta.
 var rival_count: int = 1
 
+## Cada rival agora e uma civilizacao de fantasia de verdade, nao mais uma
+## copia do reino do jogador so trocando nome/cor — pedido do usuario:
+## "insira outras civilizacoes de fantasia, tipo os anoes, os orcs, os
+## elfos... voce cria tropas especificas pra essas civilizacoes". `race`
+## da acesso a uma tropa exclusiva no pool de producao da IA (ver
+## RivalAI._military_kinds_for/RACE_UNIQUE_KIND); "Reino de Ferroeste"
+## (ja soava a fortaleza de ferro) e "Horda das Brumas" (ja tinha um Xama
+## como lider) so precisaram do campo novo, o antigo "Cla Corvo Negro"
+## virou o reino elfico pra fechar o trio classico anao/orc/elfo.
 const RIVAL_CIVS := [
-	{"name": "Cla Corvo Negro", "leader": "Lorde Vaelkor", "color": Color(0.6, 0.15, 0.15)},
-	{"name": "Reino de Ferroeste", "leader": "Rei Bramwell", "color": Color(0.15, 0.5, 0.2)},
-	{"name": "Horda das Brumas", "leader": "Xama Skarn", "color": Color(0.5, 0.35, 0.75)},
+	{"name": "Reino Elfico de Verdemata", "leader": "Rainha Aelaria", "color": Color(0.25, 0.55, 0.35), "race": "elf"},
+	{"name": "Reino de Ferroeste", "leader": "Rei Bramwell", "color": Color(0.55, 0.42, 0.18), "race": "dwarf"},
+	{"name": "Horda das Brumas", "leader": "Xama Skarn", "color": Color(0.4, 0.5, 0.25), "race": "orc"},
 ]
 
 ## Escolhido na tela de titulo; so afeta a economia dos RIVAIS (PlayerData.
@@ -67,6 +77,7 @@ func setup_players(grid: HexGrid) -> void:
 		rival_civ.civ_name = info.name
 		rival_civ.leader_name = info.leader
 		rival_civ.color = info.color
+		rival_civ.race = info.get("race", "")
 		var rival := PlayerData.new(rival_civ)
 		rival.yield_multiplier = mult
 		players.append(rival)
@@ -147,15 +158,17 @@ func _spawn_starting_forces() -> void:
 		hex_grid.spawn_unit(guard_coord, UnitDatabase.create_unit("warrior"), rival)
 
 ## Espalha os rivais em angulos igualmente espacados ao redor do centro do
-## mapa (onde o humano comeca), a uma distancia proporcional ao raio —
-## generalizacao da origem unica fixa que existia antes de multiplos
-## rivais serem possiveis. O achatamento em r (*0.6) e so pra caber melhor
-## no formato hexagonal/losangular do mapa gerado.
+## mapa (onde o humano comeca), numa elipse escalada pela largura/altura
+## reais do mapa retangular (nao mais um raio unico com achatamento fixo
+## de 0.6 — aquele numero era so pra caber no losango/hexagono antigo,
+## ver historico). 0.35 = 70% da METADE de cada dimensao, mesma proporcao
+## de distancia do centro que a formula antiga usava.
 func _rival_origin(index: int, count: int) -> Vector2i:
 	var angle = TAU * float(index) / float(max(count, 1))
-	var dist = float(map_radius) * 0.7
-	var q = int(round(cos(angle) * dist))
-	var r = int(round(sin(angle) * dist * 0.6))
+	var dist_q = float(map_width) * 0.35
+	var dist_r = float(map_height) * 0.35
+	var q = int(round(cos(angle) * dist_q))
+	var r = int(round(sin(angle) * dist_r))
 	return Vector2i(q, r)
 
 func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
@@ -167,6 +180,15 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 			unit.reset_movement()
 			_heal_if_garrisoned(unit)
 			_apply_regen(unit)
+
+	# Monstro neutro (owner_player == null, ver MonsterDatabase) tambem
+	# precisa repor movimento antes de agir — MonsterAI.take_turn (abaixo)
+	# depende disso pra Invasor/Cacador conseguirem se mover. Sem cura por
+	# guarnicao/regeneracao passiva aqui de proposito: nenhum dos 5 tipos
+	# de monstro tem regen_fraction/guarnicao em cidade propria — extensao
+	# futura facil, nao necessaria agora.
+	for unit in hex_grid.neutral_units():
+		unit.reset_movement()
 
 	for rival in rival_players:
 		RivalAI.decide_production(rival)
@@ -190,7 +212,25 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 	for rival in rival_players:
 		RivalAI.take_turn(rival, hex_grid, human_player)
 
+	# Covis de Monstro reforcam a propria guarda com o tempo (pedido do
+	# usuario: "ao redor de um covil de goblin pode spawnar ate 5
+	# goblins... tem que ter um limite pra nao spawnar pra sempre") — ver
+	# HexGrid.process_monster_lairs. Passa o turno atual pra chance de
+	# reforco escalar com o tempo (ver HexGrid._reinforce_chance). Antes de
+	# recompute_fog pra qualquer monstro novo ja aparecer/sumir corretamente
+	# no fog deste turno.
+	hex_grid.process_monster_lairs(TurnManager.turn_number)
+
+	# Acampamentos Barbaros: cada monstro neutro age por conta propria
+	# (guardar territorio / marchar sobre a cidade mais proxima / cacar
+	# presa isolada — ver MonsterAI.gd). Depois do reforco de proposito:
+	# um grupo recem-nascido ja pode agir no mesmo turno em que aparece,
+	# mesmo precedente que unidade de rival recem-treinada ja tinha
+	# (RivalAI.take_turn acima roda depois da producao de cidade).
+	MonsterAI.take_turn(hex_grid, TurnManager.turn_number)
+
 	hex_grid.recompute_fog(human_player)
+	hex_grid.refresh_construction_markers() # predios concluidos neste turno somem do "em obra"
 	check_game_over()
 
 ## Publico: tambem chamado logo apos um ataque do jogador (SelectionManager),
@@ -212,3 +252,28 @@ func check_game_over() -> void:
 func _end_game(victory: bool) -> void:
 	state = GameState.GAME_OVER
 	EventBus.game_over.emit(victory)
+
+## --- Debug (HUD.gd, botao "Debug" so em builds de desenvolvimento via
+## OS.is_debug_build()) ---
+
+## Forca o fim de jogo na hora, sem esperar eliminar unidade/cidade
+## nenhuma de verdade — reaproveita _end_game() (mesmo sinal
+## EventBus.game_over que o fim de jogo real usa), so pula a checagem de
+## check_game_over(). Util pra testar a tela de vitoria/derrota sem
+## precisar jogar uma partida inteira.
+func debug_force_game_over(victory: bool) -> void:
+	_end_game(victory)
+
+## Completa a pesquisa atual do jogador humano na hora. Reaproveita
+## _process_research() de verdade (mesmo toast de "Tecnologia
+## pesquisada", mesma logica de completar) — so garante progresso
+## suficiente antes de chamar, em vez de duplicar a condicao de
+## conclusao aqui.
+func debug_complete_current_research() -> void:
+	if human_player == null or human_player.current_research == "":
+		return
+	var tech: TechData = TechDatabase.get_tech(human_player.current_research)
+	if tech == null:
+		return
+	human_player.research_progress = tech.cost
+	_process_research(human_player)

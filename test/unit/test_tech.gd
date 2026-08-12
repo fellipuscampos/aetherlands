@@ -42,6 +42,21 @@ func test_is_unit_unlocked_archer_requires_archery():
 	assert_false(TechDatabase.is_unit_unlocked("archer", {}))
 	assert_true(TechDatabase.is_unit_unlocked("archer", {"archery": true}))
 
+func test_tech_that_unlocks_finds_the_matching_tech():
+	var tech = TechDatabase.tech_that_unlocks("archer")
+	assert_not_null(tech)
+	assert_eq(tech.id, "archery")
+
+func test_tech_that_unlocks_returns_null_for_kind_without_a_tech():
+	assert_null(TechDatabase.tech_that_unlocks("warrior"), "Guerreiro sempre foi liberado sem pesquisa nenhuma")
+
+## Regressao: TechData.unlocks_unit tambem default pra "" nas tecnologias
+## de bioma (Agricultura, Mineracao...) que nao desbloqueiam unidade
+## nenhuma — sem a guarda explicita, tech_that_unlocks("") "encontraria"
+## a primeira dessas por acidente em vez de devolver null.
+func test_tech_that_unlocks_returns_null_for_empty_kind():
+	assert_null(TechDatabase.tech_that_unlocks(""), "predio de rendimento (trains_unit vazio) nao deveria exigir tecnologia nenhuma")
+
 func test_is_unit_unlocked_cavalry_requires_horseback_riding():
 	assert_false(TechDatabase.is_unit_unlocked("cavalry", {}))
 	assert_true(TechDatabase.is_unit_unlocked("cavalry", {"horseback_riding": true}))
