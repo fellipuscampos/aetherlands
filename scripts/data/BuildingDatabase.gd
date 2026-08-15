@@ -69,6 +69,19 @@ static func _build_all() -> Dictionary:
 	walls.defense_bonus = 0.5
 	buildings[walls.id] = walls
 
+	# Predio de RENDIMENTO (mesma familia de Celeiro/Oficina/Mercado —
+	# trains_unit vazio, nunca exige tecnologia pra construir, ver
+	# City._tech_unlocked_for_building) que da vida numerica ao "Ergue a
+	# Torre dos Sabios" que a descricao de canalizacao_base ja promete
+	# (ver TechDatabase.gd) — sem isso a tech ficava so com lore, nenhum
+	# efeito de bioma NEM de predio.
+	var sages_tower := BuildingData.new()
+	sages_tower.id = "sages_tower"
+	sages_tower.display_name = "Torre dos Sábios"
+	sages_tower.production_cost = 28.0
+	sages_tower.bonus_mana = 3
+	buildings[sages_tower.id] = sages_tower
+
 	var barracks := BuildingData.new()
 	barracks.id = "barracks"
 	barracks.display_name = "Quartel"
@@ -118,6 +131,23 @@ static func _build_all() -> Dictionary:
 	druid_grove.trains_unit = "treant"
 	buildings[druid_grove.id] = druid_grove
 
+	# Predios de treino da arvore de tecnologia magica (ver TechDatabase:
+	# forja_runica/necromancia_pratica) — fecham a mesma cadeia de 3 passos
+	# do resto do elenco (pesquisar -> construir -> treinar).
+	var runic_anvil := BuildingData.new()
+	runic_anvil.id = "runic_anvil"
+	runic_anvil.display_name = "Bigorna Rúnica"
+	runic_anvil.production_cost = 34.0
+	runic_anvil.trains_unit = "stone_golem"
+	buildings[runic_anvil.id] = runic_anvil
+
+	var shadow_crypt := BuildingData.new()
+	shadow_crypt.id = "shadow_crypt"
+	shadow_crypt.display_name = "Cripta Sombria"
+	shadow_crypt.production_cost = 34.0
+	shadow_crypt.trains_unit = "shadow_summoner"
+	buildings[shadow_crypt.id] = shadow_crypt
+
 	return buildings
 
 static func _all() -> Dictionary:
@@ -133,22 +163,31 @@ static func all_buildings() -> Array:
 
 ## Predio de treino cujo trains_unit bate com `kind` (ex: "warrior" ->
 ## Quartel), ou null se `kind` nao exige nenhum predio especifico (ex:
-## "settler") — ver City.can_train().
+## "settler") — ver City.can_train(). Tropa racial exclusiva (UnitDatabase.
+## RACE_UNIQUE_KIND — human_knight/dwarf_axeguard/orc_berserker/elf_ranger)
+## nao tem `trains_unit` proprio em NENHUM BuildingData (nao ganhou predio
+## dedicado), mas ainda precisa de UM predio pra treinar: cai no Quartel,
+## o mesmo que ja treina o Guerreiro comum — tematicamente sua tropa de
+## elite continua treinando no mesmo lugar que o resto do exercito, sem
+## exigir um predio novo so pra isso.
 static func building_that_trains(kind: String) -> BuildingData:
 	for b in all_buildings():
 		if b.trains_unit == kind:
 			return b
+	if UnitDatabase.race_for_unique_kind(kind) != "":
+		return get_building("barracks")
 	return null
 
 ## Soma o bonus de TODOS os predios ja construidos (built = City.buildings).
 static func total_bonus(built: Dictionary) -> Dictionary:
-	var bonus = {"food": 0, "production": 0, "gold": 0}
+	var bonus = {"food": 0, "production": 0, "gold": 0, "mana": 0}
 	for id in built.keys():
 		var b: BuildingData = get_building(id)
 		if b:
 			bonus.food += b.bonus_food
 			bonus.production += b.bonus_production
 			bonus.gold += b.bonus_gold
+			bonus.mana += b.bonus_mana
 	return bonus
 
 static func defense_bonus_for(built: Dictionary) -> float:

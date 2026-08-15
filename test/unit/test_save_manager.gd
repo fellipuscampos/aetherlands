@@ -87,6 +87,9 @@ func test_save_and_load_restores_player_and_map_state():
 	warrior.hp = 7.0
 	warrior.movement_left = 1.0
 	human.gold = 42.0
+	human.mana = 18.0
+	human.mana_income_per_turn = 5.0
+	human.spell_cooldowns["Lança de Arcana"] = 12
 	_make_unit("warrior", rival, rival_coord) # so pra check_game_over() nao fechar o jogo no load
 
 	var city = hex_grid.found_city(city_coord, human, "Minha Capital")
@@ -99,8 +102,8 @@ func test_save_and_load_restores_player_and_map_state():
 	city.buildings["walls"] = true
 	var expected_worked_tiles = city.worked_tiles.duplicate()
 
-	human.researched_techs["agriculture"] = true
-	human.current_research = "mining"
+	human.researched_techs["canalizacao_base"] = true
+	human.current_research = "transmutacao_rocha"
 	human.research_progress = 12.0
 
 	var peace_accepted = Diplomacy.propose_peace(human, rival) # 1 unidade de cada lado, empate aceita a paz (ver Diplomacy._accepts_peace)
@@ -124,6 +127,9 @@ func test_save_and_load_restores_player_and_map_state():
 
 	assert_eq(GameManager.human_player.civ.civ_name, "Reino de Teste")
 	assert_almost_eq(GameManager.human_player.gold, 42.0, 0.01)
+	assert_almost_eq(GameManager.human_player.mana, 18.0, 0.01, "saldo de mana deveria sobreviver ao save/load")
+	assert_almost_eq(GameManager.human_player.mana_income_per_turn, 5.0, 0.01)
+	assert_eq(GameManager.human_player.spell_cooldowns.get("Lança de Arcana", 0), 12, "recarga de feitico deveria sobreviver ao save/load")
 	assert_eq(GameManager.human_player.units.size(), 1)
 	assert_almost_eq(GameManager.human_player.units[0].hp, 7.0, 0.01)
 	assert_almost_eq(GameManager.human_player.units[0].movement_left, 1.0, 0.01)
@@ -142,8 +148,8 @@ func test_save_and_load_restores_player_and_map_state():
 	assert_true(loaded_city.buildings.has("granary"), "predios construidos deveriam sobreviver ao save/load")
 	assert_true(loaded_city.buildings.has("walls"))
 
-	assert_true(GameManager.human_player.researched_techs.has("agriculture"), "tecnologia pesquisada deveria sobreviver ao save/load")
-	assert_eq(GameManager.human_player.current_research, "mining")
+	assert_true(GameManager.human_player.researched_techs.has("canalizacao_base"), "tecnologia pesquisada deveria sobreviver ao save/load")
+	assert_eq(GameManager.human_player.current_research, "transmutacao_rocha")
 	assert_almost_eq(GameManager.human_player.research_progress, 12.0, 0.01)
 
 	assert_eq(GameManager.rival_players.size(), 1)

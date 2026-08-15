@@ -8,7 +8,7 @@ extends Node
 ## depois reaplica hp/movimento/producao por cima.
 
 const SAVE_PATH := "user://savegame.json"
-const SAVE_VERSION := 11 # v11: territorio dinamico de cidade (City.owned_tiles, ver HexGrid.city_territory_tiles) salvo por cidade (v10: covis destruidos (LairStructure/HexGrid.destroy_lair) salvos em cleared_lair_coords (v9: acampamentos barbaros — monstro neutro ganha is_camp_boss/behavior_state/movement_left (v8: monstros neutros (guardiao + reforco/patrulha) e o RNG de turno dos covis salvos por inteiro, no lugar de so a lista de covis ja limpos (v7: mapa retangular (map_width/map_height no lugar de map_radius) (v6: predios posicionados no mapa; v5: covis de monstro limpos; v4: predios de cidade; v3: dificuldade; v2: lista de rivais + diplomacia + veterania de unidade)))))
+const SAVE_VERSION := 14 # v14: raca do jogador (GameManager.human_race, ver TitleScreen/CivilizationData.race) salva pra sobreviver a um load (v13: economia arcana (PlayerData.mana/mana_income_per_turn, ver Ponto 3) salva por jogador (v12: recarga de feiticos (PlayerData.spell_cooldowns, ver SpellManager) salva por jogador (v11: territorio dinamico de cidade (City.owned_tiles, ver HexGrid.city_territory_tiles) salvo por cidade (v10: covis destruidos (LairStructure/HexGrid.destroy_lair) salvos em cleared_lair_coords (v9: acampamentos barbaros — monstro neutro ganha is_camp_boss/behavior_state/movement_left (v8: monstros neutros (guardiao + reforco/patrulha) e o RNG de turno dos covis salvos por inteiro, no lugar de so a lista de covis ja limpos (v7: mapa retangular (map_width/map_height no lugar de map_radius) (v6: predios posicionados no mapa; v5: covis de monstro limpos; v4: predios de cidade; v3: dificuldade; v2: lista de rivais + diplomacia + veterania de unidade))))))))
 
 ## path e parametrizavel so pros testes GUT usarem um arquivo isolado, sem
 ## tocar no save de verdade do jogador — o jogo em si sempre usa SAVE_PATH.
@@ -32,6 +32,7 @@ func save_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 		"turn_number": TurnManager.turn_number,
 		"current_player_index": TurnManager.current_player_index,
 		"human_kingdom_name": GameManager.human_player.civ.civ_name,
+		"human_race": GameManager.human_player.civ.race,
 		"difficulty": GameManager.difficulty,
 		"explored_coords": _serialize_explored(hex_grid),
 		"neutral_units": _serialize_neutral_units(hex_grid),
@@ -82,6 +83,7 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 	GameManager.map_width = int(data.map_width)
 	GameManager.map_height = int(data.map_height)
 	GameManager.human_kingdom_name = data.get("human_kingdom_name", "")
+	GameManager.human_race = data.get("human_race", "human")
 	GameManager.rival_count = data.rivals.size()
 	GameManager.difficulty = data.get("difficulty", "normal")
 
@@ -233,6 +235,9 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 		"researched_techs": player.researched_techs.keys(),
 		"current_research": player.current_research,
 		"research_progress": player.research_progress,
+		"spell_cooldowns": player.spell_cooldowns,
+		"mana": player.mana,
+		"mana_income_per_turn": player.mana_income_per_turn,
 	}
 	if is_rival:
 		result["at_war_with_human"] = player.is_at_war_with(GameManager.human_player)
@@ -294,3 +299,8 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 		player.researched_techs[id] = true
 	player.current_research = saved.get("current_research", "")
 	player.research_progress = float(saved.get("research_progress", 0.0))
+	var cooldowns: Dictionary = saved.get("spell_cooldowns", {})
+	for spell_name in cooldowns.keys():
+		player.spell_cooldowns[spell_name] = int(cooldowns[spell_name])
+	player.mana = float(saved.get("mana", 0.0))
+	player.mana_income_per_turn = float(saved.get("mana_income_per_turn", 0.0))

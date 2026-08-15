@@ -193,24 +193,65 @@ func test_can_train_does_not_leak_across_different_training_buildings():
 	assert_false(city.can_train("archer"))
 	city.queue_free()
 
+## Pedido do usuario: escolher raca na tela de titulo precisa ter uma
+## implicacao real — so a raca DONA de uma tropa racial (UnitDatabase.
+## RACE_UNIQUE_KIND) pode treina-la, mesmo com o predio (Quartel) ja
+## construido.
+func test_can_train_is_false_for_a_racial_unit_of_a_different_race():
+	var human := PlayerData.new(CivilizationData.new())
+	human.civ.race = "human"
+	var city := City.new()
+	city.owner_player = human
+	city.buildings["barracks"] = true
+	assert_false(city.can_train("dwarf_axeguard"), "Humano nao deveria conseguir treinar a tropa exclusiva Ana")
+	city.queue_free()
+
+func test_can_train_is_true_for_the_matching_race_once_barracks_is_built():
+	var dwarf := PlayerData.new(CivilizationData.new())
+	dwarf.civ.race = "dwarf"
+	var city := City.new()
+	city.owner_player = dwarf
+	city.buildings["barracks"] = true
+	assert_true(city.can_train("dwarf_axeguard"))
+	city.queue_free()
+
+func test_can_train_is_false_for_matching_race_without_barracks():
+	var dwarf := PlayerData.new(CivilizationData.new())
+	dwarf.civ.race = "dwarf"
+	var city := City.new()
+	city.owner_player = dwarf
+	assert_false(city.can_train("dwarf_axeguard"), "tropa racial tambem precisa do Quartel, mesmo com a raca certa")
+	city.queue_free()
+
+## Defensivo: cidade sem owner_player (ex: City.new() cru, ver outros
+## testes acima) nao deveria travar checando raca de tropa racial — so
+## nunca fica treinavel, sem exception.
+func test_can_train_racial_unit_is_false_without_an_owner_player():
+	var city := City.new()
+	city.buildings["barracks"] = true
+	assert_false(city.can_train("elf_ranger"))
+	city.queue_free()
+
 ## Pivot seguinte pedido pelo usuario: "so posso construir esses predios
 ## especiais quando pesquisar a tecnologia, ai aparece disponivel pra
-## construir". Campo de Tiro (treina Arqueiro) so pode ser CONSTRUIDO
-## depois de pesquisar Tiro com Arco — antes disso can_build() ja bloqueia,
-## nem chega a abrir o modo de posicionamento de tile.
+## construir". Torre Arcana (treina Mago) so pode ser CONSTRUIDA depois de
+## pesquisar Invocacao de Espiritos — antes disso can_build() ja bloqueia,
+## nem chega a abrir o modo de posicionamento de tile. (Arqueiro/Cavaleiro
+## viraram tropas mundanas sempre liberadas na arvore magica atual, ver
+## TechDatabase — so as tropas MAGICAS ainda tem esse gate de 3 passos.)
 func test_can_build_training_building_is_false_without_its_tech():
 	var human := PlayerData.new(CivilizationData.new())
 	var city := City.new()
 	city.owner_player = human
-	assert_false(city.can_build("archery_range"), "sem Tiro com Arco pesquisado, Campo de Tiro nao deveria poder ser construido")
+	assert_false(city.can_build("arcane_tower"), "sem Invocacao de Espiritos pesquisada, Torre Arcana nao deveria poder ser construida")
 	city.queue_free()
 
 func test_can_build_training_building_is_true_once_its_tech_is_researched():
 	var human := PlayerData.new(CivilizationData.new())
-	human.researched_techs["archery"] = true
+	human.researched_techs["invocacao_espiritos"] = true
 	var city := City.new()
 	city.owner_player = human
-	assert_true(city.can_build("archery_range"))
+	assert_true(city.can_build("arcane_tower"))
 	city.queue_free()
 
 ## Quartel treina Guerreiro, que nunca exigiu pesquisa nenhuma
@@ -225,11 +266,20 @@ func test_can_build_barracks_never_requires_research():
 ## Regressao critica: predios de RENDIMENTO (trains_unit vazio) NAO
 ## deveriam exigir tecnologia nenhuma — sem essa guarda,
 ## TechDatabase.tech_that_unlocks("") "encontraria" a primeira tech de
-## bioma da lista (Agricultura) por acidente, bloqueando o Celeiro ate
-## pesquisar algo que nem tem nada a ver com ele.
+## bioma da lista (Canalizacao da Trama) por acidente, bloqueando o
+## Celeiro ate pesquisar algo que nem tem nada a ver com ele.
 func test_can_build_yield_building_never_requires_research():
 	var city := City.new()
 	assert_true(city.can_build("granary"), "Celeiro (predio de rendimento) nao deveria depender de tecnologia nenhuma")
+	city.queue_free()
+
+## Torre dos Sabios e um predio de RENDIMENTO (trains_unit vazio, mesma
+## familia de Celeiro/Oficina/Mercado/Muralhas) — mesma regra acima, sem
+## gate de tecnologia nenhum, mesmo a descricao de canalizacao_base
+## "prometendo" ela (ver TechDatabase.gd/BuildingDatabase.gd).
+func test_can_build_sages_tower_never_requires_research():
+	var city := City.new()
+	assert_true(city.can_build("sages_tower"))
 	city.queue_free()
 
 ## Colonizador nao tem predio de treino associado (BuildingDatabase.
@@ -434,6 +484,47 @@ func test_collect_yields_includes_building_bonus():
 	hex_grid.queue_free()
 	city.queue_free()
 
+## Economia arcana (Ponto 3): mana rendida por um Nodulo Arcano TRABALHADO
+## (recurso, ver ResourceDatabase) soma com o bonus PERMANENTE da Torre dos
+## Sabios (predio) — os dois canais somam, nenhum substitui o outro, mesmo
+## padrao ja provado pra food/production/gold acima.
+func test_collect_yields_includes_mana_from_worked_resource_and_building():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var resource_coord: Vector2i = HexGrid.NEIGHBOR_DIRS[0]
+	var resource_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	resource_tile.resource = "mana_node"
+	hex_grid.tiles[resource_coord] = resource_tile
+
+	var city := City.new()
+	city.coord = center
+	city.buildings["sages_tower"] = true # +3 mana
+	var worked: Array[Vector2i] = [resource_coord]
+	city.worked_tiles = worked
+
+	var yields = city.collect_yields(hex_grid)
+
+	assert_almost_eq(yields.mana, 5.0, 0.01, "2 (nodulo arcano trabalhado) + 3 (Torre dos Sabios) = 5")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+func test_effective_tile_yield_mana_node_resource_gives_two_mana():
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = human
+
+	var data = TerrainDatabase.create_tile(HexTileData.TerrainType.FOREST)
+	data.resource = "mana_node"
+
+	var y = city.effective_tile_yield(data)
+
+	assert_eq(y.mana, 2)
+
+	city.queue_free()
+
 func _make_ring_hex_grid(center: Vector2i) -> HexGrid:
 	var hex_grid := HexGrid.new()
 	hex_grid._ready()
@@ -577,7 +668,7 @@ func test_auto_assign_prefers_tile_with_resource_bonus_over_plain_higher_base_yi
 
 func test_effective_tile_yield_includes_tech_and_resource_bonus():
 	var human := PlayerData.new(CivilizationData.new())
-	human.researched_techs["mining"] = true # +1 producao em colinas/montanhas
+	human.researched_techs["transmutacao_rocha"] = true # +1 producao em colinas/montanhas
 	var city := City.new()
 	city.owner_player = human
 
@@ -586,7 +677,7 @@ func test_effective_tile_yield_includes_tech_and_resource_bonus():
 
 	var y = city.effective_tile_yield(data)
 
-	assert_eq(y.production, 5, "2 (base) + 1 (mineracao) + 2 (ferro) = 5")
+	assert_eq(y.production, 5, "2 (base) + 1 (transmutacao de rochas) + 2 (ferro) = 5")
 
 	city.queue_free()
 

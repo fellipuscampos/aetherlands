@@ -36,12 +36,13 @@ var production_item: String = "settler"
 ## cidade produz, em vez de somar todos os vizinhos sempre.
 var worked_tiles: Array[Vector2i] = []
 
-## Tiles que a cidade REALMENTE possui (fronteira/borda visual, ver
-## HexGrid.city_territory_tiles/_build_city_border_mesh) — cresce com a
+## Tiles que a cidade REALMENTE possui (territorio, ver HexGrid.
+## city_territory_tiles/_build_city_tint_mesh — o tingimento de cor no chao
+## de cada tile e o unico sinal visual disso hoje) — cresce com a
 ## populacao (ver process_turn/_claim_frontier_tile abaixo), independente
 ## de worked_tiles (rendimento) e do raio de posicionamento de predio (os
 ## dois continuam fixos em "vizinho direto da propria celula", fora do
-## escopo desta mudanca — so a BORDA visual/posse fica dinamica). Iniciado
+## escopo desta mudanca — so a POSSE de territorio fica dinamica). Iniciado
 ## em HexGrid.found_city() com o mesmo conjunto de hoje (celula + 6
 ## vizinhos), depois cresce um tile por vez.
 var owned_tiles: Array[Vector2i] = []
@@ -148,7 +149,18 @@ func _tech_unlocked_for_building(building_id: String) -> bool:
 ## set_production() direto, sem passar por aqui, mesma assimetria ja
 ## documentada em BuildingDatabase (IA nao constroi predio nenhum, entao
 ## nunca teria como cumprir o gate).
+##
+## Tropa racial exclusiva (UnitDatabase.RACE_UNIQUE_KIND) tem uma segunda
+## trava, ANTES da checagem de predio: so a raca DONA da tropa pode
+## treinar ela (pedido do usuario: escolher raca na tela de titulo precisa
+## ter uma implicacao real) — um jogador Anao nunca deveria conseguir
+## treinar o Patrulheiro Elfico so por ter o Quartel construido.
 func can_train(kind: String) -> bool:
+	var owner_race: String = UnitDatabase.race_for_unique_kind(kind)
+	if owner_race != "":
+		var player_race: String = owner_player.civ.race if owner_player and owner_player.civ else ""
+		if player_race != owner_race:
+			return false
 	var required: BuildingData = BuildingDatabase.building_that_trains(kind)
 	if required == null:
 		return true
@@ -193,6 +205,11 @@ func effective_tile_yield(data: HexTileData) -> Dictionary:
 		"food": data.food_yield + tech_bonus.food + resource_bonus.food,
 		"production": data.production_yield + tech_bonus.production + resource_bonus.production,
 		"gold": data.gold_yield + tech_bonus.gold + resource_bonus.gold,
+		# Mana nao tem componente "cru" de terreno (HexTileData nao tem
+		# mana_yield, so food/production/gold) — vem inteiro de recurso
+		# estrategico (Nodulo Arcano, ver ResourceDatabase) ou tech, nunca
+		# do bioma sozinho.
+		"mana": tech_bonus.mana + resource_bonus.mana,
 	}
 
 ## Soma o rendimento efetivo do tile da cidade (sempre de graca) + so os
@@ -205,7 +222,7 @@ func effective_tile_yield(data: HexTileData) -> Dictionary:
 ## (Invasor nao alcanca tile de cidade, HexGrid.compute_reachable ja
 ## bloqueia), so um worked_tiles pode estar pilhado na pratica.
 func collect_yields(hex_grid: HexGrid) -> Dictionary:
-	var totals = {"food": 0.0, "production": 0.0, "gold": 0.0}
+	var totals = {"food": 0.0, "production": 0.0, "gold": 0.0, "mana": 0.0}
 	var coords: Array[Vector2i] = [coord]
 	coords.append_array(worked_tiles)
 	for c in coords:
@@ -218,14 +235,17 @@ func collect_yields(hex_grid: HexGrid) -> Dictionary:
 		totals.food += y.food
 		totals.production += y.production
 		totals.gold += y.gold
+		totals.mana += y.mana
 	var building_bonus = BuildingDatabase.total_bonus(buildings)
 	totals.food += building_bonus.food
 	totals.production += building_bonus.production
 	totals.gold += building_bonus.gold
+	totals.mana += building_bonus.mana
 	var mult = owner_player.yield_multiplier if owner_player else 1.0
 	totals.food *= mult
 	totals.production *= mult
 	totals.gold *= mult
+	totals.mana *= mult
 	return totals
 
 func process_turn(hex_grid: HexGrid) -> Dictionary:
@@ -269,7 +289,7 @@ func process_turn(hex_grid: HexGrid) -> Dictionary:
 		else:
 			spawned_kind = production_item
 
-	return {"gold": yields.gold, "spawn_unit_kind": spawned_kind, "built_kind": built_kind, "built_coord": built_coord}
+	return {"gold": yields.gold, "mana": yields.mana, "spawn_unit_kind": spawned_kind, "built_kind": built_kind, "built_coord": built_coord}
 
 ## Preenche worked_tiles ate `population` com os melhores vizinhos livres
 ## (ver HexTileData.can_be_worked — terra firme ou Costa, nunca Oceano

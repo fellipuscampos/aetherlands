@@ -1,10 +1,11 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/main/Main.gd" id="Main_gd"]
 [ext_resource type="Script" path="res://scripts/world/HexGrid.gd" id="HexGrid_gd"]
 [ext_resource type="Script" path="res://scripts/camera/RTSCamera.gd" id="RTSCamera_gd"]
 [ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="HUD_scn"]
 [ext_resource type="PackedScene" path="res://scenes/ui/TitleScreen.tscn" id="TitleScreen_scn"]
+[ext_resource type="PackedScene" path="res://scenes/ui/GameSetupScreen.tscn" id="GameSetupScreen_scn"]
 [ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="PauseMenu_scn"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
@@ -74,5 +75,7 @@ fov = 50
 [node name="HUD" parent="UILayer" instance=ExtResource("HUD_scn")]
 
 [node name="TitleScreen" parent="UILayer" instance=ExtResource("TitleScreen_scn")]
+
+[node name="GameSetupScreen" parent="UILayer" instance=ExtResource("GameSetupScreen_scn")]
 
 [node name="PauseMenu" parent="UILayer" instance=ExtResource("PauseMenu_scn")]

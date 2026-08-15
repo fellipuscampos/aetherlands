@@ -96,6 +96,33 @@ func test_unit_outside_own_city_does_not_heal():
 
 	assert_eq(warrior.hp, 1.0)
 
+## Fortificar (Unit.fortified, pedido do usuario: "se você tiver ferido,
+## você fica se curando um pouco todo turno") — cura passiva fora de
+## cidade, mais fraca que guarnicao de proposito (GameManager.
+## FORTIFY_HEAL_FRACTION < GARRISON_HEAL_FRACTION).
+func test_fortified_unit_outside_city_heals_passively():
+	var warrior = _make_unit("warrior", rival, Vector2i(0, 0))
+	warrior.hp = 1.0
+	warrior.fortified = true
+	var expected = min(1.0 + warrior.unit_data.max_hp * GameManager.FORTIFY_HEAL_FRACTION, warrior.unit_data.max_hp)
+
+	GameManager._heal_if_garrisoned(warrior)
+
+	assert_almost_eq(warrior.hp, expected, 0.01)
+
+## Guarnicao numa cidade PROPRIA cura mais forte que so fortificar — nao
+## deveria somar os dois (double-heal), so a maior das duas vale.
+func test_garrisoned_and_fortified_unit_heals_only_via_garrison_amount():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var warrior = _make_unit("warrior", rival, Vector2i(0, 0))
+	warrior.hp = 1.0
+	warrior.fortified = true
+	var expected = min(1.0 + warrior.unit_data.max_hp * GameManager.GARRISON_HEAL_FRACTION, warrior.unit_data.max_hp)
+
+	GameManager._heal_if_garrisoned(warrior)
+
+	assert_almost_eq(warrior.hp, expected, 0.01, "guarnicao deveria valer, nao somar com a cura de fortificar por cima")
+
 ## Ent (UnitData.regen_fraction, GameManager._apply_regen): diferente da
 ## cura por guarnicao, regenera em QUALQUER lugar — nao precisa estar
 ## dentro da propria cidade nem perto de nenhuma.
@@ -219,10 +246,10 @@ func test_ranged_unit_advances_with_melee_escort_nearby():
 	assert_ne(archer.coord, Vector2i(0, 0), "com escolta por perto, arqueiro deveria avancar normalmente")
 
 ## Civilizacoes de fantasia (CivilizationData.race, ver GameManager.
-## RIVAL_CIVS): cada raca com tropa propria (RivalAI.RACE_UNIQUE_KIND) ve
-## essa tropa no proprio pool de producao, mas so a sua — um anao nunca
-## sorteia Berserker Orc, e uma civ sem raca nenhuma (jogador humano, ou
-## um rival hipotetico sem `race`) nunca sorteia tropa racial nenhuma.
+## RIVAL_CIVS): cada raca com tropa propria (UnitDatabase.RACE_UNIQUE_KIND)
+## ve essa tropa no proprio pool de producao, mas so a sua — um anao nunca
+## sorteia Berserker Orc, e uma civ sem raca reconhecida nenhuma (um rival
+## hipotetico sem `race`) nunca sorteia tropa racial nenhuma.
 func test_military_kinds_for_includes_the_racial_unique_unit():
 	var dwarf_civ := CivilizationData.new()
 	dwarf_civ.race = "dwarf"

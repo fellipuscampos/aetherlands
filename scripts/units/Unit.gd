@@ -35,12 +35,54 @@ const VETERANCY_KILL_THRESHOLDS := [0, 1, 3, 6] # kills minimos pra cada indice/
 const VETERANCY_BONUS_PER_LEVEL := 0.1
 const PROMOTION_HEAL_FRACTION := 0.2
 
+## Sentinela "sem ordem pendente" (mesmo padrao de HexGrid.NO_LAIR) pro
+## campo abaixo.
+const NO_MOVE_ORDER := Vector2i(-999999, -999999)
+
 var unit_data: UnitData
 var owner_player: PlayerData
 var coord: Vector2i
 var movement_left: float = 0.0
 var kills: int = 0
 var veterancy_level: int = 0
+
+## Destino de um pedido "mover ate" que pode levar VARIOS turnos pra
+## completar (pedido do usuario: "no civilization eu posso colocar pra ela
+## se mover pra um lugar longe... o movimento fica gravado e todo turno
+## essa tropa vai se movendo") — NO_MOVE_ORDER = sem ordem pendente.
+## SelectionManager._try_queue_move_order seta isto ao clicar um destino
+## fora do alcance do turno atual; HexGrid.continue_move_order consome ele
+## aos poucos, chamado tanto na hora (mesmo turno, o quanto der) quanto em
+## toda troca de turno seguinte (GameManager._on_turn_changed), ate chegar
+## ou o caminho deixar de existir. Recalculado do ZERO a cada chamada (nao
+## e um caminho fixo salvo aqui) — se um obstaculo novo aparecer no meio
+## do trajeto (outra unidade, guerra declarada...) a rota se adapta
+## sozinha em vez de travar numa rota velha invalida. Nao sobrevive a um
+## save/load (SaveManager nao serializa este campo de proposito — ordem
+## pendente e uma conveniencia de sessao, nao um estado de jogo que
+## precise persistir; carregar um save so limpa silenciosamente qualquer
+## ordem em andamento).
+var move_order_target: Vector2i = NO_MOVE_ORDER
+
+## Modo "Fortificar" tipo Civilization (pedido do usuario: "um modo em que
+## se você tiver ferido, você fica se curando um pouco todo turno... e em
+## geral ela fica daquele jeito parado até você mover ela ou alguma tropa
+## atacar ela") — cura passiva fora de cidade (ver GameManager.
+## FORTIFY_HEAL_FRACTION/_heal_if_garrisoned) + bonus de defesa (ver
+## CombatResolver.FORTIFY_DEFENSE_BONUS). So cancela com uma ORDEM NOVA do
+## jogador (mover, atacar, explorar) — SER atacado nao cancela (a unidade
+## revida normalmente e continua fortificada se sobreviver), exatamente
+## como o usuario descreveu.
+var fortified: bool = false
+
+## Modo "Explorar" tipo Civilization (pedido do usuario: "uma função que
+## fica ativada... que se baseie em ficar andando por territórios que
+## ainda não foram explorados") — HexGrid.explore_step() consome isto a
+## cada troca de turno, andando sozinha em direcao ao tile UNSEEN mais
+## perto alcancavel. Cancela com Mover ou Fortificar (pedido do usuario:
+## "algo desliga a opção de explorar"), ou sozinho quando nao sobra
+## nenhum tile UNSEEN alcancavel (mapa todo explorado).
+var exploring: bool = false
 
 ## true so pro ocupante ORIGINAL de um Covil de Monstro (ver HexGrid.
 ## spawn_monster_at/_spawn_monster_lairs) — do lado de MonsterDatabase.
@@ -367,6 +409,54 @@ func _build_procedural_body() -> void:
 			foliage.material_override = foliage_mat
 			foliage.position.y = 0.75
 			add_child(foliage)
+		"human_knight":
+			# Cavalo em tom natural (NAO tingido pela cor da civ, diferente
+			# da Cavalaria comum) + cavaleiro na cor da civ + lanca erguida
+			# com bandeirola dourada — leitura de "realeza"/nobreza,
+			# silhueta distinta o bastante da Cavalaria comum (sem lanca)
+			# pra nao confundir as duas na tela.
+			var horse := MeshInstance3D.new()
+			var horse_mesh := BoxMesh.new()
+			horse_mesh.size = Vector3(0.58, 0.34, 0.28)
+			horse.mesh = horse_mesh
+			var horse_mat := StandardMaterial3D.new()
+			horse_mat.albedo_color = Color(0.42, 0.28, 0.16)
+			horse.material_override = horse_mat
+			horse.position.y = 0.29
+			add_child(horse)
+
+			var rider := MeshInstance3D.new()
+			var rider_mesh := CapsuleMesh.new()
+			rider_mesh.radius = 0.13
+			rider_mesh.height = 0.42
+			rider.mesh = rider_mesh
+			rider.material_override = mat
+			rider.position = Vector3(0.05, 0.56, 0.0)
+			add_child(rider)
+
+			var lance := MeshInstance3D.new()
+			var lance_mesh := CylinderMesh.new()
+			lance_mesh.top_radius = 0.015
+			lance_mesh.bottom_radius = 0.02
+			lance_mesh.height = 0.6
+			lance.mesh = lance_mesh
+			var lance_mat := StandardMaterial3D.new()
+			lance_mat.albedo_color = Color(0.6, 0.58, 0.5)
+			lance.material_override = lance_mat
+			lance.position = Vector3(0.2, 0.75, 0.0)
+			lance.rotation_degrees = Vector3(0, 0, 15)
+			add_child(lance)
+
+			var pennant := MeshInstance3D.new()
+			var pennant_mesh := PrismMesh.new()
+			pennant_mesh.size = Vector3(0.14, 0.1, 0.02)
+			pennant.mesh = pennant_mesh
+			var pennant_mat := StandardMaterial3D.new()
+			pennant_mat.albedo_color = Color(0.9, 0.75, 0.2)
+			pennant.material_override = pennant_mat
+			pennant.position = Vector3(0.28, 0.95, 0.0)
+			pennant.rotation_degrees = Vector3(0, 0, 15)
+			add_child(pennant)
 		"dwarf_axeguard":
 			# Baixo e largo (silhueta "atarracada" reconhecivel de longe,
 			# oposto do humanoide alto e magro do padrao) + cabeca de
@@ -450,6 +540,48 @@ func _build_procedural_body() -> void:
 			bow.position = Vector3(-0.14, 0.5, -0.05)
 			bow.rotation_degrees = Vector3(0, 0, 12)
 			add_child(bow)
+		"stone_golem":
+			# Silhueta larga e empilhada (torso grande + "cabeca" cubica
+			# menor por cima) — leitura de "bloco de pedra andante", o
+			# oposto do humanoide magro padrao.
+			var torso := MeshInstance3D.new()
+			var torso_mesh := BoxMesh.new()
+			torso_mesh.size = Vector3(0.5, 0.55, 0.4)
+			torso.mesh = torso_mesh
+			torso.material_override = mat
+			torso.position.y = 0.32
+			add_child(torso)
+
+			var head := MeshInstance3D.new()
+			var head_mesh := BoxMesh.new()
+			head_mesh.size = Vector3(0.24, 0.24, 0.24)
+			head.mesh = head_mesh
+			head.material_override = mat
+			head.position.y = 0.72
+			add_child(head)
+		"shadow_summoner":
+			# Silhueta fina e encapuzada (mesmo corte do Mago) mas com um
+			# orbe escuro flutuando acima da cabeca em vez de uma cabeca
+			# clara — leitura de "algo sombrio sendo canalizado", nao um
+			# rosto normal.
+			var robe := MeshInstance3D.new()
+			var robe_mesh := PrismMesh.new()
+			robe_mesh.size = Vector3(0.36, 0.75, 0.36)
+			robe.mesh = robe_mesh
+			robe.material_override = mat
+			robe.position.y = 0.38
+			add_child(robe)
+
+			var orb := MeshInstance3D.new()
+			var orb_mesh := SphereMesh.new()
+			orb_mesh.radius = 0.13
+			orb_mesh.height = 0.26
+			orb.mesh = orb_mesh
+			var orb_mat := StandardMaterial3D.new()
+			orb_mat.albedo_color = Color(0.15, 0.05, 0.2)
+			orb.material_override = orb_mat
+			orb.position.y = 0.88
+			add_child(orb)
 		_: # "warrior" e qualquer kind desconhecido caem no padrao
 			var body := MeshInstance3D.new()
 			var mesh := CapsuleMesh.new()

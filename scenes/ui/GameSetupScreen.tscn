@@ -1,0 +1,183 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/GameSetupScreen.gd" id="GameSetupScreen_gd"]
+
+[sub_resource type="ButtonGroup" id="RaceGroup"]
+[sub_resource type="ButtonGroup" id="RivalCountGroup"]
+
+[node name="GameSetupScreen" type="Control"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("GameSetupScreen_gd")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.04, 0.07, 0.82)
+
+[node name="CenterBox" type="CenterContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="CenterBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+custom_minimum_size = Vector2(880, 0)
+
+[node name="TitleLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 32
+text = "Nova Partida"
+
+[node name="KingdomNameLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Nome do seu reino:"
+
+[node name="KingdomNameEdit" type="LineEdit" parent="CenterBox/Box"]
+layout_mode = 2
+placeholder_text = "Reino de Aldenmark"
+
+[node name="RaceSection" type="HBoxContainer" parent="CenterBox/Box"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="RaceListColumn" type="VBoxContainer" parent="CenterBox/Box/RaceSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(180, 0)
+theme_override_constants/separation = 8
+
+[node name="RaceSectionLabel" type="Label" parent="CenterBox/Box/RaceSection/RaceListColumn"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "Escolha sua raça"
+
+[node name="HumanRaceButton" type="Button" parent="CenterBox/Box/RaceSection/RaceListColumn"]
+layout_mode = 2
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("RaceGroup")
+text = "Humano"
+
+[node name="ElfRaceButton" type="Button" parent="CenterBox/Box/RaceSection/RaceListColumn"]
+layout_mode = 2
+toggle_mode = true
+button_group = SubResource("RaceGroup")
+text = "Elfo"
+
+[node name="DwarfRaceButton" type="Button" parent="CenterBox/Box/RaceSection/RaceListColumn"]
+layout_mode = 2
+toggle_mode = true
+button_group = SubResource("RaceGroup")
+text = "Anão"
+
+[node name="OrcRaceButton" type="Button" parent="CenterBox/Box/RaceSection/RaceListColumn"]
+layout_mode = 2
+toggle_mode = true
+button_group = SubResource("RaceGroup")
+text = "Orc"
+
+[node name="RaceDetailPanel" type="PanelContainer" parent="CenterBox/Box/RaceSection"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(560, 0)
+
+[node name="RaceDetailBox" type="VBoxContainer" parent="CenterBox/Box/RaceSection/RaceDetailPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="RaceNameLabel" type="Label" parent="CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox"]
+layout_mode = 2
+theme_type_variation = &"PanelTitle"
+text = "Humano"
+
+[node name="RaceTaglineLabel" type="Label" parent="CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "Versátil e Ambicioso"
+
+[node name="RaceLoreLabel" type="RichTextLabel" parent="CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+text = "Lore da raça."
+
+[node name="RaceUniqueSectionLabel" type="Label" parent="CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "Tropa Exclusiva"
+
+[node name="RaceUniqueNameLabel" type="Label" parent="CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox"]
+layout_mode = 2
+theme_type_variation = &"PanelTitle"
+theme_override_font_sizes/font_size = 19
+text = "Tropa Exclusiva: Cavaleiro Real"
+
+[node name="RaceUniqueBlurbLabel" type="RichTextLabel" parent="CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox"]
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+text = "Descrição da tropa exclusiva."
+
+[node name="RivalCountLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+text = "Reinos rivais:"
+
+[node name="RivalCountRow" type="HBoxContainer" parent="CenterBox/Box"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="OneRivalButton" type="Button" parent="CenterBox/Box/RivalCountRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("RivalCountGroup")
+text = "1"
+
+[node name="TwoRivalsButton" type="Button" parent="CenterBox/Box/RivalCountRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("RivalCountGroup")
+text = "2"
+
+[node name="ThreeRivalsButton" type="Button" parent="CenterBox/Box/RivalCountRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("RivalCountGroup")
+text = "3"
+
+[node name="FooterRow" type="HBoxContainer" parent="CenterBox/Box"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BackButton" type="Button" parent="CenterBox/Box/FooterRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Voltar"
+
+[node name="StartGameButton" type="Button" parent="CenterBox/Box/FooterRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Iniciar Partida"
+
+[node name="StatusLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+modulate = Color(1.0, 0.55, 0.5, 1.0)
+text = ""

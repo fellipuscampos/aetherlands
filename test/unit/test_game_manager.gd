@@ -16,6 +16,7 @@ var _original_map_height: int
 var _original_turn_number: int
 var _original_turn_player_index: int
 var _original_difficulty: String
+var _original_human_race: String
 
 func before_each():
 	_original_state = GameManager.state
@@ -29,6 +30,7 @@ func before_each():
 	_original_turn_number = TurnManager.turn_number
 	_original_turn_player_index = TurnManager.current_player_index
 	_original_difficulty = GameManager.difficulty
+	_original_human_race = GameManager.human_race
 
 func after_each():
 	GameManager.state = _original_state
@@ -42,6 +44,7 @@ func after_each():
 	TurnManager.turn_number = _original_turn_number
 	TurnManager.current_player_index = _original_turn_player_index
 	GameManager.difficulty = _original_difficulty
+	GameManager.human_race = _original_human_race
 
 func test_setup_players_creates_requested_number_of_rivals():
 	var hex_grid := HexGrid.new()
@@ -111,16 +114,31 @@ func test_setup_players_gives_each_rival_the_race_from_rival_civs():
 
 	hex_grid.queue_free()
 
-## O jogador humano continua sem raca de fantasia nesta rodada (so os
-## rivais ganharam, ver CivilizationData.race) — escolher a propria raca
-## fica pra depois.
-func test_setup_players_human_has_no_race():
+## GameManager.human_race defaults pra "human" (ex: um teste que chama
+## setup_players() direto, sem passar pela tela de titulo) — mesmo padrao
+## de human_kingdom_name == "" caindo pro DEFAULT_KINGDOM_NAME.
+func test_setup_players_human_defaults_to_human_race():
 	var hex_grid := HexGrid.new()
 	hex_grid._ready()
 
 	GameManager.setup_players(hex_grid)
 
-	assert_eq(GameManager.human_player.civ.race, "")
+	assert_eq(GameManager.human_player.civ.race, "human")
+
+	hex_grid.queue_free()
+
+## Pedido do usuario: "crie um sistema onde ao iniciar o game a gente pode
+## escolher tambem a raca que vai jogar" — a raca escolhida na tela de
+## titulo (GameManager.human_race, ver TitleScreen._on_new_game_pressed)
+## precisa chegar ate CivilizationData.race do jogador humano.
+func test_setup_players_gives_human_the_chosen_race():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.human_race = "elf"
+
+	GameManager.setup_players(hex_grid)
+
+	assert_eq(GameManager.human_player.civ.race, "elf")
 
 	hex_grid.queue_free()
 
@@ -198,11 +216,11 @@ func test_debug_force_game_over_sets_state_and_emits_signal():
 ## researched_techs e limpar current_research).
 func test_debug_complete_current_research_finishes_the_selected_tech():
 	GameManager.human_player = PlayerData.new(CivilizationData.new())
-	GameManager.human_player.current_research = "agriculture"
+	GameManager.human_player.current_research = "canalizacao_base"
 
 	GameManager.debug_complete_current_research()
 
-	assert_true(GameManager.human_player.researched_techs.has("agriculture"))
+	assert_true(GameManager.human_player.researched_techs.has("canalizacao_base"))
 	assert_eq(GameManager.human_player.current_research, "")
 
 func test_debug_complete_current_research_does_nothing_without_a_selected_tech():
@@ -259,14 +277,16 @@ func test_spawn_starting_forces_never_places_two_civs_on_the_same_tile():
 	hex_grid.queue_free()
 
 ## O pipeline inteiro de comecar um jogo novo (gerar mapa + espalhar
-## civs) precisa continuar funcionando no tamanho Medio (84x54, 4536
-## tiles — pedido do usuario com as dimensoes exatas do Civilization),
+## civs) precisa continuar funcionando no tamanho Grande (96x60, 5760
+## tiles — pedido do usuario com as dimensoes exatas do Civilization, e
+## desde "elimine a criacao do mapa medio e pequeno, vamos a partir de
+## agora usar so o grande" o UNICO tamanho que o jogo de verdade usa),
 ## nao so nos mapas pequenos que o resto da suite ja cobre.
-func test_start_new_game_works_at_the_new_medium_map_size():
+func test_start_new_game_works_at_the_large_map_size():
 	var hex_grid := HexGrid.new()
 	hex_grid._ready()
-	GameManager.map_width = TitleScreen.MAP_SIZES.medium.width
-	GameManager.map_height = TitleScreen.MAP_SIZES.medium.height
+	GameManager.map_width = TitleScreen.MAP_SIZES.large.width
+	GameManager.map_height = TitleScreen.MAP_SIZES.large.height
 	GameManager.rival_count = 3
 
 	GameManager.start_new_game(hex_grid)

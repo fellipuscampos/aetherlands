@@ -1,4 +1,4 @@
-class_name HexGrid
+﻿class_name HexGrid
 extends Node3D
 
 ## Gera um mapa hexagonal 3D real (prismas gerados por codigo, sem depender
@@ -13,10 +13,18 @@ const NEIGHBOR_DIRS: Array[Vector2i] = [
 
 enum Visibility { UNSEEN, EXPLORED, VISIBLE }
 
-const ROCK_BASE_COLOR := Color(0.55, 0.55, 0.58)
 ## Escurecido pra combinar com cliff_tint de terrain.gdshader (pedido do
 ## usuario: os spikes pareciam "cinzas espetados" destoando da falesia).
 const MOUNTAIN_SPIKE_BASE_COLOR := Color(0.28, 0.25, 0.24)
+## Pack ice/icebergs pequenos flutuando no Mar Gelado (pedido do usuario,
+## Ponto 2 — "se possivel... micro-icebergs flutuantes" — ver
+## _build_ice_floe_mesh/_rebuild_props abaixo). Azul-ciano claro e fosco
+## (pedido do usuario, 3a rodada: a tonalidade anterior, quase branca pura,
+## lia como "isopor" — esta tem saturacao de azul suficiente pra ler como
+## gelo, mesma familia de cor do frozen_tint do shader de agua em vez de um
+## branco neutro) — sao pedacos de gelo solido de verdade, nao a superficie
+## liquida gelada por baixo.
+const ICE_FLOE_BASE_COLOR := Color(0.75, 0.88, 0.95)
 
 ## Refatoracao de nevoa de guerra (pedido do usuario: 3 estados visuais
 ## distintos em vez de escurecimento direto) — props (arvores/pedras/picos)
@@ -38,86 +46,8 @@ const MOUNTAIN_PEAK_HEIGHT := 0.9
 const MOUNTAIN_PEAK_SHARPNESS := 1.6
 ## Espelha hill_height de terrain.gdshader (mesmo motivo do par acima) —
 ## usado por _tile_surface_height pra saber a altura VISUAL real do centro
-## de uma Colina (onde o rio toca, ver _add_river_segment), nao so
-## base_height cru.
+## de uma Colina, nao so base_height cru.
 const HILL_HEIGHT := 0.35
-
-## Rios (pedido do usuario: "sistema de Rios procedurais... nascem
-## prioritariamente em Montanha/Colina e seguem... buscando menor elevacao
-## ate encontrar o mar ou outro rio"). Sem pathfinding de verdade — uma
-## caminhada gulosa (steepest descent) na elevacao CRUA do ruido de geracao
-## (elevation_by_coord, ver generate_map/_generate_rivers), nao em
-## base_height (que e so uma constante por bioma, daria muitos empates
-## entre vizinhos do mesmo bioma). Montanha nasce rio com mais frequencia
-## que Colina de proposito ("prioritariamente" no pedido do usuario).
-## Reduzido de 0.6/0.35 (pedido do usuario: "2 a 4 rios PRINCIPAIS por
-## mapa", nao dezenas — a densidade alta de rodadas anteriores era pra
-## garantir visibilidade enquanto o bug de culling nao tinha sido
-## encontrado; agora que a causa raiz (AABB) esta corrigida, nao precisa
-## mais forcar quantidade).
-const RIVER_SOURCE_CHANCE_MOUNTAINS := 0.12
-const RIVER_SOURCE_CHANCE_HILLS := 0.05
-const RIVER_MAX_LENGTH := 40 # trava de seguranca contra loop patologico — a checagem de "visited" por trace ja evita ciclo de verdade
-## Rio que NAO alcanca agua/outro rio E fica com menos que isso de arestas
-## e descartado (pedido do usuario: "rios fragmentados/segmentos orfaos" —
-## um cotoco de 1-2 arestas solto no meio do mapa nao rende visual de rio
-## de verdade). Rio que ALCANCA agua/outro rio nunca e descartado por
-## tamanho, mesmo curto (um riacho costeiro de 1 aresta e valido).
-const RIVER_MIN_ORPHAN_EDGES := 3
-const RIVER_WIDTH_FACTOR := 0.18 # fracao de hex_size — reduzido de 0.4 (pedido do usuario: "leito fluido e delicado", nao uma fita larga)
-## CORRIGIDO (reportado pelo usuario com screenshot: "os rios NAO estao
-## aparecendo"): a versao anterior usava um offset NEGATIVO (afundava a
-## malha abaixo da superficie visual do terreno) — mas a malha do rio
-## passava exatamente pelo CENTRO de cada tile, que e onde o topo do
-## prisma (a "tampa" opaca do terreno, ver terrain.gdshader elevation_
-## height) fica MAIS alto naquele XZ especifico. Qualquer coisa abaixo da
-## tampa opaca, na mesma posicao XZ, fica escondida atras dela pra
-## qualquer camera olhando de cima — nao existe canal esculpido de
-## verdade na geometria do terreno, entao "afundar" so escondia o rio.
-## Agora positivo (rio ACIMA da superficie local) e a malha passa pelas
-## ARESTAS/QUINAS dos hexagonos (ver _edge_midpoint/_corner_point_safe),
-## nao mais pelo centro.
-##
-## Reduzido pra 0.01 (pedido do usuario) SO DEPOIS de resolver o motivo
-## real do 0.05 anterior: o terrain.gdshader agora ESCULPE uma calha nos
-## CANTOS exatos que a malha do rio toca (ver river_carve_depth/
-## _river_carve_mask/_compute_river_carve_masks) e SUPRIME o ruido de
-## micro-relevo ali (senao um ricochete aleatorio de ate +-0.04 —
-## metade de elevation_noise_strength — podia cancelar parte do entalhe
-## e reintroduzir o MESMO bug de rio escondido de duas rodadas atras). A
-## mascara cobre TODOS os pontos que a malha do rio realmente usa
-## (_compute_river_waypoints e chamada pelos dois lados, garantindo que
-## bate 100%), inclusive os cantos usados so pra CONTORNAR um pico (a
-## maioria, ver _hex_boundary_arc) e o centro de um conector de
-## confluencia (bit 6 da mascara). Com isso, o pior caso deixa de ser
-## "ruido aleatorio ganhando da offset" e vira deterministico: margem =
-## river_carve_depth + OFFSET, sempre positiva mesmo em 0.01 — e so cresceu
-## quando river_carve_depth subiu de 0.04 pra 0.08 numa rodada seguinte
-## (pedido do usuario: "entalhe mais visivel"), entao 0.01 continua seguro
-## (na verdade com MAIS folga que antes). Residual conhecido: o fallback
-## DEFENSIVO de _add_river_path (in_corners vazio) nao e coberto pela
-## mascara — mas estruturalmente nunca deveria disparar (prev/next sao
-## sempre vizinhos reais, ver _trace_river), entao aceito o risco teorico
-## ali em troca de nao complicar mais o sistema por um caso que não
-## deveria existir.
-const RIVER_ABOVE_OFFSET := 0.01
-## Mesmo papel de RIVER_ABOVE_OFFSET, so que pro contorno territorial de
-## cidade (ver _build_city_border_mesh/_corner_point_safe) — mais raso de
-## proposito: a borda e uma fita fina "pintada" no chao, nao uma superficie
-## de agua, entao nao precisa da mesma folga visual.
-const BORDER_ABOVE_OFFSET := 0.02
-const RIVER_SUBDIVISIONS := 3 # pontos internos por trecho pro ruido lateral (pedido do usuario: "nao parecer uma linha reta rigida") — os pontos EXTREMOS de cada trecho (arestas/cantos/centros compartilhados entre trechos vizinhos) nunca sao perturbados, pra continuarem se encontrando exatamente no mesmo ponto sem fresta
-const RIVER_LATERAL_NOISE_FACTOR := 0.14 # fracao de hex_size
-
-## Foz/deságue no oceano (pedido do usuario: "delta suave") — so aplica no
-## ULTIMO trecho de um rio que termina em agua de verdade (has_terminus E
-## NAO is_confluence, ver _add_river_path). RIVER_MOUTH_EXTEND estende o
-## ultimo ponto pra DENTRO do tile de oceano, em direcao ao centro dele;
-## RIVER_MOUTH_WIDTH_MULT e o multiplicador de largura no fim desse trecho
-## (a largura sobe GRADUALMENTE de 1x no inicio do trecho ate esse valor
-## no fim, nao um salto abrupto).
-const RIVER_MOUTH_EXTEND := 0.2
-const RIVER_MOUTH_WIDTH_MULT := 1.5
 
 ## Mapa retangular (pedido do usuario, com numeros exatos de referencia:
 ## "Pequeno: 74x46... Medio: 84x54... Grande: 96x60"), nao mais um
@@ -140,8 +70,13 @@ const RIVER_MOUTH_WIDTH_MULT := 1.5
 @export_group("Geracao de Terreno")
 ## Frequencia do ruido que desenha continentes/ilhas. Mais baixo = poucos
 ## continentes GRANDES; mais alto = mais ilhas/arquipelagos pequenos e
-## numerosos.
-@export var continent_noise_frequency: float = 0.035
+## numerosos. Baixado de 0.035 (pedido do usuario: mapa estava saindo
+## "arquipelago denso" — ~74% agua medido empiricamente — e sufocando
+## expansao terrestre; ver OCEAN_ELEVATION_THRESHOLD abaixo pro outro lado
+## do ajuste). Frequencia mais baixa da litorais mais lisos/organicos e
+## continentes maiores, o que junto com o novo limiar deixa a maior parte
+## da terra conectada numa unica massa continua em vez de fragmentada.
+@export var continent_noise_frequency: float = 0.028
 ## Quanto a mascara de borda puxa a elevacao pra baixo perto das bordas do
 ## mapa. 0 desliga a mascara (volta ao bug antigo: ruido cru preenchendo o
 ## retangulo inteiro); 1 garante borda 100% oceano mesmo se o ruido cru
@@ -206,39 +141,10 @@ var lairs_by_coord: Dictionary = {}
 ## _deserialize_neutral_units ja usam pra unidades.
 var cleared_lair_coords: Array[Vector2i] = []
 
-## Arestas de rio, canonicas (ver _edge_key): "qa,ra|qb,rb" -> [Vector2i a,
-## Vector2i b]. Nao precisa ser salvo (SaveManager) — mesmo motivo de
-## lair_kind_by_coord acima, generate_map() recria tudo do zero 100%
-## deterministico pela mesma map_seed.
-var river_edges: Dictionary = {}
-## Todo tile tocado por PELO MENOS uma aresta de rio — lookup rapido em
-## _trace_river pra saber "esse vizinho ja faz parte de algum rio" (dessa
-## trace ou de outra) sem varrer river_edges inteiro a cada passo.
-var _river_tiles: Dictionary = {}
-## Um item por nascente tracada (ver _trace_river): {"tiles": Array[Vector2i]
-## (nascente -> ultimo tile de terra antes de parar), "has_terminus": bool,
-## "terminus": Vector2i, "is_confluence": bool (terminus e outro rio, nao
-## agua)}. E o que _rebuild_river_mesh de fato desenha agora — river_edges/
-## _river_tiles continuam existindo so pra lookup rapido DURANTE o tracado
-## (detectar confluencia), a malha usa a ORDEM aqui (necessaria pra ligar
-## os pontos medios de aresta em sequencia sem pular tile, ver
-## _add_river_path).
-var river_paths: Array = []
-
-## Vector2i -> int (mascara de 6 bits, um por CANTO do hexagono — ver
-## HexMetrics.corner). Bit `c` ligado = algum ponto de junca de rio
-## (_compute_river_waypoints) assenta EXATAMENTE nesse canto deste tile —
-## calculado uma vez por _compute_river_carve_masks logo apos _generate_
-## rivers, ANTES do terreno solido ser construido (ver generate_map),
-## pra terrain.gdshader poder esculpir uma calha exatamente onde a malha
-## do rio (HexGrid._add_river_path) realmente vai assentar (pedido do
-## usuario: "leito escavado e integrado ao terreno").
-var _river_carve_mask: Dictionary = {}
-
 var _hex_mesh: ArrayMesh
 var _tree_mesh: ArrayMesh
-var _rock_mesh: ArrayMesh
-var _mountain_spike_mesh: ArrayMesh # pico rochoso pontudo/assimetrico, ver _build_rock_spike_mesh — diferente do _rock_mesh (prisma hexagonal baixo, usado em Colina)
+var _mountain_spike_mesh: ArrayMesh # pico rochoso pontudo/assimetrico, ver _build_rock_spike_mesh
+var _ice_floe_mesh: ArrayMesh # pedaco de gelo baixo/chato flutuando no Mar Gelado, ver _build_ice_floe_mesh
 var _multimesh_instance: MultiMeshInstance3D # terreno solido (terrain.gdshader) — continua 1 instancia de prisma por tile
 ## Agua (Oceano/Mar Gelado) E Mar de Lava agora dividem UM UNICO PlaneMesh
 ## continuo (water_shader.gdshader, shader unificado) — nao 2 planos
@@ -249,23 +155,37 @@ var _multimesh_instance: MultiMeshInstance3D # terreno solido (terrain.gdshader)
 ## mascara, ver _rebuild_water_overlay/_build_liquid_plane.
 var _liquid_plane_instance: MeshInstance3D
 var _props_tree_instance: MultiMeshInstance3D
-var _props_rock_instance: MultiMeshInstance3D
 var _props_mountain_spike_instance: MultiMeshInstance3D
-var _river_instance: MeshInstance3D
+var _props_ice_floe_instance: MultiMeshInstance3D
 var _ground_body: StaticBody3D
 var _selection_marker: MeshInstance3D
 var _noise := FastNoiseLite.new() # elevacao/continentes — ver _elevation_for()
 var _warp_noise := FastNoiseLite.new() # domain warp: distorce coordenadas antes de amostrar elevacao/umidade/vulcanico/arcano, pra formas organicas
 var _coord_to_index: Dictionary = {} # so tiles de terreno solido (_multimesh_instance)
+## Distancia (em tiles) de cada tile ate a terra solida mais proxima — ver
+## _compute_coast_distance_tiles/_rebuild_water_overlay. Calculado UMA VEZ
+## por geracao de mapa (a topologia terra/agua nunca muda depois), nao a
+## cada _rebuild_water_overlay (isso rodaria a cada hover/selecao/turno,
+## bem mais frequente que o necessario pra um dado estatico).
+var _coast_distance_tiles: Dictionary = {}
+## Textura de 1 texel-por-tile pra classificacao EXATA de Mar de Lava — ver
+## _rebuild_lava_tile_mask.
+var _lava_tile_mask_texture: ImageTexture
 var _tree_coord_to_index: Dictionary = {}
-var _rock_coord_to_index: Dictionary = {}
 var _mountain_spike_coord_to_index: Dictionary = {}
+var _ice_floe_coord_to_index: Dictionary = {}
 ## Props 3D de recurso (minerio/cavalos/gemas/seda, ver ResourceDatabase) —
 ## classe separada (nao mais campos soltos aqui) porque cada recurso
 ## precisa da sua PROPRIA malha/MultiMesh (uma por "tipo", igual arvore/
 ## pedra/pico), entao ResourcePropsManager encapsula essa colecao inteira
 ## em vez de HexGrid crescer mais 4 pares de MultiMeshInstance3D/Dictionary.
 var _resource_props_manager: ResourcePropsManager
+## Icones 2D billboard (placa + silhueta) flutuando sobre tiles com
+## recurso, estilo Civilization — ver ResourceIconManager. Separado de
+## _resource_props_manager de proposito: um e o objeto 3D no chao, o
+## outro e o selo sempre virado pra camera; cada um so sabe desenhar/
+## reconstruir a propria coisa.
+var _resource_icon_manager: ResourceIconManager
 ## Agua/lava sao 1 MeshInstance3D continuo agora (sem instancia por tile)
 ## — fog-of-war/destaque de movimento (que antes tingiam a cor de cada
 ## instancia individualmente) viram esta textura compartilhada, amostrada
@@ -287,10 +207,16 @@ var _liquid_type_texture: ImageTexture
 var _units_root: Node3D
 var _cities_root: Node3D
 var _buildings_root: Node3D
-var _borders_root: Node3D
 var _construction_root: Node3D
 var _lairs_root: Node3D
-var _city_borders: Dictionary = {} # City -> MeshInstance3D, contorno permanente do territorio (ver _update_city_border)
+var _tints_root: Node3D
+var _city_tints: Dictionary = {} # City -> MeshInstance3D, tingimento do chao do territorio (ver _update_city_tint)
+## Cache do shader de tingimento — evita um load() do disco por CIDADE a
+## CADA turno (_update_city_tint roda pra toda cidade toda vez que a nevoa
+## muda). load() em si tem cache interno do Godot por caminho, mas ainda
+## paga overhead de lookup/validacao a cada chamada; carregar uma vez so e
+## estritamente mais barato e o Shader e imutavel (nunca precisa recarregar).
+var _territory_tint_shader: Shader
 var _construction_markers: Dictionary = {} # Vector2i -> Node3D, marcador animado de "em construcao" (ver refresh_construction_markers)
 ## Vector2i -> turno em que a pilhagem expira (ver pillage_tile/
 ## is_tile_pillaged) — Invasor saqueando um tile trabalhado por cidade
@@ -310,8 +236,8 @@ var _volcanic_noise := FastNoiseLite.new() # bioma raro: Lava substituindo Monta
 var _arcane_noise := FastNoiseLite.new() # bioma raro: Campos de Cristal
 
 ## Profundidade do prisma de TERRA firme, como fracao de hex_size — maior
-## que o 0.4 padrao (usado pelas pedras decorativas, ver _rock_mesh
-## abaixo) de proposito: reportado pelo usuario, com screenshot, que
+## que o 0.4 padrao de _build_hex_prism_mesh (ver abaixo) de proposito:
+## reportado pelo usuario, com screenshot, que
 ## costa de Colina/Montanha (base_height 0.3/0.65) parecia "cortada" na
 ## agua, sem base submersa nenhuma — o prisma antigo (fundo em base_height
 ## - hex_size*0.4) ficava ACIMA do plano de agua (LIQUID_LEVEL_Y = -0.2)
@@ -326,9 +252,10 @@ func _ready() -> void:
 	add_to_group("hex_grid")
 	_hex_mesh = _build_hex_prism_mesh(hex_size, LAND_PRISM_DEPTH_FACTOR)
 	_tree_mesh = _build_tree_mesh()
-	_rock_mesh = _build_hex_prism_mesh(hex_size * 0.32)
 	_mountain_spike_mesh = _build_rock_spike_mesh()
+	_ice_floe_mesh = _build_ice_floe_mesh()
 	_resource_props_manager = ResourcePropsManager.new(self)
+	_resource_icon_manager = ResourceIconManager.new(self)
 	_build_selection_marker()
 	_build_hover_label()
 
@@ -344,10 +271,6 @@ func _ready() -> void:
 	_buildings_root.name = "Buildings"
 	add_child(_buildings_root)
 
-	_borders_root = Node3D.new()
-	_borders_root.name = "Borders"
-	add_child(_borders_root)
-
 	_construction_root = Node3D.new()
 	_construction_root.name = "ConstructionMarkers"
 	add_child(_construction_root)
@@ -355,6 +278,10 @@ func _ready() -> void:
 	_lairs_root = Node3D.new()
 	_lairs_root.name = "Lairs"
 	add_child(_lairs_root)
+
+	_tints_root = Node3D.new()
+	_tints_root.name = "TerritoryTints"
+	add_child(_tints_root)
 
 func _process(delta: float) -> void:
 	if _selection_marker.visible:
@@ -473,9 +400,20 @@ func generate_map(width: int, height: int, seed_value: int = -1) -> void:
 	# conectados) nunca fica isolada aos PROPRIOS olhos desta funcao, so
 	# tiles de fora que viraram colateral dela.
 	_smooth_isolated_biome_cells()
+	# Depois de toda decisao de bioma (incluindo _ensure_biome_variety,
+	# que pode ter acabado de PLANTAR um cluster minimo de Montanha em
+	# mapa Grande+) — ver _thin_mountain_clusters pro motivo/mecanica.
+	_thin_mountain_clusters()
+	# _thin_mountain_clusters rebaixa tile a tile (nao a regiao inteira de
+	# uma vez) — um blob grande vira "anel"/parede fina de verdade, mas o
+	# efeito colateral e que uma pontinha fina do anel as vezes fica com 0
+	# vizinhos de Montanha depois da poda (Montanha isolada, MESMO bug que
+	# _ensure_biome_variety ja causava em outro contexto, ver comentario
+	# acima) — rodar a limpeza de novo aqui absorve essas pontas pro bioma
+	# vizinho majoritario, mesmo padrao ja seguro/testado.
+	_smooth_isolated_biome_cells()
 	_ensure_lava_sea_present()
 	_reclassify_coastal_ocean()
-	_generate_rivers(elevation_by_coord)
 	_rebuild_multimesh()
 	_spawn_monster_lairs()
 
@@ -493,19 +431,19 @@ func _clear_entities() -> void:
 	if _buildings_root:
 		for child in _buildings_root.get_children():
 			child.queue_free()
-	if _borders_root:
-		for child in _borders_root.get_children():
-			child.queue_free()
 	if _construction_root:
 		for child in _construction_root.get_children():
 			child.queue_free()
 	if _lairs_root:
 		for child in _lairs_root.get_children():
 			child.queue_free()
+	if _tints_root:
+		for child in _tints_root.get_children():
+			child.queue_free()
 	units_by_coord.clear()
 	cities_by_coord.clear()
 	buildings_by_coord.clear()
-	_city_borders.clear()
+	_city_tints.clear()
 	_construction_markers.clear()
 	# lairs_by_coord/cleared_lair_coords tambem resetam aqui: generate_map()
 	# (unico chamador de _clear_entities) sempre recria os covis do zero
@@ -625,6 +563,110 @@ func reconstruct_path(start: Vector2i, end: Vector2i) -> Array[Vector2i]:
 	path.reverse()
 	return path
 
+## Caminho de custo minimo entre `start` e `end`, SEM teto de movement_points
+## (diferente de compute_reachable, que so acha tiles alcancaveis NO turno
+## atual) — pedido do usuario: "no civilization eu posso colocar pra ela se
+## mover pra um lugar longe... o movimento fica gravado e todo turno essa
+## tropa vai se movendo". MESMAS regras de passagem de compute_reachable
+## (sem empilhar unidade, sem entrar em cidade inimiga, terreno bloqueado
+## so pra quem nao voa) — nao reusa aquela funcao direto porque o teto de
+## movimento e essencial pra ela (reachable-NESTE-turno), enquanto aqui o
+## objetivo e o oposto (caminho completo, custe quantos turnos custar).
+## Devolve [] se nao existir caminho nenhum (ex: destino numa ilha sem
+## ponte, pra unidade terrestre) — Array NAO inclui `start`, so os passos
+## a partir dele. Ver HexGrid.continue_move_order, quem consome isso aos
+## poucos a cada turno.
+## Dijkstra de verdade com fila de prioridade (heap binario, ver
+## _heap_push/_heap_pop_min abaixo) — ANTES era uma busca estilo SPFA sem
+## ordem nenhuma (fila FIFO simples) que sempre inundava o componente
+## conectado INTEIRO antes de devolver, mesmo pra achar o caminho ate um
+## `end` bem pertinho (usuario reportou queda pra ~15 FPS na troca de turno;
+## explore_step/continue_move_order chamam isto pra CADA unidade explorando
+## ou com ordem de movimento pendente, TODO turno). Com fila de prioridade
+## por custo, o primeiro pop de um no ja e seu custo MINIMO definitivo
+## (garantia de Dijkstra pra pesos nao-negativos, que e sempre o caso aqui —
+## movement_cost nunca e negativo), entao da pra parar assim que `end` for
+## extraido do topo do heap sem nenhum risco de achar um caminho pior do que
+## o de antes. Devolve o MESMO caminho de custo minimo de sempre (com pesos
+## de terreno diferentes por tile pode haver mais de um caminho igualmente
+## curto — qual desses empates especificos e escolhido pode variar em
+## relacao a versao antiga, mas o CUSTO/numero de turnos pra completar nunca
+## muda).
+func compute_path(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool = false) -> Array[Vector2i]:
+	var path: Array[Vector2i] = []
+	if start == end:
+		return path
+	var cost_so_far := {start: 0.0}
+	var came_from := {start: start}
+	var heap: Array = [[0.0, start]] # array de [cost, coord], mantido como min-heap pelo indice 0
+	while heap.size() > 0:
+		var entry = _heap_pop_min(heap)
+		var current_cost: float = entry[0]
+		var current: Vector2i = entry[1]
+		if current_cost > cost_so_far.get(current, INF):
+			continue # entrada obsoleta: este no ja teve um custo melhor relaxado depois de entrar no heap
+		if current == end:
+			break
+		for n in get_neighbors(current):
+			if get_unit_at(n) != null:
+				continue
+			var city_here = get_city_at(n)
+			if city_here != null and city_here.owner_player != owner:
+				continue
+			var terrain: HexTileData = get_tile(n)
+			if not flies and terrain.blocks_land_units():
+				continue
+			var step_cost = 1.0 if flies else terrain.movement_cost
+			var new_cost = current_cost + step_cost
+			if not cost_so_far.has(n) or new_cost < cost_so_far[n]:
+				cost_so_far[n] = new_cost
+				came_from[n] = current
+				_heap_push(heap, new_cost, n)
+	if not came_from.has(end):
+		return path
+	var step = end
+	while step != start:
+		path.push_front(step)
+		step = came_from[step]
+	return path
+
+## Heap binario minimo generico sobre um Array de pares [cost, coord] —
+## usado so por compute_path acima. Implementacao classica (sift-up/
+## sift-down por indice de arvore binaria empacotada num Array).
+func _heap_push(heap: Array, cost: float, coord: Vector2i) -> void:
+	heap.append([cost, coord])
+	var i = heap.size() - 1
+	while i > 0:
+		var parent = (i - 1) / 2
+		if heap[parent][0] <= heap[i][0]:
+			break
+		var tmp = heap[parent]
+		heap[parent] = heap[i]
+		heap[i] = tmp
+		i = parent
+
+func _heap_pop_min(heap: Array) -> Array:
+	var top = heap[0]
+	var last = heap.pop_back()
+	if heap.size() > 0:
+		heap[0] = last
+		var i = 0
+		while true:
+			var left = 2 * i + 1
+			var right = 2 * i + 2
+			var smallest = i
+			if left < heap.size() and heap[left][0] < heap[smallest][0]:
+				smallest = left
+			if right < heap.size() and heap[right][0] < heap[smallest][0]:
+				smallest = right
+			if smallest == i:
+				break
+			var tmp = heap[smallest]
+			heap[smallest] = heap[i]
+			heap[i] = tmp
+			i = smallest
+	return top
+
 func spawn_unit(coord: Vector2i, unit_data: UnitData, player: PlayerData) -> Unit:
 	var unit := Unit.new()
 	_units_root.add_child(unit)
@@ -655,6 +697,129 @@ func move_unit(unit: Unit, dest: Vector2i, cost: float) -> void:
 	# attack > 0 exclui o Colonizador (pedido explicito: "unidade MILITAR").
 	if unit.owner_player != null and unit.unit_data.attack > 0.0 and dest in lair_coords:
 		_grant_lair_clear_reward(unit, dest)
+
+## Consome um pedido de "mover ate" pendente (Unit.move_order_target) o
+## quanto o movimento ATUAL da unidade permitir — chamado tanto na hora
+## (SelectionManager._try_queue_move_order, o quanto der ja neste turno)
+## quanto em toda troca de turno seguinte (GameManager._on_turn_changed,
+## logo apos unit.reset_movement() recarregar movement_left). Recalcula o
+## caminho INTEIRO do zero a cada chamada (nao anda por um Array salvo) —
+## se um obstaculo novo aparecer no meio do trajeto (outra unidade
+## entrando no caminho, guerra declarada bloqueando uma cidade...) a rota
+## se adapta sozinha em vez de travar tentando seguir uma rota velha
+## invalida. Desiste da ordem (limpa move_order_target) em 3 casos: chegou,
+## o destino deixou de ter caminho nenhum, ou o proximo passo custa mais
+## que o TOTAL de movimento da unidade mesmo com o turno inteiro fresco
+## (nunca vai dar pra completar, ja que movimento nao acumula entre
+## turnos — sem essa saida a ordem ficaria presa pra sempre, tentando de
+## novo a cada turno sem nenhum feedback).
+func continue_move_order(unit: Unit) -> void:
+	# Rede de seguranca (pedido do usuario: "fortificar é um estado de
+	# alerta... ao ativar o estado de fortificado ele deve cancelar as
+	# outras ações") — SelectionManager.fortify_selected() ja limpa
+	# move_order_target na hora de ligar Fortificar, entao isto normalmente
+	# nunca dispara; existe so pra garantir que uma unidade fortificada
+	# JAMAIS ande sozinha, mesmo que algum caminho futuro esqueca de
+	# limpar o campo.
+	if unit.fortified:
+		unit.move_order_target = Unit.NO_MOVE_ORDER
+		return
+	if unit.move_order_target == Unit.NO_MOVE_ORDER:
+		return
+	if unit.coord == unit.move_order_target:
+		unit.move_order_target = Unit.NO_MOVE_ORDER
+		return
+	var path = compute_path(unit.coord, unit.move_order_target, unit.owner_player, unit.unit_data.flies)
+	if path.is_empty():
+		unit.move_order_target = Unit.NO_MOVE_ORDER
+		return
+	var first_terrain: HexTileData = get_tile(path[0])
+	var first_step_cost = 1.0 if unit.unit_data.flies else first_terrain.movement_cost
+	if first_step_cost > unit.unit_data.movement_points:
+		unit.move_order_target = Unit.NO_MOVE_ORDER
+		return
+	for step in path:
+		var terrain: HexTileData = get_tile(step)
+		var step_cost = 1.0 if unit.unit_data.flies else terrain.movement_cost
+		if step_cost > unit.movement_left:
+			break
+		move_unit(unit, step, step_cost)
+		if unit.movement_left <= 0.0:
+			break
+	if unit.coord == unit.move_order_target:
+		unit.move_order_target = Unit.NO_MOVE_ORDER
+
+## Consome "Explorar" (Unit.exploring) por um turno — pedido do usuario:
+## "uma função que fica ativada... que se baseie em ficar andando por
+## territórios que ainda não foram explorados". Acha os tiles UNSEEN mais
+## pertos (por distancia hexagonal crua) e tenta um caminho de verdade
+## (compute_path) ate os mais proximos deles, na ordem, ate achar um
+## alcancavel — nao so o UNICO mais perto, senao uma unidade terrestre
+## numa ilha desistiria de explorar so porque o tile UNSEEN geometricamente
+## mais perto calha de ficar do outro lado do oceano, mesmo com MUITO
+## territorio alcancavel ainda por perto. Anda o quanto o movimento ATUAL
+## permitir, igual continue_move_order (mesmo padrao: recalcula tudo do
+## ZERO a cada chamada, pra fog-of-war revelada durante o proprio
+## movimento ja valer pro PROXIMO turno). Desliga sozinho (exploring =
+## false) quando nao sobra nenhum tile UNSEEN alcancavel — mapa todo
+## explorado (ou unidade isolada) e um fim natural, nao um erro.
+const EXPLORE_CANDIDATE_LIMIT := 24 # tentar TODOS os UNSEEN do mapa com compute_path seria caro demais; os N mais pertos ja bastam pra achar algum alcancavel
+
+func explore_step(unit: Unit) -> void:
+	# Mesma rede de seguranca de continue_move_order acima — Fortificar
+	# sempre vence, uma unidade fortificada nunca deveria andar sozinha.
+	if unit.fortified:
+		unit.exploring = false
+		return
+	if not unit.exploring:
+		return
+	# So mantem os EXPLORE_CANDIDATE_LIMIT tiles UNSEEN mais pertos JA VISTOS
+	# durante a varredura (heap limitado, reaproveitando _heap_push/
+	# _heap_pop_min de compute_path com custo negativo — mesmo truque de
+	# "min-heap vira max-heap") em vez de juntar TODOS os UNSEEN do mapa
+	# (ate 5760) num Array so pra depois sort_custom() descartar quase tudo.
+	# sort_custom tambem RECALCULAVA axial_distance a cada COMPARACAO
+	# (O(n log n) chamadas de lambda) em vez de uma vez por candidato — o
+	# heap limitado computa a distancia UMA vez por tile e faz so O(log
+	# EXPLORE_CANDIDATE_LIMIT) trabalho por candidato. Mesmo conjunto final
+	# de ate 24 mais pertos, na mesma ordem crescente de distancia.
+	var heap: Array = []
+	for coord in tiles.keys():
+		if visibility.get(coord, Visibility.UNSEEN) != Visibility.UNSEEN:
+			continue
+		var terrain: HexTileData = tiles[coord]
+		if not unit.unit_data.flies and terrain.blocks_land_units():
+			continue
+		var dist: float = float(HexMetrics.axial_distance(unit.coord, coord))
+		if heap.size() < EXPLORE_CANDIDATE_LIMIT:
+			_heap_push(heap, -dist, coord)
+		elif -dist > heap[0][0]:
+			_heap_pop_min(heap)
+			_heap_push(heap, -dist, coord)
+	if heap.is_empty():
+		unit.exploring = false
+		return
+	var candidates: Array[Vector2i] = []
+	while heap.size() > 0:
+		candidates.push_front(_heap_pop_min(heap)[1])
+
+	var path: Array[Vector2i] = []
+	for candidate in candidates:
+		path = compute_path(unit.coord, candidate, unit.owner_player, unit.unit_data.flies)
+		if not path.is_empty():
+			break
+	if path.is_empty():
+		unit.exploring = false
+		return
+
+	for step in path:
+		var terrain: HexTileData = get_tile(step)
+		var step_cost = 1.0 if unit.unit_data.flies else terrain.movement_cost
+		if step_cost > unit.movement_left:
+			break
+		move_unit(unit, step, step_cost)
+		if unit.movement_left <= 0.0:
+			break
 
 ## Remove TODO estado de um covil (reforco, estrutura 3D, marca de
 ## "ativo") sem conceder ouro nem notificar — usado tanto pela recompensa
@@ -703,7 +868,7 @@ func found_city(coord: Vector2i, player: PlayerData, city_name: String, silent: 
 	city.owned_tiles = [coord]
 	city.owned_tiles.append_array(get_neighbors(coord))
 	city.auto_assign_worked_tiles(self)
-	_update_city_border(city)
+	_update_city_tint(city)
 	if player == GameManager.human_player and not silent:
 		EventBus.notify.emit("Cidade fundada: %s" % city_name, "city")
 	return city
@@ -746,7 +911,7 @@ func capture_city(city: City, new_owner: PlayerData) -> void:
 		old_owner.cities.erase(city)
 	city.change_owner(new_owner)
 	new_owner.cities.append(city)
-	_update_city_border(city) # cor do contorno precisa seguir o novo dono
+	_update_city_tint(city) # tingimento do territorio precisa seguir o novo dono
 	if new_owner == GameManager.human_player:
 		EventBus.notify.emit("Voce capturou %s!" % city_display_name, "city")
 	elif old_owner == GameManager.human_player:
@@ -830,11 +995,6 @@ func _apply_fog_to_entities(player: PlayerData) -> void:
 			building.visible = true
 		else:
 			building.visible = visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
-	for city in _city_borders.keys():
-		if city.owner_player == player:
-			_city_borders[city].visible = true
-		else:
-			_city_borders[city].visible = visibility.get(city.coord, Visibility.UNSEEN) == Visibility.VISIBLE
 
 ## path_coords (opcional) e a previa do trajeto ate o tile sob o mouse —
 ## pintado por cima do verde/vermelho, tipo o preview de movimento do
@@ -873,8 +1033,8 @@ func clear_highlight() -> void:
 	hide_hover_label()
 
 ## Territorio de uma cidade = City.owned_tiles (posse dinamica, cresce com
-## a populacao — ver City._claim_frontier_tile) — usado pro contorno
-## visual (_build_city_border_mesh). Diferente de worked_tiles (rendimento)
+## a populacao — ver City._claim_frontier_tile) — usado pro tingimento
+## visual (_build_city_tint_mesh). Diferente de worked_tiles (rendimento)
 ## e do raio de posicionamento de predio, que continuam fixos em "vizinho
 ## direto da propria celula", fora do escopo desta mudanca.
 func city_territory_tiles(city: City) -> Dictionary:
@@ -895,108 +1055,94 @@ func city_owning_tile(coord: Vector2i, excluding: City = null) -> City:
 			return city
 	return null
 
-## Contorno PERMANENTE ao redor do territorio da cidade, na cor da
-## civilizacao dona (tipo a borda cultural do Civilization) — sempre
-## visivel, nao so quando a cidade esta selecionada, pra "limite da
-## cidade" parar de ser so um numero escondido no painel. Reconstroi o
-## mesh do zero (barato: no maximo ~12 arestas por cidade) sempre que a
-## cidade e fundada ou muda de dono (a cor precisa acompanhar).
-## Contorno agora usa um ShaderMaterial customizado (shaders/border_shader.
-## gdshader — linha fina tracejada com leve contorno escuro nas margens,
-## estilo "tinta/marcador territorial", ver comentario do proprio shader)
-## em vez do StandardMaterial3D unshaded/no_depth_test de antes —
-## mesmo padrao de carregamento de _rebuild_river_mesh (load() + push_error
-## se falhar). Cor do jogador continua vinda por VERTEX COLOR (nao por
-## uniform): mesma escolha do rio/props, evita sincronizar um uniform por
-## cidade toda vez que o dono muda. `no_depth_test` sumiu de proposito
-## (pedido do usuario, "reative o Depth Test") — o "bias" contra z-fighting
-## agora e um deslocamento geometrico REAL (BORDER_ABOVE_OFFSET, ver
-## _build_city_border_mesh), a mesma solucao ja usada pelo rio
-## (RIVER_ABOVE_OFFSET), entao a borda pode ficar corretamente ESCONDIDA
-## atras de um morro na frente da camera em vez de sempre "raio-X".
-func _update_city_border(city: City) -> void:
-	if _city_borders.has(city):
-		_city_borders[city].queue_free()
-	var mesh_instance := MeshInstance3D.new()
-	var mesh := _build_city_border_mesh(city)
-	if mesh.get_surface_count() > 0:
-		mesh_instance.mesh = mesh
-	var mat := ShaderMaterial.new()
-	var border_shader: Shader = load("res://shaders/border_shader.gdshader")
-	if border_shader == null:
-		push_error("HexGrid: falha ao carregar res://shaders/border_shader.gdshader — contorno ficara sem material (invisivel)")
-	mat.shader = border_shader
-	mesh_instance.material_override = mat
-	_borders_root.add_child(mesh_instance)
-	_city_borders[city] = mesh_instance
+## Deslocamento vertical do tingimento de territorio acima do chao. O
+## tingimento e um leque preenchendo o hexagono INTEIRO, quase
+## perfeitamente COPLANAR com o topo do terreno, entao qualquer folga
+## pequena sofre z-fighting/oclusao na area toda — 0.04 da margem de
+## verdade contra isso.
+const TINT_ABOVE_OFFSET := 0.04
+## Opacidade do tingimento pra um trecho VISIBLE — pedido do usuario apos
+## abandonar o sistema de linha de contorno (repetidos problemas de
+## renderizacao/juncao de geometria, ver historico de border_shader.
+## gdshader/_build_player_border_mesh, removidos): "faça apenas com que o
+## territorio de uma nacao tenha uma cor especifica... colorir o topo de
+## cada celula com essa cor". Sem NENHUMA linha de contorno agora, o
+## tingimento e o UNICO sinal visual de posse territorial — subido bem
+## acima do "8%-12%" original (que era so um acabamento complementar a
+## borda) pra ficar claramente reconhecivel sozinho.
+const TERRITORY_TINT_ALPHA := 0.35
+## EXPLORED (nao VISIBLE agora) fica com uma FRACAO da opacidade normal —
+## memoria mais fraca que visao ativa de verdade, mesmo espirito de
+## _sepia_prop_color pros outros props/estruturas deste arquivo.
+const TERRITORY_TINT_EXPLORED_ALPHA_MULT := 0.5
 
-## Alfa de um trecho de contorno cujo tile so esta EXPLORED (nao VISIBLE
-## agora) — pedido do usuario: "renderize desaturada/sepia com alfa
-## reduzido em vez de ocultar" (so UNSEEN oculta, ver abaixo).
-const EXPLORED_BORDER_ALPHA := 0.55
+## Camada visual SEPARADA (nao um material do proprio terreno — mesmo
+## principio de todo outro overlay deste arquivo: rio, contorno, props de
+## recurso) que tinge o chao de cada tile do territorio da cidade na cor
+## da civ (pedido do usuario, requisito 3: "tingimento suave no chao dos
+## hexagonos dominados"). Reconstruida no MESMO ciclo que o contorno (ver
+## _apply_land_and_prop_fog/found_city/capture_city).
+## Reaproveita o MeshInstance3D/ShaderMaterial da cidade entre chamadas (em
+## vez de queue_free() + instanciar tudo de novo do zero toda vez) — cidade
+## nunca e destruida individualmente fora de um reset de mapa inteiro
+## (_clear_entities, que ja libera _tints_root inteiro e limpa _city_tints),
+## entao e sempre seguro so trocar o `.mesh` de uma instancia existente. So
+## a malha (SurfaceTool) em si ainda e reconstruida — territorio/nevoa podem
+## ter mudado — mas sem o custo de alocar Node/Material novos e agendar
+## queue_free() todo turno pra toda cidade.
+func _update_city_tint(city: City) -> void:
+	var mesh_instance: MeshInstance3D
+	if _city_tints.has(city):
+		mesh_instance = _city_tints[city]
+	else:
+		mesh_instance = MeshInstance3D.new()
+		var mat := ShaderMaterial.new()
+		if _territory_tint_shader == null:
+			_territory_tint_shader = load("res://shaders/territory_tint_shader.gdshader")
+			if _territory_tint_shader == null:
+				push_error("HexGrid: falha ao carregar res://shaders/territory_tint_shader.gdshader — tingimento de territorio ficara sem material (invisivel)")
+		mat.shader = _territory_tint_shader
+		mesh_instance.material_override = mat
+		_tints_root.add_child(mesh_instance)
+		_city_tints[city] = mesh_instance
+	var mesh := _build_city_tint_mesh(city)
+	mesh_instance.mesh = mesh if mesh.get_surface_count() > 0 else null
 
-## Uma aresta do hex vira um segmento de contorno so quando o vizinho
-## NAO faz parte do territorio (aresta interna, entre dois tiles da mesma
-## cidade, nunca e desenhada) — mesmo algoritmo generico de "borda de
-## regiao" independente do formato exato do territorio (agora dinamico,
-## ver City.owned_tiles/city_territory_tiles), funciona igual pra
-## territorio irregular/nao-hexagonal.
-##
-## Altura REAL do terreno em vez de um BORDER_HEIGHT fixo (pedido do
-## usuario, "acompanhar perfeitamente o relevo") — reusa a MESMA tecnica ja
-## usada pelos rios pra nao atravessar a "parede" de um vizinho mais alto
-## (_tallest_neighbor_height + _corner_point_safe, ver comentario deles).
-##
-## Nevoa POR SEGMENTO (pedido do usuario, requisito 4): cada TILE do
-## contorno decide sozinho o tratamento do proprio trecho via
-## _fog_level_for (mesma fonte que o terreno solido usa) — UNSEEN nem gera
-## geometria (oculto sob a nevoa), EXPLORED usa _sepia_prop_color (reuso,
-## mesmo helper que LairStructure/ResourcePropsManager ja usam) + alfa
-## reduzido, VISIBLE cor cheia. UV.x = 0.0 na aresta EXTERNA (limite real
-## do territorio, onde a linha assenta) e 1.0 na aresta INTERNA (deslocada
-## BORDER_THICKNESS pra dentro) — border_shader.gdshader usa isso pro
-## contorno escuro/fade de dentro pra fora.
-##
-## Linha FINA (pedido do usuario: "excessivamente espessa... refazer para
-## algo fino, elegante" — BORDER_THICKNESS caiu de 0.09 pra 0.025, a fita
-## quase nao se afasta da aresta real do hexagono). UV.y agora e distancia
-## de MUNDO (0 em c1 ate hex_size em c2, nao mais 0..1 normalizado) —
-## como toda aresta de hexagono regular mede exatamente hex_size, o padrao
-## tracejado do shader (fixo em unidades de mundo) fica com o MESMO
-## tamanho de traco/vao em qualquer aresta do mapa, independente de onde
-## ela esta (cada aresta ainda reinicia UV.y em 0 no proprio canto de
-## entrada — sem perseguir alinhamento de fase entre trechos vizinhos, o
-## que e aceitavel pra um tracejado, que ja tem vaos de proposito).
-func _build_city_border_mesh(city: City) -> ArrayMesh:
-	const BORDER_THICKNESS := 0.025
+## Leque de triangulos (centro + 6 cantos) por tile do territorio — um
+## "tampo" plano cobrindo o hexagono INTEIRO. Altura: centro na altura VISUAL real
+## (_tile_surface_height, com pico/domo de Montanha/Colina) e os 6 cantos
+## em base_height puro — mesmo fato geometrico usado no resto do arquivo
+## (no canto de verdade o pico/domo ja caiu pra zero) — entao o leque
+## aproxima a curva real do dominio do tile em vez de flutuar acima dos
+## cantos (Montanha/Colina) ou afundar no pico. Nevoa POR TILE (mesma fonte
+## que o contorno usa, _fog_level_for): UNSEEN nao gera geometria, EXPLORED
+## fica sepia + mais transparente ainda, VISIBLE cor/opacidade cheias.
+func _build_city_tint_mesh(city: City) -> ArrayMesh:
 	var territory := city_territory_tiles(city)
-	var base_color = city.owner_player.civ.color if city.owner_player else Color.WHITE
+	var civ: CivilizationData = city.owner_player.civ if city.owner_player else null
+	var base_color = civ.color if civ else Color.WHITE
 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for tile_coord in territory.keys():
 		var fog_level = _fog_level_for(tile_coord)
 		if fog_level <= 0.0:
-			continue # UNSEEN: trecho do contorno oculto sob a nevoa
-		var color = base_color if fog_level >= 1.0 else _sepia_prop_color(base_color)
-		var alpha = 1.0 if fog_level >= 1.0 else EXPLORED_BORDER_ALPHA
+			continue # UNSEEN: tile sem tingimento nenhum sob a nevoa
+		var explored: bool = fog_level < 1.0
+		var color = base_color if not explored else _sepia_prop_color(base_color)
+		var alpha = TERRITORY_TINT_ALPHA * (TERRITORY_TINT_EXPLORED_ALPHA_MULT if explored else 1.0)
 		var col := Color(color.r, color.g, color.b, alpha)
-		var safe_height = _tallest_neighbor_height(tile_coord)
-		var center = HexMetrics.axial_to_world(tile_coord.x, tile_coord.y, hex_size)
+		var w = world_for_coord(tile_coord)
+		var center_point = Vector3(w.x, _tile_surface_height(tile_coord) + TINT_ABOVE_OFFSET, w.z)
+		var corner_y = w.y + TINT_ABOVE_OFFSET
+		var corners: Array[Vector3] = []
 		for i in range(6):
-			if territory.has(tile_coord + NEIGHBOR_DIRS[i]):
-				continue
-			var c1 = _corner_point_safe(tile_coord, i, safe_height, BORDER_ABOVE_OFFSET)
-			var c2 = _corner_point_safe(tile_coord, i + 1, safe_height, BORDER_ABOVE_OFFSET)
-			var inward = (center - Vector3((c1.x + c2.x) * 0.5, 0.0, (c1.z + c2.z) * 0.5)).normalized() * BORDER_THICKNESS
-			var c1_in = c1 + inward
-			var c2_in = c2 + inward
-			st.set_color(col); st.set_uv(Vector2(0.0, 0.0)); st.add_vertex(c1)
-			st.set_color(col); st.set_uv(Vector2(0.0, hex_size)); st.add_vertex(c2)
-			st.set_color(col); st.set_uv(Vector2(1.0, 0.0)); st.add_vertex(c1_in)
-			st.set_color(col); st.set_uv(Vector2(0.0, hex_size)); st.add_vertex(c2)
-			st.set_color(col); st.set_uv(Vector2(1.0, hex_size)); st.add_vertex(c2_in)
-			st.set_color(col); st.set_uv(Vector2(1.0, 0.0)); st.add_vertex(c1_in)
+			var c = HexMetrics.corner(hex_size, i)
+			corners.append(Vector3(w.x + c.x, corner_y, w.z + c.z))
+		for i in range(6):
+			st.set_color(col); st.set_uv(Vector2.ZERO); st.add_vertex(center_point)
+			st.set_color(col); st.set_uv(Vector2.ZERO); st.add_vertex(corners[i])
+			st.set_color(col); st.set_uv(Vector2.ZERO); st.add_vertex(corners[(i + 1) % 6])
 	return st.commit()
 
 ## Marcador animado (girando + balancando) sobre um tile com um predio EM
@@ -1085,15 +1231,14 @@ func _apply_land_and_prop_fog() -> void:
 		_apply_terrain_fog(_multimesh_instance.multimesh, _coord_to_index)
 	_apply_prop_fog()
 	_rebuild_biome_overlay()
-	_rebuild_river_mesh() # pedido do usuario: fog-of-war dos rios acompanha o dos tiles vizinhos
-	# Contorno territorial: reconstruido no MESMO ciclo que o rio, mesmo
-	# custo ja aceito hoje (evento discreto: turno/hover/selecao, nunca por
-	# frame) — cobre TANTO fog mudando (nevoa por segmento, ver
-	# _build_city_border_mesh) QUANTO territorio crescendo (City.owned_tiles,
-	# ver City._claim_frontier_tile chamado todo turno em process_turn),
-	# sem precisar de um gancho separado em GameManager/City pra cada caso.
+	# Tingimento de territorio: reconstruido no MESMO ciclo, mesmo custo ja
+	# aceito hoje (evento discreto: turno/hover/selecao, nunca por frame) —
+	# cobre TANTO fog mudando (nevoa por tile, ver _build_city_tint_mesh)
+	# QUANTO territorio crescendo (City.owned_tiles, ver City.
+	# _claim_frontier_tile chamado todo turno em process_turn), sem
+	# precisar de um gancho separado em GameManager/City pra cada caso.
 	for city in cities_by_coord.values():
-		_update_city_border(city)
+		_update_city_tint(city)
 
 ## Refatoracao de nevoa de guerra (pedido do usuario: "escurecimento direto
 ## nos tiles... corte seco no formato do hexagono" virando 3 estados visuais
@@ -1123,11 +1268,12 @@ func _apply_terrain_fog(mm: MultiMesh, coord_to_index: Dictionary) -> void:
 func _apply_prop_fog() -> void:
 	if _props_tree_instance:
 		_tint_props(_props_tree_instance.multimesh, _tree_coord_to_index, Color.WHITE)
-	if _props_rock_instance:
-		_tint_props(_props_rock_instance.multimesh, _rock_coord_to_index, ROCK_BASE_COLOR)
 	if _props_mountain_spike_instance:
 		_tint_props(_props_mountain_spike_instance.multimesh, _mountain_spike_coord_to_index, MOUNTAIN_SPIKE_BASE_COLOR)
+	if _props_ice_floe_instance:
+		_tint_props(_props_ice_floe_instance.multimesh, _ice_floe_coord_to_index, ICE_FLOE_BASE_COLOR)
 	_resource_props_manager.apply_fog(visibility)
+	_resource_icon_manager.apply_fog(visibility)
 	for coord in lairs_by_coord.keys():
 		lairs_by_coord[coord].apply_fog_state(visibility.get(coord, Visibility.UNSEEN))
 
@@ -1342,8 +1488,24 @@ const ARCANE_NOISE_THRESHOLD := 0.4
 ## Elevacao < isso vira Oceano/Mar Gelado; senao e terra. Ver _elevation_for
 ## — elevacao ja inclui a mascara de borda (_edge_falloff), entao este
 ## limiar sozinho decide a fracao terra/agua do mapa junto com
-## edge_falloff_strength/edge_falloff_start (@export).
-const OCEAN_ELEVATION_THRESHOLD := -0.13
+## edge_falloff_strength/edge_falloff_start (@export) e continent_noise_
+## frequency (@export, acima).
+##
+## -0.38 (era -0.13, pedido do usuario: "mundo esta gerando ~74% de agua...
+## sufoca a expansao dos imperios", queria ~50% terra / 50% agua padrao
+## "Continentes/Pangaea"). Escolhido varrendo threshold x frequencia
+## OFFLINE (amostrando _elevation_for cru em varias sementes, sem pagar o
+## custo de generate_map() completo) ate achar o ponto onde a media de 5
+## sementes fixas (1, 42, 999, 12345, 7) cai perto de 52% terra / 48% agua
+## — perto o bastante do centro da faixa-alvo (45-50% agua) que a variacao
+## normal entre sementes (a mesma amostragem mediu ~±5 pontos percentuais
+## de uma semente pra outra) nao empurra nenhuma delas pra fora da faixa
+## tolerada nos testes (ver test_terrain_generation.gd,
+## test_generate_map_water_percentage_stays_within_the_continents_range).
+## -0.13 dava so ~22-27% terra com a frequencia antiga — mudar SO a
+## frequencia (mais baixa = continentes maiores) sem tambem descer este
+## limiar teria deixado o mapa ainda mais aguado, nao menos.
+const OCEAN_ELEVATION_THRESHOLD := -0.38
 const HILLS_ELEVATION_THRESHOLD := 0.14
 const MOUNTAINS_ELEVATION_THRESHOLD := 0.32
 
@@ -1352,8 +1514,21 @@ const MOUNTAINS_ELEVATION_THRESHOLD := 0.32
 const VOLCANIC_MIN_TEMPERATURE := 0.62
 ## Vulcanico "perto de oceano/fenda": distancia (em tiles) ate a agua mais
 ## proxima (ver _coastal_distance_by_coord) igual ou menor que isto conta
-## como litoraneo/fenda o bastante.
-const VOLCANIC_COASTAL_MAX_DISTANCE := 3
+## como litoraneo/fenda o bastante. Subido de 3 pra 5 (proximo do teto de
+## alcance da propria busca, COASTAL_DISTANCE_MAX=6) junto com o
+## rebalanceamento de terra/agua (ver OCEAN_ELEVATION_THRESHOLD acima):
+## continentes bem maiores/mais conectados tem uma fracao MENOR de terra
+## litoranea (menos costa por area, geometria basica — dobrar o raio de um
+## continente so dobra o perimetro mas quadruplica a area), entao o mesmo
+## raio de 3 tiles passou a cobrir uma fatia proporcionalmente menor da
+## terra do que cobria no mundo arquipelago antigo, deixando a regiao
+## vulcanica pequena demais perto do resto dos biomas (ver
+## test_generate_map_desert_and_volcanic_are_comparable_in_size_to_other_
+## biomes/test_generate_map_lava_mostly_occupies_flat_terrain_not_just_
+## mountains). Continua estritamente MENOR que o teto de busca (6) —
+## "vulcanico no interior profundo, longe de qualquer agua" continua
+## impossivel pela via costeira (so resta a via de Montanha).
+const VOLCANIC_COASTAL_MAX_DISTANCE := 5
 ## Faixa fria (Tundra/Taiga, ver _pick_biome) onde a transicao pra
 ## Colina/Montanha vira elegivel a Campos de Cristal.
 const CRYSTAL_TRANSITION_MAX_TEMPERATURE := 0.4
@@ -1371,12 +1546,6 @@ func _is_volcanic_eligible(temperature: float, elevation_tier: int, coastal_dist
 	if temperature < VOLCANIC_MIN_TEMPERATURE:
 		return false
 	return coastal_distance <= VOLCANIC_COASTAL_MAX_DISTANCE or elevation_tier == _ElevationTier.MOUNTAINS
-
-## Regra de fantasia (Mar de Lava substituindo Oceano comum): so em zona
-## vulcanica (mesmo ruido/limiar que decide Lava em terra) de alta
-## temperatura — nunca troca um oceano frio/temperado por lava.
-func _is_volcanic_sea_eligible(temperature: float) -> bool:
-	return temperature >= VOLCANIC_MIN_TEMPERATURE
 
 ## Regra de fantasia (Campos de Cristal): cluster coeso numa TRANSICAO
 ## tundra/montanha (fria + Colina ou Montanha) OU numa ilha pequena isolada
@@ -1416,11 +1585,15 @@ func _generate_tile_data(coord: Vector2i, elevation: float, coastal_distance: in
 
 	var data: HexTileData
 	if elevation < OCEAN_ELEVATION_THRESHOLD:
+		# Mar de Lava NUNCA nasce aqui (pedido do usuario, regressao: "lava
+		# gerando no meio do oceano" — antes disso, qualquer tile de agua
+		# aberta com temperatura alta o bastante virava Mar de Lava so pelo
+		# ruido vulcanico, SEM NENHUMA relacao com terra vulcanica proxima).
+		# Mar de Lava so existe pelo caminho de TERRA abaixo (_maybe_volcanic
+		# chamado com land_biome, gated por _is_volcanic_eligible: litoral
+		# proximo OU Montanha) — nasce sempre DENTRO de uma regiao de terra
+		# ja vulcanicamente elegivel, nunca solto em oceano aberto.
 		var water_biome = _pick_water_biome(temperature)
-		if _is_volcanic_sea_eligible(temperature):
-			var volcanic_value = _volcanic_noise.get_noise_2d(warped.x, warped.y)
-			if volcanic_value > LAVA_SEA_NOISE_THRESHOLD:
-				water_biome = HexTileData.TerrainType.LAVA_SEA
 		data = TerrainDatabase.create_tile(water_biome)
 	else:
 		var elevation_tier = _tier_for_elevation(elevation)
@@ -1746,6 +1919,60 @@ func _ensure_forced_region(terrain_type: int, sorted_coords: Array, claimed: Dic
 ## So usado por _ensure_forced_region: escreve o tile forcado de verdade
 ## em `tiles` (bug encontrado testando o item 30 generalizado — o tile
 ## "semente" de uma regiao forcada do zero, `target` acima, ficava so na
+## Limite de vizinhos de Montanha (pedido do usuario: "montanhas gerando em
+## blocos gigantescos/massivos... nenhum tile de montanha pode ter mais de
+## 3 vizinhos diretos que tambem sejam montanha"). Qualquer tile de
+## Montanha respeitando isso so pode fazer parte de uma linha/parede fina
+## (no MAXIMO um "T" ou cotovelo largo) — um blob solido inevitavelmente
+## tem tiles interiores com 5-6 vizinhos de Montanha, entao violam sempre.
+const MAX_MOUNTAIN_NEIGHBORS := 3
+
+## Erosao iterativa (pedido do usuario, "Restruturacao da Geracao de
+## Montanhas"): cada PASSADA acha TODOS os tiles violando MAX_MOUNTAIN_
+## NEIGHBORS usando o estado do INICIO da passada (nao recalcula no meio —
+## senao a ordem de iteracao de tiles.keys() mudaria o resultado final) e
+## rebaixa todos de uma vez; repete ate nao sobrar violacao nenhuma. Sempre
+## converge: cada passada com violacao remove PELO MENOS 1 tile de
+## Montanha, e o total de tiles de Montanha so' diminui (nunca cresce) —
+## nao ha como entrar em loop infinito. Rodando um blob solido, isso poda
+## as camadas internas passada a passada ate sobrar so' um "anel"/parede
+## fina de 1-2 tiles de espessura nas bordas do blob original, exatamente
+## a leitura de "cordilheira" pedida — muito mais barato e prevcircavel
+## que remodelar o ruido de elevacao inteiro (`_elevation_for`), que
+## alimenta tambem agua/costa/Colina e varias regras de elegibilidade
+## (vulcanico/cristal) ja calibradas em rodadas anteriores.
+##
+## So mexe em tiles cujo terrain_type JA E MOUNTAINS no momento da chamada
+## — chamada DEPOIS de _generate_tile_data/_maybe_volcanic/_maybe_crystal
+## decidirem o bioma final de cada coord (ver generate_map), entao um tile
+## que a elevacao marcou como "faixa de Montanha" mas que virou Lava/
+## Cristal (land_biome sobrescrito) nunca e tocado aqui — thinning nao
+## interfere nas contagens/proporcoes de vulcanico/cristal ja resolvidas.
+## Fallback tematico (pedido do usuario: "converta o tile interno para
+## Colina (Hills) ou Neve (Snow/Tundra)"): Neve pra clima frio (mesmo
+## SNOW_TEMPERATURE_THRESHOLD ja usado em _temp_band_for), Colina pro
+## resto — mesmo par HOT/COLD_BIOMES usado alhures neste arquivo.
+func _thin_mountain_clusters() -> void:
+	while true:
+		var to_downgrade: Array[Vector2i] = []
+		for coord in tiles.keys():
+			var data: HexTileData = tiles[coord]
+			if data.terrain_type != HexTileData.TerrainType.MOUNTAINS:
+				continue
+			var mountain_neighbors := 0
+			for n in get_neighbors(coord):
+				var ndata: HexTileData = tiles.get(n)
+				if ndata != null and ndata.terrain_type == HexTileData.TerrainType.MOUNTAINS:
+					mountain_neighbors += 1
+			if mountain_neighbors > MAX_MOUNTAIN_NEIGHBORS:
+				to_downgrade.append(coord)
+		if to_downgrade.is_empty():
+			return
+
+		for coord in to_downgrade:
+			var fallback = HexTileData.TerrainType.SNOW if _temperature_for(coord) < SNOW_TEMPERATURE_THRESHOLD else HexTileData.TerrainType.HILLS
+			_write_forced_tile(fallback, coord)
+
 ## lista local `largest_cluster` pra fins de contagem/BFS, mas nunca era
 ## de fato escrito em `tiles`; se nenhum vizinho elegivel fosse encontrado
 ## depois, o bioma inteiro acabava sumindo do mapa — foi assim que
@@ -1805,8 +2032,7 @@ func _ensure_lava_sea_present() -> void:
 ## firme solida OU de outro tile ja convertido em Costa em Costa (pedido do
 ## usuario: "Coast" tipo Civilization, com rendimento de cidade proprio,
 ## ver TerrainDatabase/City.can_be_worked). So roda DEPOIS de todo o mapa
-## ja estar gerado (chamado em generate_map antes de _generate_rivers) —
-## precisa conhecer os vizinhos de CADA tile, que so existem depois da
+## ja estar gerado — precisa conhecer os vizinhos de CADA tile, que so existem depois da
 ## geracao completa rodar uma vez. "Terra firme" aqui e "nao e agua nem
 ## lava" (data.is_water()/is_lava()) — Mar de Lava, por exemplo, NAO conta
 ## como terra firme, entao Oceano encostado nele nao vira Costa so por
@@ -1861,194 +2087,6 @@ func _reclassify_coastal_ocean() -> void:
 			var new_data = TerrainDatabase.create_tile(HexTileData.TerrainType.COAST)
 			new_data.resource = old_data.resource # Oceano nao tem recurso hoje (ResourceDatabase), mas preserva por seguranca se um dia ganhar
 			tiles[coord] = new_data
-
-## Chave canonica de uma aresta nao-direcionada entre dois tiles vizinhos —
-## mesma chave venha (a,b) ou (b,a), pra river_edges nunca guardar a MESMA
-## aresta duas vezes com direcoes trocadas.
-func _edge_key(a: Vector2i, b: Vector2i) -> String:
-	if a.x < b.x or (a.x == b.x and a.y < b.y):
-		return "%d,%d|%d,%d" % [a.x, a.y, b.x, b.y]
-	return "%d,%d|%d,%d" % [b.x, b.y, a.x, a.y]
-
-func _mark_river_edge(a: Vector2i, b: Vector2i) -> void:
-	var key = _edge_key(a, b)
-	if not river_edges.has(key):
-		river_edges[key] = [a, b]
-	_river_tiles[a] = true
-	_river_tiles[b] = true
-
-## Rios (pedido do usuario, ver consts RIVER_* acima) — nascem em Montanha/
-## Colina e descem por caminhada gulosa (steepest descent) na elevacao CRUA
-## do ruido de geracao ate: (1) alcancar agua de verdade (Oceano/Mar
-## Gelado), (2) esbarrar num tile que ja faz parte de OUTRO rio (confluencia
-## — os dois passam a compartilhar a jusante), ou (3) ficar sem vizinho mais
-## baixo (topo isolado sem saida — o rio so termina ali, sem alcancar o mar;
-## aceitavel, mesma logica "sem pathfinding de verdade" documentada nos
-## proprios consts). elevation_by_coord vem de generate_map() (Passo 1, ja
-## calculado ANTES do bioma pra mascara de borda/distancia costeira) —
-## usar ISSO em vez de base_height de proposito: base_height e uma
-## constante por BIOMA (todo tile de Colina tem o mesmo 0.3), daria muitos
-## empates entre vizinhos do mesmo bioma; a elevacao crua do ruido varia
-## continuamente tile a tile, dando um gradiente de descida de verdade.
-func _generate_rivers(elevation_by_coord: Dictionary) -> void:
-	river_edges.clear()
-	_river_tiles.clear()
-	river_paths.clear()
-
-	var rng := RandomNumberGenerator.new()
-	rng.seed = map_seed + 9000 # canal dedicado, mesmo padrao dos outros noises/RNGs (seed+N, ver generate_map)
-
-	var sources: Array[Vector2i] = []
-	for coord in tiles.keys():
-		var data: HexTileData = tiles[coord]
-		if data.terrain_type == HexTileData.TerrainType.MOUNTAINS:
-			if rng.randf() < RIVER_SOURCE_CHANCE_MOUNTAINS:
-				sources.append(coord)
-		elif data.terrain_type == HexTileData.TerrainType.HILLS:
-			if rng.randf() < RIVER_SOURCE_CHANCE_HILLS:
-				sources.append(coord)
-	sources.sort() # determinismo: tiles.keys() segue ordem de insercao (ja deterministica), mas ordenar explicitamente nao depende disso continuar valendo
-
-	for source in sources:
-		_trace_river(source, elevation_by_coord)
-
-	# Debug pedido pelo usuario pra confirmar de fato quantos rios saem do
-	# tracado (sem precisar abrir o editor) — deliberadamente barulhento
-	# (print_rich colorido), tirar depois que a visibilidade dos rios em
-	# jogo for confirmada.
-	print_rich("[color=cyan]RIOS GERADOS:[/color] %d caminhos, %d arestas, %d tiles tocados" % [
-		river_paths.size(), river_edges.size(), _river_tiles.size()
-	])
-
-	_compute_river_carve_masks()
-
-## Preenche _river_carve_mask (ver var acima) reusando a MESMA funcao que
-## a malha do rio usa pra decidir seus pontos de juncao
-## (_compute_river_waypoints) — garante que a calha esculpida no
-## terrain.gdshader bata EXATAMENTE com onde o rio realmente assenta,
-## inclusive nos cantos usados so pra contornar um pico/domo (ver
-## _hex_boundary_arc), que sao a MAIORIA dos cantos tocados (achado da
-## rodada anterior: um rio descendo elevacao tende a manter direcao
-## consistente, entao entrada/saida de um tile costumam ser arestas
-## OPOSTAS, nao adjacentes — o contorno de varias arestas e o caso comum,
-## nao excecao). Chamada uma vez so, logo apos _generate_rivers, ANTES de
-## _rebuild_multimesh construir o terreno solido (ver generate_map) — o
-## terreno so e (re)construido do zero na geracao do mapa, nunca precisa
-## recalcular essa mascara depois (diferente da malha do rio em si, que
-## SIM e reconstruida a cada fog-of-war, ver _rebuild_river_mesh).
-func _compute_river_carve_masks() -> void:
-	_river_carve_mask.clear()
-	for path in river_paths:
-		var wps = _compute_river_waypoints(path)
-		for wp in wps:
-			var corner: int = wp["corner"]
-			if corner < 0:
-				continue
-			var tile: Vector2i = wp["tile"]
-			_river_carve_mask[tile] = _river_carve_mask.get(tile, 0) | (1 << corner)
-		# Bit 6 (valor 64, fora dos 6 bits de canto 0-5): o conector de
-		# confluencia (ver _add_river_path/_compute_river_waypoints) assenta
-		# no CENTRO do tile de destino, nao num canto — sem essa marca o
-		# terrain.gdshader nao saberia suprimir o ruido de micro-relevo
-		# ali, e RIVER_ABOVE_OFFSET precisaria ficar alto o bastante pra
-		# cobrir esse residuo tambem (o mesmo raciocinio dos cantos, so que
-		# pro centro).
-		if path.get("is_confluence", false):
-			var terminus: Vector2i = path.get("terminus", Vector2i.ZERO)
-			_river_carve_mask[terminus] = _river_carve_mask.get(terminus, 0) | 64
-
-## Registra o resultado de UMA caminhada em river_paths (ver var acima) —
-## chamado sempre que _trace_river para, com ou sem terminus valido
-## (topo sem saida so guarda a lista de tiles, sem terminus).
-##
-## Filtro de rio orfao (pedido do usuario): um caminho que NAO alcancou
-## agua nem outra rio E tem poucos segmentos vira so um cotoco solto no
-## meio do mapa, sem se conectar a nada — descartado aqui, ANTES de
-## registrar em river_paths ou marcar river_edges/_river_tiles (pra nao
-## "contar" como rio existente pra futuras traces, ver _trace_river).
-func _finish_river_path(path_tiles: Array[Vector2i], has_terminus: bool, terminus: Vector2i, is_confluence: bool) -> void:
-	var edge_count = path_tiles.size() - 1 + (1 if has_terminus else 0)
-	if not has_terminus and edge_count < RIVER_MIN_ORPHAN_EDGES:
-		return
-
-	river_paths.append({
-		"tiles": path_tiles.duplicate(),
-		"has_terminus": has_terminus,
-		"terminus": terminus,
-		"is_confluence": is_confluence,
-	})
-	for i in range(path_tiles.size() - 1):
-		_mark_river_edge(path_tiles[i], path_tiles[i + 1])
-	if has_terminus:
-		_mark_river_edge(path_tiles[path_tiles.size() - 1], terminus)
-
-## Caminhada gulosa que agora GUARDA A ORDEM dos tiles visitados (path_tiles),
-## nao so as arestas soltas — necessario pra _add_river_path desenhar os
-## pontos medios de aresta EM SEQUENCIA (ver correcao de "rio invisivel"
-## acima: a malha passa a seguir as ARESTAS entre tiles, nao mais o centro
-## de cada um, e pra isso precisa saber a ORDEM em que as arestas se ligam).
-func _trace_river(start: Vector2i, elevation_by_coord: Dictionary) -> void:
-	var current := start
-	var visited := {start: true}
-	var path_tiles: Array[Vector2i] = [start]
-	# _river_tiles NAO e mais marcado aqui durante a caminhada (so em
-	# _finish_river_path, depois do filtro de rio orfao curto abaixo) —
-	# `visited` ja protege esta MESMA trace de revisitar seus proprios
-	# tiles, entao _river_tiles so precisa refletir traces ANTERIORES ja
-	# CONFIRMADAS (nao descartadas), pra um cotoco orfao descartado nao
-	# "bloquear"/confundir uma trace futura pensando que ali ja e rio.
-	var steps := 0
-	while steps < RIVER_MAX_LENGTH:
-		steps += 1
-		var current_elevation: float = elevation_by_coord.get(current, 0.0)
-		var best_neighbor := Vector2i.ZERO
-		var best_elevation := current_elevation
-		var found_strict := false
-		# Fallback de planalto (pedido do usuario: "se o vizinho tiver a
-		# mesma altura, continue o caminho em vez de abortar") — so usado
-		# se NENHUM vizinho estritamente mais baixo existir; evita nascente
-		# morta prematura num trecho raso/plano antes de realmente descer.
-		# Ainda 100% seguro contra loop infinito: `visited` nunca deixa
-		# revisitar o mesmo tile, e RIVER_MAX_LENGTH e uma trava extra.
-		var plateau_neighbor := Vector2i.ZERO
-		var found_plateau := false
-		for dir in NEIGHBOR_DIRS:
-			var n = current + dir
-			if not tiles.has(n):
-				continue
-			var ndata: HexTileData = tiles[n]
-			if ndata.is_lava(): # rio de agua nunca atravessa lava — so desvia
-				continue
-			if ndata.is_water():
-				_finish_river_path(path_tiles, true, n, false)
-				return
-			if _river_tiles.has(n) and not visited.has(n):
-				# esbarrou num tile que ja e de OUTRO rio — confluencia,
-				# conecta e para (nao precisa checar os outros vizinhos).
-				_finish_river_path(path_tiles, true, n, true)
-				return
-			if visited.has(n):
-				continue
-			var n_elevation: float = elevation_by_coord.get(n, 1.0)
-			if n_elevation < best_elevation:
-				best_elevation = n_elevation
-				best_neighbor = n
-				found_strict = true
-			elif not found_plateau and is_equal_approx(n_elevation, current_elevation):
-				plateau_neighbor = n
-				found_plateau = true
-		if found_strict:
-			path_tiles.append(best_neighbor)
-			visited[best_neighbor] = true
-			current = best_neighbor
-			continue
-		if found_plateau:
-			path_tiles.append(plateau_neighbor)
-			visited[plateau_neighbor] = true
-			current = plateau_neighbor
-			continue
-		_finish_river_path(path_tiles, false, Vector2i.ZERO, false) # cercado por vizinhos mais altos (ou ja visitados) dos dois lados — rio termina aqui, sem alcancar o mar (aceitavel)
-		return
 
 ## Todas as regioes conectadas (BFS por vizinhanca de hexagono real, nao
 ## so distancia) dentro de `coords` — cada uma como um Array de Vector2i,
@@ -2637,6 +2675,35 @@ func _material_kind_for(terrain_type: int) -> float:
 		_:
 			return 0.0
 
+## Distancia em tiles (BFS no grafo de vizinhos, land_coords como fontes
+## multiplas) de CADA tile ate a terra solida mais proxima — "falsa
+## profundidade" pro water_shader.gdshader (pedido do usuario: o gradiente
+## de profundidade REAL via DEPTH_TEXTURE salta quase direto pro azul
+## escuro logo apos a borda do hexagono, porque nao ha malha de fundo do
+## mar submersa alem da "saia" vertical do prisma de terreno — ver
+## LAND_PRISM_DEPTH_FACTOR — entao o degrade real so existe numa faixa
+## finissima). Land tile = distancia 0 (fonte da BFS); primeiro anel de
+## agua colado na costa = distancia 1; e por ai vai. _rebuild_water_overlay
+## consome isso (subtraindo 1, ja que so tiles de AGUA importam pro shader)
+## e baka num canal da textura pro shader ler por pixel, ver
+## COAST_DISTANCE_NORM_MAX em water_shader.gdshader.
+func _compute_coast_distance_tiles(land_coords: Array[Vector2i]) -> Dictionary:
+	var dist := {}
+	var queue: Array[Vector2i] = []
+	for coord in land_coords:
+		dist[coord] = 0
+		queue.append(coord)
+	var head := 0
+	while head < queue.size():
+		var current: Vector2i = queue[head]
+		head += 1
+		var d: int = dist[current]
+		for n in get_neighbors(current):
+			if tiles.has(n) and not dist.has(n):
+				dist[n] = d + 1
+				queue.append(n)
+	return dist
+
 ## Terreno solido (todo bioma que nao seja Oceano/Mar Gelado/Mar de Lava)
 ## continua 1 prisma por tile num MultiMeshInstance3D (terrain.gdshader).
 ## TODO liquido (agua E lava) divide UM UNICO PlaneMesh continuo — ver
@@ -2648,9 +2715,6 @@ func _rebuild_multimesh() -> void:
 		_multimesh_instance.queue_free()
 	if _liquid_plane_instance:
 		_liquid_plane_instance.queue_free()
-	if _river_instance:
-		_river_instance.queue_free()
-		_river_instance = null
 	if _ground_body:
 		_ground_body.queue_free()
 
@@ -2664,13 +2728,15 @@ func _rebuild_multimesh() -> void:
 	_multimesh_instance = _build_terrain_multimesh(land_coords, _coord_to_index)
 	add_child(_multimesh_instance)
 
+	_coast_distance_tiles = _compute_coast_distance_tiles(land_coords)
+
 	_liquid_plane_instance = _build_liquid_plane()
 	add_child(_liquid_plane_instance)
+	_rebuild_lava_tile_mask()
 
 	_rebuild_props()
 	_rebuild_water_overlay() # fog inicial (tudo UNSEEN, ver visibility) no plano recem-criado
 	_rebuild_biome_overlay() # idem, mascara inicial pro terreno solido
-	_rebuild_river_mesh() # idem, malha+cor inicial do rio (river_edges ja populado por generate_map antes desta funcao)
 
 	var half_extents = get_world_half_extents()
 	var plane_shape := BoxShape3D.new()
@@ -2712,505 +2778,70 @@ func _build_liquid_plane() -> MeshInstance3D:
 	mesh_instance.material_override = material
 	return mesh_instance
 
-## RGB = multiplicador de brilho por fog-of-war, MESMA escala de sempre
-## (_apply_terrain_fog/_tint_props) — usado como COLOR por vertice na malha
-## do rio (ver _add_river_segment), ja que river_shader.gdshader multiplica
-## ALBEDO por COLOR.rgb igual o overlay da agua faz.
-func _river_fog_factor(coord: Vector2i) -> float:
-	match visibility.get(coord, Visibility.UNSEEN):
-		Visibility.UNSEEN:
-			return 0.02
-		Visibility.EXPLORED:
-			return 0.45
-		_:
-			return 1.0
-
-## Ponto medio de uma aresta compartilhada entre dois tiles VIZINHOS — pra
-## um grid hexagonal regular, o ponto medio entre os dois CENTROS coincide
-## exatamente com o ponto medio da aresta que eles compartilham (fato
-## geometrico padrao de tiling hexagonal: a bissetriz perpendicular do
-## segmento centro-a-centro passa pelos dois cantos da aresta, e o meio do
-## segmento cai exatamente no meio dela) — entao nao precisa calcular
-## cantos/direcao de vizinho nenhum, so a media das duas posicoes-mundo.
-##
-## Y usa o MAIOR base_height dos dois lados (NAO a media — bug real pego no
-## smoke test de verificacao: cada tile e um prisma INDEPENDENTE, entao uma
-## diferenca grande de altura entre vizinhos — ex: Montanha 0.65 do lado de
-## uma Planicie 0.01 — vira uma PAREDE vertical de verdade (a falesia, ver
-## terrain.gdshader cliff_normal_threshold), nao uma rampa suave. A media
-## dos dois (0.335) cai ATRAS dessa parede do lado da Montanha — escondida
-## de novo, mesmo bug relatado pelo usuario, so que agora so nas bordas de
-## desnivel grande em vez do mapa inteiro. Usando o MAIOR dos dois, o rio
-## sempre fica acima da superficie visivel dos DOIS lados (o preco e
-## "flutuar" um pouco acima do lado mais baixo perto de uma queda brusca —
-## seria fisicamente uma cachoeira ali, que esta fita plana nao modela,
-## mas ainda assim visivel, o que a versao anterior nao garantia).
-## RIVER_ABOVE_OFFSET por cima garante a folga mesmo em bordas de altura
-## igual (onde max() == qualquer um dos dois lados).
-func _edge_midpoint(a: Vector2i, b: Vector2i) -> Vector3:
-	var wa = world_for_coord(a)
-	var wb = world_for_coord(b)
-	var data_a: HexTileData = tiles[a]
-	var data_b: HexTileData = tiles.get(b, null)
-	var height_a = data_a.base_height
-	var height_b = data_b.base_height if data_b != null else height_a
-	var y = max(height_a, height_b) + RIVER_ABOVE_OFFSET
-	return Vector3((wa.x + wb.x) * 0.5, y, (wa.z + wb.z) * 0.5)
-
-## Centro de um tile na sua altura VISUAL real (com pico/domo, ver
-## _tile_surface_height) + RIVER_ABOVE_OFFSET — usado SO como conector de
-## confluencia (ver _add_river_path) e como fallback de caminho degenerado
-## (nascente que ja nasce direto na agua/outro rio, sem nenhuma aresta
-## interna pra formar uma linha).
-func _tile_center_point(coord: Vector2i) -> Vector3:
-	var w = world_for_coord(coord)
-	return Vector3(w.x, _tile_surface_height(coord) + RIVER_ABOVE_OFFSET, w.z)
-
-## Os dois indices de CANTO (ver HexMetrics.corner: angulo = 60*i-30) da
-## aresta compartilhada entre um tile e seu vizinho na direcao NEIGHBOR_
-## DIRS[i], relativos ao PRIMEIRO tile (a). Derivado geometricamente uma
-## vez (a distancia entre os CENTROS de dois hexagonos vizinhos, dividida
-## ao meio, cai exatamente no meio da aresta compartilhada — comparando
-## essa posicao com os pontos medios de cada par de cantos consecutivos
-## de HexMetrics.corner pra achar qual par bate com qual direcao de
-## NEIGHBOR_DIRS). Devolve [] se `b` nao for vizinho direto de `a`.
-const _EDGE_CORNERS_BY_DIR: Array = [
-	[0, 1], [5, 0], [4, 5], [3, 4], [2, 3], [1, 2],
-]
-
-func _shared_edge_corners(a: Vector2i, b: Vector2i) -> Array:
-	var dir_index = NEIGHBOR_DIRS.find(b - a)
-	if dir_index == -1:
-		return []
-	return _EDGE_CORNERS_BY_DIR[dir_index]
-
-## Maior base_height entre um tile e TODOS os seus vizinhos reais — usado
-## como altura "segura" pra TODOS os cantos do contorno de `coord` (ver
-## _corner_point_safe/_hex_boundary_arc): evita ficar atras da parede de
-## falesia de QUALQUER vizinho mais alto, nao so os dois tiles de uma
-## aresta especifica (generalizacao do criterio de _edge_midpoint pra
-## quando o contorno inteiro do tile pode ser percorrido, nao so um ponto).
-func _tallest_neighbor_height(coord: Vector2i) -> float:
-	var data: HexTileData = tiles[coord]
-	var tallest = data.base_height
-	for dir in NEIGHBOR_DIRS:
-		var n = coord + dir
-		if tiles.has(n):
-			tallest = max(tallest, tiles[n].base_height)
-	return tallest
-
-## Um canto de `coord` (ver HexMetrics.corner), na altura `safe_height`
-## (ver _tallest_neighbor_height) + `offset` (RIVER_ABOVE_OFFSET por
-## padrao — os 4 chamadores de rio ja existentes continuam identicos sem
-## passar o parametro; a borda de cidade usa BORDER_ABOVE_OFFSET, ver
-## _build_city_border_mesh). No CANTO de verdade (r=1.0 em elevation_height
-## do shader, diferente do ponto-medio de aresta em r=0.866) o pico/domo de
-## Montanha/Colina ja cai pra EXATAMENTE zero, entao base_height sozinho ja
-## e a altura visual real ali, sem residuo nenhum.
-func _corner_point_safe(coord: Vector2i, corner_index: int, safe_height: float, offset: float = RIVER_ABOVE_OFFSET) -> Vector3:
-	var w = world_for_coord(coord)
-	var c = HexMetrics.corner(hex_size, corner_index)
-	return Vector3(w.x + c.x, safe_height + offset, w.z + c.z)
-
-## Sequencia de indices de canto de `entry_corner` ate `exit_corner`,
-## andando pelo CAMINHO MAIS CURTO ao redor do hexagono (0..5 em qualquer
-## sentido) — usado pra contornar um tile inteiramente pela borda quando a
-## aresta de entrada e a de saida NAO sao adjacentes (nao compartilham
-## canto nenhum, ver _add_river_path), em vez de cortar reto pelo centro.
-func _hex_boundary_arc(entry_corner: int, exit_corner: int) -> Array:
-	var diff = (exit_corner - entry_corner + 6) % 6
-	var result: Array = []
-	var c = entry_corner
-	if diff <= 3:
-		while true:
-			result.append(c)
-			if c == exit_corner:
-				break
-			c = (c + 1) % 6
-	else:
-		while true:
-			result.append(c)
-			if c == exit_corner:
-				break
-			c = (c + 5) % 6
-	return result
-
-## Malha UNICA (SurfaceTool/ArrayMesh) cobrindo TODOS os caminhos de rio —
-## nao MultiMesh (rio e uma rede continua, nao geometria repetida) nem 1
-## MeshInstance3D por caminho (dezenas de nodes desnecessarios). Reconstruida
-## INTEIRA (geometria + cor) a cada chamada, inclusive em toda atualizacao
-## de fog-of-war (ver _apply_land_and_prop_fog) — a cor de fog fica
-## EMBUTIDA por vertice, nao um uniform separado como no plano de agua,
-## entao mudar so a cor exige reconstruir. Aceitavel: contagem de caminhos
-## de rio e pequena (dezenas, nao milhares), mesmo padrao de custo ja aceito
-## por _rebuild_water_overlay/_rebuild_biome_overlay (eventos discretos:
-## geracao/turno/hover/selecao, nunca por frame).
-func _rebuild_river_mesh() -> void:
-	if _river_instance:
-		_river_instance.queue_free()
-		_river_instance = null
-	if river_paths.is_empty():
-		return
-
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var rng := RandomNumberGenerator.new()
-	# Canal PROPRIO (map_seed+9500), separado do RNG de geracao do tracado
-	# (map_seed+9000, ver _generate_rivers) — reconstruir a malha por causa
-	# de fog-of-war nao deve mudar o TRACADO do rio, so a cor, entao reusa
-	# sempre a MESMA sequencia de ruido lateral a cada rebuild.
-	rng.seed = map_seed + 9500
-	for path in river_paths:
-		_add_river_path(st, path, rng)
-
-	st.generate_normals()
-	var mesh := st.commit()
-	if mesh.get_surface_count() == 0:
-		return
-
-	_river_instance = MeshInstance3D.new()
-	_river_instance.mesh = mesh
-	_river_instance.visible = true
-	# AABB manual generosa cobrindo o mapa inteiro + margem (pedido do
-	# usuario, contra frustum culling indevido) — mesh.get_aabb() ja deveria
-	# bastar sozinho (Godot computa a partir dos vertices reais no commit()),
-	# mas usar uma caixa deliberadamente maior que o mapa e uma rede de
-	# seguranca de custo zero: elimina qualquer duvida de a malha ficar de
-	# fora do frustum por AABB mal calculada.
-	var half_extents = get_world_half_extents()
-	var margin := 5.0
-	_river_instance.custom_aabb = AABB(
-		Vector3(-half_extents.x - margin, -5.0, -half_extents.y - margin),
-		Vector3((half_extents.x + margin) * 2.0, 10.0, (half_extents.y + margin) * 2.0)
-	)
-	var material := ShaderMaterial.new()
-	var river_shader: Shader = load("res://shaders/river_shader.gdshader")
-	if river_shader == null:
-		push_error("HexGrid: falha ao carregar res://shaders/river_shader.gdshader — rio ficara sem material (invisivel)")
-	material.shader = river_shader
-	_river_instance.material_override = material
-	add_child(_river_instance)
-
-## Ribbon seguindo ESTRITAMENTE as ARESTAS/QUINAS dos hexagonos (pedido do
-## usuario: rios NAO devem atravessar o interior/centro dos tiles, nem
-## sequer "por cima" de um pico de Montanha — so cantos reais do grid).
-##
-## Achado importante nesta correcao: a suposicao original ("um rio raramente
-## faz meia-volta dentro do mesmo tile, entao a aresta de entrada e a de
-## saida geralmente sao ADJACENTES") estava ERRADA — o oposto e verdade: um
-## rio descendo um gradiente de elevacao tende a manter uma direcao
-## relativamente CONSISTENTE, entao entrar por um lado e sair pelo lado
-## OPOSTO-ish e o caso COMUM, nao raro (confirmado num smoke test: 0
-## vertices proximos da distancia de canto real na primeira versao). Por
-## isso o algoritmo agora sempre CONTORNA o tile pela borda (_hex_boundary_
-## arc), do canto de entrada ate o canto de saida, pelo caminho mais curto
-## ao redor do hexagono — nunca corta pelo meio, seja a entrada/saida
-## adjacente (contorno de 1 aresta, o caso mais comum agora que se sabe que
-## nao e raro) ou opostas (contorno de ate 3 arestas, contornando a base do
-## tile em vez de atravessar por cima/por baixo dele).
-##
-## Continuidade entre tiles consecutivos e garantida por POSICAO (nao por
-## indice de canto — o mesmo canto fisico tem indices DIFERENTES vistos de
-## tiles vizinhos diferentes): o canto de ENTRADA de cada tile interior e
-## escolhido como o que estiver mais proximo (em XZ) do ultimo ponto ja
-## colocado, que por construcao e o MESMO ponto fisico calculado do lado do
-## tile anterior.
-##
-## Limitacao conhecida: numa CONFLUENCIA (path.is_confluence == true), o
-## conector final usa o CENTRO do tile de destino (_tile_center_point), nao
-## um canto — o rio que ja passava por ali (de outra nascente) pode nao ter
-## um vertice EXATAMENTE nesse centro, entao visualmente os dois tracados
-## convergem pra dentro do mesmo tile pequeno sem sempre se tocar pixel a
-## pixel. Aceitavel: ainda assim ficam bem proximos, sem o gap grande que
-## existiria sem esse conector.
-## Sequencia de PONTOS DE JUNCAO de um caminho de rio — cantos reais quando
-## possivel (contornando o hexagono pela borda, ver _hex_boundary_arc),
-## pontos-medio de aresta ou centro elevado como fallback (ver comentario
-## de _add_river_path pra o raciocinio completo). Cada item devolvido e
-## {"pos": Vector3, "fog": float, "tile": Vector2i, "corner": int} —
-## corner = -1 quando o ponto NAO e um canto de verdade (ponto-medio de
-## aresta, centro de confluencia, ou o ponto estendido da foz), usado por
-## _compute_river_carve_masks pra saber EXATAMENTE onde esculpir o
-## terrain.gdshader (a mesma lista de pontos que a malha do rio usa,
-## nao uma aproximacao separada — garante que toda calha esculpida
-## corresponda a um ponto onde o rio realmente assenta, e vice-versa).
-## Extraido como funcao pura (sem SurfaceTool) pra ser chamada tanto na
-## hora de construir a malha quanto (mais cedo, ANTES do terreno solido
-## ser construido) na hora de calcular a mascara de esculpir.
-func _compute_river_waypoints(path: Dictionary) -> Array:
-	var path_tiles: Array = path["tiles"]
-	var has_terminus: bool = path.get("has_terminus", false)
-	var is_confluence: bool = path.get("is_confluence", false)
-	var terminus: Vector2i = path.get("terminus", Vector2i.ZERO)
-
-	var nodes: Array[Vector2i] = path_tiles.duplicate()
-	if has_terminus and not is_confluence:
-		nodes.append(terminus)
-
-	var wps: Array = []
-
-	if nodes.size() >= 2:
-		# Primeiro ponto: UM dos dois cantos da aresta entre a nascente e o
-		# proximo no (pedido do usuario: nascente comeca NA ARESTA/QUINA,
-		# nao no centro do tile) — sem lado anterior pra comparar ainda,
-		# entao pega so o primeiro candidato (escolha arbitraria mas
-		# deterministica).
-		var first_corners = _shared_edge_corners(nodes[0], nodes[1])
-		if not first_corners.is_empty():
-			wps.append({
-				"pos": _corner_point_safe(nodes[0], first_corners[0], _tallest_neighbor_height(nodes[0])),
-				"fog": _river_fog_factor(nodes[0]), "tile": nodes[0], "corner": first_corners[0],
-			})
-		else:
-			wps.append({
-				"pos": _edge_midpoint(nodes[0], nodes[1]),
-				"fog": _river_fog_factor(nodes[0]), "tile": nodes[0], "corner": -1,
-			})
-
-		for i in range(1, nodes.size() - 1):
-			var prev: Vector2i = nodes[i - 1]
-			var cur: Vector2i = nodes[i]
-			var next: Vector2i = nodes[i + 1]
-
-			var in_corners = _shared_edge_corners(cur, prev)
-			var out_corners = _shared_edge_corners(cur, next)
-			if in_corners.is_empty() or out_corners.is_empty():
-				# Nao deveria acontecer (prev/next sao sempre vizinhos reais
-				# de cur, ver _trace_river) — fallback defensivo.
-				wps.append({"pos": _edge_midpoint(cur, next), "fog": _river_fog_factor(cur), "tile": cur, "corner": -1})
-				continue
-
-			# Qual dos in_corners e o MESMO ponto fisico que o ultimo
-			# waypoint ja colocado (calculado do lado do tile ANTERIOR) —
-			# comparado por posicao XZ (nao por indice — indices sao
-			# relativos a tiles diferentes, so a posicao no mundo e
-			# garantida igual).
-			var last_point: Vector3 = wps[wps.size() - 1]["pos"]
-			var last_xz = Vector2(last_point.x, last_point.z)
-			var entry_corner = in_corners[0]
-			var best_dist = INF
-			for c in in_corners:
-				var p = _corner_point_safe(cur, c, 0.0)
-				var d = Vector2(p.x, p.z).distance_to(last_xz)
-				if d < best_dist:
-					best_dist = d
-					entry_corner = c
-
-			# Qual dos out_corners da o contorno MAIS CURTO ao redor do
-			# hexagono a partir de entry_corner.
-			var exit_corner = out_corners[0]
-			var best_len = 6
-			for x in out_corners:
-				var d = (x - entry_corner + 6) % 6
-				var arc_len = min(d, 6 - d)
-				if arc_len < best_len:
-					best_len = arc_len
-					exit_corner = x
-
-			var safe_height = _tallest_neighbor_height(cur)
-			var arc = _hex_boundary_arc(entry_corner, exit_corner)
-			# arc[0] == entry_corner, o MESMO ponto ja colocado (so que
-			# calculado do lado do tile anterior) — pula pra nao duplicar.
-			for j in range(1, arc.size()):
-				wps.append({
-					"pos": _corner_point_safe(cur, arc[j], safe_height),
-					"fog": _river_fog_factor(cur), "tile": cur, "corner": arc[j],
-				})
-
-	if has_terminus and is_confluence:
-		var last: Vector2i = path_tiles[path_tiles.size() - 1]
-		wps.append({
-			"pos": _tile_center_point(terminus),
-			"fog": (_river_fog_factor(last) + _river_fog_factor(terminus)) * 0.5,
-			"tile": terminus, "corner": -1,
-		})
-
-	if wps.size() < 2:
-		# Caminho degenerado (nascente ja encosta direto na agua/outro rio,
-		# sem nenhum tile intermediario) — ainda assim precisa de 2 pontos
-		# pra formar uma linha; usa o centro da propria nascente como o
-		# primeiro.
-		var only: Vector2i = path_tiles[0]
-		wps.push_front({"pos": _tile_center_point(only), "fog": _river_fog_factor(only), "tile": only, "corner": -1})
-	if wps.size() < 2:
-		return wps
-
-	# Foz suave no oceano (pedido do usuario) — SO quando o rio desagua em
-	# agua de verdade (nao numa confluencia, que ja tem seu proprio
-	# conector pro centro do tile de destino). Estende o ULTIMO ponto pra
-	# dentro do tile de oceano, em direcao ao centro dele, e afunda a
-	# altura em direcao a LIQUID_LEVEL_Y — simula o rio "entrando" na
-	# superficie do mar em vez de parar seco bem na linha da costa. corner
-	# vira -1 (o ponto estendido nao e mais um canto de verdade, e ja esta
-	# dentro da agua — nao faz sentido esculpir terreno ali).
-	if has_terminus and not is_confluence:
-		var terminus_w = world_for_coord(terminus)
-		var last_wp = wps[wps.size() - 1]
-		var last_point: Vector3 = last_wp["pos"]
-		var dir_to_center = Vector3(terminus_w.x - last_point.x, 0.0, terminus_w.z - last_point.z)
-		var dlen = dir_to_center.length()
-		if dlen > 0.001:
-			dir_to_center /= dlen
-			var extended = last_point + dir_to_center * RIVER_MOUTH_EXTEND
-			extended.y = lerp(last_point.y, LIQUID_LEVEL_Y, 0.6)
-			last_wp["pos"] = extended
-			last_wp["corner"] = -1
-
-	return wps
-
-## Ribbon como uma TRIANGLE STRIP de verdade (pedido do usuario: "quinas
-## nao podem ser quads desconectados que so encostam no mesmo ponto-
-## medio"). Achata TODOS os trechos entre pontos de juncao (ver
-## _compute_river_waypoints) numa unica polilinha continua (com o ruido
-## lateral de sempre nos pontos internos), e calcula em CADA ponto uma
-## direcao MITER (bisseccao normalizada da direcao de entrada e saida) em
-## vez de uma normal por trecho isolada — os vertices esquerdo/direito de
-## uma juncao ficam EXATAMENTE compartilhados entre os dois trechos que se
-## encontram ali, eliminando o "canto pontudo/quebrado" de antes. O
-## comprimento do vetor miter e escalado por 1/cos(metade do angulo) pra
-## manter a largura visual constante na curva (trava num maximo — rede de
-## seguranca barata, os angulos do hexagono nunca chegam perto do caso
-## degenerado de uma dobra de quase 180°).
-func _add_river_path(st: SurfaceTool, path: Dictionary, rng: RandomNumberGenerator) -> void:
-	var wps = _compute_river_waypoints(path)
-	if wps.size() < 2:
-		return
-
-	var is_river_mouth: bool = path.get("has_terminus", false) and not path.get("is_confluence", false)
-	var half_width = RIVER_WIDTH_FACTOR * hex_size * 0.5
-	var steps = RIVER_SUBDIVISIONS
-	var mouth_segment_index = wps.size() - 2 if is_river_mouth else -1
-
-	var flat_pos: Array[Vector3] = []
-	var flat_fog: Array[float] = []
-	var flat_half_width: Array[float] = []
-	var flat_alpha: Array[float] = []
-
-	for seg in range(wps.size() - 1):
-		var start_p: Vector3 = wps[seg]["pos"]
-		var end_p: Vector3 = wps[seg + 1]["pos"]
-		var start_fog: float = wps[seg]["fog"]
-		var end_fog: float = wps[seg + 1]["fog"]
-		var is_mouth_seg = seg == mouth_segment_index
-
-		var seg_dir = Vector3(end_p.x - start_p.x, 0.0, end_p.z - start_p.z)
-		var length = seg_dir.length()
-		if length < 0.001:
-			continue
-		seg_dir /= length
-		var seg_perp = Vector3(-seg_dir.z, 0.0, seg_dir.x)
-
-		# O ponto i=0 de cada trecho (exceto o primeiro trecho do caminho
-		# inteiro) e o MESMO ponto que o ultimo ja adicionado pelo trecho
-		# anterior — nao duplica, senao a fita ficaria com 2 vertices na
-		# mesma posicao no meio da lista achatada.
-		var first_i = 0 if flat_pos.is_empty() else 1
-		for i in range(first_i, steps + 1):
-			var t = float(i) / float(steps)
-			# Y usa um t SUAVIZADO (smoothstep), XZ continua linear (pedido
-			# do usuario: "corredeira" natural em vez de degrau de 90° —
-			# reportado quando o rio cruza de Montanha/Colina pra Planicie
-			# num unico trecho curto). O smoothstep acelera no meio e
-			# desacelera nas pontas, entao a transicao de altura comeca e
-			# termina suave em vez de cortar reto — sem isso, dois waypoints
-			# vizinhos com alturas bem diferentes (o CANTO compartilhado, na
-			# convencao de altura do tile anterior, seguido do PROXIMO canto
-			# do mesmo tile, ja na convencao DELE — ver _tallest_neighbor_
-			# height, cada tile usa a sua propria) ligavam por uma reta
-			# curta e ingreme, lendo como "flutuando"/degrau em vez de rampa.
-			var eased_t = smoothstep(0.0, 1.0, t)
-			var p = Vector3(
-				lerp(start_p.x, end_p.x, t),
-				lerp(start_p.y, end_p.y, eased_t),
-				lerp(start_p.z, end_p.z, t)
-			)
-			if i > 0 and i < steps:
-				var jitter = (rng.randf() - 0.5) * RIVER_LATERAL_NOISE_FACTOR * hex_size
-				p += seg_perp * jitter
-			flat_pos.append(p)
-			flat_fog.append(lerp(start_fog, end_fog, t))
-			# Foz (pedido do usuario): largura sobe GRADUALMENTE ate
-			# RIVER_MOUTH_WIDTH_MULT no fim do trecho, e a opacidade desce
-			# ate 0 no mesmo ritmo — o shader multiplica ALPHA por COLOR.a
-			# (ver river_shader.gdshader), entao isso desvanece o rio
-			# suavemente dentro do oceano em vez de cortar seco na costa.
-			flat_half_width.append(half_width * (lerp(1.0, RIVER_MOUTH_WIDTH_MULT, t) if is_mouth_seg else 1.0))
-			flat_alpha.append(lerp(1.0, 0.0, t) if is_mouth_seg else 1.0)
-
-	var n = flat_pos.size()
-	if n < 2:
-		return
-
-	# Direcao/normal MITER por ponto — media normalizada da direcao de
-	# entrada e de saida (bisseccao do angulo, pedido do usuario), com o
-	# vetor perpendicular escalado pra compensar o encurtamento aparente
-	# em curvas.
-	var perps: Array[Vector3] = []
-	for i in range(n):
-		var dir_in = Vector3.ZERO
-		var dir_out = Vector3.ZERO
-		if i > 0:
-			dir_in = Vector3(flat_pos[i].x - flat_pos[i - 1].x, 0.0, flat_pos[i].z - flat_pos[i - 1].z)
-			if dir_in.length() > 0.0001:
-				dir_in = dir_in.normalized()
-		if i < n - 1:
-			dir_out = Vector3(flat_pos[i + 1].x - flat_pos[i].x, 0.0, flat_pos[i + 1].z - flat_pos[i].z)
-			if dir_out.length() > 0.0001:
-				dir_out = dir_out.normalized()
-		var miter_dir = dir_in + dir_out
-		if miter_dir.length() < 0.0001:
-			miter_dir = dir_in if dir_in.length() > 0.0001 else dir_out
-		if miter_dir.length() < 0.0001:
-			miter_dir = Vector3.RIGHT # ponto isolado sem vizinho nenhum — nao deveria acontecer (n>=2)
-		miter_dir = miter_dir.normalized()
-		var perp = Vector3(-miter_dir.z, 0.0, miter_dir.x)
-		var miter_scale = 1.0
-		if dir_in.length() > 0.0001 and dir_out.length() > 0.0001:
-			var edge_perp_in = Vector3(-dir_in.z, 0.0, dir_in.x)
-			var d = perp.dot(edge_perp_in)
-			if abs(d) > 0.05:
-				miter_scale = clamp(1.0 / d, 0.5, 2.5)
-		perps.append(perp * miter_scale)
-
-	for i in range(n - 1):
-		var p1 = flat_pos[i]
-		var p2 = flat_pos[i + 1]
-		var f1 = flat_fog[i]
-		var f2 = flat_fog[i + 1]
-		var a1 = flat_alpha[i]
-		var a2 = flat_alpha[i + 1]
-		var v1 = p1 - perps[i] * flat_half_width[i]
-		var v2 = p1 + perps[i] * flat_half_width[i]
-		var v3 = p2 - perps[i + 1] * flat_half_width[i + 1]
-		var v4 = p2 + perps[i + 1] * flat_half_width[i + 1]
-		var uv_y1 = float(i) / float(n - 1)
-		var uv_y2 = float(i + 1) / float(n - 1)
-
-		st.set_color(Color(f1, f1, f1, a1))
-		st.set_uv(Vector2(0.0, uv_y1))
-		st.add_vertex(v1)
-		st.set_color(Color(f1, f1, f1, a1))
-		st.set_uv(Vector2(1.0, uv_y1))
-		st.add_vertex(v2)
-		st.set_color(Color(f2, f2, f2, a2))
-		st.set_uv(Vector2(0.0, uv_y2))
-		st.add_vertex(v3)
-
-		st.set_color(Color(f1, f1, f1, a1))
-		st.set_uv(Vector2(1.0, uv_y1))
-		st.add_vertex(v2)
-		st.set_color(Color(f2, f2, f2, a2))
-		st.set_uv(Vector2(1.0, uv_y2))
-		st.add_vertex(v4)
-		st.set_color(Color(f2, f2, f2, a2))
-		st.set_uv(Vector2(0.0, uv_y2))
-		st.add_vertex(v3)
-
 ## Resolucao modesta e filtro linear DE PROPOSITO: o objetivo e uma
 ## transicao suave tipo neblina na agua (e uma borda levemente
 ## antialiased entre agua/lava, de graca pelo MESMO filtro linear — ver
-## liquid_type abaixo), nao um contorno hexagonal pixel-perfeito.
-const WATER_OVERLAY_RESOLUTION := 160
+## liquid_type abaixo), nao um contorno hexagonal pixel-perfeito. Subida de
+## 160 pra 224 (pedido do usuario: eliminar "linhas de contorno em
+## camadas" na borda Oceano/Mar Gelado) — num mapa Grande (96 tiles de
+## largura), 160 texels davam so ~1.7 texel por tile, tao grosseiro que o
+## filtro linear malha o contorno hexagonal de verdade num degrade
+## quadriculado/staircase em vez de suave. 224 ainda e "modesta" (a maior
+## parte do trabalho de suavizar a borda agora vem do dithering por ruido
+## no fragment shader, ver frozen_noise em water_shader.gdshader), so o
+## bastante a mais de texel-por-tile pra nao brigar visualmente com esse
+## ruido. _rebuild_water_overlay roda em eventos discretos (nunca por
+## frame), entao o custo extra (~2x iteracoes) fica imperceptivel.
+const WATER_OVERLAY_RESOLUTION := 224
+
+## Teto (em tiles) pra normalizar _coast_distance_tiles num canal de 8 bits
+## da textura (0..1) — TEM que bater com a const de mesmo nome em
+## water_shader.gdshader (comentado la tambem), senao o shader desnormaliza
+## errado. 6 tiles e bem mais que coast_mid_extent_tiles (a distancia onde o
+## shader ja considera "oceano aberto"), entao nunca clipa a faixa que
+## realmente importa pro gradiente visual.
+const COAST_DISTANCE_NORM_MAX := 6.0
+
+## Mascara de Mar de Lava EXATA por tile (pedido do usuario, apos duas
+## rodadas de ajuste fino na resolucao/filtro de liquid_type_texture ainda
+## nao bastarem: "quero que as celulas de lava ocupem a celula inteira") —
+## 1 texel POR TILE (map_width x map_height), nao por posicao-mundo continua
+## como WATER_OVERLAY_RESOLUTION. O shader converte world_pos.xz pro coord
+## axial EXATO (mesmo arredondamento cubo que HexMetrics.world_to_axial faz
+## aqui, portado pra GLSL como world_to_axial_round em water_shader.gdshader)
+## e busca ESSE tile especifico nesta textura com filter_nearest — garantido
+## bater com a fronteira hexagonal de verdade, sem zona fracionaria nenhuma
+## (diferente de amostrar uma grade continua, que nunca alinha perfeitamente
+## com o contorno hexagonal nao importa a resolucao). col/row usa o MESMO
+## esquema de coordenada offset "odd-r" que generate_map usa pra popular
+## `tiles` (invertido: dado q/r, `col = q + (row - (row&1))/2` desfaz
+## `q = col - (row - (row&1))/2`), garantindo indices sempre dentro de
+## [0, map_width) x [0, map_height) sem precisar de nenhuma margem de
+## seguranca extra. Calculada UMA VEZ por geracao de mapa (mesma razao de
+## _coast_distance_tiles: bioma nunca muda de tile depois de gerado).
+func _rebuild_lava_tile_mask() -> void:
+	if _liquid_plane_instance == null:
+		return
+	var half_w = map_width / 2
+	var half_h = map_height / 2
+	var img := Image.create(map_width, map_height, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0.0, 0.0, 0.0, 1.0))
+	for coord in tiles.keys():
+		var data: HexTileData = tiles[coord]
+		if data.terrain_type != HexTileData.TerrainType.LAVA_SEA:
+			continue
+		var row = coord.y
+		var col = coord.x + (row - (row & 1)) / 2
+		var px = col + half_w
+		var py = row + half_h
+		if px >= 0 and px < map_width and py >= 0 and py < map_height:
+			img.set_pixel(px, py, Color(1.0, 0.0, 0.0, 1.0))
+	_lava_tile_mask_texture = ImageTexture.create_from_image(img)
+	var material: ShaderMaterial = _liquid_plane_instance.material_override
+	material.set_shader_parameter("lava_tile_mask", _lava_tile_mask_texture)
+	material.set_shader_parameter("lava_grid_size", Vector2(map_width, map_height))
+	material.set_shader_parameter("lava_grid_half", Vector2(half_w, half_h))
+	material.set_shader_parameter("lava_hex_size", hex_size)
 
 ## O plano de liquido e 1 malha continua so, sem instancia por tile pra
 ## tingir/classificar individualmente — fog-of-war, destaque de movimento
@@ -3249,13 +2880,24 @@ func _rebuild_water_overlay(reachable: Array = [], attackable: Array = [], path:
 		buildable_set[c] = true
 
 	var half_extents = get_world_half_extents()
-	var overlay_img := Image.create(WATER_OVERLAY_RESOLUTION, WATER_OVERLAY_RESOLUTION, false, Image.FORMAT_RGBA8)
-	var type_img := Image.create(WATER_OVERLAY_RESOLUTION, WATER_OVERLAY_RESOLUTION, false, Image.FORMAT_RGBA8)
-	for py in range(WATER_OVERLAY_RESOLUTION):
-		var v = float(py) / float(WATER_OVERLAY_RESOLUTION - 1)
+	var res := WATER_OVERLAY_RESOLUTION
+	# PackedByteArray + Image.create_from_data em vez de Image.set_pixel por
+	# pixel — mesmos valores finais, so troca o MECANISMO de escrita.
+	# set_pixel paga overhead de chamada/validacao de formato por pixel; num
+	# loop de res*res (224*224 = 50176) isso pesa MUITO mais que indexar um
+	# array de bytes puro. Motivo: usuario reportou queda pra ~15 FPS na
+	# troca de turno, e este rebuild roda todo turno (recompute_fog) e a
+	# cada hover/selecao (set_highlight/clear_highlight).
+	var overlay_data := PackedByteArray()
+	overlay_data.resize(res * res * 4)
+	var type_data := PackedByteArray()
+	type_data.resize(res * res * 4)
+	for py in range(res):
+		var v = float(py) / float(res - 1)
 		var world_z = lerp(-half_extents.y, half_extents.y, v)
-		for px in range(WATER_OVERLAY_RESOLUTION):
-			var u = float(px) / float(WATER_OVERLAY_RESOLUTION - 1)
+		var row_offset = py * res * 4
+		for px in range(res):
+			var u = float(px) / float(res - 1)
 			var world_x = lerp(-half_extents.x, half_extents.x, u)
 			var coord = HexMetrics.world_to_axial(world_x, world_z, hex_size)
 
@@ -3277,15 +2919,39 @@ func _rebuild_water_overlay(reachable: Array = [], attackable: Array = [], path:
 			var is_frozen = tile != null and tile.terrain_type == HexTileData.TerrainType.FROZEN_OCEAN
 			var is_lava = tile != null and tile.terrain_type == HexTileData.TerrainType.LAVA_SEA
 			tint.a = 0.0 if is_frozen else 1.0
-			overlay_img.set_pixel(px, py, tint)
 			var lava_value = 1.0 if is_lava else 0.0
 			var fog_level = _fog_level_for(coord) if tile != null else 0.0
-			type_img.set_pixel(px, py, Color(lava_value, lava_value, lava_value, fog_level))
+			# Canal G: distancia normalizada ate a costa (ver
+			# _compute_coast_distance_tiles), 0 = agua colada na terra, 1 =
+			# COAST_DISTANCE_NORM_MAX+ tiles mar adentro — antes esse canal
+			# ficava redundante (mesmo valor de R). land_dist vem da BFS com
+			# terra = 0, entao subtrai 1 pra virar "tiles de agua desde a
+			# costa" (agua colada na terra = land_dist 1 -> 0).
+			var land_dist = _coast_distance_tiles.get(coord, -1)
+			var water_coast_dist = float(max(land_dist - 1, 0)) if land_dist >= 0 else COAST_DISTANCE_NORM_MAX
+			var coast_dist_norm = clamp(water_coast_dist / COAST_DISTANCE_NORM_MAX, 0.0, 1.0)
+
+			var idx = row_offset + px * 4
+			overlay_data[idx] = int(round(clamp(tint.r, 0.0, 1.0) * 255.0))
+			overlay_data[idx + 1] = int(round(clamp(tint.g, 0.0, 1.0) * 255.0))
+			overlay_data[idx + 2] = int(round(clamp(tint.b, 0.0, 1.0) * 255.0))
+			overlay_data[idx + 3] = int(round(clamp(tint.a, 0.0, 1.0) * 255.0))
+			type_data[idx] = int(round(lava_value * 255.0))
+			type_data[idx + 1] = int(round(coast_dist_norm * 255.0))
+			type_data[idx + 2] = int(round(lava_value * 255.0))
+			type_data[idx + 3] = int(round(clamp(fog_level, 0.0, 1.0) * 255.0))
+
+	var overlay_img := Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, overlay_data)
+	var type_img := Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, type_data)
 
 	_water_overlay_texture = ImageTexture.create_from_image(overlay_img)
 	_liquid_type_texture = ImageTexture.create_from_image(type_img)
 	var material: ShaderMaterial = _liquid_plane_instance.material_override
 	material.set_shader_parameter("overlay_texture", _water_overlay_texture)
+	# R (is_lava) desta textura so' alimenta mais lava_proximity (blend
+	# cosmetico da agua perto de lava) agora — a decisao de RAMO lava-vs-agua
+	# usa lava_tile_mask (1 texel por tile, ver _rebuild_lava_tile_mask),
+	# nao mais esta textura continua por posicao-mundo.
 	material.set_shader_parameter("liquid_type_texture", _liquid_type_texture)
 
 ## Resolucao PROPOSITALMENTE mais baixa que WATER_OVERLAY_RESOLUTION —
@@ -3331,12 +2997,18 @@ func _rebuild_biome_overlay() -> void:
 		return
 
 	var half_extents = get_world_half_extents()
-	var img := Image.create(BIOME_OVERLAY_RESOLUTION, BIOME_OVERLAY_RESOLUTION, false, Image.FORMAT_RGBA8)
-	for py in range(BIOME_OVERLAY_RESOLUTION):
-		var v = float(py) / float(BIOME_OVERLAY_RESOLUTION - 1)
+	var res := BIOME_OVERLAY_RESOLUTION
+	# Mesma troca de mecanismo de _rebuild_water_overlay acima: PackedByteArray
+	# + Image.create_from_data em vez de set_pixel por pixel — mesmos valores,
+	# so mais barato de escrever.
+	var data := PackedByteArray()
+	data.resize(res * res * 4)
+	for py in range(res):
+		var v = float(py) / float(res - 1)
 		var world_z = lerp(-half_extents.y, half_extents.y, v)
-		for px in range(BIOME_OVERLAY_RESOLUTION):
-			var u = float(px) / float(BIOME_OVERLAY_RESOLUTION - 1)
+		var row_offset = py * res * 4
+		for px in range(res):
+			var u = float(px) / float(res - 1)
 			var world_x = lerp(-half_extents.x, half_extents.x, u)
 			var coord = HexMetrics.world_to_axial(world_x, world_z, hex_size)
 			var tile: HexTileData = tiles.get(coord)
@@ -3344,8 +3016,13 @@ func _rebuild_biome_overlay() -> void:
 			if tile != null and not tile.is_water() and tile.terrain_type != HexTileData.TerrainType.LAVA_SEA:
 				color = tile.color
 			var fog_level := _fog_level_for(coord) if tile != null else 0.0
-			img.set_pixel(px, py, Color(color.r, color.g, color.b, fog_level))
+			var idx = row_offset + px * 4
+			data[idx] = int(round(clamp(color.r, 0.0, 1.0) * 255.0))
+			data[idx + 1] = int(round(clamp(color.g, 0.0, 1.0) * 255.0))
+			data[idx + 2] = int(round(clamp(color.b, 0.0, 1.0) * 255.0))
+			data[idx + 3] = int(round(clamp(fog_level, 0.0, 1.0) * 255.0))
 
+	var img := Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, data)
 	_biome_overlay_texture = ImageTexture.create_from_image(img)
 	var terrain_material: ShaderMaterial = _multimesh_instance.material_override
 	terrain_material.set_shader_parameter("biome_overlay_texture", _biome_overlay_texture)
@@ -3370,19 +3047,17 @@ func _build_terrain_multimesh(coords: Array[Vector2i], coord_to_index: Dictionar
 		# r = seed aleatorio por tile (variacao sutil de cor/rugosidade,
 		# ver shaders/terrain.gdshader), g = volumetria (elevation_kind: 0
 		# plano, 1 Colina, 2 Montanha — pedido do usuario, ver terrain.gdshader
-		# elevation_height), b = mascara de calha de rio (6 bits, um por
-		# CANTO do hexagono — ver _river_carve_mask/river_carve_depth), a =
-		# tratamento visual especial (_material_kind_for) — sem isso todo
-		# bioma so mudava de cor sob a MESMA textura de chao generica,
-		# reportado pelo usuario ("os biomas nao parecem bem trabalhados").
+		# elevation_height), a = tratamento visual especial
+		# (_material_kind_for) — sem isso todo bioma so mudava de cor sob a
+		# MESMA textura de chao generica, reportado pelo usuario ("os biomas
+		# nao parecem bem trabalhados"). b fica sem uso (0.0).
 		var material_kind = _material_kind_for(data.terrain_type)
 		var elevation_kind := 0.0
 		if data.terrain_type == HexTileData.TerrainType.MOUNTAINS:
 			elevation_kind = 2.0
 		elif data.terrain_type == HexTileData.TerrainType.HILLS:
 			elevation_kind = 1.0
-		var river_mask: int = _river_carve_mask.get(coord, 0)
-		multimesh.set_instance_custom_data(i, Color(randf(), elevation_kind, float(river_mask) / 127.0, material_kind))
+		multimesh.set_instance_custom_data(i, Color(randf(), elevation_kind, 0.0, material_kind))
 		coord_to_index[coord] = i
 		i += 1
 
@@ -3421,8 +3096,7 @@ func _set_optional_texture(material: ShaderMaterial, param: String, path: String
 ## `depth_factor` multiplica `size` pra profundidade do prisma (padrao 0.4,
 ## historico) — terreno solido chama com um `depth_factor` MAIOR (ver
 ## LAND_PRISM_DEPTH_FACTOR) pra garantir "saia" submersa abaixo do plano de
-## agua mesmo nos tiles mais altos (Colina/Montanha); pedras decorativas
-## (_rock_mesh) continuam no 0.4 de sempre, sem precisar disso.
+## agua mesmo nos tiles mais altos (Colina/Montanha).
 func _build_hex_prism_mesh(size: float, depth_factor: float = 0.4) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -3473,28 +3147,42 @@ func _rebuild_props() -> void:
 	if _props_tree_instance:
 		_props_tree_instance.queue_free()
 		_props_tree_instance = null
-	if _props_rock_instance:
-		_props_rock_instance.queue_free()
-		_props_rock_instance = null
 	if _props_mountain_spike_instance:
 		_props_mountain_spike_instance.queue_free()
 		_props_mountain_spike_instance = null
+	if _props_ice_floe_instance:
+		_props_ice_floe_instance.queue_free()
+		_props_ice_floe_instance = null
 
 	const TREE_TERRAINS := [
 		HexTileData.TerrainType.FOREST, HexTileData.TerrainType.TAIGA, HexTileData.TerrainType.JUNGLE,
 	]
 	var tree_coords: Array[Vector2i] = []
-	var rock_coords: Array[Vector2i] = [] # so Colina agora — Montanha ganhou seu proprio prop de pico rochoso abaixo
 	var mountain_coords: Array[Vector2i] = []
+	var ice_floe_coords: Array[Vector2i] = []
 	for coord in tiles.keys():
 		var data: HexTileData = tiles[coord]
+		# Tile com recurso especial (ver ResourceDatabase/ResourcePropsManager)
+		# nunca ganha arvore decorativa — pedido do usuario: 3-5 arvores
+		# empilhadas enterravam visualmente o prop pequeno do recurso (e o
+		# icone billboard some atras da copa da arvore), tornando o tile
+		# ilegivel como "tem recurso aqui". Pico de Montanha (mountain_coords
+		# abaixo) fica de fora dessa exclusao de proposito: nao e decoracao
+		# esparsa, e a propria geometria da Montanha (toda Montanha ganha um,
+		# sem probabilidade) — excluir deixaria so os tiles COM recurso com
+		# aparencia de Montanha "achatada"/quebrada.
 		if data.terrain_type in TREE_TERRAINS:
-			tree_coords.append(coord)
-		elif data.terrain_type == HexTileData.TerrainType.HILLS:
-			if randf() < 0.6:
-				rock_coords.append(coord)
+			if data.resource == "":
+				tree_coords.append(coord)
 		elif data.terrain_type == HexTileData.TerrainType.MOUNTAINS:
 			mountain_coords.append(coord)
+		elif data.terrain_type == HexTileData.TerrainType.FROZEN_OCEAN:
+			# Nem todo tile de Mar Gelado ganha gelo flutuante (pedido do
+			# usuario: "nao precisam ter em todas as celulas") — um mar de
+			# gelo real tem trechos de agua aberta entre os blocos, nao
+			# cobertura uniforme tile-a-tile.
+			if randf() < 0.55:
+				ice_floe_coords.append(coord)
 
 	_tree_coord_to_index.clear()
 	if tree_coords.size() > 0:
@@ -3550,38 +3238,6 @@ func _rebuild_props() -> void:
 		tree_mat.alpha_scissor_threshold = 0.5
 		_props_tree_instance.material_override = tree_mat
 		add_child(_props_tree_instance)
-
-	_rock_coord_to_index.clear()
-	if rock_coords.size() > 0:
-		var mm2 := MultiMesh.new()
-		mm2.transform_format = MultiMesh.TRANSFORM_3D
-		mm2.use_colors = true
-		mm2.mesh = _rock_mesh
-		mm2.instance_count = rock_coords.size()
-		for i in range(rock_coords.size()):
-			var coord = rock_coords[i]
-			var pos = world_for_coord(coord)
-			# A mesh da pedra (prisma hexagonal reduzido) tem o topo em y=0
-			# local; sem levantar a origem, o topo ficaria coplanar ao topo
-			# do terreno e "brigaria" com ele no render (z-fighting). Erguer
-			# pela altura do prisma faz a base dela encostar no chao.
-			pos.y += hex_size * 0.32 * 0.4
-			pos.x += randf_range(-0.3, 0.3)
-			pos.z += randf_range(-0.3, 0.3)
-			var basis = Basis(Vector3.UP, randf() * TAU).scaled(Vector3.ONE * randf_range(0.7, 1.3))
-			mm2.set_instance_transform(i, Transform3D(basis, pos))
-			mm2.set_instance_color(i, ROCK_BASE_COLOR)
-			_rock_coord_to_index[coord] = [i] # Array por consistencia com _tree_coord_to_index, ver _tint_props
-		_props_rock_instance = MultiMeshInstance3D.new()
-		_props_rock_instance.multimesh = mm2
-		var rock_mat := StandardMaterial3D.new()
-		rock_mat.vertex_color_use_as_albedo = true
-		rock_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		# Nevoa de guerra — ver comentario equivalente em tree_mat acima.
-		rock_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-		rock_mat.alpha_scissor_threshold = 0.5
-		_props_rock_instance.material_override = rock_mat
-		add_child(_props_rock_instance)
 
 	_mountain_spike_coord_to_index.clear()
 	if mountain_coords.size() > 0:
@@ -3645,7 +3301,76 @@ func _rebuild_props() -> void:
 		_props_mountain_spike_instance.material_override = spike_mat
 		add_child(_props_mountain_spike_instance)
 
+	_ice_floe_coord_to_index.clear()
+	if ice_floe_coords.size() > 0:
+		# 1 a 2 pedacos de gelo por tile de Mar Gelado SORTEADO (nem todo
+		# tile ganha, ver ice_floe_coords acima), tamanho bem variado por
+		# instancia — pedido do usuario: "mais realistas... nao precisam ter
+		# em todas as celulas... tamanhos variados, alguns grandes, alguns
+		# pequenos, em rotacoes diferentes". Mesmo padrao radial de arvore/
+		# pico, mas flutuando NA SUPERFICIE do plano de agua (LIQUID_LEVEL_Y)
+		# em vez de assentar no terreno solido, ja que Mar Gelado e um bioma
+		# de AGUA (is_water()==true, sem prisma embaixo).
+		var placements: Array[Dictionary] = []
+		for coord in ice_floe_coords:
+			var center = world_for_coord(coord)
+			var count = randi_range(1, 2)
+			for j in range(count):
+				var offset_dist = randf_range(0.05, hex_size * 0.45)
+				var offset_angle = randf() * TAU
+				var pos = center
+				pos.x += cos(offset_angle) * offset_dist
+				pos.z += sin(offset_angle) * offset_dist
+				# Exatamente na altura do plano de agua (pedido do usuario:
+				# "garanta que fiquem alinhados com a altura exata do nivel
+				# da agua") — a malha ja tem a base em y=0 local, entao sem
+				# nenhum offset aleatorio o topo/base do floe fica sempre na
+				# MESMA cota que LIQUID_LEVEL_Y, nunca flutuando acima nem
+				# afundando abaixo da superficie.
+				pos.y = LIQUID_LEVEL_Y
+				# Faixa ampla (era 1.3-2.0, so "grande") pra ter pedaços
+				# pequenos e grandes de verdade no mesmo mapa (pedido do
+				# usuario: "tamanhos variados, alguns grandes, alguns
+				# pequenos"), nao so uma variação sutil dentro do "grande".
+				var floe_scale = randf_range(0.5, 2.2)
+				# Rotacao aleatoria em Y por instancia (ja existia) — cada
+				# pedaco pega um angulo independente, entao nunca ficam
+				# todos com a mesma orientacao.
+				var floe_basis = Basis(Vector3.UP, randf() * TAU).scaled(Vector3.ONE * floe_scale)
+				placements.append({"coord": coord, "pos": pos, "basis": floe_basis})
+
+		var mm4 := MultiMesh.new()
+		mm4.transform_format = MultiMesh.TRANSFORM_3D
+		mm4.use_colors = true
+		mm4.mesh = _ice_floe_mesh
+		mm4.instance_count = placements.size()
+		for i in range(placements.size()):
+			var p = placements[i]
+			mm4.set_instance_transform(i, Transform3D(p.basis, p.pos))
+			mm4.set_instance_color(i, ICE_FLOE_BASE_COLOR)
+			if not _ice_floe_coord_to_index.has(p.coord):
+				_ice_floe_coord_to_index[p.coord] = []
+			_ice_floe_coord_to_index[p.coord].append(i)
+		_props_ice_floe_instance = MultiMeshInstance3D.new()
+		_props_ice_floe_instance.multimesh = mm4
+		var floe_mat := StandardMaterial3D.new()
+		floe_mat.vertex_color_use_as_albedo = true
+		floe_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		# Fosco (pedido do usuario, mesmo espirito do Mar Gelado no shader
+		# de agua) — gelo solido nao deveria brilhar como plastico/metal.
+		# 0.9 (era 0.85, pedido do usuario 3a rodada) reduz ainda mais
+		# qualquer reflexo especular residual que contribuia pro aspecto de
+		# "isopor" ao lado da nova cor mais saturada acima.
+		floe_mat.roughness = 0.9
+		floe_mat.metallic = 0.0
+		# Nevoa de guerra — ver comentario equivalente em tree_mat acima.
+		floe_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+		floe_mat.alpha_scissor_threshold = 0.5
+		_props_ice_floe_instance.material_override = floe_mat
+		add_child(_props_ice_floe_instance)
+
 	_resource_props_manager.rebuild(tiles)
+	_resource_icon_manager.rebuild(tiles)
 
 ## Espelha (aproximadamente, sem o ruido de quebra que o shader soma por
 ## cima) elevation_height() de terrain.gdshader pro termo de Montanha — so
@@ -3656,10 +3381,9 @@ func _mountain_surface_extra_height(offset_dist: float) -> float:
 	return MOUNTAIN_PEAK_HEIGHT * shape
 
 ## Altura VISUAL real do CENTRO de um tile (base_height + o pico/domo do
-## terrain.gdshader no seu ponto mais alto, r=0) — usado pra encaixar a
-## malha do rio (_add_river_segment) no relevo em vez de afundar dentro de
-## um pico de Montanha/domo de Colina (o rio nasce/passa exatamente pelo
-## CENTRO de cada tile, que e onde elevation_height() do shader e MAXIMA).
+## terrain.gdshader no seu ponto mais alto, r=0) — usado pelo contorno de
+## territorio da cidade (_build_city_tint_mesh) pra encaixar no relevo em
+## vez de afundar dentro de um pico de Montanha/domo de Colina.
 func _tile_surface_height(coord: Vector2i) -> float:
 	var data: HexTileData = tiles[coord]
 	var h = data.base_height
@@ -3695,6 +3419,53 @@ func _build_rock_spike_mesh() -> ArrayMesh:
 		var normal = (mid - Vector3(0.0, height * 0.3, 0.0)).normalized()
 		for v in [p1, apex, p2]:
 			st.set_color(MOUNTAIN_SPIKE_BASE_COLOR)
+			st.set_normal(normal)
+			st.add_vertex(v)
+
+	return st.commit()
+
+## Pack ice/iceberg pequeno (pedido do usuario, Ponto 2: "micro-icebergs
+## flutuantes... pequenas formacoes de gelo 3D/procedurais") — mesma
+## tecnica de contorno jitterado do pico de Montanha acima (_build_
+## rock_spike_mesh), so BAIXO e CHATO em vez de pontudo (gelo flutuando
+## na superficie, nao uma montanha) e com a base mais ESTREITA que o topo
+## (afunila pra baixo, como um pedaco de gelo real que fica mais fino
+## debaixo d'agua). Escala/posicao/rotacao por instancia ficam em
+## _rebuild_props, igual arvore/pedra/pico.
+func _build_ice_floe_mesh() -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	var sides := 6
+	var top_radius := 0.16
+	var bottom_radius := 0.1
+	var height := 0.09
+	var top_points: Array[Vector3] = []
+	var bottom_points: Array[Vector3] = []
+	for i in range(sides):
+		var a = TAU * float(i) / float(sides)
+		var jitter = 1.0 + 0.4 * sin(a * 2.3 + 0.7) # contorno irregular fixo, nao um hexagono perfeito
+		top_points.append(Vector3(cos(a) * top_radius * jitter, height, sin(a) * top_radius * jitter))
+		bottom_points.append(Vector3(cos(a) * bottom_radius * jitter, 0.0, sin(a) * bottom_radius * jitter))
+
+	var top_center := Vector3(0.0, height, 0.0)
+	for i in range(sides):
+		var p1 = top_points[i]
+		var p2 = top_points[(i + 1) % sides]
+		for v in [top_center, p1, p2]:
+			st.set_color(ICE_FLOE_BASE_COLOR)
+			st.set_normal(Vector3.UP)
+			st.add_vertex(v)
+
+	for i in range(sides):
+		var t1 = top_points[i]
+		var t2 = top_points[(i + 1) % sides]
+		var b1 = bottom_points[i]
+		var b2 = bottom_points[(i + 1) % sides]
+		var mid = (t1 + t2 + b1 + b2) * 0.25
+		var normal = Vector3(mid.x, 0.0, mid.z).normalized()
+		for v in [b1, t2, t1, b1, b2, t2]:
+			st.set_color(ICE_FLOE_BASE_COLOR)
 			st.set_normal(normal)
 			st.add_vertex(v)
 

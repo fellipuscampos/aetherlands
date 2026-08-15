@@ -83,35 +83,6 @@ uniform float hill_height : hint_range(0.0, 1.0) = 0.35;
 uniform float mountain_range_noise_scale : hint_range(0.01, 0.3) = 0.05;
 uniform float mountain_range_variation : hint_range(0.0, 1.0) = 0.5;
 
-// Calha de rio (pedido do usuario: "leito escavado e integrado ao
-// terreno", nao uma fita flutuando por cima do chao plano). river_mask
-// vem de INSTANCE_CUSTOM.b (ver HexGrid._build_terrain_multimesh) — 6
-// bits, um por CANTO do hexagono (nao por aresta/vizinho — corner-
-// indexado, ver HexGrid._river_carve_mask/_compute_river_carve_masks),
-// + bit 6 pro CENTRO virar conector de confluencia (ver elevation_height):
-// bit `c` (0-5) ligado significa que a malha do rio (HexGrid._add_river_
-// path) assenta um vertice EXATAMENTE no canto `c` deste tile. Onde isso
-// acontece, o topo afunda (calha em V natural: o vertice do CANTO desce,
-// o CENTRO do leque nao, entao a interpolacao do proprio triangulo ja da
-// o formato em V sem precisar de geometria extra) e o ruido de micro-
-// relevo e SUPRIMIDO (nao subtraido, removido) — sem isso um ricochete
-// aleatorio de ate +-metade de elevation_noise_strength poderia cancelar
-// parte do entalhe num ponto especifico, quebrando a garantia de que a
-// malha do rio (RIVER_ABOVE_OFFSET, ver HexGrid.gd) sempre fica acima da
-// superficie esculpida. Subiu de 0.04 pra 0.08 (pedido do usuario: "o
-// entalhe precisa ser mais visivel") — a garantia de seguranca continua
-// exata (margem = river_carve_depth + RIVER_ABOVE_OFFSET, nao depende do
-// valor especifico), so fica com mais folga ainda.
-uniform float river_carve_depth : hint_range(0.0, 0.3) = 0.08;
-// Cor/aspecto do LEITO dentro da calha (pedido do usuario: "textura de
-// rocha/areia molhada... mesmo abaixo da agua") — aplicado em ALBEDO no
-// fragment(), gated pela MESMA deteccao de cunha por canto que esculpe a
-// geometria aqui (is_river_corner_wedge abaixo), pra a cor sempre bater
-// exatamente com o relevo entalhado.
-uniform vec3 river_channel_tint : source_color = vec3(0.26, 0.24, 0.2);
-uniform float river_channel_darken : hint_range(0.0, 1.0) = 0.55;
-uniform float river_channel_roughness : hint_range(0.0, 1.0) = 0.4; // mais baixo que pedra seca (~0.9) — "molhado" reflete um pouco mais
-
 // Neve no pico (pedido do usuario) — mascara por ALTURA (v_local_y, ja
 // inclui o pico) E por INCLINACAO (v_world_normal.y, reusa o MESMO
 // limiar de cliff_normal_threshold: a partir do ponto que uma face deixa
@@ -190,7 +161,6 @@ varying vec2 v_local_xz; // posicao LOCAL (antes do MODEL_MATRIX) no plano XZ �
 varying float v_local_y; // altura LOCAL do vertice dentro do prisma (0 = topo, -prism_depth = base) — so pra sombra de contato falsa
 varying float v_seed; // aleatorio por tile (INSTANCE_CUSTOM.r) — variacao de cor/rugosidade
 varying float v_elevation_kind; // INSTANCE_CUSTOM.g: 0 = plano, 1 = Colina, 2 = Montanha (ver HexGrid._build_terrain_multimesh)
-varying float v_river_mask; // INSTANCE_CUSTOM.b decodificado (0-127, ver river_carve_depth) — precisa de varying (nao ler INSTANCE_CUSTOM direto) pra fragment() acessar, mesmo padrao de v_seed/v_elevation_kind/v_material_kind acima
 // Qual tratamento visual especial este tile usa (ver HexGrid._material_
 // kind_for): 0 = terreno comum, 1 = Neve/Gelo Eterno, 2 = Deserto,
 // 3 = Lava, 4 = Campos de Cristal. Agua/Mar de Lava NAO passam mais por
@@ -231,26 +201,6 @@ float fog_cloud_pattern(vec2 world_xz, float t) {
 	return clamp(n1 * 0.6 + n2 * 0.4, 0.0, 1.0);
 }
 
-// Deteccao de "esta perto de um canto com rio" por CUNHA angular de 60°
-// (uma por canto do hexagono) — usada TANTO por elevation_height() (pra
-// esculpir a geometria) QUANTO por fragment() (pra tingir o leito, ver
-// river_channel_tint), garantindo que as duas coisas usem EXATAMENTE o
-// mesmo criterio e nunca fiquem dessincronizadas. So testa perto da
-// BORDA (r>0.5): o CENTRO do leque nunca e um canto de verdade, e o teste
-// evita atan(0,0) indefinido bem no centro exato.
-bool is_river_corner_wedge(vec2 local_xz, int river_mask) {
-	if (river_mask <= 0) {
-		return false;
-	}
-	float r = length(local_xz) / max(hex_radius, 0.001);
-	if (r <= 0.5) {
-		return false;
-	}
-	float angle_deg = degrees(atan(local_xz.y, local_xz.x));
-	int corner_idx = int(mod(round((angle_deg + 30.0) / 60.0), 6.0));
-	return ((river_mask >> corner_idx) & 1) == 1;
-}
-
 // Altura extra (acima do topo plano padrao) num ponto do topo do prisma.
 // local_xz e a posicao LOCAL (relativa ao CENTRO do tile, r=0 no centro,
 // r=hex_radius na borda); world_xz e a mesma posicao em espaco MUNDO, so
@@ -259,22 +209,10 @@ bool is_river_corner_wedge(vec2 local_xz, int river_mask) {
 // recalcular a normal — por isso e uma funcao pura de posicao, nao lê
 // nenhum built-in magico (permitido fora de fragment(), so o contrario
 // que da erro nesta versao da Godot).
-float elevation_height(vec2 local_xz, vec2 world_xz, float elevation_kind, int river_mask) {
+float elevation_height(vec2 local_xz, vec2 world_xz, float elevation_kind) {
 	float r = length(local_xz) / max(hex_radius, 0.001);
 
-	// Calha de rio (ver uniform river_carve_depth acima e is_river_corner_
-	// wedge no topo do arquivo) — detectada ANTES do ruido de micro-
-	// relevo de proposito, pra poder SUPRIMIR esse ruido exatamente onde a
-	// calha precisa ficar previsivel/segura (nao competir com um
-	// ricochete aleatorio que poderia cancelar parte do entalhe). Bit 6
-	// (valor 64, fora dos 6 bits de canto) e o CENTRO virar conector de
-	// confluencia (ver HexGrid._compute_river_carve_masks) — mesma
-	// supressao de ruido, so que perto do centro (r<=0.5) em vez de perto
-	// da borda.
-	bool river_here = is_river_corner_wedge(local_xz, river_mask);
-	bool suppress_center_noise = ((river_mask & 64) != 0) && r <= 0.5;
-
-	float h = (river_here || suppress_center_noise) ? 0.0 : (value_noise(world_xz * elevation_noise_scale) - 0.5) * elevation_noise_strength;
+	float h = (value_noise(world_xz * elevation_noise_scale) - 0.5) * elevation_noise_strength;
 	if (elevation_kind > 1.5) {
 		// Montanha: pico alto, queda mais abrupta que linear (peak_sharpness
 		// > 1) perto da borda pra dar uma base mais vertical/rochosa em vez
@@ -295,19 +233,6 @@ float elevation_height(vec2 local_xz, vec2 world_xz, float elevation_kind, int r
 		// gradual, sem o "topo achatado" que pow(x,>1) da perto do centro).
 		float shape = 1.0 - smoothstep(0.0, 1.0, r);
 		h += hill_height * shape;
-	}
-
-	if (river_here) {
-		// A calha em V acontece de graca pela propria topologia do leque
-		// (SurfaceTool): so o CANTO desce, o CENTRO nao — a interpolacao
-		// linear do triangulo entre os dois ja da o formato em V, sem
-		// precisar de geometria/subdivisao extra. carve_shape cresce com r
-		// pra a descida ficar mais forte perto da propria borda (onde o
-		// vizinho do outro lado do rio tambem esculpe o MESMO tanto, ja
-		// que RIVER_ABOVE_OFFSET/HexGrid.gd garantem que a malha do rio
-		// assenta num canto compartilhado por ambos os lados).
-		float carve_shape = pow(clamp(r, 0.0, 1.0), 2.0);
-		h -= river_carve_depth * carve_shape;
 	}
 
 	return h;
@@ -331,15 +256,6 @@ void vertex() {
 	v_elevation_kind = INSTANCE_CUSTOM.g;
 	v_material_kind = INSTANCE_CUSTOM.a;
 	v_local_xz = VERTEX.xz;
-
-	// Mascara de calha de rio (ver uniform river_carve_depth acima) —
-	// INSTANCE_CUSTOM.b guarda 7 bits normalizados (river_mask/127.0, ver
-	// HexGrid._build_terrain_multimesh: 6 bits de canto + bit 6 de
-	// confluencia), round() desfaz a perda de precisao do float antes de
-	// converter de volta pra inteiro. v_river_mask guarda o valor JA
-	// decodificado (nao normalizado de novo) pra fragment() reusar direto.
-	int river_mask = int(round(INSTANCE_CUSTOM.b * 127.0));
-	v_river_mask = float(river_mask);
 
 	// A borda superior do prisma tem DOIS vertices na mesma posicao local
 	// (um pertencendo ao leque do topo, outro a parede — copias separadas,
@@ -367,7 +283,7 @@ void vertex() {
 	// raio ao centro do tile) pra fechar sem fresta com os vizinhos, ja que
 	// na borda (r=hex_radius) o termo de pico/domo cai pra exatamente zero.
 	float is_top_edge = float(VERTEX.y > -0.001);
-	VERTEX.y += elevation_height(VERTEX.xz, pre_world.xz, v_elevation_kind, river_mask) * is_top_edge;
+	VERTEX.y += elevation_height(VERTEX.xz, pre_world.xz, v_elevation_kind) * is_top_edge;
 
 	// Normal recalculada por diferenca central na MESMA funcao de altura
 	// (mesma tecnica das ondas da agua, ver water_shader.gdshader
@@ -380,10 +296,10 @@ void vertex() {
 	// manter o normal horizontal original mesmo deslocada, senao a deteccao
 	// de falesia (cliff_normal_threshold) erraria bem na beirada do tile.
 	float eps = 0.35;
-	float h_l = elevation_height(VERTEX.xz + vec2(-eps, 0.0), pre_world.xz + vec2(-eps, 0.0), v_elevation_kind, river_mask);
-	float h_r = elevation_height(VERTEX.xz + vec2(eps, 0.0), pre_world.xz + vec2(eps, 0.0), v_elevation_kind, river_mask);
-	float h_d = elevation_height(VERTEX.xz + vec2(0.0, -eps), pre_world.xz + vec2(0.0, -eps), v_elevation_kind, river_mask);
-	float h_u = elevation_height(VERTEX.xz + vec2(0.0, eps), pre_world.xz + vec2(0.0, eps), v_elevation_kind, river_mask);
+	float h_l = elevation_height(VERTEX.xz + vec2(-eps, 0.0), pre_world.xz + vec2(-eps, 0.0), v_elevation_kind);
+	float h_r = elevation_height(VERTEX.xz + vec2(eps, 0.0), pre_world.xz + vec2(eps, 0.0), v_elevation_kind);
+	float h_d = elevation_height(VERTEX.xz + vec2(0.0, -eps), pre_world.xz + vec2(0.0, -eps), v_elevation_kind);
+	float h_u = elevation_height(VERTEX.xz + vec2(0.0, eps), pre_world.xz + vec2(0.0, eps), v_elevation_kind);
 	vec3 bump_normal = normalize(vec3(h_l - h_r, 2.0 * eps, h_d - h_u));
 	NORMAL = mix(NORMAL, bump_normal, is_top_face);
 
@@ -537,17 +453,6 @@ void fragment() {
 		ALBEDO = mix(ALBEDO, peak_snow_color, snow_mask);
 		ROUGHNESS = mix(ROUGHNESS, 0.8, snow_mask);
 		SPECULAR = mix(SPECULAR, 0.15, snow_mask);
-	}
-
-	// Leito do rio (pedido do usuario: "textura de rocha/areia molhada pra
-	// marcar o leito mesmo abaixo da agua") — MESMA deteccao de cunha por
-	// canto (is_river_corner_wedge) que esculpe a geometria no topo desta
-	// funcao, garantindo que a cor sempre bata com o relevo entalhado. Por
-	// cima de QUALQUER branch acima (inclusive falesia — uma parede molhada
-	// bem na base de um rio faz sentido tematicamente, nao e um erro).
-	if (is_river_corner_wedge(v_local_xz, int(v_river_mask))) {
-		ALBEDO = mix(ALBEDO, river_channel_tint, river_channel_darken);
-		ROUGHNESS = min(ROUGHNESS, river_channel_roughness);
 	}
 
 	// Sombra de contato falsa: escurece as PAREDES do prisma perto da

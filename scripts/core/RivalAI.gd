@@ -30,27 +30,18 @@ const RETREAT_HP_FRACTION := 0.35 # abaixo disso, foge pra curar em vez de briga
 const ESCORT_RANGE := 2 # distancia maxima pra um aliado corpo-a-corpo contar como escolta
 const MILITARY_KINDS := ["warrior", "warrior", "archer", "cavalry", "catapult", "mage", "griffin", "treant"] # pesos simples
 
-## Tropa exclusiva de cada civilizacao de fantasia (CivilizationData.race,
-## ver GameManager.RIVAL_CIVS e UnitDatabase.create_unit) — pedido do
-## usuario: "insira outras civilizacoes de fantasia... voce cria tropas
-## especificas pra essas civilizacoes". Escopo desta rodada: so a IA rival
-## usa isso (o jogador nao tem raca ainda), entao o gate fica aqui em vez
-## de em City.can_train()/BuildingDatabase (que sao so pro jogador).
-const RACE_UNIQUE_KIND := {
-	"dwarf": "dwarf_axeguard",
-	"orc": "orc_berserker",
-	"elf": "elf_ranger",
-}
-
 ## MILITARY_KINDS + a tropa racial (pesada igual "warrior", duas entradas)
-## quando o jogador tem uma raca com tropa propria — civ sem raca (jogador
-## humano, ou um rival hipotetico sem `race` definida) so usa o elenco
-## comum, sem nenhuma tropa exclusiva aparecer no sorteio.
+## quando o jogador tem uma raca com tropa propria (UnitDatabase.
+## RACE_UNIQUE_KIND — pedido do usuario: "insira outras civilizacoes de
+## fantasia... voce cria tropas especificas pra essas civilizacoes",
+## depois estendido pro jogador humano tambem poder escolher raca na tela
+## de titulo) — civ sem raca reconhecida so usa o elenco comum, sem
+## nenhuma tropa exclusiva aparecer no sorteio.
 static func _military_kinds_for(player: PlayerData) -> Array:
 	var kinds := MILITARY_KINDS.duplicate()
 	var race: String = player.civ.race if player.civ else ""
-	if RACE_UNIQUE_KIND.has(race):
-		var unique: String = RACE_UNIQUE_KIND[race]
+	if UnitDatabase.RACE_UNIQUE_KIND.has(race):
+		var unique: String = UnitDatabase.RACE_UNIQUE_KIND[race]
 		kinds.append(unique)
 		kinds.append(unique)
 	return kinds

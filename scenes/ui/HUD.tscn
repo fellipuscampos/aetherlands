@@ -23,15 +23,32 @@ grow_horizontal = 2
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="TurnLabel" type="Label" parent="TopBar/TopBarRow"]
+[node name="StatusGroup" type="HBoxContainer" parent="TopBar/TopBarRow"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TurnLabel" type="Label" parent="TopBar/TopBarRow/StatusGroup"]
 layout_mode = 2
 text = "Turno 1"
 
-[node name="GoldLabel" type="Label" parent="TopBar/TopBarRow"]
+[node name="StatusSep1" type="VSeparator" parent="TopBar/TopBarRow/StatusGroup"]
+layout_mode = 2
+
+[node name="GoldLabel" type="Label" parent="TopBar/TopBarRow/StatusGroup"]
 layout_mode = 2
 text = "Ouro: 0"
 
-[node name="StatsLabel" type="Label" parent="TopBar/TopBarRow"]
+[node name="StatusSep2" type="VSeparator" parent="TopBar/TopBarRow/StatusGroup"]
+layout_mode = 2
+
+[node name="ManaLabel" type="Label" parent="TopBar/TopBarRow/StatusGroup"]
+layout_mode = 2
+text = "Mana: 0 (+0)"
+
+[node name="StatusSep3" type="VSeparator" parent="TopBar/TopBarRow/StatusGroup"]
+layout_mode = 2
+
+[node name="StatsLabel" type="Label" parent="TopBar/TopBarRow/StatusGroup"]
 layout_mode = 2
 text = "Cidades: 0 | Unidades: 0"
 
@@ -39,34 +56,46 @@ text = "Cidades: 0 | Unidades: 0"
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="PauseButton" type="Button" parent="TopBar/TopBarRow"]
+[node name="NavGroup" type="HBoxContainer" parent="TopBar/TopBarRow"]
 layout_mode = 2
-text = "Menu (Esc)"
+theme_override_constants/separation = 6
 
-[node name="TechButton" type="Button" parent="TopBar/TopBarRow"]
+[node name="TechButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
 layout_mode = 2
 text = "Tecnologia"
 
-[node name="DiplomacyButton" type="Button" parent="TopBar/TopBarRow"]
+[node name="GrimoireButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
+layout_mode = 2
+text = "Grimório"
+
+[node name="DiplomacyButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
 layout_mode = 2
 text = "Diplomacia"
 
-[node name="HelpButton" type="Button" parent="TopBar/TopBarRow"]
+[node name="HelpButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
 layout_mode = 2
 text = "? Ajuda"
 
-[node name="DebugButton" type="Button" parent="TopBar/TopBarRow"]
+[node name="DebugButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
 layout_mode = 2
 text = "Debug"
 visible = false
 
-[node name="SaveButton" type="Button" parent="TopBar/TopBarRow"]
+[node name="NavSep" type="VSeparator" parent="TopBar/TopBarRow/NavGroup"]
+layout_mode = 2
+
+[node name="SaveButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
 layout_mode = 2
 text = "Salvar"
 
+[node name="PauseButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
+layout_mode = 2
+text = "Menu (Esc)"
+
 [node name="EndTurnButton" type="Button" parent="TopBar/TopBarRow"]
 layout_mode = 2
-text = "Finalizar Turno"
+custom_minimum_size = Vector2(168, 0)
+text = "Finalizar Turno (Espaço)"
 
 [node name="NotificationStack" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -82,22 +111,27 @@ alignment = 0
 
 [node name="Minimap" type="Control" parent="."]
 layout_mode = 1
-anchor_left = 1.0
-offset_left = -216.0
-offset_top = 56.0
-offset_right = -16.0
-offset_bottom = 236.0
-grow_horizontal = 0
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 0.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -308.0
+offset_right = 216.0
+offset_bottom = -128.0
+grow_vertical = 0
 script = ExtResource("Minimap_gd")
 
 [node name="TileInfoPanel" type="PanelContainer" parent="."]
+visible = false
+clip_contents = true
 layout_mode = 1
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -400.0
-offset_top = -620.0
+offset_left = -480.0
+offset_top = -220.0
 offset_right = -16.0
 offset_bottom = -16.0
 grow_horizontal = 0
@@ -112,143 +146,160 @@ layout_mode = 2
 text = "Selecione um tile"
 autowrap_mode = 3
 
-[node name="ProductionScroll" type="ScrollContainer" parent="TileInfoPanel/TileInfoBox"]
+[node name="ProductionTabs" type="TabContainer" parent="TileInfoPanel/TileInfoBox"]
 layout_mode = 2
 size_flags_vertical = 3
 visible = false
 
-[node name="ProductionScrollBox" type="VBoxContainer" parent="TileInfoPanel/TileInfoBox/ProductionScroll"]
+[node name="UnitsTab" type="ScrollContainer" parent="TileInfoPanel/TileInfoBox/ProductionTabs"]
+layout_mode = 2
+
+[node name="ProductionRow" type="GridContainer" parent="TileInfoPanel/TileInfoBox/ProductionTabs/UnitsTab"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 10
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+columns = 2
 
-[node name="UnitsSectionLabel" type="Label" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
+[node name="BuildingsTab" type="ScrollContainer" parent="TileInfoPanel/TileInfoBox/ProductionTabs"]
+visible = false
 layout_mode = 2
-theme_type_variation = &"SectionLabel"
-text = "Unidades"
 
-[node name="ProductionRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
+[node name="BuildingsTabBox" type="VBoxContainer" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab"]
 layout_mode = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
 
-[node name="ProduceWarriorButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
-layout_mode = 2
-text = "Guerreiro"
-
-[node name="ProduceArcherButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
-layout_mode = 2
-text = "Arqueiro"
-
-[node name="ProduceCavalryButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
-layout_mode = 2
-text = "Cavaleiro"
-
-[node name="ProduceSettlerButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
-layout_mode = 2
-text = "Colonizador"
-
-[node name="ProduceCatapultButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
-layout_mode = 2
-text = "Catapulta"
-
-[node name="ProduceMageButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
-layout_mode = 2
-text = "Mago"
-
-[node name="ProduceGriffinButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
-layout_mode = 2
-text = "Grifo"
-
-[node name="ProduceTreantButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/ProductionRow"]
-layout_mode = 2
-text = "Ent"
-
-[node name="YieldBuildingsSectionLabel" type="Label" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
+[node name="YieldBuildingsSectionLabel" type="Label" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox"]
 layout_mode = 2
 theme_type_variation = &"SectionLabel"
 text = "Predios de producao"
 
-[node name="BuildingsRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
+[node name="BuildingsRow" type="GridContainer" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox"]
 layout_mode = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+columns = 2
 
-[node name="BuildGranaryButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/BuildingsRow"]
+[node name="BuildGranaryButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/BuildingsRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
 text = "Celeiro"
 
-[node name="BuildWorkshopButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/BuildingsRow"]
+[node name="BuildWorkshopButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/BuildingsRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
 text = "Oficina"
 
-[node name="BuildMarketButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/BuildingsRow"]
+[node name="BuildMarketButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/BuildingsRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
 text = "Mercado"
 
-[node name="BuildWallsButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/BuildingsRow"]
+[node name="BuildWallsButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/BuildingsRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
 text = "Muralhas"
 
-[node name="TrainingBuildingsSectionLabel" type="Label" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
+[node name="TrainingBuildingsSectionLabel" type="Label" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox"]
 layout_mode = 2
 theme_type_variation = &"SectionLabel"
 text = "Predios de treino"
 
-[node name="TrainingRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
+[node name="TrainingRow" type="GridContainer" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox"]
 layout_mode = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+columns = 2
 
-[node name="BuildBarracksButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+[node name="BuildBarracksButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
 text = "Quartel"
 
-[node name="BuildArcheryRangeButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+[node name="BuildArcheryRangeButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
 text = "Campo de Tiro"
 
-[node name="BuildStableButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+[node name="BuildStableButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
 text = "Estabulo"
 
-[node name="BuildSiegeWorkshopButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+[node name="BuildSiegeWorkshopButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
 text = "Arsenal de Cerco"
 
-[node name="BuildArcaneTowerButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+[node name="BuildArcaneTowerButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
 text = "Torre Arcana"
 
-[node name="BuildGriffinRoostButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+[node name="BuildGriffinRoostButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
 text = "Poleiro de Grifos"
 
-[node name="BuildDruidGroveButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox/TrainingRow"]
+[node name="BuildDruidGroveButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow"]
 layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
 text = "Bosque Druida"
 
-[node name="WorkedTilesLabel" type="Label" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
+[node name="BuildRunicAnvilButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
+text = "Bigorna Rúnica"
+
+[node name="BuildShadowCryptButton" type="Button" parent="TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 0)
+text = "Cripta Sombria"
+
+[node name="WorkedTilesLabel" type="Label" parent="TileInfoPanel/TileInfoBox"]
 layout_mode = 2
 autowrap_mode = 3
 visible = false
 text = "Tiles trabalhados:"
 
-[node name="WorkedTilesRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox/ProductionScroll/ProductionScrollBox"]
+[node name="WorkedTilesScroll" type="ScrollContainer" parent="TileInfoPanel/TileInfoBox"]
+custom_minimum_size = Vector2(0, 118)
 layout_mode = 2
+size_flags_vertical = 0
+horizontal_scroll_mode = 0
+visible = false
+
+[node name="WorkedTilesRow" type="HFlowContainer" parent="TileInfoPanel/TileInfoBox/WorkedTilesScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/h_separation = 6
 theme_override_constants/v_separation = 6
-visible = false
 
 [node name="UnitPanel" type="PanelContainer" parent="."]
 layout_mode = 1
-anchor_left = 0.0
+anchor_left = 0.5
+anchor_right = 0.5
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -120.0
-offset_right = 280.0
+offset_left = -180.0
+offset_right = 180.0
+offset_top = -230.0
 offset_bottom = -16.0
+grow_horizontal = 2
 grow_vertical = 0
 
 [node name="UnitBox" type="VBoxContainer" parent="UnitPanel"]
@@ -260,10 +311,48 @@ layout_mode = 2
 text = "Unidade"
 autowrap_mode = 3
 
+[node name="UnitActionsRow" type="HBoxContainer" parent="UnitPanel/UnitBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="MoveButton" type="Button" parent="UnitPanel/UnitBox/UnitActionsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Mover"
+
+[node name="FortifyButton" type="Button" parent="UnitPanel/UnitBox/UnitActionsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "Fortificar"
+
+[node name="ExploreButton" type="Button" parent="UnitPanel/UnitBox/UnitActionsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "Explorar"
+
 [node name="FoundCityButton" type="Button" parent="UnitPanel/UnitBox"]
 layout_mode = 2
 text = "Fundar Cidade"
 visible = false
+
+[node name="FpsLabel" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -92.0
+offset_top = -20.0
+offset_right = -8.0
+offset_bottom = -4.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+horizontal_alignment = 2
+theme_type_variation = &"MutedLabel"
+text = "FPS: 0"
 
 [node name="OverlayBackdrop" type="ColorRect" parent="."]
 layout_mode = 1
@@ -320,14 +409,10 @@ autowrap_mode = 3
 
 [node name="TechPanel" type="PanelContainer" parent="."]
 layout_mode = 1
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -400.0
-offset_top = -330.0
-offset_right = 400.0
-offset_bottom = 330.0
+anchor_left = 0.075
+anchor_top = 0.075
+anchor_right = 0.925
+anchor_bottom = 0.925
 grow_horizontal = 2
 grow_vertical = 2
 visible = false
@@ -424,6 +509,43 @@ text = "X"
 [node name="DiplomacyRows" type="VBoxContainer" parent="DiplomacyPanel/DiplomacyBox"]
 layout_mode = 2
 theme_override_constants/separation = 6
+
+[node name="GrimoirePanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -200.0
+offset_right = 260.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+
+[node name="GrimoireBox" type="VBoxContainer" parent="GrimoirePanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="GrimoireHeader" type="HBoxContainer" parent="GrimoirePanel/GrimoireBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="GrimoireTitleLabel" type="Label" parent="GrimoirePanel/GrimoireBox/GrimoireHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PanelTitle"
+text = "Grimório"
+
+[node name="GrimoireCloseButton" type="Button" parent="GrimoirePanel/GrimoireBox/GrimoireHeader"]
+layout_mode = 2
+custom_minimum_size = Vector2(32, 32)
+text = "X"
+
+[node name="GrimoireRows" type="VBoxContainer" parent="GrimoirePanel/GrimoireBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="DebugPanel" type="PanelContainer" parent="."]
 layout_mode = 1

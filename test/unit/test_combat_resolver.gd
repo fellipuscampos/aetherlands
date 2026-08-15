@@ -191,6 +191,39 @@ func test_mage_ignores_walls_defense_bonus():
 	assert_gt(mage_result.damage_to_defender, warrior_result.damage_to_defender, "mago deveria ignorar tambem o bonus de defesa de Muralhas")
 	city.queue_free()
 
+## Fortificar (Unit.fortified, pedido do usuario: "as opções... mover,
+## fortificar e explorar") — mesmo mecanismo de bonus de defesa de
+## terreno/Muralhas, so que vindo da propria unidade estar parada.
+func test_fortified_defender_takes_less_damage():
+	var attacker_a = _make_unit("warrior", human, Vector2i(2, 0))
+	var defender_not_fortified = _make_unit("warrior", rival, Vector2i(0, 0)) # GRASSLAND, sem bonus de terreno pra isolar o efeito
+	var result_not_fortified = CombatResolver.predict(attacker_a, defender_not_fortified, hex_grid)
+
+	var attacker_b = _make_unit("warrior", human, Vector2i(2, 0))
+	var defender_fortified = _make_unit("warrior", rival, Vector2i(0, 0))
+	defender_fortified.fortified = true
+	var result_fortified = CombatResolver.predict(attacker_b, defender_fortified, hex_grid)
+
+	assert_lt(
+		result_fortified.damage_to_defender, result_not_fortified.damage_to_defender,
+		"defensor fortificado deveria tomar menos dano que um identico sem fortificar"
+	)
+
+## Magia ignora fortificar tambem, igual bonus de terreno/Muralhas (mesmo
+## campo unit_data.ignores_terrain_defense gate os tres).
+func test_mage_ignores_fortify_defense_bonus():
+	var mage = _make_unit("mage", human, Vector2i(2, 0))
+	var warrior = _make_unit("warrior", human, Vector2i(2, 0))
+	var defender_a = _make_unit("warrior", rival, Vector2i(0, 0))
+	defender_a.fortified = true
+	var defender_b = _make_unit("warrior", rival, Vector2i(0, 0))
+	defender_b.fortified = true
+
+	var mage_result = CombatResolver.predict(mage, defender_a, hex_grid)
+	var warrior_result = CombatResolver.predict(warrior, defender_b, hex_grid)
+
+	assert_gt(mage_result.damage_to_defender, warrior_result.damage_to_defender, "mago deveria ignorar tambem o bonus de defesa de Fortificar")
+
 ## Covil de Monstro (defender.owner_player == null, ver MonsterDatabase):
 ## derrotar o guardiao credita unit_data.gold_reward pro dono do atacante,
 ## nao so remove a unidade sem nenhum efeito.

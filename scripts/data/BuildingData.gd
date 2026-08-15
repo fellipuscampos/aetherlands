@@ -14,6 +14,7 @@ extends Resource
 @export var bonus_food: int = 0
 @export var bonus_production: int = 0
 @export var bonus_gold: int = 0
+@export var bonus_mana: int = 0
 
 ## So Muralhas usa isso por enquanto: soma ao multiplicador de defesa de
 ## unidade guarnicionada na cidade, igual bonus de terreno — ver

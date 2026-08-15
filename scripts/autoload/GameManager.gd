@@ -3,6 +3,11 @@ extends Node
 enum GameState { MENU, PLAYING, GAME_OVER }
 
 const GARRISON_HEAL_FRACTION := 0.25 # % do HP maximo curado por turno guarnecido
+## % do HP maximo curado por turno so por estar Fortificado (Unit.fortified,
+## ver SelectionManager.fortify_selected) — mais fraco que guarnicao numa
+## cidade de proposito (GARRISON_HEAL_FRACTION), fortificar no campo aberto
+## nunca deveria curar tao rapido quanto estar dentro dos proprios muros.
+const FORTIFY_HEAL_FRACTION := 0.1
 const SCIENCE_PER_POPULATION := 1.0 # "ciencia" por turno = populacao total das cidades
 
 var state: GameState = GameState.MENU
@@ -17,6 +22,17 @@ var rival_players: Array[PlayerData] = []
 ## Escolhido na tela de titulo antes de start_new_game(); "" mantem o padrao.
 var human_kingdom_name: String = ""
 const DEFAULT_KINGDOM_NAME := "Reino de Aldenmark"
+
+## Raca do jogador (CivilizationData.race, ver UnitDatabase.RACE_UNIQUE_
+## KIND) — escolhida na tela de titulo (TitleScreen._selected_race),
+## pedido do usuario: "crie um sistema onde ao iniciar o game a gente pode
+## escolher tambem a raca que vai jogar... elfo, anao, orc e humanos, ai
+## as implicacoes disso voce pode criar tambem" (a implicacao escolhida:
+## cada raca destrava sua propria tropa de elite exclusiva, ver City.
+## can_train). "human" e o padrao — precisa continuar valido pra qualquer
+## caminho que pule a tela de titulo (ex: testes que chamam setup_players
+## direto sem passar por TitleScreen).
+var human_race: String = "human"
 
 ## Escolhido na tela de titulo (1 a RIVAL_CIVS.size()); setup_players()
 ## limita (clamp) pro caso de vir de um save antigo com mais civs do que
@@ -66,6 +82,7 @@ func setup_players(grid: HexGrid) -> void:
 	human_civ.civ_name = human_kingdom_name if human_kingdom_name != "" else DEFAULT_KINGDOM_NAME
 	human_civ.leader_name = "Rainha Elara"
 	human_civ.color = Color(0.2, 0.45, 0.85)
+	human_civ.race = human_race
 	human_player = PlayerData.new(human_civ)
 	players.append(human_player)
 
@@ -99,8 +116,19 @@ func setup_players(grid: HexGrid) -> void:
 ## RivalAI._retreat).
 func _heal_if_garrisoned(unit: Unit) -> void:
 	var city = hex_grid.get_city_at(unit.coord)
-	if city and city.owner_player == unit.owner_player and unit.hp < unit.unit_data.max_hp:
-		unit.hp = min(unit.hp + unit.unit_data.max_hp * GARRISON_HEAL_FRACTION, unit.unit_data.max_hp)
+	if city and city.owner_player == unit.owner_player:
+		if unit.hp < unit.unit_data.max_hp:
+			unit.hp = min(unit.hp + unit.unit_data.max_hp * GARRISON_HEAL_FRACTION, unit.unit_data.max_hp)
+		return
+	_heal_if_fortified(unit)
+
+## Cura passiva do modo Fortificar (Unit.fortified) — pedido do usuario:
+## "se você tiver ferido, você fica se curando um pouco todo turno". So
+## chamada quando a unidade NAO esta guarnicionada (ver _heal_if_garrisoned
+## acima) pra nunca curar duas vezes no mesmo turno.
+func _heal_if_fortified(unit: Unit) -> void:
+	if unit.fortified and unit.hp < unit.unit_data.max_hp:
+		unit.hp = min(unit.hp + unit.unit_data.max_hp * FORTIFY_HEAL_FRACTION, unit.unit_data.max_hp)
 
 ## Ent (UnitData.regen_fraction): regenera sozinho todo turno, em qualquer
 ## lugar do mapa — nao depende de estar guarnicionado como o resto do
@@ -178,6 +206,23 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 	for player in players:
 		for unit in player.units:
 			unit.reset_movement()
+			# Continua um pedido de "mover ate" pendente (Unit.move_order_
+			# target, ver SelectionManager._try_queue_move_order/HexGrid.
+			# continue_move_order) — pedido do usuario: "no civilization eu
+			# posso colocar pra ela se mover pra um lugar longe... o
+			# movimento fica gravado e todo turno essa tropa vai se
+			# movendo". So a IA rival nunca seta esse campo (continua
+			# decidindo movimento do proprio jeito, ver RivalAI.
+			# move_unit_toward), entao isto e um no-op de graca pros
+			# units dela — nao precisa checar humano vs rival aqui.
+			hex_grid.continue_move_order(unit)
+			# Continua "Explorar" (Unit.exploring) pelo mesmo motivo — so o
+			# jogador humano liga isso (SelectionManager.toggle_explore_
+			# selected), entao e um no-op pra IA/monstro tambem. Mutuamente
+			# exclusivo com move_order_target por construcao (as duas
+			# funcoes de toggle desligam uma a outra), entao chamar as duas
+			# sempre e seguro.
+			hex_grid.explore_step(unit)
 			_heal_if_garrisoned(unit)
 			_apply_regen(unit)
 
@@ -196,9 +241,11 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 
 	for player in players:
 		_process_research(player)
+		var mana_income := 0.0
 		for city in player.cities.duplicate():
 			var result = city.process_turn(hex_grid)
 			player.gold += result.gold
+			mana_income += result.mana
 			if result.spawn_unit_kind != "":
 				var spawn_coord = WorldSetup.find_spawn_tile(hex_grid, city.coord)
 				hex_grid.spawn_unit(spawn_coord, UnitDatabase.create_unit(result.spawn_unit_kind), player)
@@ -208,6 +255,8 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 				if player == human_player:
 					var building: BuildingData = BuildingDatabase.get_building(result.built_kind)
 					EventBus.notify.emit("%s concluiu: %s" % [city.city_name, building.display_name], "confirm")
+		player.mana += mana_income
+		player.mana_income_per_turn = mana_income
 
 	for rival in rival_players:
 		RivalAI.take_turn(rival, hex_grid, human_player)

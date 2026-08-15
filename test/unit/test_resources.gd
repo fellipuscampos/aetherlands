@@ -19,6 +19,35 @@ func test_yield_for_no_resource_is_zero():
 	assert_eq(y.food, 0)
 	assert_eq(y.production, 0)
 	assert_eq(y.gold, 0)
+	assert_eq(y.mana, 0)
+
+## Nodulo Arcano (Ponto 3, "Economia Arcana"): mesmo mecanismo de
+## recurso estrategico de sempre, so que rendendo MANA em vez de comida/
+## producao/ouro — pedido do usuario: "Trabalhar um tile com MANA_NODE
+## gera +2 de Mana por turno".
+func test_mana_node_is_eligible_on_hills_and_forest():
+	assert_true("mana_node" in ResourceDatabase.eligible_resources(HexTileData.TerrainType.HILLS))
+	assert_true("mana_node" in ResourceDatabase.eligible_resources(HexTileData.TerrainType.FOREST))
+
+func test_mana_node_is_not_eligible_on_unrelated_biomes():
+	assert_false("mana_node" in ResourceDatabase.eligible_resources(HexTileData.TerrainType.GRASSLAND))
+	assert_false("mana_node" in ResourceDatabase.eligible_resources(HexTileData.TerrainType.OCEAN))
+
+## Regressao (pedido do usuario: "faca recursos nao nascerem nas
+## montanhas") — Montanha nao deve mais oferecer recurso nenhum,
+## nem Ferro nem Nodulo Arcano (os dois unicos que ja apareceram la).
+func test_no_resource_is_eligible_on_mountains():
+	assert_eq(ResourceDatabase.eligible_resources(HexTileData.TerrainType.MOUNTAINS).size(), 0)
+
+func test_yield_for_mana_node_gives_two_mana_and_nothing_else():
+	var y = ResourceDatabase.yield_for("mana_node")
+	assert_eq(y.mana, 2)
+	assert_eq(y.food, 0)
+	assert_eq(y.production, 0)
+	assert_eq(y.gold, 0)
+
+func test_display_name_for_mana_node():
+	assert_eq(ResourceDatabase.display_name("mana_node"), "Nódulo Arcano")
 
 func test_resource_placement_is_deterministic_for_same_seed():
 	var grid_a := HexGrid.new()

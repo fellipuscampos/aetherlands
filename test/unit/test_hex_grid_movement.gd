@@ -1,4 +1,4 @@
-extends GutTest
+﻿extends GutTest
 
 var hex_grid: HexGrid
 var human: PlayerData
@@ -88,25 +88,6 @@ func test_is_tile_building_site_reflects_placed_building():
 	hex_grid.place_building(Vector2i(1, 0), "granary", human)
 	assert_true(hex_grid.is_tile_building_site(Vector2i(1, 0)))
 
-## "Limite da cidade sempre visivel, como um contorno do Civilization"
-## (pedido do usuario): fundar uma cidade ja cria um contorno permanente
-## na cor da civilizacao, sem depender de selecao na HUD.
-func test_found_city_creates_a_border():
-	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
-	assert_true(hex_grid._city_borders.has(city), "fundar deveria criar um contorno pra cidade")
-
-## Regressao: capturar uma cidade precisa RECONSTRUIR o contorno (cor nova,
-## do novo dono) — senao o territorio capturado continuaria mostrando a
-## cor do dono antigo.
-func test_capture_city_rebuilds_border():
-	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
-	var border_before = hex_grid._city_borders[city]
-
-	hex_grid.capture_city(city, human)
-
-	assert_true(hex_grid._city_borders.has(city))
-	assert_ne(hex_grid._city_borders[city], border_before, "contorno deveria ser reconstruido ao mudar de dono")
-
 func test_city_territory_tiles_includes_city_and_all_neighbors():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
 	var territory = hex_grid.city_territory_tiles(city)
@@ -121,93 +102,48 @@ func test_city_owning_tile_detects_conflict_with_other_city():
 	assert_eq(hex_grid.city_owning_tile(Vector2i(0, 0)), city_a)
 	assert_null(hex_grid.city_owning_tile(Vector2i(0, 0), city_a), "excluindo a propria cidade, ninguem mais possui esse tile")
 
-## Territorio agora e dinamico (City.owned_tiles, nao mais sempre "celula +
-## 6 vizinhos") — confirma que a malha de contorno filtra arestas internas
-## corretamente mesmo pra um formato IRREGULAR (aqui, so 2 tiles vizinhos,
-## um "dominó" em vez de um hexagono completo). Cada tile isolado tem 6
-## arestas; a aresta COMPARTILHADA entre os 2 e filtrada dos dois lados
-## (interna), sobrando 5 expostas em cada um = 10 arestas x 6 vertices
-## (2 triangulos por aresta) cada.
-func test_build_city_border_mesh_filters_internal_edges_for_irregular_territory():
+## Tingimento de territorio (pedido do usuario, requisito 3: "camada
+## transparente com a cor da civilizacao no chao de cada hexagono do
+## territorio"). Cada tile vira um leque de 6 triangulos (centro + par de
+## cantos consecutivos) = 18 vertices; o territorio padrao de found_city
+## (celula + 6 vizinhos) tem 7 tiles = 126 vertices, contando que todos
+## estejam VISIBLE.
+func test_build_city_tint_mesh_covers_all_owned_tiles():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
-	var neighbor_coord: Vector2i = HexGrid.NEIGHBOR_DIRS[0]
-	# Array[Vector2i] explicito (nao um literal [a, b] cru) — atribuir um
-	# Array generico direto a uma propriedade Array[Vector2i] de outro
-	# objeto falha em tempo de execucao no GDScript se o literal nao for
-	# reconhecido como homogeneo em tempo de compilacao.
-	var domino_territory: Array[Vector2i] = [Vector2i(0, 0), neighbor_coord]
-	city.owned_tiles = domino_territory
 	for coord in city.owned_tiles:
 		hex_grid.visibility[coord] = HexGrid.Visibility.VISIBLE
 
-	var mesh = hex_grid._build_city_border_mesh(city)
+	var mesh = hex_grid._build_city_tint_mesh(city)
 
 	assert_eq(mesh.get_surface_count(), 1)
 	var vertex_count = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()
-	assert_eq(vertex_count, 10 * 6, "2 tiles em 'domino': 5 arestas expostas cada (a compartilhada e filtrada dos dois lados) = 10 arestas x 6 vertices")
+	assert_eq(vertex_count, 7 * 18, "7 tiles (celula + 6 vizinhos) x 18 vertices (leque de 6 triangulos) cada")
 
-## Acompanhamento de relevo (pedido do usuario: "nao use uma altura Y fixa
-## para todo o segmento... busque a altura real do terreno"). Reusa a
-## mesma tecnica de _tallest_neighbor_height/_corner_point_safe ja usada
-## pelos rios pra nao atravessar a "parede" de um vizinho bem mais alto.
-func test_border_mesh_snaps_to_tallest_neighbor_not_flat_tile_height():
+## Nevoa no tingimento — mesma filosofia do contorno: UNSEEN nao gera
+## geometria nenhuma, EXPLORED fica com uma FRACAO da opacidade normal.
+func test_build_city_tint_mesh_skips_unseen_and_dims_explored_tiles():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
-	var raised_coord = HexGrid.NEIGHBOR_DIRS[0]
-	var raised_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
-	raised_tile.base_height = 5.0 # bem acima de qualquer bioma padrao, pra nao dar empate por acaso
-	hex_grid.tiles[raised_coord] = raised_tile
-	for coord in city.owned_tiles:
-		hex_grid.visibility[coord] = HexGrid.Visibility.VISIBLE
-	var center_tile: HexTileData = hex_grid.tiles[Vector2i(0, 0)]
+	# visibility nunca foi populado neste fixture — tudo comeca UNSEEN.
+	var empty_mesh = hex_grid._build_city_tint_mesh(city)
+	assert_eq(empty_mesh.get_surface_count(), 0, "territorio inteiro UNSEEN nao deveria gerar tingimento nenhum")
 
-	var mesh = hex_grid._build_city_border_mesh(city)
-	var vertices: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-
-	var max_y := -INF
-	for v in vertices:
-		max_y = max(max_y, v.y)
-
-	assert_almost_eq(max_y, 5.0 + HexGrid.BORDER_ABOVE_OFFSET, 0.001, "canto do contorno deveria subir ate a altura do vizinho mais alto")
-	assert_gt(max_y, center_tile.base_height + HexGrid.BORDER_ABOVE_OFFSET, "deveria ser maior que a altura FIXA antiga (base_height cru do proprio tile), provando que agora acompanha o relevo vizinho")
-
-## Nevoa POR SEGMENTO (requisito do usuario): UNSEEN nem gera geometria
-## (oculto sob a nevoa), EXPLORED gera com alfa reduzido e cor dessaturada
-## (nao a cor crua da civ), VISIBLE fica cheio.
-func test_border_mesh_skips_unseen_tiles_and_dims_explored_ones():
-	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
-	# visibility nunca foi populado neste fixture — todo o territorio comeca UNSEEN.
-	var empty_mesh = hex_grid._build_city_border_mesh(city)
-	assert_eq(empty_mesh.get_surface_count(), 0, "territorio inteiro UNSEEN nao deveria gerar geometria nenhuma")
-
-	# Encolhe pra so 2 tiles: com o hexagono completo (7 tiles) de found_city,
-	# o proprio tile central fica "cercado" pelo resto do territorio (todo
-	# vizinho seu ainda esta em owned_tiles, mesmo fogado) e nunca expoe
-	# nenhuma aresta, independente da propria visibilidade — precisa de um
-	# territorio menor pra garantir que os 2 tiles realmente expoem borda.
-	var explored_coord: Vector2i = HexGrid.NEIGHBOR_DIRS[0]
-	var shrunk_territory: Array[Vector2i] = [Vector2i(0, 0), explored_coord]
-	city.owned_tiles = shrunk_territory
 	hex_grid.visibility[Vector2i(0, 0)] = HexGrid.Visibility.VISIBLE
+	var explored_coord: Vector2i = HexGrid.NEIGHBOR_DIRS[0]
 	hex_grid.visibility[explored_coord] = HexGrid.Visibility.EXPLORED
 
-	var mesh = hex_grid._build_city_border_mesh(city)
+	var mesh = hex_grid._build_city_tint_mesh(city)
 	var colors: PackedColorArray = mesh.surface_get_arrays(0)[Mesh.ARRAY_COLOR]
-	var civ_color = human.civ.color
-	var full_color := Color(civ_color.r, civ_color.g, civ_color.b, 1.0)
 
-	# SurfaceTool.commit() comprime COLOR pra 8 bits por canal por padrao —
-	# 0.55 vira ~140/255 (0.549...) na malha final, entao a comparacao de
-	# alfa precisa de uma tolerancia maior que is_equal_approx() (feito pra
-	# ruido de ponto flutuante, nao quantizacao de 1/255 ~= 0.0039).
 	var saw_full_alpha := false
-	var saw_reduced_alpha := false
+	var saw_dimmed_alpha := false
+	var expected_dimmed = HexGrid.TERRITORY_TINT_ALPHA * HexGrid.TERRITORY_TINT_EXPLORED_ALPHA_MULT
 	for c in colors:
-		if c.is_equal_approx(full_color):
+		if abs(c.a - HexGrid.TERRITORY_TINT_ALPHA) < 0.005:
 			saw_full_alpha = true
-		elif abs(c.a - HexGrid.EXPLORED_BORDER_ALPHA) < 0.01:
-			saw_reduced_alpha = true
-	assert_true(saw_full_alpha, "trecho VISIBLE deveria ter alfa 1.0 e cor cheia da civ")
-	assert_true(saw_reduced_alpha, "trecho EXPLORED deveria ter alfa reduzido e cor dessaturada (nao a cor crua da civ)")
+		elif abs(c.a - expected_dimmed) < 0.005:
+			saw_dimmed_alpha = true
+	assert_true(saw_full_alpha, "tile VISIBLE deveria tingir com TERRITORY_TINT_ALPHA cheio")
+	assert_true(saw_dimmed_alpha, "tile EXPLORED deveria tingir com uma fracao da opacidade normal")
 
 ## Marcador animado de "em construcao" (pedido do usuario: mostrar que ali
 ## tem uma obra rolando) — refresh_construction_markers() reconcilia com
@@ -337,6 +273,170 @@ func test_non_flying_unit_cannot_cross_frozen_ocean():
 	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, warrior.unit_data.flies)
 
 	assert_false(reachable.has(Vector2i(1, 0)), "unidade terrestre nao deveria atravessar Mar Gelado")
+
+## "Mover ate" tipo Civilization (pedido do usuario: "no civilization eu
+## posso colocar pra ela se mover pra um lugar longe... o movimento fica
+## gravado e todo turno essa tropa vai se movendo") — compute_path acha o
+## caminho INTEIRO ate um destino longe, sem o teto de movement_points que
+## compute_reachable tem.
+func test_compute_path_returns_full_route_ignoring_movement_cap():
+	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[Vector2i(3, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[Vector2i(4, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0)) # so 2 de movimento, destino fica a 4 tiles
+
+	var path = hex_grid.compute_path(warrior.coord, Vector2i(4, 0), warrior.owner_player)
+
+	assert_eq(path, [Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0)], "caminho completo deveria incluir os 4 passos, mesmo bem alem do movimento de UM turno")
+
+func test_compute_path_to_the_same_tile_is_empty():
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	var path = hex_grid.compute_path(warrior.coord, warrior.coord, warrior.owner_player)
+
+	assert_eq(path.size(), 0)
+
+func test_compute_path_to_a_tile_outside_the_map_is_empty():
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	var path = hex_grid.compute_path(warrior.coord, Vector2i(999, 999), warrior.owner_player)
+
+	assert_eq(path.size(), 0)
+
+## Continua um pedido pendente (Unit.move_order_target) sozinha, sem
+## precisar de novo clique do jogador — chega direto se o destino cabe no
+## movimento atual.
+func test_continue_move_order_reaches_destination_directly_when_it_fits_in_current_movement():
+	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0)) # 2 de movimento, destino a 2 tiles
+	warrior.move_order_target = Vector2i(2, 0)
+
+	hex_grid.continue_move_order(warrior)
+
+	assert_eq(warrior.coord, Vector2i(2, 0))
+	assert_eq(warrior.move_order_target, Unit.NO_MOVE_ORDER, "ordem deveria ser limpa ao chegar")
+
+## O ponto central do pedido: destino longe demais pra UM turno anda o
+## quanto der e MANTEM a ordem pendente, pra continuar sozinha depois.
+func test_continue_move_order_advances_partially_and_keeps_the_order_pending_when_destination_is_far():
+	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[Vector2i(3, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[Vector2i(4, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0)) # 2 de movimento, destino a 4 tiles
+	warrior.move_order_target = Vector2i(4, 0)
+
+	hex_grid.continue_move_order(warrior)
+
+	assert_eq(warrior.coord, Vector2i(2, 0), "deveria andar exatamente os 2 tiles que o movimento do turno permite")
+	assert_eq(warrior.movement_left, 0.0)
+	assert_eq(warrior.move_order_target, Vector2i(4, 0), "ordem deveria continuar pendente pro proximo turno")
+
+## Simula 2 turnos seguidos (reset_movement + continue_move_order, mesma
+## sequencia de GameManager._on_turn_changed) ate a unidade chegar sozinha.
+func test_continue_move_order_resumes_across_turns_until_arrival():
+	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[Vector2i(3, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[Vector2i(4, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+	warrior.move_order_target = Vector2i(4, 0)
+
+	hex_grid.continue_move_order(warrior) # turno 1: anda ate (2,0), sem movimento sobrando
+	assert_eq(warrior.coord, Vector2i(2, 0))
+
+	warrior.reset_movement() # troca de turno
+	hex_grid.continue_move_order(warrior) # turno 2: anda o resto ate (4,0)
+
+	assert_eq(warrior.coord, Vector2i(4, 0))
+	assert_eq(warrior.move_order_target, Unit.NO_MOVE_ORDER)
+
+## Rota recalculada do ZERO a cada chamada (nao segue um caminho salvo) —
+## se outra unidade ocupar o UNICO caminho possivel no meio do trajeto, a
+## ordem desiste (limpa move_order_target) em vez de ficar tentando pra
+## sempre sem nenhum feedback.
+func test_continue_move_order_gives_up_when_the_path_becomes_blocked():
+	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+	warrior.move_order_target = Vector2i(2, 0)
+	_make_unit("warrior", rival, Vector2i(1, 0)) # bloqueia o unico caminho ate (2,0) neste fixture minimo
+
+	hex_grid.continue_move_order(warrior)
+
+	assert_eq(warrior.coord, Vector2i(0, 0), "nao deveria ter se movido nenhum passo")
+	assert_eq(warrior.move_order_target, Unit.NO_MOVE_ORDER, "deveria desistir da ordem em vez de travar tentando pra sempre")
+
+func test_continue_move_order_does_nothing_without_a_pending_order():
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	hex_grid.continue_move_order(warrior)
+
+	assert_eq(warrior.coord, Vector2i(0, 0))
+	assert_eq(warrior.movement_left, warrior.unit_data.movement_points)
+
+## Regressao/relato de bug do usuario: "se ele tiver movendo e eu ativar
+## o fortificar ele não para... ao ativar o estado de fortificado ele
+## deve cancelar as outras ações" — rede de seguranca no proprio
+## continue_move_order (alem do cancelamento em SelectionManager.
+## fortify_selected): uma unidade fortificada NUNCA deveria continuar
+## andando sozinha, mesmo que move_order_target continue setado por
+## algum motivo.
+func test_continue_move_order_does_nothing_when_fortified():
+	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+	warrior.move_order_target = Vector2i(2, 0)
+	warrior.fortified = true
+
+	hex_grid.continue_move_order(warrior)
+
+	assert_eq(warrior.coord, Vector2i(0, 0), "unidade fortificada nao deveria se mover sozinha")
+	assert_eq(warrior.move_order_target, Unit.NO_MOVE_ORDER, "a ordem pendente deveria ser limpa, nao so ignorada")
+
+## "Explorar" tipo Civilization (pedido do usuario: "uma função que fica
+## ativada... que se baseie em ficar andando por territórios que ainda
+## não foram explorados") — anda sozinha na direcao do tile UNSEEN mais
+## perto. Marca tudo VISIBLE exceto UM vizinho especifico, senao o "mais
+## perto" empataria entre os 6 vizinhos identicos do fixture padrao.
+func test_explore_step_moves_toward_the_nearest_unseen_tile():
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+	warrior.exploring = true
+	hex_grid.visibility[Vector2i(0, 0)] = HexGrid.Visibility.VISIBLE
+	for dir in HexGrid.NEIGHBOR_DIRS:
+		if dir != Vector2i(1, 0):
+			hex_grid.visibility[dir] = HexGrid.Visibility.VISIBLE
+
+	hex_grid.explore_step(warrior)
+
+	assert_eq(warrior.coord, Vector2i(1, 0), "deveria ter andado na direcao do UNICO tile UNSEEN por perto")
+
+func test_explore_step_turns_off_when_nothing_left_unexplored():
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+	warrior.exploring = true
+	hex_grid.visibility[Vector2i(0, 0)] = HexGrid.Visibility.VISIBLE
+	for dir in HexGrid.NEIGHBOR_DIRS:
+		hex_grid.visibility[dir] = HexGrid.Visibility.VISIBLE
+
+	hex_grid.explore_step(warrior)
+
+	assert_eq(warrior.coord, Vector2i(0, 0), "sem tile UNSEEN nenhum, nao deveria se mover")
+	assert_false(warrior.exploring, "deveria desligar sozinho quando nao sobra nada pra explorar")
+
+func test_explore_step_does_nothing_when_not_exploring():
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	hex_grid.explore_step(warrior)
+
+	assert_eq(warrior.coord, Vector2i(0, 0))
+
+## Mesma rede de seguranca de test_continue_move_order_does_nothing_when_
+## fortified acima — Fortificar sempre vence.
+func test_explore_step_does_nothing_when_fortified():
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+	warrior.exploring = true
+	warrior.fortified = true
+
+	hex_grid.explore_step(warrior)
+
+	assert_eq(warrior.coord, Vector2i(0, 0), "unidade fortificada nao deveria explorar sozinha")
+	assert_false(warrior.exploring, "exploring deveria ser desligado, nao so ignorado")
 
 func test_tiles_in_range_does_not_include_tiles_beyond_range():
 	var center := Vector2i(0, 0)

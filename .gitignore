@@ -6,7 +6,8 @@
 # Imported/compiled resources
 .import/
 export.cfg
-export_presets.cfg
+# export_presets.cfg é versionado de propósito — usado pelo workflow de
+# deploy (.github/workflows/deploy.yml) pra exportar builds no CI.
 
 # Mono-specific ignores
 .mono/
@@ -20,3 +21,7 @@ Thumbs.db
 *.TMP
 ~*
 *~RF*.TMP
+
+# Build output local (export de teste) — builds de release de verdade vêm
+# do workflow de deploy, anexados às GitHub Releases, não deste diretório.
+/build/

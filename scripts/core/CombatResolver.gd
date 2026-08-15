@@ -10,6 +10,17 @@ extends RefCounted
 ## quando o combate envolve uma unidade dele — sem isso, um ataque do rival
 ## fora de tela passaria despercebido.
 
+## Bonus de defesa por ficar Fortificado (Unit.fortified, ver
+## SelectionManager.fortify_selected) — pedido do usuario descreveu a cura
+## passiva do Fortificar mas nao os detalhes de combate ("não sei tantos
+## detalhes"); bonus de defesa e o efeito CLASSICO do Fortificar em jogos
+## de estrategia por turnos — sem ele, "Fortificar" seria so um sinonimo
+## de "nao fazer nada". Reusa o mesmo "ignore_fortification" do Mago
+## abaixo (unit_data.ignores_terrain_defense) que ja ignora terreno/
+## Muralhas — fortificar tambem e uma fortificacao, magia ignora do mesmo
+## jeito.
+const FORTIFY_DEFENSE_BONUS := 0.25
+
 ## Calcula o resultado do combate SEM aplicar nada — usado pela RivalAI
 ## pra decidir se vale a pena atacar antes de se comprometer (ver
 ## RivalAI.is_favorable_attack). resolve() usa isso tambem, garantindo
@@ -27,7 +38,8 @@ static func predict(attacker: Unit, defender: Unit, hex_grid: HexGrid) -> Dictio
 		var city = hex_grid.get_city_at(defender.coord)
 		if city and city.owner_player == defender.owner_player:
 			building_bonus = BuildingDatabase.defense_bonus_for(city.buildings)
-	var defense_multiplier = 1.0 + terrain_bonus + building_bonus
+	var fortify_bonus = FORTIFY_DEFENSE_BONUS if (defender.fortified and not ignore_fortification) else 0.0
+	var defense_multiplier = 1.0 + terrain_bonus + building_bonus + fortify_bonus
 	var atk = attacker.unit_data.attack * attacker.veterancy_multiplier()
 	var def = defender.unit_data.defense * defense_multiplier * defender.veterancy_multiplier()
 	var is_melee_range = HexMetrics.axial_distance(attacker.coord, defender.coord) <= 1

@@ -15,8 +15,17 @@ extends RefCounted
 ## medieval-fantasia sem precisar de nenhum asset externo (mesma filosofia
 ## "procedural com fallback" usada em todo o resto do projeto).
 
-const COLOR_BG_PANEL := Color(0.11, 0.09, 0.07, 0.97)
-const COLOR_BG_PANEL_LIGHT := Color(0.17, 0.14, 0.10, 0.98)
+## Alfa 1.0 (era 0.97/0.98 — quase opaco, mas nao de verdade): pedido do
+## usuario, "torne o fundo do painel modal 100% OPACO... sem deixar o
+## mapa/minimapa vazar por tras dos cards". Modal com alfa < 1.0 sobre o
+## mundo 3D em movimento deixava um leve "fantasma" do terreno/labels de
+## cidade por baixo, pior ainda quando um elemento brilhante (minimapa)
+## ficava atras. Afeta TODOS os paineis (Tecnologia, Grimorio, Diplomacia,
+## Debug, Ajuda, Fim de Jogo) de uma vez, ja que todos usam o mesmo
+## stylebox global de PanelContainer — de proposito, nenhum modal deveria
+## ser translucido.
+const COLOR_BG_PANEL := Color(0.11, 0.09, 0.07, 1.0)
+const COLOR_BG_PANEL_LIGHT := Color(0.17, 0.14, 0.10, 1.0)
 const COLOR_BORDER := Color(0.5, 0.38, 0.18, 1.0)
 const COLOR_BORDER_BRIGHT := Color(0.8, 0.63, 0.28, 1.0)
 const COLOR_TEXT := Color(0.92, 0.87, 0.76, 1.0)
@@ -77,6 +86,23 @@ static func build() -> Theme:
 	theme.set_stylebox("background", "ProgressBar", panel_style(COLOR_BG_PANEL.darkened(0.2), COLOR_BORDER, 1, 4))
 	theme.set_stylebox("fill", "ProgressBar", panel_style(COLOR_ACCENT, COLOR_ACCENT, 0, 4))
 	theme.set_color("font_color", "ProgressBar", COLOR_TEXT)
+
+	# TabContainer (City Inspector Panel: abas "Unidades"/"Construções", ver
+	# HUD.tscn ProductionTabs) — sem isto renderizava no cinza padrao do
+	# Godot, quebrando a identidade visual "pergaminho antigo" bem na tela
+	# mais usada do jogo.
+	theme.set_stylebox("panel", "TabContainer", panel_style(COLOR_BG_PANEL_LIGHT, COLOR_BORDER, 2, 8))
+	theme.set_stylebox("tab_selected", "TabContainer", panel_style(COLOR_BG_PANEL_LIGHT, COLOR_BORDER_BRIGHT, 2, 6))
+	theme.set_stylebox("tab_unselected", "TabContainer", panel_style(COLOR_BG_PANEL.darkened(0.15), COLOR_BORDER, 1, 6))
+	theme.set_stylebox("tab_hovered", "TabContainer", panel_style(COLOR_BG_PANEL_LIGHT.lightened(0.05), COLOR_BORDER_BRIGHT, 1, 6))
+	theme.set_color("font_selected_color", "TabContainer", COLOR_BORDER_BRIGHT)
+	theme.set_color("font_unselected_color", "TabContainer", COLOR_TEXT_MUTED)
+	theme.set_font_size("font_size", "TabContainer", FONT_SIZE_BODY)
+
+	# VSeparator (divisorias finas entre indicadores/grupos de botao na
+	# barra superior, ver HUD.tscn StatusGroup/NavGroup) — cor default do
+	# Godot destoava da paleta bronze/dourada do resto do jogo.
+	theme.set_color("color", "VSeparator", COLOR_BORDER)
 
 	return theme
 

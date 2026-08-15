@@ -7,6 +7,17 @@ extends RefCounted
 
 var civ: CivilizationData
 var gold: float = 0.0
+
+## Economia arcana (Ponto 3): saldo gasto pra conjurar feiticos do Grimorio
+## (ver SpellManager.gd) — cresce todo turno com o mana rendido pelas
+## cidades (Nodulo Arcano trabalhado + predios como a Torre dos Sabios, ver
+## City.collect_yields), mesmo padrao de `gold` acima. mana_income_per_turn
+## e so o ULTIMO valor calculado (nao acumula) — puramente informativo pra
+## HUD mostrar "Mana: X (+Y)" sem precisar recalcular a soma de todas as
+## cidades toda vez que a barra superior redesenha.
+var mana: float = 0.0
+var mana_income_per_turn: float = 0.0
+
 var units: Array[Unit] = []
 var cities: Array[City] = []
 
@@ -30,6 +41,13 @@ var known_enemy_cities: Dictionary = {} # Vector2i -> true
 var researched_techs: Dictionary = {} # id -> true
 var current_research: String = ""
 var research_progress: float = 0.0
+
+## Recarga de feiticos/rituais (ver SpellDatabase/SpellManager): nome do
+## feitico -> numero do turno em que volta a ficar disponivel. Ausencia da
+## chave == disponivel agora (nunca conjurado, ou recarga ja passou e
+## nunca foi limpa — SpellManager.can_cast compara direto contra o turno
+## atual em vez de precisar "expirar" a entrada).
+var spell_cooldowns: Dictionary = {} # String -> int
 
 ## Diplomacia (ver Diplomacy.gd): presenca de `other` aqui significa "em
 ## guerra com other" — ausencia significa paz. Simetrico por construcao

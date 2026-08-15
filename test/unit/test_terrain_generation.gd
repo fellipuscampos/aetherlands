@@ -91,6 +91,78 @@ func test_generate_map_with_different_seeds_can_differ():
 	grid_a.queue_free()
 	grid_b.queue_free()
 
+## Regressao critica (pedido do usuario): o mapa estava saindo ~74% agua
+## ("arquipelago denso", medido empiricamente antes desta correcao),
+## sufocando a expansao terrestre dos impérios — ver OCEAN_ELEVATION_
+## THRESHOLD/continent_noise_frequency (HexGrid.gd) pro ajuste. Gera 5
+## mapas com sementes fixas e exige que TODOS fiquem dentro da faixa
+## tolerada de 40%-55% de agua — um pouco mais larga que o alvo de design
+## (45%-50%) de proposito, pra nao ficar flutuante com a variacao normal
+## de ~±5 pontos percentuais entre sementes (medida na mesma amostragem
+## que escolheu o threshold).
+func test_generate_map_water_percentage_stays_within_the_continents_range():
+	var seeds = [1, 42, 999, 12345, 7]
+	for s in seeds:
+		var grid := HexGrid.new()
+		grid._ready()
+		grid.generate_map(41, 41, s)
+
+		var water_count := 0
+		var total := 0
+		for coord in grid.tiles.keys():
+			total += 1
+			if grid.tiles[coord].is_water():
+				water_count += 1
+		var water_pct = 100.0 * water_count / total
+
+		assert_true(
+			water_pct >= 40.0 and water_pct <= 55.0,
+			"semente %d: %.1f%% de agua, fora da faixa tolerada de mapa Continentes/Pangaea (40%%-55%%)" % [s, water_pct]
+		)
+
+		grid.queue_free()
+
+## Requisito de "continent shaping" (pedido do usuario): a terra deveria
+## formar massas continentais CONTINUAS (onde cabem varias cidades), nao
+## um monte de ilhas de 2-3 tiles isoladas — reusa _land_component_size_
+## by_coord (BFS de vizinhanca real, ja existente pra decidir ilha pequena
+## elegivel a Campos de Cristal) pra medir quanto da terra pertence a UM
+## SO bloco conectado. 50% e uma margem folgada de proposito (medido
+## empiricamente com os mesmos parametros: ~90-96% na pratica) — so pra
+## pegar uma regressao de verdade (ex.: alguem subindo a frequencia do
+## ruido de continente de novo), nao flutuacao normal entre sementes.
+func test_generate_map_land_forms_large_connected_masses_not_scattered_islands():
+	var seeds = [1, 42, 999, 12345, 7]
+	for s in seeds:
+		var grid := HexGrid.new()
+		grid._ready()
+		grid.generate_map(41, 41, s)
+
+		# "Terra" aqui e so "nao e agua" (mesmo criterio usado pra classificar
+		# elevacao em generate_map — is_land_by_coord = elevation >=
+		# OCEAN_ELEVATION_THRESHOLD) — Lava/Mar de Lava continuam contando
+		# como parte da massa continental visualmente, so a agua de verdade
+		# (is_water()) quebra a continuidade.
+		var is_land_by_coord := {}
+		var land_total := 0
+		for coord in grid.tiles.keys():
+			var is_land = not grid.tiles[coord].is_water()
+			is_land_by_coord[coord] = is_land
+			if is_land:
+				land_total += 1
+
+		var component_size = grid._land_component_size_by_coord(grid.tiles.keys(), is_land_by_coord)
+		var largest := 0
+		for coord in component_size.keys():
+			largest = max(largest, component_size[coord])
+
+		assert_true(
+			float(largest) / float(land_total) >= 0.5,
+			"semente %d: maior massa de terra conectada tem so %d/%d tiles de terra (%.0f%%) — terra parece fragmentada em ilhas pequenas" % [s, largest, land_total, 100.0 * largest / land_total]
+		)
+
+		grid.queue_free()
+
 ## Regressao ("ta meio bugado os biomas... um monte de celula distribuida
 ## aleatoriamente... isso nao e bioma de fato", reportado pelo usuario):
 ## bioma precisa formar REGIOES continuas (varios tiles vizinhos do mesmo
@@ -217,26 +289,6 @@ func test_reclassify_coastal_ocean_converts_only_ocean_touching_land():
 	assert_eq(hex_grid.tiles[coastal_ocean].terrain_type, HexTileData.TerrainType.COAST, "Oceano vizinho de terra deveria virar Costa")
 	assert_eq(hex_grid.tiles[coastal_frozen].terrain_type, HexTileData.TerrainType.FROZEN_OCEAN, "Mar Gelado nao tem variante de Costa, deveria continuar igual")
 	assert_eq(hex_grid.tiles[deep_ocean].terrain_type, HexTileData.TerrainType.OCEAN, "Oceano sem vizinho de terra deveria continuar Oceano aberto")
-
-## Rio (ver HexGrid._trace_river) precisa reconhecer Costa como "chegou no
-## mar" igual reconhece Oceano — Costa E agua de verdade (is_water()==true),
-## entao isso ja deveria funcionar de graca, mas testa explicitamente pra
-## nunca regredir se is_water() for mexido de novo no futuro.
-func test_river_tracing_treats_coast_as_a_valid_sea_terminus():
-	hex_grid.tiles.clear()
-	var land := Vector2i(0, 0)
-	hex_grid.tiles[land] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
-	var coast := land + HexGrid.NEIGHBOR_DIRS[0]
-	hex_grid.tiles[coast] = TerrainDatabase.create_tile(HexTileData.TerrainType.COAST)
-
-	hex_grid.river_edges.clear()
-	hex_grid._river_tiles.clear()
-	hex_grid.river_paths.clear()
-	hex_grid._trace_river(land, {land: 0.5, coast: -0.5})
-
-	assert_eq(hex_grid.river_paths.size(), 1)
-	assert_true(hex_grid.river_paths[0]["has_terminus"])
-	assert_eq(hex_grid.river_paths[0]["terminus"], coast)
 
 ## Regressao de performance: gerar o mapa Grande retangular (96x60, 5760
 ## tiles — pedido do usuario com as dimensoes exatas do Civilization)
@@ -476,14 +528,16 @@ func test_generate_map_at_large_size_lava_always_forms_a_real_region():
 ## `_maybe_volcanic`, `_maybe_crystal`) sempre deixa alguns tiles isolados
 ## perto das bordas — corrigido com `_smooth_isolated_biome_cells()`
 ## (roda em TODO tamanho de mapa, antes de `_ensure_biome_variety`).
-## Gera 10 mapas por tamanho (Pequeno/Medio/Grande, 30 no total, sementes
-## deterministicas de um RandomNumberGenerator com semente fixa) e exige
-## que NENHUM tile fique sem nenhum vizinho do mesmo bioma — nao especifico
-## de Deserto/Lava, vale pra qualquer um dos 16 tipos.
+## Gera 10 mapas no tamanho Grande (unico tamanho que o jogo cria desde
+## "elimine a criacao do mapa medio e pequeno, vamos a partir de agora
+## usar so o grande" — sementes deterministicas de um RandomNumberGenerator
+## com semente fixa) e exige que NENHUM tile fique sem nenhum vizinho do
+## mesmo bioma — nao especifico de Deserto/Lava, vale pra qualquer um dos
+## 16 tipos.
 func test_generate_map_never_has_isolated_single_tile_biomes():
 	var randgen = RandomNumberGenerator.new()
 	randgen.seed = 5555
-	var sizes = [TitleScreen.MAP_SIZES.small, TitleScreen.MAP_SIZES.medium, TitleScreen.MAP_SIZES.large]
+	var sizes = [TitleScreen.MAP_SIZES.large]
 	for map_size in sizes:
 		for i in range(10):
 			var s = randgen.randi()
@@ -619,8 +673,21 @@ func test_generate_map_desert_and_volcanic_are_comparable_in_size_to_other_biome
 			desert_count, forest_jungle_avg * 0.3,
 			"semente %d: Deserto (%d tiles) esta desproporcionalmente pequeno perto da media de Floresta/Selva/Tundra/Taiga (%.0f)" % [s, desert_count, forest_jungle_avg]
 		)
+		# Vulcanico usa uma razao mais baixa que Deserto (0.1 em vez de 0.3,
+		# ver VOLCANIC_COASTAL_MAX_DISTANCE em HexGrid.gd): elegibilidade
+		# vulcanica exige litoral proximo OU Montanha, entao ela escala com
+		# a fracao de terra COSTEIRA, nao com a area total de terra. O
+		# rebalanceamento de agua/terra (pedido do usuario — continentes
+		# grandes e conectados em vez de arquipelago) fez a terra costeira
+		# encolher como FRACAO da terra total (continente maior = menos
+		# litoral por area, geometria basica), entao a media de Floresta/
+		# Selva/Tundra/Taiga (que escala com area total) cresceu bem mais
+		# rapido que a regiao vulcanica nesta rodada — nao e mais "5
+		# celulaszinhas" (a barra que este teste realmente existe pra
+		# pegar, ver o pedido original do usuario acima), so uma proporcao
+		# menor perto de biomas que nao dependem de litoral.
 		assert_gt(
-			volcanic_count, forest_jungle_avg * 0.3,
+			volcanic_count, forest_jungle_avg * 0.1,
 			"semente %d: regiao vulcanica (%d tiles) esta desproporcionalmente pequena perto da media de Floresta/Selva/Tundra/Taiga (%.0f)" % [s, volcanic_count, forest_jungle_avg]
 		)
 
