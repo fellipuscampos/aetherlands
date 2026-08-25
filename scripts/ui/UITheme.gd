@@ -21,7 +21,7 @@ extends RefCounted
 ## mundo 3D em movimento deixava um leve "fantasma" do terreno/labels de
 ## cidade por baixo, pior ainda quando um elemento brilhante (minimapa)
 ## ficava atras. Afeta TODOS os paineis (Tecnologia, Grimorio, Diplomacia,
-## Debug, Ajuda, Fim de Jogo) de uma vez, ja que todos usam o mesmo
+## Debug, Fim de Jogo) de uma vez, ja que todos usam o mesmo
 ## stylebox global de PanelContainer — de proposito, nenhum modal deveria
 ## ser translucido.
 const COLOR_BG_PANEL := Color(0.11, 0.09, 0.07, 1.0)
@@ -99,10 +99,13 @@ static func build() -> Theme:
 	theme.set_color("font_unselected_color", "TabContainer", COLOR_TEXT_MUTED)
 	theme.set_font_size("font_size", "TabContainer", FONT_SIZE_BODY)
 
-	# VSeparator (divisorias finas entre indicadores/grupos de botao na
-	# barra superior, ver HUD.tscn StatusGroup/NavGroup) — cor default do
-	# Godot destoava da paleta bronze/dourada do resto do jogo.
+	# VSeparator (divisorias finas entre indicadores na barra superior, ver
+	# HUD.tscn TopBar/TopBarRow/StatusGroup) e HSeparator (divisoria entre
+	# grupos de botao no ActionBar do canto inferior direito, ver HUD.tscn
+	# ActionBar/ActionBarBox) — cor default do Godot destoava da paleta
+	# bronze/dourada do resto do jogo.
 	theme.set_color("color", "VSeparator", COLOR_BORDER)
+	theme.set_color("color", "HSeparator", COLOR_BORDER)
 
 	return theme
 

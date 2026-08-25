@@ -100,6 +100,8 @@ func test_save_and_load_restores_player_and_map_state():
 	city.stored_production = 2.0
 	city.buildings["granary"] = true
 	city.buildings["walls"] = true
+	city.hp = 17.5
+	city.shield = 6.0
 	var expected_worked_tiles = city.worked_tiles.duplicate()
 
 	human.researched_techs["canalizacao_base"] = true
@@ -147,6 +149,8 @@ func test_save_and_load_restores_player_and_map_state():
 		assert_true(w in loaded_city.worked_tiles, "tile trabalhado %s deveria estar presente depois de carregar" % w)
 	assert_true(loaded_city.buildings.has("granary"), "predios construidos deveriam sobreviver ao save/load")
 	assert_true(loaded_city.buildings.has("walls"))
+	assert_almost_eq(loaded_city.hp, 17.5, 0.01, "vida da cidade deveria sobreviver ao save/load")
+	assert_almost_eq(loaded_city.shield, 6.0, 0.01, "escudo da cidade deveria sobreviver ao save/load")
 
 	assert_true(GameManager.human_player.researched_techs.has("canalizacao_base"), "tecnologia pesquisada deveria sobreviver ao save/load")
 	assert_eq(GameManager.human_player.current_research, "transmutacao_rocha")

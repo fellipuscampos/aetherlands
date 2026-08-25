@@ -10,4 +10,3 @@ signal restart_requested
 signal notify(text: String, sfx_kind: String)
 signal fog_updated
 signal minimap_clicked(world_pos: Vector3)
-signal pause_requested

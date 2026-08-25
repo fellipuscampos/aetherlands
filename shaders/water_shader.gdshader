@@ -63,6 +63,15 @@ uniform float fog_cloud_warp_strength : hint_range(0.0, 2.0) = 0.8;
 uniform vec3 fog_explored_tint : source_color = vec3(0.55, 0.48, 0.36);
 uniform float fog_explored_desaturate : hint_range(0.0, 1.0) = 0.6;
 uniform float fog_explored_darken : hint_range(0.0, 1.0) = 0.4;
+// Luma FIXO do tom sepia de Explorado — pedido do usuario, 4a rodada
+// ("ainda da pra ver onde o terreno termina e comeca a agua, quero que
+// nao tenha essa divisao"): a versao anterior derivava o brilho do sepia
+// do ALBEDO REAL (agua rasa turquesa BRILHANTE vs agua funda escura vs
+// terra vizinha), entao a costa continuava "desenhada" por baixo da
+// nevoa so pela diferenca de brilho entre tiles supostamente escondidos.
+// MESMO valor de terrain.gdshader, pra costa e terra ficarem
+// PIXEL-IGUAIS quando Explorado.
+uniform float fog_sepia_luma : hint_range(0.0, 1.0) = 0.42;
 
 // ---------------------------------------------------------------------
 // Agua — ondas (2 camadas em direcoes/velocidades opostas)
@@ -527,6 +536,22 @@ void fragment() {
 		vec3 n_axis = vec3(0.0, 1.0, 0.0);
 		vec3 n_tex = normalize(t_axis * (tsn_a.x + tsn_b.x) + b_axis * (tsn_a.y + tsn_b.y) + n_axis * (tsn_a.z + tsn_b.z));
 		vec3 water_world_normal = normalize(mix(n_proc, n_tex, texture_influence));
+		// Nevoa de guerra tambem precisa achatar as ONDAS, nao so a cor —
+		// pedido do usuario ("a nevoa de guerra mostra o relevo do mapa...
+		// ainda ta mostrando o oceano" apos terrain.gdshader ja ter sido
+		// corrigido): sem isso, agua fora de visao continuava com o normal
+		// de onda completo, entao o brilho especular/reflexo animado ainda
+		// "lia" como agua de verdade em movimento, denunciando a costa por
+		// baixo da mesma nuvem uniforme que a terra ja usa. step() DURO
+		// (nao smoothstep), MESMO motivo/limiar de terrain.gdshader (ver
+		// comentario la): liquid_type_texture e baixa resolucao/bilinear,
+		// fog_level vem borrado por varios tiles perto de qualquer
+		// fronteira — uma FRACAO de onda ainda e onda o bastante pra
+		// denunciar "isso e agua", entao precisa ser tudo ou nada, nao um
+		// gradiente. So agua REALMENTE visivel agora mantem onda de
+		// verdade; Unexplored E Explorado caem pro normal plano.
+		float water_shape_mask = step(0.999, fog_level);
+		water_world_normal = normalize(mix(vec3(0.0, 1.0, 0.0), water_world_normal, water_shape_mask));
 		NORMAL = normalize((VIEW_MATRIX * vec4(water_world_normal, 0.0)).xyz);
 
 		// Gradiente de 3 cores (pedido do usuario, estilo Civ VI/VII: raso
@@ -689,13 +714,20 @@ void fragment() {
 	// agua nao explorada "da mesma forma que cobre a terra", nao deixar so
 	// escura, com transicao homogenea entre terra e mar na mesma area de
 	// Terra Incognita.
-	float sepia_luma = dot(ALBEDO, vec3(0.299, 0.587, 0.114));
-	vec3 sepia_albedo = mix(vec3(sepia_luma), fog_explored_tint * (sepia_luma + 0.3), fog_explored_desaturate) * (1.0 - fog_explored_darken);
+	vec3 sepia_albedo = mix(vec3(fog_sepia_luma), fog_explored_tint * (fog_sepia_luma + 0.3), fog_explored_desaturate) * (1.0 - fog_explored_darken);
 
 	float cloud_pattern = fog_cloud_pattern(world_pos.xz, TIME);
 	vec3 cloud_albedo = fog_cloud_color * (0.7 + cloud_pattern * 0.5);
 
-	float fog_cloud_weight = 1.0 - smoothstep(0.0, 0.5, fog_level);
+	// Pedido do usuario, 2a/3a rodada ("ainda ta mostrando o oceano" / "so
+	// seja possivel ver nevoa, sem relevos"): ROUGHNESS/SPECULAR/EMISSION
+	// precisam ficar "sob nuvem" durante Unexplored E Explorado (nao so
+	// Unexplored como antes), com step() DURO (nao smoothstep) pelo MESMO
+	// motivo de water_shape_mask/shape_mask acima — fog_level vem borrado
+	// por varios tiles perto de qualquer fronteira (textura baixa
+	// resolucao/bilinear), uma FRACAO de brilho especular ja e brilho
+	// especular o bastante pra denunciar agua.
+	float fog_cloud_weight = 1.0 - step(0.999, fog_level);
 	vec3 stage_unexplored_to_explored = mix(cloud_albedo, sepia_albedo, smoothstep(0.0, 0.5, fog_level));
 	ALBEDO = mix(stage_unexplored_to_explored, ALBEDO, smoothstep(0.5, 1.0, fog_level));
 

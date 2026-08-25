@@ -1,0 +1,55 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/LoadingScreen.gd" id="LoadingScreen_gd"]
+[ext_resource type="Script" path="res://scripts/ui/LoadingSpinner.gd" id="LoadingSpinner_gd"]
+
+[node name="LoadingScreen" type="Control"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("LoadingScreen_gd")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.07, 0.06, 0.045, 1.0)
+
+[node name="CenterBox" type="CenterContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="CenterBox"]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+text = "Gerando o Mapa..."
+
+[node name="SpinnerBox" type="CenterContainer" parent="CenterBox/Box"]
+layout_mode = 2
+
+[node name="Spinner" type="Control" parent="CenterBox/Box/SpinnerBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(56, 56)
+script = ExtResource("LoadingSpinner_gd")
+
+[node name="SubtitleLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+custom_minimum_size = Vector2(360, 0)
+modulate = Color(0.75, 0.7, 0.6, 1.0)
+text = "Mapas grandes podem levar alguns segundos — isso é normal."

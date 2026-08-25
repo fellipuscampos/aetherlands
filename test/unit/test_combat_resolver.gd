@@ -11,6 +11,12 @@ func before_each():
 	_created_units = []
 
 	hex_grid = HexGrid.new()
+	# HexGrid so cria _cities_root/_tints_root (entre outros) em _ready(),
+	# que o motor so chama quando o node entra na scene tree — precisa
+	# disso pros testes de resolve_city_attack abaixo, que exercitam
+	# hex_grid.found_city()/capture_city() de verdade (mesmo padrao ja
+	# usado em test_hex_grid_movement.gd).
+	hex_grid._ready()
 	hex_grid.tiles[Vector2i(0, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
 	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
@@ -239,3 +245,95 @@ func test_defeating_monster_lair_grants_gold_reward():
 
 	assert_almost_eq(human.gold, MonsterDatabase.create_monster("goblin").gold_reward, 0.01)
 	assert_null(hex_grid.get_unit_at(Vector2i(1, 0)), "guardiao derrotado deveria sumir do grid")
+
+## Cobre CombatResolver.resolve_city_attack — pedido do usuario: "quero...
+## estabelecer a vida da cidade... e o shield tambem... a partir do
+## momento que voce construir a muralha... [o shield fica] abaixo da vida
+## atual". Ate aqui, atacar uma cidade indefesa (sem unidade guarnicionada)
+## capturava na hora, num unico clique (ver SelectionManager._attack_from_
+## selected/RivalAI._engage ANTES desta mudanca) — agora e um dano de
+## verdade contra hp/shield, so captura quando a vida zera.
+func test_attacking_undefended_city_with_walls_damages_shield_before_hp():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0)) # attack 4.0
+	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
+	city.buildings["walls"] = true
+	city.shield = city.max_shield()
+	var hp_before = city.hp
+
+	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
+
+	assert_almost_eq(city.shield, city.max_shield() - 4.0, 0.01, "escudo deveria absorver o dano primeiro")
+	assert_eq(city.hp, hp_before, "vida nao deveria cair enquanto o escudo aguenta o dano sozinho")
+	city.queue_free()
+
+func test_attacking_undefended_city_overflow_damage_spills_into_hp():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0)) # attack 4.0
+	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
+	city.buildings["walls"] = true
+	city.shield = 1.0 # menos que o dano do ataque
+	var hp_before = city.hp
+
+	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
+
+	assert_eq(city.shield, 0.0, "escudo deveria zerar")
+	assert_almost_eq(city.hp, hp_before - 3.0, 0.01, "sobra de dano (4 do ataque - 1 de escudo) deveria cair na vida")
+	city.queue_free()
+
+func test_attacking_undefended_city_without_walls_damages_hp_directly():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0)) # attack 4.0
+	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
+	var hp_before = city.hp
+
+	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
+
+	assert_almost_eq(city.hp, hp_before - 4.0, 0.01)
+	assert_eq(city.shield, 0.0, "sem Muralhas construida, a cidade nao deveria ter escudo nenhum")
+	city.queue_free()
+
+func test_city_is_not_captured_by_a_single_attack_that_does_not_zero_its_hp():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
+
+	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
+
+	assert_eq(city.owner_player, rival, "um unico ataque fraco nao deveria capturar a cidade mais")
+	assert_true(rival.cities.has(city))
+	city.queue_free()
+
+func test_city_is_captured_once_its_hp_reaches_zero():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
+	city.hp = 2.0 # qualquer ataque mata
+
+	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
+
+	assert_eq(city.owner_player, human)
+	assert_true(human.cities.has(city))
+	assert_false(rival.cities.has(city))
+	city.queue_free()
+
+func test_attacker_loses_all_movement_after_attacking_a_city():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	attacker.movement_left = 2.0
+	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
+
+	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
+
+	assert_eq(attacker.movement_left, 0.0)
+	city.queue_free()
+
+## Cidade capturada comeca curada pro novo dono — pedido implicito (sem
+## isso, uma cidade mal-capturada com a vida quase zerada ficaria
+## trivialmente reconquistavel pelo dono anterior no proximo turno).
+func test_capturing_a_city_via_attack_resets_hp_and_shield_for_new_owner():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
+	city.buildings["walls"] = true
+	city.hp = 1.0
+	city.shield = 0.0
+
+	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
+
+	assert_almost_eq(city.hp, city.max_hp(), 0.01, "cidade capturada deveria comecar curada pro novo dono")
+	assert_almost_eq(city.shield, city.max_shield(), 0.01)
+	city.queue_free()

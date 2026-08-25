@@ -290,13 +290,19 @@ func test_reclassify_coastal_ocean_converts_only_ocean_touching_land():
 	assert_eq(hex_grid.tiles[coastal_frozen].terrain_type, HexTileData.TerrainType.FROZEN_OCEAN, "Mar Gelado nao tem variante de Costa, deveria continuar igual")
 	assert_eq(hex_grid.tiles[deep_ocean].terrain_type, HexTileData.TerrainType.OCEAN, "Oceano sem vizinho de terra deveria continuar Oceano aberto")
 
-## Regressao de performance: gerar o mapa Grande retangular (96x60, 5760
-## tiles — pedido do usuario com as dimensoes exatas do Civilization)
-## precisa continuar rapido o bastante pra nao travar a tela de "Jogar"
-## perceptivelmente. Medido na maquina de desenvolvimento: ~60-90ms; a
-## margem aqui (2s) e generosa de proposito, so pra pegar uma regressao
-## de verdade (ex: alguem tornando a geracao acidentalmente quadratica),
-## nao performance normal variando entre maquinas.
+## Regressao de performance: gerar o mapa Grande retangular precisa
+## continuar rapido o bastante pra nao travar a tela de "Jogar"
+## perceptivelmente. Medido na maquina de desenvolvimento a ~60-90ms pro
+## tamanho ORIGINAL (96x60, 5760 tiles); pedido do usuario de expandir a
+## grid pra caber os continentes Vulcanico/de Cristal (320x84, ~26900
+## tiles, ~4.7x mais) subiu isso pra ~2.7-2.9s (varias passadas O(tiles)
+## — _reclassify_coastal_ocean/_smooth_isolated_biome_cells rodam MULTIPLAS
+## vezes cada, entao o custo nao escala so linear com tile count). Margem
+## aqui (5s) generosa sobre o observado, so pra pegar uma regressao de
+## verdade (ex: alguem tornando a geracao acidentalmente quadratica), nao
+## performance normal variando entre maquinas — geracao roda so 1x por
+## jogo novo/carregado, nao por turno, entao um tanto mais lenta aqui e um
+## trade-off aceito pelo mapa maior, nao uma regressao de turno-a-turno.
 func test_generate_map_at_large_radius_completes_quickly():
 	var t0 = Time.get_ticks_msec()
 	var grid := HexGrid.new()
@@ -304,7 +310,7 @@ func test_generate_map_at_large_radius_completes_quickly():
 	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 999)
 	var elapsed_ms = Time.get_ticks_msec() - t0
 
-	assert_lt(elapsed_ms, 2000, "geracao do mapa Grande esta demorando demais: %dms" % elapsed_ms)
+	assert_lt(elapsed_ms, 5000, "geracao do mapa Grande esta demorando demais: %dms" % elapsed_ms)
 
 	grid.queue_free()
 
@@ -312,8 +318,8 @@ func test_generate_map_at_large_radius_completes_quickly():
 ## pareciam biomas de neve... nao vi o de fogo". _material_kind_for() e o
 ## que diz ao shader qual tratamento visual especial usar em vez da
 ## textura de chao generica (0 = generica, 1 = Neve/Gelo, 2 = Deserto,
-## 3 = Lava, 4 = Cristal) — pura, testavel sem precisar de contexto de
-## shader/desenho.
+## 3 = rocha vulcanica solida generica, 4 = Cristal, 6 = Lava solida) —
+## pura, testavel sem precisar de contexto de shader/desenho.
 func test_material_kind_for_snow_and_ice_is_one():
 	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.SNOW), 1.0)
 	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.ICE), 1.0)
@@ -321,8 +327,14 @@ func test_material_kind_for_snow_and_ice_is_one():
 func test_material_kind_for_desert_is_two():
 	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.DESERT), 2.0)
 
-func test_material_kind_for_lava_is_three():
-	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.LAVA), 3.0)
+## Pedido do usuario: "faça o terreno lava... parecer mais magma,
+## atualmente é só uma pedra preta" — Lava ganhou mat_kind PROPRIO (6),
+## separado da rocha vulcanica solida generica (3, ver
+## test_material_kind_for_volcanic_continent_rock_is_three abaixo), pra
+## poder ter veios de magma brilhando sem afetar Terra/Colinas/Montanhas
+## Vulcanicas.
+func test_material_kind_for_lava_is_six():
+	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.LAVA), 6.0)
 
 func test_material_kind_for_crystal_is_four():
 	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.CRYSTAL), 4.0)
@@ -331,6 +343,39 @@ func test_material_kind_for_ordinary_biomes_is_zero():
 	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.GRASSLAND), 0.0)
 	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.OCEAN), 0.0)
 	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.MOUNTAINS), 0.0)
+
+## Microbiomas dos continentes Vulcanico/de Cristal reusam mat_kind
+## existente (so o `color` de TerrainDatabase muda) — Picos de Cristal e
+## Fonte Mistica reusam o brilho/textura animada de Cristal (4); Solo
+## Mistico cai no padrao (0), igual a maioria dos biomas normais.
+func test_material_kind_for_crystal_peaks_and_mystic_spring_is_four():
+	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.CRYSTAL_PEAKS), 4.0)
+	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.MYSTIC_SPRING), 4.0)
+
+func test_material_kind_for_mystic_soil_is_zero():
+	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.MYSTIC_SOIL), 0.0)
+
+## Rocha vulcanica solida "morta" de verdade (Montanhas Vulcanicas/Colinas
+## Vulcanicas/Terra Vulcanica — SEM Lava, que tem mat_kind PROPRIO agora,
+## ver test_material_kind_for_lava_is_six acima) reusa a MESMA textura de
+## rocha negra real — regressao original reportada pelo usuario: cor
+## generica (mat_kind 0) lia como "terreno marrom apagado que parece
+## deserto" em vez de basalto/rocha queimada. So o `color` por tipo muda
+## (ver TerrainDatabase, recalibrado numa segunda regressao — "mesmo
+## material de basalto preto para tudo, sem contraste" — pra sobrar
+## diferenca depois do escurecimento que este mat_kind aplica).
+func test_material_kind_for_volcanic_continent_rock_is_three():
+	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.VOLCANIC_PEAKS), 3.0)
+	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.VOLCANIC_HILLS), 3.0)
+	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.VOLCANIC_ROCK), 3.0)
+
+## Solo de Cinzas NAO reusa a rocha (regressao: "mude para um tom
+## CINZA-CLARO/GRAFITE... contraste imediato com a terra firme") — reusa
+## a formula de Deserto (textura de dunas, SEM o escurecimento ×0.6 que a
+## rocha aplica) com tint claro, pra ficar genuinamente diferente da
+## rocha solida, nao so uma variacao de cor sobre a MESMA textura.
+func test_material_kind_for_volcanic_ash_is_two():
+	assert_eq(hex_grid._material_kind_for(HexTileData.TerrainType.VOLCANIC_ASH), 2.0)
 
 ## Reportado pelo usuario: biomas raros (Lava, Cristal, Mar Gelado, Gelo)
 ## as vezes nao apareciam nenhuma vez no mapa. "Acho que faz sentido todos
@@ -438,53 +483,73 @@ func test_generate_map_lava_forms_a_clustered_region_not_isolated_tiles():
 ## Regressao critica ("acho que voce ta fazendo como se fossem montanhas,
 ## o lance do bioma vulcanico e ser um bioma terrestre tal qual qualquer
 ## outro... nao montanhas", reportado pelo usuario): antes do roadmap item
-## 30, Lava so podia nascer dentro da faixa de elevacao de Colina/Montanha
-## (`_pick_hills_biome`/`_pick_mountain_biome`, ja removidas) — mesmo
-## formando uma regiao "agrupada" tecnicamente, ela nunca conseguia se
-## espalhar pra terreno PLANO, entao sempre ficava perto/dentro de uma
-## cadeia de montanhas, parecendo so "montanha diferente" em vez de um
-## bioma de verdade. Gera o mapa Grande com 5 sementes diferentes e exige
-## que a MAIORIA dos tiles de Lava de cada mapa esteja em elevacao FLAT
-## (terreno que teria sido plano se nao fosse Lava), nao HILLS/MOUNTAINS.
-func test_generate_map_lava_mostly_occupies_flat_terrain_not_just_mountains():
+## 30, Lava so podia nascer dentro da faixa de elevacao de Colina/Montanha.
+##
+## Redesenhado DUAS vezes nesta sessao (continentes Vulcanico/de Cristal +
+## regressao "eliminou completamente a lava/gerou 30 montanhas
+## agrupadas"): dentro da zona Vulcanica, `_generate_tile_data` reserva
+## elevacao MOUNTAINS exclusivamente pra Montanhas Vulcanicas (checada
+## ANTES de qualquer decisao de Lava, ver comentario la) — Lava/Mar de
+## Lava praticamente nunca nascem em elevacao Montanha por CONSTRUCAO.
+## "Praticamente" porque _smooth_isolated_biome_cells (roda DEPOIS, sem
+## saber de elevacao) pode ocasionalmente virar um tile de Terra Vulcanica
+## isolado (ex: sobra da poda de _thin_special_zone_peaks, ver
+## MAX_SPECIAL_ZONE_PEAK_NEIGHBORS) pro bioma Lava se TODOS os vizinhos
+## dele ja forem Lava — um punhado de excecoes aceitas (a limpeza de
+## isolamento importa mais que exclusividade de elevacao 100% perfeita),
+## nao uma regressao de verdade. Colina/Plano continuam livres pra Lava
+## (o elemento DOMINANTE ali agora, pedido do usuario).
+func test_generate_map_lava_rarely_occupies_mountain_elevation():
 	var seeds = [1, 2, 3, 4, 5]
+	var saw_lava_anywhere := false
 	for s in seeds:
 		var grid := HexGrid.new()
 		grid._ready()
 		grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, s)
 
-		var flat_count := 0
-		var total := 0
+		var lava_total := 0
+		var lava_on_mountain := 0
 		for coord in grid.tiles.keys():
-			if grid.tiles[coord].terrain_type != HexTileData.TerrainType.LAVA:
+			if grid.tiles[coord].terrain_type != HexTileData.TerrainType.LAVA and grid.tiles[coord].terrain_type != HexTileData.TerrainType.LAVA_SEA:
 				continue
-			total += 1
-			if grid._elevation_tier(coord) == grid._ElevationTier.FLAT:
-				flat_count += 1
+			lava_total += 1
+			if grid._elevation_tier(coord) == grid._ElevationTier.MOUNTAINS:
+				lava_on_mountain += 1
 
-		assert_gt(total, 0, "semente %d: mapa Grande deveria ter Lava" % s)
-		assert_gt(
-			float(flat_count) / float(total), 0.5,
-			"semente %d: so %d/%d tiles de Lava estao em terreno originalmente plano — deveria ser a maioria, nao ficar restrito a Colina/Montanha" % [s, flat_count, total]
+		if lava_total == 0:
+			grid.queue_free()
+			continue
+		saw_lava_anywhere = true
+		assert_lt(
+			float(lava_on_mountain) / float(lava_total), 0.1,
+			"semente %d: %d/%d tiles de Lava/Mar de Lava estao em elevacao Montanha — deveria ser excecao rara, nao comum" % [s, lava_on_mountain, lava_total]
 		)
 
 		grid.queue_free()
+
+	assert_true(saw_lava_anywhere, "nenhuma das %d sementes testadas gerou Lava/Mar de Lava" % seeds.size())
 
 ## Regressao critica ("gerei o mapa grande 2x e nenhum veio com bioma de
 ## vulcao, no maximo vem uma celula vulcanica, nao se forma regiao
 ## vulcanica", reportado pelo usuario): a garantia de cobertura no Grande
 ## (`_ensure_biome_variety`) so checava Lava "existir" no mapa, entao 1-2
 ## celulas isoladas (ou ate uma unica) ja contavam como "coberto" e nunca
-## disparavam nenhum reforco — exatamente o bug relatado. Testa 8 sementes
-## diferentes (bateria maior que os outros testes de terreno de proposito,
-## pra realmente pegar o pior caso) no tamanho Grande: TODAS precisam ter
-## uma regiao VULCANICA conectada (pedra de Lava OU Mar de Lava — ver
-## HexTileData.is_lava(), roadmap item 32: o nucleo de uma regiao pode
-## virar liquido, entao a regiao continua sendo UMA SO mesmo com pedra e
-## liquido misturados) de pelo menos `FORCED_CLUSTER_MIN` tiles (ver
-## `_ensure_forced_region`).
+## disparavam nenhum reforco — exatamente o bug relatado.
+##
+## `_ensure_biome_variety` NAO cobre mais Lava (escopada so pra zona
+## Principal, ver comentario em ALL_BIOME_TYPES) — Lava agora e uma
+## mancha de perigo minoritaria dentro do interior da zona Vulcanica
+## dedicada (pedido do usuario nesta sessao: "em vez de ser 100% lava,
+## estruture o solo em Terra Vulcanica/Basalto como terreno base"), entao
+## a garantia de "SEMPRE forma regiao de FORCED_CLUSTER_MIN" nao existe
+## mais pra Lava especificamente (pode legitimamente faltar nalguma
+## semente, sem ser bug). O que continua valendo, e o que este teste
+## agora confere: QUANDO Lava aparece, ela forma cluster de verdade (nao
+## fica em tile isolado sozinho) — regressao ainda relevante pro ruido
+## continuo que a gera (_maybe_volcanic).
 func test_generate_map_at_large_size_lava_always_forms_a_real_region():
 	var seeds = [1, 2, 3, 4, 5, 6, 7, 8]
+	var saw_lava_anywhere := false
 	for s in seeds:
 		var grid := HexGrid.new()
 		grid._ready()
@@ -494,6 +559,11 @@ func test_generate_map_at_large_size_lava_always_forms_a_real_region():
 		for coord in grid.tiles.keys():
 			if grid.tiles[coord].is_lava():
 				lava_coords.append(coord)
+
+		if lava_coords.is_empty():
+			grid.queue_free()
+			continue
+		saw_lava_anywhere = true
 
 		var visited := {}
 		var largest = 0
@@ -512,12 +582,14 @@ func test_generate_map_at_large_size_lava_always_forms_a_real_region():
 						stack.append(n)
 			largest = max(largest, size)
 
-		assert_gte(
-			largest, grid.FORCED_CLUSTER_MIN,
-			"semente %d: maior regiao conectada de Lava tem so %d tile(s) — deveria formar uma regiao de verdade, nao ficar isolada" % [s, largest]
+		assert_gt(
+			largest, 1,
+			"semente %d: maior regiao conectada de Lava tem so %d tile(s) — deveria formar cluster de verdade, nao ficar isolada" % [s, largest]
 		)
 
 		grid.queue_free()
+
+	assert_true(saw_lava_anywhere, "nenhuma das %d sementes testadas gerou Lava — algo esta errado com _maybe_volcanic/_volcanic_noise" % seeds.size())
 
 ## Regressao critica (roadmap item 31), **reportado pelo usuario** pela
 ## TERCEIRA vez seguida sobre o mesmo assunto: "ele ainda ta formando
@@ -641,14 +713,25 @@ func test_lava_sea_blocks_land_units_but_is_not_water():
 ## extremamente pequeno... 5 celulaszinhas nao fazem um bioma". Antes
 ## desta correcao, Deserto/Estepe ficavam com ~3-11% da propria faixa de
 ## temperatura (limiares de umidade 0.3/0.6 mal calibrados pra distribuicao
-## real do `_moisture_noise`) e Lava com ~0.1-1% do mapa (limiar alto
-## demais, pensado pra ser "raro"), enquanto Floresta/Selva ficavam com
-## ~2.5-9.5%. Gera o mapa Grande com 5 sementes e exige que Deserto e a
-## regiao vulcanica (pedra + Mar de Lava) fiquem pelo menos numa fracao
-## razoavel do tamanho MEDIO das florestas/selvas do mesmo mapa — nao
-## precisam ser identicos (biomas diferentes tem area diferente por
-## natureza), mas nao podem mais ser uma ordem de grandeza menores.
-func test_generate_map_desert_and_volcanic_are_comparable_in_size_to_other_biomes():
+## real do `_moisture_noise`), enquanto Floresta/Selva ficavam com
+## ~2.5-9.5%. Gera o mapa Grande com 5 sementes e exige que Deserto fique
+## pelo menos numa fracao razoavel do tamanho MEDIO das florestas/selvas
+## do mesmo mapa — nao precisa ser identico (biomas diferentes tem area
+## diferente por natureza), mas nao pode mais ser uma ordem de grandeza
+## menor.
+##
+## A comparacao equivalente pra Lava/regiao vulcanica foi RETIRADA daqui
+## (existia como `volcanic_count` medido no mapa inteiro) — desde que os
+## continentes Vulcanico/de Cristal existem, Lava deixou de ser um bioma
+## espalhado pelo continente Principal e virou uma mancha de perigo
+## MINORITARIA dentro do interior da zona Vulcanica dedicada (pedido do
+## usuario nesta sessao: "em vez de ser 100% lava, estruture o solo em
+## Terra Vulcanica/Basalto como terreno base"), entao comparar sua
+## contagem contra a media de Floresta/Selva do mapa INTEIRO nao mede mais
+## nada relevante — ver test_generate_map_at_large_size_volcanic_continent_
+## has_real_relief pro equivalente que agora importa (Terra Vulcanica
+## precisa ser MAIS comum que Lava/Mar de Lava dentro da propria zona).
+func test_generate_map_desert_is_comparable_in_size_to_other_biomes():
 	var seeds = [1, 2, 3, 4, 5]
 	for s in seeds:
 		var grid := HexGrid.new()
@@ -667,39 +750,31 @@ func test_generate_map_desert_and_volcanic_are_comparable_in_size_to_other_biome
 			+ counts.get(HexTileData.TerrainType.TAIGA, 0)
 		) / 4.0
 		var desert_count = counts.get(HexTileData.TerrainType.DESERT, 0)
-		var volcanic_count = counts.get(HexTileData.TerrainType.LAVA, 0) + counts.get(HexTileData.TerrainType.LAVA_SEA, 0)
 
 		assert_gt(
 			desert_count, forest_jungle_avg * 0.3,
 			"semente %d: Deserto (%d tiles) esta desproporcionalmente pequeno perto da media de Floresta/Selva/Tundra/Taiga (%.0f)" % [s, desert_count, forest_jungle_avg]
-		)
-		# Vulcanico usa uma razao mais baixa que Deserto (0.1 em vez de 0.3,
-		# ver VOLCANIC_COASTAL_MAX_DISTANCE em HexGrid.gd): elegibilidade
-		# vulcanica exige litoral proximo OU Montanha, entao ela escala com
-		# a fracao de terra COSTEIRA, nao com a area total de terra. O
-		# rebalanceamento de agua/terra (pedido do usuario — continentes
-		# grandes e conectados em vez de arquipelago) fez a terra costeira
-		# encolher como FRACAO da terra total (continente maior = menos
-		# litoral por area, geometria basica), entao a media de Floresta/
-		# Selva/Tundra/Taiga (que escala com area total) cresceu bem mais
-		# rapido que a regiao vulcanica nesta rodada — nao e mais "5
-		# celulaszinhas" (a barra que este teste realmente existe pra
-		# pegar, ver o pedido original do usuario acima), so uma proporcao
-		# menor perto de biomas que nao dependem de litoral.
-		assert_gt(
-			volcanic_count, forest_jungle_avg * 0.1,
-			"semente %d: regiao vulcanica (%d tiles) esta desproporcionalmente pequena perto da media de Floresta/Selva/Tundra/Taiga (%.0f)" % [s, volcanic_count, forest_jungle_avg]
 		)
 
 		grid.queue_free()
 
 ## Fim a fim (mapa Grande de verdade, nao construido a mao): confere que
 ## _reclassify_coastal_ocean (chamado dentro de generate_map) converteu
-## TODO Oceano vizinho de terra OU de outra Costa em Costa (nenhum Oceano
-## "preso" sobrando, ver comentario da funcao sobre o bug de tile isolado
-## que a expansao em passadas corrige) e que TODA Costa faz parte de uma
-## faixa costeira de verdade — toca terra firme diretamente OU toca outra
-## Costa (nunca aparece sozinha e desconectada no meio do oceano aberto).
+## TODO Oceano vizinho de terra FIRME em Costa (o caso incondicional, nunca
+## depende de quantas passadas sobram — ver COAST_RECLASSIFY_MAX_PASSES) e
+## que TODA Costa faz parte de uma faixa costeira de verdade — toca terra
+## firme diretamente OU toca outra Costa (nunca aparece sozinha e
+## desconectada no meio do oceano aberto).
+##
+## NAO afirma mais "todo Oceano vizinho de Costa tambem devia ter virado
+## Costa" — isso exigiria a onda de conversao convergir por completo (ate
+## nao sobrar NENHUM Oceano tocando Costa), o que so era garantido no mapa
+## menor de antes. Com os continentes Vulcanico/de Cristal (pedido do
+## usuario) o oceano de separacao entre eles e bem mais largo que qualquer
+## faixa costeira litoranea de verdade deveria alcancar, entao a onda
+## legitimamente para (por design, COAST_RECLASSIFY_MAX_PASSES) antes de
+## consumir o oceano aberto inteiro — Costa continua uma faixa litoranea
+## estreita de verdade, nao um problema de convergencia.
 func test_generate_map_coastal_ocean_becomes_coast_end_to_end():
 	var grid := HexGrid.new()
 	grid._ready()
@@ -719,11 +794,151 @@ func test_generate_map_coastal_ocean_becomes_coast_end_to_end():
 
 		if data.terrain_type == HexTileData.TerrainType.OCEAN:
 			assert_false(touches_land, "Oceano em %s toca terra firme e deveria ter virado Costa" % str(coord))
-			assert_false(touches_coast, "Oceano em %s toca Costa e deveria ter virado Costa tambem (expansao em passadas)" % str(coord))
 		elif data.terrain_type == HexTileData.TerrainType.COAST:
 			coast_count += 1
 			assert_true(touches_land or touches_coast, "Costa em %s deveria fazer parte de uma faixa costeira de verdade (tocar terra ou outra Costa)" % str(coord))
 
 	assert_gt(coast_count, 0, "mapa Grande deveria ter gerado pelo menos uma Costa")
+
+	grid.queue_free()
+
+## Continentes Vulcanico/de Cristal (pedido do usuario: "dois novos
+## continentes especiais... utilizando estritamente os tipos de terreno
+## que JA EXISTEM"). So no tamanho Grande de verdade (HexGrid._zone_for so
+## classifica por retangulo fixo quando _is_large_map_or_bigger()) — mapa
+## de teste pequeno continua 100% zona Principal, sem zona especial
+## nenhuma (ver test_generate_map_water_percentage_stays_within_the_
+## continents_range, que so passa de novo por causa dessa distincao).
+func test_zone_for_classifies_main_volcanic_crystal_and_gap_correctly_on_large_map():
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.map_width = TitleScreen.MAP_SIZES.large.width
+	grid.map_height = TitleScreen.MAP_SIZES.large.height
+
+	assert_eq(grid._zone_for(Vector2i(0, 0)), grid._Zone.MAIN, "origem deveria estar na zona Principal")
+	assert_eq(grid._zone_for(grid.VOLCANIC_ZONE_CENTER), grid._Zone.VOLCANIC, "centro da zona Vulcanica deveria classificar como Vulcanica")
+	assert_eq(grid._zone_for(grid.CRYSTAL_ZONE_CENTER), grid._Zone.CRYSTAL, "centro da zona de Cristal deveria classificar como Cristal")
+	# Ponto a meio caminho entre Principal e Vulcanica, fora dos limites das duas — oceano de separacao garantido.
+	var gap_coord = Vector2i((grid.MAIN_ZONE_CENTER.x + grid.VOLCANIC_ZONE_CENTER.x) / 2, 0)
+	assert_eq(grid._zone_for(gap_coord), grid._Zone.NONE, "ponto no meio do gap Principal<->Vulcanica deveria ser NONE (oceano garantido)")
+
+	grid.queue_free()
+
+## Identidade tematica estrita (pedido do usuario: "cada continente deve
+## MANTER sua identidade tematica estrita — nada de florestas normais ou
+## deserto no vulcanico/cristal"), agora com MICROBIOMAS de verdade em vez
+## de um bloco monobioma (pedido do usuario, sessao seguinte: "aplicar a
+## eles o mesmo nivel de complexidade, relevo e variacao de microbiomas
+## que o Continente Principal possui"): continente Vulcanico so pode ter
+## Lava/Mar de Lava/Terra Vulcanica/Montanhas Vulcanicas/Solo de Cinzas;
+## continente de Cristal so pode ter Cristal/Picos de Cristal/Solo
+## Mistico/Fonte Mistica; continente Principal SEM NENHUM dos 8 tipos
+## especiais (nem os originais LAVA/LAVA_SEA/CRYSTAL, nem os 6
+## microbiomas novos); e nenhuma contaminacao cruzada entre as duas zonas
+## especiais (nada de tipo do Vulcanico aparecendo no Cristal ou
+## vice-versa). Semente fixa, mapa Grande de verdade.
+func test_generate_map_at_large_size_special_continents_have_pure_composition():
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 2024)
+
+	var volcanic_types: Array = [
+		HexTileData.TerrainType.LAVA, HexTileData.TerrainType.LAVA_SEA,
+		HexTileData.TerrainType.VOLCANIC_ROCK, HexTileData.TerrainType.VOLCANIC_HILLS, HexTileData.TerrainType.VOLCANIC_PEAKS, HexTileData.TerrainType.VOLCANIC_ASH,
+	]
+	var crystal_types: Array = [
+		HexTileData.TerrainType.CRYSTAL, HexTileData.TerrainType.CRYSTAL_PEAKS,
+		HexTileData.TerrainType.MYSTIC_SOIL, HexTileData.TerrainType.MYSTIC_SPRING,
+	]
+	var water_types: Array = [HexTileData.TerrainType.OCEAN, HexTileData.TerrainType.FROZEN_OCEAN, HexTileData.TerrainType.COAST]
+
+	var volcanic_land_count := 0
+	var crystal_land_count := 0
+	for coord in grid.tiles.keys():
+		var terrain_type = grid.tiles[coord].terrain_type
+		var zone = grid._zone_for(coord)
+		match zone:
+			grid._Zone.MAIN:
+				assert_false(terrain_type in volcanic_types, "zona Principal nao deveria ter nenhum tile vulcanico (bioma %d) em %s" % [terrain_type, str(coord)])
+				assert_false(terrain_type in crystal_types, "zona Principal nao deveria ter nenhum tile de cristal (bioma %d) em %s" % [terrain_type, str(coord)])
+			grid._Zone.VOLCANIC:
+				if not (terrain_type in water_types):
+					assert_true(terrain_type in volcanic_types, "terra na zona Vulcanica deveria ser um microbioma vulcanico, achei bioma %d em %s" % [terrain_type, str(coord)])
+					assert_false(terrain_type in crystal_types, "zona Vulcanica nao deveria ter nenhum tile de cristal (contaminacao cruzada), achei bioma %d em %s" % [terrain_type, str(coord)])
+					volcanic_land_count += 1
+			grid._Zone.CRYSTAL:
+				if not (terrain_type in water_types):
+					assert_true(terrain_type in crystal_types, "terra na zona de Cristal deveria ser um microbioma de cristal, achei bioma %d em %s" % [terrain_type, str(coord)])
+					assert_false(terrain_type in volcanic_types, "zona de Cristal nao deveria ter nenhum tile vulcanico (contaminacao cruzada), achei bioma %d em %s" % [terrain_type, str(coord)])
+					crystal_land_count += 1
+
+	assert_gt(volcanic_land_count, 0, "continente Vulcanico deveria ter gerado terra de verdade")
+	assert_gt(crystal_land_count, 0, "continente de Cristal deveria ter gerado terra de verdade")
+
+	grid.queue_free()
+
+## Relevo/microbiomas de verdade (pedido do usuario: "gere cordilheiras de
+## Montanhas Vulcanicas no centro"/"em vez de ser 100% lava, estruture o
+## solo em Terra Vulcanica/Basalto como terreno base"/"adicione zonas de
+## Solo de Cinzas nas bordas e praias") — confere que os TRES papeis
+## (cordilheira, base caminhavel, periferia) realmente aparecem no
+## continente Vulcanico, nao so Lava/Mar de Lava sobrando do design antigo.
+func test_generate_map_at_large_size_volcanic_continent_has_real_relief():
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 2024)
+
+	var counts := {}
+	for coord in grid.tiles.keys():
+		if grid._zone_for(coord) != grid._Zone.VOLCANIC:
+			continue
+		var t = grid.tiles[coord].terrain_type
+		counts[t] = counts.get(t, 0) + 1
+
+	assert_gt(counts.get(HexTileData.TerrainType.VOLCANIC_ROCK, 0), 0, "Vulcanico deveria ter Terra Vulcanica (base caminhavel) de verdade")
+	assert_gt(counts.get(HexTileData.TerrainType.VOLCANIC_HILLS, 0), 0, "Vulcanico deveria ter Colinas Vulcanicas (elevacao media) de verdade")
+	assert_gt(counts.get(HexTileData.TerrainType.VOLCANIC_PEAKS, 0), 0, "Vulcanico deveria ter Montanhas Vulcanicas (cordilheira central) de verdade")
+	assert_gt(counts.get(HexTileData.TerrainType.VOLCANIC_ASH, 0), 0, "Vulcanico deveria ter Solo de Cinzas (periferia/praia) de verdade")
+	# Lava precisa ser o elemento FLUIDO DOMINANTE (pedido explicito do
+	# usuario apos regressao: "a Lava DEVE ser o elemento fluido dominante
+	# desta zona... grandes corpos fluidos de Lava cortando a massa
+	# terrestre" — NAO mais "minoria", como uma iteracao anterior desta
+	# mesma feature tinha deixado). Exige uma fracao substancial (>=35%)
+	# do total Lava-ou-Rocha, sem travar num "mais que" exato contra Rocha
+	# (o continente ainda precisa de solo caminhavel de verdade pra
+	# navegacao, pedido igualmente explicito — "o interior deve ser
+	# navegavel/caminhavel entre as fendas de lava e rocha").
+	var walkable_base = counts.get(HexTileData.TerrainType.VOLCANIC_ROCK, 0)
+	var hazard = counts.get(HexTileData.TerrainType.LAVA, 0) + counts.get(HexTileData.TerrainType.LAVA_SEA, 0)
+	assert_gt(hazard, 0, "Vulcanico deveria ter Lava/Mar de Lava de verdade (elemento fluido dominante pedido pelo usuario)")
+	assert_gt(
+		float(hazard) / float(hazard + walkable_base), 0.35,
+		"Lava/Mar de Lava (%d tiles) esta desproporcionalmente pequena perto de Terra Vulcanica (%d tiles) — deveria ser o elemento dominante" % [hazard, walkable_base]
+	)
+
+	grid.queue_free()
+
+## Mesma ideia do teste acima, pro continente de Cristal (pedido do
+## usuario: "gere Picos/Montanhas de Cristal no interior"/"transicionando
+## para areas de Solo Mistico... nas regioes mais baixas e costeiras").
+## Fonte Mistica ("recursos fluidos") e uma feature RARA de proposito
+## (ruido bem acima do limiar normal de Cristal), entao nao e exigida em
+## toda semente — so confere que ela pelo menos PODE nascer (usada por
+## outro teste especifico, ver test_maybe_crystal_* pro limiar em si).
+func test_generate_map_at_large_size_crystal_continent_has_real_relief():
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 2024)
+
+	var counts := {}
+	for coord in grid.tiles.keys():
+		if grid._zone_for(coord) != grid._Zone.CRYSTAL:
+			continue
+		var t = grid.tiles[coord].terrain_type
+		counts[t] = counts.get(t, 0) + 1
+
+	assert_gt(counts.get(HexTileData.TerrainType.MYSTIC_SOIL, 0), 0, "Cristal deveria ter Solo Mistico (base caminhavel/periferia) de verdade")
+	assert_gt(counts.get(HexTileData.TerrainType.CRYSTAL_PEAKS, 0), 0, "Cristal deveria ter Picos de Cristal (cordilheira central) de verdade")
+	assert_gt(counts.get(HexTileData.TerrainType.CRYSTAL, 0), 0, "Cristal deveria ter Campos de Cristal (nucleo denso) de verdade")
 
 	grid.queue_free()

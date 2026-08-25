@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/TitleScreen.tscn" id="TitleScreen_scn"]
 [ext_resource type="PackedScene" path="res://scenes/ui/GameSetupScreen.tscn" id="GameSetupScreen_scn"]
 [ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="PauseMenu_scn"]
+[ext_resource type="PackedScene" path="res://scenes/ui/LoadingScreen.tscn" id="LoadingScreen_scn"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 sky_top_color = Color(0.25, 0.45, 0.75, 1)
@@ -79,3 +80,6 @@ fov = 50
 [node name="GameSetupScreen" parent="UILayer" instance=ExtResource("GameSetupScreen_scn")]
 
 [node name="PauseMenu" parent="UILayer" instance=ExtResource("PauseMenu_scn")]
+
+[node name="LoadingScreen" parent="UILayer" instance=ExtResource("LoadingScreen_scn")]
+visible = false

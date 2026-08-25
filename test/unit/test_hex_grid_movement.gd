@@ -35,6 +35,17 @@ func _make_unit(kind: String, player: PlayerData, coord: Vector2i) -> Unit:
 	_created_units.append(unit)
 	return unit
 
+## Color.is_equal_approx() usa uma tolerancia MUITO apertada (CMP_EPSILON,
+## ~1e-5) — fina demais pra comparar uma cor lida de volta de uma Image em
+## FORMAT_RGBA8 (8 bits por canal, passo de quantizacao ~1/255 ≈ 0.0039).
+## Um valor como 0.08 nao arredonda pra um multiplo exato de 1/255
+## (0.08*255=20.4), entao o pixel lido de volta (~0.0784) nunca bate com
+## is_equal_approx mesmo sendo visualmente identico — ver testes de
+## _build_construction_progress_bar_texture abaixo.
+func _color_close(a: Color, b: Color, tolerance: float = 0.01) -> bool:
+	return abs(a.r - b.r) <= tolerance and abs(a.g - b.g) <= tolerance \
+		and abs(a.b - b.b) <= tolerance and abs(a.a - b.a) <= tolerance
+
 ## Regressao do bug relatado pelo usuario: atacar uma cidade inimiga sem
 ## defensor estava so movendo a unidade pra cima dela em vez de capturar,
 ## porque compute_reachable() nao excluia tiles de cidade inimiga — o tile
@@ -73,6 +84,22 @@ func test_capturing_undefended_city_transfers_ownership():
 	assert_eq(city.owner_player, human)
 	assert_true(human.cities.has(city))
 	assert_false(rival.cities.has(city))
+
+## Cidade capturada comeca curada pro novo dono — pedido do usuario ("vida
+## da cidade... o shield") tornou hp/shield mecanicos (ver CombatResolver.
+## resolve_city_attack); sem isso, uma cidade capturada com a vida quase
+## zerada ficaria trivialmente reconquistavel no proximo turno.
+func test_capturing_a_city_resets_its_hp_and_shield_to_full():
+	hex_grid.found_city(Vector2i(1, 0), rival, "Cidade Inimiga")
+	var city = hex_grid.get_city_at(Vector2i(1, 0))
+	city.buildings["walls"] = true
+	city.hp = 1.0
+	city.shield = 0.0
+
+	hex_grid.capture_city(city, human)
+
+	assert_almost_eq(city.hp, city.max_hp(), 0.01)
+	assert_almost_eq(city.shield, city.max_shield(), 0.01)
 
 ## Predio POSICIONADO no mapa (Building.gd, ver City.building_coords) —
 ## registrado igual unidade/cidade (units_by_coord/cities_by_coord).
@@ -167,6 +194,111 @@ func test_refresh_construction_markers_removes_marker_once_no_longer_pending():
 	hex_grid.refresh_construction_markers()
 
 	assert_false(hex_grid._construction_markers.has(Vector2i(1, 0)), "marcador deveria sumir quando o predio nao esta mais pendente")
+
+## Pedido do usuario: "a barra de progresso nao esta avançando conforme os
+## turnos, pra saber se a construção esta ficando prova [pronta], e faça
+## ficar acima da construção nao da cidade" — a barra flutuante mora no
+## PROPRIO marcador (acima do tile do predio, ver _build_construction_
+## marker), nao mais em City.gd (que ficava acima da CIDADE, lugar errado
+## — o usuario nunca via ela se mexer porque olhava pro predio, nao pro
+## banner da cidade). refresh_construction_markers() agora tambem atualiza
+## o preenchimento a cada chamada (uma vez por turno, ja depois de City.
+## process_turn() acumular producao).
+## Pedido do usuario, 3a rodada ("as barras nao ficam uma sob a outra, ache
+## um sistema melhor"): a barra virou UM Sprite3D so, com fundo E
+## preenchimento desenhados JUNTOS na MESMA textura (ver
+## _build_construction_progress_bar_texture) — sem dois nos separados pra
+## desalinhar. O teste confere os PIXELS da textura: uma coluna dentro da
+## fracao esperada tem a cor de preenchimento, uma coluna fora tem a cor
+## vazia.
+func test_refresh_construction_markers_shows_progress_matching_stored_production():
+	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	city.pending_building_coord = Vector2i(1, 0)
+	city.set_production("barracks")
+	city.stored_production = city.production_cost() * 0.4
+
+	hex_grid.refresh_construction_markers()
+
+	var marker: Node3D = hex_grid._construction_markers[Vector2i(1, 0)]
+	var bar := marker.get_node("ProgressBar") as Sprite3D
+	var image := bar.texture.get_image()
+	var w := HexGrid.CONSTRUCTION_PROGRESS_BAR_TEX_WIDTH
+	var mid_row := HexGrid.CONSTRUCTION_PROGRESS_BAR_TEX_HEIGHT / 2
+	# x=0/x=w-1 (e y=0/y=h-1) sao sempre a MOLDURA (ver
+	# CONSTRUCTION_PROGRESS_BAR_BORDER_COLOR) — os testes checam colunas/
+	# linha claramente DENTRO da area de preenchimento, nao na borda.
+	assert_true(_color_close(image.get_pixel(2, mid_row), HexGrid.CONSTRUCTION_PROGRESS_BAR_FILL_COLOR), "coluna perto do inicio deveria estar preenchida (~40% de progresso)")
+	assert_true(_color_close(image.get_pixel(w - 2, mid_row), HexGrid.CONSTRUCTION_PROGRESS_BAR_EMPTY_COLOR), "coluna perto do fim deveria continuar vazia (~40% de progresso)")
+
+## Pedido do usuario, apos reportar a barra "sumida por varios turnos, ai
+## aparece do nada na metade": _update_construction_marker_progress
+## redesenha a textura inteira a cada chamada (nunca reaproveita a Image
+## antiga), entao o teste precisa reler bar.texture DEPOIS de cada refresh,
+## nao guardar so uma referencia antiga.
+func test_refresh_construction_markers_updates_progress_on_an_already_existing_marker():
+	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	city.pending_building_coord = Vector2i(1, 0)
+	city.set_production("barracks")
+	city.stored_production = 0.0
+	hex_grid.refresh_construction_markers()
+	var marker: Node3D = hex_grid._construction_markers[Vector2i(1, 0)]
+	var bar := marker.get_node("ProgressBar") as Sprite3D
+	var w := HexGrid.CONSTRUCTION_PROGRESS_BAR_TEX_WIDTH
+
+	city.stored_production = city.production_cost() * 0.75
+	hex_grid.refresh_construction_markers()
+
+	assert_true(hex_grid._construction_markers.has(Vector2i(1, 0)), "mesmo marcador deveria continuar existindo, so o preenchimento muda")
+	var image := bar.texture.get_image()
+	var mid_row := HexGrid.CONSTRUCTION_PROGRESS_BAR_TEX_HEIGHT / 2
+	assert_true(_color_close(image.get_pixel(roundi(w * 0.6), mid_row), HexGrid.CONSTRUCTION_PROGRESS_BAR_FILL_COLOR), "75% de progresso deveria preencher bem alem da metade da barra")
+
+## Pedido do usuario: "melhorou mas ainda parece que quando a barra chega
+## em 90% a construção acaba" — o predio concluido limpa pending_building_
+## coord no MESMO turno em que a producao cruza o custo (ver City.
+## process_turn), entao sem tratamento especial o marcador some no mesmo
+## refresh, e o jogador nunca chega a VER a barra cheia (so o ultimo valor
+## do turno anterior, podendo ser bem menos que 100%). Agora refresh_
+## construction_markers(just_completed) mantem o marcador por UM refresh
+## extra com a barra travada em 100% antes de sumir de vez.
+func test_refresh_construction_markers_holds_completed_marker_at_full_for_one_extra_refresh():
+	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	city.pending_building_coord = Vector2i(1, 0)
+	city.set_production("barracks")
+	city.stored_production = city.production_cost() * 0.9
+	hex_grid.refresh_construction_markers()
+	var marker: Node3D = hex_grid._construction_markers[Vector2i(1, 0)]
+	var bar := marker.get_node("ProgressBar") as Sprite3D
+
+	# predio concluido: City ja limpou pending_building_coord (nao esta mais
+	# em "wanted"), mas o coord chega em just_completed neste refresh.
+	city.pending_building_coord = City.NO_PENDING_COORD
+	hex_grid.refresh_construction_markers([Vector2i(1, 0)])
+
+	assert_true(hex_grid._construction_markers.has(Vector2i(1, 0)), "marcador deveria continuar visivel por mais um refresh apos concluir")
+	var image := bar.texture.get_image()
+	var w := HexGrid.CONSTRUCTION_PROGRESS_BAR_TEX_WIDTH
+	var mid_row := HexGrid.CONSTRUCTION_PROGRESS_BAR_TEX_HEIGHT / 2
+	assert_true(_color_close(image.get_pixel(w - 2, mid_row), HexGrid.CONSTRUCTION_PROGRESS_BAR_FILL_COLOR), "barra deveria mostrar 100% preenchido na volta de graca")
+
+	# proximo refresh (sem esse coord em just_completed de novo): remove de vez.
+	hex_grid.refresh_construction_markers()
+
+	assert_false(hex_grid._construction_markers.has(Vector2i(1, 0)), "marcador deveria sumir de vez no refresh seguinte a volta de graca")
+
+## Cancelamento (jogador trocou a producao antes de completar) NAO deveria
+## ganhar a "volta de graca" acima — sem isso no just_completed, o marcador
+## deveria continuar sumindo na hora, como sempre funcionou.
+func test_refresh_construction_markers_removes_cancelled_marker_immediately():
+	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	city.pending_building_coord = Vector2i(1, 0)
+	hex_grid.refresh_construction_markers()
+	assert_true(hex_grid._construction_markers.has(Vector2i(1, 0)))
+
+	city.pending_building_coord = City.NO_PENDING_COORD
+	hex_grid.refresh_construction_markers() # just_completed vazio (cancelamento, nao conclusao)
+
+	assert_false(hex_grid._construction_markers.has(Vector2i(1, 0)), "cancelamento nao deveria ganhar a volta de graca em 100%")
 
 ## Base da previa de trajeto (estilo Civilization) mostrada ao passar o
 ## mouse sobre um tile alcancavel — ver SelectionManager.handle_world_hover().

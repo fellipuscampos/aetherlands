@@ -64,6 +64,22 @@ func test_predict_matches_actual_resolve_damage():
 
 	assert_almost_eq(hp_before - defender.hp, predicted.damage_to_defender, 0.01)
 
+## RivalAI.begin_turn()/act_for_unit() sao a MESMA logica de take_turn(), so
+## separada em duas partes pra GameManager poder espalhar por frames (ver
+## GameManager.stagger_ai_turns, pedido do usuario: "Civilization... em
+## pequenos grupos... diminui o lag na passada de turnos") — confirma que a
+## dupla continua produzindo o mesmo resultado de antes: ataque letal
+## favoravel executa normalmente atraves delas.
+func test_begin_turn_and_act_for_unit_together_match_take_turn_behavior():
+	var attacker = _make_unit("warrior", rival, Vector2i(0, 0))
+	var defender = _make_unit("warrior", human, Vector2i(1, 0))
+	defender.hp = 0.5 # qualquer golpe mata
+
+	var visible = RivalAI.begin_turn(rival, hex_grid, human)
+	RivalAI.act_for_unit(attacker, hex_grid, rival, human, visible)
+
+	assert_ne(hex_grid.get_unit_at(Vector2i(1, 0)), defender, "ataque letal deveria ter derrotado o defensor")
+
 func test_favorable_attack_is_true_for_lethal_hit():
 	var attacker = _make_unit("warrior", rival, Vector2i(0, 0))
 	var defender = _make_unit("warrior", human, Vector2i(1, 0))
@@ -248,7 +264,7 @@ func test_ranged_unit_advances_with_melee_escort_nearby():
 ## Civilizacoes de fantasia (CivilizationData.race, ver GameManager.
 ## RIVAL_CIVS): cada raca com tropa propria (UnitDatabase.RACE_UNIQUE_KIND)
 ## ve essa tropa no proprio pool de producao, mas so a sua — um anao nunca
-## sorteia Berserker Orc, e uma civ sem raca reconhecida nenhuma (um rival
+## sorteia Berserker da Horda, e uma civ sem raca reconhecida nenhuma (um rival
 ## hipotetico sem `race`) nunca sorteia tropa racial nenhuma.
 func test_military_kinds_for_includes_the_racial_unique_unit():
 	var dwarf_civ := CivilizationData.new()
@@ -276,7 +292,7 @@ func test_military_kinds_for_has_no_racial_unit_without_a_race():
 	assert_false("elf_ranger" in kinds)
 
 ## Regressao de integracao: com 2+ cidades e tudo desbloqueado, um rival
-## orc eventualmente sorteia Berserker Orc de verdade via decide_production
+## orc eventualmente sorteia Berserker da Horda de verdade via decide_production
 ## (nao so a lista em si, o fluxo completo tambem).
 func test_decide_production_can_pick_the_racial_unit_for_that_race():
 	var orc_civ := CivilizationData.new()

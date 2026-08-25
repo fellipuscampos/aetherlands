@@ -7,6 +7,11 @@ extends Node3D
 ## onde fundar uma cidade. Sem modelo Kenney equivalente disponivel (so
 ## torre+bandeira foram baixados, ver City.gd), cada tipo usa uma forma
 ## procedural distinta o bastante pra reconhecer de longe qual predio e.
+## Excecao: um predio com BuildingData.self_placed (so Muralhas por
+## enquanto) nunca vira uma instancia desta classe — o efeito dele e
+## inteiramente visual DENTRO da propria City (ver City._add_walls),
+## entao nao passa pelo fluxo de escolha de tile nem aparece no match
+## abaixo.
 
 var building_id: String
 var coord: Vector2i
@@ -27,8 +32,6 @@ func _build_visual() -> void:
 			_build_workshop(accent_color)
 		"market":
 			_build_market(accent_color)
-		"walls":
-			_build_walls(accent_color)
 		"barracks":
 			_build_barracks(accent_color)
 		"archery_range":
@@ -43,6 +46,15 @@ func _build_visual() -> void:
 			_build_griffin_roost(accent_color)
 		"druid_grove":
 			_build_druid_grove(accent_color)
+
+## Kit de estilo (RaceTheme) do dono deste predio, ou o kit "human" (que e
+## byte-a-byte o material original de antes desta mudanca, ver RaceTheme.
+## STYLE_KITS) se nao houver dono — nenhum predio hoje e construido sem
+## owner_player de verdade, mas o fallback existe pelo mesmo motivo de
+## _body_color() em Unit.gd: nunca deixar uma leitura de .civ.race travar
+## por causa de um dono nulo.
+func _race_style_kit() -> Dictionary:
+	return RaceTheme.style_kit(owner_player.civ.race if owner_player else "human")
 
 ## Celeiro: silo (cilindro) + telhado conico, cor de graos.
 func _build_granary(accent_color: Color) -> void:
@@ -127,47 +139,94 @@ func _build_market(accent_color: Color) -> void:
 	awning.position.y = 0.3
 	add_child(awning)
 
-## Muralhas: segmentos de parede formando um arco baixo — nao cerca a
-## cidade de verdade (so decora o tile), a defesa de verdade vem de
-## BuildingDatabase.defense_bonus_for aplicado em CombatResolver.
-func _build_walls(_accent_color: Color) -> void:
-	var stone_mat := StandardMaterial3D.new()
-	stone_mat.albedo_color = Color(0.5, 0.5, 0.52)
-	for i in range(4):
-		var angle = deg_to_rad(-60.0 + i * 40.0)
-		var segment := MeshInstance3D.new()
-		var segment_mesh := BoxMesh.new()
-		segment_mesh.size = Vector3(0.22, 0.28, 0.1)
-		segment.mesh = segment_mesh
-		segment.material_override = stone_mat
-		segment.position = Vector3(sin(angle) * 0.3, 0.14, cos(angle) * 0.3 - 0.1)
-		segment.rotation.y = angle
-		add_child(segment)
-
-## Quartel: corpo baixo de pedra com "ameias" (blocos pequenos) no topo,
-## tingidas na cor da civilizacao — silhueta de fortim, distinta do galpao
-## civil da Oficina.
+## Quartel: pedido do usuario ("faça a construção do quartel ser algo mais
+## medieval") — evolui do bloco liso + 3 cubos antigo pra uma leitura de
+## "pequeno forte": corpo de pedra com ameias na frente E atras (parapeito
+## completo, nao so uma fileira), porta de madeira escura encaixada na
+## fachada, e uma torre de canto com telhado conico + bandeirola na cor da
+## civilizacao (mesmo principio do toldo do Mercado: o pano tingido "avisa"
+## de quem e o predio) — silhueta de castelo em miniatura, a mais alta e
+## elaborada entre os predios civis, atras so da Torre Arcana.
 func _build_barracks(accent_color: Color) -> void:
+	var stone_color: Color = _race_style_kit().barracks_color
 	var body := MeshInstance3D.new()
 	var body_mesh := BoxMesh.new()
-	body_mesh.size = Vector3(0.48, 0.34, 0.38)
+	body_mesh.size = Vector3(0.46, 0.34, 0.36)
 	body.mesh = body_mesh
 	var body_mat := StandardMaterial3D.new()
-	body_mat.albedo_color = Color(0.42, 0.4, 0.38)
+	body_mat.albedo_color = stone_color
 	body.material_override = body_mat
 	body.position.y = 0.17
 	add_child(body)
 
+	var door := MeshInstance3D.new()
+	var door_mesh := BoxMesh.new()
+	door_mesh.size = Vector3(0.11, 0.17, 0.02)
+	door.mesh = door_mesh
+	var door_mat := StandardMaterial3D.new()
+	door_mat.albedo_color = Color(0.22, 0.15, 0.1)
+	door.material_override = door_mat
+	door.position = Vector3(0, 0.085, 0.19)
+	add_child(door)
+
 	var merlon_mat := StandardMaterial3D.new()
 	merlon_mat.albedo_color = accent_color.darkened(0.2)
-	for i in range(3):
-		var merlon := MeshInstance3D.new()
-		var merlon_mesh := BoxMesh.new()
-		merlon_mesh.size = Vector3(0.1, 0.1, 0.1)
-		merlon.mesh = merlon_mesh
-		merlon.material_override = merlon_mat
-		merlon.position = Vector3(-0.15 + i * 0.15, 0.39, 0.14)
-		add_child(merlon)
+	for z in [0.14, -0.14]:
+		for i in range(4):
+			var merlon := MeshInstance3D.new()
+			var merlon_mesh := BoxMesh.new()
+			merlon_mesh.size = Vector3(0.08, 0.09, 0.08)
+			merlon.mesh = merlon_mesh
+			merlon.material_override = merlon_mat
+			merlon.position = Vector3(-0.18 + i * 0.12, 0.385, z)
+			add_child(merlon)
+
+	var turret := MeshInstance3D.new()
+	var turret_mesh := CylinderMesh.new()
+	turret_mesh.top_radius = 0.09
+	turret_mesh.bottom_radius = 0.11
+	turret_mesh.height = 0.5
+	turret.mesh = turret_mesh
+	var turret_mat := StandardMaterial3D.new()
+	turret_mat.albedo_color = stone_color.darkened(0.15)
+	turret.material_override = turret_mat
+	turret.position = Vector3(0.2, 0.25, -0.16)
+	add_child(turret)
+
+	var turret_roof := MeshInstance3D.new()
+	var turret_roof_mesh := CylinderMesh.new()
+	turret_roof_mesh.top_radius = 0.005
+	turret_roof_mesh.bottom_radius = 0.13
+	turret_roof_mesh.height = 0.22
+	turret_roof.mesh = turret_roof_mesh
+	var turret_roof_mat := StandardMaterial3D.new()
+	turret_roof_mat.albedo_color = accent_color.darkened(0.25)
+	turret_roof.material_override = turret_roof_mat
+	turret_roof.position = Vector3(0.2, 0.61, -0.16)
+	add_child(turret_roof)
+
+	var pole := MeshInstance3D.new()
+	var pole_mesh := CylinderMesh.new()
+	pole_mesh.top_radius = 0.012
+	pole_mesh.bottom_radius = 0.012
+	pole_mesh.height = 0.18
+	pole.mesh = pole_mesh
+	var pole_mat := StandardMaterial3D.new()
+	pole_mat.albedo_color = Color(0.3, 0.22, 0.15)
+	pole.material_override = pole_mat
+	pole.position = Vector3(0.2, 0.81, -0.16)
+	add_child(pole)
+
+	var flag := MeshInstance3D.new()
+	var flag_mesh := PrismMesh.new()
+	flag_mesh.size = Vector3(0.1, 0.06, 0.015)
+	flag.mesh = flag_mesh
+	var flag_mat := StandardMaterial3D.new()
+	flag_mat.albedo_color = accent_color
+	flag.material_override = flag_mat
+	flag.position = Vector3(0.25, 0.85, -0.16)
+	flag.rotation_degrees = Vector3(0, 90, 0)
+	add_child(flag)
 
 ## Campo de Tiro: alvo circular (aneis) preso num poste, de frente pra
 ## quem olha — silhueta simples o bastante pra ler "treino de arco" de
@@ -180,7 +239,7 @@ func _build_archery_range(accent_color: Color) -> void:
 	post_mesh.height = 0.45
 	post.mesh = post_mesh
 	var post_mat := StandardMaterial3D.new()
-	post_mat.albedo_color = Color(0.4, 0.28, 0.18)
+	post_mat.albedo_color = _race_style_kit().archery_range_color
 	post.material_override = post_mat
 	post.position.y = 0.22
 	add_child(post)
@@ -220,7 +279,7 @@ func _build_stable(accent_color: Color) -> void:
 	body_mesh.size = Vector3(0.6, 0.28, 0.32)
 	body.mesh = body_mesh
 	var body_mat := StandardMaterial3D.new()
-	body_mat.albedo_color = Color(0.55, 0.42, 0.28)
+	body_mat.albedo_color = _race_style_kit().stable_color
 	body.material_override = body_mat
 	body.position.y = 0.14
 	add_child(body)

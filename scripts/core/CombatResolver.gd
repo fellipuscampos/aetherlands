@@ -115,3 +115,41 @@ static func resolve(attacker: Unit, defender: Unit, hex_grid: HexGrid) -> void:
 				EventBus.notify.emit("Seu %s foi derrotado ao atacar!" % attacker_name, "combat")
 	elif defender_is_human:
 		EventBus.notify.emit("Seu %s foi atacado e resistiu!" % defender_name, "combat")
+
+## Atacar uma cidade SEM unidade guarnicionada (ver defender_unit check no
+## chamador — SelectionManager._attack_from_selected/RivalAI._engage; uma
+## cidade DEFENDIDA continua resolvendo o combate contra a unidade acima,
+## sem mudanca) — pedido do usuario: "quero... estabelecer a vida da
+## cidade... e o shield tambem... a partir do momento que voce construir a
+## muralha... [o shield fica] abaixo da vida atual". Ate aqui, uma cidade
+## indefesa era capturada na hora, num unico clique — agora o dano
+## desconta do ESCUDO primeiro (Muralhas, se construida), so depois da
+## VIDA da propria cidade, e so captura quando a vida chega a zero (ANTES
+## disso, a cidade so fica mais fraca — regenera aos poucos entre ataques,
+## ver City.process_turn).
+static func resolve_city_attack(attacker: Unit, city: City, hex_grid: HexGrid) -> void:
+	var attacker_name = attacker.unit_data.unit_name
+	var attacker_is_human = attacker.owner_player == GameManager.human_player
+	var defender_is_human = city.owner_player == GameManager.human_player
+
+	var damage = max(1.0, attacker.unit_data.attack * attacker.veterancy_multiplier())
+	attacker.movement_left = 0.0
+
+	var remaining_damage = damage
+	if city.shield > 0.0:
+		var absorbed = min(city.shield, remaining_damage)
+		city.shield -= absorbed
+		remaining_damage -= absorbed
+	if remaining_damage > 0.0:
+		city.hp = max(0.0, city.hp - remaining_damage)
+	city._update_life_bars()
+	hex_grid.spawn_damage_popup(city.coord, damage)
+
+	if city.hp <= 0.0:
+		hex_grid.capture_city(city, attacker.owner_player) # emite seu proprio EventBus.notify
+		return
+
+	if defender_is_human:
+		EventBus.notify.emit("%s foi atacada! Vida: %d/%d" % [city.city_name, int(city.hp), int(city.max_hp())], "combat")
+	elif attacker_is_human:
+		EventBus.notify.emit("Seu %s enfraqueceu %s!" % [attacker_name, city.city_name], "combat")

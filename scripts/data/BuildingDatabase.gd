@@ -11,12 +11,15 @@ extends RefCounted
 ## (City.buildings, Dictionary id->true).
 ##
 ## Duas familias: predios de RENDIMENTO/DEFESA (Celeiro/Oficina/Mercado/
-## Muralhas, `trains_unit` vazio) e predios de TREINO (Quartel em diante,
-## `trains_unit` preenchido) — cada tropa de combate so pode ser produzida
+## Torre dos Sabios/Muralhas, `trains_unit` vazio) e predios de TREINO
+## (Quartel em diante, `trains_unit` preenchido) — cada tropa de combate so
+## pode ser produzida
 ## se a cidade ja tiver o predio de treino correspondente (City.can_train(),
 ## pedido do usuario: "cada tropa e feita numa construcao... so pode
-## treinar as tropas na sua respectiva construcao"). Colonizador fica de
-## fora dessa regra (nao e uma tropa de combate, sempre disponivel).
+## treinar as tropas na sua respectiva construcao"). Colonizador E Guarda
+## ficam de fora dessa regra (Guarda voltou a nao exigir predio nenhum,
+## pedido do usuario numa rodada seguinte: "o guarda comum nao precisa de
+## quartel pra ser feito").
 ##
 ## Cadeia de 3 passos pro resto do elenco (pedido do usuario, rodada
 ## seguinte: "so posso construir esses predios especiais quando pesquisar
@@ -27,8 +30,30 @@ extends RefCounted
 ## derivado achando `TechDatabase.tech_that_unlocks(building.trains_unit)`
 ## — sem precisar duplicar o mapeamento tropa->tecnologia aqui), so entao
 ## o predio (uma vez construido) libera TREINAR a tropa (City.can_train()).
-## Quartel fica de fora do primeiro passo porque Guerreiro nunca exigiu
-## pesquisa nenhuma (tech_that_unlocks("warrior") == null).
+## Quartel, Estabulo e Campo de Tiro passam por esse primeiro passo tambem:
+## as techs "Quartel"/"Estabulo"/"Arquearia" sao quem liberam CONSTRUIR
+## cada predio, o que atrasa Homem de Armas, Cavaleiro/Cavaleiro Real/
+## Batedor e Arqueiro ate elas serem pesquisadas. Batedor tem um QUINTO
+## gate por cima (a propria tech "Batedor Montado", prerequisito
+## "estabulo") — Estabulo construido libera Cavaleiro/Cavaleiro Real, mas
+## Batedor so destrava depois de pesquisar as DUAS techs (Estabulo E
+## Batedor Montado), ver TechData.unlocks_unit.
+##
+## `requires_building` (BuildingData) e um QUARTO gate independente, so pro
+## Estabulo por enquanto: alem da tech propria, tambem exige o Quartel
+## FISICAMENTE construido nesta cidade antes (pedido do usuario: "faca o
+## estabulo ser uma coisa que so pode ser feita depois do quartel") — ver
+## City.can_build().
+##
+## Muralhas e a UNICA excecao na familia de RENDIMENTO/DEFESA: mesmo sem
+## `trains_unit`, ainda tem tech propria travando a construcao (tech
+## "muralhas", ver TechData.unlocks_building/TechDatabase.tech_that_
+## unlocks_building) — pedido do usuario: "a muralha nao faz tanto sentido
+## [como predio sempre liberado, sem tech nenhuma]... vamos remover ela, e
+## adicionar como pesquisa". Tambem e o UNICO predio com `self_placed =
+## true` (ver BuildingData.self_placed) — nao ganha um Building.gd separado
+## num tile vizinho escolhido, vira o anel de muralha da PROPRIA cidade
+## (City._add_walls, acionado por City.buildings.has("walls")).
 ##
 ## Escopo desta rodada: so a cidade do JOGADOR constroi predios —
 ## RivalAI.decide_production continua so escolhendo entre unidades
@@ -62,11 +87,20 @@ static func _build_all() -> Dictionary:
 	market.bonus_gold = 2
 	buildings[market.id] = market
 
+	# self_placed = true — sem tile pra escolher no mapa (ver BuildingData.
+	# self_placed), a producao vira o anel de muralha da PROPRIA cidade
+	# (City._add_walls) assim que completa. Gated pela tech "muralhas" (ver
+	# TechData.unlocks_building/TechDatabase.tech_that_unlocks_building) —
+	# pedido do usuario: "a muralha nao faz tanto sentido [como predio
+	# generico]... adiciona como pesquisa... libera a construção da
+	# muralha, mas essa muralha simplesmente adiciona esteticamente uma
+	# muralha ao redor do tile da cidade... dando um shield a ela".
 	var walls := BuildingData.new()
 	walls.id = "walls"
 	walls.display_name = "Muralhas"
 	walls.production_cost = 30.0
 	walls.defense_bonus = 0.5
+	walls.self_placed = true
 	buildings[walls.id] = walls
 
 	# Predio de RENDIMENTO (mesma familia de Celeiro/Oficina/Mercado —
@@ -82,11 +116,17 @@ static func _build_all() -> Dictionary:
 	sages_tower.bonus_mana = 3
 	buildings[sages_tower.id] = sages_tower
 
+	# trains_unit = "men_at_arms" (NAO "warrior") — pedido do usuario:
+	# "o guarda comum nao precisa de quartel pra ser feito", revertendo a
+	# decisao anterior desta mesma sessao. Guarda volta a ser o unico kind
+	# de COMBATE sem predio nenhum (ver building_that_trains abaixo, cai no
+	# `return null` no fim por nao bater em nada); Homem de Armas fica
+	# sozinho dependendo do Quartel.
 	var barracks := BuildingData.new()
 	barracks.id = "barracks"
 	barracks.display_name = "Quartel"
 	barracks.production_cost = 20.0
-	barracks.trains_unit = "warrior"
+	barracks.trains_unit = "men_at_arms"
 	buildings[barracks.id] = barracks
 
 	var archery_range := BuildingData.new()
@@ -96,11 +136,17 @@ static func _build_all() -> Dictionary:
 	archery_range.trains_unit = "archer"
 	buildings[archery_range.id] = archery_range
 
+	# requires_building = "barracks" — pedido do usuario: "faca o estabulo
+	# ser uma coisa que so pode ser feita depois do quartel". Isso ja
+	# implica transitivamente que a tech "Quartel" tambem precisa estar
+	# pesquisada antes (Quartel construido => tech Quartel pesquisada),
+	# sem precisar duplicar esse gate na propria tech "Estabulo".
 	var stable := BuildingData.new()
 	stable.id = "stable"
 	stable.display_name = "Estabulo"
 	stable.production_cost = 26.0
 	stable.trains_unit = "cavalry"
+	stable.requires_building = "barracks"
 	buildings[stable.id] = stable
 
 	var siege_workshop := BuildingData.new()
@@ -161,19 +207,30 @@ static func get_building(id: String) -> BuildingData:
 static func all_buildings() -> Array:
 	return _all().values()
 
-## Predio de treino cujo trains_unit bate com `kind` (ex: "warrior" ->
+## Predio de treino cujo trains_unit bate com `kind` (ex: "men_at_arms" ->
 ## Quartel), ou null se `kind` nao exige nenhum predio especifico (ex:
-## "settler") — ver City.can_train(). Tropa racial exclusiva (UnitDatabase.
-## RACE_UNIQUE_KIND — human_knight/dwarf_axeguard/orc_berserker/elf_ranger)
-## nao tem `trains_unit` proprio em NENHUM BuildingData (nao ganhou predio
-## dedicado), mas ainda precisa de UM predio pra treinar: cai no Quartel,
-## o mesmo que ja treina o Guerreiro comum — tematicamente sua tropa de
-## elite continua treinando no mesmo lugar que o resto do exercito, sem
-## exigir um predio novo so pra isso.
+## "settler" E "warrior" — Guarda nao tem predio nenhum, pedido do usuario:
+## "o guarda comum nao precisa de quartel pra ser feito") — ver
+## City.can_train(). Tropa racial exclusiva (UnitDatabase.RACE_UNIQUE_KIND
+## — dwarf_axeguard/orc_berserker/elf_ranger) nao tem `trains_unit` proprio
+## em NENHUM BuildingData (nao ganhou predio dedicado), mas ainda precisa
+## de UM predio pra treinar: cai no Quartel por padrao — tematicamente sua
+## tropa de elite continua treinando no mesmo lugar que o resto do
+## exercito, sem exigir um predio novo so pra isso. Cavaleiro Real
+## (human_knight) e a UNICA excecao — pedido do usuario: "apos construido
+## no estabulo voce pode fazer o cavaleiro real", cai no Estabulo em vez
+## do Quartel (faz sentido tematico: cavalaria pesada treina onde os
+## cavalos estao), checado ANTES do fallback racial generico abaixo.
+## Batedor (scout) tambem cai no Estabulo pelo mesmo motivo tematico — um
+## batedor MONTADO tambem sai de onde os cavalos estao, sem exigir predio
+## proprio so pra uma tropa de baixo dano (pedido do usuario: "o batedor
+## montado... libera a construcao do batedor").
 static func building_that_trains(kind: String) -> BuildingData:
 	for b in all_buildings():
 		if b.trains_unit == kind:
 			return b
+	if kind == "human_knight" or kind == "scout":
+		return get_building("stable")
 	if UnitDatabase.race_for_unique_kind(kind) != "":
 		return get_building("barracks")
 	return null

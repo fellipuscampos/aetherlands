@@ -129,8 +129,13 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 		var coord = Vector2i(int(c[0]), int(c[1]))
 		if hex_grid.tiles.has(coord):
 			hex_grid.visibility[coord] = HexGrid.Visibility.EXPLORED
-	hex_grid.recompute_fog(GameManager.human_player)
+	# refresh_construction_markers ANTES de recompute_fog (mesma ordem de
+	# GameManager._finish_turn, mesmo motivo): recompute_fog e quem gateia
+	# a visibilidade de cada marcador pela nevoa (ver HexGrid._apply_fog_to_
+	# entities) — se rodasse depois, um marcador restaurado aqui apareceria
+	# visivel pra QUALQUER cidade inimiga ate o proximo turno.
 	hex_grid.refresh_construction_markers() # restaura o marcador de obra pra predio que ainda estava em producao ao salvar
+	hex_grid.recompute_fog(GameManager.human_player)
 	GameManager.check_game_over()
 	return true
 
@@ -217,6 +222,8 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 			"population": city.population,
 			"stored_food": city.stored_food,
 			"stored_production": city.stored_production,
+			"hp": city.hp,
+			"shield": city.shield,
 			"production_item": city.production_item,
 			"worked_tiles": worked,
 			"owned_tiles": owned,
@@ -280,6 +287,14 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 		city.owned_tiles = owned
 		for id in c.get("buildings", []):
 			city.buildings[id] = true
+		# get(..., max_*()) com fallback: save ANTIGO (de antes de hp/shield
+		# existirem) carrega a cidade com vida/escudo cheios em vez de
+		# quebrar. Le DEPOIS de population E buildings (Muralhas) ja
+		# restauradas acima — senao o fallback calcularia max_hp()/
+		# max_shield() errado (population ainda no default 1, "walls"
+		# ainda ausente de buildings).
+		city.hp = float(c.get("hp", city.max_hp()))
+		city.shield = float(c.get("shield", city.max_shield()))
 		# Recria o modelo 3D de cada predio no tile exato onde foi
 		# posicionado — sem isso o predio continuaria valendo o bonus (ja
 		# restaurado acima) mas sumiria do mapa depois de um load.
@@ -292,7 +307,16 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 		if c.has("pending_building_coord"):
 			var pc = c.pending_building_coord
 			city.pending_building_coord = Vector2i(int(pc[0]), int(pc[1]))
+		# found_city() acima ja desenhou o cluster de casas/torre/muralha uma
+		# vez, mas com populacao 1 e buildings vazio (os dois so foram
+		# restaurados DEPOIS, nas linhas acima) — sem refazer agora, uma
+		# cidade carregada com populacao 5+ nao mostraria a torre grande, e
+		# uma com Muralhas construida nao mostraria o anel (ver City.
+		# _build_visual_procedural/_add_walls), os dois so apareceriam no
+		# PROXIMO ponto de crescimento de populacao.
+		city._build_visual_procedural()
 		city._refresh_label()
+		city._update_life_bars() # hp/shield restaurados acima, com population/buildings ja no valor final
 	for coord_arr in saved.get("known_enemy_cities", []):
 		player.known_enemy_cities[Vector2i(int(coord_arr[0]), int(coord_arr[1]))] = true
 	for id in saved.get("researched_techs", []):

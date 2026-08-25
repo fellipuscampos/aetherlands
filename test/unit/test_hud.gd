@@ -2,17 +2,19 @@ extends GutTest
 
 ## Cobre a correcao dos bugs de sobreposicao que o usuario reportou
 ## ("alguns [paineis] entram um por cima do outro"): fim de jogo aparecendo
-## por cima de um overlay (Tecnologia/Diplomacia/Ajuda) ainda aberto, e
+## por cima de um overlay (Tecnologia/Diplomacia/Grimorio) ainda aberto, e
 ## botoes que deveriam ficar desabilitados depois do fim de jogo pra nao
 ## dar pra "fechar" a tela de vitoria/derrota sem querer.
 
 var hud: Control
 var _original_state
 var _original_human_player: PlayerData
+var _original_debug_mode: bool
 
 func before_each():
 	_original_state = GameManager.state
 	_original_human_player = GameManager.human_player
+	_original_debug_mode = GameManager.debug_mode
 	var hud_scene: PackedScene = load("res://scenes/ui/HUD.tscn")
 	hud = hud_scene.instantiate()
 	add_child_autofree(hud)
@@ -20,6 +22,8 @@ func before_each():
 func after_each():
 	GameManager.state = _original_state
 	GameManager.human_player = _original_human_player
+	GameManager.debug_mode = _original_debug_mode
+	GameManager.is_turn_processing = false
 
 func test_close_topmost_overlay_returns_false_when_nothing_is_open():
 	assert_false(hud.close_topmost_overlay())
@@ -73,7 +77,6 @@ func test_game_over_disables_buttons_that_would_dismiss_the_screen():
 	assert_true(hud.tech_button.disabled)
 	assert_true(hud.diplomacy_button.disabled)
 	assert_true(hud.grimoire_button.disabled)
-	assert_true(hud.help_button.disabled)
 	assert_true(hud.debug_button.disabled)
 
 func test_restart_reenables_overlay_buttons():
@@ -84,13 +87,12 @@ func test_restart_reenables_overlay_buttons():
 	assert_false(hud.tech_button.disabled)
 	assert_false(hud.diplomacy_button.disabled)
 	assert_false(hud.grimoire_button.disabled)
-	assert_false(hud.help_button.disabled)
 	assert_false(hud.debug_button.disabled)
 	assert_false(hud.game_over_panel.visible)
 
 ## Painel de Debug (pedido do usuario: "adicione opcoes debug onde eu
 ## posso tirar a fog do mapa e coisas assim") segue a MESMA regra de "so
-## um overlay por vez" que Ajuda/Tecnologia/Diplomacia ja tinham.
+## um overlay por vez" que Tecnologia/Diplomacia/Grimorio ja tinham.
 func test_close_topmost_overlay_closes_debug_panel():
 	hud._on_debug_pressed()
 	assert_true(hud.debug_panel.visible, "pre-condicao: painel deveria abrir")
@@ -108,6 +110,24 @@ func test_opening_debug_panel_closes_an_already_open_overlay():
 
 func test_debug_button_only_visible_in_debug_builds():
 	assert_eq(hud.debug_button.visible, OS.is_debug_build(), "botao de Debug nao deveria aparecer num export de release")
+
+## Pedido do usuario: "enquanto ta processando o botao fica ou
+## indisponivel ou substituido por algo como processando" (ver
+## GameManager.is_turn_processing/stagger_ai_turns) — cobre as DUAS coisas.
+func test_end_turn_button_disabled_and_relabeled_while_turn_is_processing():
+	GameManager.is_turn_processing = true
+
+	hud._process(0.0)
+
+	assert_true(hud.end_turn_button.disabled)
+	assert_eq(hud.end_turn_button.text, hud.END_TURN_BUTTON_PROCESSING_TEXT)
+
+	GameManager.is_turn_processing = false
+
+	hud._process(0.0)
+
+	assert_false(hud.end_turn_button.disabled)
+	assert_eq(hud.end_turn_button.text, hud.END_TURN_BUTTON_TEXT)
 
 func test_debug_gold_button_adds_gold_to_human_player():
 	GameManager.human_player = PlayerData.new(CivilizationData.new())
@@ -131,6 +151,24 @@ func test_refresh_stats_shows_mana_balance_and_income():
 	hud._refresh_stats()
 
 	assert_eq(hud.mana_label.text, "Mana: 42 (+7)")
+
+## Pedido do usuario: "libere no modo debug, quando eu ativar, tudo
+## liberado". Botao toggle (mesmo padrao do DebugRevealMapButton) — clique
+## liga GameManager.debug_mode e atualiza o proprio texto/estado visual.
+func test_debug_mode_button_toggles_debug_mode_and_updates_its_own_label():
+	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	assert_false(GameManager.debug_mode, "pre-condicao: modo debug comeca desligado")
+
+	hud._on_debug_mode_pressed()
+
+	assert_true(GameManager.debug_mode)
+	assert_true(hud.debug_mode_button.button_pressed)
+	assert_eq(hud.debug_mode_button.text, "Desativar Modo Debug")
+
+	hud._on_debug_mode_pressed()
+
+	assert_false(GameManager.debug_mode)
+	assert_false(hud.debug_mode_button.button_pressed)
 
 ## Vencer/Perder Agora reaproveitam o MESMO sinal EventBus.game_over que o
 ## fim de jogo real usa — clicar um dos dois deveria fechar o painel de
@@ -262,6 +300,12 @@ func test_selecting_a_unit_without_a_city_hides_the_tile_info_panel():
 ## Cidade PROPRIA continua mostrando o painel de producao normalmente,
 ## mesmo com uma unidade guarnicionada em cima dela — gerenciar a cidade
 ## nao pode ficar inacessivel so porque ha uma unidade guardando ela.
+## Pedido do usuario, numa rodada seguinte: "ao clicar na cidade, essa area
+## do menu [ActionBar] some, e fica so o menu da cidade ocupando a parte
+## direita" — a cidade agora tambem faz o UnitPanel sumir (ele mora na
+## MESMA area que o ActionBar, ver HUD.tscn), mesmo com a tropa
+## guarnicionada la (_on_unit_selected roda ANTES, mesmo clique, e
+## _on_tile_selected tem a ultima palavra — ver comentario dela).
 func test_selecting_own_city_still_shows_tile_info_panel_even_with_a_garrisoned_unit():
 	var original_hex_grid = GameManager.hex_grid
 	var hex_grid := HexGrid.new()
@@ -276,11 +320,259 @@ func test_selecting_own_city_still_shows_tile_info_panel_even_with_a_garrisoned_
 	unit.setup(UnitDatabase.create_unit("warrior"), human, coord)
 	hex_grid.units_by_coord[coord] = unit
 
+	# Mesma ordem do clique real (SelectionManager.handle_world_click emite
+	# unit_selected ANTES de tile_selected).
+	hud._on_unit_selected(unit)
 	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
 
 	assert_true(hud.tile_info_panel.visible, "cidade propria deveria continuar mostrando o painel mesmo com unidade guarnicionada")
+	assert_false(hud.action_bar.visible, "ActionBar deveria sumir enquanto a cidade esta em foco")
+	assert_false(hud.unit_panel.visible, "UnitPanel deveria sumir enquanto a cidade esta em foco, mesmo com a tropa guarnicionada")
 
 	unit.queue_free()
+	city.queue_free()
+	hex_grid.queue_free()
+	GameManager.hex_grid = original_hex_grid
+
+## Selecionar uma tropa (sem cidade no tile) nao deveria mexer no ActionBar
+## — ele so some quando uma CIDADE propria esta em foco (pedido do
+## usuario: "elas fiquem ali do lado do menu de opções", nao por cima
+## dele).
+func test_selecting_a_unit_without_a_city_keeps_the_action_bar_visible():
+	var original_hex_grid = GameManager.hex_grid
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.hex_grid = hex_grid
+	var unit := Unit.new()
+	unit.setup(UnitDatabase.create_unit("warrior"), human, coord)
+	hex_grid.units_by_coord[coord] = unit
+
+	hud._on_unit_selected(unit)
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+
+	assert_true(hud.action_bar.visible)
+	assert_true(hud.unit_panel.visible)
+
+	unit.queue_free()
+	hex_grid.queue_free()
+	GameManager.hex_grid = original_hex_grid
+
+## Pedido do usuario: "ao clicar na cidade, essa area do menu some, e fica
+## so o menu da cidade ocupando a parte direita" — o painel de cidade
+## cresce ate a mesma borda direita do ActionBar (que fica escondido).
+func test_selecting_own_city_expands_the_tile_info_panel_to_the_action_bars_edge():
+	var original_hex_grid = GameManager.hex_grid
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.hex_grid = hex_grid
+	var city = hex_grid.found_city(coord, human, "Capital")
+
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+
+	assert_eq(hud.tile_info_panel.offset_right, hud.TILE_INFO_PANEL_EXPANDED_RIGHT)
+
+	city.queue_free()
+	hex_grid.queue_free()
+	GameManager.hex_grid = original_hex_grid
+
+## Pedido do usuario: "apenas ao clicar em outra coisa fora da cidade, o
+## menu da cidade some e volta o menu geral de tecnologia e etc" —
+## clicar num tile SEM cidade depois de ter uma cidade selecionada traz o
+## ActionBar de volta e volta o painel pra largura compacta.
+func test_deselecting_the_city_brings_back_the_action_bar_and_compact_panel_width():
+	var original_hex_grid = GameManager.hex_grid
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var city_coord := Vector2i(0, 0)
+	var empty_coord := Vector2i(1, 0)
+	hex_grid.tiles[city_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[empty_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.hex_grid = hex_grid
+	var city = hex_grid.found_city(city_coord, human, "Capital")
+	hud._on_tile_selected(city_coord, hex_grid.get_tile(city_coord))
+	assert_false(hud.action_bar.visible, "pre-condicao: cidade selecionada deveria esconder o ActionBar")
+
+	hud._on_unit_selected(null)
+	hud._on_tile_selected(empty_coord, hex_grid.get_tile(empty_coord))
+
+	assert_true(hud.action_bar.visible)
+	assert_eq(hud.tile_info_panel.offset_right, hud.TILE_INFO_PANEL_COMPACT_RIGHT)
+
+	city.queue_free()
+	hex_grid.queue_free()
+	GameManager.hex_grid = original_hex_grid
+
+## Pedido do usuario: "faca ser exibido somente tropas que voce pode fazer
+## ao clicar na cidade" — botao de producao so aparece quando REALMENTE
+## treinavel agora, nao mais desabilitado-com-tooltip. Cidade recem-fundada
+## (sem nenhum predio/pesquisa): Guarda e Colonizador sempre visiveis;
+## Homem de Armas (exige Quartel construido) fica escondido.
+func test_city_production_row_only_shows_currently_trainable_kinds():
+	var original_hex_grid = GameManager.hex_grid
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.hex_grid = hex_grid
+	var city = hex_grid.found_city(coord, human, "Capital")
+
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+
+	assert_true(hud._production_buttons["settler"].visible)
+	assert_true(hud._production_buttons["warrior"].visible, "Guarda nao depende de predio/pesquisa, deveria sempre aparecer")
+	assert_false(hud._production_buttons["men_at_arms"].visible, "Homem de Armas sem Quartel construido nao deveria aparecer")
+
+	human.researched_techs["quartel"] = true
+	city.buildings["barracks"] = true
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+
+	assert_true(hud._production_buttons["men_at_arms"].visible, "Homem de Armas com Quartel construido e pesquisado deveria aparecer")
+
+	city.queue_free()
+	hex_grid.queue_free()
+	GameManager.hex_grid = original_hex_grid
+
+## Pedido do usuario, numa rodada seguinte: "as construções que precisam
+## de pesquisa, só aparecem listadas na cidade quando nós de fato criamos
+## a pesquisa, enquanto isso elas não aparecem no menu da cidade" — mesmo
+## principio do teste acima (tropas), agora pros PREDIOS de treino. Predio
+## de RENDIMENTO (sem tech associada) fica de fora da regra, continua
+## sempre visivel.
+func test_city_construction_row_hides_buildings_that_need_unresearched_tech():
+	var original_hex_grid = GameManager.hex_grid
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.hex_grid = hex_grid
+	var city = hex_grid.found_city(coord, human, "Capital")
+
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+
+	assert_true(hud.build_granary_button.visible, "Celeiro nao depende de pesquisa, deveria sempre aparecer")
+	assert_false(hud.build_barracks_button.visible, "Quartel sem a tech 'quartel' pesquisada nao deveria aparecer")
+	assert_false(hud.build_stable_button.visible, "Estabulo sem a tech 'estabulo' pesquisada nao deveria aparecer")
+
+	human.researched_techs["quartel"] = true
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+
+	assert_true(hud.build_barracks_button.visible, "Quartel com a tech 'quartel' pesquisada deveria aparecer")
+	assert_false(hud.build_stable_button.visible, "Estabulo ainda precisa da propria tech ('estabulo'), so 'quartel' nao basta")
+
+	city.queue_free()
+	hex_grid.queue_free()
+	GameManager.hex_grid = original_hex_grid
+
+## Pedido do usuario, numa rodada seguinte: "quando uma construção ta
+## sendo feita, tenha algum indicador de avanço... atualmente nao sabemos
+## nem quanto demora... nem o progresso". Selecionar uma cidade agora
+## mostra uma barra + texto com o item/PP acumulado/PP total.
+func test_selecting_a_city_shows_production_progress():
+	var original_hex_grid = GameManager.hex_grid
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.hex_grid = hex_grid
+	var city = hex_grid.found_city(coord, human, "Capital")
+	city.set_production("settler") # cidade nasce ociosa (""), ver City.gd — precisa de algo selecionado pra ter progresso
+	city.stored_production = 5.0
+
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+
+	assert_true(hud.production_progress_label.visible)
+	assert_true(hud.production_progress_bar.visible)
+	assert_eq(hud.production_progress_bar.value, 5.0)
+	assert_eq(hud.production_progress_bar.max_value, city.production_cost())
+	assert_true(hud.production_progress_label.text.contains("5"), "texto deveria mostrar o PP acumulado")
+
+	city.queue_free()
+	hex_grid.queue_free()
+	GameManager.hex_grid = original_hex_grid
+
+## Sem cidade nenhuma no tile, o indicador de progresso nao deveria ficar
+## "preso" mostrando o valor da ultima cidade selecionada.
+func test_selecting_a_tile_without_a_city_hides_production_progress():
+	var original_hex_grid = GameManager.hex_grid
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	GameManager.hex_grid = hex_grid
+
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+
+	assert_false(hud.production_progress_label.visible)
+	assert_false(hud.production_progress_bar.visible)
+
+	hex_grid.queue_free()
+	GameManager.hex_grid = original_hex_grid
+
+## Cidade OCIOSA (production_item == "", ver comentario do campo em
+## City.gd — pedido do usuario: "so produza outra [unidade] se voce for
+## la e por pra produzir de novo") tambem nao deveria mostrar a barra de
+## progresso — nao ha item nenhum em producao pra ter progresso.
+func test_selecting_an_idle_city_hides_production_progress():
+	var original_hex_grid = GameManager.hex_grid
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.hex_grid = hex_grid
+	var city = hex_grid.found_city(coord, human, "Capital")
+	city.set_production("")
+
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+
+	assert_false(hud.production_progress_label.visible)
+	assert_false(hud.production_progress_bar.visible)
+
+	city.queue_free()
+	hex_grid.queue_free()
+	GameManager.hex_grid = original_hex_grid
+
+## Pedido do usuario: "essa arvore de tecnologia humana que fizemos, eu
+## quero que faca uma equivalente pra cada civilizacao... mudando o nome
+## das tropas e aparencia das tropas e edificios em questao" — os botoes
+## de producao (predio E tropa) devem mostrar o nome TEMATICO da raca do
+## jogador humano, nao o nome cru de UnitDatabase/BuildingDatabase.
+func test_production_buttons_use_the_race_themed_name_for_a_dwarf_city():
+	var original_hex_grid = GameManager.hex_grid
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var civ := CivilizationData.new()
+	civ.race = "dwarf"
+	var human := PlayerData.new(civ)
+	GameManager.human_player = human
+	GameManager.hex_grid = hex_grid
+	var city = hex_grid.found_city(coord, human, "Capital")
+
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+
+	assert_eq(hud._production_buttons["cavalry"].text, hud._unit_button_label("cavalry", "dwarf"))
+	assert_eq(hud.build_barracks_button.text, hud._building_button_label("barracks", "dwarf"))
+	assert_ne(hud._production_buttons["cavalry"].text, hud._unit_button_label("cavalry", "human"), "nome humano cru nao deveria aparecer pra um jogador anao")
+
 	city.queue_free()
 	hex_grid.queue_free()
 	GameManager.hex_grid = original_hex_grid

@@ -20,6 +20,22 @@ enum TerrainType {
 	OCEAN, SNOW, TUNDRA, TAIGA, DESERT, SAVANNA, JUNGLE, PLAINS,
 	GRASSLAND, FOREST, HILLS, MOUNTAINS,
 	FROZEN_OCEAN, ICE, LAVA, CRYSTAL, LAVA_SEA,
+	## Microbiomas dos continentes Vulcanico/de Cristal (pedido do usuario:
+	## "os novos continentes ficaram visualmente e taticamente simplórios
+	## por serem blocos homogêneos/monobioma... precisamos aplicar a eles o
+	## mesmo nivel de complexidade, relevo e variacao de microbiomas que o
+	## Continente Principal possui") — todos CAMINHAVEIS (ao contrario de
+	## LAVA/LAVA_SEA acima, que continuam sendo o unico obstaculo/perigo de
+	## verdade em cada continente especial). Ver HexGrid._generate_tile_data
+	## pra como cada um se encaixa na decisao em camadas (elevacao ->
+	## litoral -> ruido) dentro da zona Vulcanica/de Cristal.
+	VOLCANIC_ROCK, # "Terra Vulcanica" — base caminhavel dominante do Vulcanico, substitui o antigo "100% Lava"
+	VOLCANIC_HILLS, # "Colinas Vulcanicas" — elevacao MEDIA (elevation_tier HILLS na zona Vulcanica), relevo 3D real (cupula, ver elevation_kind) entre a base e os Picos
+	VOLCANIC_PEAKS, # "Montanhas Vulcanicas" — cordilheira central (elevation_tier MOUNTAINS na zona Vulcanica)
+	VOLCANIC_ASH, # "Solo de Cinzas" — faixa costeira/periferica do Vulcanico
+	CRYSTAL_PEAKS, # "Picos de Cristal" — cordilheira central (elevation_tier HILLS/MOUNTAINS na zona de Cristal)
+	MYSTIC_SOIL, # "Solo Mistico" — base caminhavel dominante do Cristal / faixa costeira
+	MYSTIC_SPRING, # "Fonte Mistica" — feature rara de "recursos fluidos" (ruido bem alto, sem reintroduzir rio)
 	## Agua rasa encostada em terra firme (pedido do usuario: "Coast" tipo
 	## Civilization) — nunca nasce direto do ruido de elevacao como Oceano;
 	## HexGrid._reclassify_coastal_ocean converte OCEAN pra COAST num passo

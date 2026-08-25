@@ -4,6 +4,41 @@ extends Node3D
 const FOOD_TO_GROW_BASE := 8.0
 const LABEL_HEIGHT := 1.4
 
+## Piso de producao garantido pro tile CENTRAL da cidade (ver collect_
+## yields) — sem isso, uma cidade fundada em Planicie/Deserto/qualquer
+## terreno com production_yield 0 (ver TerrainDatabase) ficava com
+## stored_production LITERALMENTE travado em zero por varios turnos, ate a
+## populacao crescer o bastante pra reivindicar um segundo tile trabalhado
+## com producao de verdade — pedido do usuario apos reportar a barra de
+## progresso "vários turnos com ela no 0": "não sei se o problema é que a
+## construção realmente fica congelada no tempo no início". Era: o tile da
+## cidade nao tinha NENHUM piso, e auto_assign_worked_tiles (score = food*
+## 1.5 + production*1.3) prefere Planicie de producao 0 sobre Colina/
+## Floresta de producao 2 so por causa do peso maior em comida, entao nem o
+## primeiro tile trabalhado corrigia isso sozinho. Padrao consagrado de 4X
+## (Civilization e afins): o tile central sempre garante um minimo de
+## producao, nunca fica refem do terreno cru embaixo dele.
+const CITY_CENTER_MIN_PRODUCTION := 1.0
+
+## Vida/escudo da cidade — pedido do usuario: "quero... estabelecer a vida
+## da cidade, sempre mostrando na tela quanta vida ela tem, e o shield
+## tambem, a partir do momento que voce construir a muralha". Ate aqui
+## cidade NAO tinha vida nenhuma: atacar uma indefesa capturava na hora,
+## num unico clique (ver SelectionManager._attack_from_selected/RivalAI.
+## _engage, ANTES desta mudanca). Agora vira combate de verdade — so
+## captura quando hp chega a zero (ver CombatResolver.resolve_city_attack)
+## — e Muralhas ganha proposito MECANICO alem do visual: o escudo absorve
+## dano antes da vida cair, regenerando mais rapido entre ataques (mesmo
+## espirito da cura de guarnicao, ver GameManager.GARRISON_HEAL_FRACTION).
+## max_hp cresce com a populacao (cidade tardia e mais dificil de arrasar);
+## max_shield e um valor fixo, so existe se o predio "walls" ja foi
+## construido (ver max_shield()).
+const CITY_BASE_MAX_HP := 20.0
+const CITY_MAX_HP_PER_POPULATION := 4.0
+const CITY_HP_REGEN_FRACTION := 0.08 # fracao de max_hp curada por turno
+const CITY_MAX_SHIELD := 15.0
+const CITY_SHIELD_REGEN_FRACTION := 0.15 # fracao de max_shield recarregada por turno
+
 ## Escala visual da cidade por populacao (pedido do usuario: "Populacao 1 =
 ## 2-3 casinhas; Populacao 5 = distrito densamente povoado com torres/
 ## muralhas") — 3 faixas, nao crescimento linear infinito: uma cidade tardia
@@ -14,19 +49,52 @@ const LABEL_HEIGHT := 1.4
 ## cidade.
 const POP_HAMLET_MAX := 2 # 1-2: aldeia, so casinhas
 const POP_TOWN_MAX := 4 # 3-4: vila, casinhas + salao central
-## 5+: cidade murada — casinhas + torre + muralha
+## 5+: cidade grande — casinhas + torre (torre NAO implica muralha mais,
+## ver _build_visual_procedural/_add_walls: a muralha agora reflete se o
+## predio "walls" foi construido, independente de populacao)
 
 var owner_player: PlayerData
 var coord: Vector2i
 var city_name: String = "Cidade"
+## Circunraio REAL do hex do tile (HexGrid.hex_size, ver setup()) — pedido
+## do usuario apos ver a muralha pequena demais e mal encaixada: "voce
+## conseguiria fazer... como esse vermelho que tracei" (um hexagono do
+## TAMANHO do proprio tile, acompanhando a quebra agua/terra, nao um
+## menor abraçando so o cluster de predios do centro). Antes a muralha
+## usava um raio LOCAL fixo (0.62) sem nenhuma relacao com o tile de
+## verdade — 1.0 aqui e so o fallback pro default de HexGrid.hex_size,
+## usado por testes que criam City.new() bare sem passar por setup().
+var tile_radius: float = 1.0
 var population: int = 1
 var stored_food: float = 0.0
 var stored_production: float = 0.0
-## Colonizador e o unico item SEM predio de treino associado (ver
-## BuildingDatabase.building_that_trains), entao e o unico kind sempre
-## produzivel de graca — o default seguro pra uma cidade recem-fundada
-## (ver can_train() abaixo, Guerreiro agora exige o Quartel construido).
-var production_item: String = "settler"
+## Ver comentario de CITY_BASE_MAX_HP acima — inicializados em setup()
+## (hp cheio, shield 0 ate Muralhas ser construida).
+var hp: float = 0.0
+var shield: float = 0.0
+## Colonizador e Guarda sao os dois kinds SEM predio de treino associado
+## (ver BuildingDatabase.building_that_trains) — Colonizador nao depende
+## de nenhum predio, entao E o kind natural pro jogador escolher assim
+## que fundar (ver can_train() abaixo), mas isso e ELE quem decide, nao
+## um default automatico (ver "" logo abaixo).
+##
+## "" = cidade OCIOSA, sem nada em producao — pedido do usuario: "eu quero
+## que voce so produza uma unidade se for la e pedir... e quando ela
+## acabar, so produza outra se voce for la e por pra produzir de novo",
+## reforcado depois de uma cidade recem-fundada, SEM NINGUEM MEXER,
+## spawnar um Colonizador sozinha ("fundei uma cidade e fiquei dando
+## next, e do nada uma hora spawnou um colonizador") — o default "settler"
+## sofria do MESMO bug que process_turn() ja corrigia apos completar: uma
+## cidade nova comecava com um item ja selecionado sem o jogador pedir.
+## Agora toda cidade nasce ociosa, e process_turn() volta pra "" toda vez
+## que um item (unidade OU predio) completa, em vez de cair pra
+## "settler"/repetir o mesmo item pra sempre sozinha. RivalAI.decide_
+## production ja rechama set_production() TODO turno pra IA rival
+## (inclusive na fundacao, ver GameManager._on_turn_changed chamando
+## decide_production ANTES de process_turn), entao ela nunca fica ociosa
+## de verdade — isso so afeta cidades sem ninguem escolhendo pra elas
+## todo turno, ou seja, so a do jogador humano.
+var production_item: String = ""
 
 ## Cada ponto de populacao trabalha um tile vizinho (o tile da propria
 ## cidade e sempre contado de graca, fora desta lista — ver
@@ -77,12 +145,35 @@ var _name_label: Label3D
 ## (change_owner() continua livre pra derrubar TUDO, ela ja reconstroi os
 ## dois de qualquer forma).
 var _buildings_root: Node3D
+## Barras de vida/escudo (ver _build_life_bars/_update_life_bars) — Sprite3D
+## com textura redesenhada a cada update, MESMO sistema ja usado e testado
+## pra barra de progresso de construcao (ver HexGrid._build_construction_
+## progress_bar_texture) — mais robusto que mutar QuadMesh.size em lugar
+## (risco de AABB/culling desatualizado quando a barra CRESCE de novo,
+## nao so encolhe, ver saga da barra de progresso nesta sessao).
+var _life_bar: Sprite3D
+var _shield_bar: Sprite3D
 
-func setup(player: PlayerData, start_coord: Vector2i, new_city_name: String) -> void:
+func setup(player: PlayerData, start_coord: Vector2i, new_city_name: String, hex_size: float = 1.0) -> void:
 	owner_player = player
 	coord = start_coord
 	city_name = new_city_name
+	tile_radius = hex_size
+	# hp/shield cheios ao fundar — precisa vir ANTES de _build_visual() pra
+	# _build_life_bars() ja desenhar a barra certa desde o primeiro frame,
+	# nao um frame de vida 0/0 seguido de correcao.
+	hp = max_hp()
+	shield = max_shield()
 	_build_visual()
+
+func max_hp() -> float:
+	return CITY_BASE_MAX_HP + population * CITY_MAX_HP_PER_POPULATION
+
+## 0.0 ate o predio "walls" ser construido (ver BuildingDatabase.gd/
+## City._add_walls) — sem Muralhas, a cidade nao tem escudo nenhum pra
+## absorver.
+func max_shield() -> float:
+	return CITY_MAX_SHIELD if buildings.has("walls") else 0.0
 
 ## Trocar de projeto zera o progresso acumulado, como na maioria dos 4X:
 ## evita "salvar" producao de um item pra completar outro instantaneamente.
@@ -100,8 +191,14 @@ func set_production(kind: String) -> void:
 
 ## production_item pode ser um kind de unidade OU um id de predio
 ## (BuildingDatabase) — checa predio primeiro pra nao precisar de um
-## segundo campo/fila de producao separada.
+## segundo campo/fila de producao separada. "" (cidade OCIOSA, ver
+## comentario de production_item) devolve 0.0 direto — sem essa guarda,
+## cairia em UnitDatabase.create_unit(""), que devolve o CUSTO DEFAULT de
+## UnitData (15.0, nao 0), um numero enganoso pra quem chama isto achando
+## que reflete "nada em producao".
 func production_cost() -> float:
+	if production_item == "":
+		return 0.0
 	var building: BuildingData = BuildingDatabase.get_building(production_item)
 	if building:
 		return building.production_cost
@@ -120,30 +217,60 @@ func can_build(building_id: String) -> bool:
 		return false
 	if buildings.size() >= max_building_slots():
 		return false
+	if not _prerequisite_building_present(building_id):
+		return false
 	return _tech_unlocked_for_building(building_id)
+
+## Alguns predios exigem OUTRO predio ja construido nesta mesma cidade
+## antes (BuildingData.requires_building, ex: Estabulo exige o Quartel) —
+## pedido do usuario: "faca o estabulo ser uma coisa que so pode ser feita
+## depois do quartel". Independente do gate de TECNOLOGIA logo abaixo (os
+## dois se combinam pro Estabulo: Quartel construido E tech "Estabulo"
+## pesquisada).
+func _prerequisite_building_present(building_id: String) -> bool:
+	var building: BuildingData = BuildingDatabase.get_building(building_id)
+	if building == null or building.requires_building == "":
+		return true
+	return buildings.has(building.requires_building)
 
 ## Predio de TREINO so fica disponivel pra construir depois de pesquisar a
 ## mesma tecnologia que desbloqueia a tropa correspondente
 ## (TechDatabase.tech_that_unlocks(building.trains_unit)) — pedido do
 ## usuario: "so posso construir esses predios especiais quando pesquisar a
 ## tecnologia, ai aparece disponivel pra construir". Predios de PRODUCAO
-## (Celeiro, Muralhas...) e o Quartel (Guerreiro nunca exigiu pesquisa)
-## nao tem tecnologia associada (tech_that_unlocks devolve null), ficam
-## sempre liberados por essa checagem, so sujeitos ao limite de slots.
+## (Celeiro, Oficina, Mercado, Torre dos Sabios) nao tem tecnologia
+## associada (tech_that_unlocks devolve null E tech_that_unlocks_building
+## tambem), ficam sempre liberados por essa checagem, so sujeitos ao
+## limite de slots. Quartel, Estabulo, Campo de Tiro e Muralhas TEM
+## tecnologia associada cada um (respectivamente "Quartel"/"Estabulo"/
+## "Arquearia"/"Muralhas", ver TechDatabase) — Homem de Armas so treina
+## depois da primeira, Cavaleiro (comum)/Cavaleiro Real/Batedor so depois
+## da segunda (Batedor ainda exige a PROPRIA tech "Batedor Montado" por
+## cima — gate SEPARADO, checado por has_unlocked()/is_unit_unlocked() na
+## HUD, nao aqui, ver comentario de TechData.unlocks_unit), Arqueiro so
+## depois da terceira, Muralhas so depois da quarta (essa via unlocks_
+## building, nao unlocks_unit — Muralhas nao treina tropa nenhuma). Guarda
+## nao depende de nenhum predio (ver BuildingDatabase.building_that_trains),
+## entao nunca passa por aqui.
 func _tech_unlocked_for_building(building_id: String) -> bool:
 	var building: BuildingData = BuildingDatabase.get_building(building_id)
 	if building == null:
 		return true
 	var tech: TechData = TechDatabase.tech_that_unlocks(building.trains_unit)
 	if tech == null:
+		# Predio SEM trains_unit (familia rendimento/defesa) pode MESMO
+		# ASSIM ter tech propria (ex: Muralhas, ver TechData.
+		# unlocks_building) — so nao passa pelo gate de trains_unit acima.
+		tech = TechDatabase.tech_that_unlocks_building(building_id)
+	if tech == null:
 		return true
 	return owner_player != null and owner_player.researched_techs.has(tech.id)
 
 ## Cada tropa de combate so pode ser produzida se a cidade ja tiver o
 ## predio de treino correspondente construido (BuildingDatabase.
-## building_that_trains) — Colonizador nao tem predio associado, entao
-## fica sempre liberado. Como can_build() ja exige a tecnologia certa pra
-## CONSTRUIR o predio, uma tropa so fica trainable depois da cadeia
+## building_that_trains) — Colonizador e Guarda nao tem predio associado,
+## entao ficam sempre liberados. Como can_build() ja exige a tecnologia
+## certa pra CONSTRUIR o predio, uma tropa so fica trainable depois da cadeia
 ## completa: pesquisar -> construir -> treinar. So enforced pro JOGADOR
 ## (ver HUD._on_produce_pressed); RivalAI.decide_production chama
 ## set_production() direto, sem passar por aqui, mesma assimetria ja
@@ -154,7 +281,7 @@ func _tech_unlocked_for_building(building_id: String) -> bool:
 ## trava, ANTES da checagem de predio: so a raca DONA da tropa pode
 ## treinar ela (pedido do usuario: escolher raca na tela de titulo precisa
 ## ter uma implicacao real) — um jogador Anao nunca deveria conseguir
-## treinar o Patrulheiro Elfico so por ter o Quartel construido.
+## treinar o Arqueiro Solar so por ter o Quartel construido.
 func can_train(kind: String) -> bool:
 	var owner_race: String = UnitDatabase.race_for_unique_kind(kind)
 	if owner_race != "":
@@ -232,6 +359,8 @@ func collect_yields(hex_grid: HexGrid) -> Dictionary:
 		if data == null:
 			continue
 		var y = effective_tile_yield(data)
+		if c == coord:
+			y.production = max(y.production, CITY_CENTER_MIN_PRODUCTION)
 		totals.food += y.food
 		totals.production += y.production
 		totals.gold += y.gold
@@ -265,29 +394,69 @@ func process_turn(hex_grid: HexGrid) -> Dictionary:
 	var spawned_kind := ""
 	var built_kind := ""
 	var built_coord := NO_PENDING_COORD
-	var cost = production_cost()
-	if stored_production >= cost:
-		stored_production -= cost
-		var building: BuildingData = BuildingDatabase.get_building(production_item)
-		if building:
-			buildings[production_item] = true
-			built_kind = production_item
-			# pending_building_coord so fica vazio se algo chamou
-			# set_production() direto (ex: testes) sem passar pelo fluxo de
-			# posicionamento — o predio ainda conta pro bonus/limite, so
-			# nao ganha modelo 3D no mapa.
-			if pending_building_coord != NO_PENDING_COORD:
-				building_coords[production_item] = pending_building_coord
-				built_coord = pending_building_coord
-			pending_building_coord = NO_PENDING_COORD
-			# Sem isso a cidade tentaria "reconstruir" o mesmo predio pra
-			# sempre — troca pro item mais basico em vez de deixar producao
-			# futura ser desperdicada num predio que ja existe. "settler"
-			# (nao "warrior") porque e o unico kind sempre produzivel sem
-			# depender de nenhum predio de treino (ver can_train()).
-			production_item = "settler"
-		else:
-			spawned_kind = production_item
+	# production_item == "" (cidade OCIOSA, ver comentario da variavel e
+	# set_production()) nunca completa nada sozinha — pedido do usuario:
+	# "a partir do momento que voce funda a cidade, ele fica produzindo
+	# sem parar unidades... eu quero que... quando ela acabar, so produza
+	# outra se voce for la e por pra produzir de novo". Guarda aqui (em
+	# vez de so confiar em production_cost() devolver 0.0 pra "") pra
+	# nao chamar UnitDatabase.create_unit("") a toa todo turno.
+	if production_item != "":
+		var cost = production_cost()
+		if stored_production >= cost:
+			stored_production -= cost
+			var building: BuildingData = BuildingDatabase.get_building(production_item)
+			if building:
+				buildings[production_item] = true
+				built_kind = production_item
+				if building.self_placed:
+					# Muralhas: sem modelo 3D separado pra hex_grid.
+					# place_building desenhar (ver comentario de self_placed em
+					# BuildingData.gd) — o efeito e o anel de muralha da PROPRIA
+					# cidade (_add_walls), que so seria redesenhado no PROXIMO
+					# crescimento de populacao. Forca agora, senao o jogador nao
+					# veria efeito nenhum da producao que acabou de terminar ate
+					# a cidade crescer de novo.
+					_build_visual_procedural()
+					# Escudo comeca CHEIO assim que a muralha fica pronta — o
+					# jogador acabou de terminar a obra, nao faz sentido ela
+					# comecar vazia e so encher aos poucos (ver CITY_MAX_SHIELD/
+					# max_shield()).
+					shield = max_shield()
+				# pending_building_coord so fica vazio se algo chamou
+				# set_production() direto (ex: testes) sem passar pelo fluxo de
+				# posicionamento — o predio ainda conta pro bonus/limite, so
+				# nao ganha modelo 3D no mapa.
+				if pending_building_coord != NO_PENDING_COORD:
+					building_coords[production_item] = pending_building_coord
+					built_coord = pending_building_coord
+				pending_building_coord = NO_PENDING_COORD
+				# Fica OCIOSA apos completar — pedido do usuario (ver
+				# comentario acima). ANTES caia de volta pra "settler" e
+				# ficava reconstruindo Colonizador pra sempre sozinha;
+				# agora o jogador escolhe o proximo item explicitamente
+				# (RivalAI.decide_production ja rechama set_production
+				# TODO turno de qualquer forma, independente disso).
+				production_item = ""
+			else:
+				spawned_kind = production_item
+				production_item = "" # idem acima — tropa concluida tambem deixa a cidade ociosa
+
+	# Cura passiva de vida/escudo, todo turno — mesmo espirito da cura de
+	# guarnicao de unidade (GameManager._heal_if_garrisoned/_apply_regen).
+	# Sem isso, uma cidade que sobreviveu a um ataque ficaria FERIDA PRA
+	# SEMPRE (proximo ataque, mesmo fraco, a capturaria trivialmente) —
+	# shield regenera mais rapido que hp de proposito, e uma estrutura
+	# defensiva feita pra recuperar entre cercos, nao pra desgastar
+	# permanentemente.
+	if hp < max_hp():
+		hp = min(hp + max_hp() * CITY_HP_REGEN_FRACTION, max_hp())
+	if shield < max_shield():
+		shield = min(shield + max_shield() * CITY_SHIELD_REGEN_FRACTION, max_shield())
+	# Tambem cobre o caso de max_hp() ter mudado so por causa do
+	# crescimento de populacao acima (fracao mostrada muda mesmo sem hp
+	# mudar).
+	_update_life_bars()
 
 	return {"gold": yields.gold, "mana": yields.mana, "spawn_unit_kind": spawned_kind, "built_kind": built_kind, "built_coord": built_coord}
 
@@ -395,6 +564,89 @@ func _build_visual() -> void:
 	add_child(_name_label)
 	_refresh_label()
 
+	_build_life_bars()
+
+## Duas barras Sprite3D empilhadas, SEMPRE visiveis (nao so quando
+## danificada, diferente da barra de HP de unidade — ver Unit._build_hp_
+## bar) — pedido do usuario: "sempre mostrando na tela quanta vida ela
+## tem". Escudo fica LOGO ABAIXO da vida ("outra vida abaixo da vida
+## atual, sendo o shield") e so aparece depois de Muralhas construida (ver
+## _update_life_bars/max_shield()).
+const LIFE_BAR_Y := 1.65
+const SHIELD_BAR_Y := 1.5
+const LIFE_BAR_TEX_WIDTH := 64
+const LIFE_BAR_TEX_HEIGHT := 10
+const LIFE_BAR_PIXEL_SIZE := 0.011
+const LIFE_BAR_BORDER_COLOR := Color(0.08, 0.06, 0.05)
+const LIFE_BAR_EMPTY_COLOR := Color(0.5, 0.5, 0.52, 0.95)
+const LIFE_BAR_HIGH_COLOR := Color(0.3, 0.8, 0.3)
+const LIFE_BAR_MID_COLOR := Color(0.85, 0.75, 0.2)
+const LIFE_BAR_LOW_COLOR := Color(0.85, 0.2, 0.2)
+const SHIELD_BAR_FILL_COLOR := Color(0.35, 0.65, 0.95)
+const SHIELD_BAR_EMPTY_COLOR := Color(0.4, 0.42, 0.48, 0.95)
+
+func _build_life_bars() -> void:
+	_life_bar = Sprite3D.new()
+	_life_bar.name = "LifeBar"
+	_life_bar.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_life_bar.no_depth_test = true
+	_life_bar.shaded = false
+	_life_bar.pixel_size = LIFE_BAR_PIXEL_SIZE
+	_life_bar.position = Vector3(0, LIFE_BAR_Y, 0)
+	add_child(_life_bar)
+
+	_shield_bar = Sprite3D.new()
+	_shield_bar.name = "ShieldBar"
+	_shield_bar.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_shield_bar.no_depth_test = true
+	_shield_bar.shaded = false
+	_shield_bar.pixel_size = LIFE_BAR_PIXEL_SIZE
+	_shield_bar.position = Vector3(0, SHIELD_BAR_Y, 0)
+	add_child(_shield_bar)
+
+	_update_life_bars()
+
+## Chamado sempre que hp/shield/population/buildings muda (combate, regen
+## por turno, crescimento de populacao — que muda max_hp() mesmo sem hp
+## mudar — e conclusao de Muralhas) — so redesenha a TEXTURA, nunca mexe
+## em tamanho/posicao (mesmo motivo da barra de progresso de construcao,
+## ver HexGrid._update_construction_marker_progress).
+func _update_life_bars() -> void:
+	if _life_bar == null:
+		return
+	var hp_frac = clamp(hp / max_hp(), 0.0, 1.0) if max_hp() > 0.0 else 1.0
+	_life_bar.texture = _build_life_bar_texture(hp_frac, _life_bar_fill_color(hp_frac), LIFE_BAR_EMPTY_COLOR)
+
+	var has_shield = buildings.has("walls")
+	_shield_bar.visible = has_shield
+	if has_shield:
+		var shield_frac = clamp(shield / max_shield(), 0.0, 1.0) if max_shield() > 0.0 else 0.0
+		_shield_bar.texture = _build_life_bar_texture(shield_frac, SHIELD_BAR_FILL_COLOR, SHIELD_BAR_EMPTY_COLOR)
+
+func _life_bar_fill_color(frac: float) -> Color:
+	if frac > 0.6:
+		return LIFE_BAR_HIGH_COLOR
+	elif frac > 0.3:
+		return LIFE_BAR_MID_COLOR
+	return LIFE_BAR_LOW_COLOR
+
+func _build_life_bar_texture(frac: float, fill_color: Color, empty_color: Color) -> ImageTexture:
+	var w := LIFE_BAR_TEX_WIDTH
+	var h := LIFE_BAR_TEX_HEIGHT
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var fill_px := roundi(w * clamp(frac, 0.0, 1.0))
+	for x in range(w):
+		var is_border_x = x == 0 or x == w - 1
+		for y in range(h):
+			var is_border_y = y == 0 or y == h - 1
+			var color: Color
+			if is_border_x or is_border_y:
+				color = LIFE_BAR_BORDER_COLOR
+			else:
+				color = fill_color if x < fill_px else empty_color
+			img.set_pixel(x, y, color)
+	return ImageTexture.create_from_image(img)
+
 ## Reconstroi o CLUSTER de construcoes (nao o label, ver _buildings_root)
 ## a partir da populacao atual — chamado na fundacao (_build_visual) e de
 ## novo a cada ponto de populacao ganho (process_turn). RNG seedado pelo
@@ -429,9 +681,18 @@ func _build_visual_procedural() -> void:
 
 	if is_city:
 		_add_tower(civ_color, population)
-		_add_walls(rng)
 	else:
 		_add_small_keep(civ_color)
+	# Anel de muralha: ANTES acionado so por populacao (junto com is_city
+	# acima) — pedido do usuario: "a muralha [predio] nao faz tanto
+	# sentido... adiciona como pesquisa... essa muralha simplesmente
+	# adiciona esteticamente uma muralha ao redor do tile da cidade...
+	# dando um shield a ela". Agora reflete se a cidade de fato CONSTRUIU
+	# o predio "walls" (gated pela tech "muralhas", ver BuildingDatabase.
+	# gd) — independente de populacao, uma aldeia pequena murada e tao
+	# valida quanto uma cidade grande sem muralha nenhuma.
+	if buildings.has("walls"):
+		_add_walls()
 
 func _add_hut(local_pos: Vector3, scale: float, rng: RandomNumberGenerator) -> void:
 	var body := MeshInstance3D.new()
@@ -514,24 +775,82 @@ func _add_tower(civ_color: Color, population_value: int) -> void:
 	roof.position.y = 0.9 + height_bonus + 0.17
 	_buildings_root.add_child(roof)
 
-## Segmentos de muralha em anel perto da borda do tile (populacao >
-## POP_TOWN_MAX) — pedido do usuario: "distrito densamente povoado com
-## torres/muralhas".
-func _add_walls(rng: RandomNumberGenerator) -> void:
+## Muralha de VERDADE contornando o hexagono do tile — pedido do usuario:
+## "se as celulas sao hexagonos, a muralha devem ser um conjunto de retas
+## em cada aresta pra formar um hexagono ao redor da celula da cidade",
+## depois confirmado com um desenho por cima do proprio contorno do tile
+## (a quebra agua/terra): "voce conseguiria fazer... como esse vermelho
+## que tracei" — ou seja, do TAMANHO do tile de verdade (ver tile_radius,
+## HexGrid.hex_size), nao um raio local pequeno so abraçando o cluster de
+## predios do centro (primeira tentativa, rejeitada por ficar mal
+## encaixada e pequena demais).
+##
+## Geometria de hexagono regular (mesma formula angular de HexMetrics.
+## corner, agora aplicada ao raio REAL do tile):
+## - O MEIO de cada aresta fica no APOTEMA (raio * cos 30°), nao no
+##   circunraio (onde ficam os VERTICES).
+## - O comprimento de cada aresta de um hexagono regular e IGUAL ao
+##   proprio circunraio.
+## 6 segmentos retos (um por aresta, centralizados no apotema, alinhados
+## com a aresta) + 6 pilares curtos exatamente nos VERTICES (via
+## HexMetrics.corner) fecham as juntas entre segmentos adjacentes e leem
+## como torres de canto — silhueta de hexagono fechado, do tamanho do
+## proprio tile.
+const WALL_RADIUS_FACTOR := 0.94 # levemente < 1.0: fica por DENTRO da borda do tile, sem vazar pro vizinho
+const WALL_SEGMENT_LENGTH_FACTOR := 0.86 # fracao da aresta cheia: sobra vira o vao que o pilar de canto preenche
+const WALL_HEIGHT_FACTOR := 0.24
+const WALL_THICKNESS_FACTOR := 0.1
+const WALL_PILLAR_RADIUS_FACTOR := 0.065
+const WALL_PILLAR_HEIGHT_FACTOR := 0.32
+
+func _add_walls() -> void:
+	var wall_radius = tile_radius * WALL_RADIUS_FACTOR
+	var wall_apothem = wall_radius * 0.8660254 # cos(30°) — hexagono regular
+	var wall_segment_length = wall_radius * WALL_SEGMENT_LENGTH_FACTOR
+	var wall_height = wall_radius * WALL_HEIGHT_FACTOR
+	var wall_thickness = wall_radius * WALL_THICKNESS_FACTOR
+	var wall_pillar_radius = wall_radius * WALL_PILLAR_RADIUS_FACTOR
+	var wall_pillar_height = wall_radius * WALL_PILLAR_HEIGHT_FACTOR
+
 	var wall_mat := StandardMaterial3D.new()
 	wall_mat.albedo_color = Color(0.5, 0.48, 0.45)
-	var segments := 6
-	var radius := 0.62
-	for i in range(segments):
-		var angle = (TAU / segments) * i
+	var pillar_mat := StandardMaterial3D.new()
+	pillar_mat.albedo_color = Color(0.42, 0.4, 0.38)
+
+	for i in range(6):
+		# angulo do MEIO da aresta i — os dois vertices que a delimitam
+		# ficam em HexMetrics.corner(), a (60*i - 30) e (60*i + 30), entao
+		# o meio cai exatamente em 60*i.
+		var mid_angle = deg_to_rad(60.0 * i)
 		var seg := MeshInstance3D.new()
 		var seg_mesh := BoxMesh.new()
-		seg_mesh.size = Vector3(0.34, 0.16, 0.08)
+		seg_mesh.size = Vector3(wall_segment_length, wall_height, wall_thickness)
 		seg.mesh = seg_mesh
 		seg.material_override = wall_mat
-		seg.position = Vector3(cos(angle) * radius, 0.08, sin(angle) * radius)
-		seg.rotation.y = angle + PI / 2.0
+		seg.position = Vector3(cos(mid_angle) * wall_apothem, wall_height * 0.5, sin(mid_angle) * wall_apothem)
+		# Gira o comprimento (eixo X local) pra tangente da aresta. NAO e
+		# "mid_angle + PI/2" (formula antiga, matematicamente errada pra 4
+		# das 6 arestas — so i=0/i=3 acertavam por coincidencia de simetria
+		# diametral, as outras 4 espelhavam o segmento pro lado errado,
+		# cruzando com os vizinhos em vez de formar hexagono fechado).
+		# Derivacao: rotation.y=θ leva o eixo +X local pra mundo
+		# (cos θ, -sin θ). A direcao real da aresta i (do vertice
+		# HexMetrics.corner(i) ao corner(i+1)) e proporcional a
+		# (-sin(mid_angle), cos(mid_angle)) — resolvendo cos θ=-sin(mid_angle)
+		# e -sin θ=cos(mid_angle) da θ = -mid_angle - PI/2.
+		seg.rotation.y = -mid_angle - PI / 2.0
 		_buildings_root.add_child(seg)
+
+		var corner_pos := HexMetrics.corner(wall_radius, i)
+		var pillar := MeshInstance3D.new()
+		var pillar_mesh := CylinderMesh.new()
+		pillar_mesh.top_radius = wall_pillar_radius
+		pillar_mesh.bottom_radius = wall_pillar_radius
+		pillar_mesh.height = wall_pillar_height
+		pillar.mesh = pillar_mesh
+		pillar.material_override = pillar_mat
+		pillar.position = Vector3(corner_pos.x, wall_pillar_height * 0.5, corner_pos.z)
+		_buildings_root.add_child(pillar)
 
 func _refresh_label() -> void:
 	if _name_label:

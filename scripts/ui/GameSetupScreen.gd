@@ -38,32 +38,32 @@ signal back_requested
 ## frase aponta pra um numero que existe de verdade no jogo.
 const RACE_INFO := {
 	"human": {
-		"display_name": "Humano",
-		"tagline": "Versátil e Ambicioso",
-		"lore": "Espalhados por todos os cantos de Aetherlands, os reinos humanos prosperam através da adaptação e da diplomacia. Sem nenhuma vantagem natural marcante como anões ou elfos, os humanos compensam com disciplina militar e a lealdade inabalável de seus cavaleiros — um povo que constrói impérios não pela força bruta, mas pela ordem.",
+		"display_name": "Reino de Aldenmark",
+		"tagline": "Honra no Aço, Ordem na Fé",
+		"lore": "Advindos de outro mundo após um cataclismo devastador, os humanos organizavam-se inicialmente em feudos isolados. Contudo, as constantes ameaças de feras e monstros os obrigaram a se unificar em um vasto império fortemente militarizado, governado por um Rei e estruturado em grandes casas nobres. Convictos da supremacia de sua espécie e fiéis à fé trazida de seu mundo original, compensam a falta de magia inata refinando táticas de guerra ancestrais e ostentando uma doutrina militar implacável centralizada na sua lendária cavalaria.",
 		"unique_unit_name": "Cavaleiro Real",
-		"unique_unit_blurb": "Um cavaleiro montado equilibrado, com a maior defesa entre as tropas raciais [b]móveis[/b] (perde só pro Guarda-Machado Anão, que fica parado) — a versatilidade humana em forma de aço e lança.",
+		"unique_unit_blurb": "Cavalaria pesada de elite protegida por armaduras de placas completas. Uma força de impacto devastadora que personifica a honra e o aço de Aldenmark no campo de batalha.",
 	},
 	"elf": {
-		"display_name": "Elfo",
-		"tagline": "Ancião e Ágil",
-		"lore": "O Reino Élfico de Verdemata guarda os segredos das florestas mais antigas de Aetherlands. Vivendo em harmonia com a natureza há séculos, os elfos dominam a arte da mobilidade e do tiro certeiro, preferindo golpear de longe e desaparecer entre as árvores a travar combate corpo-a-corpo.",
-		"unique_unit_name": "Patrulheiro Élfico",
-		"unique_unit_blurb": "A tropa mais [b]ágil[/b] do jogo em terra, com o maior alcance de ataque e o maior alcance de visão do elenco inteiro — enxerga e atinge o inimigo antes de ser visto.",
+		"display_name": "Império de Elenor",
+		"tagline": "Os Primeiros Nascidos, Filhos do Sol",
+		"lore": "Muito antes do surgimento das raças jovens, os Elfos cruzaram os véus do cosmos e se tornaram uma das primeiras raças conscientes a desbravar Aetherlands. Considerados seres semi-divinos, vivem sob uma rígida teocracia governada por um Rei-Deus e possuem uma maestria inigualável na Magia de Luz, venerando o próprio Sol como a manifestação suprema do divino. No passado, a semelhança entre suas doutrinas fez os humanos cogitarem a submissão ao domínio élfico, mas divergências culturais impediram que uma aliança duradoura se concretizasse.",
+		"unique_unit_name": "Arqueiro Solar",
+		"unique_unit_blurb": "Atiradores de elite imbuídos com a bênção do Rei-Deus. Seus disparos de pura luz arcana alcançam longas distâncias, ignorando defesas físicas e queimando a resistência dos alvos.",
 	},
 	"dwarf": {
-		"display_name": "Anão",
-		"tagline": "Inabalável e Resiliente",
-		"lore": "Sob as montanhas de Ferroeste, os anões forjam impérios na pedra e no metal. Lentos para avançar mas quase impossíveis de derrubar, os clãs anões confiam na resistência de suas fileiras blindadas para vencer qualquer cerco — o que um anão conquista, um anão mantém.",
+		"display_name": "Liga dos Clãs de Ferro",
+		"tagline": "Mestres do Aço, Guardiões da Riqueza",
+		"lore": "Assim como as outras grandes raças, os Anões cruzaram os mundos e fincaram suas raízes nas profundezas de Aetherlands. Desprovidos de um governo centralizado, organizam-se em uma próspera rede de clãs e guildas autônomas, cujos acordos e pactos comerciais se unem firmemente diante das ameaças de guerra. Famosos por sua tenacidade física, aversão à luz da superfície e um apetite insaciável por ouro, dominaram a mineração e a forja a um nível inigualável, tornando suas armas e minérios indispensáveis para o comércio de todas as civilizações.",
 		"unique_unit_name": "Guarda-Machado Anão",
-		"unique_unit_blurb": "A maior [b]defesa[/b] entre todas as tropas raciais do jogo — pernas curtas, mas uma parede de metal que não sai do lugar.",
+		"unique_unit_blurb": "Infantaria pesada inamovível de choque. Possui a maior defesa física do jogo ao permanecer imóvel, servindo como uma verdadeira muralha de ferro e machado na linha de frente.",
 	},
 	"orc": {
-		"display_name": "Orc",
-		"tagline": "Selvagem e Implacável",
-		"lore": "A Horda das Brumas segue a Xamã Skarn através de terras devastadas pela guerra, vivendo pelo combate e pela glória da batalha. Sem se preocupar com armadura ou disciplina de fileira, os berserkers orcs confiam na fúria bruta para esmagar qualquer inimigo antes que ele tenha chance de reagir.",
-		"unique_unit_name": "Berserker Orc",
-		"unique_unit_blurb": "O maior [b]ataque corpo-a-corpo[/b] do jogo, de propósito — e a menor defesa entre as tropas raciais, sem armadura nenhuma. Todo o investimento é ofensivo.",
+		"display_name": "Horda dos Clãs Primordiais",
+		"tagline": "A Ameaça Implacável, Senhores da Guerra",
+		"lore": "A origem exata dos Orcs permanece um mistério: enquanto alguns acreditam que vieram de mundos distantes, outros sustentam que são nativos de Aetherlands ou até criados por forças obscuras. Organizados em tribos movidas por pilhagens, invasões e guerra, sua liderança é ditada unicamente pelo direito do mais forte, expandindo seus domínios enquanto o líder mantiver o respeito e o pavor de seus seguidores. Com uma taxa de multiplicação assustadora, são enxergados pelas outras civilizações como uma ameaça implacável, maligna e brutal.",
+		"unique_unit_name": "Berserker da Horda",
+		"unique_unit_blurb": "Infantaria leve de investida devastadora. Ganha bônus de dano à medida que perde vida no combate, tornando-se extremamente perigosa e incontrolável quando ferida.",
 	},
 }
 
@@ -142,6 +142,15 @@ func _update_race_detail(race: String) -> void:
 	race_lore_label.text = info.lore
 	race_unique_name_label.text = "Tropa Exclusiva: %s" % info.unique_unit_name
 	race_unique_blurb_label.text = info.unique_unit_blurb
+	# Placeholder do campo de nome segue a raca selecionada — antes ficava
+	# fixo em "Reino de Aldenmark" (nome humano) nao importa a raca
+	# escolhida, o que junto do fallback tambem fixo em GameManager.
+	# _default_kingdom_name_for_race fazia um jogador de Elfo/Anao/Orc que
+	# nao digitasse nome proprio acabar com reino chamado "Aldenmark" mesmo
+	# assim (bug relatado pelo usuario: "escolhi outro reino e iniciei com
+	# o reino humano"). So atualiza o TEXTO fantasma — nunca sobrescreve um
+	# nome que o jogador ja digitou (kingdom_name_edit.text continua dele).
+	kingdom_name_edit.placeholder_text = info.display_name
 
 func _on_rival_count_pressed(count: int) -> void:
 	_selected_rival_count = count

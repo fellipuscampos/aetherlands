@@ -154,6 +154,24 @@ uniform float fog_cloud_warp_strength : hint_range(0.0, 2.0) = 0.8;
 uniform vec3 fog_explored_tint : source_color = vec3(0.55, 0.48, 0.36);
 uniform float fog_explored_desaturate : hint_range(0.0, 1.0) = 0.6;
 uniform float fog_explored_darken : hint_range(0.0, 1.0) = 0.4;
+// Luma FIXO do tom sepia de Explorado — pedido do usuario, 4a rodada
+// ("ainda da pra ver onde o terreno termina e comeca a agua, quero que
+// nao tenha essa divisao"): a versao anterior derivava o brilho do sepia
+// do ALBEDO REAL de cada tile (`dot(ALBEDO, luma_weights)`), entao um
+// tile de agua rasa (turquesa BRILHANTE) e um tile de terra vizinho
+// (bioma mais escuro) geravam sepia com brilho DIFERENTE mesmo os dois
+// "escondidos" — essa diferenca de brilho e o que desenhava a linha da
+// costa por baixo da nevoa. MESMO valor usado em water_shader.gdshader,
+// pra costa e terra ficarem PIXEL-IGUAIS quando Explorado.
+uniform float fog_sepia_luma : hint_range(0.0, 1.0) = 0.42;
+// Altura pra onde qualquer tile fora de visao agora "senta" (ver vertex(),
+// cancela MODEL_MATRIX[3].y) — a MAIOR fonte de relevo revelado pela
+// nevoa nao e o pico/domo do proprio shader, e sim HexTileData.base_height
+// (Colina/Montanha ficam translacionadas bem mais alto que Planicie ja na
+// PROPRIA instancia, em HexGrid.gd, antes de qualquer vertex() rodar).
+// 0.0 cai perto da altura de terreno comum (Planicie/Deserto/etc), o
+// "nivel do mar" visual do mapa.
+uniform float fog_flatten_base_y = 0.0;
 
 varying vec3 world_pos;
 varying vec3 v_world_normal;
@@ -163,10 +181,13 @@ varying float v_seed; // aleatorio por tile (INSTANCE_CUSTOM.r) — variacao de 
 varying float v_elevation_kind; // INSTANCE_CUSTOM.g: 0 = plano, 1 = Colina, 2 = Montanha (ver HexGrid._build_terrain_multimesh)
 // Qual tratamento visual especial este tile usa (ver HexGrid._material_
 // kind_for): 0 = terreno comum, 1 = Neve/Gelo Eterno, 2 = Deserto,
-// 3 = Lava, 4 = Campos de Cristal. Agua/Mar de Lava NAO passam mais por
-// este shader (tem shader proprio, ver shaders/water_shader.gdshader e
-// shaders/lava_shader.gdshader) — mat_kind 5 (Mar de Lava) nunca aparece
-// aqui, so existe pro proposito historico de HexGrid._material_kind_for.
+// 3 = rocha vulcanica solida generica, 4 = Campos de Cristal, 6 = Lava
+// solida (veios de magma brilhando, ver mat_kind==6 em fragment() —
+// separado de 3 desde o pedido "faça o terreno lava parecer mais magma").
+// Agua/Mar de Lava NAO passam mais por este shader (tem shader proprio,
+// ver shaders/water_shader.gdshader) — mat_kind 5 (Mar de Lava) nunca
+// aparece aqui, so existe pro proposito historico de HexGrid._material_
+// kind_for.
 varying float v_material_kind;
 
 float hash(vec2 p) {
@@ -283,7 +304,57 @@ void vertex() {
 	// raio ao centro do tile) pra fechar sem fresta com os vizinhos, ja que
 	// na borda (r=hex_radius) o termo de pico/domo cai pra exatamente zero.
 	float is_top_edge = float(VERTEX.y > -0.001);
-	VERTEX.y += elevation_height(VERTEX.xz, pre_world.xz, v_elevation_kind) * is_top_edge;
+
+	// Nevoa de guerra tambem precisa esconder o RELEVO, nao so a cor —
+	// pedido do usuario: "a nevoa de guerra mostra o relevo do mapa, faca
+	// ela nao mostrar o relevo e ser apenas uniforme". Sem isso, um tile de
+	// Montanha fora da visao atual ja aparecia com o pico erguido (so a COR
+	// ficava encoberta pela nuvem/tom sepia em fragment()), entao dava pra
+	// "ler" o relevo da regiao so pela silhueta, mesmo sem estar vendo ela
+	// agora. Primeira versao so achatava Unexplored (fog_level perto de 0),
+	// mantendo o relevo em Explorado — usuario confirmou com print que
+	// ainda dava pra ver relevo (a area coberta de nuvem no print e
+	// justamente Explorado, nao Unexplored). Agora so tiles REALMENTE
+	// Visiveis agora (fog_level perto de 1) mantem relevo — Unexplored E
+	// Explorado (fog_level 0 e 0.5) ficam os dois uniformes/achatados.
+	// Amostra o MESMO biome_overlay_texture que fragment() usa pro fog_level
+	// (canal alfa, ver uniforms acima) — mesma formula de UV, sem o warp
+	// organico (que so importa pra transicao fina de cor de bioma, nao
+	// faz diferenca aqui).
+	//
+	// step() DURO, nao smoothstep() — pedido do usuario, 3a rodada ("ainda
+	// da pra ver o territorio... eu quero que so seja possivel ver nevoa,
+	// sem relevos"): biome_overlay_texture e de proposito BAIXA resolucao
+	// com filtro bilinear (pra COR borrar suave entre biomas vizinhos, ver
+	// comentario do uniform), entao fog_level vem BORRADO por varios tiles
+	// perto de qualquer fronteira Explorado/Visivel — com smoothstep() cada
+	// tile nessa faixa borrada recebia uma FRACAO ligeiramente diferente de
+	// relevo (nem 0% nem 100%), e essa diferenca de altura ENTRE vizinhos
+	// e o que lia como "linhas de contorno"/silhueta de territorio na
+	// nevoa. Relevo tolera fracao de cor suave, mas NAO tolera fracao de
+	// ALTURA sem denunciar forma — precisa ser tudo ou nada por tile.
+	vec2 fog_uv = pre_world.xz / (biome_overlay_half_extents * 2.0) + 0.5;
+	float vertex_fog_level = texture(biome_overlay_texture, fog_uv).a;
+	float shape_mask = step(0.999, vertex_fog_level);
+
+	// A DIFERENCA maior de relevo entre tiles nao vem do pico/domo abaixo
+	// (elevation_height, ja mascarado por shape_mask) — vem de HexTileData.
+	// base_height, um deslocamento de altura por TIPO de terreno (Colina/
+	// Montanha ficam bem mais altas que Planicie/Deserto) aplicado como
+	// TRANSLACAO da propria instancia em HexGrid.gd (`pos.y = data.
+	// base_height`, ver _build_terrain_multimesh), NAO um calculo daqui.
+	// Um tile de Montanha fora de visao ja renderizava bem mais alto que
+	// os vizinhos so pela posicao da instancia, sem nenhum vertex() nem
+	// elevation_height() envolvido — por isso mascarar so o pico/domo
+	// (primeira versao desta correcao) nao mudava nada visivel. Cancela
+	// essa translacao (MODEL_MATRIX[3].y — so translacao pura, ver
+	// comentario acima) pra fog_flatten_base_y sempre que o tile nao
+	// estiver REALMENTE visivel agora, entao toda a vizinhanca nao-visivel
+	// senta na MESMA altura uniforme, nao so o pico/domo em cima dela.
+	float instance_base_y = MODEL_MATRIX[3].y;
+	VERTEX.y += (fog_flatten_base_y - instance_base_y) * (1.0 - shape_mask);
+
+	VERTEX.y += elevation_height(VERTEX.xz, pre_world.xz, v_elevation_kind) * is_top_edge * shape_mask;
 
 	// Normal recalculada por diferenca central na MESMA funcao de altura
 	// (mesma tecnica das ondas da agua, ver water_shader.gdshader
@@ -301,7 +372,10 @@ void vertex() {
 	float h_d = elevation_height(VERTEX.xz + vec2(0.0, -eps), pre_world.xz + vec2(0.0, -eps), v_elevation_kind);
 	float h_u = elevation_height(VERTEX.xz + vec2(0.0, eps), pre_world.xz + vec2(0.0, eps), v_elevation_kind);
 	vec3 bump_normal = normalize(vec3(h_l - h_r, 2.0 * eps, h_d - h_u));
-	NORMAL = mix(NORMAL, bump_normal, is_top_face);
+	// shape_mask (ver acima) tambem entra aqui — Unexplored fica com o
+	// normal ORIGINAL do prisma (topo liso), nao o normal calculado a
+	// partir de um relevo que nem esta sendo desenhado mais.
+	NORMAL = mix(NORMAL, bump_normal, is_top_face * shape_mask);
 
 	v_local_y = VERTEX.y;
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
@@ -390,12 +464,39 @@ void fragment() {
 		ROUGHNESS = 0.85;
 		METALLIC = 0.0;
 	} else if (mat_kind == 3) {
-		// Lava (bioma vulcanico, terreno solido): so pedra negra real
-		// (ambientCG "Rock035") sem brilho nenhum — o brilho de verdade
-		// fica so pro Mar de Lava (shaders/lava_shader.gdshader).
+		// Rocha vulcanica solida "morta" (Terra/Colinas/Montanhas
+		// Vulcanicas — SEM Lava, ver mat_kind==6 abaixo): so pedra negra
+		// real (ambientCG "Rock035") sem brilho nenhum.
 		vec3 rock_tex_color = triplanar_sample(lava_tex, world_pos, weights, texture_scale) * texture_brightness;
 		ALBEDO = tint * rock_tex_color * 0.6;
 		ROUGHNESS = 0.75;
+		METALLIC = 0.0;
+	} else if (mat_kind == 6) {
+		// Lava solida — crosta de pedra escura com RACHADURAS finas de
+		// magma por baixo. v2 (pedido do usuario apos ver o resultado):
+		// "ficou muito quadriculado e parecido com a lava... quero mais
+		// ativo, mais vulcanico, mas nao tao parecido com a lava [liquida]".
+		// A v1 usava uma mascara "hotspot" (pow(ruido,N) numa escala BAIXA,
+		// mesma tecnica do Campo de Cristal) — em escala baixa isso cria
+		// blotches grandes/blocudos (o "quadriculado" reportado) cobrindo
+		// area demais, chegando perto do visual denso do Mar de Lava de
+		// verdade. Agora e ruido de RACHADURA (ridge noise: dois campos de
+		// value_noise somados, mascara so PERTO de um valor fixo em vez de
+		// ACIMA de um limiar — cria linhas finas, nao blobs) numa escala
+		// bem mais alta (rachaduras finas, nao blocos) e area de cobertura
+		// BEM menor — "brasa ocasional entre pedra fria" em vez de "tudo
+		// pegando fogo", genuinamente diferente do fluxo denso do Mar de
+		// Lava adjacente (shaders/water_shader.gdshader).
+		vec3 crust_color = triplanar_sample(lava_tex, world_pos, weights, texture_scale) * texture_brightness;
+		vec2 crack_uv = world_pos.xz * 9.0 + vec2(TIME * 0.025, TIME * 0.018);
+		float crack_field = value_noise(crack_uv) + value_noise(crack_uv * 2.1 + vec2(19.0, 7.0)) * 0.5;
+		float crack = pow(clamp(1.0 - abs(crack_field - 0.78) * 8.0, 0.0, 1.0), 2.0);
+		float pulse = 0.6 + 0.4 * sin(TIME * 1.1 + v_seed * 6.283);
+		vec3 magma_glow = mix(vec3(0.85, 0.15, 0.02), vec3(1.0, 0.55, 0.08), crack) * pulse;
+		ALBEDO = tint * crust_color * 0.6 + magma_glow * crack * 0.5;
+		EMISSION = magma_glow * crack * 0.85;
+		ROUGHNESS = 0.7;
+		SPECULAR = 0.3;
 		METALLIC = 0.0;
 	} else if (mat_kind == 4) {
 		// Campos de Cristal: textura facetada tipo gelo rachado (ambientCG
@@ -441,8 +542,12 @@ void fragment() {
 	// MESMO limiar onde uma face deixa de ser "ingreme demais" — a mesma
 	// inclinacao que define rocha exposta tambem define onde a neve nao se
 	// acumula). So Montanha (v_elevation_kind > 1.5) — Colina fica com o
-	// bioma original, pedido do usuario.
-	if (v_elevation_kind > 1.5) {
+	// bioma original, pedido do usuario. EXCLUI mat_kind 3 (Montanhas
+	// Vulcanicas do continente Vulcanico, reportado pelo usuario: "gerou
+	// mais de 30 montanhas com topo de NEVE" — um "plano infernal/Mordor"
+	// nunca deveria ter neve, elevation_kind so controla a CUPULA/relevo,
+	// nao o clima do bioma).
+	if (v_elevation_kind > 1.5 && mat_kind != 3) {
 		float snow_edge_noise = value_noise(world_pos.xz * snow_edge_noise_scale) - 0.5;
 		float local_snow_threshold = snow_threshold + snow_edge_noise * snow_edge_noise_strength;
 		float snow_height_mask = smoothstep(local_snow_threshold - snow_blend, local_snow_threshold, v_local_y);
@@ -478,8 +583,7 @@ void fragment() {
 	// 100% ALBEDO original — e a mistura JA fica suave entre tiles vizinhos
 	// de graca, porque fog_level em si vem de uma textura de baixa
 	// resolucao com filtro linear (nao um valor uniforme "seco" por tile).
-	float sepia_luma = dot(ALBEDO, vec3(0.299, 0.587, 0.114));
-	vec3 sepia_albedo = mix(vec3(sepia_luma), fog_explored_tint * (sepia_luma + 0.3), fog_explored_desaturate) * (1.0 - fog_explored_darken);
+	vec3 sepia_albedo = mix(vec3(fog_sepia_luma), fog_explored_tint * (fog_sepia_luma + 0.3), fog_explored_desaturate) * (1.0 - fog_explored_darken);
 
 	float cloud_pattern = fog_cloud_pattern(world_pos.xz, TIME);
 	vec3 cloud_albedo = fog_cloud_color * (0.7 + cloud_pattern * 0.5);

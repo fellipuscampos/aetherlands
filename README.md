@@ -420,8 +420,6 @@ complexidade aumentar:
   adversario (o seu ou dele) encerra a partida, com banner na tela (turnos
   jogados, cidades, unidades e ouro no final) e botao **"Jogar Novamente"**
   que gera um mapa novo e reinicia tudo sem precisar fechar o Godot.
-- Painel de ajuda em jogo (botao "? Ajuda" na barra superior) com o resumo
-  dos controles, ninguem precisa ler este README pra jogar.
 - Notificacoes em tela (combate, cidade fundada/capturada/perdida), sem
   isso um ataque do rival fora da camera passaria despercebido.
 - Minimapa (canto superior direito) desenhado a mao a partir dos dados do
@@ -462,8 +460,8 @@ complexidade aumentar:
   populacao/producao/fila, tecnologia, diplomacia, turno atual, tiles ja
   explorados) pra QUALQUER numero de rivais, e reconstroi tudo chamando os
   mesmos caminhos de spawn/fundacao de um jogo novo (`SaveManager.gd`).
-- Menu de pausa (tecla **Esc** ou botao "Menu" na barra superior,
-  `PauseMenu.gd`): congela o jogo de verdade via `get_tree().paused`
+- Menu de pausa (so a tecla **Esc**, sem botao dedicado — `PauseMenu.gd`):
+  congela o jogo de verdade via `get_tree().paused`
   (camera, animacoes e cliques no mundo param sozinhos, so o proprio menu
   continua respondendo, via `PROCESS_MODE_ALWAYS`) e deixa salvar, carregar
   outra partida ou voltar ao menu principal sem fechar o jogo.

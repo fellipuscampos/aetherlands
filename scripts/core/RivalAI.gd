@@ -65,17 +65,38 @@ static func decide_research(player: PlayerData) -> void:
 	if available.size() > 0:
 		player.current_research = available[randi() % available.size()].id
 
-static func take_turn(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
+## So a parte de "preparar" o turno da IA (visibilidade atual + atualizar
+## cidades inimigas escoutadas), SEM mover nenhuma unidade ainda — extraido
+## de take_turn() pra GameManager poder chamar isto UMA VEZ por rival e
+## depois processar as unidades dela aos poucos, em frames diferentes (ver
+## GameManager._build_rival_turn_items/stagger_ai_turns, pedido do
+## usuario: "civilization nao faz tudo acontecer no mapa ao mesmo
+## tempo... em pequenos grupos... diminui o lag na passada de turnos").
+static func begin_turn(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> Dictionary:
 	var visible := hex_grid.compute_visible_tiles(player)
 	_scout_enemy_cities(player, opponent, visible)
+	return visible
 
+## Acao de UMA unidade rival — extraida de take_turn() pelo mesmo motivo de
+## begin_turn() acima, pra poder ser chamada unidade-por-unidade em frames
+## diferentes.
+static func act_for_unit(unit: Unit, hex_grid: HexGrid, player: PlayerData, opponent: PlayerData, visible: Dictionary) -> void:
+	if unit.unit_data.can_found_city:
+		_handle_settler(unit, hex_grid, player)
+	elif unit.unit_data.attack > 0.0:
+		_handle_attacker(unit, hex_grid, player, opponent, visible)
+
+## Turno da IA rival inteiro DE UMA VEZ, no MESMO frame — continua sendo o
+## caminho usado quando GameManager.stagger_ai_turns esta desligado (o
+## padrao, inclusive em TODO teste GUT, que nunca liga esse flag), agora so
+## delegando pra begin_turn()/act_for_unit() acima em vez de duplicar a
+## logica.
+static func take_turn(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
+	var visible := begin_turn(player, hex_grid, opponent)
 	for unit in player.units.duplicate():
 		if not is_instance_valid(unit):
 			continue
-		if unit.unit_data.can_found_city:
-			_handle_settler(unit, hex_grid, player)
-		elif unit.unit_data.attack > 0.0:
-			_handle_attacker(unit, hex_grid, player, opponent, visible)
+		act_for_unit(unit, hex_grid, player, opponent, visible)
 
 ## Cidade inimiga entra na memoria permanente assim que fica visivel — nao
 ## precisa continuar visivel depois disso (ela nao anda).
@@ -106,7 +127,10 @@ static func _handle_attacker(unit: Unit, hex_grid: HexGrid, player: PlayerData, 
 	move_unit_toward(unit, hex_grid, target_coord)
 
 ## Ataca so se o combate parecer favoravel; cidade indefesa e sempre um
-## alvo valido (captura garantida, nao tem "combate" pra avaliar).
+## alvo valido pra ATACAR (sem risco pro atacante — cidade nao contra-
+## ataca) — mas nao captura mais num unico golpe, ver CombatResolver.
+## resolve_city_attack (desconta do escudo/vida da cidade, pode levar
+## varios turnos ate a vida zerar e capturar de verdade).
 static func _engage(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i) -> void:
 	var defender = hex_grid.get_unit_at(target_coord)
 	if defender:
@@ -115,8 +139,7 @@ static func _engage(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i) -> vo
 		return
 	var city = hex_grid.get_city_at(target_coord)
 	if city:
-		hex_grid.capture_city(city, unit.owner_player)
-		unit.movement_left = 0.0
+		CombatResolver.resolve_city_attack(unit, city, hex_grid)
 
 ## Nao ataca se for morrer no proprio ataque. Se o defensor tambem
 ## sobrevive, so vale a pena se a unidade causar proporcionalmente mais

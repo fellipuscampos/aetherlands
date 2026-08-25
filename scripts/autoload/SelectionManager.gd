@@ -455,8 +455,10 @@ func _attack_from_selected(coord: Vector2i) -> void:
 	else:
 		var defender_city = hex_grid.get_city_at(coord)
 		if defender_city:
-			hex_grid.capture_city(defender_city, attacker.owner_player)
-			attacker.movement_left = 0.0
+			# Cidade indefesa NAO captura mais num unico ataque — ver
+			# CombatResolver.resolve_city_attack (desconta do escudo/vida
+			# da cidade, so captura quando a vida zera).
+			CombatResolver.resolve_city_attack(attacker, defender_city, hex_grid)
 
 	hex_grid.recompute_fog(GameManager.human_player)
 	GameManager.check_game_over()

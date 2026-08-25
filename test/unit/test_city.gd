@@ -1,12 +1,15 @@
 extends GutTest
 
-## Colonizador e o unico kind sem predio de treino associado (ver
-## BuildingDatabase.building_that_trains), entao e o default seguro pra
-## uma cidade recem-fundada — Guerreiro agora exige o Quartel construido
-## (ver can_train() abaixo), nao pode mais ser o default.
-func test_default_production_is_settler():
+## Pedido do usuario, apos reportar que uma cidade recem-fundada spawnava
+## um Colonizador sozinha sem ninguem escolher nada: "fundei uma cidade e
+## fiquei dando next, e do nada uma hora spawnou um colonizador" — toda
+## cidade nova nasce OCIOSA ("", ver comentario do campo em City.gd), NAO
+## mais com "settler" pre-selecionado (isso sofria do mesmo bug que
+## process_turn() ja corrige apos completar: produzir sem o jogador ter
+## pedido).
+func test_default_production_is_idle():
 	var city := City.new()
-	assert_eq(city.production_item, "settler")
+	assert_eq(city.production_item, "")
 	city.queue_free()
 
 func test_set_production_changes_item_and_resets_progress():
@@ -19,9 +22,11 @@ func test_set_production_changes_item_and_resets_progress():
 
 func test_set_production_same_kind_keeps_progress():
 	var city := City.new()
+	city.set_production("settler") # cidade nasce ociosa (""), ver City.gd — precisa escolher antes de repetir a mesma escolha
 	city.stored_production = 10.0
-	city.set_production("settler") # ja e o padrao, nao deveria zerar
+	city.set_production("settler") # MESMO kind de novo, nao deveria zerar
 	assert_eq(city.stored_production, 10.0)
+	city.queue_free()
 
 ## Regressao: abandonar um predio EM ANDAMENTO (trocar pra unidade ou
 ## outro predio antes de completar) precisa limpar pending_building_coord
@@ -150,7 +155,54 @@ func test_process_turn_spawns_unit_once_production_cost_is_reached():
 			assert_eq(result.spawn_unit_kind, "warrior")
 			break
 
-	assert_true(spawned, "cidade deveria ter completado a producao do guerreiro em 20 turnos")
+	assert_true(spawned, "cidade deveria ter completado a producao do guarda em 20 turnos")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+## Pedido do usuario apos reportar a barra de progresso "vários turnos com
+## ela no 0": "não sei se o problema é que a construção realmente fica
+## congelada no tempo no início". Confirmado: Planicie (GRASSLAND) tem
+## production_yield 0 (ver TerrainDatabase) — uma cidade fundada/sem tile
+## trabalhado nenhum sobre esse terreno ficava com producao literalmente
+## zero por turno, indefinidamente. collect_yields() agora garante um piso
+## (CITY_CENTER_MIN_PRODUCTION) so pro tile CENTRAL da cidade, exatamente
+## como Civilization e outros 4X fazem.
+func test_collect_yields_guarantees_minimum_production_on_zero_yield_city_tile():
+	var hex_grid := HexGrid.new()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND) # producao 0/turno
+
+	var city := City.new()
+	city.coord = coord
+
+	var yields = city.collect_yields(hex_grid)
+
+	assert_eq(yields.production, City.CITY_CENTER_MIN_PRODUCTION, "tile central sem producao nenhuma deveria cair no piso garantido, nao ficar em zero")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+## Mesmo cenario acima, mas verificando que process_turn() de fato ACUMULA
+## producao turno apos turno em vez de ficar travado — e nao so que
+## collect_yields() calcula certo isoladamente.
+func test_process_turn_accumulates_production_even_on_zero_yield_terrain():
+	var hex_grid := HexGrid.new()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND) # producao 0/turno
+
+	var city := City.new()
+	city.coord = coord
+	city.set_production("granary")
+
+	# 2 turnos, nao 3: comida da Planicie sozinha (3/turno, sem tile
+	# trabalhado nenhum aqui) cruzaria o limiar de crescimento no 3o turno
+	# (FOOD_TO_GROW_BASE=8) — fora do escopo deste teste, que so quer
+	# confirmar que a producao NAO fica travada em zero.
+	for i in range(2):
+		city.process_turn(hex_grid)
+
+	assert_eq(city.stored_production, City.CITY_CENTER_MIN_PRODUCTION * 2, "producao deveria avancar todo turno, nunca ficar travada em zero")
 
 	hex_grid.queue_free()
 	city.queue_free()
@@ -171,25 +223,36 @@ func test_can_build_is_false_once_building_already_built():
 	city.queue_free()
 
 ## Pivot pedido pelo usuario: "cada tropa e feita numa construcao... so
-## pode treinar as tropas na sua respectiva construcao". Guerreiro exige o
-## Quartel ja construido nesta cidade especifica antes de poder ser
-## produzido — ver BuildingDatabase.building_that_trains().
+## pode treinar as tropas na sua respectiva construcao". Homem de Armas
+## exige o Quartel ja construido nesta cidade especifica antes de poder
+## ser produzido — ver BuildingDatabase.building_that_trains(). Guarda NAO
+## entra mais nesta regra (pedido do usuario numa rodada seguinte: "o
+## guarda comum nao precisa de quartel pra ser feito", ver teste dedicado
+## abaixo).
 func test_can_train_is_false_without_the_matching_training_building():
 	var city := City.new()
-	assert_false(city.can_train("warrior"), "sem Quartel construido, Guerreiro nao deveria ser treinavel")
+	assert_false(city.can_train("men_at_arms"), "sem Quartel construido, Homem de Armas nao deveria ser treinavel")
 	city.queue_free()
 
 func test_can_train_is_true_once_the_matching_training_building_is_built():
 	var city := City.new()
 	city.buildings["barracks"] = true
-	assert_true(city.can_train("warrior"))
+	assert_true(city.can_train("men_at_arms"))
+	city.queue_free()
+
+## Guarda voltou a nao exigir predio nenhum (mesmo status do Colonizador) —
+## pedido do usuario: "o guarda comum nao precisa de quartel pra ser
+## feito". Precisa continuar treinavel MESMO sem o Quartel construido.
+func test_can_train_warrior_never_requires_a_building():
+	var city := City.new()
+	assert_true(city.can_train("warrior"), "Guarda nao deveria depender de predio nenhum")
 	city.queue_free()
 
 ## Ter o predio de treino de OUTRA tropa nao libera esta — cada predio so
 ## libera o kind que ele mesmo treina.
 func test_can_train_does_not_leak_across_different_training_buildings():
 	var city := City.new()
-	city.buildings["barracks"] = true # treina Guerreiro, nao Arqueiro
+	city.buildings["barracks"] = true # treina Homem de Armas, nao Arqueiro
 	assert_false(city.can_train("archer"))
 	city.queue_free()
 
@@ -254,13 +317,222 @@ func test_can_build_training_building_is_true_once_its_tech_is_researched():
 	assert_true(city.can_build("arcane_tower"))
 	city.queue_free()
 
-## Quartel treina Guerreiro, que nunca exigiu pesquisa nenhuma
-## (TechDatabase.tech_that_unlocks("warrior") == null) — deveria continuar
-## sempre construivel desde o inicio, sem depender de owner_player nem de
-## tecnologia nenhuma.
-func test_can_build_barracks_never_requires_research():
+## Mudanca de comportamento pedida pelo usuario ("Mesmo Quartel, agora com
+## pesquisa" — confirmado via pergunta de esclarecimento explicita): Quartel
+## passou a ter sua PROPRIA tecnologia (TechDatabase.tech_that_unlocks(
+## "warrior") agora acha "quartel", nao mais null), entao deixou de ser
+## construivel de graca desde o inicio — mesma cadeia de 3 passos que a
+## Torre Arcana ja seguia (ver testes acima), so que agora tambem cobre o
+## Quartel. Isso atrasa tanto o Guarda quanto o Homem de Armas (os dois
+## dependem do mesmo predio), efeito colateral aceito explicitamente pelo
+## usuario.
+func test_can_build_barracks_requires_its_tech():
+	var human := PlayerData.new(CivilizationData.new())
 	var city := City.new()
+	city.owner_player = human
+	assert_false(city.can_build("barracks"), "sem a tech Quartel pesquisada, o predio nao deveria poder ser construido")
+	city.queue_free()
+
+func test_can_build_barracks_is_true_once_its_tech_is_researched():
+	var human := PlayerData.new(CivilizationData.new())
+	human.researched_techs["quartel"] = true
+	var city := City.new()
+	city.owner_player = human
 	assert_true(city.can_build("barracks"))
+	city.queue_free()
+
+## Pedido do usuario: "a muralha nao faz tanto sentido [como predio sempre
+## liberado, sem tech nenhuma]... vamos remover ela, e adicionar como
+## pesquisa". Diferente de Quartel/Estabulo/Arquearia (que travam via
+## TechData.unlocks_unit == building.trains_unit), Muralhas nao treina
+## tropa nenhuma — trava via TechData.unlocks_building (ver TechDatabase.
+## tech_that_unlocks_building), gate SEPARADO que _tech_unlocked_for_
+## building tambem precisa consultar quando o gate de trains_unit nao acha
+## nada.
+func test_can_build_walls_requires_its_tech():
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = human
+	assert_false(city.can_build("walls"), "sem a tech Muralhas pesquisada, o predio nao deveria poder ser construido")
+	city.queue_free()
+
+func test_can_build_walls_is_true_once_its_tech_is_researched():
+	var human := PlayerData.new(CivilizationData.new())
+	human.researched_techs["muralhas"] = true
+	var city := City.new()
+	city.owner_player = human
+	assert_true(city.can_build("walls"))
+	city.queue_free()
+
+## Vida/escudo da cidade (ver comentario de CITY_BASE_MAX_HP em City.gd) —
+## pedido do usuario: "quero... estabelecer a vida da cidade, sempre
+## mostrando na tela quanta vida ela tem, e o shield tambem, a partir do
+## momento que voce construir a muralha".
+func test_max_hp_grows_with_population():
+	var city := City.new()
+	city.population = 1
+	var hp_at_pop_1 = city.max_hp()
+	city.population = 5
+	var hp_at_pop_5 = city.max_hp()
+	assert_gt(hp_at_pop_5, hp_at_pop_1, "cidade maior deveria ser mais dificil de arrasar")
+	city.queue_free()
+
+func test_max_shield_is_zero_without_walls_built():
+	var city := City.new()
+	assert_eq(city.max_shield(), 0.0, "sem Muralhas construida, a cidade nao deveria ter escudo nenhum")
+	city.queue_free()
+
+func test_max_shield_is_positive_once_walls_is_built():
+	var city := City.new()
+	city.buildings["walls"] = true
+	assert_gt(city.max_shield(), 0.0)
+	city.queue_free()
+
+func test_setup_initializes_hp_to_max_and_shield_to_zero():
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+
+	city.setup(human, Vector2i(0, 0), "Capital")
+
+	assert_almost_eq(city.hp, city.max_hp(), 0.01, "cidade recem-fundada deveria comecar com vida cheia")
+	assert_eq(city.shield, 0.0, "cidade recem-fundada nao tem Muralhas construida ainda")
+	city.queue_free()
+
+## process_turn() cura vida/escudo aos poucos todo turno (mesmo espirito
+## da cura de guarnicao de unidade, GameManager._heal_if_garrisoned) —
+## sem isso, uma cidade que sobreviveu a um ataque ficaria ferida pra
+## sempre, trivialmente capturavel por qualquer ataque seguinte.
+func test_process_turn_regenerates_hp_over_time():
+	var hex_grid := HexGrid.new()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.setup(human, coord, "Capital")
+	city.hp = city.max_hp() * 0.5
+
+	city.process_turn(hex_grid)
+
+	assert_gt(city.hp, city.max_hp() * 0.5, "vida deveria regenerar um pouco a cada turno")
+	assert_lte(city.hp, city.max_hp(), "regeneracao nunca deveria passar do maximo")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+func test_process_turn_regenerates_shield_over_time_once_walls_is_built():
+	var hex_grid := HexGrid.new()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.setup(human, coord, "Capital")
+	city.buildings["walls"] = true
+	city.shield = city.max_shield() * 0.5
+
+	city.process_turn(hex_grid)
+
+	assert_gt(city.shield, city.max_shield() * 0.5, "escudo deveria regenerar um pouco a cada turno")
+	assert_lte(city.shield, city.max_shield(), "regeneracao nunca deveria passar do maximo")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+## Mesma mudanca de comportamento, pro Estabulo — pedido do usuario: "voce
+## precisa pesquisar[,] o estabulo [pra poder] construir". TechDatabase.
+## tech_that_unlocks("cavalry") agora acha "estabulo", nao mais null.
+func test_can_build_stable_requires_its_tech():
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = human
+	assert_false(city.can_build("stable"), "sem a tech Estabulo pesquisada, o predio nao deveria poder ser construido")
+	city.queue_free()
+
+## Precisa da tech E do Quartel construido (ver testes de
+## requires_building abaixo) — so a tech sozinha ainda nao basta.
+## population = 2 pra abrir espaco pro segundo predio (Quartel ja ocupa o
+## unico slot de uma cidade populacao 1, ver max_building_slots()).
+func test_can_build_stable_is_true_once_its_tech_is_researched_and_barracks_built():
+	var human := PlayerData.new(CivilizationData.new())
+	human.researched_techs["estabulo"] = true
+	var city := City.new()
+	city.owner_player = human
+	city.population = 2
+	city.buildings["barracks"] = true
+	assert_true(city.can_build("stable"))
+	city.queue_free()
+
+## Pedido do usuario: "faca o estabulo ser uma coisa que so pode ser feita
+## depois do quartel" — BuildingData.requires_building. Mesmo com a tech
+## "Estabulo" ja pesquisada, sem o Quartel FISICAMENTE construido nesta
+## cidade o Estabulo continua bloqueado.
+func test_can_build_stable_requires_the_barracks_built_even_with_its_tech_researched():
+	var human := PlayerData.new(CivilizationData.new())
+	human.researched_techs["estabulo"] = true
+	var city := City.new()
+	city.owner_player = human
+	assert_false(city.can_build("stable"), "sem o Quartel construido, o Estabulo nao deveria poder ser construido")
+	city.queue_free()
+
+## Regressao pro caminho oposto: Quartel construido mas SEM a tech
+## "Estabulo" pesquisada ainda bloqueia — os dois gates (predio + tech) se
+## combinam, nenhum sozinho basta. population = 2 pra isolar o gate de
+## TECNOLOGIA como unico motivo do bloqueio (population 1 ja bloquearia so
+## pelo limite de slots, com o Quartel sozinho ocupando o unico espaco).
+func test_can_build_stable_requires_its_tech_even_with_the_barracks_built():
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = human
+	city.population = 2
+	city.buildings["barracks"] = true
+	assert_false(city.can_build("stable"), "sem a tech Estabulo pesquisada, o predio nao deveria poder ser construido")
+	city.queue_free()
+
+## Cavaleiro Real (human_knight) e a UNICA tropa racial que treina no
+## Estabulo, nao no Quartel (ver BuildingDatabase.building_that_trains) —
+## pedido do usuario: "apos construido no estabulo voce pode fazer o
+## cavaleiro real". Ter so o Quartel construido NAO deveria libera-lo.
+func test_can_train_human_knight_requires_the_stable_not_the_barracks():
+	var human := PlayerData.new(CivilizationData.new())
+	human.civ.race = "human"
+	var city := City.new()
+	city.owner_player = human
+	city.buildings["barracks"] = true
+	assert_false(city.can_train("human_knight"), "Quartel construido nao deveria liberar o Cavaleiro Real, so o Estabulo")
+	city.buildings["stable"] = true
+	assert_true(city.can_train("human_knight"))
+	city.queue_free()
+
+## Mesma mudanca de comportamento, pro Campo de Tiro — pedido do usuario:
+## "introduza a pesquisa em arqueria... nela voce libera a construcao que
+## atualmente temos pra treinar arqueiros". TechDatabase.tech_that_unlocks
+## ("archer") agora acha "arquearia", nao mais null.
+func test_can_build_archery_range_requires_its_tech():
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = human
+	assert_false(city.can_build("archery_range"), "sem a tech Arquearia pesquisada, o predio nao deveria poder ser construido")
+	city.queue_free()
+
+func test_can_build_archery_range_is_true_once_its_tech_is_researched():
+	var human := PlayerData.new(CivilizationData.new())
+	human.researched_techs["arquearia"] = true
+	var city := City.new()
+	city.owner_player = human
+	assert_true(city.can_build("archery_range"))
+	city.queue_free()
+
+## Batedor (scout) cai no MESMO Estabulo que ja treina Cavaleiro/Cavaleiro
+## Real, sem predio proprio — pedido do usuario: "uma pesquisa seguinte ao
+## estabulo... o batedor montado, que libera a construcao do batedor".
+func test_can_train_scout_requires_the_stable():
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = human
+	assert_false(city.can_train("scout"), "sem Estabulo construido, Batedor nao deveria ser treinavel")
+	city.buildings["stable"] = true
+	assert_true(city.can_train("scout"))
 	city.queue_free()
 
 ## Regressao critica: predios de RENDIMENTO (trains_unit vazio) NAO
@@ -317,7 +589,14 @@ func test_can_build_respects_population_limit_even_for_a_new_building():
 ## Regressao: completar um predio precisa marcar buildings[id]=true (pra
 ## sempre, ver collect_yields()) e devolver built_kind pro GameManager
 ## notificar — diferente de unidade, nao spawna nada no grid.
-func test_process_turn_completes_building_and_switches_back_to_settler():
+##
+## Pedido do usuario: "a partir do momento que voce funda a cidade, ele
+## fica produzindo sem parar unidades... eu quero que... quando ela
+## acabar, so produza outra se voce for la e por pra produzir de novo" —
+## ANTES completar um predio trocava production_item de volta pra
+## "settler" (que ai ficava se auto-reconstruindo pra sempre, mesmo bug).
+## Agora fica OCIOSA ("") ate o jogador escolher o proximo item.
+func test_process_turn_completes_building_and_goes_idle():
 	var hex_grid := HexGrid.new()
 	var coord := Vector2i(0, 0)
 	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS) # producao 2/turno
@@ -335,7 +614,66 @@ func test_process_turn_completes_building_and_switches_back_to_settler():
 
 	assert_eq(built, "granary", "cidade deveria ter completado o Celeiro em 20 turnos")
 	assert_true(city.buildings.has("granary"))
-	assert_eq(city.production_item, "settler", "deveria trocar pro unico kind sempre produzivel (sem predio de treino) em vez de tentar reconstruir o mesmo predio")
+	assert_eq(city.production_item, "", "cidade deveria ficar OCIOSA apos completar, nao reconstruir sozinha nem trocar pra outro item automaticamente")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+## Mesma mudanca de comportamento, pra UNIDADE — antes uma cidade
+## produzindo Guarda (ou qualquer outra tropa) ficava reconstruindo a
+## MESMA tropa pra sempre sozinha (production_item nunca era limpo apos
+## spawnar); agora fica ociosa ate o jogador escolher de novo.
+func test_process_turn_completes_a_unit_and_goes_idle():
+	var hex_grid := HexGrid.new()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS) # producao 2/turno
+
+	var city := City.new()
+	city.coord = coord
+	city.set_production("warrior") # custa 15 producao
+
+	var spawned := ""
+	for i in range(20):
+		var result = city.process_turn(hex_grid)
+		if result.spawn_unit_kind != "":
+			spawned = result.spawn_unit_kind
+			break
+
+	assert_eq(spawned, "warrior", "cidade deveria ter completado o Guarda")
+	assert_eq(city.production_item, "", "cidade deveria ficar OCIOSA apos completar a tropa, nao continuar produzindo a mesma sozinha")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+## production_cost() precisa devolver 0.0 (nao o custo default de
+## UnitDatabase.create_unit("")) pra uma cidade OCIOSA — senao qualquer
+## chamador (HUD, marcador de construcao) leria um numero enganoso.
+func test_production_cost_is_zero_when_idle():
+	var city := City.new()
+	city.set_production("granary")
+	city.set_production("") # cancela/limpa producao direto
+
+	assert_eq(city.production_item, "")
+	assert_eq(city.production_cost(), 0.0)
+	city.queue_free()
+
+## Regressao central: uma cidade ociosa nunca deveria "completar" nada
+## sozinha so por acumular producao — mesmo apos MUITOS turnos, sem o
+## jogador escolher um item, spawn_unit_kind/built_kind ficam sempre
+## vazios.
+func test_process_turn_never_completes_anything_while_idle():
+	var hex_grid := HexGrid.new()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+
+	var city := City.new()
+	city.coord = coord
+	city.set_production("")
+
+	for i in range(30):
+		var result = city.process_turn(hex_grid)
+		assert_eq(result.spawn_unit_kind, "", "cidade ociosa nao deveria spawnar unidade nenhuma sozinha")
+		assert_eq(result.built_kind, "", "cidade ociosa nao deveria completar predio nenhum sozinho")
 
 	hex_grid.queue_free()
 	city.queue_free()
@@ -462,6 +800,153 @@ func test_process_turn_completes_building_without_a_coord_when_none_was_chosen()
 
 	hex_grid.queue_free()
 	city.queue_free()
+
+## Muralhas (BuildingData.self_placed = true) NUNCA passa por
+## pending_building_coord (nem via SelectionManager, ver HUD._on_produce_
+## pressed) — diferente do "graceful degrade" acima (que cobre um caso
+## ACIDENTAL), aqui a ausencia de coord/modelo 3D e o comportamento
+## PRETENDIDO: o efeito e o anel de muralha da PROPRIA cidade (ver City.
+## _add_walls), acionado na hora que a producao completa (ver process_turn
+## chamando _build_visual_procedural quando building.self_placed), sem
+## esperar o proximo crescimento de populacao.
+func test_process_turn_completes_self_placed_walls_and_refreshes_the_wall_ring():
+	var hex_grid := HexGrid.new()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+
+	var human := PlayerData.new(CivilizationData.new())
+	human.researched_techs["muralhas"] = true
+	var city := City.new()
+	city.setup(human, coord, "Capital") # _build_visual() inicializa _buildings_root, ver comentario abaixo
+	city.set_production("walls")
+	var child_count_before = city._buildings_root.get_child_count()
+
+	var built_kind := ""
+	var built_coord = City.NO_PENDING_COORD
+	for i in range(30):
+		var result = city.process_turn(hex_grid)
+		if result.built_kind != "":
+			built_kind = result.built_kind
+			built_coord = result.built_coord
+			break
+
+	assert_eq(built_kind, "walls")
+	assert_eq(built_coord, City.NO_PENDING_COORD, "Muralhas nao deveria gerar um Building.gd separado num tile")
+	assert_false(city.building_coords.has("walls"))
+	assert_true(city.buildings.has("walls"))
+	assert_gt(city._buildings_root.get_child_count(), child_count_before, "o anel de muralha deveria aparecer na hora, sem esperar a cidade crescer")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+## Regressao geometrica: pedido do usuario ("se as celulas sao hexagonos, a
+## muralha devem ser um conjunto de retas em cada aresta pra formar um
+## hexagono ao redor da celula") — a versao anterior espalhava 6 blocos
+## soltos num CIRCULO, todos no CIRCUNRAIO (onde ficam os VERTICES de um
+## hexagono, nao o meio das arestas), com vaos largos entre eles — nunca
+## fechava silhueta de hexagono nenhuma. Agora: 6 segmentos retos
+## centralizados no APOTEMA (meio de cada aresta) + 6 pilares de canto
+## EXATAMENTE nos vertices (HexMetrics.corner), fechando as juntas.
+func test_walls_visual_forms_a_closed_hexagon_of_segments_and_corner_pillars():
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.setup(human, Vector2i(0, 0), "Capital") # tile_radius default 1.0
+	city.buildings["walls"] = true
+	city._build_visual_procedural()
+
+	var expected_wall_radius = city.tile_radius * City.WALL_RADIUS_FACTOR
+	var expected_apothem = expected_wall_radius * 0.8660254
+	var expected_segment_length = expected_wall_radius * City.WALL_SEGMENT_LENGTH_FACTOR
+	var expected_pillar_radius = expected_wall_radius * City.WALL_PILLAR_RADIUS_FACTOR
+
+	var segments: Array = []
+	var pillars: Array = []
+	for child in city._buildings_root.get_children():
+		if child is MeshInstance3D:
+			if child.mesh is BoxMesh and is_equal_approx(child.mesh.size.x, expected_segment_length):
+				segments.append(child)
+			elif child.mesh is CylinderMesh and is_equal_approx(child.mesh.top_radius, expected_pillar_radius):
+				pillars.append(child)
+
+	assert_eq(segments.size(), 6, "deveria ter exatamente 1 segmento reto por aresta do hexagono")
+	assert_eq(pillars.size(), 6, "deveria ter exatamente 1 pilar por vertice do hexagono")
+
+	# Cada segmento fica centralizado no APOTEMA (meio da aresta), NAO no
+	# circunraio (onde ficam os vertices) — essa era a diferenca chave do
+	# PRIMEIRO bug (segmentos flutuando alem da aresta de verdade).
+	#
+	# Regressao do SEGUNDO bug (posicao certa, ROTACAO errada — so este
+	# assert de distancia nao pegava isso, deixou passar batido apesar da
+	# muralha ficar visualmente toda torta/cruzada): confere que a direcao
+	# de cada segmento (extremos calculados a partir da rotacao de
+	# verdade, via transform.basis) fica PARALELA a direcao real da
+	# aresta do hexagono correspondente, nao girada pro lado espelhado
+	# errado.
+	for seg in segments:
+		var dist_from_center = Vector2(seg.position.x, seg.position.z).length()
+		assert_almost_eq(dist_from_center, expected_apothem, 0.01, "segmento deveria ficar no apotema (meio da aresta), nao no circunraio")
+
+		var half_length = expected_segment_length * 0.5
+		var world_offset = seg.transform.basis * Vector3(half_length, 0, 0)
+		var seg_dir = Vector2(world_offset.x, world_offset.z).normalized()
+
+		# a posicao do segmento (angulo = 60*i graus) diz de qual aresta i
+		# ele deveria fazer parte.
+		var seg_angle_deg = rad_to_deg(atan2(seg.position.z, seg.position.x))
+		var i = ((roundi(seg_angle_deg / 60.0) % 6) + 6) % 6
+		var corner_a = HexMetrics.corner(expected_wall_radius, i)
+		var corner_b = HexMetrics.corner(expected_wall_radius, (i + 1) % 6)
+		var edge_dir = Vector2(corner_b.x - corner_a.x, corner_b.z - corner_a.z).normalized()
+
+		var alignment = abs(seg_dir.dot(edge_dir)) # 1.0 = perfeitamente paralelo (ou anti-paralelo, tanto faz pra uma caixa simetrica)
+		assert_almost_eq(alignment, 1.0, 0.01, "segmento deveria estar alinhado com a aresta real do hexagono, nao girado/cruzado em outro angulo")
+
+	# Cada pilar fica EXATAMENTE num vertice do hexagono (so X/Z importam
+	# aqui — Y e so a altura do pilar acima do chao).
+	for i in range(6):
+		var expected = HexMetrics.corner(expected_wall_radius, i)
+		var found = false
+		for pillar in pillars:
+			var pillar_xz = Vector2(pillar.position.x, pillar.position.z)
+			var expected_xz = Vector2(expected.x, expected.z)
+			if pillar_xz.distance_to(expected_xz) < 0.01:
+				found = true
+				break
+		assert_true(found, "deveria existir um pilar exatamente no vertice %d do hexagono" % i)
+
+	city.queue_free()
+
+## Pedido do usuario, apos ver a muralha pequena/mal-encaixada: "voce
+## conseguiria fazer... como esse vermelho que tracei" (um hexagono do
+## TAMANHO do proprio tile, nao de um raio local arbitrario) — confirma
+## que a muralha de fato escala com o hex_size REAL do tile (HexGrid.
+## hex_size, propagado via found_city -> City.setup -> tile_radius), nao
+## um numero fixo desconectado do mapa.
+func test_walls_visual_scales_with_the_real_tile_hex_size():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	hex_grid.hex_size = 2.0 # tile bem maior que o default (1.0)
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var human := PlayerData.new(CivilizationData.new())
+
+	var city = hex_grid.found_city(coord, human, "Capital")
+	city.buildings["walls"] = true
+	city._build_visual_procedural()
+
+	assert_almost_eq(city.tile_radius, 2.0, 0.01, "tile_radius deveria vir do hex_size real do HexGrid, nao ficar preso no default 1.0")
+
+	var expected_apothem = (2.0 * City.WALL_RADIUS_FACTOR) * 0.8660254
+	var found_segment_at_expected_radius = false
+	for child in city._buildings_root.get_children():
+		if child is MeshInstance3D and child.mesh is BoxMesh:
+			var dist_from_center = Vector2(child.position.x, child.position.z).length()
+			if is_equal_approx(dist_from_center, expected_apothem):
+				found_segment_at_expected_radius = true
+				break
+	assert_true(found_segment_at_expected_radius, "muralha deveria acompanhar o hex_size 2.0, nao ficar presa numa escala fixa pequena")
+
+	hex_grid.queue_free()
 
 ## Regressao: collect_yields() precisa somar o bonus PERMANENTE dos predios
 ## ja construidos (BuildingDatabase.total_bonus), nao so o rendimento de

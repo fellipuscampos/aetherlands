@@ -70,3 +70,40 @@ func test_find_start_tile_never_returns_a_tile_guarded_by_a_monster():
 
 	assert_eq(start, Vector2i(1, 0), "deveria pular o tile guardado por um monstro e escolher o proximo melhor")
 	hex_grid.queue_free()
+
+## Cobre WorldSetup.find_spawn_tile: pedido do usuario ("quando terminar de
+## fazer uma tropa, faca ela spawnar fora da cidade, ao inves de dentro") —
+## nunca devolve o proprio `coord` (a cidade) enquanto existir QUALQUER
+## vizinho livre, mesmo que o proprio coord tambem estivesse livre.
+func test_find_spawn_tile_never_returns_the_origin_even_when_free():
+	var hex_grid := HexGrid.new()
+	hex_grid.tiles[Vector2i(0, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var spawn = WorldSetup.find_spawn_tile(hex_grid, Vector2i(0, 0))
+
+	assert_eq(spawn, Vector2i(1, 0), "deveria preferir o vizinho, nunca o proprio coord")
+	hex_grid.queue_free()
+
+func test_find_spawn_tile_skips_a_blocked_neighbor():
+	var hex_grid := HexGrid.new()
+	hex_grid.tiles[Vector2i(0, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	hex_grid.tiles[Vector2i(1, -1)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var spawn = WorldSetup.find_spawn_tile(hex_grid, Vector2i(0, 0))
+
+	assert_eq(spawn, Vector2i(1, -1), "deveria pular o vizinho de oceano e achar o proximo vizinho livre")
+	hex_grid.queue_free()
+
+## Fallback defensivo: sem NENHUM vizinho valido (mapa minusculo/cercado),
+## devolve o proprio coord em vez de travar ou devolver uma coordenada
+## invalida — mesmo comportamento de antes pra esse caso extremo.
+func test_find_spawn_tile_falls_back_to_origin_without_any_valid_neighbor():
+	var hex_grid := HexGrid.new()
+	hex_grid.tiles[Vector2i(0, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var spawn = WorldSetup.find_spawn_tile(hex_grid, Vector2i(0, 0))
+
+	assert_eq(spawn, Vector2i(0, 0))
+	hex_grid.queue_free()

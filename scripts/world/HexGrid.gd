@@ -192,6 +192,39 @@ var _resource_icon_manager: ResourceIconManager
 ## pelo shader por posicao-mundo (ver _rebuild_water_overlay,
 ## water_shader.gdshader). RGB = brilho (fog/destaque); A = "esta
 ## congelado?" (Mar Gelado).
+## pixel-index (py*res+px) -> coord axial, pra WATER_OVERLAY_RESOLUTION.
+## Profiling real (usuario reportou "cai de 140 pra 15 fps ao passar
+## turno") mostrou _rebuild_water_overlay sozinho custando ~180-250ms/
+## chamada num mapa Grande com varias civs — a troca de Image.set_pixel por
+## PackedByteArray (otimizacao anterior) so baratou a ESCRITA; o custo de
+## verdade era HexMetrics.world_to_axial (varias operacoes de ponto
+## flutuante + chamada de funcao) rodando 224*224=50176 vezes TODA
+## chamada. Como a geometria da grade (half_extents/hex_size/resolucao) e
+## FIXA depois de generate_map(), o mapeamento pixel->coord tambem e fixo
+## — calculado UMA vez aqui (_ensure_water_overlay_coord_cache) e reusado
+## em toda chamada seguinte via indexacao de array pura, sem nenhum
+## world_to_axial repetido.
+var _water_overlay_coord_cache: Array[Vector2i] = []
+## Mesma ideia de _water_overlay_coord_cache, pra BIOME_OVERLAY_RESOLUTION.
+var _biome_overlay_coord_cache: Array[Vector2i] = []
+## Bytes RGBA de _water_overlay_texture pro caso SEM highlight nenhum
+## (reachable/attackable/path/buildable todos vazios — o caso de
+## recompute_fog/fim de turno) — nesse caso o tint fica sempre branco puro e
+## so a transparencia de Mar Gelado (is_frozen, ESTATICO, nunca muda depois
+## do mapa gerado) entra em jogo, entao o resultado e sempre IDENTICO entre
+## chamadas. Calculado uma vez (junto do coord cache) e reusado direto sem
+## reconstruir Image/ImageTexture nenhum turno em que nada esta destacado.
+var _water_overlay_baseline_bytes: PackedByteArray = PackedByteArray()
+## Textura pronta (Image+ImageTexture ja construidos) equivalente aos bytes
+## acima — cacheada separada pra nem pagar o custo de Image.create_from_data/
+## ImageTexture.create_from_image de novo no caso sem highlight.
+var _water_overlay_baseline_texture: ImageTexture
+## Bytes RGBA de _liquid_type_texture com R/G/B (lava/coast, ambos
+## ESTATICOS — nunca mudam depois do mapa gerado) ja preenchidos e A=0 de
+## placeholder — _rebuild_water_overlay duplica isto (memcpy rapido) e so
+## sobrescreve o canal A (fog_level, o UNICO canal que muda de verdade a
+## cada turno) em vez de recalcular lava/coast por pixel de novo.
+var _liquid_type_static_bytes: PackedByteArray = PackedByteArray()
 var _water_overlay_texture: ImageTexture
 ## Mascara global de cor de bioma pro terreno solido (mesma estrategia da
 ## agua, pedido do usuario) — RGB = cor de bioma do tile, JA com o
@@ -204,6 +237,13 @@ var _biome_overlay_texture: ImageTexture
 ## shader unificado usa isso pra decidir qual dos dois "modos" desenhar em
 ## cada pixel do plano continuo (ver _rebuild_water_overlay).
 var _liquid_type_texture: ImageTexture
+## Coords de terreno SOLIDO tingidas pela ultima chamada de set_highlight
+## (uniao de reachable+attackable+path+buildable) — deixa clear_highlight/a
+## PROXIMA set_highlight desfazer so ESSAS instancias (mm.set_instance_color
+## de volta a tiles[coord].color) em vez de varrer o mapa INTEIRO (ate 5760
+## tiles) so pra apagar um highlight de meia duzia de hexagonos. Ver
+## _reset_highlighted_terrain/set_highlight/clear_highlight.
+var _last_highlighted_land_coords: Array = []
 var _units_root: Node3D
 var _cities_root: Node3D
 var _buildings_root: Node3D
@@ -218,6 +258,15 @@ var _city_tints: Dictionary = {} # City -> MeshInstance3D, tingimento do chao do
 ## estritamente mais barato e o Shader e imutavel (nunca precisa recarregar).
 var _territory_tint_shader: Shader
 var _construction_markers: Dictionary = {} # Vector2i -> Node3D, marcador animado de "em construcao" (ver refresh_construction_markers)
+## Vector2i -> true, predios que ACABARAM de ser concluidos e cujo marcador
+## esta na "volta de graca" (bara travada em 100%, ver refresh_construction_
+## markers) antes de sumir de vez no PROXIMO refresh — pedido do usuario:
+## "quando a barra chega em 90% a construção acaba", ou seja o marcador
+## sumia no MESMO turno em que a producao empurrava alem do custo, entao o
+## jogador nunca chegava a VER a barra cheia, so o ultimo valor do turno
+## anterior (podia ser bem menos que 100%, dependendo do ritmo de producao
+## vs custo do predio).
+var _construction_markers_pending_removal: Dictionary = {}
 ## Vector2i -> turno em que a pilhagem expira (ver pillage_tile/
 ## is_tile_pillaged) — Invasor saqueando um tile trabalhado por cidade
 ## (MonsterAI._maybe_pillage_tile) zera o rendimento dele por um tempo
@@ -292,7 +341,10 @@ func _process(delta: float) -> void:
 	if _construction_markers.size() > 0:
 		_construction_time += delta
 		for marker in _construction_markers.values():
-			marker.rotate_y(delta * 1.5)
+			# So a geometria do guindaste (sub-no "Crane") gira — `marker` em
+			# si (pai da barra de progresso tambem, ver _build_construction_
+			# marker) so balança em Y, senao a barra giraria junto.
+			marker.get_node("Crane").rotate_y(delta * 1.5)
 			marker.position.y = marker.get_meta("base_y") + sin(_construction_time * 2.0 + marker.get_meta("phase")) * 0.05
 
 ## seed_value < 0 sorteia uma semente nova (jogo novo); Salvar/Carregar passa
@@ -303,6 +355,11 @@ func generate_map(width: int, height: int, seed_value: int = -1) -> void:
 	_clear_entities()
 	tiles.clear()
 	visibility.clear()
+	# Geometria da grade (half_extents) muda com map_width/map_height —
+	# invalida os caches de pixel->coord (ver _water_overlay_coord_cache),
+	# senao um novo jogo/mapa reusaria o mapeamento antigo, errado.
+	_water_overlay_coord_cache = []
+	_biome_overlay_coord_cache = []
 	map_seed = seed_value if seed_value >= 0 else randi()
 	# Frequencias BAIXAS (nao mexem nos octaves fractais padrao do
 	# FastNoiseLite — 5 octavas de FBM por padrao) esticam o comprimento de
@@ -404,16 +461,33 @@ func generate_map(width: int, height: int, seed_value: int = -1) -> void:
 	# que pode ter acabado de PLANTAR um cluster minimo de Montanha em
 	# mapa Grande+) — ver _thin_mountain_clusters pro motivo/mecanica.
 	_thin_mountain_clusters()
-	# _thin_mountain_clusters rebaixa tile a tile (nao a regiao inteira de
-	# uma vez) — um blob grande vira "anel"/parede fina de verdade, mas o
-	# efeito colateral e que uma pontinha fina do anel as vezes fica com 0
-	# vizinhos de Montanha depois da poda (Montanha isolada, MESMO bug que
-	# _ensure_biome_variety ja causava em outro contexto, ver comentario
-	# acima) — rodar a limpeza de novo aqui absorve essas pontas pro bioma
-	# vizinho majoritario, mesmo padrao ja seguro/testado.
+	# Mesma poda, aplicada as Montanhas Vulcanicas/Picos de Cristal dos
+	# continentes especiais (regressao critica reportada pelo usuario:
+	# "gerou um bloco massivo com mais de 30 montanhas... agrupadas no
+	# centro" — ver _thin_special_zone_peaks pro motivo/mecanica).
+	_thin_special_zone_peaks()
+	# _thin_mountain_clusters/_thin_special_zone_peaks rebaixam tile a
+	# tile (nao a regiao inteira de uma vez) — um blob grande vira "anel"/
+	# parede fina ou pontos isolados de verdade, mas o efeito colateral e
+	# que uma pontinha fina as vezes fica com 0 vizinhos do mesmo tipo
+	# depois da poda (tile isolado, MESMO bug que _ensure_biome_variety ja
+	# causava em outro contexto, ver comentario acima) — rodar a limpeza
+	# de novo aqui absorve essas pontas pro bioma vizinho majoritario,
+	# mesmo padrao ja seguro/testado.
 	_smooth_isolated_biome_cells()
 	_ensure_lava_sea_present()
 	_reclassify_coastal_ocean()
+	# Mesmo motivo das duas chamadas repetidas acima (_ensure_biome_variety/
+	# _thin_mountain_clusters): _reclassify_coastal_ocean converte Oceano em
+	# Costa em ONDA por passadas (ate COAST_RECLASSIFY_MAX_PASSES), e pode
+	# colateralmente isolar um tile vizinho — um Oceano cercado por Costa
+	# recem-convertida (a onda avancou nos vizinhos dele mas nao nele
+	# mesmo, geralmente perto da borda de alcance da onda) fica sem nenhum
+	# vizinho do mesmo bioma. So virou visivel com os continentes Vulcanico/
+	# de Cristal (gap de oceano bem maior entre eles, mais chance da onda
+	# esbarrar num limite antes de terminar de convergir) — rodar a limpeza
+	# de novo aqui absorve esses tiles, mesmo padrao ja seguro/testado.
+	_smooth_isolated_biome_cells()
 	_rebuild_multimesh()
 	_spawn_monster_lairs()
 
@@ -445,6 +519,7 @@ func _clear_entities() -> void:
 	buildings_by_coord.clear()
 	_city_tints.clear()
 	_construction_markers.clear()
+	_construction_markers_pending_removal.clear()
 	# lairs_by_coord/cleared_lair_coords tambem resetam aqui: generate_map()
 	# (unico chamador de _clear_entities) sempre recria os covis do zero
 	# deterministicamente, logo em seguida (_spawn_monster_lairs). Quem
@@ -684,7 +759,19 @@ func move_unit(unit: Unit, dest: Vector2i, cost: float) -> void:
 	unit.coord = dest
 	unit.movement_left = max(0.0, unit.movement_left - cost)
 	var target_pos = world_for_coord(dest)
-	unit.slide_to(target_pos)
+	# Unidade fora da nevoa (unit.visible == false, ver _apply_fog_to_entities)
+	# nao aparece na tela — animar o deslize dela com Tween e trabalho jogado
+	# fora (o Tween continua processando todo frame por MOVE_DURATION mesmo
+	# sem nada renderizado). So teleporta direto pra posicao final nesse caso.
+	# Unidade do proprio jogador humano SEMPRE tem visible=true (mesma funcao
+	# acima), entao ela continua animando normalmente sempre — so afeta
+	# unidades de rival/monstro fora de visao, exatamente a rajada de
+	# unidades de IA se movendo/agindo de uma vez que o usuario reportou como
+	# "muito travado" ao passar o turno.
+	if unit.visible:
+		unit.slide_to(target_pos)
+	else:
+		unit.position = target_pos
 	units_by_coord[dest] = unit
 	# Pilhagem de Covil (pedido do usuario: "mover unidade militar ate um
 	# covil ativo sem defensores destroi o covil"): move_unit so e chamado
@@ -857,7 +944,7 @@ func remove_unit(unit: Unit) -> void:
 func found_city(coord: Vector2i, player: PlayerData, city_name: String, silent: bool = false) -> City:
 	var city := City.new()
 	_cities_root.add_child(city)
-	city.setup(player, coord, city_name)
+	city.setup(player, coord, city_name, hex_size)
 	city.position = world_for_coord(coord)
 	cities_by_coord[coord] = city
 	player.cities.append(city)
@@ -909,6 +996,15 @@ func capture_city(city: City, new_owner: PlayerData) -> void:
 	var city_display_name = city.city_name
 	if old_owner:
 		old_owner.cities.erase(city)
+	# Cidade capturada comeca "curada" pro novo dono — pedido do usuario
+	# ("vida da cidade... o shield") tornou hp/shield mecanicos de verdade
+	# (ver CombatResolver.resolve_city_attack); sem isso, uma cidade
+	# capturada com a vida quase zerada ficaria trivialmente reconquistavel
+	# pelo dono anterior no proximo turno. Precisa vir ANTES de change_owner
+	# (que reconstroi as barras do zero via _build_visual/_build_life_bars)
+	# pra elas ja nascerem mostrando o valor certo.
+	city.hp = city.max_hp()
+	city.shield = city.max_shield()
 	city.change_owner(new_owner)
 	new_owner.cities.append(city)
 	_update_city_tint(city) # tingimento do territorio precisa seguir o novo dono
@@ -995,6 +1091,20 @@ func _apply_fog_to_entities(player: PlayerData) -> void:
 			building.visible = true
 		else:
 			building.visible = visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
+	# marcador de obra (guindaste + barra) tem que seguir a MESMA regra —
+	# senao a obra de uma cidade inimiga aparecia mesmo em tile nunca visto,
+	# entregando de graca "essa cidade esta construindo algo ali" por baixo
+	# da nevoa. owner_player vem de meta (ver refresh_construction_markers),
+	# null pra um marcador que nunca recebeu meta ainda (nao deveria
+	# acontecer fora de teste, mas fica visivel por padrao nesse caso raro
+	# em vez de sumir sem explicacao).
+	for coord in _construction_markers.keys():
+		var marker: Node3D = _construction_markers[coord]
+		var owner = marker.get_meta("owner_player", null)
+		if owner == null or owner == player:
+			marker.visible = true
+		else:
+			marker.visible = visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
 
 ## path_coords (opcional) e a previa do trajeto ate o tile sob o mouse —
 ## pintado por cima do verde/vermelho, tipo o preview de movimento do
@@ -1007,12 +1117,25 @@ func _apply_fog_to_entities(player: PlayerData) -> void:
 ## de verdade); agua/lava agora sao 1 plano continuo cada, sem instancia por
 ## tile — participam do destaque via o MESMO overlay de textura do fog (ver
 ## _rebuild_water_overlay), reconstruido aqui com os 4 conjuntos de coords.
+## ANTES chamava _apply_land_and_prop_fog() inteiro aqui — reconstruia
+## props/biome_overlay/tingimento de TODA cidade a cada troca de hover,
+## mesmo que `visibility` nao tenha mudado NADA (so a previa de trajeto sob
+## o mouse muda durante um hover). Isso rodava a cada tile novo sob o mouse
+## enquanto uma unidade esta selecionada — usuario reportou "muito travado,
+## quando eu dou zoom laga" (zoom em si e barato, mas mexer a camera quase
+## sempre muda o tile sob o mouse tambem, entao disparava a mesma cascata).
+## Agora so desfaz (_reset_highlighted_terrain) as instancias que a chamada
+## ANTERIOR tingiu, aplica os tingimentos novos, e pronto — nevoa de
+## verdade (props/biome/territorio) so e recalculada por recompute_fog
+## (fim de turno) ou set_debug_fog_disabled, os UNICOS momentos em que
+## `visibility` realmente muda.
 func set_highlight(reachable_coords: Array, attackable_coords: Array, path_coords: Array = [], buildable_coords: Array = []) -> void:
-	_apply_land_and_prop_fog()
+	_reset_highlighted_terrain(_last_highlighted_land_coords)
 	_highlight_coords(reachable_coords, Color(0.3, 1.0, 0.3), 0.5)
 	_highlight_coords(attackable_coords, Color(1.0, 0.2, 0.2), 0.5)
 	_highlight_coords(path_coords, Color(1.0, 1.0, 0.4), 0.7)
 	_highlight_coords(buildable_coords, Color(0.35, 0.7, 1.0), 0.55)
+	_last_highlighted_land_coords = reachable_coords + attackable_coords + path_coords + buildable_coords
 	_rebuild_water_overlay(reachable_coords, attackable_coords, path_coords, buildable_coords)
 
 ## Tinge `coords` por cima da cor ja aplicada (fog) no terreno SOLIDO —
@@ -1028,8 +1151,25 @@ func _highlight_coords(coords: Array, tint: Color, weight: float) -> void:
 		var base_color = mm.get_instance_color(idx)
 		mm.set_instance_color(idx, base_color.lerp(tint, weight))
 
+## Desfaz o tingimento de highlight de `coords`, devolvendo a cor CRUA do
+## bioma (tiles[coord].color) — mesmo valor que _apply_terrain_fog aplicaria
+## pra esses tiles especificos, so que sem varrer o mapa inteiro. Fog-of-war
+## em si (escurecimento/sepia) nunca viveu na cor da instancia (isso e
+## sempre shader-side via biome_overlay_texture, ver _apply_terrain_fog) —
+## entao resetar pra cor crua aqui e sempre correto, nao so uma aproximacao.
+func _reset_highlighted_terrain(coords: Array) -> void:
+	if _multimesh_instance == null or coords.is_empty():
+		return
+	var mm = _multimesh_instance.multimesh
+	for coord in coords:
+		if not _coord_to_index.has(coord) or not tiles.has(coord):
+			continue
+		mm.set_instance_color(_coord_to_index[coord], tiles[coord].color)
+
 func clear_highlight() -> void:
-	_apply_fog_colors()
+	_reset_highlighted_terrain(_last_highlighted_land_coords)
+	_last_highlighted_land_coords = []
+	_rebuild_water_overlay()
 	hide_hover_label()
 
 ## Territorio de uma cidade = City.owned_tiles (posse dinamica, cresce com
@@ -1151,28 +1291,77 @@ func _build_city_tint_mesh(city: City) -> ArrayMesh:
 ## a cada mudanca de estado relevante (ver refresh_construction_markers):
 ## mais simples e menos propenso a erro do que caçar manualmente todo lugar
 ## que pending_building_coord pode mudar (concluido, trocado, cancelado).
-func refresh_construction_markers() -> void:
-	var wanted := {}
+## wanted agora mapeia coord -> City (nao so um bool) — pedido do usuario:
+## "a barra de progresso nao esta avançando... faça ficar acima da
+## construção nao da cidade" — o marcador ja fica na posicao certa
+## (world_for_coord do TILE do predio, ver _build_construction_marker), so
+## faltava ATUALIZAR a barra a cada refresh (antes so existia visualmente
+## presa em City.gd, flutuando sobre a CIDADE, nao sobre o predio de
+## verdade sendo construido — o usuario nunca via ela se mexer porque
+## olhava pro lugar errado). Precisa da City dona pra ler stored_production/
+## production_cost() na hora de atualizar.
+##
+## just_completed: coords cujo predio ACABOU de ficar pronto NESTE turno
+## (ver GameManager._on_turn_changed/_finish_turn, result.built_coord) — sem
+## isso, wanted.has(coord) ja da false no MESMO refresh em que a producao
+## cruzou o custo (City.process_turn ja limpou pending_building_coord antes
+## de refresh_construction_markers ser chamado), entao o marcador sumia
+## sem NUNCA renderizar 100%, so o ultimo valor do turno anterior. Agora,
+## pra esses coords, a barra fica travada em 100% por UM refresh extra
+## antes de sumir de vez — cancelamento (jogador trocou a producao antes de
+## completar) continua removendo na hora, sem essa "volta de graca".
+func refresh_construction_markers(just_completed: Array[Vector2i] = []) -> void:
+	var wanted := {} # coord -> City
 	for city in cities_by_coord.values():
 		if city.pending_building_coord != City.NO_PENDING_COORD:
-			wanted[city.pending_building_coord] = true
+			wanted[city.pending_building_coord] = city
 	for coord in _construction_markers.keys().duplicate():
-		if not wanted.has(coord):
+		if wanted.has(coord):
+			continue
+		if _construction_markers_pending_removal.has(coord):
+			_construction_markers[coord].queue_free()
+			_construction_markers.erase(coord)
+			_construction_markers_pending_removal.erase(coord)
+		elif coord in just_completed:
+			_update_construction_marker_progress_full(_construction_markers[coord])
+			_construction_markers_pending_removal[coord] = true
+		else:
 			_construction_markers[coord].queue_free()
 			_construction_markers.erase(coord)
 	for coord in wanted.keys():
 		if not _construction_markers.has(coord):
 			_construction_markers[coord] = _build_construction_marker(coord)
+		var city: City = wanted[coord]
+		# owner_player fica de meta (nao da pra ler da City depois que o
+		# marcador sai de "wanted" — ver volta de graca acima) pra
+		# _apply_fog_to_entities saber gatear visibilidade igual unidade/
+		# cidade/predio: dono sempre ve, resto so com o tile ATUALMENTE
+		# visivel (nao so explorado) — sem isso a obra de uma cidade
+		# inimiga vazava por baixo da nevoa, nunca escondida.
+		_construction_markers[coord].set_meta("owner_player", city.owner_player)
+		_update_construction_marker_progress(_construction_markers[coord], city)
 
 ## Guindaste bem simples (base + braco) — nao precisa ser bonito, so
 ## precisa ser obviamente DIFERENTE de um predio pronto (por isso
 ## translucido) e chamar atencao (por isso gira e balanca em _process()).
+## A geometria do guindaste (post/arm) mora num sub-no "Crane" PROPRIO que
+## e quem de fato gira (ver _process()) — `marker` (o pai, so balança em Y)
+## e a barra de progresso ficam de FORA dessa rotacao. Regressao: a barra
+## era filha direta de `marker` antes, entao girava junto com o guindaste
+## (pedido do usuario: "a barra de progresso ta girando, e ainda por cima
+## ta duas barras girando diferente" — o bg/fg quase coincidentes, ambos
+## com billboard, brigando com a rotacao do pai a cada frame e alternando
+## qual ficava na frente).
 func _build_construction_marker(coord: Vector2i) -> Node3D:
 	var marker := Node3D.new()
 	var base_pos = world_for_coord(coord)
 	marker.position = base_pos
 	marker.set_meta("base_y", base_pos.y)
 	marker.set_meta("phase", randf() * TAU)
+
+	var crane := Node3D.new()
+	crane.name = "Crane"
+	marker.add_child(crane)
 
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(1.0, 0.8, 0.2, 0.8)
@@ -1188,7 +1377,7 @@ func _build_construction_marker(coord: Vector2i) -> Node3D:
 	post.mesh = post_mesh
 	post.material_override = mat
 	post.position.y = 0.22
-	marker.add_child(post)
+	crane.add_child(post)
 
 	var arm := MeshInstance3D.new()
 	var arm_mesh := BoxMesh.new()
@@ -1196,10 +1385,114 @@ func _build_construction_marker(coord: Vector2i) -> Node3D:
 	arm.mesh = arm_mesh
 	arm.material_override = mat
 	arm.position = Vector3(0.12, 0.45, 0.0)
-	marker.add_child(arm)
+	crane.add_child(arm)
+
+	_build_construction_progress_bar(marker)
 
 	_construction_root.add_child(marker)
 	return marker
+
+## Barra de progresso ACIMA do guindaste (0.68, guindaste vai ate 0.45) —
+## pedido do usuario: "pra saber se a construção esta ficando prova [pronta]
+## ... faça ficar acima da construção nao da cidade". TERCEIRA versao desta
+## barra — as duas anteriores usavam DOIS QuadMesh separados (fundo +
+## preenchimento) tentando se manter alinhados por matematica de posicao/
+## tamanho manual, e isso nunca funcionou direito (girava junto com o
+## guindaste, depois o preenchimento ficava com limites de visibilidade
+## errados ao crescer, e por fim os DOIS QUADS NUNCA FICAVAM ALINHADOS um
+## sob o outro — pedido do usuario: "as barras nao ficam uma sob a outra,
+## ache um sistema melhor"). Sistema novo: UM UNICO Sprite3D com UMA
+## textura so, contendo fundo+preenchimento JA desenhados juntos, no MESMO
+## padrao ja comprovado de Unit._build_troop_icon()/ResourceIconManager
+## (billboard de Sprite3D, nao StandardMaterial3D.billboard_mode numa
+## malha propria — Sprite3D ja resolve sozinho tamanho/posicionamento/
+## orientacao, sem matematica manual nenhuma pra dar errado). O tamanho e
+## a POSICAO do sprite NUNCA mudam depois de criado — so os PIXELS da
+## textura mudam a cada atualizacao, entao nao ha nada pra desalinhar.
+const CONSTRUCTION_PROGRESS_BAR_Y := 0.7
+const CONSTRUCTION_PROGRESS_BAR_TEX_WIDTH := 64
+const CONSTRUCTION_PROGRESS_BAR_TEX_HEIGHT := 12
+## world_width = TEX_WIDTH * PIXEL_SIZE = 64 * 0.0125 = 0.8 — pedido do
+## usuario: "fica uns bons turnos sem a barra de progresso aparecer...
+## quando ta em 90% a construção termina". As duas versoes anteriores ja
+## tinham a MATEMATICA de preenchimento certa (confirmado por teste
+## automatizado), entao o problema que sobrou e de PERCEPCAO: em 0.5
+## unidade de largura (a distancia normal de camera do RTS) um
+## preenchimento de 10-30% vira uma lasca fininha, quase impossivel de
+## notar antes de ja estar bem cheia. Aumentado ~60% (0.5 -> 0.8) e com
+## BORDA propria (ver abaixo) — a MOLDURA do indicador fica visivel desde
+## o turno 1, mesmo com 0% de progresso, entao da pra perceber que "tem um
+## indicador ali" antes mesmo dele comecar a encher.
+const CONSTRUCTION_PROGRESS_BAR_PIXEL_SIZE := 0.0125
+const CONSTRUCTION_PROGRESS_BAR_FILL_COLOR := Color(1.0, 0.8, 0.2) # mesmo amarelo do guindaste
+## Cinza CLARO (nao mais quase-preto 0.08) — pedido do usuario, mesmo
+## motivo do tamanho maior acima: o fundo escuro demais se confundia com
+## sombra/terreno escuro, entao nem a MOLDURA do indicador chamava atencao
+## enquanto o preenchimento ainda era pequeno.
+const CONSTRUCTION_PROGRESS_BAR_EMPTY_COLOR := Color(0.55, 0.55, 0.58, 0.95)
+## Contorno escuro solido (1px) em volta da barra inteira — da uma leitura
+## de "isso e um indicador de UI", nao so um retangulo colorido solto,
+## visivel independente da cor de fundo do bioma por baixo.
+const CONSTRUCTION_PROGRESS_BAR_BORDER_COLOR := Color(0.12, 0.1, 0.06)
+
+func _build_construction_progress_bar(marker: Node3D) -> void:
+	var bar := Sprite3D.new()
+	bar.name = "ProgressBar"
+	bar.texture = _build_construction_progress_bar_texture(0.0)
+	bar.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	bar.no_depth_test = true
+	bar.shaded = false
+	bar.pixel_size = CONSTRUCTION_PROGRESS_BAR_PIXEL_SIZE
+	bar.position = Vector3(0, CONSTRUCTION_PROGRESS_BAR_Y, 0)
+	marker.add_child(bar)
+
+## Desenha borda + fundo (cinza claro) + preenchimento (amarelo) NA MESMA
+## imagem, pixel a pixel da esquerda pra direita — os primeiros `frac` por
+## cento das colunas (fora da moldura de 1px) ficam com a cor de
+## preenchimento, o resto com a cor de fundo. Reconstroi a textura inteira
+## do zero a cada chamada (mesmo padrao ja usado por Unit._build_troop_
+## icon_texture/ResourceIconManager — nunca reaproveita/muta uma Image
+## existente).
+func _build_construction_progress_bar_texture(frac: float) -> ImageTexture:
+	var w := CONSTRUCTION_PROGRESS_BAR_TEX_WIDTH
+	var h := CONSTRUCTION_PROGRESS_BAR_TEX_HEIGHT
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var fill_px := roundi(w * clamp(frac, 0.0, 1.0))
+	for x in range(w):
+		var is_border_x = x == 0 or x == w - 1
+		for y in range(h):
+			var is_border_y = y == 0 or y == h - 1
+			var color: Color
+			if is_border_x or is_border_y:
+				color = CONSTRUCTION_PROGRESS_BAR_BORDER_COLOR
+			else:
+				color = CONSTRUCTION_PROGRESS_BAR_FILL_COLOR if x < fill_px else CONSTRUCTION_PROGRESS_BAR_EMPTY_COLOR
+			img.set_pixel(x, y, color)
+	return ImageTexture.create_from_image(img)
+
+## Chamado a cada refresh_construction_markers() (uma vez por turno, ja
+## depois de City.process_turn() ter acumulado producao — ver comentario
+## de refresh_construction_markers) — so troca a TEXTURA do sprite pela
+## fracao atual (stored_production/production_cost() da cidade DONA deste
+## predio); nunca mexe em tamanho/posicao (ver comentario da const
+## CONSTRUCTION_PROGRESS_BAR_Y acima pro motivo).
+func _update_construction_marker_progress(marker: Node3D, city: City) -> void:
+	var bar := marker.get_node_or_null("ProgressBar") as Sprite3D
+	if bar == null:
+		return
+	var cost = city.production_cost()
+	var frac = clamp(city.stored_production / cost, 0.0, 1.0) if cost > 0.0 else 1.0
+	bar.texture = _build_construction_progress_bar_texture(frac)
+
+## Trava a barra do marcador em 100% sem precisar da City dona — usada na
+## "volta de graca" de um predio recem-concluido (ver refresh_construction_
+## markers/just_completed), onde a City ja resetou production_item/
+## pending_building_coord e nao tem mais como calcular a fracao de novo.
+func _update_construction_marker_progress_full(marker: Node3D) -> void:
+	var bar := marker.get_node_or_null("ProgressBar") as Sprite3D
+	if bar == null:
+		return
+	bar.texture = _build_construction_progress_bar_texture(1.0)
 
 ## Mostra um rotulo flutuante sobre um tile — usado pra indicar custo de
 ## movimento (previa de trajeto) ou "ATACAR" ao passar o mouse sobre um
@@ -1255,6 +1548,10 @@ func _apply_terrain_fog(mm: MultiMesh, coord_to_index: Dictionary) -> void:
 		var data: HexTileData = tiles[coord]
 		var idx = coord_to_index[coord]
 		mm.set_instance_color(idx, data.color)
+	# Mapa inteiro ja esta na cor crua agora — nenhum highlight residual pra
+	# _reset_highlighted_terrain desfazer na proxima set_highlight/
+	# clear_highlight (ver _last_highlighted_land_coords).
+	_last_highlighted_land_coords = []
 
 ## Props (arvores/pedras/picos) nao passam por terrain.gdshader (material
 ## simples, sem shader custom) — entao continuam tingidos por INSTANCIA,
@@ -1360,38 +1657,79 @@ func _warp_world(world: Vector3) -> Vector2:
 	var dz = _warp_noise.get_noise_2d(world.x + 1000.0, world.z - 1000.0) * warp_strength
 	return Vector2(world.x + dx, world.z + dz)
 
-## 0 no centro do mapa, sobe suavemente ate 1 na borda (comecando em
+## 0 no centro DA ZONA (nao mais do mapa inteiro — ver nota de _zone_for
+## acima), sobe suavemente ate 1 na borda da zona (comecando em
 ## edge_falloff_start, ver @export) — multiplicado por edge_falloff_strength
-## e subtraido da elevacao (ver _elevation_for) pra garantir que a borda do
-## mapa seja SEMPRE oceano e a terra fique concentrada no meio, formando
-## continentes/ilhas separados do resto do mapa em vez de uma unica massa
-## retangular colada na borda (o bug original: ruido sem mascara nenhuma
-## preenchia o retangulo inteiro de ponta a ponta). Usa a distancia
-## Chebyshev (o MAIOR dos dois eixos normalizados) de proposito — um
-## falloff radial/eliptico deixaria o meio de cada lado do retangulo sem
+## e subtraido da elevacao (ver _elevation_for) pra garantir que a borda de
+## CADA zona seja SEMPRE oceano e a terra fique concentrada no centro dela,
+## formando continentes/ilhas separados do resto do mapa em vez de uma
+## unica massa retangular colada na borda (o bug original: ruido sem
+## mascara nenhuma preenchia o retangulo inteiro de ponta a ponta). Usa a
+## distancia Chebyshev (o MAIOR dos dois eixos normalizados) de proposito —
+## um falloff radial/eliptico deixaria o meio de cada lado do retangulo sem
 ## puxao nenhum antes de chegar nos cantos; Chebyshev trata a borda inteira
-## igualmente, do jeito que um mapa RETANGULAR pede.
-func _edge_falloff(coord: Vector2i) -> float:
-	var half_w = float(map_width) / 2.0
-	var half_h = float(map_height) / 2.0
-	var nx = float(coord.x) / max(half_w, 1.0)
-	var nz = float(coord.y) / max(half_h, 1.0)
+## igualmente, do jeito que uma zona RETANGULAR pede.
+##
+## Parametrizada por center/half_w/half_h (nao mais map_width/map_height
+## direto) — pedido do usuario: "expandir o tamanho fixo do mapa pra
+## acomodar dois novos continentes especiais... mantenha a proporcao de
+## mar aberto ao redor dos continentes normais". Se isto continuasse lendo
+## map_width/map_height ao vivo, o continente Principal se espalharia pra
+## preencher o canvas TOTAL (agora bem maior, pra caber Vulcanico/Cristal)
+## em vez de manter a pegada historica de 96x60 — _edge_falloff (a
+## variante sem parametro, abaixo) e quem trava isso pra zona Principal.
+func _edge_falloff_for_zone(coord: Vector2i, center: Vector2i, half_w: float, half_h: float) -> float:
+	var nx = float(coord.x - center.x) / max(half_w, 1.0)
+	var nz = float(coord.y - center.y) / max(half_h, 1.0)
 	var d = max(abs(nx), abs(nz))
 	return smoothstep(edge_falloff_start, 1.0, d)
+
+## Wrapper fino sobre _edge_falloff_for_zone pra zona Principal — mantido
+## com o nome/assinatura de sempre pra todo chamador existente continuar
+## funcionando sem mudanca nenhuma.
+func _edge_falloff(coord: Vector2i) -> float:
+	# Mapa ABAIXO do tamanho Grande: sem continentes especiais (ver
+	# _zone_for), o mapa INTEIRO e a zona Principal — falloff tem que ser
+	# proporcional as dimensoes DELE MESMO (map_width/map_height ao vivo),
+	# exatamente como sempre foi, senao um mapa de teste pequeno (ex:
+	# 41x41) mal aciona o falloff (que so faria sentido pra um retangulo
+	# de 96x60) e gera terra demais/agua de menos. So o tamanho Grande de
+	# verdade trava a zona Principal na pegada FIXA historica.
+	if not _is_large_map_or_bigger():
+		return _edge_falloff_for_zone(coord, MAIN_ZONE_CENTER, float(map_width) / 2.0, float(map_height) / 2.0)
+	return _edge_falloff_for_zone(coord, MAIN_ZONE_CENTER, MAIN_ZONE_HALF_WIDTH, MAIN_ZONE_HALF_HEIGHT)
 
 ## Elevacao "de verdade" usada por TUDO (agua/plano/colina/montanha, ver
 ## _generate_tile_data/_tier_for_elevation): ruido de continente de baixa
 ## frequencia (formas grandes, `_noise`) com coordenadas distorcidas
-## (_warp_world, litoral organico) menos a mascara de borda (_edge_falloff).
-## O falloff sobe ate 1.0 na borda; multiplicado por edge_falloff_strength
-## (0..1) isso desloca a elevacao ate 1 unidade inteira pra baixo — bem
-## mais que o suficiente pra cruzar OCEAN_ELEVATION_THRESHOLD mesmo se o
-## ruido cru estivesse no pico (+1) bem na borda.
+## (_warp_world, litoral organico) menos a mascara de borda da ZONA a que
+## `coord` pertence (ver _zone_for/_edge_falloff_for_zone). Fora de toda
+## zona (o oceano de separacao entre continentes) devolve elevacao bem
+## abaixo de OCEAN_ELEVATION_THRESHOLD incondicionalmente — oceano
+## GARANTIDO por construcao ali, nunca dependente do ruido dar certo.
+## Reusa a MESMA instancia de `_noise`/`_warp_world` pras 3 zonas (nao
+## precisa de ruido dedicado novo): e um campo continuo infinito, amostrar
+## a centenas de tiles de distancia ja da formas descorrelacionadas de
+## graca, sem arriscar uma frequencia/seed nova degenerar uma ilha.
+## O falloff sobe ate 1.0 na borda da zona; multiplicado por
+## edge_falloff_strength (0..1) isso desloca a elevacao ate 1 unidade
+## inteira pra baixo — bem mais que o suficiente pra cruzar
+## OCEAN_ELEVATION_THRESHOLD mesmo se o ruido cru estivesse no pico (+1)
+## bem na borda da zona.
 func _elevation_for(coord: Vector2i) -> float:
+	var zone = _zone_for(coord)
+	if zone == _Zone.NONE:
+		return OCEAN_ELEVATION_THRESHOLD - 1.0
 	var world = HexMetrics.axial_to_world(coord.x, coord.y, hex_size)
 	var warped = _warp_world(world)
 	var base = _noise.get_noise_2d(warped.x, warped.y)
-	return base - _edge_falloff(coord) * edge_falloff_strength
+	match zone:
+		_Zone.VOLCANIC:
+			return base - _edge_falloff_for_zone(coord, VOLCANIC_ZONE_CENTER, VOLCANIC_ZONE_HALF_WIDTH, VOLCANIC_ZONE_HALF_HEIGHT) * edge_falloff_strength
+		_Zone.CRYSTAL:
+			return base - _edge_falloff_for_zone(coord, CRYSTAL_ZONE_CENTER, CRYSTAL_ZONE_HALF_WIDTH, CRYSTAL_ZONE_HALF_HEIGHT) * edge_falloff_strength
+		_:
+			return base - _edge_falloff(coord) * edge_falloff_strength
 
 func _tier_for_elevation(elevation: float) -> int:
 	if elevation < OCEAN_ELEVATION_THRESHOLD:
@@ -1485,6 +1823,58 @@ const VOLCANIC_NOISE_THRESHOLD := 0.28
 const LAVA_SEA_NOISE_THRESHOLD := 0.46
 const ARCANE_NOISE_THRESHOLD := 0.4
 
+## Continentes Vulcanico/de Cristal (pedido do usuario: "aplicar a eles o
+## mesmo nivel de complexidade, relevo e variacao de microbiomas que o
+## Continente Principal possui"). Distancia costeira (mesma unidade de
+## _coastal_distance_by_coord) dentro da qual a periferia de CADA zona
+## especial vira incondicionalmente Solo de Cinzas/Solo Mistico.
+##
+## 1 (nao 3) — medido empiricamente apos regressao (a zona Vulcanica
+## virou ~60-70% Solo de Cinzas com o valor antigo): zonas especiais sao
+## bem menores que o continente Principal (64x42 contra 96x60), e uma
+## massa de terra menor tem proporcionalmente MAIS territorio perto da
+## propria costa pra qualquer distancia fixa (mesma geometria basica que
+## VOLCANIC_COASTAL_MAX_DISTANCE ja documenta pro continente Principal:
+## "dobrar o raio so dobra o perimetro mas quadruplica a area") — um
+## limiar calibrado pro continente Principal vira desproporcionalmente
+## generoso numa zona menor. 1 tile ainda da um anel de praia real e
+## visivel, sem dominar o continente.
+const SPECIAL_ZONE_PERIPHERY_MAX_DISTANCE := 1
+## Limiar de ruido (bem ACIMA de ARCANE_NOISE_THRESHOLD) pra Fonte
+## Mistica — "recursos fluidos" do usuario, feature RARA de proposito
+## (nascentes especiais, nao um bioma comum), reusando o MESMO
+## _arcane_noise ja amostrado pra decidir Campos de Cristal, sem
+## reintroduzir o sistema de rio removido antes nesta sessao.
+const MYSTIC_SPRING_NOISE_THRESHOLD := 0.72
+
+## Limiares de Lava/Mar de Lava DENTRO da zona Vulcanica — DELIBERADAMENTE
+## bem mais baixos que VOLCANIC_NOISE_THRESHOLD/LAVA_SEA_NOISE_THRESHOLD
+## (os limiares "legado" do continente Principal, calibrados perto da
+## origem do mapa). Regressao critica reportada pelo usuario: "eliminou
+## completamente a lava" — _volcanic_noise amostrado bem longe da origem
+## (a zona Vulcanica fica centrada em VOLCANIC_ZONE_CENTER, ~148 tiles do
+## (0,0)) tem uma faixa de valores LOCAL bem mais estreita (medido
+## empiricamente numa amostragem offline da zona: min~-0.68, max~0.42,
+## mediana~-0.03) — os limiares legado (0.28/0.46) praticamente nunca
+## batiam ali, deixando o continente inteiro sem Lava nenhuma. Recalibrados
+## por PERCENTIL da faixa observada, nao valor absoluto: LAVA_THRESHOLD
+## perto da mediana (~metade do interior vira Lava-ou-Mar-de-Lava, pedido
+## do usuario: "a Lava DEVE ser o elemento fluido dominante desta zona"),
+## LAVA_SEA_THRESHOLD no top ~20% (o nucleo mais "quente" vira liquido de
+## verdade, mesma proporcao/espirito do limiar legado, so recentralizado).
+const VOLCANIC_ZONE_LAVA_THRESHOLD := -0.05
+const VOLCANIC_ZONE_LAVA_SEA_THRESHOLD := 0.15
+
+## Limite de vizinhos pra Montanhas Vulcanicas/Picos de Cristal (pedido do
+## usuario: "nenhum tile de montanha/vulcao pode ter mais de 2 vizinhos
+## diretos que tambem sejam montanhas" — mais estrito que MAX_MOUNTAIN_
+## NEIGHBORS=3 do continente Principal, de proposito: "espalhe os vulcoes
+## como picos isolados... ou no maximo pequenas cordilheiras em linha de 1
+## tile de largura", nao o blob de 30+ tiles reportado). Ver
+## _thin_special_zone_peaks, mesmo algoritmo de _thin_mountain_clusters
+## (poda iterativa ate estabilizar) aplicado as duas zonas especiais.
+const MAX_SPECIAL_ZONE_PEAK_NEIGHBORS := 2
+
 ## Elevacao < isso vira Oceano/Mar Gelado; senao e terra. Ver _elevation_for
 ## — elevacao ja inclui a mascara de borda (_edge_falloff), entao este
 ## limiar sozinho decide a fracao terra/agua do mapa junto com
@@ -1508,6 +1898,58 @@ const ARCANE_NOISE_THRESHOLD := 0.4
 const OCEAN_ELEVATION_THRESHOLD := -0.38
 const HILLS_ELEVATION_THRESHOLD := 0.14
 const MOUNTAINS_ELEVATION_THRESHOLD := 0.32
+
+## Continentes Vulcanico/de Cristal (pedido do usuario: "dois novos
+## continentes especiais... utilizando estritamente os tipos de terreno
+## que JA EXISTEM"). O mapa Grande passa a ter 3 "zonas" fixas em
+## coordenadas axiais — Principal (a pegada historica 96x60, centro na
+## origem, ver TitleScreen.MAIN_ZONE_SIZE), Vulcanica e de Cristal (novas,
+## centradas longe da origem) — mais uma margem de oceano GARANTIDO fora
+## de toda zona (ver _elevation_for). Layout lado a lado no eixo largo (Q),
+## nao na diagonal, pra crescer o canvas so em largura em vez de largura E
+## altura juntas. Gap Principal<->cada zona nova: MAIN_ZONE_HALF_WIDTH(48)
+## + gap(36) + VOLCANIC_ZONE_HALF_WIDTH(32) = 116, exatamente o centro
+## escolhido abaixo — gap sempre >= 36 tiles de oceano garantido por
+## construcao (nunca "provavelmente oceano" por sorte de ruido).
+const MAIN_ZONE_CENTER := Vector2i(0, 0)
+const MAIN_ZONE_HALF_WIDTH := 48.0 # TitleScreen.MAIN_ZONE_SIZE.width / 2
+const MAIN_ZONE_HALF_HEIGHT := 30.0 # TitleScreen.MAIN_ZONE_SIZE.height / 2
+
+const VOLCANIC_ZONE_CENTER := Vector2i(-116, 0)
+const VOLCANIC_ZONE_HALF_WIDTH := 32.0
+const VOLCANIC_ZONE_HALF_HEIGHT := 21.0
+
+const CRYSTAL_ZONE_CENTER := Vector2i(116, 0)
+const CRYSTAL_ZONE_HALF_WIDTH := 32.0
+const CRYSTAL_ZONE_HALF_HEIGHT := 21.0
+
+enum _Zone { NONE, MAIN, VOLCANIC, CRYSTAL }
+
+## `coord` esta dentro do retangulo (distancia Chebyshev) centrado em
+## `center` com as meia-dimensoes dadas — mesmo teste de "esta dentro dos
+## limites" usado pelas 3 zonas em _zone_for.
+func _in_zone_bounds(coord: Vector2i, center: Vector2i, half_w: float, half_h: float) -> bool:
+	return absf(coord.x - center.x) <= half_w and absf(coord.y - center.y) <= half_h
+
+## Qual zona `coord` pertence — fonte unica de verdade consultada por toda
+## a geracao de elevacao/bioma/clima que precisa saber "isto e continente
+## Principal, Vulcanico, de Cristal, ou nem isso (oceano de separacao)".
+func _zone_for(coord: Vector2i) -> int:
+	# Mapas ABAIXO do tamanho Grande nao tem continentes especiais nenhum
+	## — o mapa INTEIRO e a zona Principal, do jeito que sempre foi (mesmo
+	# mapas de teste ad-hoc maiores que 96x60 numa dimensao mas com area
+	# total pequena, ex: bem estreitos e compridos, continuam 100% zona
+	# Principal). So o tamanho Grande de verdade (com area >= a nova
+	# MAP_SIZES.large) usa a classificacao por retangulo fixo abaixo.
+	if not _is_large_map_or_bigger():
+		return _Zone.MAIN
+	if _in_zone_bounds(coord, MAIN_ZONE_CENTER, MAIN_ZONE_HALF_WIDTH, MAIN_ZONE_HALF_HEIGHT):
+		return _Zone.MAIN
+	if _in_zone_bounds(coord, VOLCANIC_ZONE_CENTER, VOLCANIC_ZONE_HALF_WIDTH, VOLCANIC_ZONE_HALF_HEIGHT):
+		return _Zone.VOLCANIC
+	if _in_zone_bounds(coord, CRYSTAL_ZONE_CENTER, CRYSTAL_ZONE_HALF_WIDTH, CRYSTAL_ZONE_HALF_HEIGHT):
+		return _Zone.CRYSTAL
+	return _Zone.NONE
 
 ## "Alta temperatura" pro proposito das regras de fantasia abaixo — mesmo
 ## patamar que _pick_biome ja chama de "quente" (Deserto/Savana/Selva).
@@ -1582,19 +2024,98 @@ func _generate_tile_data(coord: Vector2i, elevation: float, coastal_distance: in
 	var world = HexMetrics.axial_to_world(coord.x, coord.y, hex_size)
 	var warped = _warp_world(world)
 	var temperature = _temperature_for(coord)
+	var zone = _zone_for(coord)
 
 	var data: HexTileData
 	if elevation < OCEAN_ELEVATION_THRESHOLD:
-		# Mar de Lava NUNCA nasce aqui (pedido do usuario, regressao: "lava
-		# gerando no meio do oceano" — antes disso, qualquer tile de agua
-		# aberta com temperatura alta o bastante virava Mar de Lava so pelo
-		# ruido vulcanico, SEM NENHUMA relacao com terra vulcanica proxima).
-		# Mar de Lava so existe pelo caminho de TERRA abaixo (_maybe_volcanic
-		# chamado com land_biome, gated por _is_volcanic_eligible: litoral
-		# proximo OU Montanha) — nasce sempre DENTRO de uma regiao de terra
-		# ja vulcanicamente elegivel, nunca solto em oceano aberto.
+		# Mar de Lava NUNCA nasce aqui fora da zona Vulcanica (pedido do
+		# usuario, regressao: "lava gerando no meio do oceano" — antes
+		# disso, qualquer tile de agua aberta com temperatura alta o
+		# bastante virava Mar de Lava so pelo ruido vulcanico, SEM NENHUMA
+		# relacao com terra vulcanica proxima). Mar de Lava so existe pelo
+		# caminho de TERRA abaixo (_maybe_volcanic chamado com land_biome),
+		# nasce sempre DENTRO de uma regiao de terra ja vulcanica.
 		var water_biome = _pick_water_biome(temperature)
 		data = TerrainDatabase.create_tile(water_biome)
+	elif zone == _Zone.VOLCANIC:
+		# Continente Vulcanico — "plano infernal/Mordor" (pedido do
+		# usuario). PRIORIDADE REVISADA DUAS VEZES apos regressoes
+		# criticas reportadas: (1) "gerou um bloco massivo com mais de 30
+		# montanhas... e eliminou completamente a lava" — elevacao
+		# decidindo Picos PRIMEIRO com Colina+Montanha juntas podia
+		# consumir a zona inteira; (2) corrigido isso deixando Lava vir
+		# ANTES de elevacao, mas ai Lava as vezes reivindicava TODO
+		# territorio de elevacao alta tambem, deixando ZERO Picos nalgumas
+		# sementes. Solucao final: so elevacao MOUNTAINS (nao mais Colina
+		# junto) decide Picos, e ela vem PRIMEIRO — mesma garantia
+		# deterministica que o continente Principal ja da pra Montanha de
+		# verdade (nao depende de sorte de ruido vulcanico), com pegada
+		# inicial pequena o bastante pra sobrar territorio de sobra pra
+		# Lava dominar. A PRIMEIRA regra que bater vence:
+		var volcanic_elevation_tier = _tier_for_elevation(elevation)
+		if volcanic_elevation_tier == _ElevationTier.MOUNTAINS:
+			# 1) Cordilheira ("espinha dorsal", pedido do usuario) — SO
+			# elevacao MOUNTAINS (nao Colina), pegada inicial pequena;
+			# poda de vizinhanca (_thin_special_zone_peaks, chamada depois
+			# em generate_map) corta qualquer blob remanescente pra linhas
+			# finas/pontos isolados (pedido do usuario: "nenhum tile de
+			# montanha pode ter mais de 2 vizinhos diretos que tambem
+			# sejam montanha").
+			data = TerrainDatabase.create_tile(HexTileData.TerrainType.VOLCANIC_PEAKS)
+		elif volcanic_elevation_tier == _ElevationTier.HILLS:
+			# 2) Colinas Vulcanicas — elevacao MEDIA (pedido do usuario:
+			# "Colinas Vulcanicas: nivel de elevacao medio, adicione
+			# variacao de altura 3D") — sem poda de vizinhanca (Colina nao
+			# bloqueia nada nem cria "continente morto", so' Montanha
+			# precisava da regra estrita de 2 vizinhos).
+			data = TerrainDatabase.create_tile(HexTileData.TerrainType.VOLCANIC_HILLS)
+		elif coastal_distance <= SPECIAL_ZONE_PERIPHERY_MAX_DISTANCE:
+			# 3) Periferia/praia (pedido do usuario: "adicione zonas de
+			# Solo de Cinzas/Rocha Negra nas bordas e praias") — anel
+			# limpo incondicional perto da costa da PROPRIA zona.
+			data = TerrainDatabase.create_tile(HexTileData.TerrainType.VOLCANIC_ASH)
+		else:
+			# 4) So' o que sobra (Plano, nem periferia) — Lava/Mar de Lava
+			# com limiares RECALIBRADOS especificamente pra esta zona (ver
+			# VOLCANIC_ZONE_LAVA_THRESHOLD/_SEA_THRESHOLD, a faixa de
+			# ruido aqui e bem mais estreita que perto da origem do mapa)
+			# pra Lava ser de verdade o elemento DOMINANTE (pedido do
+			# usuario: "a Lava DEVE ser o elemento fluido dominante desta
+			# zona... grandes corpos fluidos de Lava cortando a massa
+			# terrestre"); Terra Vulcanica caminhavel preenche o resto.
+			var volcanic_value = _volcanic_noise.get_noise_2d(warped.x, warped.y)
+			if volcanic_value > VOLCANIC_ZONE_LAVA_SEA_THRESHOLD:
+				data = TerrainDatabase.create_tile(HexTileData.TerrainType.LAVA_SEA)
+			elif volcanic_value > VOLCANIC_ZONE_LAVA_THRESHOLD:
+				data = TerrainDatabase.create_tile(HexTileData.TerrainType.LAVA)
+			else:
+				data = TerrainDatabase.create_tile(HexTileData.TerrainType.VOLCANIC_ROCK)
+	elif zone == _Zone.CRYSTAL:
+		# Continente de Cristal — mesma decisao em camadas do Vulcanico
+		# acima, tipos trocados pro tema arcano.
+		var crystal_elevation_tier = _tier_for_elevation(elevation)
+		if crystal_elevation_tier == _ElevationTier.MOUNTAINS or crystal_elevation_tier == _ElevationTier.HILLS:
+			# 1) Cordilheira central (pedido do usuario: "gere Picos/
+			# Montanhas de Cristal no interior da massa terrestre").
+			data = TerrainDatabase.create_tile(HexTileData.TerrainType.CRYSTAL_PEAKS)
+		elif coastal_distance <= SPECIAL_ZONE_PERIPHERY_MAX_DISTANCE:
+			# 2) Periferia/costa (pedido do usuario: "transicionando para
+			# areas de Solo Mistico/Grama Arcana/Vegetacao Cristalina nas
+			# regioes mais baixas e costeiras") — incondicional perto da
+			# costa da propria zona.
+			data = TerrainDatabase.create_tile(HexTileData.TerrainType.MYSTIC_SOIL)
+		else:
+			# 3) Interior — MESMO ruido/limiar de sempre pro nucleo denso
+			# de Cristal (pedido do usuario: "zonas de Campos de Cristal
+			# denso no centro"), com um limiar EXTRA acima (ruido bem mais
+			# alto, feature rara) pra Fonte Mistica ("recursos fluidos",
+			# sem reintroduzir o sistema de rio removido antes nesta
+			# sessao — vira mancha rara em vez de feature linear).
+			var arcane_value = _arcane_noise.get_noise_2d(warped.x, warped.y)
+			if arcane_value > MYSTIC_SPRING_NOISE_THRESHOLD:
+				data = TerrainDatabase.create_tile(HexTileData.TerrainType.MYSTIC_SPRING)
+			else:
+				data = TerrainDatabase.create_tile(_maybe_crystal(HexTileData.TerrainType.MYSTIC_SOIL, arcane_value))
 	else:
 		var elevation_tier = _tier_for_elevation(elevation)
 		var land_biome: int
@@ -1606,13 +2127,22 @@ func _generate_tile_data(coord: Vector2i, elevation: float, coastal_distance: in
 			var moisture = _moisture_for(warped, coastal_distance)
 			land_biome = _pick_biome(temperature, moisture)
 
-		if _is_crystal_eligible(temperature, elevation_tier, land_component_size):
-			var arcane_value = _arcane_noise.get_noise_2d(warped.x, warped.y)
-			land_biome = _maybe_crystal(land_biome, arcane_value)
+		# So o continente Principal, e so em mapas ABAIXO do tamanho Grande
+		# (que ja tem seus proprios continentes Vulcanico/Cristal dedicados
+		# — ver ramos acima), continua com o espalhamento probabilistico
+		# antigo de Lava/Cristal dentro do continente normal. Pedido do
+		# usuario: "remova a geracao pontual/avulsa de Solo Vulcanico,
+		# Lava e Solo de Cristal dos continentes normais" — no tamanho
+		# Grande, o continente Principal nunca mais chama estas duas
+		# funcoes de elegibilidade.
+		if not _is_large_map_or_bigger():
+			if _is_crystal_eligible(temperature, elevation_tier, land_component_size):
+				var arcane_value = _arcane_noise.get_noise_2d(warped.x, warped.y)
+				land_biome = _maybe_crystal(land_biome, arcane_value)
 
-		if _is_volcanic_eligible(temperature, elevation_tier, coastal_distance):
-			var volcanic_value = _volcanic_noise.get_noise_2d(warped.x, warped.y)
-			land_biome = _maybe_volcanic(land_biome, volcanic_value)
+			if _is_volcanic_eligible(temperature, elevation_tier, coastal_distance):
+				var volcanic_value = _volcanic_noise.get_noise_2d(warped.x, warped.y)
+				land_biome = _maybe_volcanic(land_biome, volcanic_value)
 
 		data = TerrainDatabase.create_tile(land_biome)
 
@@ -1713,13 +2243,20 @@ func _smooth_isolated_biome_cells() -> void:
 			_maybe_assign_resource(data, coord, world)
 			tiles[coord] = data
 
+## LAVA/CRYSTAL removidos desta lista (pedido do usuario: "remova a
+## geracao pontual/avulsa de Solo Vulcanico, Lava e Solo de Cristal dos
+## continentes normais") — o continente Principal, no tamanho Grande,
+## nunca mais gera nenhum dos dois (ver _generate_tile_data), entao nao
+## faz sentido _ensure_biome_variety forcar cluster deles la. Os dois
+## continuam garantidos, so que pelos continentes Vulcanico/Cristal
+## dedicados (deterministicos por construcao, ver _zone_for), nao por
+## este mecanismo probabilistico.
 const ALL_BIOME_TYPES := [
 	HexTileData.TerrainType.OCEAN, HexTileData.TerrainType.SNOW, HexTileData.TerrainType.TUNDRA,
 	HexTileData.TerrainType.TAIGA, HexTileData.TerrainType.DESERT, HexTileData.TerrainType.SAVANNA,
 	HexTileData.TerrainType.JUNGLE, HexTileData.TerrainType.PLAINS, HexTileData.TerrainType.GRASSLAND,
 	HexTileData.TerrainType.FOREST, HexTileData.TerrainType.HILLS, HexTileData.TerrainType.MOUNTAINS,
-	HexTileData.TerrainType.FROZEN_OCEAN, HexTileData.TerrainType.ICE, HexTileData.TerrainType.LAVA,
-	HexTileData.TerrainType.CRYSTAL,
+	HexTileData.TerrainType.FROZEN_OCEAN, HexTileData.TerrainType.ICE,
 ]
 ## Campos de Cristal incluido aqui (regra de fantasia: "transicoes entre
 ## tundra e montanhas", ver _is_crystal_eligible) — quando o fallback
@@ -1781,7 +2318,11 @@ func _ensure_biome_variety() -> void:
 	if not _is_large_map_or_bigger():
 		return
 
-	var sorted_coords: Array = tiles.keys()
+	# So escopo pra zona Principal — sem isso, este passo (que nao sabe
+	# nada de zona) plantaria cluster forcado de DESERTO/NEVE/OCEANO/etc
+	# em cima dos continentes Vulcanico/de Cristal, corrompendo a
+	# composicao estritamente Lava/Cristal deles.
+	var sorted_coords: Array = tiles.keys().filter(func(c): return _zone_for(c) == _Zone.MAIN)
 	sorted_coords.sort()
 	var claimed := {}
 	var min_dist = _min_distance_from_center()
@@ -1972,6 +2513,46 @@ func _thin_mountain_clusters() -> void:
 		for coord in to_downgrade:
 			var fallback = HexTileData.TerrainType.SNOW if _temperature_for(coord) < SNOW_TEMPERATURE_THRESHOLD else HexTileData.TerrainType.HILLS
 			_write_forced_tile(fallback, coord)
+
+## Mesmo algoritmo de erosao iterativa de _thin_mountain_clusters acima
+## (converge do mesmo jeito: cada passada com violacao remove PELO MENOS
+## 1 tile, entao o total so' diminui, nunca entra em loop infinito),
+## aplicado as Montanhas Vulcanicas/Picos de Cristal dos continentes
+## especiais — regressao critica reportada pelo usuario: "gerou um bloco
+## massivo com mais de 30 montanhas... agrupadas no centro" (o ramo de
+## _generate_tile_data pra essas zonas escolhe o tipo por elevacao SEM
+## nenhuma poda depois, entao um platô de elevacao alta virava um blob
+## solido de Peaks, exatamente esse bug). Limite mais ESTRITO que
+## MAX_MOUNTAIN_NEIGHBORS (ver MAX_SPECIAL_ZONE_PEAK_NEIGHBORS=2, pedido
+## explicito do usuario) — "espalhe os vulcoes como picos isolados... ou
+## no maximo pequenas cordilheiras em linha de 1 tile de largura", mais
+## rigoroso que a "parede/anel" que o continente Principal aceita.
+## Rebaixa sempre pro tipo-base CAMINHAVEL da propria zona (Terra
+## Vulcanica/Solo Mistico) — nunca de volta pra Lava/Cristal (que tem seu
+## proprio criterio de ruido, ja decidido antes desta poda rodar).
+func _thin_special_zone_peaks() -> void:
+	var peak_to_base := {
+		HexTileData.TerrainType.VOLCANIC_PEAKS: HexTileData.TerrainType.VOLCANIC_ROCK,
+		HexTileData.TerrainType.CRYSTAL_PEAKS: HexTileData.TerrainType.MYSTIC_SOIL,
+	}
+	while true:
+		var to_downgrade: Array[Vector2i] = []
+		for coord in tiles.keys():
+			var terrain_type = tiles[coord].terrain_type
+			if not peak_to_base.has(terrain_type):
+				continue
+			var peak_neighbors := 0
+			for n in get_neighbors(coord):
+				var ndata: HexTileData = tiles.get(n)
+				if ndata != null and ndata.terrain_type == terrain_type:
+					peak_neighbors += 1
+			if peak_neighbors > MAX_SPECIAL_ZONE_PEAK_NEIGHBORS:
+				to_downgrade.append(coord)
+		if to_downgrade.is_empty():
+			return
+
+		for coord in to_downgrade:
+			_write_forced_tile(peak_to_base[tiles[coord].terrain_type], coord)
 
 ## lista local `largest_cluster` pra fins de contagem/BFS, mas nunca era
 ## de fato escrito em `tiles`; se nenhum vizinho elegivel fosse encontrado
@@ -2203,7 +2784,19 @@ const LAIR_MIN_DISTANCE_FROM_CENTER_FRACTION := 0.25 # nunca perto do (0,0), ond
 ## proporcao de antes: raio_equivalente = metade da menor dimensao,
 ## min_dist = 25% disso (medido pra continuar dando a mesma folga que o
 ## mapa em losango tinha).
+## Mapa ABAIXO do tamanho Grande usa as PROPRIAS dimensoes ao vivo
+## (comportamento historico — mapas de teste pequenos, ex: "radius 3",
+## precisam continuar excluindo so uma fatia pequena e proporcional ao
+## PROPRIO tamanho, senao a exclusao vira maior que o mapa inteiro e
+## nenhum covil consegue nascer). So o tamanho Grande de verdade trava na
+## pegada FIXA do continente Principal (TitleScreen.MAIN_ZONE_SIZE) — essa
+## exclusao existe pra manter covil longe de onde o humano SEMPRE comeca
+## ((0,0), dentro da zona Principal), entao la sim trava no tamanho
+## historico em vez de variar com o canvas total (agora maior, pra caber
+## os continentes Vulcanico/de Cristal).
 func _min_distance_from_center() -> float:
+	if _is_large_map_or_bigger():
+		return float(min(TitleScreen.MAIN_ZONE_SIZE.width, TitleScreen.MAIN_ZONE_SIZE.height)) / 2.0 * LAIR_MIN_DISTANCE_FROM_CENTER_FRACTION
 	return float(min(map_width, map_height)) / 2.0 * LAIR_MIN_DISTANCE_FROM_CENTER_FRACTION
 
 ## Verdadeiro so no tamanho Grande (TitleScreen.MAP_SIZES.large) ou maior
@@ -2235,7 +2828,14 @@ func _spawn_monster_lairs() -> void:
 	var candidates: Array[Vector2i] = []
 	for c in all_coords:
 		var data: HexTileData = tiles[c]
-		if not data.blocks_land_units() and HexMetrics.axial_distance(c, Vector2i.ZERO) >= min_dist:
+		# Lava/Mar de Lava agora TAMBEM sao candidatos validos (antes,
+		# blocks_land_units() os excluia sempre — Dragao, bioma so [LAVA],
+		# nunca conseguia nascer de verdade por causa disso, so em testes
+		# que chamam MonsterDatabase.random_kind direto). Kind pra esses
+		# tiles especificamente vem restrito a voadores logo abaixo, entao
+		# nunca sobra um monstro terrestre fisicamente preso numa ilha de
+		# lava.
+		if (not data.blocks_land_units() or data.is_lava()) and HexMetrics.axial_distance(c, Vector2i.ZERO) >= min_dist:
 			candidates.append(c)
 
 	# Formula equivalente a antiga `map_radius / 4`: pro losango antigo,
@@ -2249,7 +2849,6 @@ func _spawn_monster_lairs() -> void:
 		var idx = rng.randi_range(0, candidates.size() - 1)
 		var coord: Vector2i = candidates[idx]
 		candidates.remove_at(idx)
-		lair_coords.append(coord)
 		# Ameaca ESPACIAL (turno sempre 0: geracao do mapa acontece antes
 		# de qualquer turno jogado) cruzada com o BIOMA do proprio tile —
 		# covil perto do centro (onde a capital tende a nascer) nunca
@@ -2258,7 +2857,29 @@ func _spawn_monster_lairs() -> void:
 		# bioma que faz sentido pra ele (ver MonsterDatabase.KIND_DATA/
 		# _threat_level).
 		var threat = _threat_level(_nearest_player_origin_distance(coord), 0)
-		var kind = MonsterDatabase.random_kind(rng, threat, tiles[coord].terrain_type)
+		var kind: String
+		if tiles[coord].is_lava():
+			# So tipo VOADOR pode nascer em cima de lava (Dragao/Vivern ja
+			# tem flies=true em KIND_DATA) — nunca cai no fallback
+			# biome-agnostico de random_kind, que poderia devolver um tipo
+			# terrestre fisicamente preso ali. Checado ANTES de registrar o
+			# covil (lair_coords.append abaixo) — se nenhum voador serve
+			# aqui, pula o candidato inteiro em vez de deixar um covil
+			# "fantasma" sem kind/guardiao/estrutura.
+			kind = MonsterDatabase.random_flying_kind(rng, threat, tiles[coord].terrain_type)
+			if kind == "":
+				continue # nenhum voador elegivel pra esse terreno especifico — pula este candidato
+		else:
+			kind = MonsterDatabase.random_kind(rng, threat, tiles[coord].terrain_type)
+		# Teto GLOBAL (ver _global_cap_for) tambem vale na geracao inicial —
+		# sem isso, um mapa grande o bastante podia colocar 2+ covis do
+		# MESMO tipo raro (ex: 2 covis de Dragao, global_cap 1) e cada um
+		# nascer com seu proprio chefao, estourando o teto antes mesmo do
+		# primeiro turno. Pula o candidato (nao consome esse slot de covil)
+		# em vez de forcar outro tipo aqui.
+		if _count_alive_of_kind(kind) >= _global_cap_for(kind):
+			continue
+		lair_coords.append(coord)
 		lair_kind_by_coord[coord] = kind
 		# Nenhum covil futuro pode nascer perto o bastante pra sua area
 		# (_lair_area, a propria celula + vizinhos) se sobrepor a de OUTRO
@@ -2340,6 +2961,17 @@ const LAIR_SPAWN_CAP := 5
 
 func _lair_cap_for(kind: String) -> int:
 	return MonsterDatabase.KIND_DATA.get(kind, {}).get("lair_cap", LAIR_SPAWN_CAP)
+
+## Teto GLOBAL (mapa inteiro, todos os covis somados) por tipo — pedido do
+## usuario: "ponha um limite no spawn de monstros... cada um so pode ter 5
+## vivos por vez, no caso dos vivern 2 vivos de uma vez e no dragao apenas
+## 1". Fallback 5 (GLOBAL_MONSTER_CAP) pra kind desconhecido, mesmo padrao
+## de _lair_cap_for/LAIR_SPAWN_CAP.
+const GLOBAL_MONSTER_CAP := 5
+
+func _global_cap_for(kind: String) -> int:
+	return MonsterDatabase.KIND_DATA.get(kind, {}).get("global_cap", GLOBAL_MONSTER_CAP)
+
 ## Chance BASE por turno de UM covil elegivel gerar mais um monstro —
 ## trickle gradual (o covil "se enchendo aos poucos" quando alguem nao
 ## limpa a regiao) em vez de todos os covis baterem o teto no mesmo turno.
@@ -2375,15 +3007,17 @@ var monster_turn_rng := RandomNumberGenerator.new()
 ## guardiao original, respeitando o limite POR TIPO (ver _lair_cap_for) —
 ## sem isso, limpar so o guardiao original esvaziava o covil pra sempre, e
 ## nenhum ficava forte o bastante pra ser uma ameaca real com o tempo.
-## Quando o covil esta cheio OU nao ha tile livre pro reforco sorteado, os
-## moradores existentes tem uma chance de patrulhar em vez de ficar parados
-## (ver _maybe_roam_lair).
+## Quando o covil esta cheio (LOCAL, ver _lair_cap_for, OU GLOBAL, ver
+## _global_cap_for — pedido do usuario: "ponha um limite no spawn de
+## monstros") OU nao ha tile livre pro reforco sorteado, os moradores
+## existentes tem uma chance de patrulhar em vez de ficar parados (ver
+## _maybe_roam_lair).
 func process_monster_lairs(turn: int = 0) -> void:
 	for lair_coord in lair_coords:
 		var kind = lair_kind_by_coord.get(lair_coord, "")
 		if kind == "":
 			continue
-		if _count_live_monsters_near_lair(lair_coord) >= _lair_cap_for(kind):
+		if _count_live_monsters_near_lair(lair_coord) >= _lair_cap_for(kind) or _count_alive_of_kind(kind) >= _global_cap_for(kind):
 			_maybe_roam_lair(lair_coord)
 			continue
 		if monster_turn_rng.randf() > _reinforce_chance(turn):
@@ -2393,18 +3027,24 @@ func process_monster_lairs(turn: int = 0) -> void:
 
 ## No hit do roll de reforco (ver process_monster_lairs): spawna ate
 ## MonsterDatabase.KIND_DATA[kind].batch_spawn monstros de uma vez,
-## limitado pelo espaco que ainda sobra ate o limite por tipo — e assim
+## limitado pelo espaco que ainda sobra ate o limite por tipo (LOCAL, area
+## do covil, E GLOBAL, mapa inteiro — ver _global_cap_for) — e assim
 ## que Esqueleto "nasce em grupo" (batch_spawn=3) sem nenhum contador novo,
 ## so multiplas chamadas de _find_free_tile_for_lair_spawn no MESMO evento
 ## de roll (o resto dos tipos tem batch_spawn=1, comportamento identico ao
-## de antes). Devolve false se nao conseguiu spawnar ninguem (area cheia/
-## sem tile livre) — sinal pro chamador tentar patrulha em vez disso.
+## de antes). O teto GLOBAL entra aqui tambem (nao so em process_monster_
+## lairs) pra um batch nao poder estourar o teto NUM SO evento de reforco
+## (ex: Esqueleto com so 1 vaga global restante nasce so 1, nao os 3 do
+## batch inteiro). Devolve false se nao conseguiu spawnar ninguem (area
+## cheia/sem tile livre) — sinal pro chamador tentar patrulha em vez disso.
 func _reinforce_lair(lair_coord: Vector2i, kind: String) -> bool:
 	var batch_spawn: int = MonsterDatabase.KIND_DATA.get(kind, {}).get("batch_spawn", 1)
 	var room_left = _lair_cap_for(kind) - _count_live_monsters_near_lair(lair_coord)
+	room_left = min(room_left, _global_cap_for(kind) - _count_alive_of_kind(kind))
+	var flies: bool = MonsterDatabase.KIND_DATA.get(kind, {}).get("flies", false)
 	var spawned_any := false
 	for i in range(min(batch_spawn, room_left)):
-		var target = _find_free_tile_for_lair_spawn(lair_coord)
+		var target = _find_free_tile_for_lair_spawn(lair_coord, flies)
 		if target == null:
 			break
 		spawn_monster_at(target, kind)
@@ -2450,18 +3090,37 @@ func _count_live_monsters_near_lair(lair_coord: Vector2i) -> int:
 			count += 1
 	return count
 
-## Tile livre (sem unidade, sem bloquear terrestre) na area do covil,
-## escolhido aleatoriamente entre os candidatos — null se a area inteira
-## ja esta ocupada (covil no limite ou cercado). Inclui a propria celula
-## do covil: normalmente ocupada pelo guardiao original, mas se ele ja foi
-## derrotado o tile fica livre pra um novo monstro reocupar o covil.
-func _find_free_tile_for_lair_spawn(lair_coord: Vector2i):
+## Quantos monstros de `kind` estao vivos em QUALQUER LUGAR do mapa agora
+## (nao so perto de UM covil, diferente de _count_live_monsters_near_lair
+## acima) — usado pelo teto GLOBAL por tipo, ver _global_cap_for.
+## visual_kind bate 1:1 com o proprio kind pra todo monstro
+## (MonsterDatabase.KIND_DATA[k].visual_kind == k, ver create_monster),
+## entao filtrar por visual_kind aqui e equivalente a filtrar pelo kind
+## original do covil que o gerou.
+func _count_alive_of_kind(kind: String) -> int:
+	var count := 0
+	for unit in units_by_coord.values():
+		if unit.owner_player == null and unit.unit_data.visual_kind == kind:
+			count += 1
+	return count
+
+## Tile livre (sem unidade, sem bloquear terrestre — a MENOS que `flies`
+## seja verdadeiro, ver abaixo) na area do covil, escolhido aleatoriamente
+## entre os candidatos — null se a area inteira ja esta ocupada (covil no
+## limite ou cercado). Inclui a propria celula do covil: normalmente
+## ocupada pelo guardiao original, mas se ele ja foi derrotado o tile fica
+## livre pra um novo monstro reocupar o covil.
+## `flies` (do kind do proprio covil, ver _reinforce_lair) libera tile de
+## Lava/Mar de Lava como candidato tambem — sem isso, um covil de Vivern/
+## Dragao nascido em cima de lava (ver _spawn_monster_lairs) nunca
+## conseguiria reforcar, ja que TODA a area ao redor dele e lava.
+func _find_free_tile_for_lair_spawn(lair_coord: Vector2i, flies: bool = false):
 	var candidates: Array[Vector2i] = []
 	for coord in _lair_area(lair_coord):
 		if get_unit_at(coord) != null:
 			continue
 		var data = get_tile(coord)
-		if data == null or data.blocks_land_units():
+		if data == null or (data.blocks_land_units() and not (flies and data.is_lava())):
 			continue
 		candidates.append(coord)
 	if candidates.is_empty():
@@ -2482,6 +3141,11 @@ func _find_free_tile_for_lair_spawn(lair_coord: Vector2i):
 func _maybe_roam_lair(lair_coord: Vector2i) -> void:
 	if monster_turn_rng.randf() > ROAM_CHANCE:
 		return
+	# Mesmo motivo de _find_free_tile_for_lair_spawn: covil de Vivern/
+	# Dragao em lava precisa poder patrulhar dentro da propria (toda-lava)
+	# area tambem, senao _maybe_roam_lair nunca acha free_coords nenhum e
+	# fica sempre um no-op silencioso pra esses covis.
+	var flies: bool = MonsterDatabase.KIND_DATA.get(lair_kind_by_coord.get(lair_coord, ""), {}).get("flies", false)
 	var area = _lair_area(lair_coord)
 	var occupants: Array[Unit] = []
 	var free_coords: Array[Vector2i] = []
@@ -2493,7 +3157,7 @@ func _maybe_roam_lair(lair_coord: Vector2i) -> void:
 		if unit != null or get_city_at(coord) != null:
 			continue
 		var data = get_tile(coord)
-		if data != null and not data.blocks_land_units():
+		if data != null and (not data.blocks_land_units() or (flies and data.is_lava())):
 			free_coords.append(coord)
 	if occupants.is_empty() or free_coords.is_empty():
 		return
@@ -2501,7 +3165,12 @@ func _maybe_roam_lair(lair_coord: Vector2i) -> void:
 	var dest: Vector2i = free_coords[monster_turn_rng.randi() % free_coords.size()]
 	units_by_coord.erase(wanderer.coord)
 	wanderer.coord = dest
-	wanderer.slide_to(world_for_coord(dest))
+	# Mesmo motivo de move_unit acima: sem nevoa cobrindo o covil, o
+	# guardiao nem aparece na tela — nao vale animar.
+	if wanderer.visible:
+		wanderer.slide_to(world_for_coord(dest))
+	else:
+		wanderer.position = world_for_coord(dest)
 	units_by_coord[dest] = wanderer
 
 ## Unica funcao que cria um monstro neutro de verdade (guardiao original OU
@@ -2544,9 +3213,21 @@ func clear_neutral_units() -> void:
 
 ## 0 = polo (frio), 1 = equador (quente) — gradiente linear pela distancia
 ## de `r` ao "equador" (r=0), com uma pitada de ruido pra a fronteira entre
-## faixas climaticas nao ficar reta demais.
+## faixas climaticas nao ficar reta demais. Latitude normalizada pela
+## pegada FIXA do continente Principal (TitleScreen.MAIN_ZONE_SIZE, nao
+## map_height ao vivo) — senao o gradiente climatico do continente
+## Principal se comprimiria conforme o canvas total cresce pra caber os
+## continentes Vulcanico/Cristal, redistribuindo deserto/neve/selva sem
+## nenhuma mudanca pedida. Continentes especiais nao usam temperatura pra
+## decidir bioma (sempre Lava/Cristal, ver _generate_tile_data), entao so
+## importa aqui pro oceano de separacao decidir Oceano vs Mar Gelado.
 func _temperature_for(coord: Vector2i) -> float:
-	var latitude = float(abs(coord.y)) / float(max(map_height / 2, 1))
+	# Mesma logica de _edge_falloff: mapa ABAIXO do tamanho Grande usa a
+	# propria altura ao vivo (comportamento historico, senao um mapa de
+	# teste pequeno normaliza a latitude errado e todo o clima muda);
+	# so o tamanho Grande de verdade trava na pegada FIXA da zona Principal.
+	var half_height = float(TitleScreen.MAIN_ZONE_SIZE.height) / 2.0 if _is_large_map_or_bigger() else float(map_height) / 2.0
+	var latitude = float(abs(coord.y)) / max(half_height, 1.0)
 	var jitter = _temp_jitter_noise.get_noise_2d(float(coord.x), float(coord.y)) * 0.15
 	return clamp(1.0 - latitude + jitter, 0.0, 1.0)
 
@@ -2650,28 +3331,59 @@ func _pick_biome(temperature: float, moisture: float) -> int:
 
 ## Valores tem que bater EXATAMENTE com o `mat_kind` interpretado em
 ## `shaders/terrain.gdshader` (0 = terreno comum/textura de chao generica,
-## 1 = Neve/Gelo Eterno, 2 = Deserto, 3 = Lava, 4 = Campos de Cristal, 5 =
-## Mar de Lava) — cada um troca a textura de chao generica por um
-## tratamento visual proprio (neve com brilho, duna de deserto, lava
-## brilhando, cristal facetado), em vez de so mudar de cor sob a mesma
-## "grama/terra" de sempre. Mar de Lava (roadmap item 32) e diferente dos
-## outros: e um tile de AGUA (`v_is_water`, ver _rebuild_multimesh), entao
-## o shader ja pula a textura de chao antes mesmo de olhar pro mat_kind —
-## o numero 5 so diz pro branch de agua aplicar EMISSION vermelha em vez
-## do visual padrao de agua (azul, sem brilho). Pura, testavel sem
-## precisar de contexto de shader/desenho.
+## 1 = Neve/Gelo Eterno, 2 = Deserto, 3 = rocha vulcanica solida generica,
+## 4 = Campos de Cristal, 5 = Mar de Lava, 6 = Lava solida) — cada um troca
+## a textura de chao generica por um tratamento visual proprio (neve com
+## brilho, duna de deserto, cristal facetado, lava brilhando), em vez de so
+## mudar de cor sob a mesma "grama/terra" de sempre. Mar de Lava (roadmap
+## item 32) e diferente dos outros: e um tile de AGUA (`v_is_water`, ver
+## _rebuild_multimesh), entao o shader ja pula a textura de chao antes
+## mesmo de olhar pro mat_kind — o numero 5 so diz pro branch de agua
+## aplicar EMISSION vermelha em vez do visual padrao de agua (azul, sem
+## brilho). Pura, testavel sem precisar de contexto de shader/desenho.
 func _material_kind_for(terrain_type: int) -> float:
 	match terrain_type:
 		HexTileData.TerrainType.SNOW, HexTileData.TerrainType.ICE:
 			return 1.0
 		HexTileData.TerrainType.DESERT:
 			return 2.0
-		HexTileData.TerrainType.LAVA:
+		HexTileData.TerrainType.VOLCANIC_ASH:
+			# Regressao reportada pelo usuario ("leitura visual 3D ficou
+			# pessima... mesmo material de basalto preto para tudo"): Solo
+			# de Cinzas reusa a formula de Deserto (textura granulada de
+			# dunas, SEM o escurecimento ×0.6 que mat_kind 3/rocha aplica —
+			# ver terrain.gdshader) com um tint CLARO (ver TerrainDatabase)
+			# — da uma textura e brilho genuinamente diferentes da rocha
+			# solida, nao so uma variacao de cor sobre a MESMA textura.
+			return 2.0
+		HexTileData.TerrainType.VOLCANIC_PEAKS, HexTileData.TerrainType.VOLCANIC_HILLS, HexTileData.TerrainType.VOLCANIC_ROCK:
+			# Rocha vulcanica solida "morta" (Terra Vulcanica/Colinas/
+			# Montanhas Vulcanicas — SEM Lava, ver mat_kind 6 abaixo) reusa
+			# a MESMA textura de rocha negra real — so' `color` muda por
+			# tipo (ver TerrainDatabase, cores recalibradas pra sobrar
+			# contraste depois do escurecimento ×0.6 que este mat_kind
+			# aplica). elevation_kind separado (ver mais abaixo) e quem da a
+			# cupula/relevo de Colinas/Montanhas Vulcanicas; o shader ja
+			# exclui neve pra mat_kind 3 especificamente (ver
+			# terrain.gdshader).
 			return 3.0
-		HexTileData.TerrainType.CRYSTAL:
+		HexTileData.TerrainType.CRYSTAL, HexTileData.TerrainType.CRYSTAL_PEAKS, HexTileData.TerrainType.MYSTIC_SPRING:
+			# Picos de Cristal e Fonte Mistica reusam o brilho/textura
+			# animada de Cristal (facetas + emissao) — combina com "pico
+			# cristalino" e "fluido arcano" sem shader novo nenhum.
 			return 4.0
 		HexTileData.TerrainType.LAVA_SEA:
 			return 5.0
+		HexTileData.TerrainType.LAVA:
+			# SEPARADO da rocha vulcanica solida (mat_kind 3) — pedido do
+			# usuario: "faça o terreno lava... parecer mais magma,
+			# atualmente é só uma pedra preta". Lava solida (a "saia" que
+			# fica exposta ao redor do Mar de Lava, movement_cost 99, ver
+			# TerrainDatabase) precisa de veios brilhando por baixo da
+			# crosta, tratamento visual PROPRIO que a rocha vulcanica comum
+			# (Terra/Colinas/Montanhas, mat_kind 3) nao tem — ver
+			# terrain.gdshader.
+			return 6.0
 		_:
 			return 0.0
 
@@ -2862,90 +3574,181 @@ func _rebuild_lava_tile_mask() -> void:
 ##   "a transicao terra/mar homogenea na area coberta pela Terra Incognita").
 ## Custo: ~WATER_OVERLAY_RESOLUTION² consultas de coordenada por chamada —
 ## so roda em eventos discretos (turno, hover, selecao), nunca por frame.
-func _rebuild_water_overlay(reachable: Array = [], attackable: Array = [], path: Array = [], buildable: Array = []) -> void:
-	if _liquid_plane_instance == null:
-		return
-
-	var reachable_set := {}
-	for c in reachable:
-		reachable_set[c] = true
-	var attackable_set := {}
-	for c in attackable:
-		attackable_set[c] = true
-	var path_set := {}
-	for c in path:
-		path_set[c] = true
-	var buildable_set := {}
-	for c in buildable:
-		buildable_set[c] = true
-
-	var half_extents = get_world_half_extents()
+## Constroi (so na primeira vez — memoizado pelo tamanho do array) o
+## mapeamento pixel->coord axial pra resolucao/geometria ATUAL do mapa. Ver
+## comentario de _water_overlay_coord_cache acima pro motivo.
+func _ensure_water_overlay_coord_cache() -> void:
 	var res := WATER_OVERLAY_RESOLUTION
-	# PackedByteArray + Image.create_from_data em vez de Image.set_pixel por
-	# pixel — mesmos valores finais, so troca o MECANISMO de escrita.
-	# set_pixel paga overhead de chamada/validacao de formato por pixel; num
-	# loop de res*res (224*224 = 50176) isso pesa MUITO mais que indexar um
-	# array de bytes puro. Motivo: usuario reportou queda pra ~15 FPS na
-	# troca de turno, e este rebuild roda todo turno (recompute_fog) e a
-	# cada hover/selecao (set_highlight/clear_highlight).
-	var overlay_data := PackedByteArray()
-	overlay_data.resize(res * res * 4)
-	var type_data := PackedByteArray()
-	type_data.resize(res * res * 4)
+	if _water_overlay_coord_cache.size() == res * res:
+		return
+	var half_extents = get_world_half_extents()
+	var cache: Array[Vector2i] = []
+	cache.resize(res * res)
+	# Constroi junto com o coord cache (mesmo loop, mesma passada) os bytes
+	# ESTATICOS de overlay/type — ver comentario dos campos acima pro motivo.
+	var baseline_bytes := PackedByteArray()
+	baseline_bytes.resize(res * res * 4)
+	var type_static_bytes := PackedByteArray()
+	type_static_bytes.resize(res * res * 4)
 	for py in range(res):
 		var v = float(py) / float(res - 1)
 		var world_z = lerp(-half_extents.y, half_extents.y, v)
-		var row_offset = py * res * 4
+		var row_offset = py * res
+		var byte_row_offset = row_offset * 4
 		for px in range(res):
 			var u = float(px) / float(res - 1)
 			var world_x = lerp(-half_extents.x, half_extents.x, u)
 			var coord = HexMetrics.world_to_axial(world_x, world_z, hex_size)
-
-			# Nevoa de guerra em si NAO dimeriza mais aqui (ver comentario da
-			# funcao acima) — so o destaque de movimento/ataque/construcao
-			# continua sendo blend de cor por cima de uma base neutra,
-			# mesmo espirito de _highlight_coords pro terreno solido.
-			var tint := Color(1.0, 1.0, 1.0, 1.0)
-			if buildable_set.has(coord):
-				tint = tint.lerp(Color(0.35, 0.7, 1.0), 0.55)
-			if path_set.has(coord):
-				tint = tint.lerp(Color(1.0, 1.0, 0.4), 0.7)
-			if attackable_set.has(coord):
-				tint = tint.lerp(Color(1.0, 0.2, 0.2), 0.5)
-			if reachable_set.has(coord):
-				tint = tint.lerp(Color(0.3, 1.0, 0.3), 0.5)
+			cache[row_offset + px] = coord
 
 			var tile: HexTileData = tiles.get(coord)
 			var is_frozen = tile != null and tile.terrain_type == HexTileData.TerrainType.FROZEN_OCEAN
 			var is_lava = tile != null and tile.terrain_type == HexTileData.TerrainType.LAVA_SEA
-			tint.a = 0.0 if is_frozen else 1.0
-			var lava_value = 1.0 if is_lava else 0.0
-			var fog_level = _fog_level_for(coord) if tile != null else 0.0
-			# Canal G: distancia normalizada ate a costa (ver
-			# _compute_coast_distance_tiles), 0 = agua colada na terra, 1 =
-			# COAST_DISTANCE_NORM_MAX+ tiles mar adentro — antes esse canal
-			# ficava redundante (mesmo valor de R). land_dist vem da BFS com
-			# terra = 0, entao subtrai 1 pra virar "tiles de agua desde a
-			# costa" (agua colada na terra = land_dist 1 -> 0).
 			var land_dist = _coast_distance_tiles.get(coord, -1)
 			var water_coast_dist = float(max(land_dist - 1, 0)) if land_dist >= 0 else COAST_DISTANCE_NORM_MAX
 			var coast_dist_norm = clamp(water_coast_dist / COAST_DISTANCE_NORM_MAX, 0.0, 1.0)
 
-			var idx = row_offset + px * 4
-			overlay_data[idx] = int(round(clamp(tint.r, 0.0, 1.0) * 255.0))
-			overlay_data[idx + 1] = int(round(clamp(tint.g, 0.0, 1.0) * 255.0))
-			overlay_data[idx + 2] = int(round(clamp(tint.b, 0.0, 1.0) * 255.0))
-			overlay_data[idx + 3] = int(round(clamp(tint.a, 0.0, 1.0) * 255.0))
-			type_data[idx] = int(round(lava_value * 255.0))
-			type_data[idx + 1] = int(round(coast_dist_norm * 255.0))
-			type_data[idx + 2] = int(round(lava_value * 255.0))
-			type_data[idx + 3] = int(round(clamp(fog_level, 0.0, 1.0) * 255.0))
+			var idx = byte_row_offset + px * 4
+			baseline_bytes[idx] = 255
+			baseline_bytes[idx + 1] = 255
+			baseline_bytes[idx + 2] = 255
+			baseline_bytes[idx + 3] = 0 if is_frozen else 255
+			var lava_byte = 255 if is_lava else 0
+			type_static_bytes[idx] = lava_byte
+			type_static_bytes[idx + 1] = int(round(coast_dist_norm * 255.0))
+			type_static_bytes[idx + 2] = lava_byte
+			type_static_bytes[idx + 3] = 0
+	_water_overlay_coord_cache = cache
+	_water_overlay_baseline_bytes = baseline_bytes
+	_water_overlay_baseline_texture = ImageTexture.create_from_image(
+		Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, baseline_bytes)
+	)
+	_liquid_type_static_bytes = type_static_bytes
 
-	var overlay_img := Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, overlay_data)
+## Bytes RGB estaticos de _rebuild_biome_overlay (cor CRUA do bioma — so'
+## muda se o terreno em si mudar, o que nunca acontece depois do mapa
+## gerado; ver _liquid_type_static_bytes pro mesmo padrao na agua) — A fica
+## sempre 0, placeholder sobrescrito toda chamada com o fog_level de verdade.
+var _biome_overlay_static_bytes: PackedByteArray = PackedByteArray()
+
+func _ensure_biome_overlay_coord_cache() -> void:
+	var res := BIOME_OVERLAY_RESOLUTION
+	if _biome_overlay_coord_cache.size() == res * res:
+		return
+	var half_extents = get_world_half_extents()
+	var cache: Array[Vector2i] = []
+	cache.resize(res * res)
+	var static_bytes := PackedByteArray()
+	static_bytes.resize(res * res * 4)
+	for py in range(res):
+		var v = float(py) / float(res - 1)
+		var world_z = lerp(-half_extents.y, half_extents.y, v)
+		var row_offset = py * res
+		var byte_row_offset = row_offset * 4
+		for px in range(res):
+			var u = float(px) / float(res - 1)
+			var world_x = lerp(-half_extents.x, half_extents.x, u)
+			var coord = HexMetrics.world_to_axial(world_x, world_z, hex_size)
+			cache[row_offset + px] = coord
+
+			var tile: HexTileData = tiles.get(coord)
+			var color := Color(0.05, 0.05, 0.05)
+			if tile != null and not tile.is_water() and tile.terrain_type != HexTileData.TerrainType.LAVA_SEA:
+				color = tile.color
+			var idx = byte_row_offset + px * 4
+			static_bytes[idx] = int(round(clamp(color.r, 0.0, 1.0) * 255.0))
+			static_bytes[idx + 1] = int(round(clamp(color.g, 0.0, 1.0) * 255.0))
+			static_bytes[idx + 2] = int(round(clamp(color.b, 0.0, 1.0) * 255.0))
+			static_bytes[idx + 3] = 0
+	_biome_overlay_static_bytes = static_bytes
+	_biome_overlay_coord_cache = cache
+
+## Perfilamento real (usuario: "cai de 140 pra 15/20 fps toda troca de
+## turno") mostrou esta funcao sozinha custando ~120-250ms/chamada num mapa
+## Grande com varias civs — a MAIOR fatia do custo de recompute_fog. Duas
+## otimizacoes em cima do coord cache (ver _ensure_water_overlay_coord_
+## cache): (1) type_data (lava/coast/fog) NUNCA depende de highlight nenhum
+## — R/G/B sao ESTATICOS (terreno nunca muda), so o canal A (fog_level)
+## varia de turno a turno, entao SEMPRE usa o template cacheado
+## (_liquid_type_static_bytes) + so recalcula A; (2) overlay_data (tint de
+## destaque) SO precisa do loop pixel-a-pixel de verdade quando algum dos 4
+## conjuntos de highlight tem alguma coisa — sem highlight nenhum (o caso de
+## recompute_fog/fim de turno, o mais comum de todos) o resultado e SEMPRE
+## identico ao baseline cacheado (_water_overlay_baseline_texture), entao
+## reusa a MESMA textura em vez de reconstruir do zero.
+func _rebuild_water_overlay(reachable: Array = [], attackable: Array = [], path: Array = [], buildable: Array = []) -> void:
+	if _liquid_plane_instance == null:
+		return
+
+	_ensure_water_overlay_coord_cache()
+	var res := WATER_OVERLAY_RESOLUTION
+
+	var type_data := _liquid_type_static_bytes.duplicate()
+	for py in range(res):
+		var row_offset = py * res
+		var byte_row_offset = row_offset * 4
+		for px in range(res):
+			var coord = _water_overlay_coord_cache[row_offset + px]
+			# visibility so tem entrada pra coord que existe em `tiles` (ver
+			# recompute_fog/set_debug_fog_disabled) — _fog_level_for ja
+			# devolve 0.0 (UNSEEN) de graca pra qualquer coord ausente, entao
+			# nao precisa checar tiles.has(coord) antes, so' um lookup a
+			# menos por pixel.
+			var fog_level = _fog_level_for(coord)
+			type_data[byte_row_offset + px * 4 + 3] = int(round(clamp(fog_level, 0.0, 1.0) * 255.0))
 	var type_img := Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, type_data)
-
-	_water_overlay_texture = ImageTexture.create_from_image(overlay_img)
 	_liquid_type_texture = ImageTexture.create_from_image(type_img)
+
+	if reachable.is_empty() and attackable.is_empty() and path.is_empty() and buildable.is_empty():
+		_water_overlay_texture = _water_overlay_baseline_texture
+	else:
+		var reachable_set := {}
+		for c in reachable:
+			reachable_set[c] = true
+		var attackable_set := {}
+		for c in attackable:
+			attackable_set[c] = true
+		var path_set := {}
+		for c in path:
+			path_set[c] = true
+		var buildable_set := {}
+		for c in buildable:
+			buildable_set[c] = true
+
+		var overlay_data := PackedByteArray()
+		overlay_data.resize(res * res * 4)
+		for py in range(res):
+			var row_offset = py * res
+			var byte_row_offset = row_offset * 4
+			for px in range(res):
+				var coord = _water_overlay_coord_cache[row_offset + px]
+
+				# Nevoa de guerra em si NAO dimeriza mais aqui (ver comentario da
+				# funcao acima) — so o destaque de movimento/ataque/construcao
+				# continua sendo blend de cor por cima de uma base neutra,
+				# mesmo espirito de _highlight_coords pro terreno solido.
+				var tint := Color(1.0, 1.0, 1.0, 1.0)
+				if buildable_set.has(coord):
+					tint = tint.lerp(Color(0.35, 0.7, 1.0), 0.55)
+				if path_set.has(coord):
+					tint = tint.lerp(Color(1.0, 1.0, 0.4), 0.7)
+				if attackable_set.has(coord):
+					tint = tint.lerp(Color(1.0, 0.2, 0.2), 0.5)
+				if reachable_set.has(coord):
+					tint = tint.lerp(Color(0.3, 1.0, 0.3), 0.5)
+
+				var tile: HexTileData = tiles.get(coord)
+				var is_frozen = tile != null and tile.terrain_type == HexTileData.TerrainType.FROZEN_OCEAN
+				tint.a = 0.0 if is_frozen else 1.0
+
+				var idx = byte_row_offset + px * 4
+				overlay_data[idx] = int(round(clamp(tint.r, 0.0, 1.0) * 255.0))
+				overlay_data[idx + 1] = int(round(clamp(tint.g, 0.0, 1.0) * 255.0))
+				overlay_data[idx + 2] = int(round(clamp(tint.b, 0.0, 1.0) * 255.0))
+				overlay_data[idx + 3] = int(round(clamp(tint.a, 0.0, 1.0) * 255.0))
+		var overlay_img := Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, overlay_data)
+		_water_overlay_texture = ImageTexture.create_from_image(overlay_img)
+
 	var material: ShaderMaterial = _liquid_plane_instance.material_override
 	material.set_shader_parameter("overlay_texture", _water_overlay_texture)
 	# R (is_lava) desta textura so' alimenta mais lava_proximity (blend
@@ -2996,31 +3799,22 @@ func _rebuild_biome_overlay() -> void:
 	if _multimesh_instance == null:
 		return
 
-	var half_extents = get_world_half_extents()
+	_ensure_biome_overlay_coord_cache()
 	var res := BIOME_OVERLAY_RESOLUTION
-	# Mesma troca de mecanismo de _rebuild_water_overlay acima: PackedByteArray
-	# + Image.create_from_data em vez de set_pixel por pixel — mesmos valores,
-	# so mais barato de escrever.
-	var data := PackedByteArray()
-	data.resize(res * res * 4)
+	# RGB (cor crua do bioma) e ESTATICO — vem pronto do template cacheado
+	# (_biome_overlay_static_bytes, ver _ensure_biome_overlay_coord_cache);
+	# so o canal A (fog_level) muda de turno a turno, entao e o UNICO valor
+	# recalculado por pixel aqui (mesmo padrao de _rebuild_water_overlay's
+	# type_data — perfilamento real mostrou isso cortando o custo desta
+	# funcao de ~27ms pra uma fracao disso).
+	var data := _biome_overlay_static_bytes.duplicate()
 	for py in range(res):
-		var v = float(py) / float(res - 1)
-		var world_z = lerp(-half_extents.y, half_extents.y, v)
-		var row_offset = py * res * 4
+		var row_offset = py * res
+		var byte_row_offset = row_offset * 4
 		for px in range(res):
-			var u = float(px) / float(res - 1)
-			var world_x = lerp(-half_extents.x, half_extents.x, u)
-			var coord = HexMetrics.world_to_axial(world_x, world_z, hex_size)
-			var tile: HexTileData = tiles.get(coord)
-			var color := Color(0.05, 0.05, 0.05)
-			if tile != null and not tile.is_water() and tile.terrain_type != HexTileData.TerrainType.LAVA_SEA:
-				color = tile.color
-			var fog_level := _fog_level_for(coord) if tile != null else 0.0
-			var idx = row_offset + px * 4
-			data[idx] = int(round(clamp(color.r, 0.0, 1.0) * 255.0))
-			data[idx + 1] = int(round(clamp(color.g, 0.0, 1.0) * 255.0))
-			data[idx + 2] = int(round(clamp(color.b, 0.0, 1.0) * 255.0))
-			data[idx + 3] = int(round(clamp(fog_level, 0.0, 1.0) * 255.0))
+			var coord = _biome_overlay_coord_cache[row_offset + px]
+			var fog_level := _fog_level_for(coord) # ver comentario equivalente em _rebuild_water_overlay
+			data[byte_row_offset + px * 4 + 3] = int(round(clamp(fog_level, 0.0, 1.0) * 255.0))
 
 	var img := Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, data)
 	_biome_overlay_texture = ImageTexture.create_from_image(img)
@@ -3053,9 +3847,16 @@ func _build_terrain_multimesh(coords: Array[Vector2i], coord_to_index: Dictionar
 		# nao parecem bem trabalhados"). b fica sem uso (0.0).
 		var material_kind = _material_kind_for(data.terrain_type)
 		var elevation_kind := 0.0
-		if data.terrain_type == HexTileData.TerrainType.MOUNTAINS:
+		if data.terrain_type == HexTileData.TerrainType.MOUNTAINS or data.terrain_type == HexTileData.TerrainType.VOLCANIC_PEAKS or data.terrain_type == HexTileData.TerrainType.CRYSTAL_PEAKS:
+			# Montanhas Vulcanicas/Picos de Cristal (continentes especiais)
+			# ganham a MESMA cupula/pico visual de Montanhas normal — mesmo
+			# canal, so mais tipos reconhecidos (ver _material_kind_for pra
+			# textura/brilho, canal independente deste).
 			elevation_kind = 2.0
-		elif data.terrain_type == HexTileData.TerrainType.HILLS:
+		elif data.terrain_type == HexTileData.TerrainType.HILLS or data.terrain_type == HexTileData.TerrainType.VOLCANIC_HILLS:
+			# Colinas Vulcanicas (pedido do usuario: "adicione variacao de
+			# altura 3D para colinas vulcanicas") ganham a MESMA cupula de
+			# Colina normal.
 			elevation_kind = 1.0
 		multimesh.set_instance_custom_data(i, Color(randf(), elevation_kind, 0.0, material_kind))
 		coord_to_index[coord] = i
@@ -3387,9 +4188,14 @@ func _mountain_surface_extra_height(offset_dist: float) -> float:
 func _tile_surface_height(coord: Vector2i) -> float:
 	var data: HexTileData = tiles[coord]
 	var h = data.base_height
-	if data.terrain_type == HexTileData.TerrainType.MOUNTAINS:
+	# VOLCANIC_PEAKS/CRYSTAL_PEAKS (continentes especiais) e VOLCANIC_HILLS
+	# faltavam aqui (bug latente pego revisando a regressao de relevo 3D:
+	# props/tingimento de territorio nesses tiles ficavam na altura CRUA de
+	# base_height, sem a cupula/pico — mesmo canal elevation_kind que
+	# _build_terrain_multimesh ja usa pro relevo visual de verdade).
+	if data.terrain_type == HexTileData.TerrainType.MOUNTAINS or data.terrain_type == HexTileData.TerrainType.VOLCANIC_PEAKS or data.terrain_type == HexTileData.TerrainType.CRYSTAL_PEAKS:
 		h += MOUNTAIN_PEAK_HEIGHT
-	elif data.terrain_type == HexTileData.TerrainType.HILLS:
+	elif data.terrain_type == HexTileData.TerrainType.HILLS or data.terrain_type == HexTileData.TerrainType.VOLCANIC_HILLS:
 		h += HILL_HEIGHT
 	return h
 

@@ -104,6 +104,22 @@ func test_guardian_moves_toward_enemy_within_guard_radius_but_never_leaves_it():
 	MonsterAI.take_turn(hex_grid)
 
 	assert_ne(guardian.coord, Vector2i.ZERO, "guardiao deveria ter se movido em direcao ao inimigo")
+
+## MonsterAI.begin_turn()/act_for_unit() sao a MESMA logica de take_turn(),
+## so separada em duas partes pra GameManager poder espalhar por frames (ver
+## GameManager.stagger_ai_turns) — confirma que a dupla continua produzindo
+## o mesmo resultado de antes.
+func test_begin_turn_and_act_for_unit_together_match_take_turn_behavior():
+	hex_grid.lair_coords = [Vector2i.ZERO]
+	hex_grid.lair_kind_by_coord[Vector2i.ZERO] = "goblin"
+	var guardian = _make_monster("goblin", Vector2i.ZERO)
+	guardian.reset_movement()
+	_make_unit("warrior", human, Vector2i(2, 0))
+
+	MonsterAI.begin_turn(hex_grid)
+	MonsterAI.act_for_unit(guardian, hex_grid, 0)
+
+	assert_ne(guardian.coord, Vector2i.ZERO, "guardiao deveria ter se movido em direcao ao inimigo")
 	assert_lte(
 		HexMetrics.axial_distance(Vector2i.ZERO, guardian.coord), MonsterAI.GUARD_RADIUS,
 		"guardiao nunca deveria sair do proprio raio de guarda perseguindo um alvo"

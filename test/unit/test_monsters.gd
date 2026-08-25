@@ -190,6 +190,83 @@ func test_process_monster_lairs_eventually_reaches_the_cap():
 
 	hex_grid.queue_free()
 
+## Constroi uma area de covil (a propria celula + 6 vizinhos) toda em
+## GRASSLAND livre — usado pelos testes de teto GLOBAL abaixo, que
+## precisam de VARIOS covis do MESMO tipo sem depender da aleatoriedade de
+## generate_map pra garantir isso.
+func _fill_lair_area(hex_grid: HexGrid, center: Vector2i) -> void:
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	for dir in HexGrid.NEIGHBOR_DIRS:
+		hex_grid.tiles[center + dir] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+## Regressao pro pedido do usuario: "ponha um limite no spawn de
+## monstros... cada um so pode ter 5 vivos por vez". Diferente do teste
+## acima (LOCAL, por covil), este cobre o teto GLOBAL somando VARIOS covis
+## do MESMO tipo — 2 covis de Goblin (lair_cap 4 cada, ate 8 no total se
+## so o limite local valesse) nunca deveriam somar mais que global_cap (5)
+## Goblins vivos ao mesmo tempo no mapa inteiro.
+func test_process_monster_lairs_never_exceeds_the_global_cap():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var lair_a := Vector2i(0, 0)
+	var lair_b := Vector2i(10, 0)
+	_fill_lair_area(hex_grid, lair_a)
+	_fill_lair_area(hex_grid, lair_b)
+	hex_grid.lair_coords.append(lair_a)
+	hex_grid.lair_coords.append(lair_b)
+	hex_grid.lair_kind_by_coord[lair_a] = "goblin"
+	hex_grid.lair_kind_by_coord[lair_b] = "goblin"
+	hex_grid.spawn_monster_at(lair_a, "goblin", true)
+	hex_grid.spawn_monster_at(lair_b, "goblin", true)
+
+	for i in range(300):
+		hex_grid.process_monster_lairs()
+
+	var count = hex_grid._count_alive_of_kind("goblin")
+	var cap = hex_grid._global_cap_for("goblin")
+	assert_lte(count, cap, "total global de Goblins excedeu o teto (%d > %d)" % [count, cap])
+
+	hex_grid.queue_free()
+
+## Complementar ao teste acima (mesmo espirito de test_process_monster_
+## lairs_eventually_reaches_the_cap): confirma que o teto GLOBAL realmente
+## e ATINGIDO com o tempo, nao so "nunca excedido" porque nada spawnou.
+func test_process_monster_lairs_eventually_reaches_the_global_cap():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var lair_a := Vector2i(0, 0)
+	var lair_b := Vector2i(10, 0)
+	_fill_lair_area(hex_grid, lair_a)
+	_fill_lair_area(hex_grid, lair_b)
+	hex_grid.lair_coords.append(lair_a)
+	hex_grid.lair_coords.append(lair_b)
+	hex_grid.lair_kind_by_coord[lair_a] = "goblin"
+	hex_grid.lair_kind_by_coord[lair_b] = "goblin"
+	hex_grid.spawn_monster_at(lair_a, "goblin", true)
+	hex_grid.spawn_monster_at(lair_b, "goblin", true)
+
+	for i in range(300):
+		hex_grid.process_monster_lairs()
+
+	assert_eq(hex_grid._count_alive_of_kind("goblin"), hex_grid._global_cap_for("goblin"), "com 2 covis de Goblin, o teto global deveria ser atingido depois de varias tentativas")
+
+	hex_grid.queue_free()
+
+## O teto GLOBAL tambem vale na GERACAO inicial (_spawn_monster_lairs), nao
+## so no reforco por turno — nenhum kind deveria comecar o jogo ja acima
+## do proprio teto, mesmo que o mapa tenha varios covis do mesmo tipo.
+func test_spawn_monster_lairs_never_exceeds_the_global_cap_at_generation():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	hex_grid.generate_map(81, 81, 222)
+
+	for kind in MonsterDatabase.KINDS:
+		var count = hex_grid._count_alive_of_kind(kind)
+		var cap = hex_grid._global_cap_for(kind)
+		assert_lte(count, cap, "%s ja nasceu acima do proprio teto global na geracao (%d > %d)" % [kind, count, cap])
+
+	hex_grid.queue_free()
+
 ## Regressao: monstro novo gerado por um covil precisa ser do MESMO tipo
 ## (kind) que o guardiao original — process_monster_lairs nao deveria
 ## nunca misturar tipos dentro da area de um unico covil.
@@ -441,6 +518,17 @@ func test_random_kind_falls_back_when_biome_has_no_eligible_kind_at_threat():
 func test_dragon_lair_cap_is_one():
 	assert_eq(MonsterDatabase.KIND_DATA["dragon"].lair_cap, 1, "Dragao deveria ser 'apenas 1 unidade por covil'")
 
+## Teto GLOBAL por tipo (pedido do usuario: "ponha um limite no spawn de
+## monstros... cada um so pode ter 5 vivos por vez, no caso dos vivern 2
+## vivos de uma vez e no dragao apenas 1") — diferente de lair_cap (LOCAL,
+## por covil), este soma TODOS os covis do mesmo tipo no mapa inteiro.
+func test_global_cap_values_match_the_users_request():
+	assert_eq(MonsterDatabase.KIND_DATA["goblin"].global_cap, 5)
+	assert_eq(MonsterDatabase.KIND_DATA["troll"].global_cap, 5)
+	assert_eq(MonsterDatabase.KIND_DATA["skeleton"].global_cap, 5)
+	assert_eq(MonsterDatabase.KIND_DATA["wyvern"].global_cap, 2, "Vivern deveria ter teto global 2")
+	assert_eq(MonsterDatabase.KIND_DATA["dragon"].global_cap, 1, "Dragao deveria ter teto global 1")
+
 ## Dragao (boss raro) exige ameaca alta E bioma vulcanico ao mesmo tempo —
 ## nunca aparece so por estar em LAVA se a ameaca do local for baixa.
 func test_dragon_requires_high_threat_and_lava_biome():
@@ -458,6 +546,32 @@ func test_dragon_requires_high_threat_and_lava_biome():
 			saw_dragon = true
 			break
 	assert_true(saw_dragon, "ameaca maxima em bioma LAVA deveria conseguir sortear Dragao em 200 tentativas")
+
+## Regressao: Dragao (bioma so [LAVA]) nunca conseguia nascer de verdade
+## no jogo, porque HexGrid._spawn_monster_lairs excluia todo tile que
+## bloqueia unidade terrestre dos candidatos, e LAVA sempre bloqueia —
+## random_flying_kind existe especificamente pra covil em Lava, restrito a
+## tipos com flies=true (Dragao/Vivern ja tem isso em KIND_DATA), NUNCA
+## cai no fallback biome-agnostico de random_kind (que poderia devolver um
+## tipo terrestre fisicamente preso ali).
+func test_random_flying_kind_never_returns_a_non_flying_kind():
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 321
+	for i in range(300):
+		var kind = MonsterDatabase.random_flying_kind(rng, randf(), HexTileData.TerrainType.LAVA)
+		if kind == "":
+			continue
+		assert_true(MonsterDatabase.KIND_DATA[kind].flies, "random_flying_kind devolveu %s, que nao voa" % kind)
+		assert_true(kind in ["wyvern", "dragon"], "LAVA deveria so sortear Vivern/Dragao voadores, nao %s" % kind)
+
+## Bioma sem NENHUM tipo voador cadastrado (ex: DESERT, nenhum monstro
+## comum voa) devolve "" em vez de forcar um fallback terrestre — o
+## chamador (HexGrid._spawn_monster_lairs) pula o candidato nesse caso.
+func test_random_flying_kind_returns_empty_string_when_nothing_qualifies():
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 321
+	var kind = MonsterDatabase.random_flying_kind(rng, 1.0, HexTileData.TerrainType.DESERT)
+	assert_eq(kind, "", "nenhum tipo voador nasce em DESERT, deveria devolver string vazia")
 
 ## Esqueleto nasce em GRUPO (batch_spawn=3) quando o covil acerta o roll de
 ## reforco — a populacao da area deveria poder saltar de mais de 1 de uma
@@ -490,6 +604,46 @@ func test_skeleton_reinforcement_can_spawn_more_than_one_at_once():
 			saw_batch = true
 			break
 	assert_true(saw_batch, "Esqueleto deveria conseguir nascer em grupo (mais de 1 de uma vez) em 500 tentativas")
+
+	hex_grid.queue_free()
+
+## Regressao: covil de Vivern nascido em cima de Lava (agora possivel, ver
+## HexGrid._spawn_monster_lairs) precisa conseguir REFORCAR normalmente —
+## antes do fix em _find_free_tile_for_lair_spawn/_maybe_roam_lair, a area
+## INTEIRA ao redor de um covil assim e Lava (blocks_land_units sempre
+## verdadeiro pra terreno de Lava), entao nenhum tile nunca contava como
+## livre e o covil ficava travado pra sempre no guardiao original, sem
+## nunca repor perdas.
+func test_wyvern_lair_on_lava_can_reinforce_past_the_initial_boss():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	hex_grid.generate_map(41, 41, 111)
+	assert_gt(hex_grid.lair_coords.size(), 0, "precondicao: deveria ter pelo menos um covil")
+
+	var lair_coord: Vector2i = hex_grid.lair_coords[0]
+	hex_grid.lair_kind_by_coord[lair_coord] = "wyvern"
+	# Simula um covil que nasceu inteiramente cercado de Lava (o cenario
+	# real que o continente Vulcanico cria) — propria celula + todos os
+	# vizinhos, removendo qualquer ocupante antigo antes de reposicionar o
+	# guardiao de verdade.
+	for coord in hex_grid._lair_area(lair_coord):
+		hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.LAVA)
+		var existing = hex_grid.get_unit_at(coord)
+		if existing != null:
+			hex_grid.remove_unit(existing)
+	hex_grid.spawn_monster_at(lair_coord, "wyvern", true)
+
+	var saw_reinforcement := false
+	for i in range(500):
+		var before = hex_grid._count_live_monsters_near_lair(lair_coord)
+		if before >= hex_grid._lair_cap_for("wyvern"):
+			break
+		hex_grid.process_monster_lairs()
+		var after = hex_grid._count_live_monsters_near_lair(lair_coord)
+		if after > before:
+			saw_reinforcement = true
+			break
+	assert_true(saw_reinforcement, "covil de Vivern cercado de Lava deveria conseguir reforcar em 500 tentativas")
 
 	hex_grid.queue_free()
 

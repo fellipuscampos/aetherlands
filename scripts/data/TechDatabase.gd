@@ -4,18 +4,29 @@ extends RefCounted
 ## Arvore de tecnologia MAGICA (pivot pedido pelo usuario: "deixe de ser uma
 ## arvore Generica/Historica... e se torne um sistema focado em MAGIA,
 ## FANTASIA E MANIPULACAO DO MUNDO" — substitui a arvore anterior de
-## Agricultura/Mineracao/Irrigacao inteira). 12 tecnologias em 4 tiers:
+## Agricultura/Mineracao/Irrigacao inteira), com um pequeno ramo MUNDANO
+## (doutrina militar, sem magia) enxertado nela. 16 tecnologias em 4 tiers:
 ##
 ## TIER 0 (bases elementares, sem pre-requisito): Canalizacao da Trama
 ## (arcanismo puro, raiz de Invocacao de Espiritos), Alquimia Botanica
-## (vegetacao encantada) e Transmutacao de Rochas (forja elemental) — as
+## (vegetacao encantada), Transmutacao de Rochas (forja elemental) — as
 ## duas ultimas sao a raiz das duas "escolas" de bioma (floresta/gelo vs.
-## colina/deserto) que se ramificam no Tier 1.
+## colina/deserto) que se ramificam no Tier 1 — e Quartel (raiz do Guarda e
+## do Homem de Armas, e TAMBEM raiz do ramo mundano inteiro, ver Tier 1).
 ## TIER 1 (especializacoes): Invocacao de Espiritos (Mago Arcano), Pacto
-## Florestal (Ent), Forja Runica (Golem de Pedra) e Geomancia (bonus de
-## deserto/savana).
+## Florestal (Ent), Forja Runica (Golem de Pedra), Geomancia (bonus de
+## deserto/savana), Estábulo (raiz do Cavaleiro comum e do Cavaleiro Real,
+## prerequisito "quartel") e Arquearia (raiz do Arqueiro, prerequisito
+## "quartel" TAMBEM — irmã de Estábulo, nao filha dela). Diagrama exato
+## pedido pelo usuario pro ramo mundano, apos eu ter errado a primeira
+## versao (Estábulo/Arquearia tinham ido pra Tier 0 sem pre-requisito
+## nenhum): "quartel -> estabulo -> batedor montado, \/ arquearia... o
+## quartel libera a pesquisa de estabulo e arquearia, mas pesquisando o
+## estabulo voce libera a pesquisa de batedor".
 ## TIER 2 (avancadas): Lordes dos Ventos (Grifo), Necromancia Pratica
-## (Convocador de Sombras) e Constructos de Guerra (Catapulta Cadenciada).
+## (Convocador de Sombras), Constructos de Guerra (Catapulta Cadenciada) e
+## Batedor Montado (Batedor, prerequisito "estabulo" — dois saltos de
+## Quartel, mesma profundidade das outras techs de Tier 2 acima).
 ## TIER 3 (rituais supremos): Cataclismo Elemental e Transcendencia
 ## Florestal — puramente rituais/feiticos por enquanto (ver TechData.
 ## unlocks_spell/terrain_transform), sem unidade nem bonus de bioma novo.
@@ -68,6 +79,124 @@ static func _build_all() -> Dictionary:
 	transmutacao_rocha.school = "Transmutação"
 	transmutacao_rocha.description = "A pedra bruta é convencida, átomo a átomo, a ceder seus veios de minério — colinas e montanhas rendem mais sob o cinzel de um transmutador treinado."
 	techs[transmutacao_rocha.id] = transmutacao_rocha
+
+	# Duas techs MUNDANAS da arvore, de proposito (pedido do usuario:
+	# "quartel tem que ter uma pesquisa... quando pesquisar o quartel,
+	# pode construir o quartel", estendido depois pro Estabulo: "voce
+	# precisa pesquisar[,] o estabulo [pra poder] construir"). Mesmo
+	# mecanismo pras duas: unlocks_unit == building.trains_unit e o que
+	# faz TechDatabase.tech_that_unlocks(kind) deixar de devolver null —
+	# City._tech_unlocked_for_building() passa a exigir a tech pesquisada
+	# antes do predio poder ser construido. Sem escola magica de verdade
+	# (school "Doutrina", cor propria em TechTree.SCHOOL_COLORS) e custo
+	# baixo — e treino e disciplina, nao arcanismo.
+	#
+	# unlocks_unit = "men_at_arms" (NAO "warrior") — pedido do usuario numa
+	# rodada seguinte: "o guarda comum nao precisa de quartel pra ser
+	# feito". BuildingDatabase.barracks.trains_unit tambem mudou pra
+	# "men_at_arms" junto, os dois precisam bater (ver comentario de
+	# _tech_unlocked_for_building em City.gd).
+	var quartel := TechData.new()
+	quartel.id = "quartel"
+	quartel.display_name = "Quartel"
+	quartel.cost = 15.0
+	quartel.unlocks_unit = "men_at_arms"
+	quartel.school = "Doutrina"
+	quartel.description = "Nem todo poder vem da Trama: um conselho de veteranos formaliza turnos de guarda, manobras e a forja de armaduras em uma doutrina permanente — o alicerce de um exército de verdade, sem feitiço nenhum envolvido."
+	techs[quartel.id] = quartel
+
+	# unlocks_unit = "cavalry" (nao "human_knight") de proposito: o Estabulo
+	# treina AS DUAS (Cavaleiro comum via trains_unit, Cavaleiro Real via
+	# fallback especial em BuildingDatabase.building_that_trains — ver
+	# comentario la) — travar a CONSTRUCAO do predio automaticamente atrasa
+	# as duas tropas juntas, sem precisar duplicar o gate. prerequisites =
+	# ["quartel"] — pedido explicito do usuario com diagrama da arvore:
+	# "quartel -> estabulo -> batedor montado, \/ arquearia... o quartel
+	# libera a pesquisa de estabulo e arquearia". Isso e um gate SEPARADO
+	# do requires_building (BuildingData.requires_building == "barracks",
+	# pedido anterior: "faca o estabulo ser uma coisa que so pode ser feita
+	# depois do quartel") — um trava a PESQUISA (nao da nem pra escolher
+	# Estabulo antes de pesquisar Quartel), o outro trava a CONSTRUCAO
+	# fisica do predio mesmo com a tech ja pronta; os dois combinados.
+	var estabulo := TechData.new()
+	estabulo.id = "estabulo"
+	estabulo.display_name = "Estábulo"
+	estabulo.cost = 15.0
+	estabulo.prerequisites = ["quartel"]
+	estabulo.unlocks_unit = "cavalry"
+	estabulo.school = "Doutrina"
+	estabulo.description = "Um mestre-cavalariço codifica as técnicas de doma, ferração e equipagem de guerra — o alicerce necessário antes de qualquer estábulo abrigar cavalos de batalha de verdade."
+	techs[estabulo.id] = estabulo
+
+	# Prerequisito ["estabulo"], NAO Tier 0 — pedido do usuario: "uma
+	# pesquisa seguinte ao estabulo... o batedor montado, que libera a
+	# construcao do batedor". "Construcao" aqui e treinar a tropa, nao um
+	# predio novo: Batedor cai no MESMO Estabulo que ja treina Cavaleiro/
+	# Cavaleiro Real (fallback especial em BuildingDatabase.
+	# building_that_trains, mesmo principio do Cavaleiro Real) — faz
+	# sentido tematico (um batedor MONTADO tambem sai do estabulo) e evita
+	# inventar um predio novo so pra uma tropa de baixo dano. unlocks_unit
+	# = "scout" (nao "cavalry" de novo) e o que da a Batedor seu PROPRIO
+	# gate de desbloqueio, alem do gate de predio que "estabulo" ja cobre —
+	# assim o jogador precisa pesquisar as DUAS (Estabulo primeiro, depois
+	# Batedor Montado) antes de treinar Batedor, mesmo com o Estabulo ja
+	# construido.
+	var batedor_montado := TechData.new()
+	batedor_montado.id = "batedor_montado"
+	batedor_montado.display_name = "Batedor Montado"
+	batedor_montado.cost = 25.0
+	batedor_montado.prerequisites = ["estabulo"]
+	batedor_montado.unlocks_unit = "scout"
+	batedor_montado.school = "Doutrina"
+	batedor_montado.description = "Um cavaleiro leve, sem armadura pesada nem lança de choque, aprende a cavalgar longe e rápido — sua função não é vencer batalhas, é ver o que está além da próxima colina antes de qualquer outra pessoa."
+	techs[batedor_montado.id] = batedor_montado
+
+	# prerequisites = ["quartel"] — CORRECAO do usuario sobre a primeira
+	# versao desta tech (que tinha ido pra Tier 0 sem pre-requisito
+	# nenhum): "nao e correlacionada com nenhuma outra" se referia a nao
+	# se correlacionar com o ramo Estabulo/Batedor Montado (arquearia e um
+	# ramo PROPRIO, separado), NAO "sem pre-requisito nenhum" — o diagrama
+	# do usuario deixa claro que Quartel e raiz das DUAS ramificacoes:
+	# "quartel -> estabulo -> batedor montado, \/ arquearia... o quartel
+	# libera a pesquisa de estabulo e arquearia". Mesmo mecanismo de
+	# Quartel/Estabulo: unlocks_unit = "archer" trava a CONSTRUCAO do Campo
+	# de Tiro (tech_that_unlocks deixa de devolver null pro Campo de Tiro),
+	# o que atrasa treinar Arqueiro ate pesquisar isso — Arqueiro deixa de
+	# ser tropa mundana "sempre liberada" (ver comentario de
+	# is_unit_unlocked).
+	var arquearia := TechData.new()
+	arquearia.id = "arquearia"
+	arquearia.display_name = "Arquearia"
+	arquearia.cost = 15.0
+	arquearia.prerequisites = ["quartel"]
+	arquearia.unlocks_unit = "archer"
+	arquearia.school = "Doutrina"
+	arquearia.description = "Puxar a corda, mirar e soltar parece simples até a centésima flecha perdida — um mestre-arqueiro formaliza a postura, a respiração e a manutenção do próprio arco em algo que se ensina de verdade, não só se aprende sozinho."
+	techs[arquearia.id] = arquearia
+
+	# Tier 0, SEM prerequisito — irma solta de Quartel, nao filha dele
+	# (fortificar uma cidade nao depende de disciplina militar nenhuma, so
+	# de mao de obra e pedra). Pedido do usuario: "eu acho que a muralha
+	# [predio] nao faz tanto sentido, vamos remover ela, e adicionar como
+	# pesquisa... essa pesquisa libera a construção da muralha, mas essa
+	# muralha no caso simplesmente adiciona esteticamente uma muralha ao
+	# redor do tile da cidade... dando um shield a ela". Reaproveita o anel
+	# de muralha que City._add_walls ja desenhava (antes so por populacao,
+	# sem bonus nenhum) em vez de duplicar visual: unlocks_building = "walls"
+	# trava a CONSTRUCAO do predio (ver TechDatabase.tech_that_unlocks_
+	# building/City._tech_unlocked_for_building), e BuildingData.walls.
+	# self_placed = true faz esse predio, uma vez construido, acender o
+	# anel de muralha da PROPRIA cidade (ver City._build_visual_procedural)
+	# em vez de virar um modelo separado num tile vizinho escolhido — nao
+	# faz sentido "escolher onde" cercar uma cidade que so tem um tile.
+	var muralhas := TechData.new()
+	muralhas.id = "muralhas"
+	muralhas.display_name = "Muralhas"
+	muralhas.cost = 15.0
+	muralhas.unlocks_building = "walls"
+	muralhas.school = "Doutrina"
+	muralhas.description = "Um mestre-pedreiro aprende a erguer um anel de pedra alto o bastante pra deter um aríete e reto o bastante pra não desabar sob o próprio peso — o alicerce de qualquer cidade que pretenda sobreviver a um cerco de verdade."
+	techs[muralhas.id] = muralhas
 
 	var invocacao_espiritos := TechData.new()
 	invocacao_espiritos.id = "invocacao_espiritos"
@@ -200,15 +329,19 @@ static func available_techs(researched: Dictionary) -> Array:
 			result.append(tech)
 	return result
 
-## Guerreiro/Colonizador sempre liberados; o resto depende de qual
-## tecnologia declara `unlocks_unit == kind` ter sido pesquisada. Kind sem
-## nenhuma tecnologia associada tambem fica liberado por padrao (fail-open
-## — nao trava um tipo de unidade novo que ainda nao ganhou tech propria;
-## e por isso que Arqueiro e Cavaleiro, que nao tem mais nenhuma tech
-## magica associada nesta arvore, ficam liberados desde o inicio junto
-## com Guerreiro — tropas mundanas nao exigem pesquisa arcana nenhuma).
+## Colonizador e Guarda sao os UNICOS kinds sempre liberados aqui — Guarda
+## via fail-open natural (nenhuma tech mira "warrior", ver comentario de
+## _build_all), Colonizador via hardcode explicito (nunca teve tech
+## nenhuma associada, nem faria sentido ter). Cavaleiro (comum), Arqueiro e
+## Batedor TODOS passam pelo loop normal agora: "Estabulo" tem unlocks_unit
+## == "cavalry", "Arquearia" == "archer", "Batedor Montado" == "scout" —
+## os tres ficam de verdade bloqueados ATE pesquisar (pedido do usuario:
+## "introduza a pesquisa em arqueria... nela voce libera a construcao que
+## atualmente temos pra treinar arqueiros"). Resto do kind sem tecnologia
+## associada fica liberado por padrao (fail-open — nao trava um tipo de
+## unidade novo que ainda nao ganhou tech propria).
 static func is_unit_unlocked(kind: String, researched: Dictionary) -> bool:
-	if kind == "settler" or kind == "warrior":
+	if kind == "settler":
 		return true
 	for tech in all_techs():
 		if tech.unlocks_unit == kind:
@@ -216,11 +349,14 @@ static func is_unit_unlocked(kind: String, researched: Dictionary) -> bool:
 	return true
 
 ## Tecnologia cujo unlocks_unit bate com `kind`, ou null se nenhuma
-## tecnologia trava esse kind (Colonizador/Guerreiro, e agora tambem
-## Arqueiro/Cavaleiro — ver comentario de is_unit_unlocked) — usado so pra
-## mostrar qual pesquisa falta num tooltip (HUD._production_lock_reason)
-## e por City._tech_unlocked_for_building() pra saber se um predio de
-## treino ja pode ser construido. kind == "" tem que devolver null
+## tecnologia trava esse kind (so Colonizador e Guarda — ver comentario de
+## is_unit_unlocked; "men_at_arms"/"cavalry"/"archer"/"scout" SIM caem
+## aqui, ver techs "Quartel"/"Estabulo"/"Arquearia"/"Batedor Montado" em
+## _build_all) — usado por
+## City._tech_unlocked_for_building() pra saber se um predio de treino ja
+## pode ser construido (e por tabela, HUD._building_lock_reason mostra
+## qual pesquisa falta no tooltip de CONSTRUCAO — nao mais no de treino de
+## tropa, que agora so aparece ja liberado). kind == "" tem que devolver null
 ## explicitamente ANTES do loop: `TechData.unlocks_unit` tambem default
 ## pra "" nas tecnologias que nao desbloqueiam unidade nenhuma
 ## (Alquimia Botanica, Geomancia...), entao sem essa guarda
@@ -232,6 +368,18 @@ static func tech_that_unlocks(kind: String) -> TechData:
 		return null
 	for tech in all_techs():
 		if tech.unlocks_unit == kind:
+			return tech
+	return null
+
+## Mesma ideia de tech_that_unlocks, so que pra um predio SEM trains_unit
+## (ex: Muralhas, ver TechData.unlocks_building) — City._tech_unlocked_for_
+## building() consulta essa aqui quando tech_that_unlocks(building.
+## trains_unit) nao acha nada (trains_unit == "" pra esses predios).
+static func tech_that_unlocks_building(building_id: String) -> TechData:
+	if building_id == "":
+		return null
+	for tech in all_techs():
+		if tech.unlocks_building == building_id:
 			return tech
 	return null
 

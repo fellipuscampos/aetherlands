@@ -1,10 +1,13 @@
 extends Control
 
-## Menu de pausa: ESC ou o botao "Menu" da HUD (via EventBus.pause_requested)
-## abre isto por cima do jogo e congela tudo com get_tree().paused = true —
-## camera, IA, animacoes de unidade etc. param sozinhos (process_mode padrao
-## deles e PAUSABLE/INHERIT). So este Control roda com PROCESS_MODE_ALWAYS,
-## senao os proprios botoes do menu de pausa parariam de responder.
+## Menu de pausa: SO a tecla ESC abre isto (pedido do usuario: "tire o meu
+## das opções tambem, o menu é o proprio esc... nao precisa de um botao
+## escrito menu" — o botao "Menu" da HUD e o EventBus.pause_requested que
+## ele emitia foram removidos, ESC ja bastava sozinho) por cima do jogo,
+## congelando tudo com get_tree().paused = true — camera, IA, animacoes de
+## unidade etc. param sozinhos (process_mode padrao deles e PAUSABLE/
+## INHERIT). So este Control roda com PROCESS_MODE_ALWAYS, senao os
+## proprios botoes do menu de pausa parariam de responder.
 ## Salvar/Sair/Continuar sao resolvidos aqui mesmo; Carregar e Voltar ao
 ## Menu exigem coordenar hex_grid/HUD/tela de titulo, entao so emitem
 ## sinal pro Main.gd cuidar disso (e sempre despausam antes de emitir).
@@ -31,10 +34,9 @@ func _ready() -> void:
 	settings_button.pressed.connect(settings_panel.toggle)
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
-	EventBus.pause_requested.connect(toggle)
 
 ## Regressao: ESC abria o menu de pausa POR CIMA de um overlay da HUD
-## (Tecnologia/Diplomacia/Ajuda) que estivesse aberto, deixando os dois
+## (Tecnologia/Diplomacia/Grimorio) que estivesse aberto, deixando os dois
 ## empilhados (o overlay continuava visivel=true por baixo, reaparecendo
 ## assim que a pausa fechasse). Fecha o overlay da HUD primeiro, se tiver
 ## um aberto — so abre a pausa de verdade se nao tinha nenhum.

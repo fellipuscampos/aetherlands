@@ -24,12 +24,29 @@ func test_techs_without_prerequisites_are_available_from_start():
 	assert_true("canalizacao_base" in ids)
 	assert_true("alquimia_botanica" in ids)
 	assert_true("transmutacao_rocha" in ids)
+	assert_true("quartel" in ids, "quartel e tier 0, sem pre-requisito")
+	assert_true("muralhas" in ids, "muralhas e tier 0, sem pre-requisito — irma solta de quartel, nao filha dele")
 	assert_false("invocacao_espiritos" in ids, "invocacao de espiritos exige canalizacao da trama pesquisada antes")
 	assert_false("pacto_florestal" in ids, "pacto florestal exige alquimia botanica pesquisada antes")
+	assert_false("batedor_montado" in ids, "batedor montado exige estabulo pesquisada antes")
+	assert_false("estabulo" in ids, "correcao do usuario: estabulo exige quartel pesquisada antes, nao e mais tier 0")
+	assert_false("arquearia" in ids, "correcao do usuario: arquearia TAMBEM exige quartel pesquisada antes, nao e mais tier 0")
 
 func test_tech_with_prerequisite_becomes_available_after_researching_it():
 	var ids = TechDatabase.available_techs({"canalizacao_base": true}).map(func(t): return t.id)
 	assert_true("invocacao_espiritos" in ids)
+
+## Diagrama exato do pedido do usuario: "quartel -> estabulo -> batedor
+## montado, \/ arquearia... o quartel libera a pesquisa de estabulo e
+## arquearia" — Quartel e raiz das DUAS, nao so de Estabulo.
+func test_quartel_unlocks_both_estabulo_and_arquearia():
+	var ids = TechDatabase.available_techs({"quartel": true}).map(func(t): return t.id)
+	assert_true("estabulo" in ids, "quartel deveria liberar a pesquisa de estabulo")
+	assert_true("arquearia" in ids, "quartel deveria liberar a pesquisa de arquearia")
+
+func test_batedor_montado_becomes_available_after_researching_estabulo():
+	var ids = TechDatabase.available_techs({"estabulo": true}).map(func(t): return t.id)
+	assert_true("batedor_montado" in ids)
 
 func test_researched_tech_is_not_offered_again():
 	var ids = TechDatabase.available_techs({"canalizacao_base": true}).map(func(t): return t.id)
@@ -39,23 +56,66 @@ func test_is_unit_unlocked_settler_and_warrior_always_true():
 	assert_true(TechDatabase.is_unit_unlocked("settler", {}))
 	assert_true(TechDatabase.is_unit_unlocked("warrior", {}))
 
-## Nenhuma tecnologia da nova arvore magica mira Arqueiro/Cavaleiro —
-## viraram tropas mundanas sempre disponiveis (mesmo status de Guerreiro),
-## so as tropas MAGICAS (Mago, Grifo, Golem, Convocador de Sombras,
-## Catapulta Cadenciada, Ent) exigem pesquisa agora. is_unit_unlocked() e
-## fail-open pra kind sem tech associada (ver comentario na propria
-## funcao), entao isso vale sem nenhuma mudanca de codigo.
-func test_archer_and_cavalry_are_always_unlocked_mundane_troops():
-	assert_true(TechDatabase.is_unit_unlocked("archer", {}))
-	assert_true(TechDatabase.is_unit_unlocked("cavalry", {}))
+## Arqueiro passou a exigir pesquisa de verdade — pedido do usuario:
+## "introduza a pesquisa em arqueria... nela voce libera a construcao que
+## atualmente temos pra treinar arqueiros". "Arquearia" tem unlocks_unit
+## == "archer", entao cai no loop normal de is_unit_unlocked e fica
+## bloqueado ate pesquisar (deixou de ser fail-open).
+func test_archer_requires_researching_arquearia():
+	assert_false(TechDatabase.is_unit_unlocked("archer", {}))
+	assert_true(TechDatabase.is_unit_unlocked("archer", {"arquearia": true}))
+
+## Cavaleiro (comum) passou a exigir pesquisa de verdade — pedido do
+## usuario: "voce precisa pesquisar[,] o estabulo [pra poder] construir".
+## Diferente do Guarda (que preserva um hardcode antigo em
+## is_unit_unlocked so pra "warrior"), Cavaleiro nao tem excecao nenhuma:
+## "Estabulo" tem unlocks_unit == "cavalry", entao cai no loop normal da
+## funcao e fica bloqueado ate pesquisar.
+func test_cavalry_requires_researching_estabulo():
+	assert_false(TechDatabase.is_unit_unlocked("cavalry", {}))
+	assert_true(TechDatabase.is_unit_unlocked("cavalry", {"estabulo": true}))
+
+## Batedor exige a PROPRIA tech ("Batedor Montado"), nao so "Estabulo" —
+## pedido do usuario: "uma pesquisa seguinte ao estabulo... o batedor
+## montado, que libera a construcao do batedor". Ter so "estabulo"
+## pesquisada NAO basta.
+func test_scout_requires_researching_batedor_montado_specifically():
+	assert_false(TechDatabase.is_unit_unlocked("scout", {}))
+	assert_false(TechDatabase.is_unit_unlocked("scout", {"estabulo": true}), "so a tech Estabulo nao deveria liberar o Batedor")
+	assert_true(TechDatabase.is_unit_unlocked("scout", {"estabulo": true, "batedor_montado": true}))
+
+func test_tech_that_unlocks_finds_estabulo_for_cavalry():
+	var tech = TechDatabase.tech_that_unlocks("cavalry")
+	assert_not_null(tech)
+	assert_eq(tech.id, "estabulo")
+
+func test_tech_that_unlocks_finds_arquearia_for_archer():
+	var tech = TechDatabase.tech_that_unlocks("archer")
+	assert_not_null(tech)
+	assert_eq(tech.id, "arquearia")
+
+func test_tech_that_unlocks_finds_batedor_montado_for_scout():
+	var tech = TechDatabase.tech_that_unlocks("scout")
+	assert_not_null(tech)
+	assert_eq(tech.id, "batedor_montado")
 
 func test_tech_that_unlocks_finds_the_matching_tech():
 	var tech = TechDatabase.tech_that_unlocks("mage")
 	assert_not_null(tech)
 	assert_eq(tech.id, "invocacao_espiritos")
 
-func test_tech_that_unlocks_returns_null_for_kind_without_a_tech():
-	assert_null(TechDatabase.tech_that_unlocks("warrior"), "Guerreiro sempre foi liberado sem pesquisa nenhuma")
+## men_at_arms (Homem de Armas) tem a tecnologia associada ("Quartel"), NAO
+## warrior (Guarda) — pedido do usuario numa rodada seguinte: "o guarda
+## comum nao precisa de quartel pra ser feito", que moveu
+## BuildingDatabase.barracks.trains_unit de "warrior" pra "men_at_arms" (e
+## quartel.unlocks_unit junto, pros dois continuarem batendo).
+func test_tech_that_unlocks_finds_quartel_for_men_at_arms():
+	var tech = TechDatabase.tech_that_unlocks("men_at_arms")
+	assert_not_null(tech)
+	assert_eq(tech.id, "quartel")
+
+func test_tech_that_unlocks_returns_null_for_warrior():
+	assert_null(TechDatabase.tech_that_unlocks("warrior"), "Guarda nao depende de tecnologia nenhuma")
 
 ## Regressao: TechData.unlocks_unit tambem default pra "" nas tecnologias
 ## de bioma (Alquimia Botanica, Geomancia...) que nao desbloqueiam unidade
@@ -63,6 +123,21 @@ func test_tech_that_unlocks_returns_null_for_kind_without_a_tech():
 ## a primeira dessas por acidente em vez de devolver null.
 func test_tech_that_unlocks_returns_null_for_empty_kind():
 	assert_null(TechDatabase.tech_that_unlocks(""), "predio de rendimento (trains_unit vazio) nao deveria exigir tecnologia nenhuma")
+
+## Mesma ideia de tech_that_unlocks, so que pra predios SEM trains_unit
+## (TechData.unlocks_building, nao unlocks_unit) — Muralhas e o unico caso
+## hoje: "a muralha nao faz tanto sentido... vamos remover ela, e
+## adicionar como pesquisa".
+func test_tech_that_unlocks_building_finds_muralhas_for_walls():
+	var tech = TechDatabase.tech_that_unlocks_building("walls")
+	assert_not_null(tech)
+	assert_eq(tech.id, "muralhas")
+
+func test_tech_that_unlocks_building_returns_null_for_a_building_without_its_own_tech():
+	assert_null(TechDatabase.tech_that_unlocks_building("granary"), "Celeiro nao tem tecnologia propria nenhuma")
+
+func test_tech_that_unlocks_building_returns_null_for_empty_id():
+	assert_null(TechDatabase.tech_that_unlocks_building(""))
 
 func test_is_unit_unlocked_mage_requires_invocacao_espiritos():
 	assert_false(TechDatabase.is_unit_unlocked("mage", {}))
@@ -223,12 +298,17 @@ func test_decide_research_does_not_override_existing_choice():
 	assert_eq(player.current_research, "transmutacao_rocha")
 
 ## Regressao: antes da arvore de tecnologia, a IA sorteava Arqueiro/
-## Cavaleiro desde o primeiro turno. Na arvore magica atual, Arqueiro e
-## Cavaleiro viraram tropas mundanas sempre liberadas (ver
-## test_archer_and_cavalry_are_always_unlocked_mundane_troops) — entao sem
-## NENHUMA tecnologia magica pesquisada, so as 3 tropas mundanas
-## (Guerreiro/Arqueiro/Cavaleiro) deveriam sair do sorteio, nunca uma
-## tropa magica (Catapulta/Mago/Grifo/Ent).
+## Cavaleiro desde o primeiro turno. RivalAI nao passa pelo gate de PREDIO
+## (so o de pesquisa/is_unit_unlocked, ver MILITARY_KINDS) — o teste so
+## afirma que Catapulta/Mago/Grifo/Ent NUNCA saem do sorteio sem pesquisa
+## nenhuma (permissivo o bastante pra sobreviver a Arqueiro/Cavaleiro terem
+## ganhado tech propria — "Arquearia"/"Estabulo": os dois deixaram de
+## aparecer nesta lista NA PRATICA, ja que sem pesquisa nenhuma so "warrior"
+## sobra em MILITARY_KINDS, mas continuam dentro do conjunto PERMITIDO
+## abaixo, entao o teste nao quebra). Guarda continua sempre "desbloqueado"
+## aqui por causa do hardcode antigo em is_unit_unlocked (ver
+## test_tech_that_unlocks_returns_null_for_warrior pro gate que MUDOU, so
+## no nivel do predio).
 func test_decide_production_never_picks_locked_units_before_researching():
 	var player := PlayerData.new(CivilizationData.new())
 	var hex_grid := HexGrid.new()

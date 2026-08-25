@@ -33,6 +33,15 @@ const BEHAVIOR_HUNTER := "hunter" # patrulha uma area larga cacando presa isolad
 ## - lair_cap: populacao maxima viva (guardiao incluso) que ESSE tipo
 ##   mantem na area do proprio covil (ver HexGrid._count_live_monsters_
 ##   near_lair) — substitui o antigo LAIR_SPAWN_CAP fixo unico.
+## - global_cap: populacao maxima viva desse tipo em QUALQUER LUGAR do
+##   mapa, somando TODOS os covis (ver HexGrid._count_alive_of_kind/
+##   _global_cap_for) — pedido do usuario: "ponha um limite no spawn de
+##   monstros... cada um so pode ter 5 vivos por vez, no caso dos vivern 2
+##   vivos de uma vez e no dragao apenas 1". Independente de lair_cap: um
+##   mapa grande pode ter VARIOS covis do mesmo tipo, cada um enchendo ate
+##   o proprio lair_cap — sem este segundo teto, o total global do tipo
+##   nao teria limite nenhum (ex: 3 covis de Vivern, lair_cap 2 cada,
+##   dariam 6 Viverns vivos ao mesmo tempo sem essa checagem extra).
 ## - batch_spawn: quantos nascem de uma vez quando o covil acerta o roll de
 ##   reforco (ver HexGrid._reinforce_lair) — Esqueleto nasce em grupo (3),
 ##   o resto nasce um de cada vez (1).
@@ -50,7 +59,7 @@ const BEHAVIOR_HUNTER := "hunter" # patrulha uma area larga cacando presa isolad
 const KIND_DATA := {
 	"goblin": {
 		"biomes": [HexTileData.TerrainType.FOREST, HexTileData.TerrainType.PLAINS, HexTileData.TerrainType.GRASSLAND],
-		"weight": 60, "min_threat": 0.0, "lair_cap": 4, "batch_spawn": 1,
+		"weight": 60, "min_threat": 0.0, "lair_cap": 4, "global_cap": 5, "batch_spawn": 1,
 		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": true,
 		"unit_name": "Goblin", "attack": 3.0, "defense": 2.0, "max_hp": 8.0,
 		"movement_points": 1.0, "vision_range": 1, "gold_reward": 15.0, "clear_reward": 75.0,
@@ -58,15 +67,28 @@ const KIND_DATA := {
 	},
 	"troll": {
 		"biomes": [HexTileData.TerrainType.MOUNTAINS, HexTileData.TerrainType.TAIGA, HexTileData.TerrainType.TUNDRA],
-		"weight": 30, "min_threat": 0.3, "lair_cap": 2, "batch_spawn": 1,
+		"weight": 30, "min_threat": 0.3, "lair_cap": 2, "global_cap": 5, "batch_spawn": 1,
 		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
 		"unit_name": "Troll", "attack": 6.0, "defense": 4.0, "max_hp": 20.0,
 		"movement_points": 1.0, "vision_range": 1, "gold_reward": 35.0, "clear_reward": 100.0,
 		"flies": false, "visual_kind": "troll",
 	},
 	"wyvern": {
-		"biomes": [HexTileData.TerrainType.LAVA, HexTileData.TerrainType.LAVA_SEA, HexTileData.TerrainType.CRYSTAL],
-		"weight": 10, "min_threat": 0.65, "lair_cap": 2, "batch_spawn": 1,
+		# Microbiomas dos continentes Vulcanico/de Cristal (VOLCANIC_ROCK/
+		# PEAKS/ASH, CRYSTAL_PEAKS, MYSTIC_SOIL/SPRING) somados aqui —
+		# sem isso, _spawn_monster_lairs (nao escopado por zona) cairia no
+		# fallback "ignora bioma" de MonsterDatabase.random_kind pra
+		# qualquer tile desses tipos novos, deixando Goblin/Troll/Esqueleto
+		# nascerem nos continentes especiais e quebrando a identidade
+		# tematica estrita pedida pelo usuario. Vivern vira "guardiao de
+		# todo o continente especial", extensao natural do que ja cobria
+		# (Lava/Mar de Lava/Cristal).
+		"biomes": [
+			HexTileData.TerrainType.LAVA, HexTileData.TerrainType.LAVA_SEA, HexTileData.TerrainType.CRYSTAL,
+			HexTileData.TerrainType.VOLCANIC_ROCK, HexTileData.TerrainType.VOLCANIC_HILLS, HexTileData.TerrainType.VOLCANIC_PEAKS, HexTileData.TerrainType.VOLCANIC_ASH,
+			HexTileData.TerrainType.CRYSTAL_PEAKS, HexTileData.TerrainType.MYSTIC_SOIL, HexTileData.TerrainType.MYSTIC_SPRING,
+		],
+		"weight": 10, "min_threat": 0.65, "lair_cap": 2, "global_cap": 2, "batch_spawn": 1,
 		"behavior": BEHAVIOR_HUNTER, "invader_promotable": false,
 		"unit_name": "Vivern", "attack": 8.0, "defense": 3.0, "max_hp": 16.0,
 		"movement_points": 3.0, "vision_range": 1, "gold_reward": 70.0, "clear_reward": 130.0,
@@ -74,7 +96,7 @@ const KIND_DATA := {
 	},
 	"skeleton": {
 		"biomes": [HexTileData.TerrainType.DESERT, HexTileData.TerrainType.TUNDRA],
-		"weight": 25, "min_threat": 0.15, "lair_cap": 4, "batch_spawn": 3,
+		"weight": 25, "min_threat": 0.15, "lair_cap": 4, "global_cap": 5, "batch_spawn": 3,
 		"behavior": BEHAVIOR_INVADER, "invader_promotable": false,
 		"unit_name": "Esqueleto", "attack": 4.0, "defense": 1.0, "max_hp": 6.0,
 		"movement_points": 2.0, "vision_range": 1, "gold_reward": 10.0, "clear_reward": 85.0,
@@ -82,7 +104,7 @@ const KIND_DATA := {
 	},
 	"dragon": {
 		"biomes": [HexTileData.TerrainType.LAVA],
-		"weight": 5, "min_threat": 0.85, "lair_cap": 1, "batch_spawn": 1,
+		"weight": 5, "min_threat": 0.85, "lair_cap": 1, "global_cap": 1, "batch_spawn": 1,
 		"behavior": BEHAVIOR_HUNTER, "invader_promotable": false,
 		"unit_name": "Dragao", "attack": 16.0, "defense": 8.0, "max_hp": 50.0,
 		"movement_points": 2.0, "vision_range": 2, "gold_reward": 200.0, "clear_reward": 150.0,
@@ -165,3 +187,31 @@ static func _eligible_kinds(threat_level: float, terrain_type: int) -> Array:
 			continue
 		eligible.append(k)
 	return eligible
+
+## Como random_kind, mas restrito a tipos com flies=true — usado SO pra
+## covis nascendo em tile de Lava/Mar de Lava (HexGrid._spawn_monster_
+## lairs), onde um tipo terrestre ficaria fisicamente preso pra sempre
+## (LAVA/LAVA_SEA bloqueiam unidade terrestre, ver HexTileData.
+## blocks_land_units). Cai pro tipo voador mais fraco elegivel pro bioma
+## (ignorando ameaca) se nenhum bater min_threat — NUNCA cai pro fallback
+## biome-agnostico de random_kind (que poderia devolver um tipo
+## terrestre); devolve "" (nao KINDS[0]) se mesmo assim nada servir, pro
+## chamador pular esse candidato em vez de forcar um monstro que nao pode
+## existir ali.
+static func random_flying_kind(rng: RandomNumberGenerator, threat_level: float, terrain_type: int) -> String:
+	var eligible: Array = _eligible_kinds(threat_level, terrain_type).filter(func(k): return KIND_DATA[k].flies)
+	if eligible.is_empty():
+		eligible = _eligible_kinds(0.0, terrain_type).filter(func(k): return KIND_DATA[k].flies)
+	if eligible.is_empty():
+		return ""
+
+	var total := 0
+	for k in eligible:
+		total += KIND_DATA[k].weight
+	var roll = rng.randi_range(0, total - 1)
+	var acc := 0
+	for k in eligible:
+		acc += KIND_DATA[k].weight
+		if roll < acc:
+			return k
+	return eligible[0]

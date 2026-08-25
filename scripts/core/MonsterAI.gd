@@ -51,19 +51,37 @@ const INVADER_GROUP_THRESHOLD := 2
 const PILLAGE_DURATION_TURNS := 6
 const PILLAGE_GOLD_LOSS := 15.0
 
-static func take_turn(hex_grid: HexGrid, turn: int = 0) -> void:
+## So a parte de "preparar" o turno dos monstros (promover grupo ocioso a
+## Invasor), sem mover nenhum ainda — extraido de take_turn() pra
+## GameManager poder chamar isto UMA VEZ e depois processar cada monstro
+## aos poucos, em frames diferentes (ver GameManager._build_monster_turn_
+## items/stagger_ai_turns, mesmo motivo de RivalAI.begin_turn).
+static func begin_turn(hex_grid: HexGrid) -> void:
 	_promote_idle_groups_to_invaders(hex_grid)
+
+## Acao de UM monstro — extraida de take_turn() pelo mesmo motivo de
+## begin_turn() acima, pra poder ser chamada monstro-por-monstro em frames
+## diferentes.
+static func act_for_unit(unit: Unit, hex_grid: HexGrid, turn: int) -> void:
+	var behavior = _effective_behavior(unit)
+	match behavior:
+		MonsterDatabase.BEHAVIOR_INVADER:
+			_take_invader_turn(unit, hex_grid, turn)
+		MonsterDatabase.BEHAVIOR_HUNTER:
+			_take_hunter_turn(unit, hex_grid)
+		_:
+			_take_guardian_turn(unit, hex_grid)
+
+## Turno dos monstros inteiro DE UMA VEZ, no MESMO frame — continua sendo o
+## caminho usado quando GameManager.stagger_ai_turns esta desligado (o
+## padrao, inclusive em TODO teste GUT), agora so delegando pra
+## begin_turn()/act_for_unit() acima em vez de duplicar a logica.
+static func take_turn(hex_grid: HexGrid, turn: int = 0) -> void:
+	begin_turn(hex_grid)
 	for unit in hex_grid.neutral_units():
 		if not is_instance_valid(unit):
 			continue
-		var behavior = _effective_behavior(unit)
-		match behavior:
-			MonsterDatabase.BEHAVIOR_INVADER:
-				_take_invader_turn(unit, hex_grid, turn)
-			MonsterDatabase.BEHAVIOR_HUNTER:
-				_take_hunter_turn(unit, hex_grid)
-			_:
-				_take_guardian_turn(unit, hex_grid)
+		act_for_unit(unit, hex_grid, turn)
 
 static func _effective_behavior(unit: Unit) -> String:
 	if unit.monster_behavior_state != "":

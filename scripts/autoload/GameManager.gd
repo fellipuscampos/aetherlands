@@ -10,6 +10,54 @@ const GARRISON_HEAL_FRACTION := 0.25 # % do HP maximo curado por turno guarnecid
 const FORTIFY_HEAL_FRACTION := 0.1
 const SCIENCE_PER_POPULATION := 1.0 # "ciencia" por turno = populacao total das cidades
 
+## Pedido do usuario: "o Civilization nao faz tudo acontecer no mapa ao
+## mesmo tempo, as pecas e acoes... se movem em fila... em pequenos
+## grupos... assim diminui o lag na passada de turnos". `false` por padrao
+## (preserva 100% do comportamento SINCRONO de sempre — critico pros
+## testes GUT, que chamam _on_turn_changed() direto e checam o resultado
+## na MESMA linha seguinte, sem passar frame nenhum; NENHUM teste liga este
+## flag). Main.gd liga pra `true` uma vez, so na partida de verdade (ver
+## comentario de stagger_ai_turns em _on_turn_changed) — GUT nunca passa
+## por Main.gd (constroi HexGrid/PlayerData/GameManager na mao), entao o
+## flag nunca acidentalmente vira true durante um teste.
+var stagger_ai_turns: bool = false
+
+## Quantas ACOES de IA (uma unidade rival OU um monstro decidindo/se
+## movendo) processar por LOTE — pequeno de proposito ("pequenos grupos").
+const AI_ACTIONS_PER_BATCH := 2
+
+## Intervalo MINIMO (segundos) entre um lote de acoes de IA e o proximo,
+## enquanto a fila (_ai_turn_queue) esta drenando — pedido do usuario numa
+## rodada seguinte: "faca tambem as animacoes, as movimentacoes, ao inves
+## de dar proximo e tudo se mover de uma vez, o que tambem causa lag...
+## nao tudo ao mesmo tempo mas em fila". So espalhar a DECISAO por frame
+## (a versao anterior, drenando direto em _process() sem pausa nenhuma)
+## ainda deixava varias animacoes de movimento (Unit.slide_to,
+## MOVE_DURATION = 0.35s) comecando quase juntas — a cada poucos frames um
+## lote novo nascia e se somava aos Tweens ja em andamento, entao o pico
+## de animacoes simultaneas continuava alto mesmo com a DECISAO
+## espalhada. Pausar AI_BATCH_INTERVAL segundos entre lotes (bem menor que
+## MOVE_DURATION, mas o bastante pra nao empilhar tudo) garante que so
+## alguns poucos Tweens tocam ao mesmo tempo — visualmente perto do "uma
+## tropa (ou um pequeno grupo) de cada vez" que o Civilization faz.
+const AI_BATCH_INTERVAL := 0.12
+
+## true enquanto a fila de acoes de IA do turno atual (rivais + monstros)
+## ainda esta sendo drenada por _process() — HUD usa isto pra desabilitar
+## E trocar o texto de "Encerrar Turno" nesse meio-tempo (ver HUD._process),
+## evitando clicar de novo em cima de um turno que ainda nao terminou de
+## verdade, e deixando claro pro jogador que a IA ainda esta "pensando".
+var is_turn_processing: bool = false
+
+var _ai_turn_queue: Array = [] # ver _build_rival_turn_items/_build_monster_turn_items/_process
+var _ai_batch_timer: float = 0.0 # acumula delta ate AI_BATCH_INTERVAL, ver _process
+## Coords de predios concluidos NESTE turno (ver loop de City.process_turn
+## abaixo), consumido e limpo por _finish_turn() ao chamar hex_grid.
+## refresh_construction_markers() — precisa ser campo (nao variavel local)
+## porque _finish_turn() pode rodar em um frame POSTERIOR ao loop, quando
+## stagger_ai_turns esta ligado (ver _process).
+var _completed_building_coords_this_turn: Array[Vector2i] = []
+
 var state: GameState = GameState.MENU
 var map_width: int = 25
 var map_height: int = 25
@@ -19,9 +67,11 @@ var players: Array[PlayerData] = []
 var human_player: PlayerData
 var rival_players: Array[PlayerData] = []
 
-## Escolhido na tela de titulo antes de start_new_game(); "" mantem o padrao.
+## Escolhido na tela de titulo antes de start_new_game(); "" mantem o padrao
+## (nome de reino da RACA escolhida, ver _default_kingdom_name_for_race —
+## NAO mais um unico nome fixo humano, ver comentario la pro bug que isso
+## corrigiu).
 var human_kingdom_name: String = ""
-const DEFAULT_KINGDOM_NAME := "Reino de Aldenmark"
 
 ## Raca do jogador (CivilizationData.race, ver UnitDatabase.RACE_UNIQUE_
 ## KIND) — escolhida na tela de titulo (TitleScreen._selected_race),
@@ -68,6 +118,21 @@ func start_new_game(grid: HexGrid) -> void:
 	_spawn_starting_forces()
 	hex_grid.recompute_fog(human_player)
 
+## Nome de reino padrao quando o jogador deixa o campo de nome em branco na
+## tela de configuracao — pedido/bug relatado pelo usuario: "escolhi outro
+## reino e iniciei com o reino humano" (o campo mostrava so o PLACEHOLDER
+## "Reino de Aldenmark", e antes disso o fallback aqui tambem so conhecia
+## esse UNICO nome, fixo, do reino humano — entao qualquer jogador que
+## escolhesse Elfo/Anao/Orc e nao digitasse um nome proprio acabava com o
+## reino chamado "Reino de Aldenmark" mesmo assim, dando a impressao de
+## estar jogando de humano mesmo com CivilizationData.race correto por
+## baixo). Agora cada raca cai no proprio nome de reino (GameSetupScreen.
+## RACE_INFO, mesma fonte usada pela tela de configuracao — sem duplicar
+## os 4 nomes numa tabela separada aqui).
+func _default_kingdom_name_for_race(race: String) -> String:
+	var info: Dictionary = GameSetupScreen.RACE_INFO.get(race, GameSetupScreen.RACE_INFO.human)
+	return info.display_name
+
 ## Monta jogadores/civs do zero, sem povoar unidades/cidades — usado tanto
 ## por start_new_game() (jogo novo, spawna forcas iniciais em seguida) quanto
 ## por SaveManager.load_game() (que reconstroi unidades/cidades a partir do
@@ -79,7 +144,7 @@ func setup_players(grid: HexGrid) -> void:
 	rival_players.clear()
 
 	var human_civ := CivilizationData.new()
-	human_civ.civ_name = human_kingdom_name if human_kingdom_name != "" else DEFAULT_KINGDOM_NAME
+	human_civ.civ_name = human_kingdom_name if human_kingdom_name != "" else _default_kingdom_name_for_race(human_race)
 	human_civ.leader_name = "Rainha Elara"
 	human_civ.color = Color(0.2, 0.45, 0.85)
 	human_civ.race = human_race
@@ -187,20 +252,32 @@ func _spawn_starting_forces() -> void:
 
 ## Espalha os rivais em angulos igualmente espacados ao redor do centro do
 ## mapa (onde o humano comeca), numa elipse escalada pela largura/altura
-## reais do mapa retangular (nao mais um raio unico com achatamento fixo
-## de 0.6 — aquele numero era so pra caber no losango/hexagono antigo,
-## ver historico). 0.35 = 70% da METADE de cada dimensao, mesma proporcao
-## de distancia do centro que a formula antiga usava.
+## da pegada FIXA do continente Principal (TitleScreen.MAIN_ZONE_SIZE, nao
+## mais map_width/map_height ao vivo — pedido do usuario: "expandir o
+## tamanho fixo do mapa pra acomodar dois novos continentes especiais").
+## Sem essa trava, os rivais se espalhariam pelo canvas TOTAL (agora bem
+## maior, pra caber os continentes Vulcanico/de Cristal), caindo no
+## oceano de separacao ou dentro de um dos continentes especiais em vez
+## de sempre nascerem dentro do continente Principal, igual sempre foi.
+## 0.35 = 70% da METADE de cada dimensao, mesma proporcao de distancia do
+## centro que a formula antiga usava.
 func _rival_origin(index: int, count: int) -> Vector2i:
 	var angle = TAU * float(index) / float(max(count, 1))
-	var dist_q = float(map_width) * 0.35
-	var dist_r = float(map_height) * 0.35
+	var dist_q = float(TitleScreen.MAIN_ZONE_SIZE.width) * 0.35
+	var dist_r = float(TitleScreen.MAIN_ZONE_SIZE.height) * 0.35
 	var q = int(round(cos(angle) * dist_q))
 	var r = int(round(sin(angle) * dist_r))
 	return Vector2i(q, r)
 
 func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 	if state == GameState.GAME_OVER:
+		return
+	# Defensivo: nao deveria acontecer de verdade (HUD desabilita "Encerrar
+	# Turno" enquanto is_turn_processing, ver HUD._process), mas TurnManager.
+	# end_turn() nao tem trava propria nenhuma — se alguem chamar de novo no
+	# meio da fila ainda drenando, ignora em vez de embaralhar _ai_turn_queue
+	# com dois turnos ao mesmo tempo.
+	if is_turn_processing:
 		return
 
 	for player in players:
@@ -243,6 +320,13 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		_process_research(player)
 		var mana_income := 0.0
 		for city in player.cities.duplicate():
+			# Modo debug (ver set_debug_mode acima): "o tempo de fazer
+			# qualquer unidade e 1 turno" — completa a producao atual
+			# (unidade OU predio, mesmo criterio de City.process_turn) so
+			# pra cidade do jogador HUMANO, antes de processar o turno de
+			# verdade, em vez de duplicar a logica de spawn/construcao aqui.
+			if debug_mode and player == human_player:
+				city.stored_production = max(city.stored_production, city.production_cost())
 			var result = city.process_turn(hex_grid)
 			player.gold += result.gold
 			mana_income += result.mana
@@ -252,34 +336,114 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 			if result.built_kind != "":
 				if result.built_coord != City.NO_PENDING_COORD:
 					hex_grid.place_building(result.built_coord, result.built_kind, player)
+					_completed_building_coords_this_turn.append(result.built_coord)
 				if player == human_player:
 					var building: BuildingData = BuildingDatabase.get_building(result.built_kind)
 					EventBus.notify.emit("%s concluiu: %s" % [city.city_name, building.display_name], "confirm")
 		player.mana += mana_income
 		player.mana_income_per_turn = mana_income
 
+	# Pedido do usuario: "Civilization nao faz tudo acontecer no mapa ao
+	# mesmo tempo... em pequenos grupos... diminui o lag na passada de
+	# turnos". stagger_ai_turns DESLIGADO (padrao/todo teste GUT): rivais e
+	# monstros agem tudo de uma vez, no MESMO frame, exatamente como
+	# sempre. LIGADO (Main.gd, so na partida de verdade): monta a fila de
+	# ACOES (uma por unidade rival + uma por monstro, ver
+	# _build_rival_turn_items/_build_monster_turn_items) mas so a EXECUTA
+	# aos poucos em _process() (AI_ACTIONS_PER_BATCH a cada AI_BATCH_
+	# INTERVAL segundos) — o resto do turno (producao/pesquisa/predio
+	# acima) continua rodando tudo de uma vez aqui, so a parte que ESCALA
+	# com o numero de unidades (a fonte real do travamento, ver comentario
+	# de stagger_ai_turns) e que fica espalhada. hex_grid.process_monster_
+	# lairs continua rodando ANTES de montar a fila de monstros nos dois
+	# casos (mesma ordem de sempre — um monstro recem-nascido ainda
+	# precisa poder agir no mesmo turno em que aparece).
+	if stagger_ai_turns:
+		_ai_turn_queue.append_array(_build_rival_turn_items())
+		hex_grid.process_monster_lairs(TurnManager.turn_number)
+		_ai_turn_queue.append_array(_build_monster_turn_items())
+		if _ai_turn_queue.is_empty():
+			_finish_turn()
+		else:
+			_ai_batch_timer = 0.0
+			is_turn_processing = true
+	else:
+		for rival in rival_players:
+			RivalAI.take_turn(rival, hex_grid, human_player)
+		hex_grid.process_monster_lairs(TurnManager.turn_number)
+		MonsterAI.take_turn(hex_grid, TurnManager.turn_number)
+		_finish_turn()
+
+## Uma acao pendente por unidade rival ainda viva, com o "contexto" dela
+## (visibilidade atual, ja calculada UMA vez por rival, nao por unidade —
+## ver RivalAI.begin_turn) pronto pra _process() so chamar RivalAI.
+## act_for_unit() aos poucos depois.
+func _build_rival_turn_items() -> Array:
+	var items: Array = []
 	for rival in rival_players:
-		RivalAI.take_turn(rival, hex_grid, human_player)
+		var visible := RivalAI.begin_turn(rival, hex_grid, human_player)
+		for unit in rival.units.duplicate():
+			if is_instance_valid(unit):
+				items.append({"kind": "rival", "unit": unit, "player": rival, "opponent": human_player, "visible": visible})
+	return items
 
-	# Covis de Monstro reforcam a propria guarda com o tempo (pedido do
-	# usuario: "ao redor de um covil de goblin pode spawnar ate 5
-	# goblins... tem que ter um limite pra nao spawnar pra sempre") — ver
-	# HexGrid.process_monster_lairs. Passa o turno atual pra chance de
-	# reforco escalar com o tempo (ver HexGrid._reinforce_chance). Antes de
-	# recompute_fog pra qualquer monstro novo ja aparecer/sumir corretamente
-	# no fog deste turno.
-	hex_grid.process_monster_lairs(TurnManager.turn_number)
+## Mesma ideia de _build_rival_turn_items, pros monstros neutros (ver
+## MonsterAI.begin_turn/act_for_unit) — chamado DEPOIS de
+## hex_grid.process_monster_lairs (ver _on_turn_changed), entao ja inclui
+## qualquer reforco recem-spawnado neste mesmo turno.
+func _build_monster_turn_items() -> Array:
+	var items: Array = []
+	MonsterAI.begin_turn(hex_grid)
+	var turn := TurnManager.turn_number
+	for unit in hex_grid.neutral_units():
+		if is_instance_valid(unit):
+			items.append({"kind": "monster", "unit": unit, "turn": turn})
+	return items
 
-	# Acampamentos Barbaros: cada monstro neutro age por conta propria
-	# (guardar territorio / marchar sobre a cidade mais proxima / cacar
-	# presa isolada — ver MonsterAI.gd). Depois do reforco de proposito:
-	# um grupo recem-nascido ja pode agir no mesmo turno em que aparece,
-	# mesmo precedente que unidade de rival recem-treinada ja tinha
-	# (RivalAI.take_turn acima roda depois da producao de cidade).
-	MonsterAI.take_turn(hex_grid, TurnManager.turn_number)
+## Drena ate AI_ACTIONS_PER_BATCH itens de _ai_turn_queue, no MAXIMO uma vez
+## a cada AI_BATCH_INTERVAL segundos (nao todo frame — ver comentario da
+## constante), enquanto is_turn_processing. So faz alguma coisa quando ha
+## uma fila de verdade sendo processada (o resto do tempo e um `if` vazio,
+## custo desprezivel) e quando o intervalo ja passou.
+func _process(delta: float) -> void:
+	if not is_turn_processing:
+		return
+	_ai_batch_timer += delta
+	if _ai_batch_timer < AI_BATCH_INTERVAL:
+		return
+	_ai_batch_timer = 0.0
 
+	var processed := 0
+	while processed < AI_ACTIONS_PER_BATCH and not _ai_turn_queue.is_empty():
+		var item: Dictionary = _ai_turn_queue.pop_front()
+		processed += 1
+		var unit: Unit = item.unit
+		if not is_instance_valid(unit):
+			continue
+		if item.kind == "rival":
+			RivalAI.act_for_unit(unit, hex_grid, item.player, item.opponent, item.visible)
+		else:
+			MonsterAI.act_for_unit(unit, hex_grid, item.turn)
+	if _ai_turn_queue.is_empty():
+		is_turn_processing = false
+		_finish_turn()
+
+## Ultimo passo do turno, rodado so DEPOIS que toda IA (rival + monstro) ja
+## agiu — sincrono (branch `else` acima) ou no fim da fila drenar (ver
+## _process acima), nunca no meio, senao recompute_fog/check_game_over
+## reagiriam a um estado do mapa so PARCIALMENTE atualizado.
+func _finish_turn() -> void:
+	# predios concluidos neste turno ganham uma "volta de graca" com a barra
+	# travada em 100% antes de sumir do "em obra" (ver comentario de
+	# just_completed em refresh_construction_markers). Roda ANTES de
+	# recompute_fog de proposito: recompute_fog e quem aplica a nevoa a
+	# CADA marcador (ver _apply_fog_to_entities) — se rodasse antes, um
+	# marcador criado/atualizado NESTE refresh so seria gateado corretamente
+	# no PROXIMO turno, deixando uma obra inimiga vazando visivel por um
+	# turno inteiro sempre que comecava ou terminava.
+	hex_grid.refresh_construction_markers(_completed_building_coords_this_turn)
+	_completed_building_coords_this_turn.clear()
 	hex_grid.recompute_fog(human_player)
-	hex_grid.refresh_construction_markers() # predios concluidos neste turno somem do "em obra"
 	check_game_over()
 
 ## Publico: tambem chamado logo apos um ataque do jogador (SelectionManager),
@@ -304,6 +468,35 @@ func _end_game(victory: bool) -> void:
 
 ## --- Debug (HUD.gd, botao "Debug" so em builds de desenvolvimento via
 ## OS.is_debug_build()) ---
+
+## Liga/desliga o modo debug — pedido do usuario: "libere no modo debug,
+## quando eu ativar, tudo liberado, tudo fica disponivel todas as
+## pesquisas ficam feitas, e o tempo de fazer qualquer unidade e 1 turno
+## pra eu estar tudo". Dois efeitos, so pro jogador HUMANO (mesmo escopo
+## de debug_gold/debug_complete_current_research, nunca a IA rival):
+## 1) LIGAR marca TODAS as tecnologias como pesquisadas na hora (mesmo
+##    Dictionary id->true que _process_research usa de verdade, ver
+##    TechDatabase.all_techs) — efeito imediato, nao precisa esperar turno
+##    nenhum. Limpa current_research/research_progress junto (nao ha mais
+##    nada pra pesquisar, uma selecao antiga ali so confundiria a TechTree
+##    mostrando "Pesquisando: X" pra algo ja concluido).
+## 2) Enquanto LIGADO, toda cidade do jogador completa a producao atual
+##    (unidade OU predio, mesma condicao `stored_production >= cost` de
+##    sempre) no PROPRIO turno em vez de acumular aos poucos — aplicado em
+##    _on_turn_changed(), ver o `if debug_mode` logo antes de
+##    city.process_turn(). DESLIGAR so para esse efeito daqui pra frente;
+##    nao "desfaz" pesquisas ja marcadas (seria um cheat sem desfazer
+##    limpo possivel, e nem faz sentido — um dev usando isso pra testar
+##    conteudo tardio nao quer perder o progresso ao desligar por engano).
+var debug_mode: bool = false
+
+func set_debug_mode(enabled: bool) -> void:
+	debug_mode = enabled
+	if enabled and human_player != null:
+		for tech in TechDatabase.all_techs():
+			human_player.researched_techs[tech.id] = true
+		human_player.current_research = ""
+		human_player.research_progress = 0.0
 
 ## Forca o fim de jogo na hora, sem esperar eliminar unidade/cidade
 ## nenhuma de verdade — reaproveita _end_game() (mesmo sinal

@@ -18,10 +18,24 @@ extends Resource
 @export var cost: float = 30.0
 @export var prerequisites: Array[String] = []
 
-## "" = nao desbloqueia unidade nenhuma. Guerreiro e Colonizador sempre
-## disponiveis desde o inicio (ver TechDatabase.is_unit_unlocked) — so
-## Arqueiro/Cavaleiro dependem de tecnologia.
+## "" = nao desbloqueia unidade nenhuma. Guarda e Colonizador nao dependem
+## de tecnologia NEM de predio pra treinar (pedido do usuario: "o guarda
+## comum nao precisa de quartel pra ser feito") — os dois ficam sempre
+## disponiveis desde o primeiro turno. Homem de Armas ainda depende do
+## Quartel estar CONSTRUIDO pra treinar de verdade, e o Quartel em si exige
+## a tech "Quartel" pra poder ser construido (ver BuildingDatabase.
+## building_that_trains / City._tech_unlocked_for_building) — os dois gates
+## sao independentes.
 @export var unlocks_unit: String = ""
+
+## "" = nao desbloqueia predio nenhum. Mesma ideia de unlocks_unit, so que
+## pra um predio SEM trains_unit (ex: Muralhas) — esses nao aparecem no
+## mecanismo de tech_that_unlocks(kind) normal (kind == building.trains_unit
+## seria "", e tech_that_unlocks("") sempre devolve null de proposito, ver
+## TechDatabase.gd) entao precisam do proprio campo pra travar a
+## CONSTRUCAO do predio (ver TechDatabase.tech_that_unlocks_building/City.
+## _tech_unlocked_for_building).
+@export var unlocks_building: String = ""
 
 ## Bonus de rendimento aplicado a QUALQUER tile destes biomas que a
 ## civilizacao estiver trabalhando, uma vez pesquisada — ver

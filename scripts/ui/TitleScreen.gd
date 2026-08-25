@@ -18,19 +18,31 @@ extends Control
 signal new_game_setup_requested
 signal load_game_requested
 
-## Mapa retangular de verdade (ver HexGrid.generate_map) com as dimensoes
-## EXATAS pedidas pelo usuario originalmente: "Grande (Large): 96 x 60
-## celulas, totalizando 5.760 hexagonos" — os proprios numeros do
-## Civilization pro tamanho Grande de mapa (grade retangular la tambem).
-## Pequeno/Medio removidos do seletor (pedido do usuario: "elimine a
-## criacao do mapa medio e pequeno, vamos a partir de agora usar so o
-## grande") — sem UI nem outro codigo pedindo esses dois tamanhos, so o
-## Grande continua aqui. Fica nesta classe (nao em GameSetupScreen, quem
-## de fato consome) so pra nao quebrar quem ja referencia
-## TitleScreen.MAP_SIZES.
+## Mapa retangular de verdade (ver HexGrid.generate_map). Pequeno/Medio
+## removidos do seletor (pedido do usuario: "elimine a criacao do mapa
+## medio e pequeno, vamos a partir de agora usar so o grande") — sem UI
+## nem outro codigo pedindo esses dois tamanhos, so o Grande continua
+## aqui. Fica nesta classe (nao em GameSetupScreen, quem de fato consome)
+## so pra nao quebrar quem ja referencia TitleScreen.MAP_SIZES.
+## Canvas TOTAL (96x60 originais + Continente Vulcanico + Continente de
+## Cristal + oceano de separacao, ver MAIN_ZONE_SIZE abaixo e
+## HexGrid._zone_for) — pedido do usuario: "expandir o tamanho fixo do
+## mapa pra acomodar dois novos continentes especiais".
 const MAP_SIZES := {
-	"large": {"width": 96, "height": 60},
+	"large": {"width": 320, "height": 84},
 }
+
+## Pegada HISTORICA do continente principal — os 96x60 originais ("Grande
+## (Large): 96 x 60 celulas, totalizando 5.760 hexagonos", os numeros do
+## Civilization pro tamanho Grande de mapa) — permanece FIXA pra sempre,
+## independente de quanto MAP_SIZES.large cresca pra caber os continentes
+## especiais. HexGrid usa isto (nao MAP_SIZES.large) pra travar forma/
+## clima/posicao do continente principal exatamente como sempre foram;
+## GameManager usa pra travar a elipse de origem dos rivais no mesmo
+## lugar de sempre. Sem isso, o continente principal se espalharia pra
+## preencher o canvas novo maior e o gradiente de clima se comprimiria,
+## mudando o continente principal sem nenhum pedido nesse sentido.
+const MAIN_ZONE_SIZE := {"width": 96, "height": 60}
 
 @onready var new_game_button: Button = $CenterBox/Box/NewGameButton
 @onready var load_game_button: Button = $CenterBox/Box/LoadGameButton

@@ -117,6 +117,27 @@ func test_enemy_building_only_visible_when_tile_is_currently_visible():
 
 	assert_false(building.visible, "predio inimigo fora de visao atual nao deveria continuar aparecendo")
 
+## Marcador de obra (guindaste + barra, HexGrid._construction_markers)
+## segue a MESMA regra de unidade/cidade/predio acima — sem isso, a barra
+## de progresso de uma cidade inimiga vazava visivel mesmo debaixo da
+## nevoa, entregando "essa cidade esta construindo algo ali" de graca, na
+## contramao do que o usuario pediu explicitamente na saga de fog-of-war
+## ("eu quero que so seja possivel ver nevoa, sem relevos").
+func test_enemy_construction_marker_only_visible_when_tile_is_currently_visible():
+	var scout = _make_unit("warrior", human, Vector2i(1, 0))
+	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	city.pending_building_coord = Vector2i(0, 0)
+	hex_grid.refresh_construction_markers()
+	var marker: Node3D = hex_grid._construction_markers[Vector2i(0, 0)]
+
+	hex_grid.recompute_fog(human)
+	assert_true(marker.visible, "obra inimiga em tile visivel deveria aparecer")
+
+	hex_grid.move_unit(scout, Vector2i(4, 0), 4.0)
+	hex_grid.recompute_fog(human)
+
+	assert_false(marker.visible, "obra inimiga fora de visao atual nao deveria continuar aparecendo")
+
 ## Debug: com debug_fog_disabled ligado, recompute_fog() para de calcular
 ## visao de verdade e so marca tudo como VISIVEL — pedido do usuario:
 ## "adicione opcoes debug onde eu posso tirar a fog do mapa e coisas

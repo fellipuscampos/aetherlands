@@ -6,6 +6,18 @@ const HP_BAR_HEIGHT := 0.07
 const HP_BAR_Y := 0.95
 const MOVE_DURATION := 0.35
 
+## Badge "isto e uma tropa" acima de toda unidade — pedido do usuario:
+## "coloque icones em cima das tropas tipo os dos recursos pra identificar
+## que e uma tropa" (ver ResourceIconManager pro mesmo principio visual
+## sobre tile de recurso). TROOP_ICON_Y fica acima da propria barra de vida
+## (HP_BAR_Y) pra nunca sobrepor ela.
+const TROOP_ICON_SIZE := 32
+const TROOP_ICON_BADGE_RADIUS := 13.0
+const TROOP_ICON_BADGE_COLOR := Color(0.05, 0.05, 0.08, 0.6)
+const TROOP_ICON_COLOR := Color(0.88, 0.88, 0.92)
+const TROOP_ICON_Y := 1.08
+static var _troop_icon_texture: ImageTexture
+
 ## Cor FALLBACK pro corpo/base de monstro neutro (owner_player == null, ver
 ## MonsterDatabase) sem entrada em MONSTER_KIND_COLORS — nao tem civ.color
 ## pra puxar, entao um vermelho sangue fixo serve tambem pra diferenciar
@@ -177,6 +189,7 @@ func _build_visual() -> void:
 	_build_procedural_body()
 	_build_base_disc()
 	_build_hp_bar()
+	_build_troop_icon()
 
 ## Cor do corpo/base de uma unidade: cor da civilizacao pro jogador, ou —
 ## pra monstro neutro (owner_player == null) — a cor FIXA do proprio tipo
@@ -188,11 +201,79 @@ func _body_color() -> Color:
 		return owner_player.civ.color
 	return MONSTER_KIND_COLORS.get(unit_data.visual_kind, MONSTER_COLOR)
 
+## Acessorio de assinatura do "kit de estilo" racial (RaceTheme) pras 4
+## tropas comuns do ramo militar (men_at_arms/cavalry/archer/scout) —
+## reaproveita literalmente o MESMO padrao de mesh ja usado na tropa
+## exclusiva daquela raca (branches "dwarf_axeguard"/"orc_berserker"/
+## "elf_ranger" mais abaixo neste arquivo) em vez de desenhar geometria
+## nova so pra essa reskin (pedido do usuario, escopo confirmado como
+## "kit de estilo": mesma silhueta base + paleta + 1-2 detalhes de
+## assinatura). Sem-efeito pra "human" (ou qualquer raca desconhecida) de
+## proposito — nenhum `match` bate, entao o chamador continua desenhando a
+## arma padrao dele sozinho. `anchor` e o ponto local (relativo a `root`)
+## onde pendurar a arma.
+func _attach_race_signature_weapon(root: Node3D, race: String, kit: Dictionary, anchor: Vector3) -> void:
+	match race:
+		"dwarf":
+			var handle := MeshInstance3D.new()
+			var handle_mesh := CylinderMesh.new()
+			handle_mesh.top_radius = 0.025
+			handle_mesh.bottom_radius = 0.025
+			handle_mesh.height = 0.42
+			handle.mesh = handle_mesh
+			var handle_mat := StandardMaterial3D.new()
+			handle_mat.albedo_color = Color(0.4, 0.28, 0.18)
+			handle.material_override = handle_mat
+			handle.position = anchor
+			root.add_child(handle)
+
+			var head := MeshInstance3D.new()
+			var head_mesh := PrismMesh.new()
+			head_mesh.size = Vector3(0.14, 0.15, 0.035)
+			head.mesh = head_mesh
+			var head_mat := StandardMaterial3D.new()
+			head_mat.albedo_color = kit.metal_color
+			head.material_override = head_mat
+			head.position = anchor + Vector3(0.0, 0.2, 0.0)
+			root.add_child(head)
+		"orc":
+			var club := MeshInstance3D.new()
+			var club_mesh := BoxMesh.new()
+			club_mesh.size = Vector3(0.08, 0.4, 0.08)
+			club.mesh = club_mesh
+			var club_mat := StandardMaterial3D.new()
+			club_mat.albedo_color = Color(0.32, 0.24, 0.16)
+			club.material_override = club_mat
+			club.position = anchor
+			club.rotation_degrees = Vector3(0, 0, -18)
+			root.add_child(club)
+		"elf":
+			var bow := MeshInstance3D.new()
+			var bow_mesh := CylinderMesh.new()
+			bow_mesh.top_radius = 0.015
+			bow_mesh.bottom_radius = 0.015
+			bow_mesh.height = 0.42
+			bow.mesh = bow_mesh
+			var bow_mat := StandardMaterial3D.new()
+			bow_mat.albedo_color = kit.metal_color
+			bow.material_override = bow_mat
+			bow.position = anchor
+			bow.rotation_degrees = Vector3(0, 0, 12)
+			root.add_child(bow)
+
 ## Formas proceduras simples, cada uma com silhueta diferente pra dar pra
 ## reconhecer o tipo de unidade a distancia mesmo sem textura/detalhe.
 func _build_procedural_body() -> void:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = _body_color()
+
+	# Raca do dono (ou "human" pra monstro/settler/etc sem dono) e o kit de
+	# estilo dela (RaceTheme.style_kit) — so as 4 tropas comuns do ramo
+	# militar (men_at_arms/cavalry/archer/scout, ver blocos abaixo) de fato
+	# consultam isso; pro resto do match e computado a toa mas e barato (so
+	# leitura de Dictionary ja cacheado) e evita recalcular em cada branch.
+	var race := owner_player.civ.race if owner_player else "human"
+	var kit := RaceTheme.style_kit(race)
 
 	match unit_data.visual_kind:
 		"settler":
@@ -204,7 +285,129 @@ func _build_procedural_body() -> void:
 			body.material_override = mat
 			body.position.y = 0.35
 			add_child(body)
+		"warrior":
+			# Guarda basico (tropa inicial, sempre disponivel sem predio
+			# nenhum — pedido do usuario: "crie uma representação do
+			# personagem que combine mais com o guarda ao invés de ser um
+			# cilindro"). Antes caia no fallback generico (so uma capsula
+			# nua, sem arma nem escudo) — agora tem silhueta propria de
+			# "infantaria de guarda": corpo + espada erguida + escudo com a
+			# cor da propria civilizacao (mesmo espirito do cavaleiro
+			# comum, que tinge o cavaleiro mas nao o cavalo).
+			#
+			# Kit de estilo racial aplicado aqui tambem (pedido do usuario,
+			# rodada seguinte: "ta vindo ainda o guarda padrao quando
+			# escolho outra civilização, sendo que era pra vir a tropa
+			# basica de cada civilização, o guarda é a tropa basica
+			# humana") — mesmo padrao ja usado em "men_at_arms" abaixo:
+			# raiz escalada + arma de assinatura reaproveitada da tropa
+			# exclusiva da raca no lugar da espada padrao.
+			var root := Node3D.new()
+			root.scale = kit.scale
+			add_child(root)
+
+			var body := MeshInstance3D.new()
+			var body_mesh := CapsuleMesh.new()
+			body_mesh.radius = 0.19
+			body_mesh.height = 0.68
+			body.mesh = body_mesh
+			body.material_override = mat
+			body.position.y = 0.38
+			root.add_child(body)
+
+			if race == "dwarf" or race == "orc" or race == "elf":
+				_attach_race_signature_weapon(root, race, kit, Vector3(0.22, 0.64, 0.0))
+			else:
+				var sword := MeshInstance3D.new()
+				var sword_mesh := PrismMesh.new()
+				sword_mesh.size = Vector3(0.05, 0.5, 0.02)
+				sword.mesh = sword_mesh
+				var sword_mat := StandardMaterial3D.new()
+				sword_mat.albedo_color = kit.metal_color # aco/bronze/ferro/dourado conforme a raca (RaceTheme.STYLE_KITS)
+				sword.material_override = sword_mat
+				sword.position = Vector3(0.22, 0.64, 0.0)
+				sword.rotation_degrees = Vector3(0, 0, 12)
+				root.add_child(sword)
+
+			var shield := MeshInstance3D.new()
+			var shield_mesh := CylinderMesh.new()
+			shield_mesh.top_radius = 0.16
+			shield_mesh.bottom_radius = 0.16
+			shield_mesh.height = 0.04
+			shield.mesh = shield_mesh
+			var shield_mat := StandardMaterial3D.new()
+			shield_mat.albedo_color = owner_player.civ.color.darkened(0.2) # escudo com o brasao/cor do reino, mesmo espirito do cavaleiro tingido na Cavalaria comum
+			shield.material_override = shield_mat
+			shield.position = Vector3(-0.2, 0.42, 0.05)
+			shield.rotation_degrees = Vector3(90, 0, 90)
+			root.add_child(shield)
+		"men_at_arms":
+			# Homem de Armas (segunda tropa humana, so treinavel apos a tech
+			# "Quartel" — ver TechDatabase/UnitDatabase). Precisa ler como um
+			# "upgrade" do Guarda a distancia: corpo mais largo (mais
+			# blindado), elmo (o Guarda nao tem), e um escudo RETANGULAR
+			# (tipo torre) em vez do escudo redondo do Guarda — silhueta
+			# claramente mais pesada/profissional, nao so uma reskin.
+			# Raiz escalada pelo kit de estilo racial (RaceTheme) — anao mais
+			# atarracado, orc mais bruto, elfo mais esguio — sem afetar barra
+			# de vida/icone de tropa, que continuam filhos diretos da unidade
+			# (ver _build_visual).
+			var root := Node3D.new()
+			root.scale = kit.scale
+			add_child(root)
+
+			var body := MeshInstance3D.new()
+			var body_mesh := CapsuleMesh.new()
+			body_mesh.radius = 0.22
+			body_mesh.height = 0.7
+			body.mesh = body_mesh
+			body.material_override = mat
+			body.position.y = 0.4
+			root.add_child(body)
+
+			var helmet := MeshInstance3D.new()
+			var helmet_mesh := SphereMesh.new()
+			helmet_mesh.radius = 0.13
+			helmet_mesh.height = 0.26
+			helmet.mesh = helmet_mesh
+			var helmet_mat := StandardMaterial3D.new()
+			helmet_mat.albedo_color = kit.metal_color # aco/bronze/ferro/dourado conforme a raca (RaceTheme.STYLE_KITS)
+			helmet.material_override = helmet_mat
+			helmet.position.y = 0.84
+			root.add_child(helmet)
+
+			# Arma de assinatura: anao/orc/elfo trocam a espada padrao pelo
+			# acessorio reaproveitado da propria tropa exclusiva deles (ver
+			# _attach_race_signature_weapon); humano (ou raca desconhecida)
+			# mantem a espada de sempre.
+			if race == "dwarf" or race == "orc" or race == "elf":
+				_attach_race_signature_weapon(root, race, kit, Vector3(0.25, 0.68, 0.0))
+			else:
+				var sword := MeshInstance3D.new()
+				var sword_mesh := PrismMesh.new()
+				sword_mesh.size = Vector3(0.06, 0.55, 0.025)
+				sword.mesh = sword_mesh
+				var sword_mat := StandardMaterial3D.new()
+				sword_mat.albedo_color = kit.metal_color
+				sword.material_override = sword_mat
+				sword.position = Vector3(0.25, 0.68, 0.0)
+				sword.rotation_degrees = Vector3(0, 0, 12)
+				root.add_child(sword)
+
+			var shield := MeshInstance3D.new()
+			var shield_mesh := BoxMesh.new() # painel reto/alto, contraste de proposito com o escudo redondo do Guarda
+			shield_mesh.size = Vector3(0.05, 0.42, 0.22)
+			shield.mesh = shield_mesh
+			var shield_mat := StandardMaterial3D.new()
+			shield_mat.albedo_color = owner_player.civ.color.darkened(0.15)
+			shield.material_override = shield_mat
+			shield.position = Vector3(-0.25, 0.42, 0.0)
+			root.add_child(shield)
 		"archer":
+			var root := Node3D.new()
+			root.scale = kit.scale
+			add_child(root)
+
 			var body := MeshInstance3D.new()
 			var mesh := CylinderMesh.new()
 			mesh.top_radius = 0.04
@@ -213,15 +416,25 @@ func _build_procedural_body() -> void:
 			body.mesh = mesh
 			body.material_override = mat
 			body.position.y = 0.42
-			add_child(body)
+			root.add_child(body)
+
+			_attach_race_signature_weapon(root, race, kit, Vector3(-0.16, 0.5, -0.05))
 		"cavalry":
+			# A montaria continua tingida na cor da civ (mat), igual sempre —
+			# o kit de estilo racial so muda a montaria de FALTA de cor fixa
+			# (ver "scout" abaixo, cuja montaria e uma cor fixa) e escala/
+			# acessorio, nunca a cor primaria de ownership.
+			var root := Node3D.new()
+			root.scale = kit.scale
+			add_child(root)
+
 			var horse := MeshInstance3D.new()
 			var horse_mesh := BoxMesh.new()
 			horse_mesh.size = Vector3(0.55, 0.32, 0.28)
 			horse.mesh = horse_mesh
 			horse.material_override = mat
 			horse.position.y = 0.28
-			add_child(horse)
+			root.add_child(horse)
 
 			var rider := MeshInstance3D.new()
 			var rider_mesh := CapsuleMesh.new()
@@ -232,7 +445,57 @@ func _build_procedural_body() -> void:
 			rider_mat.albedo_color = owner_player.civ.color.darkened(0.25)
 			rider.material_override = rider_mat
 			rider.position = Vector3(0.05, 0.55, 0.0)
-			add_child(rider)
+			root.add_child(rider)
+
+			_attach_race_signature_weapon(root, race, kit, Vector3(0.22, 0.68, 0.0))
+		"scout":
+			# Batedor (Estabulo, tech "Batedor Montado") — leitura de
+			# "cavalaria LEVE": cavalo menor e SEM tingir na cor da civ
+			# (mesmo espirito do Cavaleiro Real, "nao e um cavalo de
+			# guerra"), cavaleiro pequeno tingido na civ (pra ownership
+			# continuar legivel), SEM arma nenhuma (nem lanca, nem espada,
+			# nem arco) — so um alforje/trouxa nas costas, silhueta de
+			# "viaja rapido e leve", distinta o bastante do Cavaleiro
+			# comum/Cavaleiro Real a distancia.
+			var root := Node3D.new()
+			root.scale = kit.scale
+			add_child(root)
+
+			var horse := MeshInstance3D.new()
+			var horse_mesh := BoxMesh.new()
+			horse_mesh.size = Vector3(0.42, 0.24, 0.2)
+			horse.mesh = horse_mesh
+			var horse_mat := StandardMaterial3D.new()
+			horse_mat.albedo_color = kit.mount_color # pelagem fixa (nao tingida pela civ) — so muda de tom por raca
+			horse.material_override = horse_mat
+			horse.position.y = 0.22
+			root.add_child(horse)
+
+			var rider := MeshInstance3D.new()
+			var rider_mesh := CapsuleMesh.new()
+			rider_mesh.radius = 0.09
+			rider_mesh.height = 0.32
+			rider.mesh = rider_mesh
+			var rider_mat := StandardMaterial3D.new()
+			rider_mat.albedo_color = owner_player.civ.color.darkened(0.15)
+			rider.material_override = rider_mat
+			rider.position = Vector3(0.03, 0.42, 0.0)
+			root.add_child(rider)
+
+			var pack := MeshInstance3D.new()
+			var pack_mesh := SphereMesh.new()
+			pack_mesh.radius = 0.06
+			pack_mesh.height = 0.12
+			pack.mesh = pack_mesh
+			var pack_mat := StandardMaterial3D.new()
+			pack_mat.albedo_color = Color(0.45, 0.36, 0.24)
+			pack.material_override = pack_mat
+			pack.position = Vector3(-0.1, 0.4, 0.0)
+			root.add_child(pack)
+			# Sem arma nenhuma de proposito, mesmo pras raças reskinadas — o
+			# Batedor continua "so alforje/trouxa", silhueta de "viaja rapido
+			# e leve" (ver comentario original acima), nao ganha o acessorio
+			# de assinatura das outras 3 tropas do ramo militar.
 		"catapult":
 			var frame := MeshInstance3D.new()
 			var frame_mesh := BoxMesh.new()
@@ -582,7 +845,7 @@ func _build_procedural_body() -> void:
 			orb.material_override = orb_mat
 			orb.position.y = 0.88
 			add_child(orb)
-		_: # "warrior" e qualquer kind desconhecido caem no padrao
+		_: # kind desconhecido cai no padrao (capsula nua, sem arma/acessorio)
 			var body := MeshInstance3D.new()
 			var mesh := CapsuleMesh.new()
 			mesh.radius = 0.2
@@ -664,3 +927,55 @@ func _update_hp_bar() -> void:
 
 	_hp_bar_bg.visible = frac < 1.0
 	_hp_bar_fg.visible = frac < 1.0
+
+## Sprite3D com textura desenhada em pixels (mesma tecnica de
+## ResourceIconManager._build_icon_texture, nao Label3D/glifo Unicode — a
+## fonte padrao do projeto nao garante cobertura de simbolo de espada) —
+## placa circular semi-transparente com um par de espadas cruzadas por
+## cima. Cor FIXA (nao tingida pela civ) de proposito: o corpo/escudo/
+## bandeira da propria unidade ja carrega a cor da civilizacao, o badge so
+## precisa dizer "isto e uma unidade militar", igual pra qualquer dono —
+## inclusive monstro neutro. Textura construida uma unica vez (static,
+## cache compartilhado entre TODAS as unidades) ja que o desenho e sempre
+## identico.
+func _build_troop_icon() -> void:
+	if _troop_icon_texture == null:
+		_troop_icon_texture = _build_troop_icon_texture()
+	var sprite := Sprite3D.new()
+	sprite.texture = _troop_icon_texture
+	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.no_depth_test = true
+	sprite.shaded = false
+	sprite.double_sided = true
+	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+	sprite.pixel_size = 0.01 # menor que o badge de recurso (0.016) — flutua sobre uma unidade, nao um tile inteiro
+	sprite.position = Vector3(0, TROOP_ICON_Y, 0)
+	add_child(sprite)
+
+static func _build_troop_icon_texture() -> ImageTexture:
+	var img := Image.create(TROOP_ICON_SIZE, TROOP_ICON_SIZE, false, Image.FORMAT_RGBA8)
+	var center := Vector2(TROOP_ICON_SIZE / 2.0, TROOP_ICON_SIZE / 2.0)
+	for y in range(TROOP_ICON_SIZE):
+		for x in range(TROOP_ICON_SIZE):
+			var d := Vector2(x + 0.5, y + 0.5) - center
+			var pixel := Color(0, 0, 0, 0)
+			if d.length() <= TROOP_ICON_BADGE_RADIUS:
+				pixel = TROOP_ICON_BADGE_COLOR
+				if _hit_crossed_swords(d):
+					pixel = TROOP_ICON_COLOR
+			img.set_pixel(x, y, pixel)
+	return ImageTexture.create_from_image(img)
+
+## `d` = offset em pixels a partir do centro do badge — nucleo redondo
+## (cruzamento/guarda) + duas laminas finas nas diagonais, capadas ao raio
+## do badge — silhueta simples de "espadas cruzadas", mesmo espirito
+## geometrico dos outros icones (triangulo/losango/ferradura) do selo de
+## recurso.
+static func _hit_crossed_swords(d: Vector2) -> bool:
+	if d.length() <= 2.0:
+		return true
+	if d.length() > 11.0:
+		return false
+	var diag1: float = abs(d.x - d.y)
+	var diag2: float = abs(d.x + d.y)
+	return diag1 <= 1.6 or diag2 <= 1.6

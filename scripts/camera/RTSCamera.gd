@@ -34,15 +34,25 @@ func _on_minimap_clicked(world_pos: Vector3) -> void:
 	position.z = clamp(world_pos.z, -pan_bounds_z, pan_bounds_z)
 
 ## Chamado ao reiniciar a partida: volta a camera pra posicao/zoom inicial
-## em vez de manter onde o jogador da partida anterior deixou.
-func reset_view() -> void:
-	position = Vector3.ZERO
+## em vez de manter onde o jogador da partida anterior deixou. `focus_
+## position` (mundo, Y ignorado) centraliza o rig ali em vez de sempre
+## Vector3.ZERO — pedido do usuario: "faça ao começar o game a camera
+## começar centralizada na sua tropa inicial, atualmente a camera começa
+## em um lugar e a tropa nao necessariamente naquele lugar, ai voce tem
+## que tentar achar seu boneco". Vector3.ZERO como default preserva o
+## comportamento antigo pra quem chamar sem argumento nenhum. Clamp pelos
+## MESMOS pan_bounds do clique no minimapa (_on_minimap_clicked) — precisa
+## calcular os bounds ANTES do clamp, ao contrario da ordem antiga (que so
+## setava bounds no fim, sem problema enquanto o alvo era sempre o
+## origem).
+func reset_view(focus_position: Vector3 = Vector3.ZERO) -> void:
+	pan_bounds_x = float(GameManager.map_width) * 0.9
+	pan_bounds_z = float(GameManager.map_height) * 0.9
+	position = Vector3(clamp(focus_position.x, -pan_bounds_x, pan_bounds_x), 0.0, clamp(focus_position.z, -pan_bounds_z, pan_bounds_z))
 	rotation = Vector3.ZERO
 	camera.position = _default_camera_position
 	camera.rotation_degrees = _default_camera_rotation
 	_zoom_distance = _default_camera_position.length()
-	pan_bounds_x = float(GameManager.map_width) * 0.9
-	pan_bounds_z = float(GameManager.map_height) * 0.9
 
 func _process(delta: float) -> void:
 	_handle_pan(delta)

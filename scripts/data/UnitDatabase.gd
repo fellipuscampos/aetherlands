@@ -15,7 +15,7 @@ extends RefCounted
 ## treinavel) se a raca do jogador bater, ver City.can_train() e
 ## HUD._on_tile_selected.
 const PLAYER_TRAINABLE_KINDS: Array[String] = [
-	"settler", "warrior", "archer", "cavalry", "catapult",
+	"settler", "warrior", "men_at_arms", "archer", "cavalry", "scout", "catapult",
 	"mage", "griffin", "treant", "stone_golem", "shadow_summoner",
 	"human_knight", "dwarf_axeguard", "orc_berserker", "elf_ranger",
 ]
@@ -38,7 +38,7 @@ const RACE_UNIQUE_KIND := {
 ## Inverso de RACE_UNIQUE_KIND (kind -> raca dona), ou "" se `kind` nao e
 ## nenhuma tropa racial — usado por City.can_train() (so a raca dona pode
 ## treinar) e BuildingDatabase.building_that_trains() (todas as 4 treinam
-## no Quartel, mesmo predio do Guerreiro comum, ver comentario la).
+## no Quartel, mesmo predio do Guarda comum, ver comentario la).
 static func race_for_unique_kind(kind: String) -> String:
 	for race in RACE_UNIQUE_KIND.keys():
 		if RACE_UNIQUE_KIND[race] == kind:
@@ -59,7 +59,7 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "settler"
 			data.production_cost = 25.0
 		"warrior":
-			data.unit_name = "Guerreiro"
+			data.unit_name = "Guarda"
 			data.movement_points = 2.0
 			data.attack = 4.0
 			data.defense = 3.0
@@ -68,6 +68,20 @@ static func create_unit(kind: String) -> UnitData:
 			data.can_found_city = false
 			data.visual_kind = "warrior"
 			data.production_cost = 15.0
+		# Segunda tropa humana comum, so treinavel no Quartel apos pesquisar
+		# a tech "Quartel" (ver TechDatabase) — infantaria profissional,
+		# estatisticas acima do Guarda em troca do investimento em pesquisa
+		# + construcao.
+		"men_at_arms":
+			data.unit_name = "Homem de Armas"
+			data.movement_points = 2.0
+			data.attack = 5.5
+			data.defense = 4.5
+			data.max_hp = 16.0
+			data.vision_range = 2
+			data.can_found_city = false
+			data.visual_kind = "men_at_arms"
+			data.production_cost = 22.0
 		"archer":
 			data.unit_name = "Arqueiro"
 			data.movement_points = 2.0
@@ -89,6 +103,25 @@ static func create_unit(kind: String) -> UnitData:
 			data.can_found_city = false
 			data.visual_kind = "cavalry"
 			data.production_cost = 22.0
+		# Segunda tropa do Estabulo, so treinavel apos pesquisar a tech
+		# "Batedor Montado" (que por sua vez exige "Estabulo" pesquisada
+		# antes, ver TechDatabase) — pedido do usuario: "e uma pesquisa
+		# seguinte ao estabulo... o batedor montado... que e basicamente um
+		# explorador que pode andar 3 casas, mas nao causa muito dano".
+		# Movimento igual Cavaleiro Real (3), mas ataque/defesa/vida bem
+		# abaixo de QUALQUER outra tropa montada — o investimento aqui e
+		# 100% mobilidade/visao, nao combate. Maior vision_range do elenco
+		# comum (so perde pro Arqueiro Solar, tropa exclusiva elfica).
+		"scout":
+			data.unit_name = "Batedor"
+			data.movement_points = 3.0
+			data.attack = 1.5
+			data.defense = 1.0
+			data.max_hp = 8.0
+			data.vision_range = 4
+			data.can_found_city = false
+			data.visual_kind = "scout"
+			data.production_cost = 16.0
 		"catapult":
 			data.unit_name = "Catapulta"
 			data.movement_points = 1.0
@@ -168,7 +201,7 @@ static func create_unit(kind: String) -> UnitData:
 		# GameManager.RIVAL_CIVS) tem uma, alem do elenco comum acima.
 		"human_knight":
 			data.unit_name = "Cavaleiro Real"
-			data.movement_points = 3.0 # mais agil que Cavalaria comum, mas nao tao rapido quanto o Patrulheiro Elfico
+			data.movement_points = 3.0 # mais agil que Cavalaria comum, mas nao tao rapido quanto o Arqueiro Solar
 			data.attack = 5.0
 			data.defense = 4.0 # maior defesa entre as 4 tropas raciais moveis (perde so pro Guarda-Machado Anao, que fica parado)
 			data.max_hp = 15.0
@@ -187,7 +220,7 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "dwarf_axeguard"
 			data.production_cost = 24.0
 		"orc_berserker":
-			data.unit_name = "Berserker Orc"
+			data.unit_name = "Berserker da Horda"
 			data.movement_points = 2.0
 			data.attack = 6.0 # o maior ataque corpo-a-corpo do jogo, de proposito
 			data.defense = 1.0 # sem armadura nenhuma, todo o investimento e ofensivo
@@ -197,7 +230,7 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "orc_berserker"
 			data.production_cost = 18.0
 		"elf_ranger":
-			data.unit_name = "Patrulheiro Elfico"
+			data.unit_name = "Arqueiro Solar"
 			data.movement_points = 3.0 # o mais agil entre as unidades terrestres
 			data.attack = 3.5
 			data.defense = 1.0

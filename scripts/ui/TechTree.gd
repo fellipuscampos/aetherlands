@@ -48,48 +48,45 @@ const SCHOOL_COLORS := {
 	"Geomancia": Color(0.68, 0.52, 0.3),
 	"Elementalismo": Color(0.84, 0.42, 0.24),
 	"Necromancia": Color(0.6, 0.36, 0.68),
+	"Doutrina": Color(0.55, 0.55, 0.58),
 }
 
 var _node_rects: Dictionary = {} # id -> Rect2, posicao final de cada card (usado por _draw() pra ligar as linhas)
 
-func rebuild(researched: Dictionary, current_research: String, research_progress: float) -> void:
+## race: CivilizationData.race do jogador humano (default "human" pra nao
+## quebrar chamadas existentes/testes antigos) — usado so pra tematizar o
+## TEXTO exibido (RaceTheme.tech_name/description, nome da tropa
+## desbloqueada), ver _add_tech_card/_effect_summary. Nunca afeta
+## posicionamento/tier/pre-requisito, que continuam 100% pelos ids
+## mecanicos de TechData.
+func rebuild(researched: Dictionary, current_research: String, research_progress: float, race: String = "human") -> void:
 	for child in get_children():
 		child.queue_free()
 	_node_rects.clear()
 
 	var tiers := _compute_tiers()
-	var by_tier: Dictionary = {} # tier(int) -> Array[TechData]
-	for tech in TechDatabase.all_techs():
-		var t: int = tiers[tech.id]
-		if not by_tier.has(t):
-			by_tier[t] = []
-		by_tier[t].append(tech)
-	for t in by_tier.keys():
-		by_tier[t].sort_custom(func(a, b): return a.display_name < b.display_name)
+	var rows := _compute_rows(tiers)
 
 	var max_tier := 0
-	var max_rows := 1
-	for t in by_tier.keys():
-		max_tier = max(max_tier, t)
-		max_rows = max(max_rows, by_tier[t].size())
+	var max_row := 0
+	for tech in TechDatabase.all_techs():
+		max_tier = max(max_tier, tiers[tech.id])
+		max_row = max(max_row, rows[tech.id])
 
-	for tier in range(max_tier + 1):
-		var techs_here: Array = by_tier.get(tier, [])
-		for row in range(techs_here.size()):
-			var tech: TechData = techs_here[row]
-			var pos = MARGIN + Vector2(tier * (NODE_SIZE.x + COL_GAP), row * (NODE_SIZE.y + ROW_GAP))
-			_node_rects[tech.id] = Rect2(pos, NODE_SIZE)
-			_add_tech_card(tech, pos, researched, current_research, research_progress)
+	for tech in TechDatabase.all_techs():
+		var pos = MARGIN + Vector2(tiers[tech.id] * (NODE_SIZE.x + COL_GAP), rows[tech.id] * (NODE_SIZE.y + ROW_GAP))
+		_node_rects[tech.id] = Rect2(pos, NODE_SIZE)
+		_add_tech_card(tech, pos, researched, current_research, research_progress, race)
 
 	custom_minimum_size = Vector2(
 		(max_tier + 1) * (NODE_SIZE.x + COL_GAP) - COL_GAP + MARGIN.x * 2,
-		max_rows * (NODE_SIZE.y + ROW_GAP) - ROW_GAP + MARGIN.y * 2
+		(max_row + 1) * (NODE_SIZE.y + ROW_GAP) - ROW_GAP + MARGIN.y * 2
 	)
 	queue_redraw()
 
 ## Tier = quantos passos de pre-requisito ate a raiz (0 = sem pre-
 ## requisito nenhum). Relaxamento iterativo em vez de recursao: o grafo e
-## uma DAG bem pequena (12 nos hoje), entao performance nunca importa, mas
+## uma DAG bem pequena (16 nos hoje), entao performance nunca importa, mas
 ## isso evita ter que lidar com ciclo/ordem de visita na mao.
 func _compute_tiers() -> Dictionary:
 	var tiers := {}
@@ -110,7 +107,164 @@ func _compute_tiers() -> Dictionary:
 				changed = true
 	return tiers
 
-func _add_tech_card(tech: TechData, pos: Vector2, researched: Dictionary, current_research: String, research_progress: float) -> void:
+## Numero de linhas EM BRANCO entre um grupo (componente conexo, ver
+## _compute_components) e o proximo — separacao visual clara mesmo com os
+## dois "tocando" a mesma coluna/tier em algum ponto (ex: Quartel e
+## Alquimia Botanica sao os dois tier 0). Ha barra de rolagem de sobra
+## (pedido do usuario: "ja tem barra de rolagem mesmo, nao tem problema
+## ficar separado assim"), entao gastar linha em espaco vazio aqui e barato.
+const GROUP_ROW_GAP := 1
+
+## Duas techs pertencem ao MESMO grupo (componente conexo) se existe algum
+## caminho de pre-requisito entre elas, seguindo aresta em QUALQUER direcao
+## (nao so pai->filho) — union-find simplificado via DFS. Isso agrupa a
+## arvore MAGICA inteira num bloco so mesmo cruzando varias "school"
+## diferentes (Transmutacao de Rochas -> Forja Runica -> Constructos de
+## Guerra, por exemplo, sao 3 schools diferentes mas UM componente so, ja
+## que se conectam por pre-requisito), e deixa o ramo DOUTRINA (Quartel/
+## Estabulo/Arquearia/Batedor Montado — nenhuma aresta ligando ele a arvore
+## magica) sozinho no proprio componente, sem precisar hardcodar "Doutrina"
+## como caso especial em lugar nenhum — se uma tech futura ligar os dois
+## lados, eles se fundem num grupo so automaticamente.
+func _compute_components() -> Dictionary:
+	var adjacency: Dictionary = {} # id -> Array[String], arestas nao-direcionadas
+	for tech in TechDatabase.all_techs():
+		adjacency[tech.id] = []
+	for tech in TechDatabase.all_techs():
+		for p in tech.prerequisites:
+			if adjacency.has(p):
+				adjacency[tech.id].append(p)
+				adjacency[p].append(tech.id)
+
+	var component: Dictionary = {} # id -> int
+	var next_component := 0
+	for tech in TechDatabase.all_techs():
+		if component.has(tech.id):
+			continue
+		var stack: Array[String] = [tech.id]
+		while not stack.is_empty():
+			var current: String = stack.pop_back()
+			if component.has(current):
+				continue
+			component[current] = next_component
+			for neighbor in adjacency[current]:
+				if not component.has(neighbor):
+					stack.append(neighbor)
+		next_component += 1
+	return component
+
+## Linha (Y) de cada card — pedido do usuario ("a posicao dos cards esta
+## errada... alinhar filho com o pai", seguido de "faca algo coeso, separe
+## em grupo, nesse caso o grupo da doutrina fica separado dos demais... nao
+## faz sentido ta tudo misturado"). Antes de qualquer alinhamento, agrupa
+## por COMPONENTE CONEXO (_compute_components) — sem isso, mesmo alinhando
+## cada filho com o proprio pai, techs de grupos DIFERENTES no MESMO tier
+## (ex: Transmutacao de Rochas, tier 0 magico, e Quartel, tier 0 doutrina)
+## acabavam em linhas vizinhas por coincidencia, fazendo a linha de conexao
+## de Quartel->Estabulo passar colada em Transmutacao de Rochas e parecer
+## que UMA desbloqueia a OUTRA. Cada grupo agora ganha seu proprio BLOCO de
+## linhas contiguo (maior primeiro), com GROUP_ROW_GAP linhas em branco
+## separando um bloco do proximo — dentro de cada bloco, o alinhamento
+## filho-com-pai de antes continua valendo (_align_rows_within_group).
+func _compute_rows(tiers: Dictionary) -> Dictionary:
+	var components := _compute_components()
+	var techs_by_component: Dictionary = {} # component(int) -> Array[TechData]
+	for tech in TechDatabase.all_techs():
+		var c: int = components[tech.id]
+		if not techs_by_component.has(c):
+			techs_by_component[c] = []
+		techs_by_component[c].append(tech)
+
+	# Blocos maiores primeiro (a arvore magica, "tronco principal", fica no
+	# topo; o ramo doutrina, bem menor, fica abaixo) — empate (nao ha hoje,
+	# mas pode existir no futuro) resolvido pelo menor id dentro do bloco,
+	# so pra ordem ficar deterministica.
+	var component_ids: Array = techs_by_component.keys()
+	component_ids.sort_custom(func(a, b):
+		var size_a: int = techs_by_component[a].size()
+		var size_b: int = techs_by_component[b].size()
+		if size_a != size_b:
+			return size_a > size_b
+		return _min_tech_id(techs_by_component[a]) < _min_tech_id(techs_by_component[b])
+	)
+
+	var rows := {} # id -> int
+	var row_offset := 0
+	for c in component_ids:
+		var block: Array = techs_by_component[c]
+		var block_rows := _align_rows_within_group(block, tiers)
+		var block_height := 0
+		for tech in block:
+			rows[tech.id] = block_rows[tech.id] + row_offset
+			block_height = max(block_height, block_rows[tech.id] + 1)
+		row_offset += block_height + GROUP_ROW_GAP
+
+	return rows
+
+func _min_tech_id(techs: Array) -> String:
+	var result: String = techs[0].id
+	for t in techs:
+		if t.id < result:
+			result = t.id
+	return result
+
+## Mesmo algoritmo "alinhar filho com o pai" de antes, so que ESCOPADO a um
+## unico grupo (`techs`) em vez da arvore inteira — ver _compute_rows pro
+## agrupamento em si. Cada tech tenta ficar na MEDIA das linhas dos
+## proprios pre-requisitos (ja resolvidas no tier anterior DESTE MESMO
+## grupo, dado que tier = profundidade); a raiz do grupo (menor tier
+## presente nele) usa ordem alfabetica pura, sem pai nenhum pra alinhar.
+## Colisao (2+ techs do grupo disputando a mesma linha desejada no mesmo
+## tier — ex: Estabulo E Arquearia, as duas alinhando com a linha de
+## Quartel) e resolvida ORDENANDO por linha desejada primeiro (empate por
+## nome) e empurrando pra BAIXO em sequencia. Isso preserva a ORDEM
+## vertical entre tiers vizinhos DENTRO do grupo, o que evita as linhas de
+## conexao (_draw()) se cruzarem entre si.
+func _align_rows_within_group(techs: Array, tiers: Dictionary) -> Dictionary:
+	var by_tier: Dictionary = {} # tier(int) -> Array[TechData]
+	var min_tier := 999999
+	var max_tier := 0
+	for tech in techs:
+		var t: int = tiers[tech.id]
+		if not by_tier.has(t):
+			by_tier[t] = []
+		by_tier[t].append(tech)
+		min_tier = min(min_tier, t)
+		max_tier = max(max_tier, t)
+
+	var rows := {} # id -> int
+	for tier in range(min_tier, max_tier + 1):
+		var techs_here: Array = by_tier.get(tier, [])
+		if tier == min_tier:
+			techs_here.sort_custom(func(a, b): return a.display_name < b.display_name)
+			for i in range(techs_here.size()):
+				rows[techs_here[i].id] = i
+			continue
+
+		var desired := {} # id -> float, media da linha dos pais ja resolvidos
+		for tech in techs_here:
+			var sum := 0.0
+			var count := 0
+			for p in tech.prerequisites:
+				if rows.has(p):
+					sum += rows[p]
+					count += 1
+			desired[tech.id] = (sum / count) if count > 0 else 0.0
+		techs_here.sort_custom(func(a, b):
+			if desired[a.id] != desired[b.id]:
+				return desired[a.id] < desired[b.id]
+			return a.display_name < b.display_name
+		)
+
+		var next_free_row := 0
+		for tech in techs_here:
+			var row: int = max(roundi(desired[tech.id]), next_free_row)
+			rows[tech.id] = row
+			next_free_row = row + 1
+
+	return rows
+
+func _add_tech_card(tech: TechData, pos: Vector2, researched: Dictionary, current_research: String, research_progress: float, race: String) -> void:
 	var prereqs_met := true
 	for p in tech.prerequisites:
 		if not researched.has(p):
@@ -159,7 +313,7 @@ func _add_tech_card(tech: TechData, pos: Vector2, researched: Dictionary, curren
 		box.add_child(school_label)
 
 	var name_label := Label.new()
-	name_label.text = tech.display_name
+	name_label.text = RaceTheme.tech_name(tech.id, race)
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if not prereqs_met and not is_researched:
 		name_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_MUTED)
@@ -171,7 +325,7 @@ func _add_tech_card(tech: TechData, pos: Vector2, researched: Dictionary, curren
 	# _effect_summary() continua devolvendo so a parte de unidade/bioma
 	# (mantido assim de proposito pra nao quebrar quem ja testa essa funcao
 	# isoladamente) — o ritual e concatenado aqui na hora de montar o card.
-	var effect_text := _effect_summary(tech)
+	var effect_text := _effect_summary(tech, race)
 	if tech.unlocks_spell != "":
 		if effect_text != "":
 			effect_text = "%s · Ritual: %s" % [effect_text, tech.unlocks_spell]
@@ -191,8 +345,9 @@ func _add_tech_card(tech: TechData, pos: Vector2, researched: Dictionary, curren
 	# essencial denso; a descricao completa aparece ao passar o mouse).
 	# Era exatamente o texto que antes vazava por cima do custo/pre-
 	# requisito em techs com lore mais longa (ex: Cataclismo Elemental).
-	if tech.description != "":
-		card.tooltip_text = tech.description
+	var description := RaceTheme.tech_description(tech.id, race)
+	if description != "":
+		card.tooltip_text = description
 
 	if is_researching:
 		var bar := ProgressBar.new()
@@ -222,7 +377,7 @@ func _add_tech_card(tech: TechData, pos: Vector2, researched: Dictionary, curren
 			for p in tech.prerequisites:
 				var pt: TechData = TechDatabase.get_tech(p)
 				if pt:
-					prereq_names.append(pt.display_name)
+					prereq_names.append(RaceTheme.tech_name(pt.id, race))
 			var locked_label := Label.new()
 			locked_label.theme_type_variation = &"MutedLabel"
 			locked_label.add_theme_color_override("font_color", UITheme.COLOR_DANGER)
@@ -244,9 +399,9 @@ func _on_card_gui_input(event: InputEvent, tech_id: String) -> void:
 func _school_color(school: String) -> Color:
 	return SCHOOL_COLORS.get(school, UITheme.COLOR_TEXT_MUTED)
 
-func _effect_summary(tech: TechData) -> String:
+func _effect_summary(tech: TechData, race: String = "human") -> String:
 	if tech.unlocks_unit != "":
-		return "Desbloqueia: %s" % UnitDatabase.create_unit(tech.unlocks_unit).unit_name
+		return "Desbloqueia: %s" % RaceTheme.unit_name(tech.unlocks_unit, race)
 	var parts: Array[String] = []
 	if tech.bonus_food > 0:
 		parts.append("+%d comida" % tech.bonus_food)

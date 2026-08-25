@@ -1,33 +1,47 @@
 extends Control
 
-## Contador de FPS (pedido do usuario: "coloque o fps na tela") — pequeno,
-## fora da barra superior (que ja fica cheia de indicadores de jogo) e sem
-## bloquear clique nenhum no mapa (ver mouse_filter no .tscn). Atualizado
+## Contador de FPS (pedido do usuario: "coloque o fps na tela") — vive
+## dentro do StatusGroup da barra superior, junto dos outros indicadores
+## (pedido do usuario numa rodada seguinte: "a barra de cima vai ficar so
+## status, dinheiro, mana e etc... qualquer status de algo pode ficar la
+## na barra superior" — FPS e um status como outro qualquer). Atualizado
 ## todo frame em _process(), unica razao de HUD ter um agora.
-@onready var fps_label: Label = $FpsLabel
+@onready var fps_label: Label = $TopBar/TopBarRow/StatusGroup/FpsLabel
 
-## Barra superior: DUAS secoes visuais separadas por um Spacer expansivel
-## (pedido do usuario — "elimine a sensacao de desordem visual"): StatusGroup
-## (indicadores do imperio, so leitura) a esquerda, NavGroup (botoes de
-## navegacao) a direita, num grupo coeso em vez de misturados.
+## Barra superior: SO leitura de status agora (Turno/Ouro/Mana/Cidades-
+## Unidades/FPS) — pedido do usuario: "vamos tentar copiar a logica do hud
+## do civilization, a barra de cima vai ficar so status, dinheiro, mana e
+## etc". Os botoes de navegacao/acao (antigo NavGroup + Finalizar Turno)
+## se mudaram pro ActionBar no canto inferior direito (ver mais abaixo),
+## no mesmo espirito do agrupamento do Civilization VI: icones de menu
+## empilhados por cima do botao grande de Finalizar Turno.
 @onready var turn_label: Label = $TopBar/TopBarRow/StatusGroup/TurnLabel
 @onready var gold_label: Label = $TopBar/TopBarRow/StatusGroup/GoldLabel
 @onready var mana_label: Label = $TopBar/TopBarRow/StatusGroup/ManaLabel
 @onready var stats_label: Label = $TopBar/TopBarRow/StatusGroup/StatsLabel
-## Finalizar Turno mora na PONTA DIREITA da barra superior (pedido do
-## usuario: reorganizar a HUD "parecido com os de civilization 6" — la o
-## botao de proximo turno fica sempre no canto superior direito, nao
-## flutuando separado no rodape) — continua com borda dourada de destaque
-## + atalho Espaco/Enter (ver _style_end_turn_button()), so a POSICAO
-## mudou.
-@onready var end_turn_button: Button = $TopBar/TopBarRow/EndTurnButton
-@onready var help_button: Button = $TopBar/TopBarRow/NavGroup/HelpButton
-@onready var save_button: Button = $TopBar/TopBarRow/NavGroup/SaveButton
-@onready var pause_button: Button = $TopBar/TopBarRow/NavGroup/PauseButton
+## ActionBar (canto inferior direito, ver HUD.tscn): cluster de botoes de
+## menu/acao — pedido do usuario: "no canto inferior direito, você vao ter
+## o botao de passar de turno, de abrir a arvore de pesquisa, do grimorio
+## e qualquer outra coisa do tipo". Finalizar Turno fica por ULTIMO na
+## coluna (mais abaixo, maior — custom_minimum_size.y=44 no .tscn — pra
+## ler como a acao PRINCIPAL, mesmo espirito do botao redondo grande do
+## Civilization VI embaixo dos icones menores) — continua com borda
+## dourada de destaque + atalho Espaco/Enter (ver _style_end_turn_button()).
+@onready var action_bar: PanelContainer = $ActionBar
+@onready var end_turn_button: Button = $ActionBar/ActionBarBox/EndTurnButton
+@onready var save_button: Button = $ActionBar/ActionBarBox/SaveButton
 @onready var notification_stack: VBoxContainer = $NotificationStack
 @onready var minimap: Control = $Minimap
 @onready var tile_info_panel: PanelContainer = $TileInfoPanel
 @onready var tile_info_label: Label = $TileInfoPanel/TileInfoBox/TileInfoLabel
+## Indicador de progresso do item em producao na cidade vista — pedido do
+## usuario: "quando uma construção ta sendo feita, tenha algum indicador de
+## avanço... atualmente nao sabemos nem quanto demora... nem o progresso".
+## Antes so existia como texto cru embutido no meio de tile_info_label
+## ("Produzindo: X (12/25)"), sem barra visual nem estimativa de turnos —
+## ver _refresh_production_progress().
+@onready var production_progress_label: Label = $TileInfoPanel/TileInfoBox/ProductionProgressLabel
+@onready var production_progress_bar: ProgressBar = $TileInfoPanel/TileInfoBox/ProductionProgressBar
 ## Duas abas (pedido do usuario — painel lateral parecia "uma muralha de
 ## 15+ botoes cinzas"): "Unidades" e "Construcoes" (predios de producao +
 ## treino/mana juntos, mas com secao propria dentro da aba). Titulos
@@ -64,16 +78,16 @@ extends Control
 ## painel (e o botao de Finalizar Turno logo abaixo) pra baixo.
 @onready var worked_tiles_scroll: ScrollContainer = $TileInfoPanel/TileInfoBox/WorkedTilesScroll
 @onready var worked_tiles_row: HFlowContainer = $TileInfoPanel/TileInfoBox/WorkedTilesScroll/WorkedTilesRow
-@onready var tech_button: Button = $TopBar/TopBarRow/NavGroup/TechButton
+@onready var tech_button: Button = $ActionBar/ActionBarBox/TechButton
 @onready var tech_panel: PanelContainer = $TechPanel
 @onready var tech_current_label: Label = $TechPanel/TechBox/TechCurrentLabel
 @onready var tech_tree: TechTree = $TechPanel/TechBox/TechTreeScroll/TechTree
 @onready var tech_close_button: Button = $TechPanel/TechBox/TechHeader/TechCloseButton
-@onready var diplomacy_button: Button = $TopBar/TopBarRow/NavGroup/DiplomacyButton
+@onready var diplomacy_button: Button = $ActionBar/ActionBarBox/DiplomacyButton
 @onready var diplomacy_panel: PanelContainer = $DiplomacyPanel
 @onready var diplomacy_rows: VBoxContainer = $DiplomacyPanel/DiplomacyBox/DiplomacyRows
 @onready var diplomacy_close_button: Button = $DiplomacyPanel/DiplomacyBox/DiplomacyHeader/DiplomacyCloseButton
-@onready var grimoire_button: Button = $TopBar/TopBarRow/NavGroup/GrimoireButton
+@onready var grimoire_button: Button = $ActionBar/ActionBarBox/GrimoireButton
 @onready var grimoire_panel: PanelContainer = $GrimoirePanel
 @onready var grimoire_rows: VBoxContainer = $GrimoirePanel/GrimoireBox/GrimoireRows
 @onready var grimoire_close_button: Button = $GrimoirePanel/GrimoireBox/GrimoireHeader/GrimoireCloseButton
@@ -87,111 +101,19 @@ extends Control
 @onready var fortify_button: Button = $UnitPanel/UnitBox/UnitActionsRow/FortifyButton
 @onready var explore_button: Button = $UnitPanel/UnitBox/UnitActionsRow/ExploreButton
 @onready var found_city_button: Button = $UnitPanel/UnitBox/FoundCityButton
-@onready var help_panel: PanelContainer = $HelpPanel
-@onready var help_label: Label = $HelpPanel/HelpBox/HelpScroll/HelpLabel
-@onready var help_close_button: Button = $HelpPanel/HelpBox/HelpHeader/HelpCloseButton
 @onready var game_over_panel: PanelContainer = $GameOverPanel
 @onready var game_over_label: Label = $GameOverPanel/GameOverBox/GameOverLabel
 @onready var restart_button: Button = $GameOverPanel/GameOverBox/RestartButton
 @onready var overlay_backdrop: ColorRect = $OverlayBackdrop
-@onready var debug_button: Button = $TopBar/TopBarRow/NavGroup/DebugButton
+@onready var debug_button: Button = $ActionBar/ActionBarBox/DebugButton
 @onready var debug_panel: PanelContainer = $DebugPanel
 @onready var debug_close_button: Button = $DebugPanel/DebugBox/DebugHeader/DebugCloseButton
+@onready var debug_mode_button: Button = $DebugPanel/DebugBox/DebugModeButton
 @onready var debug_reveal_map_button: Button = $DebugPanel/DebugBox/DebugRevealMapButton
 @onready var debug_gold_button: Button = $DebugPanel/DebugBox/DebugGoldButton
 @onready var debug_complete_research_button: Button = $DebugPanel/DebugBox/DebugCompleteResearchButton
 @onready var debug_win_button: Button = $DebugPanel/DebugBox/DebugWinButton
 @onready var debug_lose_button: Button = $DebugPanel/DebugBox/DebugLoseButton
-
-const HELP_TEXT := """W A S D ou setas: mover a camera
-Q / E: rotacionar a camera
-Scroll do mouse: zoom
-
-Clique numa unidade sua para selecionar.
-Tile verde: mover ate la. Tile vermelho: atacar
-(ou capturar cidade inimiga sem defensor). Cada tipo
-de unidade tem alcance/movimento diferentes — confira
-no painel da unidade. Unidade que vence combates ganha
-abates e sobe de nivel (Recruta -> Veterano -> Elite ->
-Lendario), com bonus permanente de ataque/defesa e uma
-cura na hora da promocao.
-Passe o mouse pra ver o trajeto e o custo antes de
-clicar. Barra de vida aparece sobre a unidade assim
-que ela leva dano.
-
-Colonizador selecionado: 'Fundar Cidade' cria uma
-cidade no tile atual (consome o colonizador).
-
-Clique numa cidade sua para escolher o que ela esta
-produzindo: Colonizador, Guerreiro, Arqueiro e Cavaleiro
-sempre disponiveis (Guerreiro exige so o Quartel, sem
-pesquisa nenhuma); as tropas MAGICAS (Mago, Ent, Golem de
-Pedra, Grifo, Convocador de Sombras, Catapulta Cadenciada)
-seguem uma cadeia de tres passos: pesquisar a tecnologia
-certa libera CONSTRUIR o predio de treino correspondente,
-e so depois de construido o predio a tropa fica disponivel
-pra treinar. Botao desabilitado sempre mostra um tooltip
-explicando o proximo passo (pesquisar ou construir).
-Predios de PRODUCAO (uma vez so por cidade, dura pra
-sempre): Celeiro (+comida), Oficina (+producao), Mercado
-(+ouro) ou Muralhas (+defesa pra quem estiver
-guarnicionado ali, Mago ignora esse bonus tambem).
-Numero total de predios (producao + treino) e limitado
-pela populacao da cidade (1 predio por ponto de
-populacao) — cidade precisa crescer pra caber mais.
-O territorio da cidade (ela mesma + vizinhos) fica
-destacado em dourado no mapa enquanto ela esta
-selecionada. Ao escolher um predio, clique num tile
-azul pra posiciona-lo, do mesmo jeito que escolhe onde
-fundar uma cidade — o modelo so aparece no mapa quando
-a construcao terminar.
-Cada ponto de populacao trabalha um tile vizinho —
-clique nos botoes de "Tiles trabalhados" pra escolher
-quais (a cidade sugere automaticamente, mas voce pode
-trocar); tiles com recurso (Ferro, Cavalos, Gemas,
-Seda) dao rendimento extra.
-
-'Finalizar Turno' avanca o jogo: unidades recuperam
-movimento, cidades crescem/produzem, e os reinos
-rivais agem.
-
-'Tecnologia' abre a arvore magica: escolha o que
-pesquisar (cada cidade gera ciencia = sua populacao por
-turno). Mago, Ent, Golem de Pedra, Grifo, Convocador de
-Sombras e Catapulta Cadenciada comecam bloqueados ate
-pesquisar a tecnologia certa; as outras tecnologias dao
-bonus de rendimento em biomas especificos ou um ritual
-novo pro Grimorio.
-
-'Grimório' mostra os rituais ja desbloqueados (Lança de
-Arcana, Reanimar...). Cada um custa MANA (numero ao lado
-do nome) alem de ter sua propria recarga em turnos — os
-dois precisam estar prontos pro botao 'Conjurar' ficar
-disponivel. Mana renova todo turno (Nódulo Arcano
-trabalhado + predios como a Torre dos Sábios, mostrado na
-barra superior como "Mana: X (+Y)"). 'Conjurar' entra em
-modo de mira: o proximo clique no mapa escolhe o alvo
-(uma unidade inimiga visivel, ou uma sua, dependendo do
-feitico).
-
-'Diplomacia' mostra cada reino rival e se voce esta em
-guerra ou paz com ele. 'Propor Paz' pode ser recusado
-(a IA aceita se estiver em desvantagem numerica);
-'Declarar Guerra' e sempre imediato. Em paz, nao da
-pra atacar nem ser atacado por aquele reino.
-
-Espalhados pelo mapa, longe do centro, existem Covis
-de Monstro guardados por Goblins, Trolls ou Viverns —
-hostis a todo mundo, sem diplomacia possivel. Vencer o
-guardiao saqueia ouro na hora; perder pode custar a
-unidade que atacou. Risco alto, recompensa alta.
-
-'Salvar' grava a partida atual. 'Menu' (ou tecla Esc)
-pausa o jogo e abre um menu pra salvar, carregar outra
-partida ou voltar ao menu principal sem fechar o jogo.
-
-Vitoria: eliminar todas as unidades e cidades de TODOS
-os reinos rivais. Derrota: perder todas as suas."""
 
 var _viewed_city: City = null
 ## Guarda se UnitPanel estava visivel ANTES de abrir um overlay (pedido do
@@ -234,19 +156,17 @@ func _ready() -> void:
 	build_druid_grove_button.pressed.connect(_on_produce_pressed.bind("druid_grove"))
 	build_runic_anvil_button.pressed.connect(_on_produce_pressed.bind("runic_anvil"))
 	build_shadow_crypt_button.pressed.connect(_on_produce_pressed.bind("shadow_crypt"))
-	help_button.pressed.connect(_on_help_pressed)
 	save_button.pressed.connect(_on_save_pressed)
-	pause_button.pressed.connect(_on_pause_pressed)
 	tech_button.pressed.connect(_on_tech_pressed)
 	tech_close_button.pressed.connect(_on_tech_close_pressed)
 	diplomacy_button.pressed.connect(_on_diplomacy_pressed)
 	diplomacy_close_button.pressed.connect(_on_diplomacy_close_pressed)
 	grimoire_button.pressed.connect(_on_grimoire_pressed)
 	grimoire_close_button.pressed.connect(_on_grimoire_close_pressed)
-	help_close_button.pressed.connect(_on_help_close_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
 	debug_button.pressed.connect(_on_debug_pressed)
 	debug_close_button.pressed.connect(_on_debug_close_pressed)
+	debug_mode_button.pressed.connect(_on_debug_mode_pressed)
 	debug_reveal_map_button.pressed.connect(_on_debug_reveal_map_pressed)
 	debug_gold_button.pressed.connect(_on_debug_gold_pressed)
 	debug_complete_research_button.pressed.connect(_on_debug_complete_research_pressed)
@@ -262,12 +182,12 @@ func _ready() -> void:
 	# caso do primeiro turno, onde turn_changed ainda nao foi emitido.
 	EventBus.fog_updated.connect(_refresh_stats)
 
-	help_label.text = HELP_TEXT
 	unit_panel.visible = false
 	production_tabs.visible = false
 	worked_tiles_label.visible = false
 	worked_tiles_scroll.visible = false
-	help_panel.visible = false
+	production_progress_label.visible = false
+	production_progress_bar.visible = false
 	tech_panel.visible = false
 	diplomacy_panel.visible = false
 	grimoire_panel.visible = false
@@ -305,20 +225,33 @@ const TILE_INFO_PANEL_COMPACT_HEIGHT := 220.0
 ## Espaco reservado pra barra superior (48px) + margem, ver TopBar em
 ## HUD.tscn — o painel de CIDADE encosta logo abaixo dela.
 const TILE_INFO_PANEL_TOP_MARGIN := 56.0
+## Borda direita do painel COMPACTO — para 8px a esquerda do ActionBar
+## (ver HUD.tscn, ActionBar.offset_left = -200), deixando os dois lado a
+## lado sem se sobrepor. Borda EXPANDIDA vai ate a mesma borda direita do
+## ActionBar (-8, ver ActionBar.offset_right) — pedido do usuario: "ao
+## clicar na cidade, essa area do menu some, e fica so o menu da cidade
+## ocupando a parte direita" — o painel de cidade toma conta do espaco
+## INTEIRO que o ActionBar ocupava, nao so cresce pra cima.
+const TILE_INFO_PANEL_COMPACT_RIGHT := -208.0
+const TILE_INFO_PANEL_EXPANDED_RIGHT := -8.0
 
-## Alterna o painel entre COMPACTO (so texto do tile, canto inferior
-## direito, altura fixa pequena) e EXPANDIDO (cidade selecionada, ocupa a
-## lateral direita inteira da tela pra caber a grade de producao) — so a
-## borda de CIMA se move; a borda de baixo fica sempre a 16px do rodape,
-## entao o painel sempre "cresce pra cima" a partir do mesmo canto, nunca
-## muda de lado.
+## Alterna o painel entre COMPACTO (so texto do tile ou tropa, ao lado do
+## ActionBar, altura fixa pequena) e EXPANDIDO (cidade selecionada, ocupa
+## a lateral direita INTEIRA da tela — largura ate a borda do ActionBar
+## (que fica escondido nesse estado, ver _on_tile_selected) pra caber a
+## grade de producao, e altura ate quase o topo) — a borda de BAIXO fica
+## sempre a 16px do rodape e a borda ESQUERDA sempre a mesma, entao o
+## painel sempre "cresce pra cima e pra direita" a partir do mesmo canto,
+## nunca muda de lado.
 func _update_tile_info_panel_size(expanded: bool) -> void:
 	if expanded:
 		tile_info_panel.anchor_top = 0.0
 		tile_info_panel.offset_top = TILE_INFO_PANEL_TOP_MARGIN
+		tile_info_panel.offset_right = TILE_INFO_PANEL_EXPANDED_RIGHT
 	else:
 		tile_info_panel.anchor_top = 1.0
 		tile_info_panel.offset_top = -TILE_INFO_PANEL_COMPACT_HEIGHT
+		tile_info_panel.offset_right = TILE_INFO_PANEL_COMPACT_RIGHT
 
 ## Mostra o custo de producao de cada predio no proprio botao (pedido do
 ## usuario: "cards compactos com custo de producao/tempo") — os nomes
@@ -327,19 +260,46 @@ func _update_tile_info_panel_size(expanded: bool) -> void:
 ## nenhum a mao no texto do node).
 func _label_building_buttons() -> void:
 	for id in BUILDING_IDS:
-		var building: BuildingData = BuildingDatabase.get_building(id)
-		var btn := _build_button_for(id)
-		btn.text = "%s  —  %d PP" % [building.display_name, int(building.production_cost)]
+		_build_button_for(id).text = _building_button_label(id, "human")
+
+## Texto do botao de predio, tematizado por raca (RaceTheme.building_name
+## cai no nome cru de BuildingDatabase pra qualquer raca/predio fora do
+## ramo militar escopado, ver RaceTheme.gd) — usado tanto na rotulagem
+## inicial em _ready() (raca ainda desconhecida, "human" por padrao) quanto
+## na retematizacao em _on_tile_selected() assim que a raca do jogador
+## humano ja e conhecida.
+func _building_button_label(id: String, race: String) -> String:
+	var building: BuildingData = BuildingDatabase.get_building(id)
+	return "%s  —  %d PP" % [RaceTheme.building_name(id, race), int(building.production_cost)]
 
 ## Atalho de teclado pedido pelo usuario ("Espaço ou Enter") pro botao de
 ## acao principal — "ui_accept" e a acao embutida do proprio Godot pra
 ## Enter/Kp Enter/Espaco, os tres juntos, sem precisar mexer no input map
 ## do projeto. So dispara em PLAYING (nao durante fim de jogo) e nunca com
-## um overlay aberto (Tecnologia/Diplomacia/Grimorio/Ajuda/Debug) — o
+## um overlay aberto (Tecnologia/Diplomacia/Grimorio/Debug) — o
 ## backdrop escurecido ja bloqueia CLIQUE nesses casos, mas o teclado
 ## ignora ele, entao a checagem tem que ser explicita aqui.
+const END_TURN_BUTTON_TEXT := "Finalizar Turno (Espaço)"
+## Pedido do usuario: "enquanto ta processando o botao fica ou
+## indisponivel ou substituido por algo como processando" — faz as DUAS
+## coisas (ver _process abaixo): desabilita E troca o texto, deixando
+## claro que a IA ainda esta "pensando" em vez de so um botao cinza sem
+## explicacao.
+const END_TURN_BUTTON_PROCESSING_TEXT := "Processando Turno..."
+
 func _process(_delta: float) -> void:
 	fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
+	# GameManager.is_turn_processing (ver stagger_ai_turns) fica true
+	# enquanto a fila de acoes de IA do turno ainda esta drenando aos
+	# poucos — desabilita "Encerrar Turno" nesse meio-tempo (junto com
+	# _unhandled_input abaixo, que ja respeita end_turn_button.disabled),
+	# senao o jogador podia clicar de novo em cima de um turno que ainda
+	# nao terminou de verdade. Combinado com o fim de jogo (mesmo botao ja
+	# fica desabilitado por _on_game_over/_on_restart_pressed) — recalcular
+	# os dois aqui todo frame e mais simples do que coordenar toggle
+	# manual em varios lugares diferentes.
+	end_turn_button.disabled = GameManager.is_turn_processing or GameManager.state == GameManager.GameState.GAME_OVER
+	end_turn_button.text = END_TURN_BUTTON_PROCESSING_TEXT if GameManager.is_turn_processing else END_TURN_BUTTON_TEXT
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_pressed("ui_accept"):
@@ -371,12 +331,18 @@ func _on_produce_pressed(kind: String) -> void:
 	if building:
 		if not _viewed_city.can_build(kind):
 			return
-		# Predio precisa de um tile escolhido no mapa (como fundar cidade) —
-		# a producao so comeca de fato quando o jogador clica um tile valido
-		# (SelectionManager._handle_building_placement_click).
-		SelectionManager.start_building_placement(_viewed_city, kind)
-		return
-	if not _viewed_city.can_train(kind):
+		if not building.self_placed:
+			# Predio precisa de um tile escolhido no mapa (como fundar
+			# cidade) — a producao so comeca de fato quando o jogador clica
+			# um tile valido (SelectionManager._handle_building_placement_
+			# click).
+			SelectionManager.start_building_placement(_viewed_city, kind)
+			return
+		# self_placed (Muralhas, ver BuildingData.gd): sem tile pra
+		# escolher — nao faz sentido "onde" cercar uma cidade que so tem
+		# um tile, entao cai direto no mesmo fluxo de treinar uma unidade
+		# logo abaixo, sem passar pela UI de posicionamento.
+	elif not _viewed_city.can_train(kind):
 		return
 	_viewed_city.set_production(kind)
 	# Trocar pra unidade pode ter abandonado um predio em obra (City.
@@ -396,16 +362,12 @@ func _on_save_pressed() -> void:
 	else:
 		EventBus.notify.emit("Falha ao salvar o jogo.", "")
 
-func _on_pause_pressed() -> void:
-	EventBus.pause_requested.emit()
-
-## Ajuda/Tecnologia/Diplomacia/Debug/FimDeJogo sao todos paineis
+## Tecnologia/Diplomacia/Grimorio/Debug/FimDeJogo sao todos paineis
 ## centralizados na mesma posicao — sem isso, abrir um por cima do outro
 ## (ou o jogo acabar com um deles aberto) deixava tudo empilhado e
 ## ilegivel. So um fica visivel por vez, e o backdrop escurecido some
 ## junto (ver _show_overlay).
 func _close_overlay_panels() -> void:
-	help_panel.visible = false
 	tech_panel.visible = false
 	diplomacy_panel.visible = false
 	grimoire_panel.visible = false
@@ -447,7 +409,7 @@ func _show_overlay(panel: Control) -> void:
 ## usuario). Devolve true se fechou algo, pra quem chamou saber que ja
 ## "consumiu" o ESC e nao precisa mais abrir a pausa.
 func close_topmost_overlay() -> bool:
-	if help_panel.visible or tech_panel.visible or diplomacy_panel.visible or grimoire_panel.visible or debug_panel.visible:
+	if tech_panel.visible or diplomacy_panel.visible or grimoire_panel.visible or debug_panel.visible:
 		_close_overlay_panels()
 		return true
 	return false
@@ -470,15 +432,16 @@ func _refresh_tech_panel() -> void:
 	if player == null:
 		return
 
+	var race: String = player.civ.race
 	if player.current_research != "":
 		var tech: TechData = TechDatabase.get_tech(player.current_research)
 		tech_current_label.text = "Pesquisando: %s (%d/%d ciencia)" % [
-			tech.display_name, int(player.research_progress), int(tech.cost)
+			RaceTheme.tech_name(tech.id, race), int(player.research_progress), int(tech.cost)
 		]
 	else:
 		tech_current_label.text = "Pesquisando: nenhuma, escolha um card disponivel abaixo"
 
-	tech_tree.rebuild(player.researched_techs, player.current_research, player.research_progress)
+	tech_tree.rebuild(player.researched_techs, player.current_research, player.research_progress, race)
 
 func _on_tech_selected(id: String) -> void:
 	GameManager.human_player.current_research = id
@@ -653,9 +616,27 @@ func _on_debug_close_pressed() -> void:
 func _refresh_debug_panel() -> void:
 	var hex_grid = GameManager.hex_grid
 	var fog_disabled = hex_grid != null and hex_grid.debug_fog_disabled
+	debug_mode_button.button_pressed = GameManager.debug_mode
+	debug_mode_button.text = "Desativar Modo Debug" if GameManager.debug_mode else "Ativar Modo Debug (tudo liberado, producao instantanea)"
 	debug_reveal_map_button.button_pressed = fog_disabled
 	debug_reveal_map_button.text = "Restaurar Neblina" if fog_disabled else "Revelar Mapa (sem neblina)"
 	debug_complete_research_button.disabled = GameManager.human_player == null or GameManager.human_player.current_research == ""
+
+## Pedido do usuario: "libere no modo debug, quando eu ativar, tudo
+## liberado, tudo fica disponivel todas as pesquisas ficam feitas, e o
+## tempo de fazer qualquer unidade e 1 turno". GameManager.set_debug_mode
+## faz o trabalho de verdade (marca toda tech como pesquisada + liga o
+## efeito continuo de producao instantanea, ver comentario la) — aqui so
+## atualiza o que ja esta na tela: o painel de Tecnologia (se aberto, as
+## techs viram "Pesquisada" na hora) e o painel de producao da cidade
+## sendo vista (novas tropas/predios liberados aparecem sem precisar
+## fechar/reabrir a cidade).
+func _on_debug_mode_pressed() -> void:
+	GameManager.set_debug_mode(not GameManager.debug_mode)
+	_refresh_debug_panel()
+	if tech_panel.visible:
+		_refresh_tech_panel()
+	_refresh_viewed_city()
 
 func _on_debug_reveal_map_pressed() -> void:
 	var hex_grid = GameManager.hex_grid
@@ -682,15 +663,6 @@ func _on_debug_win_pressed() -> void:
 func _on_debug_lose_pressed() -> void:
 	GameManager.debug_force_game_over(false)
 
-func _on_help_pressed() -> void:
-	if help_panel.visible:
-		_close_overlay_panels()
-		return
-	_show_overlay(help_panel)
-
-func _on_help_close_pressed() -> void:
-	_close_overlay_panels()
-
 ## Emite o pedido de reinicio (Main.gd regenera mapa/jogo de forma sincrona
 ## nesse mesmo emit) e so entao atualiza a propria HUD com o estado novo.
 func _on_restart_pressed() -> void:
@@ -700,13 +672,15 @@ func _on_restart_pressed() -> void:
 	tech_button.disabled = false
 	diplomacy_button.disabled = false
 	grimoire_button.disabled = false
-	help_button.disabled = false
 	debug_button.disabled = false
 	unit_panel.visible = false
 	production_tabs.visible = false
 	worked_tiles_label.visible = false
 	worked_tiles_scroll.visible = false
+	production_progress_label.visible = false
+	production_progress_bar.visible = false
 	_viewed_city = null
+	action_bar.visible = true
 	tile_info_panel.visible = false
 	_update_tile_info_panel_size(false)
 	tile_info_label.text = "Selecione um tile"
@@ -757,7 +731,7 @@ func _refresh_tech_button_progress(player: PlayerData) -> void:
 		tech_button.text = "Tecnologia"
 		return
 	var pct = int(round(min(player.research_progress / tech.cost, 1.0) * 100.0)) if tech.cost > 0.0 else 100
-	tech_button.text = "%s (%d%%)" % [tech.display_name, pct]
+	tech_button.text = "%s (%d%%)" % [RaceTheme.tech_name(tech.id, player.civ.race), pct]
 
 ## Mensagens curtas (combate, fundacao/captura de cidade) que aparecem no
 ## topo da tela e somem sozinhas — sem isso, um ataque do rival fora de
@@ -780,6 +754,14 @@ func _on_notify(text: String, _sfx_kind: String) -> void:
 
 func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 	_viewed_city = null
+	# ActionBar so some quando uma cidade PROPRIA esta selecionada (ver mais
+	# abaixo, "city.owner_player == GameManager.human_player") — pedido do
+	# usuario: "ao clicar na cidade, essa area do menu some, e fica so o
+	# menu da cidade ocupando a parte direita... ao clicar em outra coisa
+	# fora da cidade, o menu da cidade some e volta o menu geral". Default
+	# visivel aqui cobre os dois early-return abaixo (sem tile/tropa sem
+	# cidade), so a branch de cidade propria mais adiante desliga.
+	action_bar.visible = true
 	if data == null:
 		# Sem tile selecionado, sem painel — antes ficava sempre visivel so
 		# com o texto "Selecione um tile", cobrindo boa parte da tela a toa
@@ -789,6 +771,8 @@ func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 		production_tabs.visible = false
 		worked_tiles_label.visible = false
 		worked_tiles_scroll.visible = false
+		production_progress_label.visible = false
+		production_progress_bar.visible = false
 		return
 
 	var hex_grid = GameManager.hex_grid
@@ -809,9 +793,15 @@ func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 		production_tabs.visible = false
 		worked_tiles_label.visible = false
 		worked_tiles_scroll.visible = false
+		production_progress_label.visible = false
+		production_progress_bar.visible = false
 		return
 
 	tile_info_panel.visible = true
+	# Default "sem cidade aqui" — a branch abaixo (city != null) sobrescreve
+	# com o item de verdade, mesmo padrao de "action_bar.visible = true" no
+	# topo desta funcao (default primeiro, excecao especifica depois).
+	_refresh_production_progress(null, null)
 
 	var text = "%s (%d, %d)\nComida %d | Producao %d | Ouro %d" % [
 		data.display_name, coord.x, coord.y, data.food_yield, data.production_yield, data.gold_yield
@@ -822,17 +812,14 @@ func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 	if hex_grid:
 		var city = hex_grid.get_city_at(coord)
 		if city:
-			var building_in_progress: BuildingData = BuildingDatabase.get_building(city.production_item)
-			var item_label = building_in_progress.display_name if building_in_progress else UnitDatabase.create_unit(city.production_item).unit_name
-			text += "\n\n%s\nPopulacao: %d\nProduzindo: %s (%d/%d)" % [
-				city.city_name, city.population, item_label,
-				int(city.stored_production), int(city.production_cost())
-			]
+			var city_race: String = city.owner_player.civ.race
+			text += "\n\n%s\nPopulacao: %d" % [city.city_name, city.population]
+			_refresh_production_progress(city, hex_grid)
 			var built_names: Array[String] = []
 			for id in city.buildings.keys():
 				var b: BuildingData = BuildingDatabase.get_building(id)
 				if b:
-					built_names.append(b.display_name)
+					built_names.append(RaceTheme.building_name(id, city_race))
 			# Sempre mostra o limite (mesmo com 0 predios ainda) — senao o
 			# jogador so descobre que ha um teto quando ja esbarra nele.
 			text += "\nPredios: %d/%d" % [city.buildings.size(), city.max_building_slots()]
@@ -840,6 +827,7 @@ func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 				text += " (%s)" % ", ".join(built_names)
 			if city.owner_player == GameManager.human_player:
 				_viewed_city = city
+				action_bar.visible = false
 
 		# Covil de Monstro (Unit neutra, owner_player == null — ver
 		# MonsterDatabase): mostra quem guarda e quanto paga derrotar, senao
@@ -854,23 +842,54 @@ func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 	production_tabs.visible = _viewed_city != null
 	_update_tile_info_panel_size(_viewed_city != null)
 	if _viewed_city:
-		# Guerreiro/Colonizador nao exigem tecnologia (sempre foram de
-		# graca), mas Guerreiro exige o Quartel construido, ver City.
-		# can_train() — as outras tropas de combate exigem AS DUAS coisas
-		# (pesquisa E predio). has_unlocked()/can_train() ja sao fail-open
-		# pra kind sem tech/predio associado, entao o mesmo par de checagem
-		# funciona pra QUALQUER kind do roster, sem caso especial nenhum.
-		var player_race: String = GameManager.human_player.civ.race if GameManager.human_player.civ else ""
+		# O painel de cidade toma conta da vizinhanca inteira do ActionBar
+		# (ver _update_tile_info_panel_size/action_bar.visible acima) — o
+		# UnitPanel ocupa exatamente essa mesma area agora (ver _on_unit_
+		# selected), entao precisa sumir enquanto a cidade estiver em foco
+		# mesmo que haja uma unidade guarnicionada nela, senao os dois
+		# competiriam pelo mesmo espaco. _on_unit_selected roda ANTES desta
+		# funcao no mesmo clique (SelectionManager emite unit_selected
+		# primeiro), entao essa linha e quem tem a ultima palavra.
+		unit_panel.visible = false
+		# Pedido do usuario: "faca ser exibido somente tropas que voce pode
+		# fazer ao clicar na cidade" — antes TODO kind do roster ficava
+		# sempre visivel (so desabilitado com tooltip explicando o motivo,
+		# ver _production_lock_reason). Agora o botao so aparece se a
+		# tropa estiver REALMENTE treinavel agora (pesquisa E predio, e no
+		# caso de tropa racial, tambem a raca certa) — can_train() ja cobre
+		# os tres sozinho (ver comentario dela em City.gd), entao nao
+		# precisa de checagem separada de raca aqui como tinha antes.
+		#
+		# A propria grade de producao (botoes de predio/tropa) so aparece pra
+		# cidade PROPRIA (ver guarda "city.owner_player == GameManager.
+		# human_player" acima) — entao retematizar os rotulos aqui sempre com
+		# a raca do jogador humano esta correto, nunca precisa considerar
+		# outro dono. Reaplicar o texto a cada clique em vez de so uma vez e
+		# barato (mesma troca de string que os outros refreshes deste bloco
+		# ja fazem) e cobre o caso comum de a raca so ficar conhecida DEPOIS
+		# do _ready() (jogo ainda nao comecou quando os botoes sao criados,
+		# ver _build_production_buttons/_label_building_buttons).
+		var race: String = GameManager.human_player.civ.race
+		for id in BUILDING_IDS:
+			var btn := _build_button_for(id)
+			btn.text = _building_button_label(id, race)
+			# Pedido do usuario: "as construcoes que precisam de pesquisa so
+			# aparecem listadas na cidade quando nos de fato criamos a
+			# pesquisa, enquanto isso elas nao aparecem no menu da cidade" —
+			# mesmo espirito ja aplicado as tropas acima (visivel so quando
+			# REALMENTE liberado). Predio de RENDIMENTO sem tech associada
+			# (Celeiro/Oficina/Mercado/Torre dos Sabios) continua sempre
+			# visivel; predio com tech propria (Quartel/Estabulo/Arquearia
+			# via trains_unit, Muralhas via TechData.unlocks_building) some
+			# ate a tech correspondente ser pesquisada, reaproveitando o
+			# MESMO gate que ja trava a construcao em si (City._tech_
+			# unlocked_for_building) — falta de sala/predio pre-requisito
+			# continuam so DESABILITANDO o botao (com tooltip explicando,
+			# ver _building_lock_reason), nao escondendo.
+			btn.visible = _viewed_city._tech_unlocked_for_building(id)
 		for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
-			# Tropa racial de OUTRA raca (ex: jogador Anao olhando o botao
-			# do Patrulheiro Elfico) fica ESCONDIDA, nao so desabilitada —
-			# ela nunca vai ficar disponivel pra essa partida, entao mostrar
-			# desabilitada seria so ruido permanente pro jogador (pedido do
-			# usuario: escolher raca precisa de implicacao real, e isso
-			# inclui a propria producao so mostrar o que faz sentido).
-			var owner_race: String = UnitDatabase.race_for_unique_kind(kind)
-			_production_buttons[kind].visible = owner_race == "" or owner_race == player_race
-			_production_buttons[kind].disabled = not GameManager.human_player.has_unlocked(kind) or not _viewed_city.can_train(kind)
+			_production_buttons[kind].text = _unit_button_label(kind, race)
+			_production_buttons[kind].visible = GameManager.human_player.has_unlocked(kind) and _viewed_city.can_train(kind)
 		build_granary_button.disabled = not _viewed_city.can_build("granary")
 		build_workshop_button.disabled = not _viewed_city.can_build("workshop")
 		build_market_button.disabled = not _viewed_city.can_build("market")
@@ -908,36 +927,76 @@ var _production_buttons: Dictionary = {} # kind -> Button, montado uma vez em _b
 func _build_production_buttons() -> void:
 	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
 		var btn := Button.new()
-		var unit := UnitDatabase.create_unit(kind)
-		btn.text = "%s  —  %d PP" % [unit.unit_name, int(unit.production_cost)]
+		btn.text = _unit_button_label(kind, "human")
 		btn.custom_minimum_size = Vector2(150, 0)
 		btn.size_flags_horizontal = SIZE_EXPAND_FILL
 		btn.pressed.connect(_on_produce_pressed.bind(kind))
 		production_row.add_child(btn)
 		_production_buttons[kind] = btn
 
-## Um botao desabilitado sem explicacao nenhuma foi exatamente o bug que o
-## usuario reportou antes ("parece nao fazer nada") — aqui o motivo (falta
-## pesquisa ou falta o predio de treino) fica no tooltip em vez do jogador
-## ter que adivinhar.
+## Mesmo espirito de _building_button_label, pro roster de tropas.
+func _unit_button_label(kind: String, race: String) -> String:
+	var unit := UnitDatabase.create_unit(kind)
+	return "%s  —  %d PP" % [RaceTheme.unit_name(kind, race), int(unit.production_cost)]
+
+## Botao de producao so fica visivel quando a tropa ja esta REALMENTE
+## treinavel (ver _on_tile_selected: visible = has_unlocked AND can_train,
+## pedido do usuario: "faca ser exibido somente tropas que voce pode fazer
+## ao clicar na cidade") — entao o tooltip aqui e so o tempo estimado de
+## producao, nunca mais um motivo de bloqueio (esse motivo virou o proprio
+## botao nao aparecer, em vez de aparecer desabilitado).
 func _update_production_tooltips() -> void:
 	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
 		_production_buttons[kind].tooltip_text = _production_lock_reason(kind)
 
-## "" quando o item ja esta liberado. Falta de tecnologia tem prioridade
-## sobre falta de predio na mensagem (pesquisar primeiro sempre resolve
-## os dois passos, o predio sozinho nao adianta sem a tecnologia).
+## So chamado pra botoes ja VISIVEIS (ver comentario acima), entao nunca
+## precisa mais explicar pesquisa/predio faltando — so o tempo estimado.
 func _production_lock_reason(kind: String) -> String:
-	if not GameManager.human_player.has_unlocked(kind):
-		var tech: TechData = TechDatabase.tech_that_unlocks(kind)
-		return "Requer pesquisar: %s" % tech.display_name if tech else ""
-	if not _viewed_city.can_train(kind):
-		var building: BuildingData = BuildingDatabase.building_that_trains(kind)
-		return "Requer: %s" % building.display_name if building else ""
 	return _estimated_turns_tooltip(UnitDatabase.create_unit(kind).production_cost)
 
 ## "custo de producao/tempo" no card (pedido do usuario) — o NOME/custo
 ## cru ja aparece no texto do botao (ver _build_production_buttons), aqui
+## Indicador de progresso do item ATUALMENTE em producao (nao um item so
+## disponivel/travado — ver _estimated_turns_tooltip pra esse outro caso)
+## — pedido do usuario: "quando uma construção ta sendo feita, tenha algum
+## indicador de avanço... atualmente nao sabemos nem quanto demora... nem
+## o progresso", "isso pra qualquer construção". `city == null` (tile sem
+## cidade, ou early-return de tropa/tile vazio) esconde os dois nodes —
+## mesmo padrao "default primeiro, excecao depois" de action_bar acima em
+## _on_tile_selected. Mostrado pra QUALQUER cidade (propria ou rival, mesmo
+## alcance que o texto antigo "Produzindo: X (12/25)" ja tinha), nao so a
+## do jogador.
+func _refresh_production_progress(city: City, hex_grid: HexGrid) -> void:
+	# city.production_item == "" = cidade OCIOSA (ver comentario do campo
+	# em City.gd) — nao ha item nenhum em producao pra mostrar progresso
+	# de, mesmo tratamento que "sem cidade nenhuma" acima.
+	if city == null or city.production_item == "":
+		production_progress_label.visible = false
+		production_progress_bar.visible = false
+		return
+
+	var city_race: String = city.owner_player.civ.race
+	var building_in_progress: BuildingData = BuildingDatabase.get_building(city.production_item)
+	var item_label = RaceTheme.building_name(city.production_item, city_race) if building_in_progress else RaceTheme.unit_name(city.production_item, city_race)
+	var cost := city.production_cost()
+	var stored := city.stored_production
+
+	var turns_text := ""
+	if hex_grid:
+		var production_per_turn = city.collect_yields(hex_grid).production
+		if production_per_turn > 0.0:
+			var turns = ceili(max(cost - stored, 0.0) / production_per_turn)
+			var suffix = "" if turns == 1 else "s"
+			turns_text = " (~%d turno%s restante%s)" % [turns, suffix, suffix]
+		else:
+			turns_text = " (sem producao suficiente pra estimar o tempo)"
+
+	production_progress_label.text = "Produzindo: %s — %d/%d PP%s" % [item_label, int(stored), int(cost), turns_text]
+	production_progress_bar.max_value = max(cost, 0.01)
+	production_progress_bar.value = stored
+	production_progress_label.visible = true
+	production_progress_bar.visible = true
+
 ## e so o tempo ESTIMADO no ritmo de producao atual da cidade vista, pra
 ## nao ter que fazer conta de cabeca. Arredonda pra cima (ceil): "pronto no
 ## proximo turno" so quando realmente sobra 1 turno inteiro ou menos.
@@ -969,8 +1028,9 @@ func _build_button_for(id: String) -> Button:
 	return null
 
 func _update_building_tooltips() -> void:
+	var race: String = GameManager.human_player.civ.race
 	for id in BUILDING_IDS:
-		_build_button_for(id).tooltip_text = _building_lock_reason(id)
+		_build_button_for(id).tooltip_text = _building_lock_reason(id, race)
 
 ## "" quando o predio ja esta liberado pra construir. Predio de treino
 ## (Quartel em diante) exige a mesma tecnologia que desbloqueia a tropa
@@ -979,13 +1039,15 @@ func _update_building_tooltips() -> void:
 ## tecnologia, ai aparece disponivel pra construir". Falta de tecnologia
 ## tem prioridade sobre limite de slots na mensagem (pesquisar primeiro e
 ## sempre o proximo passo, crescer a cidade nao adianta sem a pesquisa).
-func _building_lock_reason(id: String) -> String:
+func _building_lock_reason(id: String, race: String) -> String:
 	if _viewed_city.buildings.has(id):
 		return ""
 	var building: BuildingData = BuildingDatabase.get_building(id)
 	var tech: TechData = TechDatabase.tech_that_unlocks(building.trains_unit) if building else null
+	if tech == null and building:
+		tech = TechDatabase.tech_that_unlocks_building(id) # ex: Muralhas, sem trains_unit
 	if tech and not GameManager.human_player.researched_techs.has(tech.id):
-		return "Requer pesquisar: %s" % tech.display_name
+		return "Requer pesquisar: %s" % RaceTheme.tech_name(tech.id, race)
 	if _viewed_city.buildings.size() >= _viewed_city.max_building_slots():
 		return "Sem espaco: %d/%d predios (cidade precisa crescer)" % [_viewed_city.buildings.size(), _viewed_city.max_building_slots()]
 	return _estimated_turns_tooltip(building.production_cost)
@@ -1036,14 +1098,25 @@ func _on_worked_tile_pressed(coord: Vector2i) -> void:
 	_viewed_city.toggle_worked_tile(coord, GameManager.hex_grid)
 	_refresh_viewed_city()
 
+## UnitPanel agora mora na MESMA vizinhanca que TileInfoPanel, ao lado do
+## ActionBar (pedido do usuario: "ao clicar em tropas, elas fiquem ali do
+## lado do menu de opções, assim como fica quando clicamos nas células" —
+## ver anchor/offset dela em HUD.tscn, identicos ao estado COMPACTO de
+## TileInfoPanel). Se a mesma tropa estiver guarnicionada numa cidade
+## PROPRIA, `_on_tile_selected` (que roda logo em seguida, no MESMO
+## clique — SelectionManager emite unit_selected antes de tile_selected)
+## forca `unit_panel.visible = false` de volta, porque a cidade toma conta
+## dessa mesma area inteira nesse caso (pedido do usuario: "ao clicar na
+## cidade... fica so o menu da cidade ocupando a parte direita").
 func _on_unit_selected(unit: Unit) -> void:
 	if unit == null:
 		unit_panel.visible = false
 		return
 	unit_panel.visible = true
-	var text = "%s (%s)\nHP %d/%d | Movimento %.1f/%.1f" % [
-		unit.unit_data.unit_name, unit.veterancy_title(), int(unit.hp), int(unit.unit_data.max_hp),
-		unit.movement_left, unit.unit_data.movement_points
+	var owner_race: String = unit.owner_player.civ.race if unit.owner_player else "human"
+	var text = "%s (%s)\nHP %d/%d | Ataque %.1f | Defesa %.1f | Movimento %.1f/%.1f" % [
+		RaceTheme.unit_name(unit.unit_data.visual_kind, owner_race), unit.veterancy_title(), int(unit.hp), int(unit.unit_data.max_hp),
+		unit.unit_data.attack, unit.unit_data.defense, unit.movement_left, unit.unit_data.movement_points
 	]
 	if unit.unit_data.attack_range > 1:
 		text += "\nAlcance de ataque: %d" % unit.unit_data.attack_range
@@ -1068,7 +1141,7 @@ func _on_unit_selected(unit: Unit) -> void:
 	explore_button.button_pressed = unit.exploring
 
 ## Regressao: o painel de fim de jogo podia aparecer POR CIMA de um
-## overlay (Tecnologia/Diplomacia/Ajuda) que o jogador tivesse deixado
+## overlay (Tecnologia/Diplomacia/Grimorio) que o jogador tivesse deixado
 ## aberto — _close_overlay_panels() agora roda ANTES de mostrar este, e os
 ## botoes que abririam outro overlay ficam desabilitados (senao dava pra
 ## "fechar" a tela de fim de jogo clicando em Tecnologia sem nenhum jeito
@@ -1082,7 +1155,6 @@ func _on_game_over(victory: bool) -> void:
 	tech_button.disabled = true
 	diplomacy_button.disabled = true
 	grimoire_button.disabled = true
-	help_button.disabled = true
 	debug_button.disabled = true
 
 	var summary = ""

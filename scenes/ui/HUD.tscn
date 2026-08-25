@@ -52,50 +52,13 @@ layout_mode = 2
 layout_mode = 2
 text = "Cidades: 0 | Unidades: 0"
 
-[node name="Spacer" type="Control" parent="TopBar/TopBarRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="NavGroup" type="HBoxContainer" parent="TopBar/TopBarRow"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="TechButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
-layout_mode = 2
-text = "Tecnologia"
-
-[node name="GrimoireButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
-layout_mode = 2
-text = "Grimório"
-
-[node name="DiplomacyButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
-layout_mode = 2
-text = "Diplomacia"
-
-[node name="HelpButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
-layout_mode = 2
-text = "? Ajuda"
-
-[node name="DebugButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
-layout_mode = 2
-text = "Debug"
-visible = false
-
-[node name="NavSep" type="VSeparator" parent="TopBar/TopBarRow/NavGroup"]
+[node name="StatusSep4" type="VSeparator" parent="TopBar/TopBarRow/StatusGroup"]
 layout_mode = 2
 
-[node name="SaveButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
+[node name="FpsLabel" type="Label" parent="TopBar/TopBarRow/StatusGroup"]
 layout_mode = 2
-text = "Salvar"
-
-[node name="PauseButton" type="Button" parent="TopBar/TopBarRow/NavGroup"]
-layout_mode = 2
-text = "Menu (Esc)"
-
-[node name="EndTurnButton" type="Button" parent="TopBar/TopBarRow"]
-layout_mode = 2
-custom_minimum_size = Vector2(168, 0)
-text = "Finalizar Turno (Espaço)"
+theme_type_variation = &"MutedLabel"
+text = "FPS: 0"
 
 [node name="NotificationStack" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -130,9 +93,9 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -480.0
+offset_left = -608.0
 offset_top = -220.0
-offset_right = -16.0
+offset_right = -208.0
 offset_bottom = -16.0
 grow_horizontal = 0
 grow_vertical = 0
@@ -145,6 +108,18 @@ theme_override_constants/separation = 6
 layout_mode = 2
 text = "Selecione um tile"
 autowrap_mode = 3
+
+[node name="ProductionProgressLabel" type="Label" parent="TileInfoPanel/TileInfoBox"]
+layout_mode = 2
+visible = false
+autowrap_mode = 3
+theme_type_variation = &"MutedLabel"
+
+[node name="ProductionProgressBar" type="ProgressBar" parent="TileInfoPanel/TileInfoBox"]
+layout_mode = 2
+visible = false
+custom_minimum_size = Vector2(0, 12)
+show_percentage = false
 
 [node name="ProductionTabs" type="TabContainer" parent="TileInfoPanel/TileInfoBox"]
 layout_mode = 2
@@ -290,16 +265,18 @@ theme_override_constants/h_separation = 6
 theme_override_constants/v_separation = 6
 
 [node name="UnitPanel" type="PanelContainer" parent="."]
+visible = false
+clip_contents = true
 layout_mode = 1
-anchor_left = 0.5
-anchor_right = 0.5
+anchor_left = 1.0
 anchor_top = 1.0
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -180.0
-offset_right = 180.0
-offset_top = -230.0
+offset_left = -608.0
+offset_top = -220.0
+offset_right = -208.0
 offset_bottom = -16.0
-grow_horizontal = 2
+grow_horizontal = 0
 grow_vertical = 0
 
 [node name="UnitBox" type="VBoxContainer" parent="UnitPanel"]
@@ -311,24 +288,22 @@ layout_mode = 2
 text = "Unidade"
 autowrap_mode = 3
 
-[node name="UnitActionsRow" type="HBoxContainer" parent="UnitPanel/UnitBox"]
+[node name="UnitActionsRow" type="HFlowContainer" parent="UnitPanel/UnitBox"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
 
 [node name="MoveButton" type="Button" parent="UnitPanel/UnitBox/UnitActionsRow"]
 layout_mode = 2
-size_flags_horizontal = 3
 text = "Mover"
 
 [node name="FortifyButton" type="Button" parent="UnitPanel/UnitBox/UnitActionsRow"]
 layout_mode = 2
-size_flags_horizontal = 3
 toggle_mode = true
 text = "Fortificar"
 
 [node name="ExploreButton" type="Button" parent="UnitPanel/UnitBox/UnitActionsRow"]
 layout_mode = 2
-size_flags_horizontal = 3
 toggle_mode = true
 text = "Explorar"
 
@@ -337,22 +312,51 @@ layout_mode = 2
 text = "Fundar Cidade"
 visible = false
 
-[node name="FpsLabel" type="Label" parent="."]
+[node name="ActionBar" type="PanelContainer" parent="."]
 layout_mode = 1
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -92.0
-offset_top = -20.0
+offset_left = -200.0
+offset_top = -320.0
 offset_right = -8.0
-offset_bottom = -4.0
+offset_bottom = -8.0
 grow_horizontal = 0
 grow_vertical = 0
-mouse_filter = 2
-horizontal_alignment = 2
-theme_type_variation = &"MutedLabel"
-text = "FPS: 0"
+
+[node name="ActionBarBox" type="VBoxContainer" parent="ActionBar"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TechButton" type="Button" parent="ActionBar/ActionBarBox"]
+layout_mode = 2
+text = "Tecnologia"
+
+[node name="GrimoireButton" type="Button" parent="ActionBar/ActionBarBox"]
+layout_mode = 2
+text = "Grimório"
+
+[node name="DiplomacyButton" type="Button" parent="ActionBar/ActionBarBox"]
+layout_mode = 2
+text = "Diplomacia"
+
+[node name="DebugButton" type="Button" parent="ActionBar/ActionBarBox"]
+layout_mode = 2
+text = "Debug"
+visible = false
+
+[node name="ActionBarSep" type="HSeparator" parent="ActionBar/ActionBarBox"]
+layout_mode = 2
+
+[node name="SaveButton" type="Button" parent="ActionBar/ActionBarBox"]
+layout_mode = 2
+text = "Salvar"
+
+[node name="EndTurnButton" type="Button" parent="ActionBar/ActionBarBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(168, 44)
+text = "Finalizar Turno (Espaço)"
 
 [node name="OverlayBackdrop" type="ColorRect" parent="."]
 layout_mode = 1
@@ -363,49 +367,6 @@ grow_vertical = 2
 mouse_filter = 0
 color = Color(0.01, 0.01, 0.01, 0.65)
 visible = false
-
-[node name="HelpPanel" type="PanelContainer" parent="."]
-layout_mode = 1
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -230.0
-offset_right = 300.0
-offset_bottom = 230.0
-grow_horizontal = 2
-grow_vertical = 2
-visible = false
-
-[node name="HelpBox" type="VBoxContainer" parent="HelpPanel"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="HelpHeader" type="HBoxContainer" parent="HelpPanel/HelpBox"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="HelpTitleLabel" type="Label" parent="HelpPanel/HelpBox/HelpHeader"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_type_variation = &"PanelTitle"
-text = "Como Jogar"
-
-[node name="HelpCloseButton" type="Button" parent="HelpPanel/HelpBox/HelpHeader"]
-layout_mode = 2
-custom_minimum_size = Vector2(32, 32)
-text = "X"
-
-[node name="HelpScroll" type="ScrollContainer" parent="HelpPanel/HelpBox"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="HelpLabel" type="Label" parent="HelpPanel/HelpBox/HelpScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Como jogar"
-autowrap_mode = 3
 
 [node name="TechPanel" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -554,9 +515,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -160.0
-offset_top = -170.0
+offset_top = -190.0
 offset_right = 160.0
-offset_bottom = 170.0
+offset_bottom = 190.0
 grow_horizontal = 2
 grow_vertical = 2
 visible = false
@@ -579,6 +540,11 @@ text = "Debug"
 layout_mode = 2
 custom_minimum_size = Vector2(32, 32)
 text = "X"
+
+[node name="DebugModeButton" type="Button" parent="DebugPanel/DebugBox"]
+layout_mode = 2
+toggle_mode = true
+text = "Ativar Modo Debug (tudo liberado, producao instantanea)"
 
 [node name="DebugRevealMapButton" type="Button" parent="DebugPanel/DebugBox"]
 layout_mode = 2

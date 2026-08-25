@@ -41,13 +41,15 @@ static func found_city_from_settler(hex_grid: HexGrid, unit: Unit) -> City:
 	return hex_grid.found_city(coord, player, player.civ.civ_name + " - Cidade " + str(city_number))
 
 ## Acha um tile de terra firme e livre de unidade pra posicionar algo,
-## preferindo o proprio coord (ex: a propria cidade, pra formar guarnicao)
-## e so entao varrendo vizinhos. Sem isso, uma cidade costeira podia jogar
-## uma unidade recem-criada dentro do oceano (vizinho "index 0" as cegas
-## nao respeitava terreno nem ocupacao).
+## SEMPRE num vizinho de `coord`, nunca no proprio `coord` (ex: a propria
+## cidade) — pedido do usuario: "quando terminar de fazer uma tropa, faça
+## ela spawnar fora da cidade, ao inves de dentro". So volta a devolver
+## `coord` se NENHUM vizinho servir (mapa minusculo/cercado de agua,
+## fallback pra nao devolver uma coordenada invalida). Sem varrer vizinhos
+## primeiro, uma cidade costeira tambem podia jogar uma unidade recem-
+## criada dentro do oceano (vizinho "index 0" as cegas nao respeitava
+## terreno nem ocupacao).
 static func find_spawn_tile(hex_grid: HexGrid, coord: Vector2i) -> Vector2i:
-	if _is_valid_spawn(hex_grid, coord):
-		return coord
 	for n in hex_grid.get_neighbors(coord):
 		if _is_valid_spawn(hex_grid, n):
 			return n

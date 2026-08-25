@@ -26,3 +26,21 @@ extends Resource
 ## que nao travam producao de unidade nenhuma. Ver City.can_train() e
 ## BuildingDatabase.building_that_trains().
 @export var trains_unit: String = ""
+
+## Id de OUTRO BuildingData que precisa estar construido NESTA cidade antes
+## deste poder ser construido (ex: "barracks" pro Estabulo) — vazio pra
+## predio sem pre-requisito de construcao nenhum (a maioria). Independente
+## do gate de TECNOLOGIA (ver TechDatabase.tech_that_unlocks/City.
+## _tech_unlocked_for_building) — os dois podem se combinar (o Estabulo
+## exige tanto o Quartel construido QUANTO a propria tech "Estabulo"
+## pesquisada). Ver City.can_build().
+@export var requires_building: String = ""
+
+## true so pra Muralhas por enquanto: em vez do fluxo normal de escolher um
+## tile VIZINHO no mapa (SelectionManager.start_building_placement), a
+## producao comeca na hora (mesmo fluxo de treinar uma unidade) e o efeito
+## final e visual DENTRO da propria cidade (ver City._add_walls, acionado
+## por City.buildings.has("walls")) — nao existe Building.gd separado
+## posicionado em tile nenhum. Nao faz sentido escolher "onde" cercar uma
+## cidade que so tem um tile pra chamar de seu.
+@export var self_placed: bool = false
