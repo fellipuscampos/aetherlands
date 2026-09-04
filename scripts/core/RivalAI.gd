@@ -64,6 +64,17 @@ const SCORE_WEIGHT_ECONOMY_GAP := 1.5
 ## predio de economia, uma cidade sem ameaca visivel nunca treinaria
 ## exercito nenhum ate esgotar toda a lista de predios de rendimento.
 const SCORE_WEIGHT_MILITARY_DEFICIT := 2.0
+## Roadmap "Parte C" (composicao de exercito), C1 — preferencia SECUNDARIA
+## de composicao (nao um desempate: pode decidir entre dois candidatos
+## empatados nos outros termos, so nunca supera deficit militar real
+## sozinho). Papeis vem de ArmyComposition.roles_for_kind (derivados de
+## UnitData, sem taxonomia nova). Hierarquia verificada numericamente: no
+## ramo militar de _score_production_candidate (com o *0.5 ja existente em
+## THREAT), deficit militar maximo sozinho = SCORE_WEIGHT_MILITARY_DEFICIT
+## * 1.0 = 2.0, contra ameaca maxima + role gap maximo combinados sem
+## deficit = SCORE_WEIGHT_THREAT*1*0.5 + SCORE_WEIGHT_ROLE_GAP*1.0 =
+## 1.0+0.5 = 1.5 — 2.0 > 1.5, entao deficit real sempre vence.
+const SCORE_WEIGHT_ROLE_GAP := 0.5
 const PRODUCTION_THREAT_RADIUS := 6 # raio (em tiles) pra um inimigo visivel contar como "perto" de uma cidade
 ## Empate entre a tropa unica da propria raca e uma tropa comum (mesma
 ## pontuacao de deficit militar, ver _score_production_candidate): a
@@ -102,6 +113,7 @@ static func _military_kinds_for(player: PlayerData) -> Array:
 static func decide_production(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
 	var visible := hex_grid.compute_visible_tiles(player)
 	var military_deficit := _military_deficit(player, opponent, visible)
+	var role_counts := _role_counts(player)
 	var race: String = player.civ.race if player.civ else ""
 	var racial_unique_kind: String = UnitDatabase.RACE_UNIQUE_KIND.get(race, "")
 	for city in player.cities:
@@ -114,7 +126,7 @@ static func decide_production(player: PlayerData, hex_grid: HexGrid, opponent: P
 		var best_id := ""
 		var best_score := -INF
 		for candidate_id in _production_candidates(player, city):
-			var score := _score_production_candidate(candidate_id, defense_need, threat, military_deficit)
+			var score := _score_production_candidate(candidate_id, defense_need, threat, military_deficit, role_counts)
 			if candidate_id == racial_unique_kind:
 				score += SCORE_RACIAL_UNIT_TIE_BREAK
 			if score > best_score:
@@ -144,14 +156,16 @@ static func _production_candidates(player: PlayerData, city: City) -> Array:
 ## predio de TREINO (com trains_unit, ex Quartel/Estabulo) e qualquer
 ## unidade militar competem pela MESMA pontuacao de deficit militar —
 ## de proposito, pra construir o predio de treino faltante concorrer de
-## igual pra igual com so treinar mais uma tropa da que ja existe.
-static func _score_production_candidate(candidate_id: String, defense_need: float, threat: float, military_deficit: float) -> float:
+## igual pra igual com so treinar mais uma tropa da que ja existe. Role
+## gap (C1) so se aplica nesse ultimo ramo — candidato sem papel (predio
+## de treino em si, ou "walls") recebe bonus 0 de _role_gap_bonus.
+static func _score_production_candidate(candidate_id: String, defense_need: float, threat: float, military_deficit: float, role_counts: Dictionary) -> float:
 	if candidate_id == "walls":
 		return SCORE_WEIGHT_DEFENSE * defense_need + SCORE_WEIGHT_THREAT * threat
 	var building: BuildingData = BuildingDatabase.get_building(candidate_id)
 	if building and building.trains_unit == "":
 		return SCORE_WEIGHT_ECONOMY_GAP
-	return SCORE_WEIGHT_MILITARY_DEFICIT * military_deficit + SCORE_WEIGHT_THREAT * threat * 0.5
+	return SCORE_WEIGHT_MILITARY_DEFICIT * military_deficit + SCORE_WEIGHT_THREAT * threat * 0.5 + SCORE_WEIGHT_ROLE_GAP * _role_gap_bonus(candidate_id, role_counts)
 
 ## Cidade "sob ameaca" = HP abaixo de 75% (ja levou dano) OU unidade do
 ## oponente visivel dentro de PRODUCTION_THREAT_RADIUS tiles dela.
@@ -185,6 +199,35 @@ static func _military_deficit(player: PlayerData, opponent: PlayerData, visible:
 	# porque nao ha ameaca vista no momento.
 	var ratio := float(own_military) / float(max(known_threat, 1))
 	return clamp(1.0 - ratio, 0.0, 1.0)
+
+## Roadmap "Parte C", C1 — conta unidades vivas por papel (ArmyComposition.
+## roles_for_kind). Estado DERIVADO, recomputado a cada decide_production —
+## mesmo padrao de CityIdentity.civilization_axis_strength sobre City.
+## buildings, nunca persistido em PlayerData. Unidade multi-papel (ex.
+## cavalry=[melee,cavalry]) conta pros DOIS balaios — nao ha "papel
+## principal".
+static func _role_counts(player: PlayerData) -> Dictionary:
+	var counts := {}
+	for role in ArmyComposition.ROLES:
+		counts[role] = 0
+	for unit in player.units:
+		for role in ArmyComposition.roles_for_kind(unit.unit_data.visual_kind):
+			counts[role] += 1
+	return counts
+
+## Roadmap "Parte C", C1 — 1/(1+contagem) por papel do candidato, MAX entre
+## os papeis (nao soma: uma unidade com 2 papeis nao vale o dobro so por
+## ser multi-papel, ela cobre a MAIOR lacuna que consegue preencher).
+## Candidato sem papel nenhum (predio, settler) = 0.0.
+static func _role_gap_bonus(candidate_id: String, role_counts: Dictionary) -> float:
+	var roles := ArmyComposition.roles_for_kind(candidate_id)
+	if roles.is_empty():
+		return 0.0
+	var best := 0.0
+	for role in roles:
+		var gap: float = 1.0 / (1.0 + float(role_counts.get(role, 0)))
+		best = max(best, gap)
+	return best
 
 ## Pesos da avaliacao de guerra oportunista (ver decide_war) — pedido do
 ## usuario (roadmap Fase 1): "guerra e decidida por uma avaliacao de

@@ -95,7 +95,7 @@ func test_simulate_baseline_multi_seed_metrics():
 	for seed_value in SEEDS:
 		var result := _run_seed(seed_value)
 		all_results.append(result)
-		print("[sim seed=%d] fim=T%d 1a_guerra=%s guerras=%d dur_media_guerra=%.1f estagnado=%s eliminados=%s predios=%s cidades_finais=%s ouro_medio=%s rotas_criadas=%d rotas_ativas_fim=%d rotas_canceladas=%d fronteira_com_recurso=%s fronteira_perto_de_covil=%s eixo_dominante=%s pesquisas_identity_match=%d/%d(%.0f%%)" % [
+		print("[sim seed=%d] fim=T%d 1a_guerra=%s guerras=%d dur_media_guerra=%.1f estagnado=%s eliminados=%s predios=%s cidades_finais=%s ouro_medio=%s rotas_criadas=%d rotas_ativas_fim=%d rotas_canceladas=%d fronteira_com_recurso=%s fronteira_perto_de_covil=%s eixo_dominante=%s pesquisas_identity_match=%d/%d(%.0f%%) composicao_rivais=%s" % [
 			seed_value,
 			result.ended_turn if result.ended_turn != -1 else TURN_COUNT,
 			("T%d" % result.first_war_turn) if result.first_war_turn != -1 else "nenhuma",
@@ -115,6 +115,7 @@ func test_simulate_baseline_multi_seed_metrics():
 			result.research_choices_matching_identity,
 			result.research_choices_total,
 			result.research_choice_identity_match_pct * 100.0,
+			result.rival_role_counts,
 		])
 
 	var seeds_with_war := 0
@@ -129,6 +130,50 @@ func test_simulate_baseline_multi_seed_metrics():
 			seeds_with_elimination += 1
 	print("[sim agregado] seeds=%d com_guerra=%d estagnados=%d com_eliminacao=%d" % [
 		all_results.size(), seeds_with_war, stagnant_seeds, seeds_with_elimination,
+	])
+
+	# Roadmap "Parte C" (composicao de exercito), C1 — mesma disciplina
+	# observacional do resto deste harness: nenhum assert de composicao
+	# "certa", so instrumentacao. Contagem de PAPEL (nao de unidade -- um
+	# cavalry conta pra melee E cavalry, mesmo _role_counts usado pelo
+	# score) agregada so sobre os RIVAIS (nao o "Principal", que tem o
+	# ponto cego documentado acima de 1-oponente-por-chamada) em toda seed,
+	# pra responder: a IA rival esta produzindo exercitos com mais de um
+	# papel, ou continua puramente corpo-a-corpo como antes de C1?
+	var role_totals := {ArmyComposition.ROLE_MELEE: 0, ArmyComposition.ROLE_RANGED: 0, ArmyComposition.ROLE_CAVALRY: 0, ArmyComposition.ROLE_SIEGE: 0}
+	var distinct_roles_sum := 0
+	var rival_army_samples := 0
+	var melee_only_armies := 0
+	var ranged_only_armies := 0
+	for r in all_results:
+		for label in r.rival_role_counts.keys():
+			var counts: Dictionary = r.rival_role_counts[label]
+			rival_army_samples += 1
+			var distinct := 0
+			for role in ArmyComposition.ROLES:
+				var c: int = counts.get(role, 0)
+				role_totals[role] += c
+				if c > 0:
+					distinct += 1
+			distinct_roles_sum += distinct
+			var has_melee: bool = counts.get(ArmyComposition.ROLE_MELEE, 0) > 0
+			var has_ranged: bool = counts.get(ArmyComposition.ROLE_RANGED, 0) > 0
+			var has_cavalry: bool = counts.get(ArmyComposition.ROLE_CAVALRY, 0) > 0
+			var has_siege: bool = counts.get(ArmyComposition.ROLE_SIEGE, 0) > 0
+			if has_melee and not has_ranged and not has_cavalry and not has_siege:
+				melee_only_armies += 1
+			if has_ranged and not has_melee and not has_cavalry and not has_siege:
+				ranged_only_armies += 1
+	var role_total_units: int = role_totals[ArmyComposition.ROLE_MELEE] + role_totals[ArmyComposition.ROLE_RANGED] + role_totals[ArmyComposition.ROLE_CAVALRY] + role_totals[ArmyComposition.ROLE_SIEGE]
+	print("[sim agregado composicao] amostras_rival=%d papeis_distintos_medio=%.2f exercitos_so_melee=%d exercitos_so_ranged=%d distrib_melee=%s distrib_ranged=%s distrib_cavalry=%s distrib_siege=%s" % [
+		rival_army_samples,
+		(float(distinct_roles_sum) / float(rival_army_samples)) if rival_army_samples > 0 else 0.0,
+		melee_only_armies,
+		ranged_only_armies,
+		("%.0f%%" % (100.0 * float(role_totals[ArmyComposition.ROLE_MELEE]) / float(role_total_units))) if role_total_units > 0 else "n/a",
+		("%.0f%%" % (100.0 * float(role_totals[ArmyComposition.ROLE_RANGED]) / float(role_total_units))) if role_total_units > 0 else "n/a",
+		("%.0f%%" % (100.0 * float(role_totals[ArmyComposition.ROLE_CAVALRY]) / float(role_total_units))) if role_total_units > 0 else "n/a",
+		("%.0f%%" % (100.0 * float(role_totals[ArmyComposition.ROLE_SIEGE]) / float(role_total_units))) if role_total_units > 0 else "n/a",
 	])
 
 	# Unico assert desta fase: correcao (numero invalido), nunca balanceamento
@@ -469,6 +514,14 @@ func _finalize_metrics(m: Dictionary, primary: PlayerData, rivals: Array[PlayerD
 			m.eliminated.append(label)
 
 	m.stagnant = m.eliminated.is_empty() and (final_turn - m.last_change_turn) >= STAGNATION_WINDOW
+
+	# Roadmap "Parte C" (composicao de exercito), C1 — RivalAI._role_counts
+	# no exercito FINAL de cada rival (estado derivado, mesmo helper usado
+	# de verdade por decide_production — nao uma reimplementacao paralela).
+	# So dos rivais de proposito, ver comentario do bloco agregado abaixo.
+	m.rival_role_counts = {}
+	for rival in rivals:
+		m.rival_role_counts[_label(rival, primary)] = RivalAI._role_counts(rival)
 
 	# Roadmap 2.0 Parte 1 (A1) — "n/a" quando nenhum tile de fronteira foi
 	# reivindicado na simulacao inteira (nada pra medir), em vez de dividir

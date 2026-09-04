@@ -315,6 +315,82 @@ func test_decide_production_can_pick_the_racial_unit_for_that_race():
 
 	assert_eq(city_a.production_item, "orc_berserker", "com o Quartel pronto e nenhuma outra tropa em vantagem, o rival orc deveria preferir a propria tropa exclusiva (empate quebrado por SCORE_RACIAL_UNIT_TIE_BREAK)")
 
+## Roadmap "Parte C" (composicao de exercito), C1 — _role_counts/
+## _role_gap_bonus/hierarquia de pesos em _score_production_candidate.
+## Papeis vem de ArmyComposition.roles_for_kind (ver test_army_composition.
+## gd pra cobertura da derivacao em si); aqui so o uso dentro de RivalAI.
+
+func test_role_counts_is_zero_for_every_role_with_no_units():
+	var counts := RivalAI._role_counts(rival)
+	for role in ArmyComposition.ROLES:
+		assert_eq(counts[role], 0, role)
+
+func test_role_counts_multi_role_unit_counts_toward_every_role_it_has():
+	_make_unit("cavalry", rival, Vector2i(0, 0)) # ArmyComposition: [melee, cavalry]
+	var counts := RivalAI._role_counts(rival)
+	assert_eq(counts[ArmyComposition.ROLE_MELEE], 1)
+	assert_eq(counts[ArmyComposition.ROLE_CAVALRY], 1)
+	assert_eq(counts[ArmyComposition.ROLE_RANGED], 0)
+	assert_eq(counts[ArmyComposition.ROLE_SIEGE], 0)
+
+func test_role_gap_bonus_is_zero_for_candidate_with_no_role():
+	var counts := RivalAI._role_counts(rival)
+	assert_eq(RivalAI._role_gap_bonus("walls", counts), 0.0)
+	assert_eq(RivalAI._role_gap_bonus("barracks", counts), 0.0)
+
+func test_role_gap_bonus_decreases_monotonically_as_role_count_grows():
+	var counts := {ArmyComposition.ROLE_MELEE: 0, ArmyComposition.ROLE_RANGED: 0, ArmyComposition.ROLE_CAVALRY: 0, ArmyComposition.ROLE_SIEGE: 0}
+	assert_almost_eq(RivalAI._role_gap_bonus("warrior", counts), 1.0, 0.001)
+	counts[ArmyComposition.ROLE_MELEE] = 1
+	assert_almost_eq(RivalAI._role_gap_bonus("warrior", counts), 0.5, 0.001)
+	counts[ArmyComposition.ROLE_MELEE] = 2
+	assert_almost_eq(RivalAI._role_gap_bonus("warrior", counts), 1.0 / 3.0, 0.001)
+	counts[ArmyComposition.ROLE_MELEE] = 3
+	assert_almost_eq(RivalAI._role_gap_bonus("warrior", counts), 0.25, 0.001)
+
+func test_role_gap_bonus_takes_max_across_roles_not_sum():
+	# cavalry = [melee, cavalry]: exercito cheio de melee mas zero cavalaria
+	# deveria pontuar pela lacuna de CAVALARIA (maior), nao a soma das duas.
+	var counts := {ArmyComposition.ROLE_MELEE: 10, ArmyComposition.ROLE_RANGED: 0, ArmyComposition.ROLE_CAVALRY: 0, ArmyComposition.ROLE_SIEGE: 0}
+	assert_almost_eq(RivalAI._role_gap_bonus("cavalry", counts), 1.0, 0.001, "lacuna de cavalaria (0 unidades) deveria dominar, nao a soma com a lacuna de melee (ja cheia)")
+
+## Hierarquia de pesos (ver comentario de SCORE_WEIGHT_ROLE_GAP em RivalAI.
+## gd): deficit militar maximo sozinho (score 2.0) vence ameaca maxima +
+## role gap maximo combinados sem deficit (score 1.5) — valores exatos, nao
+## so a desigualdade em prosa. "barracks" (predio de TREINO, sem papel
+## proprio — roles_for_kind so cobre kinds de UNIDADE) isola o termo de
+## deficit sem contribuicao de role gap nenhuma, exatamente como o proprio
+## _production_candidates mistura predio de treino e unidade no mesmo ramo
+## militar do score.
+func test_score_production_candidate_military_deficit_alone_beats_threat_plus_role_gap_combined():
+	var empty_counts := {ArmyComposition.ROLE_MELEE: 0, ArmyComposition.ROLE_RANGED: 0, ArmyComposition.ROLE_CAVALRY: 0, ArmyComposition.ROLE_SIEGE: 0}
+	var deficit_alone := RivalAI._score_production_candidate("barracks", 0.0, 0.0, 1.0, empty_counts)
+	var threat_and_role_gap := RivalAI._score_production_candidate("warrior", 0.0, 1.0, 0.0, empty_counts)
+	assert_almost_eq(deficit_alone, 2.0, 0.001)
+	assert_almost_eq(threat_and_role_gap, 1.5, 0.001)
+	assert_gt(deficit_alone, threat_and_role_gap, "deficit militar real deveria sempre vencer ameaca+composicao combinados no maximo")
+
+## Integracao: exercito so com corpo-a-corpo (warrior) deveria preferir
+## treinar algo a distancia (papel ausente) em vez de mais um warrior,
+## quando os outros termos do score empatam entre os candidatos. Torre dos
+## Sabios (unico predio SEM gate de tecnologia, ver comentario de City.
+## _tech_unlocked_for_building) e construida de proposito pra remover o
+## unico concorrente de ECONOMY_GAP (1.5) que dominaria os dois candidatos
+## militares nesse cenario sem ameaca/deficit — sobra so warrior vs archer,
+## decidido pelo role gap.
+func test_decide_production_prefers_missing_role_when_otherwise_tied():
+	var city_a = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
+	hex_grid.found_city(Vector2i(5, 0), rival, "Cidade B") # 2 cidades: sai do ramo "sempre colonizador"
+	city_a.buildings["sages_tower"] = true
+	city_a.buildings["archery_range"] = true
+	rival.researched_techs["arquearia"] = true # libera has_unlocked("archer")
+	_make_unit("warrior", rival, Vector2i(1, 0))
+	_make_unit("warrior", rival, Vector2i(2, 0))
+
+	RivalAI.decide_production(rival, hex_grid, human)
+
+	assert_eq(city_a.production_item, "archer", "exercito so com corpo-a-corpo deveria preferir treinar arqueiro (papel ausente) sobre mais um warrior")
+
 ## Roadmap de gameplay Fase 4A — pequeno acrescimo ao escopo do plano
 ## original: sem isto, TradeManager.propose_route nunca teria como
 ## comecar sozinho (so existe UI humana pra guerra/paz, nenhuma pra
