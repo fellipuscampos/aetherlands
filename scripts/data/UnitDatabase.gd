@@ -68,6 +68,11 @@ static func create_unit(kind: String) -> UnitData:
 			data.can_found_city = false
 			data.visual_kind = "warrior"
 			data.production_cost = 15.0
+			# Identidade visual (KayKit Adventurers, CC0) — Barbaro, o lutador
+			# mais "basico" do pack, condizente com o Guarda ser a tropa de
+			# entrada (sem predio/pesquisa nenhuma exigida).
+			data.model_scene_path = "res://assets/models/kaykit/characters/Barbarian.glb"
+			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
 		# Segunda tropa humana comum, so treinavel no Quartel apos pesquisar
 		# a tech "Quartel" (ver TechDatabase) — infantaria profissional,
 		# estatisticas acima do Guarda em troca do investimento em pesquisa
@@ -82,6 +87,13 @@ static func create_unit(kind: String) -> UnitData:
 			data.can_found_city = false
 			data.visual_kind = "men_at_arms"
 			data.production_cost = 22.0
+			# Prova de conceito da identidade visual nova (pedido do usuario, ver
+			# UnitData.model_scene_path) — modelo real (KayKit Adventurers, CC0)
+			# em vez do corpo procedural de sempre. So esta tropa por enquanto;
+			# ainda sem animacao (bind pose) — retargeting das animacoes do
+			# KayKit Character Animations fica pra depois de validar esta fatia.
+			data.model_scene_path = "res://assets/models/kaykit/characters/Knight.glb"
+			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
 		"archer":
 			data.unit_name = "Arqueiro"
 			data.movement_points = 2.0
@@ -93,6 +105,9 @@ static func create_unit(kind: String) -> UnitData:
 			data.can_found_city = false
 			data.visual_kind = "archer"
 			data.production_cost = 18.0
+			# Identidade visual (KayKit Adventurers, CC0) — combinacao literal.
+			data.model_scene_path = "res://assets/models/kaykit/characters/Ranger.glb"
+			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
 		"cavalry":
 			data.unit_name = "Cavaleiro"
 			data.movement_points = 4.0
@@ -122,6 +137,11 @@ static func create_unit(kind: String) -> UnitData:
 			data.can_found_city = false
 			data.visual_kind = "scout"
 			data.production_cost = 16.0
+			# Identidade visual (KayKit Adventurers, CC0) — Ladino, silhueta
+			# leve/agil condiz com "Batedor" (sem cavalo disponivel nos pacotes
+			# gratuitos, mesma limitacao de Cavaleiro/Cavaleiro Real abaixo).
+			data.model_scene_path = "res://assets/models/kaykit/characters/Rogue.glb"
+			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
 		"catapult":
 			data.unit_name = "Catapulta"
 			data.movement_points = 1.0
@@ -145,6 +165,9 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "mage"
 			data.ignores_terrain_defense = true
 			data.production_cost = 28.0
+			# Identidade visual (KayKit Adventurers, CC0) — combinacao literal.
+			data.model_scene_path = "res://assets/models/kaykit/characters/Mage.glb"
+			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
 		"griffin":
 			data.unit_name = "Grifo"
 			data.movement_points = 4.0
@@ -195,6 +218,11 @@ static func create_unit(kind: String) -> UnitData:
 			data.ignores_terrain_defense = true
 			data.regen_fraction = 0.1 # drena ecos da sombra pra se sustentar, mesmo padrao do Ent
 			data.production_cost = 33.0
+			# Identidade visual (KayKit Skeletons, CC0) — Mago Esqueleto, o
+			# modelo mais proximo tematicamente de "necromancia/sombra" nos
+			# pacotes gratuitos.
+			data.model_scene_path = "res://assets/models/kaykit/skeletons/Skeleton_Mage.glb"
+			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
 		# Tropas raciais exclusivas (ver RACE_UNIQUE_KIND acima) — cada
 		# civilizacao de fantasia (CivilizationData.race, escolhida pelo
 		# jogador na tela de titulo ou sorteada pra rival em
@@ -240,4 +268,11 @@ static func create_unit(kind: String) -> UnitData:
 			data.can_found_city = false
 			data.visual_kind = "elf_ranger"
 			data.production_cost = 26.0
+			# Identidade visual (KayKit Adventurers, CC0) — reusa o mesmo
+			# modelo do Arqueiro comum (silhueta de arqueiro generica ja
+			# combina tematicamente com "Arqueiro Solar"; sem modelo elfico
+			# dedicado nos pacotes gratuitos, so estatisticas diferenciam as
+			# duas tropas).
+			data.model_scene_path = "res://assets/models/kaykit/characters/Ranger.glb"
+			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
 	return data

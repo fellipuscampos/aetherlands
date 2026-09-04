@@ -106,6 +106,28 @@ uniform float snow_blend : hint_range(0.01, 1.0) = 0.25;
 uniform float snow_edge_noise_scale : hint_range(1.0, 30.0) = 10.0;
 uniform float snow_edge_noise_strength : hint_range(0.0, 1.0) = 0.35;
 
+// Cratera de vulcao ativo no pico de Montanha Vulcanica (pedido do usuario:
+// "faça vulcões no bioma de fogo") — antes disso mat_kind==3 (Terra/Colinas/
+// Montanhas Vulcanicas) era so rocha negra "morta", sem lava/brilho nenhum
+// (ver comentario do mat_kind==3 em fragment()), enquanto o Mar de Lava/
+// Lava solida adjacentes (mat_kind 5/6) ja tinham magma brilhando de
+// verdade — as proprias MONTANHAS do continente vulcanico, que deveriam
+// ser o elemento mais dramatico do bioma, ficavam visualmente inertes.
+// Mesma tecnica de mascara por ALTURA+ruido de borda ja usada pra neve
+// (v_local_y + crater_edge_noise perturbando o limiar, pra a boca da
+// cratera ficar irregular em vez de um circulo geometrico perfeito), so
+// que restrita a mat_kind==3 (nunca aparece em Montanha comum/Gelo/
+// Cristal) e cor/EMISSION reaproveitando a MESMA paleta de magma do Mar de
+// Lava/Lava solida (fonte unica de "cor de magma" no arquivo inteiro, ver
+// water_shader.gdshader lava_fissure_color).
+uniform vec3 crater_glow_color : source_color = vec3(1.0, 0.45, 0.08);
+uniform float crater_threshold : hint_range(0.0, 1.5) = 0.62; // mais alto que snow_threshold — so a PONTA do pico, uma boca de cratera pequena, nao o topo inteiro
+uniform float crater_blend : hint_range(0.01, 1.0) = 0.15;
+uniform float crater_edge_noise_scale : hint_range(1.0, 30.0) = 12.0;
+uniform float crater_edge_noise_strength : hint_range(0.0, 1.0) = 0.4;
+uniform float crater_pulse_speed : hint_range(0.0, 3.0) = 0.7;
+uniform float crater_emission_strength : hint_range(0.0, 3.0) = 1.4;
+
 // Transicao organica de bioma nas bordas do hexagono — evoluido pra usar
 // uma MASCARA GLOBAL (mesma estrategia vencedora da agua, pedido do
 // usuario: ver HexGrid._rebuild_biome_overlay/water_shader.gdshader
@@ -525,11 +547,37 @@ void fragment() {
 	// rockiness cresce suavemente conforme a face fica mais inclinada
 	// (mesmo limiar de cliff_normal_threshold), sobrepondo rocha por cima
 	// da textura generica so onde faz sentido fisico.
-	if (v_elevation_kind > 1.5 && !is_cliff) {
+	//
+	// mat_kind != 1 (pedido do usuario: "retire as pedras das montanhas de
+	// gelo") — Neve/Gelo Eterno fica de fora desta rocha exposta, mesmo
+	// espirito do mat_kind != 3 ja excluido do bloco de neve logo abaixo
+	// (cada bioma especial de Montanha decide seu PROPRIO revestimento nas
+	// encostas ingremes, em vez de todos caírem na mesma rocha generica).
+	if (v_elevation_kind > 1.5 && !is_cliff && mat_kind != 1) {
 		vec3 mountain_rock_color = triplanar_sample(lava_tex, world_pos, weights, texture_scale) * texture_brightness;
 		float rockiness = 1.0 - smoothstep(cliff_normal_threshold, 1.0, v_world_normal.y);
 		ALBEDO = mix(ALBEDO, mix(cliff_tint, mountain_rock_color, 0.6) * (0.85 + v_seed * 0.3), rockiness);
 		ROUGHNESS = mix(ROUGHNESS, cliff_roughness, rockiness);
+	}
+
+	// Cratera de vulcao ativo — SO Montanha Vulcanica (mat_kind==3), pedido
+	// do usuario: "faça vulcões no bioma de fogo". Mascara por ALTURA
+	// (v_local_y, restrita a ponta do pico via crater_threshold mais alto
+	// que o da neve) com o limiar perturbado por ruido (crater_edge_noise)
+	// pra a boca da cratera ficar irregular, nao um circulo perfeito —
+	// mesmo principio do snow_edge_noise abaixo. Pulso de brilho (mesma
+	// formula de "respiracao" ja usada em mat_kind==6/water_shader.gdshader)
+	// da a leitura de magma vivo, nao uma mancha laranja estatica.
+	if (v_elevation_kind > 1.5 && mat_kind == 3) {
+		float crater_edge_noise = value_noise(world_pos.xz * crater_edge_noise_scale) - 0.5;
+		float local_crater_threshold = crater_threshold + crater_edge_noise * crater_edge_noise_strength;
+		float crater_mask = smoothstep(local_crater_threshold - crater_blend, local_crater_threshold, v_local_y);
+		float crater_pulse = 0.6 + 0.4 * sin(TIME * crater_pulse_speed + v_seed * 6.283);
+		vec3 crater_color = crater_glow_color * crater_pulse;
+		ALBEDO = mix(ALBEDO, crater_color, crater_mask);
+		EMISSION += crater_color * crater_mask * crater_emission_strength;
+		ROUGHNESS = mix(ROUGHNESS, 0.5, crater_mask);
+		SPECULAR = mix(SPECULAR, 0.4, crater_mask);
 	}
 
 	// Neve no pico da Montanha (pedido do usuario) — por cima de QUALQUER

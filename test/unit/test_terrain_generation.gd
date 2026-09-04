@@ -619,6 +619,15 @@ func test_generate_map_never_has_isolated_single_tile_biomes():
 
 			for coord in grid.tiles.keys():
 				var terrain_type = grid.tiles[coord].terrain_type
+				# Montanha Vulcanica (VOLCANIC_PEAKS) e a UNICA excecao
+				# deliberada a esta regra — pedido do usuario numa rodada
+				# seguinte, depois de reportar vulcoes gerando grudados:
+				# "vulcões tem que estar apenas sozinhos" (ver
+				# VOLCANIC_PEAK_MAX_NEIGHBORS/_thin_special_zone_peaks em
+				# HexGrid.gd). Todo outro bioma continua proibido de ficar
+				# isolado — so vulcao TEM que ficar.
+				if terrain_type == HexTileData.TerrainType.VOLCANIC_PEAKS:
+					continue
 				var neighbors = grid.get_neighbors(coord)
 				if neighbors.is_empty():
 					continue
@@ -918,6 +927,50 @@ func test_generate_map_at_large_size_volcanic_continent_has_real_relief():
 
 	grid.queue_free()
 
+## Pedido do usuario apos testar de verdade: "eu criei um mapa e veio 3
+## vulcoes juntos, vulcoes tem que estar apenas sozinhos" — Montanha
+## Vulcanica (VOLCANIC_PEAKS) nunca deveria ter outra Montanha Vulcanica
+## como vizinha direta (VOLCANIC_PEAK_MAX_NEIGHBORS=0, mais estrito que o
+## limiar de 2 que Picos de Cristal ainda usam). Varias sementes pra nao
+## depender de uma unica ter sorteado um caso de teste representativo.
+func test_generate_map_volcanic_peaks_are_always_isolated_from_each_other():
+	var seeds = [1, 2, 3, 4, 5, 2024]
+	for s in seeds:
+		var grid := HexGrid.new()
+		grid._ready()
+		grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, s)
+
+		for coord in grid.tiles.keys():
+			if grid.tiles[coord].terrain_type != HexTileData.TerrainType.VOLCANIC_PEAKS:
+				continue
+			for n in grid.get_neighbors(coord):
+				var ndata: HexTileData = grid.tiles.get(n)
+				assert_false(
+					ndata != null and ndata.terrain_type == HexTileData.TerrainType.VOLCANIC_PEAKS,
+					"vulcao em %s (semente %d) tem outro vulcao vizinho em %s — deveriam estar sempre sozinhos" % [str(coord), s, str(n)]
+				)
+
+		grid.queue_free()
+
+## Pedido do usuario: "tem que ter pelo menos uns 3 por continente de
+## fogo" — _ensure_minimum_volcanic_peaks garante isso mesmo quando a poda
+## de isolamento total (teste acima) derruba a maioria dos Picos que a
+## elevacao crua tinha proposto.
+func test_generate_map_has_at_least_three_isolated_volcanoes():
+	var seeds = [1, 2, 3, 4, 5, 2024]
+	for s in seeds:
+		var grid := HexGrid.new()
+		grid._ready()
+		grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, s)
+
+		var peak_count := 0
+		for coord in grid.tiles.keys():
+			if grid._zone_for(coord) == grid._Zone.VOLCANIC and grid.tiles[coord].terrain_type == HexTileData.TerrainType.VOLCANIC_PEAKS:
+				peak_count += 1
+		assert_gte(peak_count, HexGrid.MIN_VOLCANIC_PEAKS, "semente %d gerou so %d vulcao(oes), esperava pelo menos %d" % [s, peak_count, HexGrid.MIN_VOLCANIC_PEAKS])
+
+		grid.queue_free()
+
 ## Mesma ideia do teste acima, pro continente de Cristal (pedido do
 ## usuario: "gere Picos/Montanhas de Cristal no interior"/"transicionando
 ## para areas de Solo Mistico... nas regioes mais baixas e costeiras").
@@ -940,5 +993,36 @@ func test_generate_map_at_large_size_crystal_continent_has_real_relief():
 	assert_gt(counts.get(HexTileData.TerrainType.MYSTIC_SOIL, 0), 0, "Cristal deveria ter Solo Mistico (base caminhavel/periferia) de verdade")
 	assert_gt(counts.get(HexTileData.TerrainType.CRYSTAL_PEAKS, 0), 0, "Cristal deveria ter Picos de Cristal (cordilheira central) de verdade")
 	assert_gt(counts.get(HexTileData.TerrainType.CRYSTAL, 0), 0, "Cristal deveria ter Campos de Cristal (nucleo denso) de verdade")
+
+	grid.queue_free()
+
+## Roadmap de gameplay Fase 5 — "Metamorfose de Gaia" (ver SpellManager.
+## _apply_terrain_transform): troca o TIPO de terreno na Dictionary
+## tiles e (melhor esforco) atualiza a COR da instancia no multimesh de
+## terreno solido pra nao ficar com a aparencia antiga ate o mapa inteiro
+## regenerar. So confere o lado de DADOS aqui — MultiMesh.get_instance_
+## color() nao da pra confiar em teste headless (unico lugar desta suite
+## que tentou, o renderer "dummy" do --headless nao mantem esse buffer
+## de forma legivel; ver transform_tile_terrain em HexGrid.gd pro codigo
+## de atualizacao visual em si, exercitado de verdade so jogando).
+## Precisa de um mapa GERADO de verdade (nao so tiles populados a mao)
+## pra ter _coord_to_index/_multimesh_instance montados.
+func test_transform_tile_terrain_updates_the_tile_data():
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.generate_map(21, 21, 555)
+
+	var land_coord = null
+	for coord in grid.tiles.keys():
+		if not grid.tiles[coord].is_water() and grid._coord_to_index.has(coord):
+			land_coord = coord
+			break
+	assert_not_null(land_coord, "pre-condicao: mapa deveria ter pelo menos 1 tile de terra solida indexado no multimesh")
+
+	var new_type = HexTileData.TerrainType.LAVA if grid.tiles[land_coord].terrain_type != HexTileData.TerrainType.LAVA else HexTileData.TerrainType.SNOW
+
+	grid.transform_tile_terrain(land_coord, new_type)
+
+	assert_eq(grid.get_tile(land_coord).terrain_type, new_type, "dado do tile deveria ter mudado")
 
 	grid.queue_free()

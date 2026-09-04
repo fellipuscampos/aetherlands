@@ -116,7 +116,7 @@ func test_cast_a_spell_without_spelldata_is_a_safe_no_op():
 	var enemy = _make_unit("warrior", target_owner, Vector2i(1, 0))
 	var hp_before = enemy.hp
 
-	var message = SpellManager.cast(caster, "Ruína Ígnea", enemy, hex_grid, 1)
+	var message = SpellManager.cast(caster, "Feitiço Que Não Existe", enemy, hex_grid, 1)
 
 	assert_almost_eq(enemy.hp, hp_before, 0.01, "feitico sem SpellData cadastrado nao deveria mudar nada")
 	assert_true("não tem efeito" in message)
@@ -140,9 +140,31 @@ func test_has_enough_mana_true_at_or_above_the_spell_cost():
 	caster.mana = 25.0
 	assert_true(SpellManager.has_enough_mana(caster, "Lança de Arcana"))
 
+## Roadmap 2.0 Parte 1 (B1) — identidade de Nodulo Arcano: custo de mana
+## descontado so quando `hex_grid` e fornecido (mesma convencao opcional de
+## City.production_cost) e o jogador controla uma fonte.
+func test_effective_mana_cost_applies_mana_node_discount_only_when_hex_grid_is_given():
+	var spell: SpellData = SpellDatabase.get_spell("Lança de Arcana") # custa 25
+	var center := Vector2i(0, 0)
+	hex_grid.get_tile(center).resource = "mana_node"
+	var city := hex_grid.found_city(center, caster, "Capital")
+
+	assert_almost_eq(SpellManager.effective_mana_cost(spell, caster), 25.0, 0.01, "sem hex_grid, deveria continuar devolvendo o custo base")
+	assert_lt(SpellManager.effective_mana_cost(spell, caster, hex_grid), 25.0, "com hex_grid e uma fonte de Nodulo Arcano controlada, deveria custar menos")
+
+func test_has_enough_mana_respects_mana_node_discount_when_hex_grid_is_given():
+	var center := Vector2i(0, 0)
+	hex_grid.get_tile(center).resource = "mana_node"
+	hex_grid.found_city(center, caster, "Capital")
+	# Discount pra 1 fonte e 5%: 25 * 0.95 = 23.75.
+	caster.mana = 24.0
+
+	assert_false(SpellManager.has_enough_mana(caster, "Lança de Arcana"), "sem hex_grid, ainda deveria exigir o custo base (25)")
+	assert_true(SpellManager.has_enough_mana(caster, "Lança de Arcana", hex_grid), "com hex_grid e desconto, 24 de mana ja deveria bastar")
+
 func test_has_enough_mana_false_for_a_spell_without_spelldata():
 	caster.mana = 1000.0
-	assert_false(SpellManager.has_enough_mana(caster, "Ruína Ígnea"), "feitico sem custo cadastrado nunca deveria contar como 'tem mana suficiente'")
+	assert_false(SpellManager.has_enough_mana(caster, "Feitiço Que Não Existe"), "feitico sem custo cadastrado nunca deveria contar como 'tem mana suficiente'")
 
 func test_is_castable_requires_both_tech_cooldown_and_mana():
 	# So a tecnologia, sem mana: nao castable.
@@ -174,6 +196,98 @@ func test_cast_fails_with_insufficient_mana_and_applies_no_effect():
 	assert_almost_eq(caster.mana, 10.0, 0.01, "mana nao deveria ser descontada de uma conjuracao que falhou")
 	assert_false(caster.spell_cooldowns.has("Lança de Arcana"), "conjuracao que falhou por falta de mana nao deveria gastar cooldown")
 	assert_true("Mana insuficiente" in message)
+
+## Roadmap de gameplay Fase 5 — "Ruína Ígnea": dano no alvo principal MAIS
+## em qualquer unidade num tile vizinho dele (SpellData.damage_area_radius).
+func test_cast_flame_cataclysm_damages_primary_target_and_adjacent_enemy():
+	caster.researched_techs["cataclismo_elemental"] = true
+	var primary = _make_unit("warrior", target_owner, Vector2i(0, 0))
+	var nearby_enemy = _make_unit("warrior", target_owner, Vector2i(1, 0))
+	var primary_hp_before = primary.hp
+	var nearby_hp_before = nearby_enemy.hp
+
+	SpellManager.cast(caster, "Ruína Ígnea", primary, hex_grid, 1)
+
+	assert_almost_eq(primary.hp, primary_hp_before - 10.0, 0.01)
+	assert_almost_eq(nearby_enemy.hp, nearby_hp_before - 10.0, 0.01, "unidade adjacente ao alvo principal tambem deveria tomar dano")
+
+## Cataclismo indiscriminado (ver flavor text/comentario de SpellData.
+## damage_area_radius) — aliado perto do alvo tambem toma dano.
+func test_cast_flame_cataclysm_also_damages_a_nearby_ally():
+	caster.researched_techs["cataclismo_elemental"] = true
+	var primary = _make_unit("warrior", target_owner, Vector2i(0, 0))
+	var nearby_ally = _make_unit("warrior", caster, Vector2i(1, -1))
+	var ally_hp_before = nearby_ally.hp
+
+	SpellManager.cast(caster, "Ruína Ígnea", primary, hex_grid, 1)
+
+	assert_almost_eq(nearby_ally.hp, ally_hp_before - 10.0, 0.01, "cataclismo e indiscriminado: aliado perto do alvo tambem deveria tomar dano")
+
+func test_cast_flame_cataclysm_does_not_damage_units_outside_the_radius():
+	caster.researched_techs["cataclismo_elemental"] = true
+	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var primary = _make_unit("warrior", target_owner, Vector2i(0, 0))
+	var far_enemy = _make_unit("warrior", target_owner, Vector2i(2, 0)) # 2 tiles de distancia, fora do raio 1
+	var far_hp_before = far_enemy.hp
+
+	SpellManager.cast(caster, "Ruína Ígnea", primary, hex_grid, 1)
+
+	assert_almost_eq(far_enemy.hp, far_hp_before, 0.01, "unidade fora do raio da area nao deveria ser afetada")
+
+func test_cast_flame_cataclysm_sets_cooldown_and_costs_mana():
+	caster.researched_techs["cataclismo_elemental"] = true
+	var primary = _make_unit("warrior", target_owner, Vector2i(0, 0))
+	var mana_before = caster.mana
+
+	SpellManager.cast(caster, "Ruína Ígnea", primary, hex_grid, 1)
+
+	assert_almost_eq(caster.mana, mana_before - 60.0, 0.01)
+	assert_eq(caster.spell_cooldowns["Ruína Ígnea"], 1 + 6)
+
+## Roadmap de gameplay Fase 5 — "Metamorfose de Gaia": transforma o
+## terreno do tile onde o ALVO (unidade propria) esta em pe, usando
+## TechData.terrain_transform ("from": Tundra/Deserto, "to": Planicie).
+func test_cast_gaia_metamorphosis_transforms_eligible_terrain():
+	caster.researched_techs["transcendencia_florestal"] = true
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.TUNDRA)
+	var ally = _make_unit("warrior", caster, Vector2i(1, 0))
+
+	var message = SpellManager.cast(caster, "Metamorfose de Gaia", ally, hex_grid, 1)
+
+	assert_eq(hex_grid.get_tile(Vector2i(1, 0)).terrain_type, HexTileData.TerrainType.GRASSLAND)
+	assert_true("transformou" in message)
+
+func test_cast_gaia_metamorphosis_has_no_effect_on_ineligible_terrain():
+	caster.researched_techs["transcendencia_florestal"] = true
+	# before_each ja deixa (1,0) como Planicie, que nao esta na lista `from`
+	var ally = _make_unit("warrior", caster, Vector2i(1, 0))
+
+	var message = SpellManager.cast(caster, "Metamorfose de Gaia", ally, hex_grid, 1)
+
+	assert_eq(hex_grid.get_tile(Vector2i(1, 0)).terrain_type, HexTileData.TerrainType.GRASSLAND, "terreno ja fora da lista `from` nao deveria mudar")
+	assert_true("não tem efeito" in message)
+
+## A unidade so marca QUAL tile transformar — ela mesma nao e afetada.
+func test_cast_gaia_metamorphosis_does_not_affect_the_target_units_hp():
+	caster.researched_techs["transcendencia_florestal"] = true
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.DESERT)
+	var ally = _make_unit("warrior", caster, Vector2i(1, 0))
+	ally.hp = 5.0
+
+	SpellManager.cast(caster, "Metamorfose de Gaia", ally, hex_grid, 1)
+
+	assert_almost_eq(ally.hp, 5.0, 0.01, "a unidade so marca qual tile transformar, nao e afetada ela mesma")
+
+func test_cast_gaia_metamorphosis_sets_cooldown_and_costs_mana():
+	caster.researched_techs["transcendencia_florestal"] = true
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.DESERT)
+	var ally = _make_unit("warrior", caster, Vector2i(1, 0))
+	var mana_before = caster.mana
+
+	SpellManager.cast(caster, "Metamorfose de Gaia", ally, hex_grid, 1)
+
+	assert_almost_eq(caster.mana, mana_before - 50.0, 0.01)
+	assert_eq(caster.spell_cooldowns["Metamorfose de Gaia"], 1 + 8)
 
 func test_cooldown_ends_at_reflects_the_stored_turn():
 	caster.spell_cooldowns["Lança de Arcana"] = 7

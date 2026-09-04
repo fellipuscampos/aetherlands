@@ -141,6 +141,12 @@ static func create_monster(kind: String, is_camp_boss: bool = false) -> UnitData
 	data.gold_reward = info.gold_reward
 	data.flies = info.flies
 	data.movement_points = 0.0 if is_camp_boss else info.movement_points
+	# Identidade visual (KayKit Skeletons, CC0) — so o monstro Esqueleto tem
+	# combinacao literal disponivel nos pacotes gratuitos; Goblin/Troll/
+	# Wyvern/Dragao continuam procedurais (sem modelo equivalente).
+	if kind == "skeleton":
+		data.model_scene_path = "res://assets/models/kaykit/skeletons/Skeleton_Warrior.glb"
+		data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
 	return data
 
 ## Ouro pago por destruir o covil ABANDONADO (ver HexGrid.destroy_lair/

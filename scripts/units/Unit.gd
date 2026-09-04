@@ -96,6 +96,26 @@ var fortified: bool = false
 ## nenhum tile UNSEEN alcancavel (mapa todo explorado).
 var exploring: bool = false
 
+## Modo "Embarcar" (Roadmap 2.0 Parte 1, acesso naval — pedido do usuario)
+## — unidade TERRESTRE que atravessa agua de verdade (Oceano/Mar Gelado/
+## Costa, ver HexTileData.can_be_embarked_on()) enquanto isto for true. So
+## liga via SelectionManager.toggle_embark_selected(), o UNICO lugar que
+## checa as 3 condicoes (tech "Navegação" pesquisada, unidade nao voa, tile
+## atual adjacente a agua — ver HexGrid.is_coastal_tile). Unidade em
+## transito, nao um segundo modo de combate: NAO pode atacar, fortificar,
+## explorar, fundar/capturar cidade nem conjurar feitico enquanto embarcada
+## (cada acao guarda isso no proprio ponto de decisao). NAO ignora custo de
+## terreno nem cruza Lava (diferente de UnitData.flies) — so a restricao de
+## AGUA. Desliga sozinho ao pisar em terra firme de novo (ver HexGrid.
+## move_unit) — nao precisa de um botao "Desembarcar" separado. Assim como
+## fortified/exploring/move_order_target acima, NAO sobrevive a save/load
+## por padrao seria a convencao — mas este campo e a EXCECAO deliberada
+## (ver SaveManager._serialize_player/_deserialize_player): perder isto
+## silenciosamente deixaria uma unidade presa em pleno oceano tratada como
+## terrestre apos carregar, um estado invalido, nao so uma conveniencia
+## perdida.
+var embarked: bool = false
+
 ## true so pro ocupante ORIGINAL de um Covil de Monstro (ver HexGrid.
 ## spawn_monster_at/_spawn_monster_lairs) — do lado de MonsterDatabase.
 ## create_monster, controla HP/ataque reforcados e movement_points travado
@@ -178,12 +198,22 @@ func slide_to(target_pos: Vector3) -> void:
 			rotation.y = atan2(direction.x, direction.z)
 		return
 
+	# Andar (pedido do usuario: "os mobs nao tem animacao de andando?") — so
+	# troca se ja nao estiver tocando (ver _play_animation), e volta pro
+	# Idle quando o tween termina. Fica meio "piscando" em Idle por 1 frame
+	# entre dois passos consecutivos de um caminho de varios tiles (cada
+	# tile chama slide_to() separado, ver HexGrid.move_unit) — aceitavel
+	# por enquanto, sincronizar direito exigiria HexGrid avisar "ainda tem
+	# mais passo vindo", fora do escopo desta rodada.
+	_play_animation(WALK_ANIMATION)
+
 	var tween = create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(self, "position", target_pos, MOVE_DURATION).set_trans(Tween.TRANS_SINE)
 	if direction.length() > 0.05:
 		var target_angle = atan2(direction.x, direction.z)
 		tween.tween_property(self, "rotation:y", target_angle, MOVE_DURATION * 0.6)
+	tween.finished.connect(func(): _play_animation(DEFAULT_ANIMATION))
 
 func _build_visual() -> void:
 	_build_procedural_body()
@@ -261,9 +291,148 @@ func _attach_race_signature_weapon(root: Node3D, race: String, kit: Dictionary, 
 			bow.rotation_degrees = Vector3(0, 0, 12)
 			root.add_child(bow)
 
+## Nomes dos clipes usados aqui — todo pacote KayKit Character Animations
+## reaproveitado nesta sessao (Rig_Medium_General.glb/Rig_Medium_
+## MovementBasic.glb) tem os dois. Sem selecao de combate ainda (fica pra
+## depois — ataque/morte tem clipe pronto no pacote, so falta ligar).
+const DEFAULT_ANIMATION := "Idle_A"
+const WALK_ANIMATION := "Walking_A"
+
+## Segunda cena de animacao, sempre reaproveitada JUNTO da de UnitData.
+## animation_scene_path (General) pra fechar Idle+Andar — mesmo rig
+## compartilhado entre os dois arquivos e entre todo personagem/esqueleto
+## usado nesta sessao (confirmado nome a nome de osso antes de escrever
+## isto). Vira campo proprio em UnitData so se algum dia existir uma
+## unidade animada com um rig DIFERENTE (ex: "Rig_Large").
+const WALK_ANIMATION_SCENE := "res://assets/models/kaykit/animations/Rig_Medium_MovementBasic.glb"
+
+## AnimationPlayer construido em _build_model_body(), guardado aqui pra
+## slide_to() poder trocar entre Idle/Andar sem precisar buscar na arvore
+## de novo a cada passo. null pra qualquer unidade sem model_scene_path/
+## animation_scene_path (corpo procedural, ou modelo sem animacao).
+var _anim_player: AnimationPlayer
+
+## Altura-alvo (em unidades de mundo) pra qualquer modelo KayKit carregado
+## aqui — pedido do usuario apos ver o resultado ("como fazer isso ficar
+## mais bonito e organizado"): os personagens vem na escala "real" do
+## pacote (tamanho humano de verdade), bem maior que o corpo procedural que
+## substituem (ex: CapsuleMesh do Guarda tem 0.68 de altura). 0.7 casa com
+## essa escala antiga, e fica confortavelmente MENOR que qualquer predio ja
+## reescalado (ver Building.KAYKIT_SCALE — o menor predio do pack fica em
+## ~0.85 de altura depois de escalado, o maior em ~2.1).
+##
+## Por que ALTURA-ALVO por modelo (normaliza cada personagem pra 0.7) em vez
+## do MESMO fator de escala global usado nos predios (Building.KAYKIT_
+## SCALE, derivado do proprio tile hexagonal do pacote): tile e predio sao
+## geometria "morta" (sem esqueleto), entao medir o bounding box crua e
+## confiavel; personagem tem esqueleto/skinning, e o bind pose usado pro
+## rig costuma abrir os bracos mais que uma pose de pe normal (bom pra
+## pintar peso de esqueleto, ruim pra medir "altura de pe" direito) —
+## medido nesta sessao, TODO personagem do pack (silhuetas bem diferentes:
+## Barbaro/Cavaleiro/Mago/Ranger/Ladino) da a MESMA largura crua (~1.94),
+## o que so faz sentido como artefato do bind pose, nao como medida real de
+## corpo. Altura (Y) sofre menos com isso e ainda varia proporcionalmente
+## entre os personagens, entao normalizar por ALTURA continua sendo a
+## medida mais confiavel disponivel pra humanoide, mesmo sem um numero
+## "global" tao solido quanto o dos predios.
+const MODEL_TARGET_HEIGHT := 0.7
+
+## Carrega uma cena externa (KayKit) como corpo da unidade em vez de montar
+## geometria procedural — ver UnitData.model_scene_path. Reescala pra
+## MODEL_TARGET_HEIGHT a partir do proprio bounding box do modelo (cada
+## personagem do pack vem numa escala "real" ligeiramente diferente). NAO
+## tinge o modelo pela cor da civilizacao (primeira versao multiplicava
+## albedo_color por cima da textura pintada — tecnica de "atlas gradiente"
+## da KayKit — e lavava tudo pra uma cor lisa, reportado pelo usuario: "ta
+## todos sem texturas").
+func _build_model_body() -> void:
+	var scene: PackedScene = load(unit_data.model_scene_path)
+	var model: Node3D = scene.instantiate()
+	add_child(model)
+	var aabb = _model_aabb(model)
+	if aabb != null and aabb.size.y > 0.0:
+		model.scale = Vector3.ONE * (MODEL_TARGET_HEIGHT / aabb.size.y)
+	if unit_data.animation_scene_path != "":
+		_anim_player = _build_animation_player(model)
+		if _anim_player:
+			_anim_player.play(DEFAULT_ANIMATION)
+
+## Bounding box combinado de toda malha dentro de `node`, em espaco LOCAL a
+## `node` (nao depende da arvore de cena real). null se nao houver nenhum
+## MeshInstance3D com malha valida. Building.gd NAO usa mais este mesmo
+## esquema (ver Building.KAYKIT_SCALE e o comentario de MODEL_TARGET_HEIGHT
+## acima pro motivo) — helper especifico desta classe.
+func _model_aabb(node: Node, xform: Transform3D = Transform3D.IDENTITY):
+	var result = null
+	if node is MeshInstance3D and node.mesh:
+		result = xform * node.mesh.get_aabb()
+	for child in node.get_children():
+		if child is Node3D:
+			var child_aabb = _model_aabb(child, xform * child.transform)
+			if child_aabb != null:
+				result = child_aabb if result == null else result.merge(child_aabb)
+	return result
+
+## Combina os clipes de DOIS pacotes de animacao (Idle vindo de UnitData.
+## animation_scene_path + Andar vindo de WALK_ANIMATION_SCENE) numa UNICA
+## AnimationLibrary — cada arquivo KayKit exporta a propria biblioteca com
+## nome "" (padrao), entao dar add_animation_library() direto pros dois
+## colidiria (nome duplicado); copiar as Animation individuais pra uma
+## library nova e o jeito de somar os dois sem esse conflito. Funciona
+## porque o pacote de animacoes usa os MESMOS nomes de osso do pacote de
+## personagens (mesmo rig, confirmado antes de escrever isto), entao as
+## trilhas resolvem certo contra o Skeleton3D de `model` sem precisar
+## reexportar/retarget nada manualmente.
+func _build_animation_player(model: Node) -> AnimationPlayer:
+	var library := AnimationLibrary.new()
+	_copy_animations_into(library, unit_data.animation_scene_path)
+	_copy_animations_into(library, WALK_ANIMATION_SCENE)
+	if library.get_animation_list().is_empty():
+		return null
+	var player := AnimationPlayer.new()
+	model.add_child(player)
+	player.add_animation_library("", library)
+	return player
+
+func _copy_animations_into(library: AnimationLibrary, scene_path: String) -> void:
+	var anim_scene: PackedScene = load(scene_path)
+	var anim_source := anim_scene.instantiate()
+	var source_player := _find_animation_player(anim_source)
+	if source_player:
+		for lib_name in source_player.get_animation_library_list():
+			var source_lib := source_player.get_animation_library(lib_name)
+			for anim_name in source_lib.get_animation_list():
+				if not library.has_animation(anim_name):
+					library.add_animation(anim_name, source_lib.get_animation(anim_name))
+	anim_source.free()
+
+## Troca pro clipe `anim_name` so se a unidade tiver AnimationPlayer, o
+## clipe existir, e nao for o que ja esta tocando (evita reiniciar o ciclo
+## de Idle toda vez que um slide_to() termina enquanto ja estava parada).
+func _play_animation(anim_name: String) -> void:
+	if _anim_player and _anim_player.has_animation(anim_name) and _anim_player.current_animation != anim_name:
+		_anim_player.play(anim_name)
+
+func _find_animation_player(node: Node) -> AnimationPlayer:
+	if node is AnimationPlayer:
+		return node
+	for child in node.get_children():
+		var found := _find_animation_player(child)
+		if found:
+			return found
+	return null
+
 ## Formas proceduras simples, cada uma com silhueta diferente pra dar pra
 ## reconhecer o tipo de unidade a distancia mesmo sem textura/detalhe.
 func _build_procedural_body() -> void:
+	# Identidade visual nova (pedido do usuario, ver UnitData.model_scene_
+	# path) — se a tropa tiver um modelo externo definido, usa ele em vez
+	# do resto desta funcao. "" (a maioria ainda hoje) continua no corpo
+	# procedural de sempre.
+	if unit_data.model_scene_path != "":
+		_build_model_body()
+		return
+
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = _body_color()
 

@@ -444,12 +444,101 @@ func test_city_production_row_only_shows_currently_trainable_kinds():
 	hex_grid.queue_free()
 	GameManager.hex_grid = original_hex_grid
 
+## Regressao: "lá em cima não tá mostrando a comida" — o painel de cidade
+## nunca exibia o estoque de comida (nem no sistema antigo, so acumulava
+## silenciosamente). Agora que existe um teto de armazenamento de verdade
+## (City.food_storage_cap()) e consumo por populacao, o jogador precisa ver
+## os dois pra entender o ritmo de crescimento.
+func test_city_panel_shows_food_storage_and_net_food_per_turn():
+	var original_hex_grid = GameManager.hex_grid
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND) # comida 3
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.hex_grid = hex_grid
+	var city = hex_grid.found_city(coord, human, "Capital")
+
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+
+	# populacao 1 * FOOD_CONSUMPTION_PER_POP (1) = 1 de consumo; 3 (tile) - 1 = +2/turno.
+	assert_true("Comida: 0/%d (+2/turno)" % int(city.food_storage_cap()) in hud.tile_info_label.text, hud.tile_info_label.text)
+
+	city.queue_free()
+	hex_grid.queue_free()
+	GameManager.hex_grid = original_hex_grid
+
+## Regressao: rush_buy_button (Mercado, ver City.can_rush_buy()) so deveria
+## aparecer com o Mercado construido NESTA cidade E algo em producao —
+## pedido do usuario: "o mercado pode servir pra [dar um uso real pro
+## ouro]"/"é uma boa, faça isso".
+func test_rush_buy_button_visible_only_with_market_built_and_production_queued():
+	var original_hex_grid = GameManager.hex_grid
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.hex_grid = hex_grid
+	var city = hex_grid.found_city(coord, human, "Capital")
+
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+	assert_false(hud.rush_buy_button.visible, "sem Mercado nem producao, rush-buy nao deveria aparecer")
+
+	city.buildings["market"] = true
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+	assert_false(hud.rush_buy_button.visible, "cidade ociosa nao tem o que comprar, mesmo com Mercado construido")
+
+	city.set_production("warrior")
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+	assert_true(hud.rush_buy_button.visible, "com Mercado construido e algo em producao, rush-buy deveria aparecer")
+
+	city.queue_free()
+	hex_grid.queue_free()
+	GameManager.hex_grid = original_hex_grid
+
+## Clicar em rush_buy_button precisa de fato completar a producao e
+## descontar o ouro na hora (sem esperar o proximo turno pra refletir na
+## UI) — ver HUD._on_rush_buy_pressed()/City.rush_buy().
+func test_pressing_rush_buy_button_completes_production_and_deducts_gold():
+	var original_hex_grid = GameManager.hex_grid
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var human := PlayerData.new(CivilizationData.new())
+	human.gold = 1000.0
+	GameManager.human_player = human
+	GameManager.hex_grid = hex_grid
+	var city = hex_grid.found_city(coord, human, "Capital")
+	city.buildings["market"] = true
+	city.set_production("warrior") # custa 15 producao
+
+	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
+	var expected_cost = city.rush_buy_cost()
+	assert_gt(expected_cost, 0.0, "precondicao: deveria faltar producao pra comprar")
+
+	hud._on_rush_buy_pressed()
+
+	assert_almost_eq(city.stored_production, city.production_cost(), 0.01, "producao deveria estar completa apos o rush-buy")
+	assert_almost_eq(human.gold, 1000.0 - expected_cost, 0.01, "ouro deveria ter sido descontado na hora")
+
+	city.queue_free()
+	hex_grid.queue_free()
+	GameManager.hex_grid = original_hex_grid
+
 ## Pedido do usuario, numa rodada seguinte: "as construções que precisam
 ## de pesquisa, só aparecem listadas na cidade quando nós de fato criamos
 ## a pesquisa, enquanto isso elas não aparecem no menu da cidade" — mesmo
-## principio do teste acima (tropas), agora pros PREDIOS de treino. Predio
-## de RENDIMENTO (sem tech associada) fica de fora da regra, continua
-## sempre visivel.
+## principio do teste acima (tropas), agora pros PREDIOS de treino. Depois
+## que Celeiro/Oficina/Mercado tambem ganharam tech propria (pedido do
+## usuario: "precisamos fazer pesquisa de cada uma dessas coisas, tudo deve
+## ter pesquisa"), TODO predio com botao na UI hoje exige alguma tech — so
+## a Torre dos Sabios continua sem tech nenhuma, mas ela nao tem botao
+## proprio na UI ainda (fora do escopo desta rodada), entao nao ha mais um
+## exemplo "sempre visivel" pra testar aqui.
 func test_city_construction_row_hides_buildings_that_need_unresearched_tech():
 	var original_hex_grid = GameManager.hex_grid
 	var hex_grid := HexGrid.new()
@@ -463,13 +552,21 @@ func test_city_construction_row_hides_buildings_that_need_unresearched_tech():
 
 	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
 
-	assert_true(hud.build_granary_button.visible, "Celeiro nao depende de pesquisa, deveria sempre aparecer")
+	assert_false(hud.build_granary_button.visible, "Celeiro sem a tech 'celeiro' pesquisada nao deveria aparecer")
+	assert_false(hud.build_workshop_button.visible, "Oficina sem a tech 'oficina' pesquisada nao deveria aparecer")
+	assert_false(hud.build_market_button.visible, "Mercado sem a tech 'mercado' pesquisada nao deveria aparecer")
 	assert_false(hud.build_barracks_button.visible, "Quartel sem a tech 'quartel' pesquisada nao deveria aparecer")
 	assert_false(hud.build_stable_button.visible, "Estabulo sem a tech 'estabulo' pesquisada nao deveria aparecer")
 
+	human.researched_techs["celeiro"] = true
+	human.researched_techs["oficina"] = true
+	human.researched_techs["mercado"] = true
 	human.researched_techs["quartel"] = true
 	hud._on_tile_selected(coord, hex_grid.get_tile(coord))
 
+	assert_true(hud.build_granary_button.visible, "Celeiro com a tech 'celeiro' pesquisada deveria aparecer")
+	assert_true(hud.build_workshop_button.visible, "Oficina com a tech 'oficina' pesquisada deveria aparecer")
+	assert_true(hud.build_market_button.visible, "Mercado com a tech 'mercado' pesquisada deveria aparecer")
 	assert_true(hud.build_barracks_button.visible, "Quartel com a tech 'quartel' pesquisada deveria aparecer")
 	assert_false(hud.build_stable_button.visible, "Estabulo ainda precisa da propria tech ('estabulo'), so 'quartel' nao basta")
 

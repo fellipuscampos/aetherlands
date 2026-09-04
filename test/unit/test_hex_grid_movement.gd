@@ -406,6 +406,90 @@ func test_non_flying_unit_cannot_cross_frozen_ocean():
 
 	assert_false(reachable.has(Vector2i(1, 0)), "unidade terrestre nao deveria atravessar Mar Gelado")
 
+## Roadmap 2.0 Parte 1 (C) — Unit.embarked permite a uma unidade terrestre
+## atravessar Oceano/Mar Gelado, mesma UX de flies mas restrita a agua (ver
+## can_be_embarked_on()).
+func test_embarked_unit_can_cross_ocean_and_frozen_ocean():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	hex_grid.tiles[Vector2i(-1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.FROZEN_OCEAN)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, false, true)
+
+	assert_true(reachable.has(Vector2i(1, 0)), "unidade embarcada deveria conseguir atravessar Oceano")
+	assert_true(reachable.has(Vector2i(-1, 0)), "unidade embarcada deveria conseguir atravessar Mar Gelado")
+
+func test_non_embarked_unit_cannot_cross_ocean():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, false, false)
+
+	assert_false(reachable.has(Vector2i(1, 0)), "unidade nao-embarcada nao deveria atravessar Oceano")
+
+## Regressao (achado na revisao do plano): embarque NAO deveria virar um
+## segundo `flies` — precisa continuar pagando o custo de terreno de
+## verdade, so a restricao de agua e que muda.
+func test_embarked_unit_still_pays_terrain_movement_cost():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN) # custo 1
+	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS) # custo 3, destino final em terra
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+	warrior.movement_left = 3.0 # 1 (oceano) + 3 (montanha) = 4, NAO deveria caber
+
+	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, false, true)
+
+	assert_true(reachable.has(Vector2i(1, 0)), "precondicao: oceano (custo 1) deveria estar dentro do alcance")
+	assert_false(reachable.has(Vector2i(2, 0)), "se o custo de terreno fosse ignorado (como flies), a montanha custaria so 2 no total e caberia — mas embarque nao ignora custo")
+
+func test_embarked_unit_cannot_cross_lava():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.LAVA)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, false, true)
+
+	assert_false(reachable.has(Vector2i(1, 0)), "embarque nao deveria abrir excecao pra Lava")
+
+func test_move_unit_auto_disembarks_on_reaching_land():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+	warrior.embarked = true
+
+	hex_grid.move_unit(warrior, Vector2i(1, 0), 1.0)
+	assert_true(warrior.embarked, "ainda sobre agua, deveria continuar embarcada")
+
+	hex_grid.move_unit(warrior, Vector2i(2, 0), 1.0)
+	assert_false(warrior.embarked, "ao pisar em terra firme, deveria desembarcar automaticamente")
+
+func test_compute_path_embarked_crosses_ocean_gap():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	hex_grid.tiles[Vector2i(3, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	var path = hex_grid.compute_path(warrior.coord, Vector2i(3, 0), warrior.owner_player, false, true)
+
+	assert_eq(path, [Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)], "embarcada deveria conseguir tracar o caminho completo atravessando o vao de oceano")
+
+## Regra critica de C4 (achada na revisao do plano): terra so e permitida
+## como DESTINO FINAL enquanto embarcado — uma unidade nao deveria
+## conseguir atravessar terra->agua de novo no MESMO comando (evita
+## "pular de ilha em ilha" isolado e evita continue_move_order executar um
+## trajeto multi-trecho sem revalidar terreno a cada passo).
+func test_embarked_unit_cannot_path_through_land_to_reach_water_beyond_it():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND) # "ilha" no meio do caminho
+	hex_grid.tiles[Vector2i(3, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN) # agua do OUTRO lado da ilha
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+	warrior.movement_left = 10.0 # de proposito generoso, pra garantir que o motivo do bloqueio e a REGRA, nao falta de movimento
+
+	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, false, true)
+	var path = hex_grid.compute_path(warrior.coord, Vector2i(3, 0), warrior.owner_player, false, true)
+
+	assert_true(reachable.has(Vector2i(2, 0)), "a ilha em si (destino final em terra) deveria ser alcancavel")
+	assert_false(reachable.has(Vector2i(3, 0)), "agua do OUTRO lado da ilha nao deveria ser alcancavel no mesmo comando — terra so e destino final, nao passagem")
+	assert_eq(path.size(), 0, "compute_path tambem nao deveria achar rota nenhuma atravessando a ilha")
+
 ## "Mover ate" tipo Civilization (pedido do usuario: "no civilization eu
 ## posso colocar pra ela se mover pra um lugar longe... o movimento fica
 ## gravado e todo turno essa tropa vai se movendo") — compute_path acha o

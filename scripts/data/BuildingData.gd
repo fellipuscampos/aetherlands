@@ -16,6 +16,16 @@ extends Resource
 @export var bonus_gold: int = 0
 @export var bonus_mana: int = 0
 
+## Aumenta o TETO de armazenamento de comida da cidade (City.
+## food_storage_cap()) uma vez construido — so o Celeiro usa isto por
+## enquanto (pedido do usuario: redesenho do sistema de comida — cidade tem
+## um limite de armazenamento por padrao, consumido por turno pela
+## populacao, e o Celeiro aumenta esse limite em vez de so somar comida
+## bruta). Diferente de bonus_food (soma comida BRUTA todo turno, ANTES do
+## consumo), isso soma ao limite maximo que a cidade consegue guardar antes
+## de crescer populacao — ver City.process_turn()/food_storage_cap().
+@export var storage_bonus: float = 0.0
+
 ## So Muralhas usa isso por enquanto: soma ao multiplicador de defesa de
 ## unidade guarnicionada na cidade, igual bonus de terreno — ver
 ## CombatResolver.predict().
@@ -44,3 +54,12 @@ extends Resource
 ## posicionado em tile nenhum. Nao faz sentido escolher "onde" cercar uma
 ## cidade que so tem um tile pra chamar de seu.
 @export var self_placed: bool = false
+
+## Caminho de uma cena externa (.glb/.gltf, ex: KayKit) pra usar como visual
+## deste predio EM VEZ da geometria procedural de Building.gd — pedido do
+## usuario: "estude a questao de texturas e modelos 3d... pra gerar uma
+## identidade visual coerente", depois de duas tentativas anteriores com
+## pacotes prontos (Kenney/Quaternius) terem sido revertidas por destoar do
+## resto do visual. "" (padrao) mantem o comportamento procedural de sempre
+## — aditivo, nenhum predio existente quebra. Ver Building._build_visual().
+@export var model_scene_path: String = ""

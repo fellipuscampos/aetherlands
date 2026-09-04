@@ -391,3 +391,26 @@ func test_has_save_reflects_file_presence():
 
 	SaveManager.delete_save(TEST_SAVE_PATH)
 	assert_false(SaveManager.has_save(TEST_SAVE_PATH))
+
+## Roadmap 2.0 Parte 1 (C6) — EXCECAO deliberada: diferente de fortified/
+## exploring/move_order_target (que nao sobrevivem de proposito), perder
+## `embarked` deixaria uma unidade presa em pleno oceano tratada como
+## terrestre apos carregar. Unidade salva EMBARCADA sobre Oceano deveria
+## voltar embarcada apos carregar.
+func test_save_and_load_preserves_embarked_state_on_a_unit_at_sea():
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	var warrior = _make_unit("warrior", human, coord)
+	warrior.embarked = true
+	_make_unit("warrior", rival, Vector2i(1, 0)) # so pra check_game_over() nao fechar o jogo no load
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(ok)
+	assert_eq(GameManager.human_player.units.size(), 1)
+	assert_true(GameManager.human_player.units[0].embarked, "unidade embarcada sobre agua deveria continuar embarcada apos carregar")

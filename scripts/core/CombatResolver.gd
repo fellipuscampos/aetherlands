@@ -21,6 +21,29 @@ extends RefCounted
 ## jeito.
 const FORTIFY_DEFENSE_BONUS := 0.25
 
+## Defesa so MITIGA metade do proprio valor (nao anula ataque bruto 1 pra
+## 1) — mantem ataque sempre a variavel dominante, pra unidade "de ataque"
+## (mago, arqueiro) continuar valendo a pena treinar mesmo contra alvo bem
+## defendido.
+const DEFENSE_MITIGATION_FACTOR := 0.5
+## Roadmap de gameplay Fase 2: nomeado e documentado o "numero magico" que
+## ja existia (pedido do usuario: "revisar... nomear a constante e
+## comentar a razao... ou igualar a formula principal" — optei por manter
+## e documentar, nao igualar). Contra-ataque usa a MESMA mitigacao acima
+## (DEFENSE_MITIGATION_FACTOR) e AINDA multiplica o resultado por isto —
+## de proposito: quem PUXA o combate leva vantagem sobre quem so revida,
+## convencao comum de jogos de estrategia por turno (recompensa iniciativa
+## tatica, ex: focar um alvo fraco antes que ele ataque primeiro).
+const COUNTER_ATTACK_PENALTY := 0.5
+
+## Roadmap de gameplay Fase 2 — pedido do usuario: "bonus de flanqueamento
+## simples (unidade aliada adjacente ao alvo dá multiplicador modesto de
+## ataque)... so contagem de adjacencia, sem modelo de direcao/orientacao".
+## Modesto e limitado de proposito (FLANKING_MAX_ALLIES) — nao vira uma
+## corrida por empilhar unidades no mesmo alvo.
+const FLANKING_BONUS_PER_ALLY := 0.15
+const FLANKING_MAX_ALLIES := 2
+
 ## Calcula o resultado do combate SEM aplicar nada — usado pela RivalAI
 ## pra decidir se vale a pena atacar antes de se comprometer (ver
 ## RivalAI.is_favorable_attack). resolve() usa isso tambem, garantindo
@@ -40,17 +63,17 @@ static func predict(attacker: Unit, defender: Unit, hex_grid: HexGrid) -> Dictio
 			building_bonus = BuildingDatabase.defense_bonus_for(city.buildings)
 	var fortify_bonus = FORTIFY_DEFENSE_BONUS if (defender.fortified and not ignore_fortification) else 0.0
 	var defense_multiplier = 1.0 + terrain_bonus + building_bonus + fortify_bonus
-	var atk = attacker.unit_data.attack * attacker.veterancy_multiplier()
+	var atk = attacker.unit_data.attack * attacker.veterancy_multiplier() * _flanking_multiplier(attacker, defender, hex_grid)
 	var def = defender.unit_data.defense * defense_multiplier * defender.veterancy_multiplier()
 	var is_melee_range = HexMetrics.axial_distance(attacker.coord, defender.coord) <= 1
 
-	var damage_to_defender = max(1.0, atk - def * 0.5)
+	var damage_to_defender = max(1.0, atk - def * DEFENSE_MITIGATION_FACTOR)
 	var defender_dies = (defender.hp - damage_to_defender) <= 0.0
 
 	var damage_to_attacker = 0.0
 	var attacker_dies = false
 	if not defender_dies and is_melee_range:
-		damage_to_attacker = max(0.0, def - atk * 0.5) * 0.5
+		damage_to_attacker = max(0.0, def - atk * DEFENSE_MITIGATION_FACTOR) * COUNTER_ATTACK_PENALTY
 		attacker_dies = (attacker.hp - damage_to_attacker) <= 0.0
 
 	return {
@@ -60,6 +83,21 @@ static func predict(attacker: Unit, defender: Unit, hex_grid: HexGrid) -> Dictio
 		"attacker_dies": attacker_dies,
 		"is_melee_range": is_melee_range,
 	}
+
+## Conta aliados do ATACANTE (mesmo owner_player, incluindo dois monstros
+## neutros com owner_player==null) grudados num tile vizinho do DEFENSOR
+## (nao do atacante) — "cercar o alvo de mais de um lado", sem modelar
+## direcao/angulo real. O proprio atacante nunca conta a si mesmo mesmo se
+## ele proprio for adjacente ao defensor (ataque corpo-a-corpo comum).
+static func _flanking_multiplier(attacker: Unit, defender: Unit, hex_grid: HexGrid) -> float:
+	var ally_count := 0
+	for neighbor_coord in hex_grid.get_neighbors(defender.coord):
+		if neighbor_coord == attacker.coord:
+			continue
+		var unit: Unit = hex_grid.get_unit_at(neighbor_coord)
+		if unit and unit.owner_player == attacker.owner_player:
+			ally_count += 1
+	return 1.0 + FLANKING_BONUS_PER_ALLY * min(ally_count, FLANKING_MAX_ALLIES)
 
 static func resolve(attacker: Unit, defender: Unit, hex_grid: HexGrid) -> void:
 	var result = predict(attacker, defender, hex_grid)
@@ -132,7 +170,17 @@ static func resolve_city_attack(attacker: Unit, city: City, hex_grid: HexGrid) -
 	var attacker_is_human = attacker.owner_player == GameManager.human_player
 	var defender_is_human = city.owner_player == GameManager.human_player
 
-	var damage = max(1.0, attacker.unit_data.attack * attacker.veterancy_multiplier())
+	# Roadmap de gameplay Fase 2: antes, atacar uma cidade SEM unidade
+	# guarnicionada ignorava Muralhas por completo (so o escudo importava),
+	# enquanto atacar uma cidade COM guarnicao aplicava o bonus de defesa
+	# das Muralhas normalmente via predict() acima — duas regras diferentes
+	# pra "Muralha defende" dependendo de ter ou nao unidade dentro.
+	# Unificado: o mesmo BuildingDatabase.defense_bonus_for() agora reduz o
+	# dano bruto tambem aqui (dividindo em vez de multiplicar um "defense"
+	# que uma cidade nao tem) — sem Muralhas, defense_bonus_for({})==0.0 e
+	# o resultado e IDENTICO ao de antes.
+	var defense_bonus := BuildingDatabase.defense_bonus_for(city.buildings)
+	var damage = max(1.0, (attacker.unit_data.attack * attacker.veterancy_multiplier()) / (1.0 + defense_bonus))
 	attacker.movement_left = 0.0
 
 	var remaining_damage = damage

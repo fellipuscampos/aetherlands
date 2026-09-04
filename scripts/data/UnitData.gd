@@ -31,3 +31,17 @@ extends Resource
 ## (GameManager._heal_if_garrisoned). Zero pra qualquer outra unidade. Ver
 ## GameManager._apply_regen().
 @export var regen_fraction: float = 0.0
+
+## Caminho de uma cena externa (.glb/.gltf, ex: KayKit) pra usar como corpo
+## desta unidade EM VEZ da geometria procedural de Unit.gd — mesmo motivo/
+## historico de BuildingData.model_scene_path (ver comentario la). ""
+## (padrao) mantem o corpo procedural de sempre. Ver Unit._build_procedural_
+## body().
+@export var model_scene_path: String = ""
+
+## Caminho de uma cena externa (.glb) contendo clipes de animacao pro MESMO
+## esqueleto de model_scene_path (KayKit Character Animations — nomes de
+## osso identicos entre o pacote de personagens e o de animacoes, mesmo
+## rig compartilhado) — "" (padrao) deixa a unidade em bind pose (sem
+## animar). Ver Unit._build_model_body()/_play_default_animation().
+@export var animation_scene_path: String = ""

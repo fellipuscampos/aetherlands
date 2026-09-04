@@ -13,9 +13,6 @@ const NEIGHBOR_DIRS: Array[Vector2i] = [
 
 enum Visibility { UNSEEN, EXPLORED, VISIBLE }
 
-## Escurecido pra combinar com cliff_tint de terrain.gdshader (pedido do
-## usuario: os spikes pareciam "cinzas espetados" destoando da falesia).
-const MOUNTAIN_SPIKE_BASE_COLOR := Color(0.28, 0.25, 0.24)
 ## Pack ice/icebergs pequenos flutuando no Mar Gelado (pedido do usuario,
 ## Ponto 2 — "se possivel... micro-icebergs flutuantes" — ver
 ## _build_ice_floe_mesh/_rebuild_props abaixo). Azul-ciano claro e fosco
@@ -36,14 +33,12 @@ const PROP_SEPIA_TINT := Color(0.55, 0.48, 0.36)
 const PROP_SEPIA_DESATURATE := 0.6
 const PROP_SEPIA_DARKEN := 0.4
 
-## Espelha peak_height/peak_sharpness de terrain.gdshader (default do
-## uniform) — usado so pra posicionar os props de pico de Montanha (ver
-## _rebuild_props/_mountain_surface_extra_height) EM CIMA da superficie ja
-## deslocada pelo shader, sem precisar ser pixel-perfeito (o shader ainda
-## soma um ruido de quebra por cima que o GDScript nao replica aqui — so
-## precisa ficar proximo o bastante pra nao flutuar/afundar visivelmente).
+## Espelha peak_height de terrain.gdshader (default do uniform) — usado por
+## _tile_surface_height pra saber a altura VISUAL real do centro de uma
+## Montanha (base_height + o pico do shader), sem precisar ser
+## pixel-perfeito (o shader ainda soma um ruido de quebra por cima que o
+## GDScript nao replica aqui — so precisa ficar proximo o bastante).
 const MOUNTAIN_PEAK_HEIGHT := 0.9
-const MOUNTAIN_PEAK_SHARPNESS := 1.6
 ## Espelha hill_height de terrain.gdshader (mesmo motivo do par acima) —
 ## usado por _tile_surface_height pra saber a altura VISUAL real do centro
 ## de uma Colina, nao so base_height cru.
@@ -143,7 +138,6 @@ var cleared_lair_coords: Array[Vector2i] = []
 
 var _hex_mesh: ArrayMesh
 var _tree_mesh: ArrayMesh
-var _mountain_spike_mesh: ArrayMesh # pico rochoso pontudo/assimetrico, ver _build_rock_spike_mesh
 var _ice_floe_mesh: ArrayMesh # pedaco de gelo baixo/chato flutuando no Mar Gelado, ver _build_ice_floe_mesh
 var _multimesh_instance: MultiMeshInstance3D # terreno solido (terrain.gdshader) — continua 1 instancia de prisma por tile
 ## Agua (Oceano/Mar Gelado) E Mar de Lava agora dividem UM UNICO PlaneMesh
@@ -155,7 +149,6 @@ var _multimesh_instance: MultiMeshInstance3D # terreno solido (terrain.gdshader)
 ## mascara, ver _rebuild_water_overlay/_build_liquid_plane.
 var _liquid_plane_instance: MeshInstance3D
 var _props_tree_instance: MultiMeshInstance3D
-var _props_mountain_spike_instance: MultiMeshInstance3D
 var _props_ice_floe_instance: MultiMeshInstance3D
 var _ground_body: StaticBody3D
 var _selection_marker: MeshInstance3D
@@ -172,7 +165,6 @@ var _coast_distance_tiles: Dictionary = {}
 ## _rebuild_lava_tile_mask.
 var _lava_tile_mask_texture: ImageTexture
 var _tree_coord_to_index: Dictionary = {}
-var _mountain_spike_coord_to_index: Dictionary = {}
 var _ice_floe_coord_to_index: Dictionary = {}
 ## Props 3D de recurso (minerio/cavalos/gemas/seda, ver ResourceDatabase) —
 ## classe separada (nao mais campos soltos aqui) porque cada recurso
@@ -297,11 +289,21 @@ var _arcane_noise := FastNoiseLite.new() # bioma raro: Campos de Cristal
 ## plano de agua, margem confortavel.
 const LAND_PRISM_DEPTH_FACTOR := 1.0
 
+## Arvore real (KayKit Forest Nature Pack, mesmo criador/ecossistema do
+## KAYKIT_SCALE usado em Building.gd) substituindo o cone/cilindro
+## procedural — pedido do usuario: "por que nao substituiu assets da
+## natureza... arvores, e etc". A malha nativa mede ~4.16 de altura (Y);
+## a arvore procedural antiga (_build_tree_mesh, removida) tinha ~0.88 de
+## altura (tronco 0.3 + copa ate 0.22+0.55). 0.2 e o fator que aproxima a
+## altura nova da antiga (0.2*4.16=~0.83), preservando a escala relativa
+## ja calibrada entre arvore/predio/unidade no mapa.
+const TREE_MODEL_SCENE := "res://assets/models/kaykit/nature/Tree_1_A_Color1.gltf"
+const TREE_MODEL_SCALE := 0.2
+
 func _ready() -> void:
 	add_to_group("hex_grid")
 	_hex_mesh = _build_hex_prism_mesh(hex_size, LAND_PRISM_DEPTH_FACTOR)
-	_tree_mesh = _build_tree_mesh()
-	_mountain_spike_mesh = _build_rock_spike_mesh()
+	_tree_mesh = _load_tree_mesh()
 	_ice_floe_mesh = _build_ice_floe_mesh()
 	_resource_props_manager = ResourcePropsManager.new(self)
 	_resource_icon_manager = ResourceIconManager.new(self)
@@ -488,6 +490,18 @@ func generate_map(width: int, height: int, seed_value: int = -1) -> void:
 	# esbarrar num limite antes de terminar de convergir) — rodar a limpeza
 	# de novo aqui absorve esses tiles, mesmo padrao ja seguro/testado.
 	_smooth_isolated_biome_cells()
+	_ensure_minimum_volcanic_peaks()
+	# Mesmo motivo de sempre (_ensure_biome_variety/_thin_mountain_clusters/
+	# _thin_special_zone_peaks acima): promover um tile a Montanha Vulcanica
+	# pode isolar colateralmente o vizinho que antes compartilhava o TIPO
+	# ANTIGO dele (ex: uma Rocha Vulcanica que so tinha aquele UM vizinho do
+	# mesmo tipo — bug pego pelo proprio teste de regressao deste item,
+	# "esta isolado, sem nenhum vizinho do mesmo bioma", agora numa
+	# Rocha Vulcanica em vez de Montanha). _smooth_isolated_biome_cells ja
+	# tem a excecao dedicada pra NUNCA mexer em Montanha Vulcanica (ver
+	# comentario la), entao rodar de novo aqui so limpa o colateral nos
+	# OUTROS tipos, nunca desfaz a promocao que acabou de acontecer.
+	_smooth_isolated_biome_cells()
 	_rebuild_multimesh()
 	_spawn_monster_lairs()
 
@@ -595,13 +609,23 @@ func get_world_half_extents() -> Vector2:
 ## (SelectionManager/RivalAI), nunca "andando" pra dentro dela. `flies`
 ## (Grifo, UnitData.flies) ignora custo de terreno (sempre 1 por tile) E
 ## atravessa oceano — voa por cima de tudo, so unidade/cidade inimiga
-## ainda bloqueiam.
-func compute_reachable(start: Vector2i, movement_points: float, owner: PlayerData, flies: bool = false) -> Dictionary:
+## ainda bloqueiam. `embarked` (Roadmap 2.0 Parte 1, C — Unit.embarked)
+## permite cruzar agua (HexTileData.can_be_embarked_on()) SEM ignorar custo
+## de terreno nem cruzar Lava (diferente de `flies`) — e terra firme so e
+## permitida como DESTINO FINAL enquanto embarcado (ver check logo apos o
+## pop_front() abaixo): um tile de terra alcancado NO MEIO do trajeto vira
+## no-folha, nunca expande vizinhos dali, entao nenhum caminho computado
+## atravessa terra->agua->terra de novo dentro do MESMO comando (achado na
+## revisao do plano — sem essa regra, continue_move_order executaria um
+## trajeto multi-trecho sem revalidar terreno a cada passo).
+func compute_reachable(start: Vector2i, movement_points: float, owner: PlayerData, flies: bool = false, embarked: bool = false) -> Dictionary:
 	var cost_so_far := {start: 0.0}
 	var came_from := {start: start}
 	var frontier: Array[Vector2i] = [start]
 	while frontier.size() > 0:
 		var current: Vector2i = frontier.pop_front()
+		if embarked and current != start and not flies and not get_tile(current).can_be_embarked_on():
+			continue
 		for n in get_neighbors(current):
 			if get_unit_at(n) != null:
 				continue
@@ -609,7 +633,7 @@ func compute_reachable(start: Vector2i, movement_points: float, owner: PlayerDat
 			if city_here != null and city_here.owner_player != owner:
 				continue
 			var terrain: HexTileData = get_tile(n)
-			if not flies and terrain.blocks_land_units():
+			if not flies and terrain.blocks_land_units() and not (embarked and terrain.can_be_embarked_on()):
 				continue
 			var step_cost = 1.0 if flies else terrain.movement_cost
 			var new_cost = cost_so_far[current] + step_cost
@@ -667,7 +691,7 @@ func reconstruct_path(start: Vector2i, end: Vector2i) -> Array[Vector2i]:
 ## curto — qual desses empates especificos e escolhido pode variar em
 ## relacao a versao antiga, mas o CUSTO/numero de turnos pra completar nunca
 ## muda).
-func compute_path(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool = false) -> Array[Vector2i]:
+func compute_path(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool = false, embarked: bool = false) -> Array[Vector2i]:
 	var path: Array[Vector2i] = []
 	if start == end:
 		return path
@@ -682,6 +706,13 @@ func compute_path(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool
 			continue # entrada obsoleta: este no ja teve um custo melhor relaxado depois de entrar no heap
 		if current == end:
 			break
+		# Mesma regra de compute_reachable acima: terra so e permitida como
+		# DESTINO FINAL enquanto embarcado. O check `current == end` ja
+		# rodou/deu break antes deste ponto, entao um `end` em terra
+		# continua funcionando normalmente — so uma terra QUE NAO e `end`
+		# vira beco sem saida aqui.
+		if embarked and current != start and not flies and not get_tile(current).can_be_embarked_on():
+			continue
 		for n in get_neighbors(current):
 			if get_unit_at(n) != null:
 				continue
@@ -689,7 +720,7 @@ func compute_path(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool
 			if city_here != null and city_here.owner_player != owner:
 				continue
 			var terrain: HexTileData = get_tile(n)
-			if not flies and terrain.blocks_land_units():
+			if not flies and terrain.blocks_land_units() and not (embarked and terrain.can_be_embarked_on()):
 				continue
 			var step_cost = 1.0 if flies else terrain.movement_cost
 			var new_cost = current_cost + step_cost
@@ -758,6 +789,15 @@ func move_unit(unit: Unit, dest: Vector2i, cost: float) -> void:
 	units_by_coord.erase(unit.coord)
 	unit.coord = dest
 	unit.movement_left = max(0.0, unit.movement_left - cost)
+	# Roadmap 2.0 Parte 1 (C) — desembarque automatico: assim que `dest`
+	# deixa de ser um terreno de can_be_embarked_on(), a unidade volta a
+	# ser terrestre normal. Sempre dispara corretamente porque compute_
+	# reachable/compute_path com embarked=true so alcancam terra como o
+	# ULTIMO passo de qualquer caminho computado (ver comentario deles) —
+	# nunca no meio, entao nao ha risco de "desembarcar" preso em terra
+	# sem conseguir voltar a agua no mesmo trajeto.
+	if unit.embarked and not get_tile(dest).can_be_embarked_on():
+		unit.embarked = false
 	var target_pos = world_for_coord(dest)
 	# Unidade fora da nevoa (unit.visible == false, ver _apply_fog_to_entities)
 	# nao aparece na tela — animar o deslize dela com Tween e trabalho jogado
@@ -816,7 +856,7 @@ func continue_move_order(unit: Unit) -> void:
 	if unit.coord == unit.move_order_target:
 		unit.move_order_target = Unit.NO_MOVE_ORDER
 		return
-	var path = compute_path(unit.coord, unit.move_order_target, unit.owner_player, unit.unit_data.flies)
+	var path = compute_path(unit.coord, unit.move_order_target, unit.owner_player, unit.unit_data.flies, unit.embarked)
 	if path.is_empty():
 		unit.move_order_target = Unit.NO_MOVE_ORDER
 		return
@@ -856,6 +896,14 @@ func explore_step(unit: Unit) -> void:
 	# Mesma rede de seguranca de continue_move_order acima — Fortificar
 	# sempre vence, uma unidade fortificada nunca deveria andar sozinha.
 	if unit.fortified:
+		unit.exploring = false
+		return
+	# Roadmap 2.0 Parte 1 (C2) — unidade embarcada nao pode explorar (mesma
+	# rede de seguranca do fortificado acima). Na pratica SelectionManager.
+	# toggle_embark_selected ja cancela Explorar ao ligar embarque, entao
+	# isto normalmente nunca dispara — existe so como segunda camada de
+	# defesa.
+	if unit.embarked:
 		unit.exploring = false
 		return
 	if not unit.exploring:
@@ -1166,6 +1214,26 @@ func _reset_highlighted_terrain(coords: Array) -> void:
 			continue
 		mm.set_instance_color(_coord_to_index[coord], tiles[coord].color)
 
+## Roadmap de gameplay Fase 5 — "Metamorfose de Gaia" (ver SpellManager.
+## _apply_terrain_transform): troca o TIPO de terreno de um tile ja
+## gerado, mantendo o resto do mapa intacto. So atualiza a COR da
+## instancia no multimesh (mesma tecnica de _reset_highlighted_terrain
+## acima) — nao mexe na altura/geometria do prisma (a diferenca de
+## base_height entre os biomas elegiveis pro unico uso disto hoje —
+## Tundra/Deserto/Planicie — e minima, todos essencialmente planos, ver
+## TerrainDatabase.gd) nem em recurso ja sorteado no tile (limpo: o
+## bioma novo pode nao ser elegivel pro recurso antigo, ver
+## ResourceDatabase.ELIGIBILITY). recompute_fog (chamado pelo proprio
+## SelectionManager logo apos conjurar) reaplica o tingimento de neblina
+## por cima da cor crua nova.
+func transform_tile_terrain(coord: Vector2i, new_terrain_type: int) -> void:
+	if not tiles.has(coord):
+		return
+	var new_tile: HexTileData = TerrainDatabase.create_tile(new_terrain_type)
+	tiles[coord] = new_tile
+	if _multimesh_instance and _coord_to_index.has(coord):
+		_multimesh_instance.multimesh.set_instance_color(_coord_to_index[coord], new_tile.color)
+
 func clear_highlight() -> void:
 	_reset_highlighted_terrain(_last_highlighted_land_coords)
 	_last_highlighted_land_coords = []
@@ -1194,6 +1262,39 @@ func city_owning_tile(coord: Vector2i, excluding: City = null) -> City:
 		if coord in city.owned_tiles:
 			return city
 	return null
+
+## Roadmap 2.0 Parte 1 (A2) — proxy MINIMO de "tile sob pressao de cidade
+## rival", sem nenhuma camada de cultura/influencia por tras: so distancia
+## hexagonal crua ate a cidade rival mais perto. Uma cidade rival a
+## RIVAL_PRESSURE_RADIUS hexes NAO significa que as duas civs estejam
+## disputando aquele tile especificamente, so que ele esta dentro do
+## alcance de expansao plausivel de outra civ — usado em RivalAI (B3) pra
+## a IA preferir levemente um destino de assentamento longe disso, nunca
+## pra bloquear nada.
+const RIVAL_PRESSURE_RADIUS := 4
+
+func is_under_rival_pressure(coord: Vector2i, player: PlayerData) -> bool:
+	for city in cities_by_coord.values():
+		if city.owner_player == player:
+			continue
+		if HexMetrics.axial_distance(coord, city.coord) <= RIVAL_PRESSURE_RADIUS:
+			return true
+	return false
+
+## Roadmap 2.0 Parte 1 (C3) — pre-condicao espacial pro modo "Embarcar" (ver
+## SelectionManager.toggle_embark_selected): `coord` tem pelo menos um
+## vizinho de agua (HexTileData.can_be_embarked_on()). Nao da pra exigir
+## "estar EM CIMA de um tile de Costa" — confirmado que blocks_land_units()
+## = is_water() or is_lava() e is_water() inclui COAST, ou seja, uma
+## unidade terrestre NUNCA consegue fisicamente ocupar um tile de Costa
+## hoje (so trabalha-lo a distancia) — "adjacente a agua" e a regra
+## equivalente fisicamente possivel.
+func is_coastal_tile(coord: Vector2i) -> bool:
+	for n in get_neighbors(coord):
+		var data := get_tile(n)
+		if data and data.can_be_embarked_on():
+			return true
+	return false
 
 ## Deslocamento vertical do tingimento de territorio acima do chao. O
 ## tingimento e um leque preenchendo o hexagono INTEIRO, quase
@@ -1565,8 +1666,6 @@ func _apply_terrain_fog(mm: MultiMesh, coord_to_index: Dictionary) -> void:
 func _apply_prop_fog() -> void:
 	if _props_tree_instance:
 		_tint_props(_props_tree_instance.multimesh, _tree_coord_to_index, Color.WHITE)
-	if _props_mountain_spike_instance:
-		_tint_props(_props_mountain_spike_instance.multimesh, _mountain_spike_coord_to_index, MOUNTAIN_SPIKE_BASE_COLOR)
 	if _props_ice_floe_instance:
 		_tint_props(_props_ice_floe_instance.multimesh, _ice_floe_coord_to_index, ICE_FLOE_BASE_COLOR)
 	_resource_props_manager.apply_fog(visibility)
@@ -1865,15 +1964,34 @@ const MYSTIC_SPRING_NOISE_THRESHOLD := 0.72
 const VOLCANIC_ZONE_LAVA_THRESHOLD := -0.05
 const VOLCANIC_ZONE_LAVA_SEA_THRESHOLD := 0.15
 
-## Limite de vizinhos pra Montanhas Vulcanicas/Picos de Cristal (pedido do
-## usuario: "nenhum tile de montanha/vulcao pode ter mais de 2 vizinhos
-## diretos que tambem sejam montanhas" — mais estrito que MAX_MOUNTAIN_
-## NEIGHBORS=3 do continente Principal, de proposito: "espalhe os vulcoes
-## como picos isolados... ou no maximo pequenas cordilheiras em linha de 1
-## tile de largura", nao o blob de 30+ tiles reportado). Ver
-## _thin_special_zone_peaks, mesmo algoritmo de _thin_mountain_clusters
-## (poda iterativa ate estabilizar) aplicado as duas zonas especiais.
+## Limite de vizinhos pra Picos de Cristal (pedido do usuario original:
+## "nenhum tile de montanha/vulcao pode ter mais de 2 vizinhos diretos que
+## tambem sejam montanhas" — mais estrito que MAX_MOUNTAIN_NEIGHBORS=3 do
+## continente Principal). Ver _thin_special_zone_peaks, mesmo algoritmo de
+## _thin_mountain_clusters (poda iterativa ate estabilizar).
+##
+## Montanha Vulcanica (VOLCANIC_PEAKS) NAO usa mais este limiar — pedido do
+## usuario numa rodada seguinte, apos ganhar a cratera de vulcao ativo em
+## terrain.gdshader: "vulcões tem que estar apenas sozinhos" (o limiar de 2
+## ainda deixava ate 3 tiles mutuamente vizinhos sobreviverem juntos, ex:
+## um triangulo onde cada um tem exatamente 2 vizinhos-pico — foi
+## literalmente reportado assim: "veio 3 vulcoes juntos"). Ver
+## VOLCANIC_PEAK_MAX_NEIGHBORS abaixo, zero tolerancia.
 const MAX_SPECIAL_ZONE_PEAK_NEIGHBORS := 2
+
+## Vulcao de verdade tem que nascer ISOLADO — zero vizinhos diretos que
+## tambem sejam Montanha Vulcanica (ver _thin_special_zone_peaks). Picos de
+## Cristal continuam usando MAX_SPECIAL_ZONE_PEAK_NEIGHBORS (podem formar
+## pequenas cordilheiras) — so vulcao precisa ficar sozinho.
+const VOLCANIC_PEAK_MAX_NEIGHBORS := 0
+
+## Garantia minima de vulcoes por continente Vulcanico (pedido do usuario:
+## "tem que ter pelo menos uns 3 por continente de fogo") — a poda de
+## isolamento acima (VOLCANIC_PEAK_MAX_NEIGHBORS=0) pode, numa semente
+## azarada, derrubar quase todo Pico gerado pela elevacao crua ate sobrar
+## menos que isso. Ver _ensure_minimum_volcanic_peaks, chamada logo depois
+## de _thin_special_zone_peaks em generate_map().
+const MIN_VOLCANIC_PEAKS := 3
 
 ## Elevacao < isso vira Oceano/Mar Gelado; senao e terra. Ver _elevation_for
 ## — elevacao ja inclui a mascara de borda (_edge_falloff), entao este
@@ -2211,6 +2329,17 @@ func _smooth_isolated_biome_cells() -> void:
 		var changes := {}
 		for coord in tiles.keys():
 			var terrain_type = tiles[coord].terrain_type
+			# Vulcao PRECISA ficar isolado (VOLCANIC_PEAK_MAX_NEIGHBORS=0, ver
+			# _thin_special_zone_peaks/pedido do usuario: "vulcões tem que
+			# estar apenas sozinhos") — sem esta excecao, esta MESMA funcao
+			# convertia de volta pro bioma vizinho qualquer Montanha Vulcanica
+			# isolada de verdade (0 vizinhos do mesmo tipo e exatamente a
+			# definicao de "isolado" que o resto do loop abaixo usa pra
+			# LIMPAR biomas indesejados) — so sobreviviam ate aqui os
+			# aglomerados de 2-3 tiles mutuamente vizinhos, que e literalmente
+			# o bug reportado ("veio 3 vulcoes juntos").
+			if terrain_type == HexTileData.TerrainType.VOLCANIC_PEAKS:
+				continue
 			var neighbors = get_neighbors(coord)
 			if neighbors.is_empty():
 				continue
@@ -2535,6 +2664,14 @@ func _thin_special_zone_peaks() -> void:
 		HexTileData.TerrainType.VOLCANIC_PEAKS: HexTileData.TerrainType.VOLCANIC_ROCK,
 		HexTileData.TerrainType.CRYSTAL_PEAKS: HexTileData.TerrainType.MYSTIC_SOIL,
 	}
+	# Vulcao exige isolamento TOTAL (VOLCANIC_PEAK_MAX_NEIGHBORS=0); Cristal
+	# continua no limiar mais frouxo de sempre (MAX_SPECIAL_ZONE_PEAK_
+	# NEIGHBORS=2, pode formar pequena cordilheira) — ver comentario das
+	# duas constantes.
+	var peak_max_neighbors := {
+		HexTileData.TerrainType.VOLCANIC_PEAKS: VOLCANIC_PEAK_MAX_NEIGHBORS,
+		HexTileData.TerrainType.CRYSTAL_PEAKS: MAX_SPECIAL_ZONE_PEAK_NEIGHBORS,
+	}
 	while true:
 		var to_downgrade: Array[Vector2i] = []
 		for coord in tiles.keys():
@@ -2546,13 +2683,62 @@ func _thin_special_zone_peaks() -> void:
 				var ndata: HexTileData = tiles.get(n)
 				if ndata != null and ndata.terrain_type == terrain_type:
 					peak_neighbors += 1
-			if peak_neighbors > MAX_SPECIAL_ZONE_PEAK_NEIGHBORS:
+			if peak_neighbors > peak_max_neighbors[terrain_type]:
 				to_downgrade.append(coord)
 		if to_downgrade.is_empty():
 			return
 
 		for coord in to_downgrade:
 			_write_forced_tile(peak_to_base[tiles[coord].terrain_type], coord)
+
+## Garantia minima de vulcoes por continente Vulcanico (ver MIN_VOLCANIC_
+## PEAKS/pedido do usuario: "tem que ter pelo menos uns 3 por continente de
+## fogo") — a poda de isolamento total acima (VOLCANIC_PEAK_MAX_NEIGHBORS=0)
+## pode, numa semente azarada, derrubar quase todo Pico que a elevacao crua
+## tinha proposto ate sobrar menos que isso. Promove tiles CAMINHAVEIS da
+## propria zona Vulcanica (nunca Lava/Mar de Lava, que tem seu proprio
+## criterio de ruido ja decidido) que ainda nao sao vizinhos de nenhum Pico
+## existente — mantendo o MESMO isolamento total exigido de qualquer
+## vulcao, inclusive entre os proprios candidatos promovidos NESTA MESMA
+## passada (`peak_count`/checagem de vizinhanca atualizam a cada promocao).
+## Preferencia por Rocha/Colina Vulcanica (interior) sobre Solo de Cinzas
+## (periferia/praia) — um vulcao na beira da praia lê estranho tematicamente,
+## so cai nela se o interior nao tiver candidato isolado suficiente. Ordem
+## de iteracao de `tiles` e a mesma sempre (insercao determinada pela
+## sequencia de coords de generate_map), entao nenhuma aleatoriedade nova
+## entra na geracao do mapa — mesma semente continua dando o mesmo mapa.
+func _ensure_minimum_volcanic_peaks() -> void:
+	var peak_count := 0
+	var interior_candidates: Array[Vector2i] = []
+	var periphery_candidates: Array[Vector2i] = []
+	for coord in tiles.keys():
+		if _zone_for(coord) != _Zone.VOLCANIC:
+			continue
+		var terrain_type = tiles[coord].terrain_type
+		if terrain_type == HexTileData.TerrainType.VOLCANIC_PEAKS:
+			peak_count += 1
+		elif terrain_type == HexTileData.TerrainType.VOLCANIC_ROCK or terrain_type == HexTileData.TerrainType.VOLCANIC_HILLS:
+			interior_candidates.append(coord)
+		elif terrain_type == HexTileData.TerrainType.VOLCANIC_ASH:
+			periphery_candidates.append(coord)
+
+	if peak_count >= MIN_VOLCANIC_PEAKS:
+		return
+
+	for candidates in [interior_candidates, periphery_candidates]:
+		for coord in candidates:
+			if peak_count >= MIN_VOLCANIC_PEAKS:
+				return
+			var has_peak_neighbor := false
+			for n in get_neighbors(coord):
+				var ndata: HexTileData = tiles.get(n)
+				if ndata != null and ndata.terrain_type == HexTileData.TerrainType.VOLCANIC_PEAKS:
+					has_peak_neighbor = true
+					break
+			if has_peak_neighbor:
+				continue
+			_write_forced_tile(HexTileData.TerrainType.VOLCANIC_PEAKS, coord)
+			peak_count += 1
 
 ## lista local `largest_cluster` pra fins de contagem/BFS, mas nunca era
 ## de fato escrito em `tiles`; se nenhum vizinho elegivel fosse encontrado
@@ -3940,17 +4126,14 @@ func _build_hex_prism_mesh(size: float, depth_factor: float = 0.4) -> ArrayMesh:
 
 	return st.commit()
 
-## Espalha arvores procedurais em tiles de floresta e pedras em tiles de
-## colina/montanha, dando cara de bioma ao mapa sem precisar de assets. As
-## instancias reaproveitam MultiMesh (como o terreno) e respeitam a mesma
-## neblina de guerra via _apply_prop_fog().
+## Espalha arvores (modelo real KayKit, ver _load_tree_mesh) em tiles de
+## floresta e gelo flutuante em tiles de Mar Gelado, dando cara de bioma ao
+## mapa. As instancias reaproveitam MultiMesh (como o terreno) e respeitam a
+## mesma neblina de guerra via _apply_prop_fog().
 func _rebuild_props() -> void:
 	if _props_tree_instance:
 		_props_tree_instance.queue_free()
 		_props_tree_instance = null
-	if _props_mountain_spike_instance:
-		_props_mountain_spike_instance.queue_free()
-		_props_mountain_spike_instance = null
 	if _props_ice_floe_instance:
 		_props_ice_floe_instance.queue_free()
 		_props_ice_floe_instance = null
@@ -3959,7 +4142,6 @@ func _rebuild_props() -> void:
 		HexTileData.TerrainType.FOREST, HexTileData.TerrainType.TAIGA, HexTileData.TerrainType.JUNGLE,
 	]
 	var tree_coords: Array[Vector2i] = []
-	var mountain_coords: Array[Vector2i] = []
 	var ice_floe_coords: Array[Vector2i] = []
 	for coord in tiles.keys():
 		var data: HexTileData = tiles[coord]
@@ -3967,16 +4149,10 @@ func _rebuild_props() -> void:
 		# nunca ganha arvore decorativa — pedido do usuario: 3-5 arvores
 		# empilhadas enterravam visualmente o prop pequeno do recurso (e o
 		# icone billboard some atras da copa da arvore), tornando o tile
-		# ilegivel como "tem recurso aqui". Pico de Montanha (mountain_coords
-		# abaixo) fica de fora dessa exclusao de proposito: nao e decoracao
-		# esparsa, e a propria geometria da Montanha (toda Montanha ganha um,
-		# sem probabilidade) — excluir deixaria so os tiles COM recurso com
-		# aparencia de Montanha "achatada"/quebrada.
+		# ilegivel como "tem recurso aqui".
 		if data.terrain_type in TREE_TERRAINS:
 			if data.resource == "":
 				tree_coords.append(coord)
-		elif data.terrain_type == HexTileData.TerrainType.MOUNTAINS:
-			mountain_coords.append(coord)
 		elif data.terrain_type == HexTileData.TerrainType.FROZEN_OCEAN:
 			# Nem todo tile de Mar Gelado ganha gelo flutuante (pedido do
 			# usuario: "nao precisam ter em todas as celulas") — um mar de
@@ -4009,7 +4185,7 @@ func _rebuild_props() -> void:
 				var pos = center
 				pos.x += cos(offset_angle) * offset_dist
 				pos.z += sin(offset_angle) * offset_dist
-				var tree_scale = randf_range(0.8, 1.2)
+				var tree_scale = randf_range(0.8, 1.2) * TREE_MODEL_SCALE
 				var basis = Basis(Vector3.UP, randf() * TAU).scaled(Vector3.ONE * tree_scale)
 				placements.append({"coord": coord, "pos": pos, "basis": basis})
 
@@ -4028,6 +4204,11 @@ func _rebuild_props() -> void:
 		_props_tree_instance = MultiMeshInstance3D.new()
 		_props_tree_instance.multimesh = mm
 		var tree_mat := StandardMaterial3D.new()
+		# Textura pintada real da arvore KayKit (a malha em si nao carrega
+		# vertex color nenhum — confirmado no glTF, so POSITION/UV/NORMAL —
+		# entao a cor de instancia do MultiMesh abaixo so multiplica por
+		# branco/nevoa, nunca lava a textura).
+		tree_mat.albedo_texture = load("res://assets/models/kaykit/nature/forest_texture.png")
 		tree_mat.vertex_color_use_as_albedo = true
 		tree_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 		# Nevoa de guerra (pedido do usuario: props escondidos em tiles nao
@@ -4039,68 +4220,6 @@ func _rebuild_props() -> void:
 		tree_mat.alpha_scissor_threshold = 0.5
 		_props_tree_instance.material_override = tree_mat
 		add_child(_props_tree_instance)
-
-	_mountain_spike_coord_to_index.clear()
-	if mountain_coords.size() > 0:
-		# 1 a 3 picos rochosos assimetricos por tile de Montanha (pedido do
-		# usuario: "similar ao que fizemos com as arvores da floresta"),
-		# SEMPRE (nao com chance como a pedra de Colina) — a volumetria da
-		# Montanha e o requisito principal desta rodada. Offset radial
-		# afastado do CENTRO do tile (onde o proprio shader ja levanta um
-		# pico geometrico via elevation_height, ver terrain.gdshader) pra
-		# virarem "crags" satelites ao redor do pico principal, nao
-		# empilhados exatamente em cima dele.
-		var placements: Array[Dictionary] = []
-		for coord in mountain_coords:
-			var center = world_for_coord(coord)
-			var count = randi_range(1, 3)
-			for j in range(count):
-				var offset_dist = randf_range(hex_size * 0.15, hex_size * 0.55)
-				var offset_angle = randf() * TAU
-				var pos = center
-				pos.x += cos(offset_angle) * offset_dist
-				pos.z += sin(offset_angle) * offset_dist
-				# A base do pico precisa sentar EM CIMA da superficie ja
-				# elevada pelo domo/pico do shader naquele raio especifico
-				# (ver _mountain_surface_extra_height) — sem isso os picos
-				# ficariam flutuando acima ou afundados dentro do terreno
-				# deslocado pelo vertex shader.
-				pos.y += _mountain_surface_extra_height(offset_dist)
-				# Altura vertical reduzida (pedido do usuario: os spikes
-				# estavam altos demais, lendo como cones isolados em vez de
-				# crista da propria montanha) e escala ANISOTROPICA (X != Z)
-				# — alonga o rochedo numa direcao horizontal aleatoria pra
-				# parecer um fragmento de crista/aresta rochosa, nao um cone
-				# de base circular perfeita.
-				var height_scale = randf_range(0.5, 0.8)
-				var width_scale = randf_range(0.9, 1.3)
-				var elongation = randf_range(1.0, 1.7)
-				var spike_basis = Basis(Vector3.UP, randf() * TAU)
-				spike_basis = spike_basis.scaled(Vector3(width_scale * elongation, height_scale, width_scale))
-				placements.append({"coord": coord, "pos": pos, "basis": spike_basis})
-
-		var mm3 := MultiMesh.new()
-		mm3.transform_format = MultiMesh.TRANSFORM_3D
-		mm3.use_colors = true
-		mm3.mesh = _mountain_spike_mesh
-		mm3.instance_count = placements.size()
-		for i in range(placements.size()):
-			var p = placements[i]
-			mm3.set_instance_transform(i, Transform3D(p.basis, p.pos))
-			mm3.set_instance_color(i, MOUNTAIN_SPIKE_BASE_COLOR)
-			if not _mountain_spike_coord_to_index.has(p.coord):
-				_mountain_spike_coord_to_index[p.coord] = []
-			_mountain_spike_coord_to_index[p.coord].append(i)
-		_props_mountain_spike_instance = MultiMeshInstance3D.new()
-		_props_mountain_spike_instance.multimesh = mm3
-		var spike_mat := StandardMaterial3D.new()
-		spike_mat.vertex_color_use_as_albedo = true
-		spike_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		# Nevoa de guerra — ver comentario equivalente em tree_mat acima.
-		spike_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-		spike_mat.alpha_scissor_threshold = 0.5
-		_props_mountain_spike_instance.material_override = spike_mat
-		add_child(_props_mountain_spike_instance)
 
 	_ice_floe_coord_to_index.clear()
 	if ice_floe_coords.size() > 0:
@@ -4173,14 +4292,6 @@ func _rebuild_props() -> void:
 	_resource_props_manager.rebuild(tiles)
 	_resource_icon_manager.rebuild(tiles)
 
-## Espelha (aproximadamente, sem o ruido de quebra que o shader soma por
-## cima) elevation_height() de terrain.gdshader pro termo de Montanha — so
-## pra posicionar props de pico EM CIMA da superficie real, ver _rebuild_props.
-func _mountain_surface_extra_height(offset_dist: float) -> float:
-	var r = clamp(offset_dist / hex_size, 0.0, 1.0)
-	var shape = pow(1.0 - r, MOUNTAIN_PEAK_SHARPNESS)
-	return MOUNTAIN_PEAK_HEIGHT * shape
-
 ## Altura VISUAL real do CENTRO de um tile (base_height + o pico/domo do
 ## terrain.gdshader no seu ponto mais alto, r=0) — usado pelo contorno de
 ## territorio da cidade (_build_city_tint_mesh) pra encaixar no relevo em
@@ -4199,45 +4310,13 @@ func _tile_surface_height(coord: Vector2i) -> float:
 		h += HILL_HEIGHT
 	return h
 
-func _build_rock_spike_mesh() -> ArrayMesh:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-
-	var sides := 6
-	var base_radius := 0.22
-	var height := 0.75
-	var apex := Vector3(0.0, height, 0.0)
-	var base_points: Array[Vector3] = []
-	for i in range(sides):
-		var a = TAU * float(i) / float(sides)
-		# Jitter FIXO (nao aleatorio por instancia — a mesma malha e reusada
-		# em todo tile via MultiMesh, a variedade entre picos vem da
-		# posicao/rotacao/escala por instancia, ver _rebuild_props acima)
-		# pra o contorno da base nao ser um circulo/cone perfeito.
-		var jitter = 1.0 + 0.3 * sin(a * 2.7 + 1.3)
-		var r = base_radius * jitter
-		base_points.append(Vector3(cos(a) * r, 0.0, sin(a) * r))
-
-	for i in range(sides):
-		var p1 = base_points[i]
-		var p2 = base_points[(i + 1) % sides]
-		var mid = (p1 + p2) * 0.5
-		var normal = (mid - Vector3(0.0, height * 0.3, 0.0)).normalized()
-		for v in [p1, apex, p2]:
-			st.set_color(MOUNTAIN_SPIKE_BASE_COLOR)
-			st.set_normal(normal)
-			st.add_vertex(v)
-
-	return st.commit()
-
 ## Pack ice/iceberg pequeno (pedido do usuario, Ponto 2: "micro-icebergs
-## flutuantes... pequenas formacoes de gelo 3D/procedurais") — mesma
-## tecnica de contorno jitterado do pico de Montanha acima (_build_
-## rock_spike_mesh), so BAIXO e CHATO em vez de pontudo (gelo flutuando
-## na superficie, nao uma montanha) e com a base mais ESTREITA que o topo
-## (afunila pra baixo, como um pedaco de gelo real que fica mais fino
-## debaixo d'agua). Escala/posicao/rotacao por instancia ficam em
-## _rebuild_props, igual arvore/pedra/pico.
+## flutuantes... pequenas formacoes de gelo 3D/procedurais") — contorno
+## jitterado (mesma tecnica de _build_tree_mesh), so BAIXO e CHATO em vez de
+## pontudo (gelo flutuando na superficie, nao uma montanha) e com a base
+## mais ESTREITA que o topo (afunila pra baixo, como um pedaco de gelo real
+## que fica mais fino debaixo d'agua). Escala/posicao/rotacao por instancia
+## ficam em _rebuild_props, igual arvore/gelo.
 func _build_ice_floe_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -4277,47 +4356,30 @@ func _build_ice_floe_mesh() -> ArrayMesh:
 
 	return st.commit()
 
-func _build_tree_mesh() -> ArrayMesh:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+## Extrai a malha (so geometria/UV, sem material — o material real vem do
+## StandardMaterial3D montado em _rebuild_props via material_override, que
+## precisa MISTURAR a textura da arvore com a cor de instancia do MultiMesh
+## pra nevoa de guerra continuar funcionando) da cena importada da KayKit.
+## Uma unica instancia temporaria e criada so pra alcancar o MeshInstance3D
+## dentro dela; o recurso ArrayMesh em si sobrevive a instancia ser
+## descartada (fica compartilhado por todas as copias via MultiMesh, igual
+## a malha procedural antiga).
+func _load_tree_mesh() -> Mesh:
+	var scene: PackedScene = load(TREE_MODEL_SCENE)
+	var inst := scene.instantiate()
+	var mesh_instance := _find_mesh_instance(inst)
+	var mesh: Mesh = mesh_instance.mesh
+	inst.queue_free()
+	return mesh
 
-	var trunk_color = Color(0.36, 0.24, 0.14)
-	var trunk_radius = 0.06
-	var trunk_height = 0.3
-	for i in range(5):
-		var a1 = TAU * float(i) / 5.0
-		var a2 = TAU * float(i + 1) / 5.0
-		var c1 = Vector3(cos(a1) * trunk_radius, 0.0, sin(a1) * trunk_radius)
-		var c2 = Vector3(cos(a2) * trunk_radius, 0.0, sin(a2) * trunk_radius)
-		var top1 = c1 + Vector3(0.0, trunk_height, 0.0)
-		var top2 = c2 + Vector3(0.0, trunk_height, 0.0)
-		var normal = ((c1 + c2) * 0.5).normalized()
-		for v in [c1, top1, c2, c2, top1, top2]:
-			st.set_color(trunk_color)
-			st.set_normal(normal)
-			st.add_vertex(v)
-
-	var foliage_color = Color(0.16, 0.38, 0.18)
-	_add_cone(st, Vector3(0.0, 0.22, 0.0), 0.28, 0.55, foliage_color, 7)
-	_add_cone(st, Vector3(0.0, 0.48, 0.0), 0.18, 0.4, foliage_color, 7)
-
-	return st.commit()
-
-func _add_cone(st: SurfaceTool, base_center: Vector3, radius: float, height: float, color: Color, sides: int) -> void:
-	var apex = base_center + Vector3(0.0, height, 0.0)
-	for i in range(sides):
-		var a1 = TAU * float(i) / float(sides)
-		var a2 = TAU * float(i + 1) / float(sides)
-		var p1 = base_center + Vector3(cos(a1) * radius, 0.0, sin(a1) * radius)
-		var p2 = base_center + Vector3(cos(a2) * radius, 0.0, sin(a2) * radius)
-		var mid = (p1 + p2) * 0.5
-		var normal = mid - base_center
-		normal.y = height * 0.5
-		normal = normal.normalized()
-		for v in [p1, apex, p2]:
-			st.set_color(color)
-			st.set_normal(normal)
-			st.add_vertex(v)
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found := _find_mesh_instance(child)
+		if found:
+			return found
+	return null
 
 ## Numero de dano flutuante que sobe e some — sem isso, tomar dano so
 ## aparece como uma notificacao de texto no topo da tela, longe de onde a

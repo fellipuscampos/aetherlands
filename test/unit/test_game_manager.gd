@@ -78,7 +78,11 @@ func test_setup_players_clamps_rival_count_to_available_civs():
 
 	hex_grid.queue_free()
 
-func test_setup_players_starts_human_at_war_with_every_rival():
+## Pedido do usuario: "vamos fazer com que todos comecem o jogo em paz, ao
+## inves de comecar em guerra" — antes disso o humano nascia automaticamente
+## em guerra com todo rival, sem escolha nenhuma. Guerra agora so acontece
+## se o jogador declarar de proposito (ver HUD._on_declare_war_pressed).
+func test_setup_players_starts_everyone_at_peace():
 	var hex_grid := HexGrid.new()
 	hex_grid._ready()
 	GameManager.rival_count = 2
@@ -86,8 +90,8 @@ func test_setup_players_starts_human_at_war_with_every_rival():
 	GameManager.setup_players(hex_grid)
 
 	for rival in GameManager.rival_players:
-		assert_true(GameManager.human_player.is_at_war_with(rival))
-		assert_true(rival.is_at_war_with(GameManager.human_player))
+		assert_false(GameManager.human_player.is_at_war_with(rival))
+		assert_false(rival.is_at_war_with(GameManager.human_player))
 
 	hex_grid.queue_free()
 

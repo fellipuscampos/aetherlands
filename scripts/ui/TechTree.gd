@@ -53,6 +53,34 @@ const SCHOOL_COLORS := {
 
 var _node_rects: Dictionary = {} # id -> Rect2, posicao final de cada card (usado por _draw() pra ligar as linhas)
 
+## Pedido do usuario: separar a arvore em duas areas — "Magia" (Arcanismo/
+## Transmutação/Naturalismo/Elementalismo/Geomancia/Alquimia) e "Tecnologia"
+## (so a escola "Doutrina") — cada uma em sua PROPRIA instancia de TechTree
+## (ver HUD.tscn TechTabs/MagicTab+DoutrinaTab), mantendo exatamente o mesmo
+## algoritmo de tier/componente/linha de hoje, so filtrando qual
+## subconjunto de techs entra em cada instancia. "" = sem filtro, mostra a
+## arvore INTEIRA — default de proposito, pra nao quebrar quem cria
+## TechTree.new() direto sem setar isto (ver test_tech_tree.gd, que chama
+## _compute_tiers/_compute_rows/_compute_components direto num TechTree
+## "cru"). "magic" = toda tech com school != "Doutrina". "doutrina" = so
+## school == "Doutrina".
+var category: String = ""
+
+## Unico ponto de leitura de TechDatabase.all_techs() nesta classe — toda
+## outra funcao (rebuild/_compute_tiers/_compute_components/_draw) le daqui
+## em vez de chamar TechDatabase direto, pra o filtro de `category` valer
+## em TUDO de forma consistente (senao uma tech Doutrina poderia aparecer
+## na arvore de Magia so por um metodo esquecido de filtrar).
+func _techs() -> Array:
+	if category == "":
+		return TechDatabase.all_techs()
+	var result := []
+	for tech in TechDatabase.all_techs():
+		var is_doutrina: bool = tech.school == "Doutrina"
+		if is_doutrina == (category == "doutrina"):
+			result.append(tech)
+	return result
+
 ## race: CivilizationData.race do jogador humano (default "human" pra nao
 ## quebrar chamadas existentes/testes antigos) — usado so pra tematizar o
 ## TEXTO exibido (RaceTheme.tech_name/description, nome da tropa
@@ -69,11 +97,11 @@ func rebuild(researched: Dictionary, current_research: String, research_progress
 
 	var max_tier := 0
 	var max_row := 0
-	for tech in TechDatabase.all_techs():
+	for tech in _techs():
 		max_tier = max(max_tier, tiers[tech.id])
 		max_row = max(max_row, rows[tech.id])
 
-	for tech in TechDatabase.all_techs():
+	for tech in _techs():
 		var pos = MARGIN + Vector2(tiers[tech.id] * (NODE_SIZE.x + COL_GAP), rows[tech.id] * (NODE_SIZE.y + ROW_GAP))
 		_node_rects[tech.id] = Rect2(pos, NODE_SIZE)
 		_add_tech_card(tech, pos, researched, current_research, research_progress, race)
@@ -90,7 +118,7 @@ func rebuild(researched: Dictionary, current_research: String, research_progress
 ## isso evita ter que lidar com ciclo/ordem de visita na mao.
 func _compute_tiers() -> Dictionary:
 	var tiers := {}
-	var techs = TechDatabase.all_techs()
+	var techs = _techs()
 	for t in techs:
 		tiers[t.id] = 0
 	var changed := true
@@ -128,9 +156,9 @@ const GROUP_ROW_GAP := 1
 ## lados, eles se fundem num grupo so automaticamente.
 func _compute_components() -> Dictionary:
 	var adjacency: Dictionary = {} # id -> Array[String], arestas nao-direcionadas
-	for tech in TechDatabase.all_techs():
+	for tech in _techs():
 		adjacency[tech.id] = []
-	for tech in TechDatabase.all_techs():
+	for tech in _techs():
 		for p in tech.prerequisites:
 			if adjacency.has(p):
 				adjacency[tech.id].append(p)
@@ -138,7 +166,7 @@ func _compute_components() -> Dictionary:
 
 	var component: Dictionary = {} # id -> int
 	var next_component := 0
-	for tech in TechDatabase.all_techs():
+	for tech in _techs():
 		if component.has(tech.id):
 			continue
 		var stack: Array[String] = [tech.id]
@@ -169,7 +197,7 @@ func _compute_components() -> Dictionary:
 func _compute_rows(tiers: Dictionary) -> Dictionary:
 	var components := _compute_components()
 	var techs_by_component: Dictionary = {} # component(int) -> Array[TechData]
-	for tech in TechDatabase.all_techs():
+	for tech in _techs():
 		var c: int = components[tech.id]
 		if not techs_by_component.has(c):
 			techs_by_component[c] = []
@@ -424,7 +452,7 @@ func _effect_summary(tech: TechData, race: String = "human") -> String:
 ## da linha (row) de origem/destino, nunca atravessando o card de outra
 ## tecnologia no meio do caminho.
 func _draw() -> void:
-	for tech in TechDatabase.all_techs():
+	for tech in _techs():
 		if not _node_rects.has(tech.id):
 			continue
 		var to_rect: Rect2 = _node_rects[tech.id]

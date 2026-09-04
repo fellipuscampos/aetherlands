@@ -91,7 +91,7 @@ func handle_world_hover(world_pos: Vector3) -> void:
 		# caro que reconstruct_path acima, mas so roda quando o mouse muda
 		# de TILE (ja debounced por _hovered_coord no topo desta funcao),
 		# nunca por frame.
-		var long_path = hex_grid.compute_path(selected_unit.coord, coord, selected_unit.owner_player, selected_unit.unit_data.flies)
+		var long_path = hex_grid.compute_path(selected_unit.coord, coord, selected_unit.owner_player, selected_unit.unit_data.flies, selected_unit.embarked)
 		if long_path.is_empty():
 			hex_grid.set_highlight(reachable.keys(), attackable)
 			hex_grid.hide_hover_label()
@@ -138,6 +138,8 @@ func handle_world_click(world_pos: Vector3) -> void:
 
 func found_city_with_selected() -> void:
 	if selected_unit == null or not selected_unit.unit_data.can_found_city:
+		return
+	if selected_unit.embarked: # Roadmap 2.0 Parte 1 (C2) — unidade em transito nao funda cidade
 		return
 	var hex_grid = GameManager.hex_grid
 	var coord = selected_unit.coord
@@ -279,13 +281,18 @@ func _select_unit(unit: Unit) -> void:
 	move_mode = false
 	_hovered_coord = Vector2i(999999, 999999)
 	var hex_grid = GameManager.hex_grid
-	reachable = hex_grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies)
+	reachable = hex_grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies, unit.embarked)
 	attackable.clear()
 	# unit.movement_left > 0 e o que garante que uma unidade so age uma vez
 	# por turno: atacar zera o movimento (CombatResolver.resolve()), entao
 	# sem essa checagem aqui o alvo continuava marcado como "atacavel" e
-	# clicar de novo disparava outro ataque de graca, sem fim.
-	if unit.unit_data.attack > 0.0 and unit.movement_left > 0.0:
+	# clicar de novo disparava outro ataque de graca, sem fim. `not unit.
+	# embarked` (Roadmap 2.0 Parte 1, C2) — unidade em transito nao ataca;
+	# `attackable` ficar vazio tambem bloqueia capturar cidade de graca,
+	# ja que aqui captura so acontece via CombatResolver.resolve_city_
+	# attack (efeito colateral de reduzir a vida da cidade a zero atacando,
+	# nao uma acao propria) — sem alvo atacavel, nao ha como capturar.
+	if unit.unit_data.attack > 0.0 and unit.movement_left > 0.0 and not unit.embarked:
 		for n in hex_grid.tiles_in_range(unit.coord, unit.unit_data.attack_range):
 			var occ_unit = hex_grid.get_unit_at(n)
 			var occ_city = hex_grid.get_city_at(n)
@@ -345,7 +352,7 @@ func _try_queue_move_order(unit: Unit, coord: Vector2i) -> bool:
 	var hex_grid = GameManager.hex_grid
 	if hex_grid.get_unit_at(coord) != null:
 		return false
-	var path = hex_grid.compute_path(unit.coord, coord, unit.owner_player, unit.unit_data.flies)
+	var path = hex_grid.compute_path(unit.coord, coord, unit.owner_player, unit.unit_data.flies, unit.embarked)
 	if path.is_empty():
 		return false
 	unit.fortified = false
@@ -395,6 +402,8 @@ func fortify_selected() -> void:
 	if selected_unit == null:
 		return
 	var unit = selected_unit
+	if unit.embarked: # Roadmap 2.0 Parte 1 (C2) — unidade em transito nao fortifica
+		return
 	unit.fortified = not unit.fortified
 	if unit.fortified:
 		unit.exploring = false
@@ -413,6 +422,8 @@ func toggle_explore_selected() -> void:
 	if selected_unit == null:
 		return
 	var unit = selected_unit
+	if unit.embarked: # Roadmap 2.0 Parte 1 (C2) — unidade em transito nao explora
+		return
 	unit.exploring = not unit.exploring
 	move_mode = false
 	if not unit.exploring:
@@ -425,6 +436,44 @@ func toggle_explore_selected() -> void:
 	hex_grid.recompute_fog(GameManager.human_player)
 	if is_instance_valid(unit) and not unit.is_queued_for_deletion():
 		_select_unit(unit)
+
+## Botao "Embarcar" (Roadmap 2.0 Parte 1, acesso naval — pedido do
+## usuario) — SO LIGA Unit.embarked, nunca desliga (mao unica de
+## proposito): desembarque e sempre AUTOMATICO ao pisar em terra firme de
+## novo (ver HexGrid.move_unit), nunca uma acao manual — e por invariante
+## embarked==true so e verdade enquanto a unidade estiver de fato sobre
+## agua (can_be_embarked_on()), entao um "desligar" manual clicando de
+## novo no meio do oceano deixaria a unidade presa num estado invalido
+## (terrestre "normal" sobre agua aberta). Por isso o proprio botao vira
+## no-op (ver guarda `if unit.embarked: return` abaixo) em vez de tentar
+## adivinhar quando seria seguro desligar.
+##
+## Habilitado com as 3 condicoes: unidade nao voa (Grifo ja atravessa
+## oceano de graca, nao precisa disto), dono ja pesquisou "Navegação"
+## (TechDatabase.is_navigation_researched) E a unidade esta num tile
+## adjacente a agua (HexGrid.is_coastal_tile) — nao da pra embarcar no meio
+## do continente. Ligar cancela Fortificar/Explorar/qualquer ordem
+## pendente, mesmo padrao de fortify_selected/toggle_explore_selected
+## acima (comando manual novo sempre limpa os outros modos automaticos).
+func toggle_embark_selected() -> void:
+	if selected_unit == null:
+		return
+	var unit = selected_unit
+	if unit.embarked:
+		return
+	if unit.unit_data.flies:
+		return
+	if unit.owner_player == null or not TechDatabase.is_navigation_researched(unit.owner_player.researched_techs):
+		return
+	var hex_grid = GameManager.hex_grid
+	if hex_grid == null or not hex_grid.is_coastal_tile(unit.coord):
+		return
+	unit.embarked = true
+	move_mode = false
+	unit.fortified = false
+	unit.exploring = false
+	unit.move_order_target = Unit.NO_MOVE_ORDER
+	_select_unit(unit)
 
 ## Nome mostrado no aviso "ATACAR" ao passar o mouse — deixa claro o que
 ## esta no alcance ANTES de clicar, principalmente pros Covis de Monstro

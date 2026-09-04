@@ -14,9 +14,10 @@ func test_get_building_returns_null_for_unknown_id():
 func test_total_bonus_sums_multiple_buildings():
 	var built = {"granary": true, "workshop": true, "market": true}
 	var bonus = BuildingDatabase.total_bonus(built)
-	assert_eq(bonus.food, 2, "so o Celeiro da comida")
+	assert_eq(bonus.food, 1, "so o Celeiro da comida")
 	assert_eq(bonus.production, 2, "so a Oficina da producao")
 	assert_eq(bonus.gold, 2, "so o Mercado da ouro")
+	assert_almost_eq(bonus.storage, 10.0, 0.01, "so o Celeiro aumenta o teto de armazenamento")
 
 func test_total_bonus_ignores_walls_yield():
 	var built = {"walls": true}

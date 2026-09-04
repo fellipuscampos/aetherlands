@@ -35,3 +35,17 @@ extends Resource
 ## Fracao do HP MAXIMO do alvo restaurada (kind "friendly_unit"). 0 =
 ## feitico nao cura.
 @export var heal_fraction: float = 0.0
+
+## Roadmap de gameplay Fase 5 — "Ruína Ígnea": alem do alvo principal
+## (mesmo target_kind/UX de clique de sempre), tambem atinge QUALQUER
+## unidade (aliada ou nao — cataclismo indiscriminado, ver flavor text da
+## tech) num tile vizinho dele. 0 (padrao) = dano de alvo unico, como
+## Lança de Arcana ja fazia.
+@export var damage_area_radius: int = 0
+
+## Roadmap de gameplay Fase 5 — "Metamorfose de Gaia": em vez de curar
+## `target`, transforma o TERRENO do tile onde ele esta em pe (a unidade
+## so marca QUAL tile, reaproveitando target_kind="friendly_unit"/mesma UX
+## de Reanimar) — ver SpellManager._apply_terrain_transform e
+## TechDatabase.tech_that_unlocks_spell().terrain_transform.
+@export var transforms_terrain: bool = false

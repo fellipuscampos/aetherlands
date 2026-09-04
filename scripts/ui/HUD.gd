@@ -42,6 +42,10 @@ extends Control
 ## ver _refresh_production_progress().
 @onready var production_progress_label: Label = $TileInfoPanel/TileInfoBox/ProductionProgressLabel
 @onready var production_progress_bar: ProgressBar = $TileInfoPanel/TileInfoBox/ProductionProgressBar
+## Rush-buy do Mercado (ver City.can_rush_buy()/rush_buy_cost()/rush_buy())
+## — so aparece com o Mercado ja construido NESTA cidade e algo de fato em
+## producao, ver _refresh_production_progress().
+@onready var rush_buy_button: Button = $TileInfoPanel/TileInfoBox/RushBuyButton
 ## Duas abas (pedido do usuario — painel lateral parecia "uma muralha de
 ## 15+ botoes cinzas"): "Unidades" e "Construcoes" (predios de producao +
 ## treino/mana juntos, mas com secao propria dentro da aba). Titulos
@@ -81,7 +85,14 @@ extends Control
 @onready var tech_button: Button = $ActionBar/ActionBarBox/TechButton
 @onready var tech_panel: PanelContainer = $TechPanel
 @onready var tech_current_label: Label = $TechPanel/TechBox/TechCurrentLabel
-@onready var tech_tree: TechTree = $TechPanel/TechBox/TechTreeScroll/TechTree
+## Pedido do usuario: separar a arvore em duas areas — "Magia" (Arcanismo/
+## Transmutação/Naturalismo/Elementalismo/Geomancia/Alquimia) e "Tecnologia"
+## (so a escola "Doutrina") — cada aba tem sua PROPRIA instancia de
+## TechTree.gd, filtrada via TechTree.category (ver _ready()/_refresh_tech_
+## panel() abaixo), mantendo a mesma organizacao/algoritmo de tier de hoje.
+@onready var tech_tabs: TabContainer = $TechPanel/TechBox/TechTabs
+@onready var tech_tree_magic: TechTree = $TechPanel/TechBox/TechTabs/MagicTab/MagicTree
+@onready var tech_tree_doutrina: TechTree = $TechPanel/TechBox/TechTabs/DoutrinaTab/DoutrinaTree
 @onready var tech_close_button: Button = $TechPanel/TechBox/TechHeader/TechCloseButton
 @onready var diplomacy_button: Button = $ActionBar/ActionBarBox/DiplomacyButton
 @onready var diplomacy_panel: PanelContainer = $DiplomacyPanel
@@ -100,6 +111,7 @@ extends Control
 @onready var move_button: Button = $UnitPanel/UnitBox/UnitActionsRow/MoveButton
 @onready var fortify_button: Button = $UnitPanel/UnitBox/UnitActionsRow/FortifyButton
 @onready var explore_button: Button = $UnitPanel/UnitBox/UnitActionsRow/ExploreButton
+@onready var embark_button: Button = $UnitPanel/UnitBox/UnitActionsRow/EmbarkButton
 @onready var found_city_button: Button = $UnitPanel/UnitBox/FoundCityButton
 @onready var game_over_panel: PanelContainer = $GameOverPanel
 @onready var game_over_label: Label = $GameOverPanel/GameOverBox/GameOverLabel
@@ -143,6 +155,7 @@ func _ready() -> void:
 	move_button.pressed.connect(_on_move_pressed)
 	fortify_button.pressed.connect(_on_fortify_pressed)
 	explore_button.pressed.connect(_on_explore_pressed)
+	embark_button.pressed.connect(_on_embark_pressed)
 	build_granary_button.pressed.connect(_on_produce_pressed.bind("granary"))
 	build_workshop_button.pressed.connect(_on_produce_pressed.bind("workshop"))
 	build_market_button.pressed.connect(_on_produce_pressed.bind("market"))
@@ -158,6 +171,7 @@ func _ready() -> void:
 	build_shadow_crypt_button.pressed.connect(_on_produce_pressed.bind("shadow_crypt"))
 	save_button.pressed.connect(_on_save_pressed)
 	tech_button.pressed.connect(_on_tech_pressed)
+	rush_buy_button.pressed.connect(_on_rush_buy_pressed)
 	tech_close_button.pressed.connect(_on_tech_close_pressed)
 	diplomacy_button.pressed.connect(_on_diplomacy_pressed)
 	diplomacy_close_button.pressed.connect(_on_diplomacy_close_pressed)
@@ -172,7 +186,12 @@ func _ready() -> void:
 	debug_complete_research_button.pressed.connect(_on_debug_complete_research_pressed)
 	debug_win_button.pressed.connect(_on_debug_win_pressed)
 	debug_lose_button.pressed.connect(_on_debug_lose_pressed)
-	tech_tree.tech_selected.connect(_on_tech_selected)
+	tech_tree_magic.category = "magic"
+	tech_tree_doutrina.category = "doutrina"
+	tech_tabs.set_tab_title(0, "Magia")
+	tech_tabs.set_tab_title(1, "Tecnologia")
+	tech_tree_magic.tech_selected.connect(_on_tech_selected)
+	tech_tree_doutrina.tech_selected.connect(_on_tech_selected)
 	TurnManager.turn_changed.connect(_on_turn_changed)
 	EventBus.tile_selected.connect(_on_tile_selected)
 	EventBus.unit_selected.connect(_on_unit_selected)
@@ -324,6 +343,9 @@ func _on_fortify_pressed() -> void:
 func _on_explore_pressed() -> void:
 	SelectionManager.toggle_explore_selected()
 
+func _on_embark_pressed() -> void:
+	SelectionManager.toggle_embark_selected()
+
 func _on_produce_pressed(kind: String) -> void:
 	if _viewed_city == null or not GameManager.human_player.has_unlocked(kind):
 		return
@@ -355,6 +377,21 @@ func _on_produce_pressed(kind: String) -> void:
 func _refresh_viewed_city() -> void:
 	if _viewed_city:
 		_on_tile_selected(_viewed_city.coord, GameManager.hex_grid.get_tile(_viewed_city.coord))
+
+## Rush-buy do Mercado (ver City.rush_buy()) — gasta ouro do jogador pra
+## completar o item em producao na hora (conclusao de fato so no PROXIMO
+## turno, ver comentario de City.rush_buy()). Falha silenciosamente (sem
+## efeito nenhum) se faltar ouro ou o rush-buy nao estiver disponivel —
+## rush_buy_button so aparece habilitado quando ja da pra pagar (ver
+## _refresh_production_progress()), entao chegar aqui sem poder pagar so
+## aconteceria por uma condicao de corrida (ex: outro efeito descontando
+## ouro no mesmo frame), nao pelo fluxo normal.
+func _on_rush_buy_pressed() -> void:
+	if _viewed_city == null:
+		return
+	if _viewed_city.rush_buy(GameManager.hex_grid):
+		_refresh_viewed_city()
+		_refresh_stats() # ouro gasto precisa refletir na TopBar na hora, sem esperar o proximo turno
 
 func _on_save_pressed() -> void:
 	if SaveManager.save_game(GameManager.hex_grid):
@@ -424,9 +461,10 @@ func _on_tech_pressed() -> void:
 func _on_tech_close_pressed() -> void:
 	_close_overlay_panels()
 
-## Mostra a pesquisa atual (com progresso) e a arvore inteira — cada
-## tecnologia como um card colorido por estado (TechTree.gd cuida do
-## layout/desenho; aqui so repassa os dados atuais do jogador).
+## Mostra a pesquisa atual (com progresso) e as duas arvores (Magia/
+## Tecnologia, ver tech_tree_magic/tech_tree_doutrina) — cada tecnologia
+## como um card colorido por estado (TechTree.gd cuida do layout/desenho;
+## aqui so repassa os dados atuais do jogador pras duas instancias).
 func _refresh_tech_panel() -> void:
 	var player = GameManager.human_player
 	if player == null:
@@ -441,7 +479,8 @@ func _refresh_tech_panel() -> void:
 	else:
 		tech_current_label.text = "Pesquisando: nenhuma, escolha um card disponivel abaixo"
 
-	tech_tree.rebuild(player.researched_techs, player.current_research, player.research_progress, race)
+	tech_tree_magic.rebuild(player.researched_techs, player.current_research, player.research_progress, race)
+	tech_tree_doutrina.rebuild(player.researched_techs, player.current_research, player.research_progress, race)
 
 func _on_tech_selected(id: String) -> void:
 	GameManager.human_player.current_research = id
@@ -561,7 +600,9 @@ func _build_spell_row(spell_name: String, human: PlayerData) -> Control:
 
 	var spell: SpellData = SpellDatabase.get_spell(spell_name)
 	var name_label := Label.new()
-	name_label.text = "%s (%d mana)" % [spell_name, spell.mana_cost] if spell else spell_name
+	# Custo de mana exibido ja reflete o desconto de Nodulo Arcano (Roadmap
+	# 2.0 Parte 1, B1, ver SpellManager.effective_mana_cost) quando houver.
+	name_label.text = "%s (%d mana)" % [spell_name, int(SpellManager.effective_mana_cost(spell, human, GameManager.hex_grid))] if spell else spell_name
 	name_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	header.add_child(name_label)
 
@@ -577,7 +618,7 @@ func _build_spell_row(spell_name: String, human: PlayerData) -> Control:
 		var turns_left = SpellManager.cooldown_ends_at(human, spell_name) - TurnManager.turn_number
 		cast_button.text = "Recarga (%d)" % max(turns_left, 1)
 		cast_button.disabled = true
-	elif not SpellManager.has_enough_mana(human, spell_name):
+	elif not SpellManager.has_enough_mana(human, spell_name, GameManager.hex_grid):
 		cast_button.text = "Sem mana"
 		cast_button.disabled = true
 	else:
@@ -814,6 +855,22 @@ func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 		if city:
 			var city_race: String = city.owner_player.civ.race
 			text += "\n\n%s\nPopulacao: %d" % [city.city_name, city.population]
+			# Pedido do usuario apos o redesenho do sistema de comida ("lá em
+			# cima não tá mostrando a comida"): o painel de cidade nunca
+			# mostrou estoque de comida nenhum (nem no sistema antigo, so
+			# acumulava silenciosamente) — agora que existe um teto de
+			# armazenamento de verdade (City.food_storage_cap()) e consumo por
+			# populacao (City.FOOD_CONSUMPTION_PER_POP), o jogador precisa ver
+			# os dois pra entender por que a cidade esta (ou nao) perto de
+			# crescer. net_food = producao bruta do turno - consumo da
+			# populacao (mesma conta de City.process_turn()), com sinal
+			# explicito (+/-) pra ficar claro se o estoque esta subindo ou
+			# estagnado.
+			var net_food = city.collect_yields(hex_grid).food - city.population * City.FOOD_CONSUMPTION_PER_POP
+			text += "\nComida: %d/%d (%s%d/turno)" % [
+				int(city.stored_food), int(city.food_storage_cap()),
+				"+" if net_food >= 0.0 else "", int(net_food)
+			]
 			_refresh_production_progress(city, hex_grid)
 			var built_names: Array[String] = []
 			for id in city.buildings.keys():
@@ -878,9 +935,9 @@ func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 			# pesquisa, enquanto isso elas nao aparecem no menu da cidade" —
 			# mesmo espirito ja aplicado as tropas acima (visivel so quando
 			# REALMENTE liberado). Predio de RENDIMENTO sem tech associada
-			# (Celeiro/Oficina/Mercado/Torre dos Sabios) continua sempre
-			# visivel; predio com tech propria (Quartel/Estabulo/Arquearia
-			# via trains_unit, Muralhas via TechData.unlocks_building) some
+			# (so Torre dos Sabios) continua sempre visivel; predio com tech
+			# propria (Quartel/Estabulo/Arquearia via trains_unit, Muralhas/
+			# Celeiro/Oficina/Mercado via TechData.unlocks_building) some
 			# ate a tech correspondente ser pesquisada, reaproveitando o
 			# MESMO gate que ja trava a construcao em si (City._tech_
 			# unlocked_for_building) — falta de sala/predio pre-requisito
@@ -973,6 +1030,7 @@ func _refresh_production_progress(city: City, hex_grid: HexGrid) -> void:
 	if city == null or city.production_item == "":
 		production_progress_label.visible = false
 		production_progress_bar.visible = false
+		rush_buy_button.visible = false
 		return
 
 	var city_race: String = city.owner_player.civ.race
@@ -996,6 +1054,21 @@ func _refresh_production_progress(city: City, hex_grid: HexGrid) -> void:
 	production_progress_bar.value = stored
 	production_progress_label.visible = true
 	production_progress_bar.visible = true
+
+	# Rush-buy (Mercado, ver City.can_rush_buy()) — pedido do usuario: "o
+	# mercado pode servir pra [dar um uso real pro ouro]"/"é uma boa, faça
+	# isso". So aparece com o Mercado ja construido NESTA cidade E so pra
+	# cidade PROPRIA (mesmo gate de "city.owner_player == GameManager.human_
+	# player" usado pra _viewed_city/production_tabs logo abaixo — nao faz
+	# sentido comprar producao de uma cidade inimiga so por ela estar sendo
+	# espiada). Desabilita (mas continua visivel, com o custo no texto) se o
+	# jogador nao tiver ouro suficiente AINDA, em vez de sumir — assim ele
+	# sabe que a opcao existe e quanto falta juntar.
+	rush_buy_button.visible = city.owner_player == GameManager.human_player and city.can_rush_buy()
+	if rush_buy_button.visible:
+		var rush_cost := city.rush_buy_cost(GameManager.hex_grid)
+		rush_buy_button.text = "Comprar com Ouro (%d)" % int(rush_cost)
+		rush_buy_button.disabled = city.owner_player == null or city.owner_player.gold < rush_cost
 
 ## e so o tempo ESTIMADO no ritmo de producao atual da cidade vista, pra
 ## nao ter que fazer conta de cabeca. Arredonda pra cima (ceil): "pronto no
@@ -1122,7 +1195,9 @@ func _on_unit_selected(unit: Unit) -> void:
 		text += "\nAlcance de ataque: %d" % unit.unit_data.attack_range
 	if unit.veterancy_level > 0:
 		text += "\n+%d%% ataque/defesa (%d abates)" % [int(unit.veterancy_level * Unit.VETERANCY_BONUS_PER_LEVEL * 100), unit.kills]
-	if unit.fortified:
+	if unit.embarked:
+		text += "\nEmbarcada (em trânsito pelo mar — não pode atacar/fortificar/explorar)"
+	elif unit.fortified:
 		text += "\nFortificada (+%d%% defesa, cura passiva)" % int(CombatResolver.FORTIFY_DEFENSE_BONUS * 100)
 	elif unit.exploring:
 		text += "\nExplorando automaticamente"
@@ -1131,14 +1206,28 @@ func _on_unit_selected(unit: Unit) -> void:
 	if SelectionManager.move_mode:
 		text += "\n» Clique no mapa pra mover «"
 	unit_info_label.text = text
-	found_city_button.visible = unit.unit_data.can_found_city
+	found_city_button.visible = unit.unit_data.can_found_city and not unit.embarked
 	# Fortificar/Explorar sao alternancias (toggle_mode, ver HUD.tscn) —
 	# button_pressed precisa refletir o estado REAL da unidade toda vez
 	# que a selecao (ou o proprio estado) muda, senao o botao mostraria
 	# "nao pressionado" pra uma unidade ja fortificada so por ter sido
-	# reselecionada.
+	# reselecionada. Desabilitados enquanto embarcada (Roadmap 2.0 Parte 1,
+	# C2 — unidade em transito nao fortifica/explora; SelectionManager ja
+	# recusa a acao, isto e so a segunda camada/feedback visual).
 	fortify_button.button_pressed = unit.fortified
+	fortify_button.disabled = unit.embarked
 	explore_button.button_pressed = unit.exploring
+	explore_button.disabled = unit.embarked
+	# Embarcar (Roadmap 2.0 Parte 1, acesso naval) — so aparece pra unidade
+	# terrestre com Navegação ja pesquisada; desabilitado (mas visivel, pra
+	# o jogador entender que existe) fora de um tile costeiro ou ja
+	# embarcada (toggle e mao unica, ver SelectionManager.
+	# toggle_embark_selected — desembarque e sempre automatico).
+	var owner_player := unit.owner_player
+	embark_button.visible = not unit.unit_data.flies and owner_player != null and TechDatabase.is_navigation_researched(owner_player.researched_techs)
+	if embark_button.visible:
+		embark_button.button_pressed = unit.embarked
+		embark_button.disabled = unit.embarked or (GameManager.hex_grid and not GameManager.hex_grid.is_coastal_tile(unit.coord))
 
 ## Regressao: o painel de fim de jogo podia aparecer POR CIMA de um
 ## overlay (Tecnologia/Diplomacia/Grimorio) que o jogador tivesse deixado

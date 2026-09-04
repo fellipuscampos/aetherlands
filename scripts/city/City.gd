@@ -1,8 +1,23 @@
 class_name City
 extends Node3D
 
-const FOOD_TO_GROW_BASE := 8.0
+## Redesenho do sistema de comida (pedido do usuario): antes acumulava sem
+## limite ate um limiar calculado por FOOD_TO_GROW_BASE*populacao. Agora
+## toda cidade tem um TETO de armazenamento fixo (aumentado pelo Celeiro,
+## ver food_storage_cap()/BuildingData.storage_bonus), e a populacao
+## CONSOME comida todo turno — se a producao do turno nao cobre o consumo,
+## o estoque so PARA de crescer (nunca fica negativo, nunca reduz
+## populacao, decisao explicita do usuario: "só trava o crescimento").
+## Cidade cresce 1 populacao quando o estoque atinge o teto (ver
+## process_turn()).
+const FOOD_STORAGE_BASE := 15.0
+const FOOD_CONSUMPTION_PER_POP := 1.0
 const LABEL_HEIGHT := 1.4
+
+## Taxa de conversao ouro->producao do rush-buy do Mercado (ver
+## can_rush_buy()/rush_buy_cost()/rush_buy() abaixo) — cada ponto de
+## producao FALTANTE no item atual custa isso em ouro pra comprar na hora.
+const RUSH_BUY_GOLD_PER_PRODUCTION := 2.0
 
 ## Piso de producao garantido pro tile CENTRAL da cidade (ver collect_
 ## yields) — sem isso, uma cidade fundada em Planicie/Deserto/qualquer
@@ -38,6 +53,14 @@ const CITY_MAX_HP_PER_POPULATION := 4.0
 const CITY_HP_REGEN_FRACTION := 0.08 # fracao de max_hp curada por turno
 const CITY_MAX_SHIELD := 15.0
 const CITY_SHIELD_REGEN_FRACTION := 0.15 # fracao de max_shield recarregada por turno
+## Atrito de cerco (roadmap de gameplay Fase 2): unidade inimiga adjacente
+## por N turnos SEGUIDOS suspende a regeneracao de HP/escudo da cidade
+## (ver _is_enemy_adjacent/process_turn) — pedido do usuario: "comecar com
+## UMA unica consequencia simples e legivel" em vez de inventar um dreno
+## novo de producao/comida, so desligar um bonus que ja existe. N=2 (nao
+## 1) de proposito: uma unidade so DE PASSAGEM no territorio, sem
+## intencao de cercar, nao deveria contar como sitio de verdade.
+const SIEGE_TURNS_TO_SUSPEND_REGEN := 2
 
 ## Escala visual da cidade por populacao (pedido do usuario: "Populacao 1 =
 ## 2-3 casinhas; Populacao 5 = distrito densamente povoado com torres/
@@ -66,12 +89,20 @@ var city_name: String = "Cidade"
 ## usado por testes que criam City.new() bare sem passar por setup().
 var tile_radius: float = 1.0
 var population: int = 1
+## Nunca ultrapassa food_storage_cap() (ver process_turn(), que ja aplica o
+## clamp todo turno) — o "excedente" de um turno com producao muito alta
+## simplesmente e descartado ao cruzar o teto, nao acumula pro proximo
+## ciclo.
 var stored_food: float = 0.0
 var stored_production: float = 0.0
 ## Ver comentario de CITY_BASE_MAX_HP acima — inicializados em setup()
 ## (hp cheio, shield 0 ate Muralhas ser construida).
 var hp: float = 0.0
 var shield: float = 0.0
+## Ver SIEGE_TURNS_TO_SUSPEND_REGEN acima — quantos turnos SEGUIDOS ate
+## agora tem unidade inimiga adjacente; zera assim que ninguem ameacador
+## fica adjacente por um turno.
+var _consecutive_siege_turns: int = 0
 ## Colonizador e Guarda sao os dois kinds SEM predio de treino associado
 ## (ver BuildingDatabase.building_that_trains) — Colonizador nao depende
 ## de nenhum predio, entao E o kind natural pro jogador escolher assim
@@ -169,11 +200,33 @@ func setup(player: PlayerData, start_coord: Vector2i, new_city_name: String, hex
 func max_hp() -> float:
 	return CITY_BASE_MAX_HP + population * CITY_MAX_HP_PER_POPULATION
 
+## Teto de armazenamento de comida desta cidade — FOOD_STORAGE_BASE por
+## padrao, aumentado pelo Celeiro uma vez construido (BuildingData.
+## storage_bonus, ver BuildingDatabase.total_bonus()). Cidade cresce 1
+## populacao quando stored_food atinge este teto (ver process_turn()).
+func food_storage_cap() -> float:
+	return FOOD_STORAGE_BASE + BuildingDatabase.total_bonus(buildings).storage
+
 ## 0.0 ate o predio "walls" ser construido (ver BuildingDatabase.gd/
 ## City._add_walls) — sem Muralhas, a cidade nao tem escudo nenhum pra
 ## absorver.
 func max_shield() -> float:
 	return CITY_MAX_SHIELD if buildings.has("walls") else 0.0
+
+## Roadmap de gameplay Fase 4A — pedido do usuario: "Mercado ganha um
+## segundo efeito real: aumenta o numero maximo de rotas simultaneas que
+## uma cidade aguenta" (primeira vez que "Mercado" faz algo parecido com
+## o proprio nome — antes so descontava rush-buy). Ver TradeManager.
+## active_route_count/propose_route.
+const MARKET_ROUTE_CAPACITY_BONUS := 2
+## `hex_grid` OPCIONAL (Roadmap 2.0 Parte 1, B1) — so quando fornecido soma
+## o bonus de Seda (ResourceDatabase.extra_trade_route_capacity), mesma
+## convencao de parametro opcional de production_cost/rush_buy_cost abaixo.
+func max_trade_routes(hex_grid: HexGrid = null) -> int:
+	var base = MARKET_ROUTE_CAPACITY_BONUS if buildings.has("market") else 0
+	if hex_grid == null:
+		return base
+	return base + ResourceDatabase.extra_trade_route_capacity(self, hex_grid)
 
 ## Trocar de projeto zera o progresso acumulado, como na maioria dos 4X:
 ## evita "salvar" producao de um item pra completar outro instantaneamente.
@@ -196,13 +249,75 @@ func set_production(kind: String) -> void:
 ## cairia em UnitDatabase.create_unit(""), que devolve o CUSTO DEFAULT de
 ## UnitData (15.0, nao 0), um numero enganoso pra quem chama isto achando
 ## que reflete "nada em producao".
-func production_cost() -> float:
+## `hex_grid` OPCIONAL (roadmap de gameplay Fase 3) — so quando fornecido
+## aplica o desconto de Cavalos em Cavalaria (ver ResourceDatabase.
+## cavalry_cost_multiplier); todo chamador que nao passa (rush-buy,
+## HUD, debug) continua vendo o custo BASE, sem discrepancia funcional —
+## so o momento em que a producao de fato COMPLETA (process_turn, unico
+## chamador que ja tinha hex_grid em maos) usa o desconto de verdade.
+func production_cost(hex_grid: HexGrid = null) -> float:
 	if production_item == "":
 		return 0.0
 	var building: BuildingData = BuildingDatabase.get_building(production_item)
 	if building:
 		return building.production_cost
-	return UnitDatabase.create_unit(production_item).production_cost
+	var cost: float = UnitDatabase.create_unit(production_item).production_cost
+	if hex_grid and owner_player:
+		if production_item == "cavalry":
+			cost *= ResourceDatabase.cavalry_cost_multiplier(owner_player, hex_grid)
+		elif production_item in ResourceDatabase.IRON_DISCOUNT_KINDS:
+			cost *= ResourceDatabase.heavy_unit_cost_multiplier(owner_player, hex_grid)
+	return cost
+
+## Quanto falta pra completar o item atual (nunca negativo) — usado tanto
+## pelo rush-buy abaixo quanto poderia ser reusado por qualquer outro
+## calculo futuro de "quanto falta".
+func _production_remaining() -> float:
+	return max(production_cost() - stored_production, 0.0)
+
+## Mercado permite "comprar" o resto da producao do item atual com ouro em
+## vez de esperar os turnos normais — pedido do usuario: "o mercado pode
+## servir pra aumentar a produção"/"é uma boa, faça isso" (rush-buy com
+## ouro). So disponivel com o predio "market" ja construido NESTA cidade
+## (efeito local, mesmo padrao de gate por predio de BuildingDatabase.
+## building_that_trains/can_train), so quando ha algo de fato em producao
+## (cidade OCIOSA nao tem o que comprar) e so quando ainda falta alguma
+## coisa (senao o botao apareceria pra comprar um item que ja completaria
+## sozinho neste mesmo turno).
+func can_rush_buy() -> bool:
+	return buildings.has("market") and production_item != "" and _production_remaining() > 0.0
+
+## Custo em ouro pra completar o restante da producao AGORA — proporcional
+## so ao que FALTA (production_cost() - stored_production), nao ao custo
+## total, senao comprar um item quase pronto custaria o mesmo que comprar
+## do zero. 0.0 quando can_rush_buy() e false (nada pra comprar).
+## `hex_grid` OPCIONAL (Roadmap 2.0 Parte 1, B1) — so quando fornecido
+## aplica o desconto de Gemas (ResourceDatabase.rush_buy_cost_multiplier),
+## mesma convencao de production_cost acima.
+func rush_buy_cost(hex_grid: HexGrid = null) -> float:
+	if not can_rush_buy():
+		return 0.0
+	var cost = _production_remaining() * RUSH_BUY_GOLD_PER_PRODUCTION
+	if hex_grid and owner_player:
+		cost *= ResourceDatabase.rush_buy_cost_multiplier(owner_player, hex_grid)
+	return cost
+
+## Completa o item atual instantaneamente gastando ouro do dono da cidade —
+## so seta stored_production pro custo total; a conclusao de fato (spawnar
+## unidade/marcar predio construido/voltar a ficar OCIOSA, ver
+## process_turn()) acontece no PROXIMO turno, reaproveitando a MESMA logica
+## de conclusao de sempre em vez de duplicar aqui (evita ter dois lugares
+## decidindo "o que acontece quando um item termina"). Devolve false sem
+## gastar nada se o rush-buy nao estiver disponivel ou faltar ouro.
+func rush_buy(hex_grid: HexGrid = null) -> bool:
+	if not can_rush_buy():
+		return false
+	var cost := rush_buy_cost(hex_grid)
+	if owner_player == null or owner_player.gold < cost:
+		return false
+	owner_player.gold -= cost
+	stored_production = production_cost()
+	return true
 
 ## Limite de predios da cidade: cresce junto com a populacao (uma vila de
 ## populacao 1 nao tem gente/espaco pra sustentar Celeiro+Oficina+Mercado+
@@ -238,10 +353,10 @@ func _prerequisite_building_present(building_id: String) -> bool:
 ## (TechDatabase.tech_that_unlocks(building.trains_unit)) — pedido do
 ## usuario: "so posso construir esses predios especiais quando pesquisar a
 ## tecnologia, ai aparece disponivel pra construir". Predios de PRODUCAO
-## (Celeiro, Oficina, Mercado, Torre dos Sabios) nao tem tecnologia
-## associada (tech_that_unlocks devolve null E tech_that_unlocks_building
-## tambem), ficam sempre liberados por essa checagem, so sujeitos ao
-## limite de slots. Quartel, Estabulo, Campo de Tiro e Muralhas TEM
+## sem tech (so Torre dos Sabios) nao tem tecnologia associada
+## (tech_that_unlocks devolve null E tech_that_unlocks_building tambem),
+## fica sempre liberada por essa checagem, so sujeita ao limite de slots.
+## Quartel, Estabulo, Campo de Tiro, Muralhas, Celeiro, Oficina e Mercado TEM
 ## tecnologia associada cada um (respectivamente "Quartel"/"Estabulo"/
 ## "Arquearia"/"Muralhas", ver TechDatabase) — Homem de Armas so treina
 ## depois da primeira, Cavaleiro (comum)/Cavaleiro Real/Batedor so depois
@@ -249,9 +364,12 @@ func _prerequisite_building_present(building_id: String) -> bool:
 ## cima — gate SEPARADO, checado por has_unlocked()/is_unit_unlocked() na
 ## HUD, nao aqui, ver comentario de TechData.unlocks_unit), Arqueiro so
 ## depois da terceira, Muralhas so depois da quarta (essa via unlocks_
-## building, nao unlocks_unit — Muralhas nao treina tropa nenhuma). Guarda
-## nao depende de nenhum predio (ver BuildingDatabase.building_that_trains),
-## entao nunca passa por aqui.
+## building, nao unlocks_unit — Muralhas nao treina tropa nenhuma). Celeiro,
+## Oficina e Mercado tambem passam por unlocks_building (techs "celeiro"/
+## "oficina"/"mercado", ver TechDatabase) — deixaram de ser sempre
+## liberados junto com o resto da familia RENDIMENTO (so Torre dos Sabios
+## continua sem tech nenhuma). Guarda nao depende de nenhum predio (ver
+## BuildingDatabase.building_that_trains), entao nunca passa por aqui.
 func _tech_unlocked_for_building(building_id: String) -> bool:
 	var building: BuildingData = BuildingDatabase.get_building(building_id)
 	if building == null:
@@ -271,11 +389,12 @@ func _tech_unlocked_for_building(building_id: String) -> bool:
 ## building_that_trains) — Colonizador e Guarda nao tem predio associado,
 ## entao ficam sempre liberados. Como can_build() ja exige a tecnologia
 ## certa pra CONSTRUIR o predio, uma tropa so fica trainable depois da cadeia
-## completa: pesquisar -> construir -> treinar. So enforced pro JOGADOR
-## (ver HUD._on_produce_pressed); RivalAI.decide_production chama
-## set_production() direto, sem passar por aqui, mesma assimetria ja
-## documentada em BuildingDatabase (IA nao constroi predio nenhum, entao
-## nunca teria como cumprir o gate).
+## completa: pesquisar -> construir -> treinar. Chamado tanto por
+## HUD._on_produce_pressed (jogador) quanto por RivalAI.decide_production
+## (rival, desde o roadmap de gameplay Fase 1 — antes disso a IA rival
+## pulava can_build()/can_train() inteiramente via set_production() direto,
+## nunca construindo predio nenhum mas ainda assim treinando tropa
+## avancada de graca; ver RivalAI.gd).
 ##
 ## Tropa racial exclusiva (UnitDatabase.RACE_UNIQUE_KIND) tem uma segunda
 ## trava, ANTES da checagem de predio: so a raca DONA da tropa pode
@@ -352,12 +471,21 @@ func collect_yields(hex_grid: HexGrid) -> Dictionary:
 	var totals = {"food": 0.0, "production": 0.0, "gold": 0.0, "mana": 0.0}
 	var coords: Array[Vector2i] = [coord]
 	coords.append_array(worked_tiles)
+	# Ver RaceEconomy.apply_yield_bonus — anao precisa saber se algum tile
+	# TRABALHADO e Colina ou tem o recurso Ferro; calculado nesta mesma
+	# volta pra nao precisar de uma segunda varredura so pra isso.
+	var worked_has_hills := false
+	var worked_has_iron := false
 	for c in coords:
 		if hex_grid.is_tile_pillaged(c, TurnManager.turn_number):
 			continue
 		var data: HexTileData = hex_grid.get_tile(c)
 		if data == null:
 			continue
+		if data.terrain_type in RaceEconomy.HILLS_TERRAIN_TYPES:
+			worked_has_hills = true
+		if data.resource == "iron":
+			worked_has_iron = true
 		var y = effective_tile_yield(data)
 		if c == coord:
 			y.production = max(y.production, CITY_CENTER_MIN_PRODUCTION)
@@ -375,16 +503,49 @@ func collect_yields(hex_grid: HexGrid) -> Dictionary:
 	totals.production *= mult
 	totals.gold *= mult
 	totals.mana *= mult
+	# Identidade economica racial (roadmap de gameplay Fase 3) — MESMO
+	# lugar que o multiplicador de dificuldade acima, so um segundo
+	# multiplicador independente por cima.
+	var race: String = owner_player.civ.race if (owner_player and owner_player.civ) else ""
+	RaceEconomy.apply_yield_bonus(totals, race, worked_has_hills, worked_has_iron)
 	return totals
+
+## Unidade hostil (monstro neutro OU unidade de outro jogador em guerra
+## com o dono desta cidade) grudada num tile vizinho AGORA — nao guarda
+## memoria nenhuma alem do contador _consecutive_siege_turns acima
+## (unidade que sai de perto zera o progresso do sitio no mesmo turno).
+func _is_enemy_adjacent(hex_grid: HexGrid) -> bool:
+	for neighbor_coord in hex_grid.get_neighbors(coord):
+		var unit: Unit = hex_grid.get_unit_at(neighbor_coord)
+		if unit == null:
+			continue
+		if unit.owner_player == null:
+			return true # covil/monstro neutro conta como ameaca de sitio tambem
+		if unit.owner_player != owner_player and owner_player.is_at_war_with(unit.owner_player):
+			return true
+	return false
 
 func process_turn(hex_grid: HexGrid) -> Dictionary:
 	var yields = collect_yields(hex_grid)
-	stored_food += yields.food
 	stored_production += yields.production
 
-	var grow_threshold = FOOD_TO_GROW_BASE * population
-	if stored_food >= grow_threshold:
-		stored_food -= grow_threshold
+	# Consumo por populacao (pedido do usuario): cada habitante come
+	# FOOD_CONSUMPTION_PER_POP por turno, descontado da producao de comida
+	# do turno ANTES de somar ao estoque. clamp(..., 0.0, cap) cobre os dois
+	# lados: deficit so trava o estoque em 0 (nunca fica negativo, nunca
+	# reduz populacao), e excedente alem do teto e descartado (nunca
+	# acumula pro proximo ciclo) — o "cheio" do teto e o proprio gatilho de
+	# crescimento logo abaixo.
+	# Identidade racial orc (roadmap Fase 3, ver RaceEconomy.
+	# growth_multiplier_for): teto MENOR enche mais rapido com o MESMO
+	# yield de comida — "cresce mais rapido" sem mexer no yield de comida
+	# em si (esse ja ganhou o bonus generico do humano acima, se for o caso).
+	var race: String = owner_player.civ.race if (owner_player and owner_player.civ) else ""
+	var cap = food_storage_cap() / RaceEconomy.growth_multiplier_for(race)
+	var consumption = population * FOOD_CONSUMPTION_PER_POP
+	stored_food = clamp(stored_food + yields.food - consumption, 0.0, cap)
+	if stored_food >= cap:
+		stored_food -= cap
 		population += 1
 		auto_assign_worked_tiles(hex_grid)
 		_claim_frontier_tile(hex_grid) # territorio (owned_tiles) cresce junto com a populacao
@@ -402,7 +563,7 @@ func process_turn(hex_grid: HexGrid) -> Dictionary:
 	# vez de so confiar em production_cost() devolver 0.0 pra "") pra
 	# nao chamar UnitDatabase.create_unit("") a toa todo turno.
 	if production_item != "":
-		var cost = production_cost()
+		var cost = production_cost(hex_grid)
 		if stored_production >= cost:
 			stored_production -= cost
 			var building: BuildingData = BuildingDatabase.get_building(production_item)
@@ -448,11 +609,18 @@ func process_turn(hex_grid: HexGrid) -> Dictionary:
 	# SEMPRE (proximo ataque, mesmo fraco, a capturaria trivialmente) —
 	# shield regenera mais rapido que hp de proposito, e uma estrutura
 	# defensiva feita pra recuperar entre cercos, nao pra desgastar
-	# permanentemente.
-	if hp < max_hp():
-		hp = min(hp + max_hp() * CITY_HP_REGEN_FRACTION, max_hp())
-	if shield < max_shield():
-		shield = min(shield + max_shield() * CITY_SHIELD_REGEN_FRACTION, max_shield())
+	# permanentemente. EXCETO sob sitio de verdade (ver
+	# SIEGE_TURNS_TO_SUSPEND_REGEN acima) — regenerar livremente com o
+	# inimigo parado na porta ha 2+ turnos tornaria cerco irrelevante.
+	if _is_enemy_adjacent(hex_grid):
+		_consecutive_siege_turns += 1
+	else:
+		_consecutive_siege_turns = 0
+	if _consecutive_siege_turns < SIEGE_TURNS_TO_SUSPEND_REGEN:
+		if hp < max_hp():
+			hp = min(hp + max_hp() * CITY_HP_REGEN_FRACTION, max_hp())
+		if shield < max_shield():
+			shield = min(shield + max_shield() * CITY_SHIELD_REGEN_FRACTION, max_shield())
 	# Tambem cobre o caso de max_hp() ter mudado so por causa do
 	# crescimento de populacao acima (fracao mostrada muda mesmo sem hp
 	# mudar).
@@ -473,6 +641,27 @@ func auto_assign_worked_tiles(hex_grid: HexGrid) -> void:
 			break
 		worked_tiles.append(best_coord)
 
+## Roadmap 2.0 Parte 1 (A1) — bonus fixo pra qualquer tile com recurso
+## estrategico, somado em cima da formula de yield de sempre (ver
+## _tile_claim_score). Sem isso um Nodulo Arcano pontuava 0 (nao rende
+## comida/producao/ouro, so mana) e nunca era mais atraente que um tile
+## barrento qualquer — o bonus da a QUALQUER recurso o mesmo empurrao,
+## independente do yield bruto dele. Tamanho nao ajustado por medicao ainda
+## (ver harness de simulacao, test_simulation_balance.gd — Fase 0 do roadmap
+## ja tem esse padrao de "medir antes de recalibrar").
+const FRONTIER_RESOURCE_SCORE_BONUS := 4.0
+
+## Formula de pontuacao de rendimento compartilhada por _best_unassigned_
+## neighbor (trabalho) e _claim_frontier_tile (posse) abaixo — ver
+## comentario de _claim_frontier_tile pra por que as duas precisam ficar em
+## sincronia.
+func _tile_claim_score(data: HexTileData) -> float:
+	var y = effective_tile_yield(data)
+	var score = y.food * 1.5 + y.production * 1.3 + y.gold
+	if data.resource != "":
+		score += FRONTIER_RESOURCE_SCORE_BONUS
+	return score
+
 func _best_unassigned_neighbor(hex_grid: HexGrid):
 	var best_coord = null
 	var best_score = -INF
@@ -482,8 +671,7 @@ func _best_unassigned_neighbor(hex_grid: HexGrid):
 		var data: HexTileData = hex_grid.get_tile(n)
 		if data == null or not data.can_be_worked():
 			continue
-		var y = effective_tile_yield(data)
-		var score = y.food * 1.5 + y.production * 1.3 + y.gold
+		var score = _tile_claim_score(data)
 		if score > best_score:
 			best_score = score
 			best_coord = n
@@ -521,8 +709,7 @@ func _claim_frontier_tile(hex_grid: HexGrid) -> void:
 		var data: HexTileData = hex_grid.get_tile(n)
 		if data == null:
 			continue
-		var y = effective_tile_yield(data)
-		var score = y.food * 1.5 + y.production * 1.3 + y.gold
+		var score = _tile_claim_score(data)
 		if score > best_score:
 			best_score = score
 			best_coord = n

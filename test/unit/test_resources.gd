@@ -123,3 +123,294 @@ func test_city_collect_yields_applies_resource_bonus():
 
 	hex_grid.queue_free()
 	city.queue_free()
+
+## Roadmap de gameplay Fase 3 — pedido do usuario: "controla N recursos
+## estrategicos do tipo X = tem N fontes disponiveis pro bonus daquele
+## tipo". Conta ladrilho da PROPRIA cidade e ladrilho POSSUIDO (owned_tiles),
+## nao so os trabalhados — recurso possuido mas nao trabalhado ainda conta
+## pra esta contagem (diferente do bonus de yield normal).
+func test_count_controlled_counts_city_and_owned_tiles_with_the_resource():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	var owned := Vector2i(1, 0)
+	var not_owned := Vector2i(2, 0)
+	var center_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	center_tile.resource = "horses"
+	hex_grid.tiles[center] = center_tile
+	var owned_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	owned_tile.resource = "horses"
+	hex_grid.tiles[owned] = owned_tile
+	var not_owned_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	not_owned_tile.resource = "horses"
+	hex_grid.tiles[not_owned] = not_owned_tile
+
+	var player := PlayerData.new(CivilizationData.new())
+	var city := hex_grid.found_city(center, player, "Capital")
+	city.owned_tiles = [owned]
+
+	assert_eq(ResourceDatabase.count_controlled(player, hex_grid, "horses"), 2, "deveria contar o tile da cidade + o possuido, mas nao o nao-possuido")
+
+	hex_grid.queue_free()
+
+func test_count_controlled_is_zero_without_the_resource():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var player := PlayerData.new(CivilizationData.new())
+	hex_grid.found_city(center, player, "Capital")
+
+	assert_eq(ResourceDatabase.count_controlled(player, hex_grid, "horses"), 0)
+
+	hex_grid.queue_free()
+
+func test_cavalry_cost_multiplier_discounts_per_horse_source_up_to_a_cap():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	tile.resource = "horses"
+	hex_grid.tiles[center] = tile
+
+	var player := PlayerData.new(CivilizationData.new())
+	hex_grid.found_city(center, player, "Capital") # 1 fonte (o proprio tile da cidade)
+
+	assert_almost_eq(
+		ResourceDatabase.cavalry_cost_multiplier(player, hex_grid),
+		1.0 - ResourceDatabase.CAVALRY_COST_DISCOUNT_PER_HORSE_SOURCE, 0.01
+	)
+
+	hex_grid.queue_free()
+
+func test_cavalry_cost_multiplier_is_one_without_any_horse_source():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var player := PlayerData.new(CivilizationData.new())
+	hex_grid.found_city(center, player, "Capital")
+
+	assert_almost_eq(ResourceDatabase.cavalry_cost_multiplier(player, hex_grid), 1.0, 0.01)
+
+	hex_grid.queue_free()
+
+## Integracao: City.production_cost(hex_grid) de verdade aplica o
+## desconto — sem hex_grid nenhum (chamador antigo, ex: rush-buy/HUD),
+## continua devolvendo o custo BASE sem desconto (compatibilidade
+## deliberada, ver comentario da funcao em City.gd).
+func test_city_production_cost_applies_cavalry_discount_only_when_hex_grid_is_given():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	tile.resource = "horses"
+	hex_grid.tiles[center] = tile
+
+	var player := PlayerData.new(CivilizationData.new())
+	var city := hex_grid.found_city(center, player, "Capital")
+	city.set_production("cavalry")
+	var base_cost = UnitDatabase.create_unit("cavalry").production_cost
+
+	assert_almost_eq(city.production_cost(), base_cost, 0.01, "sem hex_grid, deveria continuar devolvendo o custo base")
+	assert_lt(city.production_cost(hex_grid), base_cost, "com hex_grid e uma fonte de Cavalos controlada, deveria custar menos")
+
+	hex_grid.queue_free()
+
+## Roadmap 2.0 Parte 1 (B1) — identidade de Ferro, mesmo padrao dos testes
+## de Cavalos acima.
+func test_heavy_unit_cost_multiplier_discounts_per_iron_source_up_to_a_cap():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	tile.resource = "iron"
+	hex_grid.tiles[center] = tile
+
+	var player := PlayerData.new(CivilizationData.new())
+	hex_grid.found_city(center, player, "Capital")
+
+	assert_almost_eq(
+		ResourceDatabase.heavy_unit_cost_multiplier(player, hex_grid),
+		1.0 - ResourceDatabase.IRON_COST_DISCOUNT_PER_SOURCE, 0.01
+	)
+
+	hex_grid.queue_free()
+
+func test_heavy_unit_cost_multiplier_is_one_without_any_iron_source():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var player := PlayerData.new(CivilizationData.new())
+	hex_grid.found_city(center, player, "Capital")
+
+	assert_almost_eq(ResourceDatabase.heavy_unit_cost_multiplier(player, hex_grid), 1.0, 0.01)
+
+	hex_grid.queue_free()
+
+## Regressao explicita da correcao B1: human_knight e Cavalaria (usa
+## Estabulo), NAO deveria receber o desconto de Ferro mesmo sendo "pesado".
+func test_city_production_cost_never_discounts_human_knight_with_iron():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	tile.resource = "iron"
+	hex_grid.tiles[center] = tile
+
+	var player := PlayerData.new(CivilizationData.new())
+	var city := hex_grid.found_city(center, player, "Capital")
+	city.set_production("human_knight")
+	var base_cost = UnitDatabase.create_unit("human_knight").production_cost
+
+	assert_almost_eq(city.production_cost(hex_grid), base_cost, 0.01, "human_knight e Cavalaria, nao deveria ser descontado por Ferro")
+
+	hex_grid.queue_free()
+
+## Roadmap 2.0 Parte 1 (B1) — identidade de Gemas.
+func test_rush_buy_cost_multiplier_discounts_per_gems_source_up_to_a_cap():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.FOREST)
+	tile.resource = "gems"
+	hex_grid.tiles[center] = tile
+
+	var player := PlayerData.new(CivilizationData.new())
+	hex_grid.found_city(center, player, "Capital")
+
+	assert_almost_eq(
+		ResourceDatabase.rush_buy_cost_multiplier(player, hex_grid),
+		1.0 - ResourceDatabase.GEMS_RUSH_BUY_DISCOUNT_PER_SOURCE, 0.01
+	)
+
+	hex_grid.queue_free()
+
+func test_rush_buy_cost_multiplier_is_one_without_any_gems_source():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var player := PlayerData.new(CivilizationData.new())
+	hex_grid.found_city(center, player, "Capital")
+
+	assert_almost_eq(ResourceDatabase.rush_buy_cost_multiplier(player, hex_grid), 1.0, 0.01)
+
+	hex_grid.queue_free()
+
+func test_city_rush_buy_cost_applies_gems_discount_only_when_hex_grid_is_given():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.FOREST)
+	tile.resource = "gems"
+	hex_grid.tiles[center] = tile
+
+	var player := PlayerData.new(CivilizationData.new())
+	var city := hex_grid.found_city(center, player, "Capital")
+	city.buildings["market"] = true
+	city.set_production("warrior")
+	city.stored_production = 1.0 # deixa producao restante > 0 pro rush-buy fazer sentido
+
+	var cost_without_grid := city.rush_buy_cost()
+	var cost_with_grid := city.rush_buy_cost(hex_grid)
+
+	assert_gt(cost_without_grid, 0.0, "precondicao: deveria haver custo de rush-buy pra comparar")
+	assert_lt(cost_with_grid, cost_without_grid, "com hex_grid e uma fonte de Gemas controlada, deveria custar menos")
+
+	hex_grid.queue_free()
+
+## Roadmap 2.0 Parte 1 (B1) — identidade de Nodulo Arcano.
+func test_spell_mana_cost_multiplier_discounts_per_mana_node_source_up_to_a_cap():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	tile.resource = "mana_node"
+	hex_grid.tiles[center] = tile
+
+	var player := PlayerData.new(CivilizationData.new())
+	hex_grid.found_city(center, player, "Capital")
+
+	assert_almost_eq(
+		ResourceDatabase.spell_mana_cost_multiplier(player, hex_grid),
+		1.0 - ResourceDatabase.MANA_COST_DISCOUNT_PER_SOURCE, 0.01
+	)
+
+	hex_grid.queue_free()
+
+func test_spell_mana_cost_multiplier_is_one_without_any_mana_node_source():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var player := PlayerData.new(CivilizationData.new())
+	hex_grid.found_city(center, player, "Capital")
+
+	assert_almost_eq(ResourceDatabase.spell_mana_cost_multiplier(player, hex_grid), 1.0, 0.01)
+
+	hex_grid.queue_free()
+
+## Roadmap 2.0 Parte 1 (B1) — identidade de Seda: capacidade DISCRETA de
+## rota, nao um multiplicador — teste cobre a escada inteira de valores em
+## vez de um par "aplica/nao aplica" como os quatro descontos acima.
+func test_extra_trade_route_capacity_is_a_stepped_value_by_silk_sources():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var ring := HexGrid.NEIGHBOR_DIRS.duplicate()
+	for dir in ring:
+		hex_grid.tiles[dir] = TerrainDatabase.create_tile(HexTileData.TerrainType.FOREST)
+
+	var player := PlayerData.new(CivilizationData.new())
+	var city := hex_grid.found_city(center, player, "Capital")
+	city.owned_tiles = [center]
+
+	assert_eq(ResourceDatabase.extra_trade_route_capacity(city, hex_grid), 0, "0 fontes -> +0")
+
+	city.owned_tiles = [center, ring[0]]
+	hex_grid.get_tile(ring[0]).resource = "silk"
+	assert_eq(ResourceDatabase.extra_trade_route_capacity(city, hex_grid), 0, "1 fonte -> +0")
+
+	city.owned_tiles = [center, ring[0], ring[1]]
+	hex_grid.get_tile(ring[1]).resource = "silk"
+	assert_eq(ResourceDatabase.extra_trade_route_capacity(city, hex_grid), 1, "2 fontes -> +1")
+
+	city.owned_tiles = [center, ring[0], ring[1], ring[2], ring[3]]
+	hex_grid.get_tile(ring[2]).resource = "silk"
+	hex_grid.get_tile(ring[3]).resource = "silk"
+	assert_eq(ResourceDatabase.extra_trade_route_capacity(city, hex_grid), 2, "4 fontes -> +2")
+
+	city.owned_tiles = [center, ring[0], ring[1], ring[2], ring[3], ring[4], ring[5]]
+	hex_grid.get_tile(ring[4]).resource = "silk"
+	hex_grid.get_tile(ring[5]).resource = "silk"
+	assert_eq(ResourceDatabase.extra_trade_route_capacity(city, hex_grid), 2, "6 fontes -> +2 (confirma o teto)")
+
+	hex_grid.queue_free()
+
+func test_city_max_trade_routes_adds_silk_bonus_only_when_hex_grid_is_given():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var ring := HexGrid.NEIGHBOR_DIRS.duplicate()
+	for i in range(2):
+		hex_grid.tiles[ring[i]] = TerrainDatabase.create_tile(HexTileData.TerrainType.FOREST)
+		hex_grid.tiles[ring[i]].resource = "silk"
+
+	var player := PlayerData.new(CivilizationData.new())
+	var city := hex_grid.found_city(center, player, "Capital")
+	city.owned_tiles = [center, ring[0], ring[1]]
+	city.buildings["market"] = true
+
+	assert_eq(city.max_trade_routes(), City.MARKET_ROUTE_CAPACITY_BONUS, "sem hex_grid, deveria continuar devolvendo so o bonus do Mercado")
+	assert_eq(city.max_trade_routes(hex_grid), City.MARKET_ROUTE_CAPACITY_BONUS + 1, "com hex_grid e 2 fontes de Seda, deveria somar +1")
+
+	hex_grid.queue_free()

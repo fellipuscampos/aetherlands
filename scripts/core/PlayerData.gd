@@ -55,6 +55,19 @@ var spell_cooldowns: Dictionary = {} # String -> int
 ## mutado direto fora dali.
 var enemies: Dictionary = {} # PlayerData -> true
 
+## Cansaco de guerra (roadmap de gameplay Fase 2, ver
+## Diplomacy.process_war_weariness_and_upkeep) — cresce enquanto em guerra
+## com alguem, decai em paz total. Alimenta Diplomacy._accepts_peace (quem
+## esta mais cansado aceita paz mais facil) alem da propria contagem crua
+## de unidades que ja existia.
+var war_weariness: float = 0.0
+
+## Rotas de comercio ativas que este jogador participa (roadmap de
+## gameplay Fase 4A, ver TradeManager.gd/TradeRoute.gd) — cada TradeRoute
+## aparece nesta lista PROS DOIS lados envolvidos (mesmo objeto
+## compartilhado por referencia, nao duplicado).
+var trade_routes: Array[TradeRoute] = []
+
 func _init(civ_data: CivilizationData) -> void:
 	civ = civ_data
 

@@ -121,6 +121,11 @@ visible = false
 custom_minimum_size = Vector2(0, 12)
 show_percentage = false
 
+[node name="RushBuyButton" type="Button" parent="TileInfoPanel/TileInfoBox"]
+layout_mode = 2
+visible = false
+text = "Comprar com Ouro"
+
 [node name="ProductionTabs" type="TabContainer" parent="TileInfoPanel/TileInfoBox"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -307,6 +312,12 @@ layout_mode = 2
 toggle_mode = true
 text = "Explorar"
 
+[node name="EmbarkButton" type="Button" parent="UnitPanel/UnitBox/UnitActionsRow"]
+layout_mode = 2
+toggle_mode = true
+visible = false
+text = "Embarcar"
+
 [node name="FoundCityButton" type="Button" parent="UnitPanel/UnitBox"]
 layout_mode = 2
 text = "Fundar Cidade"
@@ -426,11 +437,22 @@ layout_mode = 2
 theme_type_variation = &"MutedLabel"
 text = "◻ Pesquisada"
 
-[node name="TechTreeScroll" type="ScrollContainer" parent="TechPanel/TechBox"]
+[node name="TechTabs" type="TabContainer" parent="TechPanel/TechBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="TechTree" type="Control" parent="TechPanel/TechBox/TechTreeScroll"]
+[node name="MagicTab" type="ScrollContainer" parent="TechPanel/TechBox/TechTabs"]
+layout_mode = 2
+
+[node name="MagicTree" type="Control" parent="TechPanel/TechBox/TechTabs/MagicTab"]
+layout_mode = 2
+script = ExtResource("TechTree_gd")
+
+[node name="DoutrinaTab" type="ScrollContainer" parent="TechPanel/TechBox/TechTabs"]
+visible = false
+layout_mode = 2
+
+[node name="DoutrinaTree" type="Control" parent="TechPanel/TechBox/TechTabs/DoutrinaTab"]
 layout_mode = 2
 script = ExtResource("TechTree_gd")
 

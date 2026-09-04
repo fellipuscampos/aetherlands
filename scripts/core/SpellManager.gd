@@ -27,18 +27,28 @@ static func can_cast(caster: PlayerData, spell_name: String, current_turn: int) 
 	var available_at: int = caster.spell_cooldowns.get(spell_name, 0)
 	return current_turn >= available_at
 
+## Roadmap 2.0 Parte 1 (B1) — identidade de Nodulo Arcano: custo de mana
+## efetivo, descontado por ResourceDatabase.spell_mana_cost_multiplier
+## quando `hex_grid` e fornecido (mesma convencao opcional de City.
+## production_cost). 0.0 pra feitico sem SpellData cadastrado.
+static func effective_mana_cost(spell: SpellData, caster: PlayerData, hex_grid: HexGrid = null) -> float:
+	var mult := 1.0
+	if hex_grid:
+		mult = ResourceDatabase.spell_mana_cost_multiplier(caster, hex_grid)
+	return spell.mana_cost * mult
+
 ## false pra feitico sem SpellData cadastrado (Ruina Ignea/Metamorfose de
 ## Gaia, ver SpellDatabase) — nunca "castable" de verdade, mana ou nao.
-static func has_enough_mana(caster: PlayerData, spell_name: String) -> bool:
+static func has_enough_mana(caster: PlayerData, spell_name: String, hex_grid: HexGrid = null) -> bool:
 	var spell: SpellData = SpellDatabase.get_spell(spell_name)
 	if spell == null:
 		return false
-	return caster.mana >= spell.mana_cost
+	return caster.mana >= effective_mana_cost(spell, caster, hex_grid)
 
 ## can_cast() (tech+recarga) E has_enough_mana() (saldo) — usado pela HUD
 ## (Grimorio) pra decidir se "Conjurar" fica clicavel.
-static func is_castable(caster: PlayerData, spell_name: String, current_turn: int) -> bool:
-	return can_cast(caster, spell_name, current_turn) and has_enough_mana(caster, spell_name)
+static func is_castable(caster: PlayerData, spell_name: String, current_turn: int, hex_grid: HexGrid = null) -> bool:
+	return can_cast(caster, spell_name, current_turn) and has_enough_mana(caster, spell_name, hex_grid)
 
 ## Turno em que o feitico volta a ficar disponivel — so informativo pra UI
 ## (0 ou <= turno atual significa "disponivel agora").
@@ -59,17 +69,57 @@ static func cast(caster: PlayerData, spell_name: String, target: Unit, hex_grid:
 		return "%s ainda não tem efeito implementado." % spell_name
 	if not can_cast(caster, spell_name, current_turn):
 		return "%s ainda está em recarga." % spell_name
-	if caster.mana < spell.mana_cost:
-		return "Mana insuficiente para conjurar %s (precisa de %d, tem %d)." % [spell_name, spell.mana_cost, int(caster.mana)]
+	var mana_cost := effective_mana_cost(spell, caster, hex_grid)
+	if caster.mana < mana_cost:
+		return "Mana insuficiente para conjurar %s (precisa de %d, tem %d)." % [spell_name, int(mana_cost), int(caster.mana)]
 
 	caster.spell_cooldowns[spell_name] = current_turn + spell.cooldown_turns
-	caster.mana -= spell.mana_cost
+	caster.mana -= mana_cost
 
+	if spell.transforms_terrain:
+		return _apply_terrain_transform(spell, target, hex_grid)
 	if spell.damage > 0.0:
+		if spell.damage_area_radius > 0:
+			return _apply_damage_area(spell, target, hex_grid)
 		return _apply_damage(spell, target, hex_grid)
 	if spell.heal_fraction > 0.0:
 		return _apply_heal(spell, target)
 	return "%s conjurado." % spell_name
+
+## Roadmap de gameplay Fase 5 — "Ruína Ígnea": dano no alvo principal
+## (mesma regra de mira de sempre) MAIS em qualquer unidade num tile
+## vizinho dele (SpellData.damage_area_radius), aliada ou nao —
+## cataclismo indiscriminado, reaproveita _apply_damage por unidade em
+## vez de uma formula nova. Guarda o coord do alvo principal ANTES de
+## danifica-lo (pode morrer e sumir do grid ali mesmo, ver _apply_damage)
+## pra continuar sabendo onde procurar vizinhos.
+static func _apply_damage_area(spell: SpellData, primary_target: Unit, hex_grid: HexGrid) -> String:
+	var origin_coord := primary_target.coord
+	var messages: Array = [_apply_damage(spell, primary_target, hex_grid)]
+	for neighbor_coord in hex_grid.get_neighbors(origin_coord):
+		var unit: Unit = hex_grid.get_unit_at(neighbor_coord)
+		if unit:
+			messages.append(_apply_damage(spell, unit, hex_grid))
+	return " ".join(messages)
+
+## Roadmap de gameplay Fase 5 — "Metamorfose de Gaia": transforma o
+## TERRENO do tile onde `target` esta em pe (a unidade so marca QUAL
+## tile, nao e afetada ela mesma) usando TechData.terrain_transform
+## (from/to) da tech que concede este feitico. Sem efeito (mensagem de
+## aviso — o mana/cooldown ja foram descontados em cast() de qualquer
+## forma, mesmo padrao de "conjuracao valida mas alvo ruim" que o resto
+## do jogo usa) se o terreno atual do tile nao estiver na lista `from`.
+static func _apply_terrain_transform(spell: SpellData, target: Unit, hex_grid: HexGrid) -> String:
+	var tech: TechData = TechDatabase.tech_that_unlocks_spell(spell.name)
+	if tech == null or tech.terrain_transform.is_empty():
+		return "%s não tem transformação de terreno configurada." % spell.name
+	var coord := target.coord
+	var current: HexTileData = hex_grid.get_tile(coord)
+	if current == null or not (current.terrain_type in tech.terrain_transform.from):
+		return "%s não tem efeito nesse terreno." % spell.name
+	var new_type: int = tech.terrain_transform.to
+	hex_grid.transform_tile_terrain(coord, new_type)
+	return "%s transformou o terreno em %s." % [spell.name, TerrainDatabase.create_tile(new_type).display_name]
 
 static func _apply_damage(spell: SpellData, target: Unit, hex_grid: HexGrid) -> String:
 	var target_name = target.unit_data.unit_name

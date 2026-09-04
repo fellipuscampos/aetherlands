@@ -5,28 +5,52 @@ extends RefCounted
 ## arvore Generica/Historica... e se torne um sistema focado em MAGIA,
 ## FANTASIA E MANIPULACAO DO MUNDO" — substitui a arvore anterior de
 ## Agricultura/Mineracao/Irrigacao inteira), com um pequeno ramo MUNDANO
-## (doutrina militar, sem magia) enxertado nela. 16 tecnologias em 4 tiers:
+## (escola "Doutrina", sem magia) enxertado nela. 20 tecnologias em 4 tiers.
+##
+## 21a tecnologia (Roadmap 2.0 Parte 1, C1): "Navegação", standalone (nem
+## militar nem economica, mesmo padrao de Muralhas abaixo) — libera o modo
+## "Embarcar" (ver Unit.embarked), unica forma de alcancar os continentes
+## Vulcanico/de Cristal.
+##
+## Doutrina em si tem DUAS familias/cadeias INDEPENDENTES por proposito —
+## pedido do usuario ao reorganizar a arvore: "ajuste as familias na
+## arvore[,] a maioria da dispers[ã]o precisa[m] ter uma logica de
+## familia, o que é construido apos o outro... não faz sentido a parte de
+## unidades militares resultar em poder fazer o mercado, mas faz sentido
+## uma parte de construções e assim vai": a MILITAR (Quartel -> Estabulo/
+## Arquearia -> Batedor Montado) e a ECONOMICA (Celeiro -> Oficina ->
+## Mercado), mais Muralhas sozinha (nem uma coisa nem outra, ver comentario
+## dela mais abaixo) — nenhuma aresta liga as duas cadeias nem Muralhas a
+## elas (ver TechTree._compute_components, que ja separa por componente
+## conexo automaticamente).
 ##
 ## TIER 0 (bases elementares, sem pre-requisito): Canalizacao da Trama
 ## (arcanismo puro, raiz de Invocacao de Espiritos), Alquimia Botanica
 ## (vegetacao encantada), Transmutacao de Rochas (forja elemental) — as
 ## duas ultimas sao a raiz das duas "escolas" de bioma (floresta/gelo vs.
-## colina/deserto) que se ramificam no Tier 1 — e Quartel (raiz do Guarda e
-## do Homem de Armas, e TAMBEM raiz do ramo mundano inteiro, ver Tier 1).
+## colina/deserto) que se ramificam no Tier 1 —, Quartel (raiz da cadeia
+## militar inteira, ver Tier 1/2), Celeiro (raiz da cadeia economica, ver
+## Tier 1/2) e Muralhas (isolada, ver comentario dela).
 ## TIER 1 (especializacoes): Invocacao de Espiritos (Mago Arcano), Pacto
 ## Florestal (Ent), Forja Runica (Golem de Pedra), Geomancia (bonus de
 ## deserto/savana), Estábulo (raiz do Cavaleiro comum e do Cavaleiro Real,
-## prerequisito "quartel") e Arquearia (raiz do Arqueiro, prerequisito
-## "quartel" TAMBEM — irmã de Estábulo, nao filha dela). Diagrama exato
-## pedido pelo usuario pro ramo mundano, apos eu ter errado a primeira
-## versao (Estábulo/Arquearia tinham ido pra Tier 0 sem pre-requisito
-## nenhum): "quartel -> estabulo -> batedor montado, \/ arquearia... o
-## quartel libera a pesquisa de estabulo e arquearia, mas pesquisando o
-## estabulo voce libera a pesquisa de batedor".
+## prerequisito "quartel"), Arquearia (raiz do Arqueiro, prerequisito
+## "quartel" TAMBEM — irmã de Estábulo, nao filha dela) e Oficina (segundo
+## elo da cadeia economica, prerequisito "celeiro" — uma vila so
+## especializa mao de obra em ofício depois que a fome deixa de ser
+## problema diario). Diagrama exato pedido pelo usuario pro ramo militar,
+## apos eu ter errado a primeira versao (Estábulo/Arquearia tinham ido pra
+## Tier 0 sem pre-requisito nenhum): "quartel -> estabulo -> batedor
+## montado, \/ arquearia... o quartel libera a pesquisa de estabulo e
+## arquearia, mas pesquisando o estabulo voce libera a pesquisa de
+## batedor".
 ## TIER 2 (avancadas): Lordes dos Ventos (Grifo), Necromancia Pratica
-## (Convocador de Sombras), Constructos de Guerra (Catapulta Cadenciada) e
+## (Convocador de Sombras), Constructos de Guerra (Catapulta Cadenciada),
 ## Batedor Montado (Batedor, prerequisito "estabulo" — dois saltos de
-## Quartel, mesma profundidade das outras techs de Tier 2 acima).
+## Quartel, mesma profundidade das outras techs de Tier 2 acima) e Mercado
+## (terceiro/ultimo elo da cadeia economica, prerequisito "oficina" — o
+## excedente da oficina especializada finalmente tem pra onde escoar,
+## liberando tambem o rush-buy de producao com ouro, ver City.rush_buy()).
 ## TIER 3 (rituais supremos): Cataclismo Elemental e Transcendencia
 ## Florestal — puramente rituais/feiticos por enquanto (ver TechData.
 ## unlocks_spell/terrain_transform), sem unidade nem bonus de bioma novo.
@@ -96,6 +120,67 @@ static func _build_all() -> Dictionary:
 	# feito". BuildingDatabase.barracks.trains_unit tambem mudou pra
 	# "men_at_arms" junto, os dois precisam bater (ver comentario de
 	# _tech_unlocked_for_building em City.gd).
+	# Tier 0, SEM prerequisito — irma solta de Quartel, mesma familia
+	# Raiz da "cadeia economica" da Doutrina (Tier 0, SEM prerequisito) —
+	# pedido do usuario: "ajuste as familias na arvore[,] a maioria da
+	# dispers[ã]o precisa[m] ter uma logica de familia, o que é construido
+	# apos o outro... não faz sentido a parte de unidades militares
+	# resultar em poder fazer o mercado, mas faz sentido uma parte de
+	# construções". Celeiro/Oficina/Mercado formam essa cadeia (Celeiro ->
+	# Oficina -> Mercado, ver prerequisites de cada uma abaixo) SEPARADA da
+	# cadeia militar (Quartel -> Estabulo/Arquearia -> Batedor Montado) —
+	# as duas ficam em componentes DIFERENTES da arvore (nenhuma aresta
+	# ligando uma a outra, ver TechTree._compute_components), exatamente
+	# como o usuario pediu. Trava a CONSTRUCAO do Celeiro via unlocks_
+	# building (mesmo mecanismo de Muralhas, ver TechDatabase.tech_that_
+	# unlocks_building/City._tech_unlocked_for_building), nao unlocks_unit
+	# (Celeiro nao treina tropa nenhuma).
+	var celeiro_tech := TechData.new()
+	celeiro_tech.id = "celeiro"
+	celeiro_tech.display_name = "Celeiro"
+	celeiro_tech.cost = 15.0
+	celeiro_tech.unlocks_building = "granary"
+	celeiro_tech.school = "Doutrina"
+	celeiro_tech.description = "Um grão guardado é meio grão poupado: mestres-celeireiros aprendem a selar silos contra umidade, ratos e o inverno mais longo — o alicerce que permite a uma vila armazenar excedente de verdade em vez de vê-lo apodrecer nos campos."
+	techs[celeiro_tech.id] = celeiro_tech
+
+	# Tier 1 da cadeia economica, prerequisito ["celeiro"] — logica de
+	# familia pedida pelo usuario: uma vila so consegue liberar mao de obra
+	# pra especializar em ofícios depois que a fome deixa de ser um
+	# problema diario (Celeiro construido). Trava a CONSTRUCAO da Oficina
+	# via unlocks_building (mesmo mecanismo de Muralhas/Celeiro), nao
+	# unlocks_unit (Oficina nao treina tropa nenhuma). Mecanica em si
+	# (bonus_production da Oficina, ver BuildingDatabase.gd) continua a
+	# mesma por enquanto — o usuario pediu pra manter simples nessa rodada
+	# ("vamos fazer assim, depois deixamos mais complexo").
+	var oficina_tech := TechData.new()
+	oficina_tech.id = "oficina"
+	oficina_tech.display_name = "Oficina"
+	oficina_tech.cost = 20.0
+	oficina_tech.prerequisites = ["celeiro"]
+	oficina_tech.unlocks_building = "workshop"
+	oficina_tech.school = "Doutrina"
+	oficina_tech.description = "Com os celeiros cheios e a fome afastada, sobra tempo pra especializar: um mestre-artesão organiza bancadas, foles e ferramentas num único telhado — o mesmo ofício que antes se espalhava pelos quintais da vila agora rende mais, com menos desperdício de material e esforço."
+	techs[oficina_tech.id] = oficina_tech
+
+	# Tier 2 da cadeia economica, prerequisito ["oficina"] — fecha a familia
+	# Celeiro -> Oficina -> Mercado (comida segura -> ofício especializado
+	# -> excedente pra trocar). Libera CONSTRUIR o Mercado (unlocks_
+	# building, mesmo mecanismo das outras), que por sua vez libera
+	# COMPRAR o resto da producao do item atual com ouro (rush-buy, ver
+	# City.can_rush_buy()/rush_buy_cost()/rush_buy()) — pedido do usuario:
+	# "o mercado pode servir pra [dar um uso real pro ouro]"/"é uma boa,
+	# faça isso".
+	var mercado_tech := TechData.new()
+	mercado_tech.id = "mercado"
+	mercado_tech.display_name = "Mercado"
+	mercado_tech.cost = 25.0
+	mercado_tech.prerequisites = ["oficina"]
+	mercado_tech.unlocks_building = "market"
+	mercado_tech.school = "Doutrina"
+	mercado_tech.description = "Com as oficinas produzindo mais do que a vila consome sozinha, um conselho de mercadores padroniza pesos, câmbio e cadernos de crédito — o excedente das bancadas finalmente encontra pra onde escoar, e ouro sonante passa a apressar obras, não só pagar por elas depois de prontas."
+	techs[mercado_tech.id] = mercado_tech
+
 	var quartel := TechData.new()
 	quartel.id = "quartel"
 	quartel.display_name = "Quartel"
@@ -176,7 +261,13 @@ static func _build_all() -> Dictionary:
 
 	# Tier 0, SEM prerequisito — irma solta de Quartel, nao filha dele
 	# (fortificar uma cidade nao depende de disciplina militar nenhuma, so
-	# de mao de obra e pedra). Pedido do usuario: "eu acho que a muralha
+	# de mao de obra e pedra), e TAMBEM fora da cadeia economica Celeiro->
+	# Oficina->Mercado por proposito (mesmo motivo: mao de obra e pedra, nao
+	# comida armazenada nem ofício especializado) — pedido do usuario ao
+	# reorganizar a arvore em familias: "não precisa interligar tudo se não
+	# fizer sentido". Fica como seu proprio componente isolado (ver
+	# TechTree._compute_components), nem militar nem economico. Pedido do
+	# usuario: "eu acho que a muralha
 	# [predio] nao faz tanto sentido, vamos remover ela, e adicionar como
 	# pesquisa... essa pesquisa libera a construção da muralha, mas essa
 	# muralha no caso simplesmente adiciona esteticamente uma muralha ao
@@ -197,6 +288,19 @@ static func _build_all() -> Dictionary:
 	muralhas.school = "Doutrina"
 	muralhas.description = "Um mestre-pedreiro aprende a erguer um anel de pedra alto o bastante pra deter um aríete e reto o bastante pra não desabar sob o próprio peso — o alicerce de qualquer cidade que pretenda sobreviver a um cerco de verdade."
 	techs[muralhas.id] = muralhas
+
+	# Roadmap 2.0 Parte 1 (C1) — standalone, sem pre-requisito, mesmo padrao
+	# de Muralhas acima (nem militar nem economica, componente conexo
+	# proprio). Libera o modo "Embarcar" (ver Unit.embarked/SelectionManager.
+	# toggle_embark_selected) — unica forma de uma unidade terrestre
+	# atravessar agua e alcancar os continentes Vulcanico/de Cristal.
+	var navegacao := TechData.new()
+	navegacao.id = "navegacao"
+	navegacao.display_name = "Navegação"
+	navegacao.cost = 20.0
+	navegacao.school = "Doutrina"
+	navegacao.description = "Cascos calafetados e a leitura das correntes permitem que um exército inteiro se arrisque mar adentro — não como marujos de guerra, só gente disposta a confiar a própria vida a uma prancha de madeira até avistar terra de novo."
+	techs[navegacao.id] = navegacao
 
 	var invocacao_espiritos := TechData.new()
 	invocacao_espiritos.id = "invocacao_espiritos"
@@ -340,6 +444,12 @@ static func available_techs(researched: Dictionary) -> Array:
 ## atualmente temos pra treinar arqueiros"). Resto do kind sem tecnologia
 ## associada fica liberado por padrao (fail-open — nao trava um tipo de
 ## unidade novo que ainda nao ganhou tech propria).
+## Roadmap 2.0 Parte 1 (C1) — unica checagem que o modo "Embarcar" precisa
+## (ver SelectionManager.toggle_embark_selected).
+const NAVEGACAO_TECH_ID := "navegacao"
+static func is_navigation_researched(researched: Dictionary) -> bool:
+	return researched.has(NAVEGACAO_TECH_ID)
+
 static func is_unit_unlocked(kind: String, researched: Dictionary) -> bool:
 	if kind == "settler":
 		return true
@@ -380,6 +490,18 @@ static func tech_that_unlocks_building(building_id: String) -> TechData:
 		return null
 	for tech in all_techs():
 		if tech.unlocks_building == building_id:
+			return tech
+	return null
+
+## Mesma ideia de tech_that_unlocks/tech_that_unlocks_building, pro NOME
+## de feitico (TechData.unlocks_spell) — usado por SpellManager pra achar
+## de volta o TechData.terrain_transform de uma tech so tendo o nome do
+## feitico em maos (ver _apply_terrain_transform, roadmap Fase 5).
+static func tech_that_unlocks_spell(spell_name: String) -> TechData:
+	if spell_name == "":
+		return null
+	for tech in all_techs():
+		if tech.unlocks_spell == spell_name:
 			return tech
 	return null
 

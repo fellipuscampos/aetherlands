@@ -1,0 +1,448 @@
+extends GutTest
+
+## Fase 0 do roadmap de gameplay (ver plano aprovado em .claude/plans) —
+## harness de simulacao IA-vs-IA. Reaproveita GameManager._on_turn_changed
+## de verdade (nao uma reimplementacao paralela do loop de turno) pra
+## qualquer mudanca futura em RivalAI/City/CombatResolver/Diplomacy ser
+## automaticamente exercitada aqui, sem precisar manter duas copias do
+## mesmo fluxo sincronizadas. So 2 lacunas nao existem no GameManager real
+## (porque la o "jogador humano" decide por UI, nunca por IA) e sao
+## cobertas manualmente logo abaixo: producao/pesquisa do `primary` (o
+## "assento humano" desta simulacao, mas 100% IA aqui) e o combate dele
+## contra rivais com quem esteja em guerra.
+##
+## Este arquivo fica em test/integration/, DE PROPOSITO fora de
+## test/unit/ (ver .gutconfig.json — so escaneia test/unit), porque e mais
+## pesado que a suite rapida (gera mapa + roda N turnos x M seeds) e nao
+## deve rodar em todo `-gdir=res://test/unit -gexit`. Rodar ISOLADO (sem
+## carregar .gutconfig.json, que listaria test/unit por cima) com:
+##   godot --headless -s addons/gut/gut_cmdln.gd -gconfig=
+##     -gtest=res://test/integration/test_simulation_balance.gd -gexit
+## (sem -gconfig= aqui, -gtest SOMA ao .gutconfig.json em vez de
+## substituir — foi assim que a 1a rodada desta suite acabou executando os
+## 590 testes de test/unit tambem, sem nenhum mal mas bem mais lento).
+##
+## ACHADO da Fase 4A, decisao ja tomada com o usuario (nao mexer): rotas
+## de comercio (rotas_criadas nas metricas abaixo) ficam raras/zeradas na
+## pratica numa partida com conflito ativo. Investigado a fundo: NAO e bug
+## — Mercado (a cadeia celeiro->oficina->mercado, 3 predios) sai
+## normalmente numa civ isolada sem ameaca (testado ate turno 300).
+## O que acontece aqui e a PONTUACAO de producao da Fase 1
+## (RivalAI.SCORE_WEIGHT_MILITARY_DEFICIT=2.0 > SCORE_WEIGHT_ECONOMY_GAP=
+## 1.5 fixo) fazendo exercito ganhar quase sempre que ha ameaca visivel —
+## e com 4 civs e guerra acontecendo, ha ameaca boa parte do tempo. Decisao
+## do usuario: manter os pesos da Fase 1 como estao (ja aprovados/
+## testados), aceitar comercio como algo raro/oportunista em partida com
+## conflito, mais comum em trechos de paz — revisitar SO se isso incomodar
+## na pratica.
+##
+## Linha de base ANTES de qualquer fix de gameplay (Fase 1 em diante): hoje
+## a IA rival nao constroi predio nenhum e nunca inicia guerra sozinha (ver
+## RivalAI.decide_production/_choose_target) — os numeros que este harness
+## imprime agora SAO o "antes" pra comparar com cada fase seguinte, nao uma
+## regressao a corrigir aqui. Por pedido explicito do usuario: nesta fase
+## sao so METRICAS OBSERVADAS (impressas no stdout), nao asserts de
+## comportamento/balanceamento que quebrem a suite — travar em "deve haver
+## guerra" ou "ninguem pode dominar todas as seeds" agora faria a suite
+## nascer vermelha so por descrever o estado atual. O UNICO assert daqui e
+## sobre CORRECAO (yield/ouro negativo ou NaN), nunca sobre balanceamento —
+## fases seguintes acrescentam asserts de comportamento quando prometerem
+## aquele comportamento especificamente (ver plano, secao "Decisoes ja
+## validadas").
+
+const TURN_COUNT := 200
+const SEEDS := [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010,
+	1011, 1012, 1013, 1014, 1015]
+const STAGNATION_WINDOW := 35 # M do plano: turnos sem guerra/territorio mudando pra considerar estagnado
+const MAP_SIZE := 41 # bem menor que TitleScreen.MAP_SIZES.large (320x84) de proposito — harness precisa rodar 15 seeds x 200 turnos em tempo razoavel, nao precisa dos continentes especiais (Vulcanico/Cristal) pra medir IA/economia/guerra
+const RIVAL_COUNT := 3 # + o "primary" = 4 civs, mesmo teto pratico de GameManager.rival_count hoje
+const RIVAL_RACES := ["elf", "dwarf", "orc"]
+
+var _original_hex_grid: HexGrid
+var _original_human_player: PlayerData
+var _original_rival_players: Array[PlayerData]
+var _original_players: Array[PlayerData]
+var _original_state
+var _original_stagger: bool
+var _original_debug_mode: bool
+var _original_turn_number: int
+var _original_player_count: int
+
+func before_each():
+	_original_hex_grid = GameManager.hex_grid
+	_original_human_player = GameManager.human_player
+	_original_rival_players = GameManager.rival_players
+	_original_players = GameManager.players
+	_original_state = GameManager.state
+	_original_stagger = GameManager.stagger_ai_turns
+	_original_debug_mode = GameManager.debug_mode
+	_original_turn_number = TurnManager.turn_number
+	_original_player_count = TurnManager.player_count
+
+func after_each():
+	GameManager.hex_grid = _original_hex_grid
+	GameManager.human_player = _original_human_player
+	GameManager.rival_players = _original_rival_players
+	GameManager.players = _original_players
+	GameManager.state = _original_state
+	GameManager.stagger_ai_turns = _original_stagger
+	GameManager.debug_mode = _original_debug_mode
+	TurnManager.turn_number = _original_turn_number
+	TurnManager.player_count = _original_player_count
+
+func test_simulate_baseline_multi_seed_metrics():
+	var all_results: Array = []
+	for seed_value in SEEDS:
+		var result := _run_seed(seed_value)
+		all_results.append(result)
+		print("[sim seed=%d] fim=T%d 1a_guerra=%s guerras=%d dur_media_guerra=%.1f estagnado=%s eliminados=%s predios=%s cidades_finais=%s ouro_medio=%s rotas_criadas=%d rotas_ativas_fim=%d rotas_canceladas=%d fronteira_com_recurso=%s" % [
+			seed_value,
+			result.ended_turn if result.ended_turn != -1 else TURN_COUNT,
+			("T%d" % result.first_war_turn) if result.first_war_turn != -1 else "nenhuma",
+			result.war_count,
+			_avg(result.war_durations),
+			result.stagnant,
+			result.eliminated,
+			result.buildings_built,
+			result.final_cities,
+			result.avg_gold,
+			result.routes_created,
+			result.routes_active_at_end,
+			result.routes_cancelled,
+			result.frontier_claim_resource_pct,
+		])
+
+	var seeds_with_war := 0
+	var stagnant_seeds := 0
+	var seeds_with_elimination := 0
+	for r in all_results:
+		if r.first_war_turn != -1:
+			seeds_with_war += 1
+		if r.stagnant:
+			stagnant_seeds += 1
+		if not r.eliminated.is_empty():
+			seeds_with_elimination += 1
+	print("[sim agregado] seeds=%d com_guerra=%d estagnados=%d com_eliminacao=%d" % [
+		all_results.size(), seeds_with_war, stagnant_seeds, seeds_with_elimination,
+	])
+
+	# Unico assert desta fase: correcao (numero invalido), nunca balanceamento
+	# ou comportamento esperado — ver comentario de topo do arquivo.
+	for r in all_results:
+		assert_false(r.nan_or_negative_yield, "yield/ouro negativo ou NaN detectado numa das seeds — bug de correcao, nao questao de balanceamento")
+
+## --- Montagem de uma partida simulada ---------------------------------
+
+func _run_seed(seed_value: int) -> Dictionary:
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.generate_map(MAP_SIZE, MAP_SIZE, seed_value)
+
+	var primary := _make_player("Principal", "human")
+	var rivals: Array[PlayerData] = []
+	for i in range(RIVAL_COUNT):
+		rivals.append(_make_player("Rival %d" % (i + 1), RIVAL_RACES[i % RIVAL_RACES.size()]))
+
+	var claimed: Array[Vector2i] = []
+	_spawn_capital(grid, primary, Vector2i(0, 0), claimed)
+	var half := float(MAP_SIZE) / 2.0
+	for i in range(rivals.size()):
+		var angle := TAU * float(i) / float(rivals.size())
+		var origin := Vector2i(int(round(cos(angle) * half * 0.6)), int(round(sin(angle) * half * 0.6)))
+		_spawn_capital(grid, rivals[i], origin, claimed)
+
+	GameManager.hex_grid = grid
+	GameManager.human_player = primary
+	GameManager.rival_players = rivals
+	GameManager.players = ([primary] as Array[PlayerData]) + rivals
+	GameManager.state = GameManager.GameState.PLAYING
+	GameManager.stagger_ai_turns = false
+	GameManager.debug_mode = false
+	TurnManager.turn_number = 1
+	TurnManager.player_count = 1
+
+	var m := _new_metrics()
+	for turn_index in range(TURN_COUNT):
+		var war_before := _war_pairs(primary, rivals)
+		var cities_before := _city_counts(primary, rivals)
+
+		# GameManager._on_turn_changed so decide producao/pesquisa/ataque pra
+		# rival_players (o jogador humano decide isso via UI de verdade) —
+		# aqui nao ha UI nenhuma, entao o "primary" tambem precisa de uma
+		# decisao de producao/pesquisa pra nao ficar uma cidade eternamente
+		# parada (o que enviesaria toda metrica de economia/guerra). Isto e
+		# a UNICA duplicacao de logica do harness — o resto (regen/cura,
+		# pesquisa, producao de cidade, turno de cada rival contra o
+		# primary, covis de monstro, fog, check_game_over) vem 100% de
+		# _on_turn_changed real, sem reimplementar nada.
+		# So primary precisa de chamada manual aqui — cada rival ja recebe
+		# decide_production/decide_research/decide_war de dentro do proprio
+		# GameManager._on_turn_changed (mesmo loop `for rival in
+		# rival_players` do jogo de verdade, ver GameManager.gd). Chamar de
+		# novo aqui pros rivais duplicaria a rolagem de dado do jitter de
+		# guerra (WAR_DECLARE_CHANCE_WHEN_READY seria testado 2x por turno
+		# por engano).
+		RivalAI.decide_production(primary, grid, rivals[0])
+		RivalAI.decide_research(primary)
+		RivalAI.decide_war(primary, grid, rivals[0])
+		RivalAI.decide_trade(primary, grid, rivals[0])
+
+		GameManager._on_turn_changed(TurnManager.turn_number, 0)
+
+		# Turno do "primary": chamado SEMPRE, nao so quando em guerra —
+		# RivalAI.act_for_unit ja separa isso sozinho internamente
+		# (colonizador sempre tenta assentar/vagar, so o braco de ATAQUE
+		# passa por _choose_target, que retorna null e vira no-op quando em
+		# paz). Um gate externo por is_at_war_with aqui foi tentado antes e
+		# acabou travando TAMBEM o assentamento (bug do harness, nao do
+		# jogo) — Principal nunca passava de 1 cidade em nenhuma seed.
+		# rivals[0] serve so de referencia obrigatoria pro parametro
+		# `opponent` (usada por _scout_enemy_cities/choose_target); com
+		# RIVAL_COUNT rivais e a API de hoje suportando 1 oponente por
+		# chamada, Principal so ataca/prioriza defesa CONTRA rivals[0] —
+		# CONFIRMADO como um caso real a partir da Fase 2 (metricas mostram
+		# Principal eliminado em boa parte das seeds, NUNCA um rival).
+		#
+		# LEITURA IMPORTANTE pra quem for usar os numeros deste harness:
+		# isso e um ponto cego do HARNESS, nao evidencia de que o jogo de
+		# verdade e injusto com o humano. No jogo real, RivalAI.take_turn
+		# so precisa de 1 oponente porque so existe UMA relacao por rival
+		# (cada rival so luta contra o humano, nunca entre si — ver
+		# Diplomacy.gd) e o HUMANO DE VERDADE joga ativamente contra
+		# QUALQUER rival visivel via SelectionManager, sem essa limitacao.
+		# Aqui, "Principal" e 100% IA e so decide_production/decide_war/
+		# take_turn "enxergam" rivals[0] como ameaca — se rivals[1] ou
+		# rivals[2] declararem guerra e atacarem, Principal ainda REVIDA
+		# (contra-ataque e automatico dentro de CombatResolver.resolve,
+		# nao depende do turno do defensor) mas NUNCA prioriza Muralha/
+		# exercito em resposta a essa ameaca especifica nem parte pro
+		# ataque contra ela. Conclusao pratica: taxa de eliminacao do
+		# "Principal" especificamente NAO e uma metrica confiavel de
+		# balanceamento enquanto RivalAI continuar sendo 1-oponente-por-
+		# chamada; as metricas do lado RIVAL (predios construidos, guerras
+		# iniciadas, cidades ganhas) continuam validas, ja que cada rival
+		# aqui usa exatamente a mesma chamada 1-pra-1 que o jogo real usa.
+		if not rivals.is_empty():
+			RivalAI.take_turn(primary, grid, rivals[0])
+
+		_record_turn(m, grid, turn_index, primary, rivals, war_before, cities_before)
+
+		if GameManager.state == GameManager.GameState.GAME_OVER:
+			m.ended_turn = turn_index + 1
+			break
+		TurnManager.turn_number += 1
+
+	_finalize_metrics(m, primary, rivals)
+	grid.queue_free()
+	return m
+
+func _make_player(civ_name: String, race: String) -> PlayerData:
+	var civ := CivilizationData.new()
+	civ.civ_name = civ_name
+	civ.leader_name = civ_name
+	civ.race = race
+	return PlayerData.new(civ)
+
+func _spawn_capital(grid: HexGrid, player: PlayerData, origin: Vector2i, claimed: Array[Vector2i]) -> void:
+	var start := WorldSetup.find_start_tile(grid, origin, claimed)
+	claimed.append(start)
+	grid.found_city(start, player, player.civ.civ_name + " - Capital")
+	var guard := WorldSetup.find_spawn_tile(grid, start)
+	grid.spawn_unit(guard, UnitDatabase.create_unit("warrior"), player)
+
+## --- Metricas -----------------------------------------------------------
+
+func _war_pairs(primary: PlayerData, rivals: Array[PlayerData]) -> Dictionary:
+	var pairs := {}
+	for rival in rivals:
+		pairs[rival] = primary.is_at_war_with(rival)
+	return pairs
+
+func _city_counts(primary: PlayerData, rivals: Array[PlayerData]) -> Dictionary:
+	var counts := {}
+	counts[primary] = primary.cities.size()
+	for rival in rivals:
+		counts[rival] = rival.cities.size()
+	return counts
+
+func _new_metrics() -> Dictionary:
+	return {
+		"first_war_turn": -1,
+		"open_wars": {}, # PlayerData(rival) -> turno em que a guerra comecou
+		"war_durations": [],
+		"last_change_turn": 0, # ultimo turno com guerra nova/terminada OU numero de cidades mudando
+		"gold_sum": {}, # PlayerData -> soma acumulada, vira media em _finalize_metrics
+		"nan_or_negative_yield": false,
+		"ended_turn": -1,
+		"known_route_ids": {}, # TradeRoute -> true, so pra contar CRIACAO uma vez (Fase 4A)
+		"routes_created": 0,
+		"prev_owned_tiles": {}, # City -> Dictionary(coord->true), snapshot do turno anterior (Roadmap 2.0 Parte 1, A1)
+		"frontier_claims_total": 0, # A1: tiles NOVOS de territorio por turno (exclui o anel inicial de found_city)
+		"frontier_claims_with_resource": 0, # A1: quantos desses tinham recurso
+	}
+
+## Roadmap 2.0 Parte 1 (A1) — benchmark do bonus de recurso na pontuacao de
+## fronteira (FRONTIER_RESOURCE_SCORE_BONUS): quantos dos tiles NOVOS de
+## territorio, turno a turno, tinham recurso. Diff contra o snapshot do
+## turno anterior por cidade — a primeira vez que uma cidade aparece
+## (fundacao, sem snapshot previo) e IGNORADA de proposito, pra nao contar
+## o anel inicial de found_city (que nao passa pela pontuacao de
+## _claim_frontier_tile) como se fosse uma "escolha" da fronteira.
+func _record_frontier_claims(m: Dictionary, grid: HexGrid, primary: PlayerData, rivals: Array[PlayerData]) -> void:
+	for player in ([primary] as Array[PlayerData]) + rivals:
+		for city in player.cities:
+			if m.prev_owned_tiles.has(city):
+				var prev: Dictionary = m.prev_owned_tiles[city]
+				for coord in city.owned_tiles:
+					if not prev.has(coord):
+						m.frontier_claims_total += 1
+						var data := grid.get_tile(coord)
+						if data and data.resource != "":
+							m.frontier_claims_with_resource += 1
+			var snapshot := {}
+			for coord in city.owned_tiles:
+				snapshot[coord] = true
+			m.prev_owned_tiles[city] = snapshot
+
+## Roadmap 2.0 Parte 1 (B2) — a cada guerra DECLARADA, imprime cidade-alvo/
+## territorio/recursos controlados, pra distinguir depois "IA guerreia por
+## causa do recurso" de "IA guerreia porque a cidade e grande" (ressalva
+## conhecida do plano — score correlaciona com owned_tiles.size()). So
+## impressao no stdout, mesmo padrao observacional do resto deste harness,
+## nenhum assert novo. Tenta as DUAS direcoes (attacker->opponent e
+## opponent->attacker) porque a transicao pra guerra detectada aqui pode
+## ter vindo do lado do `primary` (decide_war manual do harness) OU do
+## lado do `rival` (decide_war interno de GameManager._on_turn_changed).
+func _log_war_target(grid: HexGrid, primary: PlayerData, rival: PlayerData, turn_number: int) -> void:
+	for pair in [[primary, rival], [rival, primary]]:
+		var attacker: PlayerData = pair[0]
+		var opponent: PlayerData = pair[1]
+		var target_coord = RivalAI._nearest_known_enemy_city(attacker, opponent, grid)
+		if target_coord == null:
+			continue
+		var target_city := grid.get_city_at(target_coord)
+		if target_city == null:
+			continue
+		var seen := {}
+		seen[target_city.coord] = true
+		for c in target_city.owned_tiles:
+			seen[c] = true
+		var resource_count := 0
+		for coord in seen.keys():
+			var data := grid.get_tile(coord)
+			if data and data.resource != "":
+				resource_count += 1
+		print("[sim guerra T%d] %s -> alvo=%s territorio=%d recursos_controlados=%d" % [
+			turn_number, _label(attacker, primary), target_city.city_name, target_city.owned_tiles.size(), resource_count
+		])
+
+func _record_turn(m: Dictionary, grid: HexGrid, turn_index: int, primary: PlayerData, rivals: Array[PlayerData], war_before: Dictionary, cities_before: Dictionary) -> void:
+	var turn_number := turn_index + 1
+	var any_change := false
+
+	for rival in rivals:
+		var now_at_war: bool = primary.is_at_war_with(rival)
+		var was_at_war: bool = war_before[rival]
+		if now_at_war and not was_at_war:
+			any_change = true
+			if m.first_war_turn == -1:
+				m.first_war_turn = turn_number
+			m.open_wars[rival] = turn_number
+			_log_war_target(grid, primary, rival, turn_number)
+		elif was_at_war and not now_at_war:
+			any_change = true
+			var started: int = m.open_wars.get(rival, turn_number)
+			m.war_durations.append(turn_number - started)
+			m.open_wars.erase(rival)
+
+	if primary.cities.size() != cities_before[primary]:
+		any_change = true
+	for rival in rivals:
+		if rival.cities.size() != cities_before[rival]:
+			any_change = true
+
+	_record_frontier_claims(m, grid, primary, rivals)
+
+	# Comercio (Fase 4A) — so conta CRIACAO uma vez por rota (a mesma
+	# TradeRoute aparece na lista dos 2 lados, ver Dictionary como set).
+	var all_routes := {}
+	for player in ([primary] as Array[PlayerData]) + rivals:
+		for route in player.trade_routes:
+			all_routes[route] = true
+	for route in all_routes.keys():
+		if not m.known_route_ids.has(route):
+			m.known_route_ids[route] = true
+			m.routes_created += 1
+
+	for player in ([primary] as Array[PlayerData]) + rivals:
+		if not m.gold_sum.has(player):
+			m.gold_sum[player] = 0.0
+		m.gold_sum[player] += player.gold
+		if is_nan(player.gold) or player.gold < 0.0:
+			m.nan_or_negative_yield = true
+		if is_nan(player.mana) or player.mana < 0.0:
+			m.nan_or_negative_yield = true
+		for city in player.cities:
+			if is_nan(city.stored_production) or city.stored_production < 0.0:
+				m.nan_or_negative_yield = true
+			if is_nan(city.stored_food) or city.stored_food < 0.0:
+				m.nan_or_negative_yield = true
+
+	if any_change:
+		m.last_change_turn = turn_number
+
+func _finalize_metrics(m: Dictionary, primary: PlayerData, rivals: Array[PlayerData]) -> void:
+	var final_turn: int = m.ended_turn if m.ended_turn != -1 else TURN_COUNT
+	# Guerra ainda aberta no fim da simulacao conta com duracao ate o
+	# ultimo turno rodado, em vez de ficar de fora da media.
+	for rival in m.open_wars.keys():
+		m.war_durations.append(final_turn - m.open_wars[rival])
+	m.war_count = m.war_durations.size()
+
+	m.buildings_built = {}
+	m.final_cities = {}
+	m.avg_gold = {}
+	m.eliminated = []
+	for player in ([primary] as Array[PlayerData]) + rivals:
+		var label := _label(player, primary)
+		var total_buildings := 0
+		for city in player.cities:
+			total_buildings += city.buildings.size()
+		m.buildings_built[label] = total_buildings
+		m.final_cities[label] = player.cities.size()
+		m.avg_gold[label] = m.gold_sum.get(player, 0.0) / float(final_turn)
+		if player.units.is_empty() and player.cities.is_empty():
+			m.eliminated.append(label)
+
+	m.stagnant = m.eliminated.is_empty() and (final_turn - m.last_change_turn) >= STAGNATION_WINDOW
+
+	# Roadmap 2.0 Parte 1 (A1) — "n/a" quando nenhum tile de fronteira foi
+	# reivindicado na simulacao inteira (nada pra medir), em vez de dividir
+	# por zero.
+	if m.frontier_claims_total > 0:
+		m.frontier_claim_resource_pct = "%.0f%%" % (100.0 * float(m.frontier_claims_with_resource) / float(m.frontier_claims_total))
+	else:
+		m.frontier_claim_resource_pct = "n/a"
+
+	# Comercio (Fase 4A) — "rotas ativas no fim" + "canceladas" (criadas
+	# menos ainda-ativas, proxy simples: nao distingue guerra de outra
+	# causa de cancelamento, mas basta pra observacao desta fase).
+	var final_routes := {}
+	for player in ([primary] as Array[PlayerData]) + rivals:
+		for route in player.trade_routes:
+			final_routes[route] = true
+	m.routes_active_at_end = final_routes.size()
+	m.routes_cancelled = m.routes_created - m.routes_active_at_end
+
+func _label(player: PlayerData, primary: PlayerData) -> String:
+	if player == primary:
+		return "Principal(%s)" % player.civ.race
+	return "%s(%s)" % [player.civ.civ_name, player.civ.race]
+
+func _avg(values: Array) -> float:
+	if values.is_empty():
+		return 0.0
+	var total := 0.0
+	for v in values:
+		total += v
+	return total / float(values.size())

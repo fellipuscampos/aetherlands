@@ -133,11 +133,39 @@ func test_tech_that_unlocks_building_finds_muralhas_for_walls():
 	assert_not_null(tech)
 	assert_eq(tech.id, "muralhas")
 
+func test_tech_that_unlocks_building_finds_celeiro_for_granary():
+	var tech = TechDatabase.tech_that_unlocks_building("granary")
+	assert_not_null(tech)
+	assert_eq(tech.id, "celeiro")
+
+func test_tech_that_unlocks_building_finds_oficina_for_workshop():
+	var tech = TechDatabase.tech_that_unlocks_building("workshop")
+	assert_not_null(tech)
+	assert_eq(tech.id, "oficina")
+
+func test_tech_that_unlocks_building_finds_mercado_for_market():
+	var tech = TechDatabase.tech_that_unlocks_building("market")
+	assert_not_null(tech)
+	assert_eq(tech.id, "mercado")
+
 func test_tech_that_unlocks_building_returns_null_for_a_building_without_its_own_tech():
-	assert_null(TechDatabase.tech_that_unlocks_building("granary"), "Celeiro nao tem tecnologia propria nenhuma")
+	assert_null(TechDatabase.tech_that_unlocks_building("sages_tower"), "Torre dos Sabios nao tem tecnologia propria nenhuma")
 
 func test_tech_that_unlocks_building_returns_null_for_empty_id():
 	assert_null(TechDatabase.tech_that_unlocks_building(""))
+
+## Roadmap de gameplay Fase 5 — usado por SpellManager pra achar de volta
+## o terrain_transform de uma tech so tendo o nome do feitico em maos.
+func test_tech_that_unlocks_spell_finds_transcendencia_florestal_for_gaia_metamorphosis():
+	var tech = TechDatabase.tech_that_unlocks_spell("Metamorfose de Gaia")
+	assert_not_null(tech)
+	assert_eq(tech.id, "transcendencia_florestal")
+
+func test_tech_that_unlocks_spell_returns_null_for_unknown_spell():
+	assert_null(TechDatabase.tech_that_unlocks_spell("Feitiço Que Não Existe"))
+
+func test_tech_that_unlocks_spell_returns_null_for_empty_name():
+	assert_null(TechDatabase.tech_that_unlocks_spell(""))
 
 func test_is_unit_unlocked_mage_requires_invocacao_espiritos():
 	assert_false(TechDatabase.is_unit_unlocked("mage", {}))
@@ -297,18 +325,30 @@ func test_decide_research_does_not_override_existing_choice():
 	RivalAI.decide_research(player)
 	assert_eq(player.current_research, "transmutacao_rocha")
 
+## Roadmap de gameplay Fase 4A — achado do harness de simulacao (Fase 0):
+## sorteio uniforme entre TODAS as disponiveis fazia Mercado (cadeia de 3
+## pesquisas em sequencia) nunca ser alcancado nem em 200 turnos. Fix:
+## tech cujo pre-requisito ja foi cumprido ganha prioridade sobre tech de
+## raiz sem pre-requisito (sempre disponivel, nunca urgente).
+func test_decide_research_prioritizes_continuing_an_already_started_chain():
+	var player := PlayerData.new(CivilizationData.new())
+	player.researched_techs["celeiro"] = true # abre "oficina" (prerequisites = ["celeiro"])
+
+	RivalAI.decide_research(player)
+
+	assert_eq(player.current_research, "oficina", "com Celeiro pronto, deveria priorizar Oficina sobre qualquer tech de raiz sem pre-requisito")
+
 ## Regressao: antes da arvore de tecnologia, a IA sorteava Arqueiro/
-## Cavaleiro desde o primeiro turno. RivalAI nao passa pelo gate de PREDIO
-## (so o de pesquisa/is_unit_unlocked, ver MILITARY_KINDS) — o teste so
-## afirma que Catapulta/Mago/Grifo/Ent NUNCA saem do sorteio sem pesquisa
-## nenhuma (permissivo o bastante pra sobreviver a Arqueiro/Cavaleiro terem
-## ganhado tech propria — "Arquearia"/"Estabulo": os dois deixaram de
-## aparecer nesta lista NA PRATICA, ja que sem pesquisa nenhuma so "warrior"
-## sobra em MILITARY_KINDS, mas continuam dentro do conjunto PERMITIDO
-## abaixo, entao o teste nao quebra). Guarda continua sempre "desbloqueado"
-## aqui por causa do hardcode antigo em is_unit_unlocked (ver
-## test_tech_that_unlocks_returns_null_for_warrior pro gate que MUDOU, so
-## no nivel do predio).
+## Cavaleiro desde o primeiro turno. Desde a Fase 1 do roadmap de gameplay
+## (RivalAI.decide_production pontuado, respeitando City.can_build/
+## can_train de verdade — antes pulava os dois gates), uma tropa travada
+## por TECH nunca vira sequer candidata na pontuacao (player.has_unlocked
+## continua fazendo esse corte em _production_candidates), entao nem
+## precisa aparecer sorteada por acaso pra este teste continuar valendo —
+## so confirma que a lista final de candidatos nunca inclui as travadas.
+## Sem pesquisa nenhuma, so "warrior" (sem tech propria — ver comentario
+## de is_unit_unlocked) e predios sem gate de tech (ex: Torre dos Sabios)
+## chegam a ser candidatos.
 func test_decide_production_never_picks_locked_units_before_researching():
 	var player := PlayerData.new(CivilizationData.new())
 	var hex_grid := HexGrid.new()
@@ -318,9 +358,10 @@ func test_decide_production_never_picks_locked_units_before_researching():
 	var city_a = hex_grid.found_city(Vector2i(0, 0), player, "Cidade A")
 	hex_grid.found_city(Vector2i(5, 0), player, "Cidade B") # 2 cidades: sai do ramo "sempre colonizador"
 
-	var mundane_kinds := ["warrior", "archer", "cavalry"]
+	var locked_kinds := ["archer", "cavalry", "catapult", "mage", "griffin", "treant"]
+	var opponent := PlayerData.new(CivilizationData.new())
 	for i in range(20): # varias rodadas pra reduzir chance de falso-positivo por sorte
-		RivalAI.decide_production(player)
-		assert_true(city_a.production_item in mundane_kinds, "sem nenhuma tecnologia magica pesquisada, so tropas mundanas deveriam sair do sorteio")
+		RivalAI.decide_production(player, hex_grid, opponent)
+		assert_false(city_a.production_item in locked_kinds, "sem nenhuma tecnologia pesquisada, tropa travada por tech nao deveria sair da pontuacao")
 
 	hex_grid.queue_free()

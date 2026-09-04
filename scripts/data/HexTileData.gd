@@ -89,6 +89,16 @@ func is_lava() -> bool:
 func blocks_land_units() -> bool:
 	return is_water() or is_lava()
 
+## Roadmap 2.0 Parte 1 (C4) — terrenos onde uma unidade EMBARCADA (Unit.
+## embarked, so com "Navegação" pesquisada) pode se mover: Oceano, Mar
+## Gelado e Costa — nunca Lava/Mar de Lava. Hoje coincide com is_water(),
+## mas e um helper NOMEADO/proprio de proposito (nao so um alias) pra o
+## sistema naval nao depender implicitamente de um detalhe de is_water()
+## (que tambem inclui Costa, nao obvio de cabeca) mudar silenciosamente no
+## futuro.
+func can_be_embarked_on() -> bool:
+	return terrain_type == TerrainType.OCEAN or terrain_type == TerrainType.FROZEN_OCEAN or terrain_type == TerrainType.COAST
+
 ## Uma cidade consegue TRABALHAR este tile (ver City._best_unassigned_
 ## neighbor/toggle_worked_tile) pra receber o rendimento dele? Terreno
 ## solido comum sempre pode; agua/lava normalmente nao (blocks_land_units),

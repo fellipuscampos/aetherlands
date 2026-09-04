@@ -165,12 +165,15 @@ func setup_players(grid: HexGrid) -> void:
 		players.append(rival)
 		rival_players.append(rival)
 
-	# Diplomacia inicial: humano em guerra com todo rival (mesmo
-	# comportamento de sempre, so que agora reversivel pela HUD — ver
-	# Diplomacy.gd). Rivais nunca brigam entre si.
-	for rival in rival_players:
-		Diplomacy.declare_war(human_player, rival)
-
+	# Diplomacia inicial: todo mundo comeca em PAZ (pedido do usuario: "vamos
+	# fazer com que todos comecem o jogo em paz, ao inves de comecar em
+	# guerra") — antes disso o humano nascia automaticamente em guerra com
+	# TODO rival, sem nenhuma escolha. PlayerData.enemies ja comeca vazio por
+	# padrao (ver comentario do campo), entao basta NAO chamar Diplomacy.
+	# declare_war aqui; guerra agora so acontece se o jogador humano
+	# declarar de proposito pela HUD (ver HUD._on_declare_war_pressed) — a
+	# IA nunca declara guerra por conta propria (RivalAI._choose_target ja
+	# respeita is_at_war_with, ver comentario la).
 	TurnManager.player_count = 1
 	TurnManager.turn_number = 1
 	TurnManager.current_player_index = 0
@@ -220,7 +223,15 @@ func _process_research(player: PlayerData) -> void:
 	var science := 0.0
 	for city in player.cities:
 		science += city.population * SCIENCE_PER_POPULATION
-	player.research_progress += science
+	# Roadmap de gameplay Fase 3: ciencia era a UNICA "yield" que nunca
+	# passava por multiplicador nenhum (nem o de dificuldade que ja existe
+	# pra IA, nem agora o racial do elfo) — pipeline paralela desde sempre
+	# desconectada de City.collect_yields(), ver comentario da funcao. Fix
+	# minimo: aplicar os MESMOS dois multiplicadores aqui tambem, sem
+	# precisar mover ciencia pra dentro de collect_yields de verdade.
+	var race: String = player.civ.race if player.civ else ""
+	var mult := player.yield_multiplier * RaceEconomy.science_multiplier_for(race)
+	player.research_progress += science * mult
 
 	if player.research_progress >= tech.cost:
 		player.researched_techs[tech.id] = true
@@ -313,8 +324,10 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		unit.reset_movement()
 
 	for rival in rival_players:
-		RivalAI.decide_production(rival)
+		RivalAI.decide_production(rival, hex_grid, human_player)
 		RivalAI.decide_research(rival)
+		RivalAI.decide_war(rival, hex_grid, human_player)
+		RivalAI.decide_trade(rival, hex_grid, human_player)
 
 	for player in players:
 		_process_research(player)
@@ -342,6 +355,14 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 					EventBus.notify.emit("%s concluiu: %s" % [city.city_name, building.display_name], "confirm")
 		player.mana += mana_income
 		player.mana_income_per_turn = mana_income
+		Diplomacy.process_war_weariness_and_upkeep(player)
+
+	# Roadmap de gameplay Fase 4A — FORA do loop `for player in players`
+	# acima de proposito: cada rota conecta 2 jogadores, processar dentro
+	# do loop por-jogador dessincronizaria a limpeza de rotas invalidas
+	# (a MESMA TradeRoute aparece nas listas dos dois lados). Ver
+	# TradeManager.process_all_routes.
+	TradeManager.process_all_routes(players)
 
 	# Pedido do usuario: "Civilization nao faz tudo acontecer no mapa ao
 	# mesmo tempo... em pequenos grupos... diminui o lag na passada de

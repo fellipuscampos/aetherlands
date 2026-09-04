@@ -100,7 +100,7 @@ func test_city_growth_claims_exactly_one_new_frontier_tile_per_population_point(
 	for t in city.owned_tiles:
 		owned_before[t] = true
 
-	city.stored_food = 999.0 # forca cruzar o limiar de crescimento neste turno
+	city.stored_food = 999.0 # forca cruzar o teto de armazenamento (clamp) neste turno
 	city.process_turn(hex_grid)
 
 	assert_eq(city.population, 2, "precondicao: populacao deveria ter crescido neste turno")
@@ -134,6 +134,61 @@ func test_claim_frontier_tile_never_claims_a_tile_already_owned_by_another_city(
 	city._claim_frontier_tile(hex_grid)
 
 	assert_eq(city.owned_tiles.size(), 1, "nenhum tile deveria ser reivindicado — toda a fronteira ja pertence a outra cidade")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+## Roadmap 2.0 Parte 1 (A1) — um tile de recurso com yield BRUTO pior que um
+## vizinho comum ainda deveria ser reivindicado primeiro, uma vez que o
+## bonus fixo de FRONTIER_RESOURCE_SCORE_BONUS entra na pontuacao. Nodulo
+## Arcano em Colina escolhido de proposito: pontuaria 0 pela formula antiga
+## (sem food/producao/ouro), pior que QUALQUER vizinho de Planicie/Grama —
+## exatamente o caso que o bonus corrige.
+func test_claim_frontier_tile_prefers_resource_tile_over_higher_raw_yield_neighbor():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var resource_coord = HexGrid.NEIGHBOR_DIRS[0]
+	var resource_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	resource_tile.resource = "mana_node"
+	hex_grid.tiles[resource_coord] = resource_tile
+	for dir in HexGrid.NEIGHBOR_DIRS.slice(1):
+		hex_grid.tiles[dir] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var player := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = player
+	city.owned_tiles = [center]
+
+	city._claim_frontier_tile(hex_grid)
+
+	assert_eq(city.owned_tiles, [center, resource_coord], "o tile com Nodulo Arcano deveria ser reivindicado antes de qualquer Planicie comum")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+## Confirma que _best_unassigned_neighbor (trabalho) usa a MESMA pontuacao
+## de _claim_frontier_tile (posse) — as duas passaram a compartilhar
+## _tile_claim_score, sem duplicar a formula.
+func test_best_unassigned_neighbor_also_prefers_resource_tile():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var resource_coord = HexGrid.NEIGHBOR_DIRS[0]
+	var resource_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	resource_tile.resource = "mana_node"
+	hex_grid.tiles[resource_coord] = resource_tile
+	for dir in HexGrid.NEIGHBOR_DIRS.slice(1):
+		hex_grid.tiles[dir] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var city := City.new()
+	city.coord = center
+
+	var best = city._best_unassigned_neighbor(hex_grid)
+
+	assert_eq(best, resource_coord)
 
 	hex_grid.queue_free()
 	city.queue_free()
@@ -195,10 +250,10 @@ func test_process_turn_accumulates_production_even_on_zero_yield_terrain():
 	city.coord = coord
 	city.set_production("granary")
 
-	# 2 turnos, nao 3: comida da Planicie sozinha (3/turno, sem tile
-	# trabalhado nenhum aqui) cruzaria o limiar de crescimento no 3o turno
-	# (FOOD_TO_GROW_BASE=8) — fora do escopo deste teste, que so quer
-	# confirmar que a producao NAO fica travada em zero.
+	# 2 turnos: bem longe do teto de armazenamento (FOOD_STORAGE_BASE=15,
+	# comida liquida da Planicie sozinha e so 2/turno depois do consumo por
+	# populacao) — fora do escopo deste teste, que so quer confirmar que a
+	# producao NAO fica travada em zero.
 	for i in range(2):
 		city.process_turn(hex_grid)
 
@@ -217,9 +272,9 @@ func test_production_cost_recognizes_building_id():
 
 func test_can_build_is_false_once_building_already_built():
 	var city := City.new()
-	assert_true(city.can_build("granary"))
-	city.buildings["granary"] = true
-	assert_false(city.can_build("granary"))
+	assert_true(city.can_build("sages_tower"))
+	city.buildings["sages_tower"] = true
+	assert_false(city.can_build("sages_tower"))
 	city.queue_free()
 
 ## Pivot pedido pelo usuario: "cada tropa e feita numa construcao... so
@@ -439,6 +494,97 @@ func test_process_turn_regenerates_shield_over_time_once_walls_is_built():
 	hex_grid.queue_free()
 	city.queue_free()
 
+## Roadmap de gameplay Fase 2: sitio (unidade inimiga adjacente por 2+
+## turnos SEGUIDOS) suspende a regeneracao de HP — pedido do usuario:
+## "comecar com UMA unica consequencia simples e legivel" em vez de um
+## dreno novo, so desliga um bonus que ja existe. N=2 (nao 1) de proposito
+## — o teste confirma que o PRIMEIRO turno de contato ainda regenera
+## normalmente, so o segundo turno SEGUIDO suspende.
+func test_process_turn_suspends_hp_regen_while_under_siege_for_two_turns():
+	var hex_grid := HexGrid.new()
+	var coord := Vector2i(0, 0)
+	var enemy_coord := Vector2i(1, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	hex_grid.tiles[enemy_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+
+	var human := PlayerData.new(CivilizationData.new())
+	var rival := PlayerData.new(CivilizationData.new())
+	Diplomacy.declare_war(human, rival)
+	var city := City.new()
+	city.setup(human, coord, "Capital")
+	city.hp = city.max_hp() * 0.5
+
+	var enemy_unit := Unit.new()
+	enemy_unit.setup(UnitDatabase.create_unit("warrior"), rival, enemy_coord)
+	hex_grid.units_by_coord[enemy_coord] = enemy_unit
+
+	city.process_turn(hex_grid) # 1o turno de contato: ainda regenera (sitio exige 2+)
+	var hp_after_first_turn = city.hp
+	assert_gt(hp_after_first_turn, city.max_hp() * 0.5, "primeiro turno de contato ainda deveria regenerar normalmente")
+
+	city.process_turn(hex_grid) # 2o turno SEGUIDO com o mesmo inimigo adjacente: sitio de verdade agora
+
+	assert_eq(city.hp, hp_after_first_turn, "com sitio de 2+ turnos, a regeneracao deveria ficar suspensa")
+
+	hex_grid.queue_free()
+	city.queue_free()
+	enemy_unit.queue_free()
+
+func test_process_turn_regenerates_normally_when_adjacent_unit_is_at_peace():
+	var hex_grid := HexGrid.new()
+	var coord := Vector2i(0, 0)
+	var other_coord := Vector2i(1, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	hex_grid.tiles[other_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+
+	var human := PlayerData.new(CivilizationData.new())
+	var other := PlayerData.new(CivilizationData.new()) # sem Diplomacy.declare_war — em paz
+	var city := City.new()
+	city.setup(human, coord, "Capital")
+	city.hp = city.max_hp() * 0.5
+
+	var other_unit := Unit.new()
+	other_unit.setup(UnitDatabase.create_unit("warrior"), other, other_coord)
+	hex_grid.units_by_coord[other_coord] = other_unit
+
+	city.process_turn(hex_grid)
+	city.process_turn(hex_grid)
+
+	assert_almost_eq(city.hp, city.max_hp() * 0.5 + 2 * city.max_hp() * City.CITY_HP_REGEN_FRACTION, 0.01, "unidade em PAZ adjacente nao deveria contar como sitio")
+
+	hex_grid.queue_free()
+	city.queue_free()
+	other_unit.queue_free()
+
+## Covil de Monstro (owner_player == null) sempre conta como ameaca de
+## sitio, mesmo sem estado de guerra formal — diplomacia nao existe pra
+## monstro neutro.
+func test_process_turn_suspends_regen_for_a_neutral_monster_adjacent():
+	var hex_grid := HexGrid.new()
+	var coord := Vector2i(0, 0)
+	var monster_coord := Vector2i(1, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	hex_grid.tiles[monster_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.setup(human, coord, "Capital")
+	city.hp = city.max_hp() * 0.5
+
+	var monster := Unit.new()
+	monster.setup(MonsterDatabase.create_monster("goblin"), null, monster_coord)
+	hex_grid.units_by_coord[monster_coord] = monster
+
+	city.process_turn(hex_grid)
+	var hp_after_first_turn = city.hp
+	city.process_turn(hex_grid)
+
+	assert_eq(city.hp, hp_after_first_turn, "monstro neutro adjacente por 2+ turnos deveria suspender a regeneracao tambem")
+
+	hex_grid.queue_free()
+	city.queue_free()
+	monster.queue_free()
+
 ## Mesma mudanca de comportamento, pro Estabulo — pedido do usuario: "voce
 ## precisa pesquisar[,] o estabulo [pra poder] construir". TechDatabase.
 ## tech_that_unlocks("cavalry") agora acha "estabulo", nao mais null.
@@ -535,14 +681,159 @@ func test_can_train_scout_requires_the_stable():
 	assert_true(city.can_train("scout"))
 	city.queue_free()
 
-## Regressao critica: predios de RENDIMENTO (trains_unit vazio) NAO
-## deveriam exigir tecnologia nenhuma — sem essa guarda,
+## Regressao critica: predios de RENDIMENTO sem tech propria (trains_unit
+## vazio E sem entrada em TechData.unlocks_building, ex: Torre dos Sabios)
+## NAO deveriam exigir tecnologia nenhuma — sem essa guarda,
 ## TechDatabase.tech_that_unlocks("") "encontraria" a primeira tech de
-## bioma da lista (Canalizacao da Trama) por acidente, bloqueando o
-## Celeiro ate pesquisar algo que nem tem nada a ver com ele.
+## bioma da lista (Canalizacao da Trama) por acidente, bloqueando a Torre
+## dos Sabios ate pesquisar algo que nem tem nada a ver com ela. Celeiro,
+## Oficina e Mercado DEIXARAM de ser exemplo disso (ganharam tech propria
+## "celeiro"/"oficina"/"mercado", ver testes test_can_build_granary_
+## requires_its_tech/test_can_build_workshop_requires_its_tech/
+## test_can_build_market_requires_its_tech abaixo).
 func test_can_build_yield_building_never_requires_research():
 	var city := City.new()
-	assert_true(city.can_build("granary"), "Celeiro (predio de rendimento) nao deveria depender de tecnologia nenhuma")
+	assert_true(city.can_build("sages_tower"), "Torre dos Sabios (predio de rendimento sem tech propria) nao deveria depender de tecnologia nenhuma")
+	city.queue_free()
+
+## Mesmo mecanismo de test_can_build_walls_requires_its_tech (unlocks_
+## building, nao unlocks_unit — Celeiro nao treina tropa nenhuma). Pedido
+## do usuario, redesenho do sistema de comida: "precisamos fazer pesquisa
+## de cada uma dessas coisas, tudo deve ter pesquisa".
+func test_can_build_granary_requires_its_tech():
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = human
+	assert_false(city.can_build("granary"), "sem a tech Celeiro pesquisada, o predio nao deveria poder ser construido")
+	city.queue_free()
+
+func test_can_build_granary_is_true_once_its_tech_is_researched():
+	var human := PlayerData.new(CivilizationData.new())
+	human.researched_techs["celeiro"] = true
+	var city := City.new()
+	city.owner_player = human
+	assert_true(city.can_build("granary"))
+	city.queue_free()
+
+## Mesmo mecanismo de test_can_build_granary_requires_its_tech — pedido do
+## usuario: "a oficina precisa de uma pesquisa, depois de ser pesquisado[,]
+## p[oder] ser construida".
+func test_can_build_workshop_requires_its_tech():
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = human
+	assert_false(city.can_build("workshop"), "sem a tech Oficina pesquisada, o predio nao deveria poder ser construido")
+	city.queue_free()
+
+func test_can_build_workshop_is_true_once_its_tech_is_researched():
+	var human := PlayerData.new(CivilizationData.new())
+	human.researched_techs["oficina"] = true
+	var city := City.new()
+	city.owner_player = human
+	assert_true(city.can_build("workshop"))
+	city.queue_free()
+
+## Mesmo mecanismo de test_can_build_granary_requires_its_tech — pedido do
+## usuario: "é uma boa, faça isso" (rush-buy com ouro, liberado pelo
+## Mercado construido).
+func test_can_build_market_requires_its_tech():
+	var human := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = human
+	assert_false(city.can_build("market"), "sem a tech Mercado pesquisada, o predio nao deveria poder ser construido")
+	city.queue_free()
+
+func test_can_build_market_is_true_once_its_tech_is_researched():
+	var human := PlayerData.new(CivilizationData.new())
+	human.researched_techs["mercado"] = true
+	var city := City.new()
+	city.owner_player = human
+	assert_true(city.can_build("market"))
+	city.queue_free()
+
+## Rush-buy (Mercado): sem o predio "market" construido nesta cidade,
+## comprar producao com ouro nao deveria estar disponivel — pedido do
+## usuario: "o mercado pode servir pra [dar um uso real pro ouro]"/"é uma
+## boa, faça isso".
+func test_can_rush_buy_is_false_without_market_built():
+	var city := City.new()
+	city.set_production("warrior")
+	assert_false(city.can_rush_buy(), "sem o Mercado construido, rush-buy nao deveria estar disponivel")
+	city.queue_free()
+
+## Cidade OCIOSA (sem nada em producao) nao tem o que comprar, mesmo com o
+## Mercado construido.
+func test_can_rush_buy_is_false_when_idle():
+	var city := City.new()
+	city.buildings["market"] = true
+	assert_false(city.can_rush_buy(), "cidade ociosa nao tem producao nenhuma pra comprar")
+	city.queue_free()
+
+func test_can_rush_buy_is_true_with_market_and_production_in_progress():
+	var city := City.new()
+	city.buildings["market"] = true
+	city.set_production("warrior")
+	assert_true(city.can_rush_buy())
+	city.queue_free()
+
+## rush_buy_cost() e proporcional so ao que FALTA (production_cost() -
+## stored_production), nao ao custo total — senao comprar um item quase
+## pronto custaria o mesmo que comprar do zero.
+func test_rush_buy_cost_is_proportional_to_remaining_production():
+	var city := City.new()
+	city.buildings["market"] = true
+	city.set_production("warrior") # custa 15 producao (UnitDatabase)
+	city.stored_production = 10.0
+
+	assert_almost_eq(city.rush_buy_cost(), 5.0 * City.RUSH_BUY_GOLD_PER_PRODUCTION, 0.01, "faltam 5 de producao (15-10), vezes a taxa de conversao")
+	city.queue_free()
+
+## Regressao: rush_buy() completa o item so ate stored_production ==
+## production_cost() — a CONCLUSAO de fato (spawnar unidade/marcar predio
+## construido/voltar a ficar ociosa) so acontece no PROXIMO process_turn(),
+## reaproveitando a mesma logica de sempre em vez de duplicar aqui.
+func test_rush_buy_completes_production_and_spends_gold():
+	var human := PlayerData.new(CivilizationData.new())
+	human.gold = 100.0
+	var city := City.new()
+	city.owner_player = human
+	city.buildings["market"] = true
+	city.set_production("warrior") # custa 15 producao
+	city.stored_production = 10.0
+
+	var expected_cost = 5.0 * City.RUSH_BUY_GOLD_PER_PRODUCTION
+	var result = city.rush_buy()
+
+	assert_true(result)
+	assert_almost_eq(city.stored_production, city.production_cost(), 0.01, "producao deveria estar completa apos o rush-buy")
+	assert_almost_eq(human.gold, 100.0 - expected_cost, 0.01, "ouro deveria ter sido descontado")
+	city.queue_free()
+
+func test_rush_buy_fails_without_enough_gold():
+	var human := PlayerData.new(CivilizationData.new())
+	human.gold = 1.0 # bem menos que o custo de comprar 5 de producao faltante
+	var city := City.new()
+	city.owner_player = human
+	city.buildings["market"] = true
+	city.set_production("warrior")
+	city.stored_production = 10.0
+
+	var result = city.rush_buy()
+
+	assert_false(result)
+	assert_almost_eq(city.stored_production, 10.0, 0.01, "producao nao deveria mudar quando o rush-buy falha por falta de ouro")
+	assert_almost_eq(human.gold, 1.0, 0.01, "ouro nao deveria ser descontado quando o rush-buy falha")
+	city.queue_free()
+
+func test_rush_buy_fails_when_not_available():
+	var human := PlayerData.new(CivilizationData.new())
+	human.gold = 1000.0
+	var city := City.new() # sem o Mercado construido
+	city.owner_player = human
+	city.set_production("warrior")
+
+	assert_false(city.rush_buy())
+	assert_almost_eq(human.gold, 1000.0, 0.01, "ouro nao deveria ser descontado sem o Mercado construido")
 	city.queue_free()
 
 ## Torre dos Sabios e um predio de RENDIMENTO (trains_unit vazio, mesma
@@ -579,10 +870,10 @@ func test_can_build_respects_population_limit_even_for_a_new_building():
 	city.population = 1
 	city.buildings["granary"] = true
 
-	assert_false(city.can_build("workshop"), "populacao 1 so cabe 1 predio — ja tem o Celeiro, nao deveria caber mais nenhum")
+	assert_false(city.can_build("sages_tower"), "populacao 1 so cabe 1 predio — ja tem o Celeiro, nao deveria caber mais nenhum")
 
 	city.population = 2
-	assert_true(city.can_build("workshop"), "populacao 2 deveria abrir espaco pro segundo predio")
+	assert_true(city.can_build("sages_tower"), "populacao 2 deveria abrir espaco pro segundo predio")
 
 	city.queue_free()
 
@@ -960,11 +1251,11 @@ func test_collect_yields_includes_building_bonus():
 
 	var city := City.new()
 	city.coord = center
-	city.buildings["granary"] = true # +2 comida
+	city.buildings["granary"] = true # +1 comida (bonus_food, ver BuildingDatabase.gd)
 
 	var yields = city.collect_yields(hex_grid)
 
-	assert_almost_eq(yields.food, 5.0, 0.01, "3 (tile) + 2 (Celeiro) = 5")
+	assert_almost_eq(yields.food, 4.0, 0.01, "3 (tile) + 1 (Celeiro) = 4")
 
 	hex_grid.queue_free()
 	city.queue_free()

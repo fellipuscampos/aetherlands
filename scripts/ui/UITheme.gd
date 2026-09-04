@@ -69,7 +69,7 @@ static func build() -> Theme:
 	theme.set_stylebox("hover", "Button", btn_hover)
 	theme.set_stylebox("pressed", "Button", btn_pressed)
 	theme.set_stylebox("disabled", "Button", btn_disabled)
-	theme.set_stylebox("focus", "Button", panel_style(Color(0, 0, 0, 0), COLOR_ACCENT, 2))
+	theme.set_stylebox("focus", "Button", panel_style(Color(0, 0, 0, 0), COLOR_ACCENT, 2, 6, false))
 	theme.set_color("font_color", "Button", COLOR_TEXT)
 	theme.set_color("font_hover_color", "Button", COLOR_TEXT)
 	theme.set_color("font_pressed_color", "Button", COLOR_BORDER_BRIGHT)
@@ -79,12 +79,12 @@ static func build() -> Theme:
 	theme.set_stylebox("panel", "PanelContainer", panel_style(COLOR_BG_PANEL, COLOR_BORDER, 2, 10))
 
 	theme.set_stylebox("normal", "LineEdit", panel_style(COLOR_BG_PANEL.darkened(0.1), COLOR_BORDER, 1))
-	theme.set_stylebox("focus", "LineEdit", panel_style(COLOR_BG_PANEL.darkened(0.1), COLOR_BORDER_BRIGHT, 2))
+	theme.set_stylebox("focus", "LineEdit", panel_style(COLOR_BG_PANEL.darkened(0.1), COLOR_BORDER_BRIGHT, 2, 6, false))
 	theme.set_color("font_color", "LineEdit", COLOR_TEXT)
 	theme.set_color("font_placeholder_color", "LineEdit", COLOR_TEXT_MUTED)
 
 	theme.set_stylebox("background", "ProgressBar", panel_style(COLOR_BG_PANEL.darkened(0.2), COLOR_BORDER, 1, 4))
-	theme.set_stylebox("fill", "ProgressBar", panel_style(COLOR_ACCENT, COLOR_ACCENT, 0, 4))
+	theme.set_stylebox("fill", "ProgressBar", panel_style(COLOR_ACCENT, COLOR_ACCENT, 0, 4, false))
 	theme.set_color("font_color", "ProgressBar", COLOR_TEXT)
 
 	# TabContainer (City Inspector Panel: abas "Unidades"/"Construções", ver
@@ -112,11 +112,36 @@ static func build() -> Theme:
 ## Compartilhado entre build() e quem monta paineis dinamicos na hora (ex:
 ## TechTree.gd desenhando um "card" por tecnologia) — mesma receita de
 ## StyleBoxFlat em todo canto, sem duplicar os numeros.
-static func panel_style(bg: Color, border: Color, border_width: int, corner_radius: int = 6) -> StyleBoxFlat:
+##
+## Melhoria grafica (pedido do usuario: "trabalhe em melhorias graficas" na
+## UI/HUD): antes disso todo painel/botao/card era um retangulo 100% chapado
+## — sem sombra nenhuma (lia como "colado" na tela, sem profundidade) e sem
+## anti-aliasing nos cantos arredondados (serrilhado visivel em qualquer
+## corner_radius > 0, screenshot confirmou isso na tela de Nova Partida).
+## anti_aliasing() da o contorno liso de graca; a sombra suave por baixo (leve
+## deslocamento pra baixo-direita, cor preta translucida) e o mesmo truque
+## usado em qualquer UI "flat design com profundidade" — nao muda nenhuma cor
+## de fundo/borda/tamanho ja calibrada, so acrescenta a sensacao de camada
+## flutuando sobre o fundo em vez de pintada nele.
+## with_shadow = false pros casos onde uma sombra ficaria errada: overlay de
+## FOCO (bg transparente por cima do stylebox normal — a sombra apareceria
+## flutuando sozinha, sem caixa visivel por baixo dela) e o "fill" fino da
+## ProgressBar (barra estreita redesenhada toda hora, sombra so sujaria).
+static func panel_style(bg: Color, border: Color, border_width: int, corner_radius: int = 6, with_shadow: bool = true) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg
 	sb.border_color = border
 	sb.set_border_width_all(border_width)
 	sb.set_corner_radius_all(corner_radius)
 	sb.set_content_margin_all(8)
+	sb.anti_aliasing = true
+	sb.anti_aliasing_size = 1.0
+	if with_shadow:
+		# Tamanho/offset PEQUENOS de proposito — botoes em grade (ex:
+		# BuildingsRow em HUD.tscn, h/v_separation=6) ficam bem proximos uns
+		# dos outros; uma sombra maior encostaria na sombra do vizinho e
+		# sujaria a leitura da grade em vez de dar profundidade.
+		sb.shadow_color = Color(0.0, 0.0, 0.0, 0.35)
+		sb.shadow_size = 3
+		sb.shadow_offset = Vector2(1.5, 2.0)
 	return sb

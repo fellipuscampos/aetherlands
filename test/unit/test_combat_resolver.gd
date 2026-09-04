@@ -139,6 +139,32 @@ func test_veteran_attacker_deals_more_damage_than_recruit():
 
 	assert_gt(veteran_result.damage_to_defender, recruit_result.damage_to_defender, "atacante veterano deveria causar mais dano que um recruta com o mesmo ataque base")
 
+## Roadmap de gameplay Fase 2: bonus de flanqueamento — unidade aliada do
+## ATACANTE adjacente ao ALVO (nao ao proprio atacante) da um multiplicador
+## modesto de ataque extra, so contagem de adjacencia (sem direcao/angulo
+## real, ver CombatResolver._flanking_multiplier).
+func test_flanking_ally_adjacent_to_defender_increases_damage():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var defender = _make_unit("warrior", rival, Vector2i(1, 0))
+	var result_alone = CombatResolver.predict(attacker, defender, hex_grid)
+
+	_make_unit("warrior", human, Vector2i(2, 0)) # aliado do atacante, adjacente ao DEFENSOR (nao ao atacante)
+
+	var result_flanked = CombatResolver.predict(attacker, defender, hex_grid)
+
+	assert_gt(result_flanked.damage_to_defender, result_alone.damage_to_defender, "aliado adjacente ao defensor deveria aumentar o dano por flanqueamento")
+
+func test_flanking_ignores_units_that_are_not_the_attackers_allies():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var defender = _make_unit("warrior", rival, Vector2i(1, 0))
+	var result_alone = CombatResolver.predict(attacker, defender, hex_grid)
+
+	_make_unit("warrior", rival, Vector2i(2, 0)) # do mesmo lado do DEFENSOR, nao do atacante
+
+	var result_with_enemy_nearby = CombatResolver.predict(attacker, defender, hex_grid)
+
+	assert_almost_eq(result_with_enemy_nearby.damage_to_defender, result_alone.damage_to_defender, 0.01, "unidade do lado do defensor nao deveria contar como flanqueamento do atacante")
+
 ## Mago (unit_data.ignores_terrain_defense) atira magia que ignora o bonus
 ## de defesa de terreno do defensor — colina (defense_bonus 0.5) protege
 ## contra guerreiro mas nao contra magia.
@@ -253,16 +279,23 @@ func test_defeating_monster_lair_grants_gold_reward():
 ## capturava na hora, num unico clique (ver SelectionManager._attack_from_
 ## selected/RivalAI._engage ANTES desta mudanca) — agora e um dano de
 ## verdade contra hp/shield, so captura quando a vida zera.
+## Desde a Fase 2 do roadmap (unificacao do bonus de Muralha, ver
+## CombatResolver.resolve_city_attack), o dano bruto do ataque (4.0) ja
+## sai reduzido por BuildingDatabase.defense_bonus_for({"walls":true})
+## (0.5) ANTES de descontar do escudo — mesmo bonus que uma unidade
+## guarnicionada ja recebia via predict(), agora tambem se aplica a uma
+## cidade indefesa. 4.0 / (1+0.5) = 2.67.
 func test_attacking_undefended_city_with_walls_damages_shield_before_hp():
 	var attacker = _make_unit("warrior", human, Vector2i(0, 0)) # attack 4.0
 	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
 	city.buildings["walls"] = true
 	city.shield = city.max_shield()
 	var hp_before = city.hp
+	var expected_damage = 4.0 / 1.5 # attack / (1 + defense_bonus_for walls)
 
 	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
 
-	assert_almost_eq(city.shield, city.max_shield() - 4.0, 0.01, "escudo deveria absorver o dano primeiro")
+	assert_almost_eq(city.shield, city.max_shield() - expected_damage, 0.01, "escudo deveria absorver o dano (ja reduzido pela Muralha) primeiro")
 	assert_eq(city.hp, hp_before, "vida nao deveria cair enquanto o escudo aguenta o dano sozinho")
 	city.queue_free()
 
@@ -270,13 +303,15 @@ func test_attacking_undefended_city_overflow_damage_spills_into_hp():
 	var attacker = _make_unit("warrior", human, Vector2i(0, 0)) # attack 4.0
 	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
 	city.buildings["walls"] = true
-	city.shield = 1.0 # menos que o dano do ataque
+	city.shield = 1.0 # menos que o dano (ja reduzido pela Muralha) do ataque
 	var hp_before = city.hp
+	var expected_damage = 4.0 / 1.5
+	var expected_overflow = expected_damage - 1.0
 
 	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
 
 	assert_eq(city.shield, 0.0, "escudo deveria zerar")
-	assert_almost_eq(city.hp, hp_before - 3.0, 0.01, "sobra de dano (4 do ataque - 1 de escudo) deveria cair na vida")
+	assert_almost_eq(city.hp, hp_before - expected_overflow, 0.01, "sobra de dano (ja reduzido pela Muralha, menos o escudo) deveria cair na vida")
 	city.queue_free()
 
 func test_attacking_undefended_city_without_walls_damages_hp_directly():

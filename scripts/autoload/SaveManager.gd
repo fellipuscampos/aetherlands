@@ -203,6 +203,13 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 			"movement_left": unit.movement_left,
 			"kills": unit.kills,
 			"veterancy_level": unit.veterancy_level,
+			# Roadmap 2.0 Parte 1 (C6) — EXCECAO deliberada: diferente de
+			# fortified/exploring/move_order_target (conveniencia de sessao,
+			# de proposito descartados ao salvar), perder isto deixaria uma
+			# unidade presa em pleno oceano tratada como terrestre apos
+			# carregar — um estado invalido, nao so uma conveniencia perdida
+			# (ver comentario de Unit.embarked).
+			"embarked": unit.embarked,
 		})
 	var cities := []
 	for city in player.cities:
@@ -259,6 +266,7 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 		unit.movement_left = float(u.movement_left)
 		unit.kills = int(u.get("kills", 0))
 		unit.veterancy_level = int(u.get("veterancy_level", 0))
+		unit.embarked = u.get("embarked", false) # Roadmap 2.0 Parte 1 (C6)
 	for c in saved.cities:
 		var coord = Vector2i(int(c.coord[0]), int(c.coord[1]))
 		var city = hex_grid.found_city(coord, player, c.name, true)

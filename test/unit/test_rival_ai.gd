@@ -291,21 +291,142 @@ func test_military_kinds_for_has_no_racial_unit_without_a_race():
 	assert_false("orc_berserker" in kinds)
 	assert_false("elf_ranger" in kinds)
 
-## Regressao de integracao: com 2+ cidades e tudo desbloqueado, um rival
-## orc eventualmente sorteia Berserker da Horda de verdade via decide_production
-## (nao so a lista em si, o fluxo completo tambem).
+## Regressao de integracao: com 2+ cidades e o predio de treino ja pronto,
+## um rival orc escolhe Berserker da Horda via decide_production (nao so a
+## lista de candidatos em si, o fluxo completo ate city.production_item).
+## Desde a Fase 1 (decide_production pontuado, deterministico — nao mais
+## um sorteio aleatorio), NAO faz mais sentido rodar em loop esperando a
+## sorte favorecer a tropa racial: mesmo estado sempre da a mesma
+## pontuacao. Berserker da Horda exige o Quartel construido (fallback de
+## treino pra tropa racial sem predio proprio, ver BuildingDatabase.
+## building_that_trains) — sem ele nunca vira candidato, entao a cidade
+## precisa ja "ter" o predio pronto pra este teste fazer sentido (simular
+## turnos de producao de verdade ate completar o Quartel esta fora do
+## escopo deste teste).
 func test_decide_production_can_pick_the_racial_unit_for_that_race():
 	var orc_civ := CivilizationData.new()
 	orc_civ.race = "orc"
 	var orc_player := PlayerData.new(orc_civ)
 	var city_a = hex_grid.found_city(Vector2i(0, 0), orc_player, "Cidade A")
 	hex_grid.found_city(Vector2i(5, 0), orc_player, "Cidade B") # 2 cidades: sai do ramo "sempre colonizador"
+	city_a.buildings["barracks"] = true
 
-	var picked_orc_unique := false
-	for i in range(60): # varias rodadas pra reduzir chance de falso-negativo por sorte
-		RivalAI.decide_production(orc_player)
-		if city_a.production_item == "orc_berserker":
-			picked_orc_unique = true
+	RivalAI.decide_production(orc_player, hex_grid, human)
+
+	assert_eq(city_a.production_item, "orc_berserker", "com o Quartel pronto e nenhuma outra tropa em vantagem, o rival orc deveria preferir a propria tropa exclusiva (empate quebrado por SCORE_RACIAL_UNIT_TIE_BREAK)")
+
+## Roadmap de gameplay Fase 4A — pequeno acrescimo ao escopo do plano
+## original: sem isto, TradeManager.propose_route nunca teria como
+## comecar sozinho (so existe UI humana pra guerra/paz, nenhuma pra
+## comercio ainda). Chance baixa por turno (RivalAI.
+## TRADE_PROPOSE_CHANCE_PER_TURN), entao roda em loop confirmando que
+## EVENTUALMENTE propoe — nao que propoe sempre.
+func test_decide_trade_eventually_proposes_a_route_to_a_known_city_at_peace():
+	var city_a := hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	city_a.buildings["market"] = true
+	var city_b := hex_grid.found_city(Vector2i(5, 0), human, "Capital Humana")
+	city_b.buildings["market"] = true
+	rival.known_enemy_cities[Vector2i(5, 0)] = true
+	assert_true(Diplomacy.propose_peace(human, rival), "pre-condicao: paz devia ser aceita (0 unidades dos dois lados)")
+
+	var proposed := false
+	for i in range(200):
+		RivalAI.decide_trade(rival, hex_grid, human)
+		if rival.trade_routes.size() > 0:
+			proposed = true
 			break
 
-	assert_true(picked_orc_unique, "rival orc deveria eventualmente sortear a propria tropa exclusiva")
+	assert_true(proposed, "com cidade conhecida em paz e Mercado nos dois lados, deveria eventualmente propor uma rota")
+
+func test_decide_trade_never_proposes_while_at_war():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival").buildings["market"] = true
+	hex_grid.found_city(Vector2i(5, 0), human, "Capital Humana").buildings["market"] = true
+	rival.known_enemy_cities[Vector2i(5, 0)] = true
+	# before_each ja deixa human/rival em guerra (Diplomacy.declare_war)
+
+	for i in range(200):
+		RivalAI.decide_trade(rival, hex_grid, human)
+
+	assert_eq(rival.trade_routes.size(), 0, "em guerra, nunca deveria propor rota de comercio")
+
+## Roadmap 2.0 Parte 1 (A3) — regressao: antes _far_enough_from_cities so
+## olhava as cidades do PROPRIO player, entao uma cidade RIVAL (inclusive
+## do jogador humano) nunca impedia um assentador de fundar colado nela.
+func test_far_enough_from_cities_is_false_near_a_human_city():
+	hex_grid.found_city(Vector2i(0, 0), human, "Capital Humana")
+	assert_false(RivalAI._far_enough_from_cities(Vector2i(1, 0), hex_grid), "distancia 1 < SETTLE_MIN_DISTANCE (3), deveria ser recusado mesmo sendo cidade do humano")
+
+func test_far_enough_from_cities_is_true_far_from_every_city():
+	hex_grid.found_city(Vector2i(0, 0), human, "Capital Humana")
+	assert_true(RivalAI._far_enough_from_cities(Vector2i(6, 0), hex_grid), "distancia 6 >= SETTLE_MIN_DISTANCE (3), deveria ser aceito")
+
+## Integracao: um assentador de IA parado ao lado de uma cidade HUMANA nao
+## deveria fundar ali — so anda (compute_reachable/move_unit), nunca chama
+## WorldSetup.found_city_from_settler.
+func test_handle_settler_does_not_found_next_to_a_human_city():
+	hex_grid.found_city(Vector2i(0, 0), human, "Capital Humana")
+	var settler = _make_unit("settler", rival, Vector2i(1, 0))
+
+	RivalAI._handle_settler(settler, hex_grid, rival)
+
+	assert_null(hex_grid.get_city_at(Vector2i(1, 0)), "assentador nao deveria ter fundado colado na cidade humana")
+
+## Roadmap 2.0 Parte 1 (B2) — pontuacao de guerra soma riqueza de recursos
+## do alvo. Muralha na cidade-alvo zera o termo de vulnerabilidade de
+## proposito, pra isolar o efeito do termo de recursos (sem isso, o score
+## ja cruzaria o limiar so por vulnerabilidade+proximidade, mascarando o
+## que estamos testando).
+func test_decide_war_eventually_declares_only_once_target_city_is_resource_rich():
+	var attacker := PlayerData.new(CivilizationData.new())
+	var opponent := PlayerData.new(CivilizationData.new())
+	hex_grid.found_city(Vector2i(0, 0), attacker, "Capital Atacante")
+	var target_coord := Vector2i(5, 0)
+	var target_city := hex_grid.found_city(target_coord, opponent, "Capital Alvo")
+	target_city.buildings["walls"] = true # vulnerabilidade 0, isola o termo de recursos
+	attacker.known_enemy_cities[target_coord] = true
+
+	var declared_without_resources := false
+	for i in range(300):
+		RivalAI.decide_war(attacker, hex_grid, opponent)
+		if attacker.is_at_war_with(opponent):
+			declared_without_resources = true
+			break
+	assert_false(declared_without_resources, "sem recursos e com muralha, o score deveria ficar abaixo do limiar de guerra")
+
+	var resource_coords = [Vector2i(50, 0), Vector2i(51, 0), Vector2i(52, 0), Vector2i(53, 0)]
+	for coord in resource_coords:
+		var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+		tile.resource = "iron"
+		hex_grid.tiles[coord] = tile
+	target_city.owned_tiles.append_array(resource_coords)
+
+	var declared_with_resources := false
+	for i in range(300):
+		RivalAI.decide_war(attacker, hex_grid, opponent)
+		if attacker.is_at_war_with(opponent):
+			declared_with_resources = true
+			break
+	assert_true(declared_with_resources, "com 4 recursos controlados pelo alvo, o termo de riqueza deveria empurrar o score acima do limiar")
+
+## Roadmap 2.0 Parte 1 (B3) — _score_settle_candidate soma 1 por vizinho
+## com recurso.
+func test_score_settle_candidate_rewards_neighboring_resources():
+	var coord := Vector2i(3, 0)
+	var resource_neighbor: Vector2i = coord + HexGrid.NEIGHBOR_DIRS[0]
+	var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	tile.resource = "iron"
+	hex_grid.tiles[resource_neighbor] = tile
+
+	var score = RivalAI._score_settle_candidate(coord, hex_grid, rival)
+
+	assert_gt(score, 0.0, "candidato com vizinho de recurso deveria pontuar acima de zero")
+
+## Roadmap 2.0 Parte 1 (B3) — _score_settle_candidate penaliza (nunca
+## bloqueia) tile sob pressao de cidade rival (A2).
+func test_score_settle_candidate_penalizes_tile_under_rival_pressure():
+	hex_grid.found_city(Vector2i(0, 0), human, "Capital Humana")
+	var pressured_coord := Vector2i(HexGrid.RIVAL_PRESSURE_RADIUS, 0)
+
+	var score = RivalAI._score_settle_candidate(pressured_coord, hex_grid, rival)
+
+	assert_lt(score, 0.0, "tile sob pressao de cidade rival (do jogador humano) deveria pontuar abaixo de zero")
