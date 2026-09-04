@@ -8,7 +8,7 @@ extends Node
 ## depois reaplica hp/movimento/producao por cima.
 
 const SAVE_PATH := "user://savegame.json"
-const SAVE_VERSION := 14 # v14: raca do jogador (GameManager.human_race, ver TitleScreen/CivilizationData.race) salva pra sobreviver a um load (v13: economia arcana (PlayerData.mana/mana_income_per_turn, ver Ponto 3) salva por jogador (v12: recarga de feiticos (PlayerData.spell_cooldowns, ver SpellManager) salva por jogador (v11: territorio dinamico de cidade (City.owned_tiles, ver HexGrid.city_territory_tiles) salvo por cidade (v10: covis destruidos (LairStructure/HexGrid.destroy_lair) salvos em cleared_lair_coords (v9: acampamentos barbaros — monstro neutro ganha is_camp_boss/behavior_state/movement_left (v8: monstros neutros (guardiao + reforco/patrulha) e o RNG de turno dos covis salvos por inteiro, no lugar de so a lista de covis ja limpos (v7: mapa retangular (map_width/map_height no lugar de map_radius) (v6: predios posicionados no mapa; v5: covis de monstro limpos; v4: predios de cidade; v3: dificuldade; v2: lista de rivais + diplomacia + veterania de unidade))))))))
+const SAVE_VERSION := 15 # v15: campanha de guerra persistente por rival (PlayerData.war_campaigns, ver RivalAI.decide_campaign) salva contra o humano -- unico oponente possivel, ver comentario de _serialize_player -- (v14: raca do jogador (GameManager.human_race, ver TitleScreen/CivilizationData.race) salva pra sobreviver a um load (v13: economia arcana (PlayerData.mana/mana_income_per_turn, ver Ponto 3) salva por jogador (v12: recarga de feiticos (PlayerData.spell_cooldowns, ver SpellManager) salva por jogador (v11: territorio dinamico de cidade (City.owned_tiles, ver HexGrid.city_territory_tiles) salvo por cidade (v10: covis destruidos (LairStructure/HexGrid.destroy_lair) salvos em cleared_lair_coords (v9: acampamentos barbaros — monstro neutro ganha is_camp_boss/behavior_state/movement_left (v8: monstros neutros (guardiao + reforco/patrulha) e o RNG de turno dos covis salvos por inteiro, no lugar de so a lista de covis ja limpos (v7: mapa retangular (map_width/map_height no lugar de map_radius) (v6: predios posicionados no mapa; v5: covis de monstro limpos; v4: predios de cidade; v3: dificuldade; v2: lista de rivais + diplomacia + veterania de unidade)))))))))
 
 ## path e parametrizavel so pros testes GUT usarem um arquivo isolado, sem
 ## tocar no save de verdade do jogador — o jogo em si sempre usa SAVE_PATH.
@@ -255,6 +255,18 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 	}
 	if is_rival:
 		result["at_war_with_human"] = player.is_at_war_with(GameManager.human_player)
+		# Roadmap "Parte C" C3 — so contra o humano de proposito: RivalAI.
+		# decide_war/decide_campaign nunca sao chamados com outro oponente
+		# (rivais nunca guerreiam entre si, ver Diplomacy.gd) — mesma
+		# suposicao que at_war_with_human ja faz, sem esquema de indice/
+		# sentinela pra outros PlayerData nenhum.
+		var campaign: Dictionary = player.war_campaigns.get(GameManager.human_player, {})
+		if not campaign.is_empty():
+			result["war_campaign"] = {
+				"objective": campaign.objective,
+				"target_coord": [campaign.target_coord.x, campaign.target_coord.y],
+				"status": campaign.status,
+			}
 	return result
 
 func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGrid) -> void:
@@ -336,3 +348,16 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 		player.spell_cooldowns[spell_name] = int(cooldowns[spell_name])
 	player.mana = float(saved.get("mana", 0.0))
 	player.mana_income_per_turn = float(saved.get("mana_income_per_turn", 0.0))
+	# Roadmap "Parte C" C3 — cabe na funcao UNICA compartilhada (chamada pra
+	# humano E cada rival) sem branch de is_rival: pro humano, a chave nunca
+	# foi escrita em _serialize_player, entao "war_campaign" sempre resolve
+	# null aqui. GameManager.human_player ja existe nesse ponto (setup_
+	# players() roda antes de qualquer _deserialize_player, ver load_game).
+	var campaign_data = saved.get("war_campaign", null)
+	if campaign_data != null:
+		var tc = campaign_data.target_coord
+		player.war_campaigns[GameManager.human_player] = {
+			"objective": campaign_data.objective,
+			"target_coord": Vector2i(int(tc[0]), int(tc[1])),
+			"status": campaign_data.status,
+		}

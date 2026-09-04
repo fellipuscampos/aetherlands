@@ -319,12 +319,30 @@ const WAR_RESOURCE_WEIGHT_BY_OBJECTIVE := {
 ## harness decide se fazem sentido, nunca calibrar dentro desta fatia.
 const WAR_WEIGHT_ROLE_FIT := 0.3
 
+## Roadmap "Parte C" C3 — extraido de dentro do loop de _best_war_objective
+## pra ser reusado tambem por _campaign_still_viable, MESMA formula, nunca
+## duas. strength_advantage/role_counts continuam calculados UMA vez pelo
+## CHAMADOR (nao aqui dentro), mesma razao de performance de sempre.
+static func _score_war_target(player: PlayerData, hex_grid: HexGrid, city: City, objective: String, strength_advantage: float, role_counts: Dictionary) -> float:
+	var proximity := 1.0 if _distance_to_nearest_own_city(player, city.coord) <= WAR_PROXIMITY_RANGE else 0.0
+	var vulnerability := 1.0 if not city.buildings.has("walls") else 0.0
+	var resource_richness := _city_resource_richness(city, hex_grid)
+	var role_fit := _role_fit_bonus(city, role_counts)
+	var resource_weight: float = WAR_RESOURCE_WEIGHT_BY_OBJECTIVE[objective]
+	return (
+		WAR_WEIGHT_STRENGTH * strength_advantage
+		+ WAR_WEIGHT_PROXIMITY * proximity
+		+ WAR_WEIGHT_VULNERABILITY * vulnerability
+		+ resource_weight * resource_richness
+		+ WAR_WEIGHT_ROLE_FIT * role_fit
+	)
+
 ## Melhor par (cidade conhecida, tipo de objetivo) contra `opponent`, ou null
 ## se nao ha nenhuma cidade conhecida. strength_advantage e role_counts sao
 ## calculados UMA vez (nivel-jogador, mesma simplificacao de _military_
-## deficit); proximidade/vulnerabilidade/riqueza/role_fit sao por CIDADE,
-## reusados pelos dois objetivos. Retorna {"city","coord","objective","score"}
-## -- valor TRANSIENTE, nunca guardado (recomputado sempre que alguem precisa
+## deficit), depois repassados pra _score_war_target por CIDADE, reusados
+## pelos dois objetivos. Retorna {"city","coord","objective","score"} --
+## valor TRANSIENTE, nunca guardado (recomputado sempre que alguem precisa
 ## saber "qual seria o objetivo agora": decide_war e o log do harness).
 static func _best_war_objective(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData):
 	var candidates := _known_enemy_cities_of(player, opponent, hex_grid)
@@ -338,19 +356,8 @@ static func _best_war_objective(player: PlayerData, hex_grid: HexGrid, opponent:
 
 	var best = null
 	for city in candidates:
-		var proximity := 1.0 if _distance_to_nearest_own_city(player, city.coord) <= WAR_PROXIMITY_RANGE else 0.0
-		var vulnerability := 1.0 if not city.buildings.has("walls") else 0.0
-		var resource_richness := _city_resource_richness(city, hex_grid)
-		var role_fit := _role_fit_bonus(city, role_counts)
 		for objective in WAR_OBJECTIVES:
-			var resource_weight: float = WAR_RESOURCE_WEIGHT_BY_OBJECTIVE[objective]
-			var score := (
-				WAR_WEIGHT_STRENGTH * strength_advantage
-				+ WAR_WEIGHT_PROXIMITY * proximity
-				+ WAR_WEIGHT_VULNERABILITY * vulnerability
-				+ resource_weight * resource_richness
-				+ WAR_WEIGHT_ROLE_FIT * role_fit
-			)
+			var score := _score_war_target(player, hex_grid, city, objective, strength_advantage, role_counts)
 			if best == null or score > best.score:
 				best = {"city": city, "coord": city.coord, "objective": objective, "score": score}
 	return best
@@ -375,7 +382,8 @@ static func _best_war_objective(player: PlayerData, hex_grid: HexGrid, opponent:
 ## visibilidade externa e o log do harness (test_simulation_balance.gd).
 ## O que acontece DEPOIS da guerra declarada (_choose_target/_engage) nao
 ## muda nada — o objetivo so afeta QUAL guerra e declarada e POR QUE, nunca
-## a execucao militar em si (isso fica pra C3, campanha multi-turno).
+## a execucao militar em si (isso fica pra C3, ver decide_campaign abaixo,
+## chamado sempre logo em seguida no mesmo loop de GameManager).
 static func decide_war(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
 	if player.is_at_war_with(opponent):
 		return
@@ -384,6 +392,126 @@ static func decide_war(player: PlayerData, hex_grid: HexGrid, opponent: PlayerDa
 		return
 	if best.score >= WAR_SCORE_THRESHOLD and randf() < WAR_DECLARE_CHANCE_WHEN_READY:
 		Diplomacy.declare_war(player, opponent)
+
+const CAMPAIGN_STATUS_ACTIVE := "active"
+const CAMPAIGN_STATUS_COMPLETED := "completed"
+const CAMPAIGN_STATUS_ABANDONED := "abandoned"
+## Limiar de ABANDONO, deliberadamente MENOR que WAR_SCORE_THRESHOLD (limiar
+## de DECLARACAO) -- metade exata, ponto de partida CALIBRAVEL (mesmo
+## espirito de WAR_WEIGHT_ROLE_FIT), harness-validate-later.
+##
+## INVARIANTE PROVADA: 0.75 < 1.5 por construcao. _campaign_still_viable usa
+## a MESMA formula ponderada (_score_war_target) que _best_war_objective/
+## decide_war ja usam pra decidir declarar guerra -- logo, qualquer alvo cujo
+## score ATUAL ainda bateria o limiar de declaracao (>=1.5) necessariamente
+## bate o de abandono tambem (1.5 > 0.75): uma campanha NUNCA e abandonada
+## enquanto seu alvo continuar tao atraente quanto no dia em que a guerra
+## foi declarada por causa dele.
+##
+## RESSALVA: a margem (0.75) amortiza flutuacao PEQUENA (role_fit sozinho
+## nunca swinga mais que WAR_WEIGHT_ROLE_FIT*1.0=0.3), mas NAO blinda contra
+## reviravolta GRANDE e legitima (colapso do proprio exercito:
+## strength_advantage pode swingar ate 2.0; alvo levantar Muralha:
+## vulnerability swinga 1.0 sozinho) -- intencional, sao razoes REAIS pra
+## reconsiderar uma campanha, nao ruido a esconder.
+const CAMPAIGN_ABANDON_SCORE_THRESHOLD := WAR_SCORE_THRESHOLD * 0.5 # 0.75
+
+## Cria/mantem/encerra a campanha de guerra contra `opponent` — memoria
+## PERSISTENTE (PlayerData.war_campaigns), ao contrario de
+## _best_war_objective (C2, sempre transiente). Chamado 1x por rival por
+## turno, logo apos decide_war, no mesmo loop de GameManager.
+## _on_turn_changed — assim uma guerra recem-declarada ja tem campanha
+## antes de qualquer unidade agir no mesmo turno. Defasagem de UM turno pra
+## observar captura de combate (mesma defasagem que ja existe entre
+## decide_war e _choose_target/_engage): uma captura que acontece no
+## combate DESTE turno so e vista por _advance_campaign no PROXIMO.
+static func decide_campaign(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
+	var campaign: Dictionary = player.war_campaigns.get(opponent, {})
+	if campaign.get("status", "") == CAMPAIGN_STATUS_ACTIVE:
+		_advance_campaign(player, hex_grid, opponent)
+	elif player.is_at_war_with(opponent):
+		_start_campaign(player, hex_grid, opponent)
+
+## MESMO limiar de decide_war (WAR_SCORE_THRESHOLD) -- nunca cria campanha
+## mais fraca do que o que justificaria declarar guerra do zero hoje. Chamada
+## tanto pra abrir a PRIMEIRA campanha quanto pra iniciar uma nova INSTANCIA
+## independente depois de uma anterior terminar (COMPLETED ou ABANDONED,
+## ver decide_campaign) — objetivo cumprido nao implica fim de guerra (esta
+## fatia nao mexe em Diplomacy.gd), entao a guerra pode continuar e uma nova
+## campanha nascer contra outro alvo no turno seguinte.
+static func _start_campaign(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
+	var best = _best_war_objective(player, hex_grid, opponent)
+	if best == null or best.score < WAR_SCORE_THRESHOLD:
+		return
+	player.war_campaigns[opponent] = {
+		"objective": best.objective,
+		"target_coord": best.coord,
+		"status": CAMPAIGN_STATUS_ACTIVE,
+	}
+
+## Persistencia e o padrao -- nenhum ramo troca de alvo so porque outro
+## candidato parece melhor agora (isso seria troca oportunista, proibida).
+## So reavalia quando o alvo em si fica invalido (capturado por QUALQUER UM,
+## ou sumiu) ou deixa de ser viavel (_campaign_still_viable).
+static func _advance_campaign(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
+	var campaign: Dictionary = player.war_campaigns[opponent]
+	var target_coord: Vector2i = campaign.target_coord
+	var target_city := hex_grid.get_city_at(target_coord)
+	var owner: PlayerData = target_city.owner_player if target_city else null
+
+	if owner == player:
+		campaign.status = CAMPAIGN_STATUS_COMPLETED
+		return
+
+	if owner != opponent:
+		# Alvo invalidado -- cidade sumiu, ou capturada por um TERCEIRO (nem
+		# player nem opponent -- so pode acontecer se outro rival tambem em
+		# guerra com opponent chegou primeiro, ver Diplomacy.gd: rivais
+		# nunca guerreiam entre si). Reavalia do zero, MESMO limiar de
+		# _start_campaign.
+		var best = _best_war_objective(player, hex_grid, opponent)
+		if best == null or best.score < WAR_SCORE_THRESHOLD:
+			campaign.status = CAMPAIGN_STATUS_ABANDONED
+		else:
+			campaign.objective = best.objective
+			campaign.target_coord = best.coord
+		return
+
+	if not _campaign_still_viable(player, hex_grid, opponent, target_city, campaign.objective):
+		campaign.status = CAMPAIGN_STATUS_ABANDONED
+	# senao: nada muda -- mantem alvo/objetivo.
+
+## "Ainda vale perseguir?" -- reusa a MESMA formula ponderada de
+## _score_war_target (nao inventa uma paralela), avaliada so pro alvo/
+## objetivo JA escolhido (nunca varre outros candidatos -- isso seria troca
+## oportunista). Ver prova numerica no comentario de
+## CAMPAIGN_ABANDON_SCORE_THRESHOLD.
+static func _campaign_still_viable(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData, target_city: City, objective: String) -> bool:
+	var own_strength := _total_military_strength(player)
+	var enemy_strength := _total_military_strength(opponent)
+	var strength_advantage: float = clamp((own_strength - enemy_strength) / max(own_strength + enemy_strength, 1.0), -1.0, 1.0)
+	var role_counts := _role_counts(player)
+	var score := _score_war_target(player, hex_grid, target_city, objective, strength_advantage, role_counts)
+	return score >= CAMPAIGN_ABANDON_SCORE_THRESHOLD
+
+## Fundacao pra proxima fatia de C3 -- "existe uma preferencia ESTRATEGICA
+## pra este oponente agora?" Retorna o target_coord da campanha ATIVA, ou
+## null. Deliberadamente NAO chamado por _choose_target/_handle_attacker
+## nesta fatia -- so prova que a camada estrategica responde; integracao
+## tatica fica pra depois (hierarquia OBJETIVO -> ALVO ESTRATEGICO -> ALVOS
+## TATICOS -> COMBATE, so as duas primeiras camadas nesta fatia).
+##
+## LACUNA CONHECIDA (aceita nesta fatia): se o humano propuser paz e o rival
+## aceitar enquanto a campanha esta ACTIVE, nada aqui reage -- decide_
+## campaign continuaria reavaliando uma campanha agora irrelevante nos
+## turnos seguintes. Inofensivo hoje porque esta funcao nao esta ligada a
+## nenhum comportamento tatico ainda; vira problema da PROXIMA fatia de C3,
+## quando _choose_campaign_target passar a ser consumida de verdade.
+static func _choose_campaign_target(player: PlayerData, opponent: PlayerData):
+	var campaign: Dictionary = player.war_campaigns.get(opponent, {})
+	if campaign.get("status", "") != CAMPAIGN_STATUS_ACTIVE:
+		return null
+	return campaign.target_coord
 
 ## Roadmap 2.0 Parte 1 (B2) — quantos recursos estrategicos DIFERENTES
 ## `city` controla (proprio tile + owned_tiles), normalizado 0.0-1.0 por

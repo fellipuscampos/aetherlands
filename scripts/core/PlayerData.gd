@@ -77,6 +77,16 @@ var enemies: Dictionary = {} # PlayerData -> true
 ## de unidades que ja existia.
 var war_weariness: float = 0.0
 
+## Memoria PERSISTENTE do objetivo de guerra contra `opponent` (Roadmap
+## "Parte C", C3) -- diferente de RivalAI._best_war_objective (C2), sempre
+## TRANSIENTE. Ausencia de chave == nenhuma campanha. So RivalAI escreve
+## aqui (decide_campaign) -- so rivais chamam isso, sempre contra
+## human_player (Diplomacy.gd: rivais nunca guerreiam entre si). Cada
+## entrada tem 3 campos: "objective" (String), "target_coord" (Vector2i,
+## nunca referencia a City -- ver comentario de RivalAI._advance_campaign),
+## "status" (RivalAI.CAMPAIGN_STATUS_*).
+var war_campaigns: Dictionary = {} # PlayerData (opponent) -> Dictionary
+
 ## Rotas de comercio ativas que este jogador participa (roadmap de
 ## gameplay Fase 4A, ver TradeManager.gd/TradeRoute.gd) — cada TradeRoute
 ## aparece nesta lista PROS DOIS lados envolvidos (mesmo objeto

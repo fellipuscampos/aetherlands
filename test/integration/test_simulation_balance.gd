@@ -95,7 +95,7 @@ func test_simulate_baseline_multi_seed_metrics():
 	for seed_value in SEEDS:
 		var result := _run_seed(seed_value)
 		all_results.append(result)
-		print("[sim seed=%d] fim=T%d 1a_guerra=%s guerras=%d dur_media_guerra=%.1f estagnado=%s eliminados=%s predios=%s cidades_finais=%s ouro_medio=%s rotas_criadas=%d rotas_ativas_fim=%d rotas_canceladas=%d fronteira_com_recurso=%s fronteira_perto_de_covil=%s eixo_dominante=%s pesquisas_identity_match=%d/%d(%.0f%%) composicao_rivais=%s" % [
+		print("[sim seed=%d] fim=T%d 1a_guerra=%s guerras=%d dur_media_guerra=%.1f estagnado=%s eliminados=%s predios=%s cidades_finais=%s ouro_medio=%s rotas_criadas=%d rotas_ativas_fim=%d rotas_canceladas=%d fronteira_com_recurso=%s fronteira_perto_de_covil=%s eixo_dominante=%s pesquisas_identity_match=%d/%d(%.0f%%) composicao_rivais=%s campanhas_iniciadas=%d campanhas_concluidas=%d campanhas_abandonadas=%d campanhas_redirecionadas=%d campanha_status_final=%s" % [
 			seed_value,
 			result.ended_turn if result.ended_turn != -1 else TURN_COUNT,
 			("T%d" % result.first_war_turn) if result.first_war_turn != -1 else "nenhuma",
@@ -116,6 +116,11 @@ func test_simulate_baseline_multi_seed_metrics():
 			result.research_choices_total,
 			result.research_choice_identity_match_pct * 100.0,
 			result.rival_role_counts,
+			result.campaigns_started,
+			result.campaigns_completed,
+			result.campaigns_abandoned,
+			result.campaigns_retargeted,
+			result.final_campaign_status,
 		])
 
 	var seeds_with_war := 0
@@ -176,6 +181,27 @@ func test_simulate_baseline_multi_seed_metrics():
 		("%.0f%%" % (100.0 * float(role_totals[ArmyComposition.ROLE_SIEGE]) / float(role_total_units))) if role_total_units > 0 else "n/a",
 	])
 
+	# Roadmap "Parte C" C3 — agregado dos 4 contadores de ciclo de vida de
+	# campanha + distribuicao final ACTIVE/COMPLETED/ABANDONED/sem_campanha
+	# somada entre todas as seeds. So observacao (mesma disciplina de C1/C2:
+	# nao decidir a priori qual distribuicao e "certa", nem calibrar
+	# CAMPAIGN_ABANDON_SCORE_THRESHOLD com base nisso agora).
+	var total_started := 0
+	var total_completed := 0
+	var total_abandoned := 0
+	var total_retargeted := 0
+	var final_status_totals := {}
+	for r in all_results:
+		total_started += r.campaigns_started
+		total_completed += r.campaigns_completed
+		total_abandoned += r.campaigns_abandoned
+		total_retargeted += r.campaigns_retargeted
+		for status in r.final_campaign_status.keys():
+			final_status_totals[status] = final_status_totals.get(status, 0) + r.final_campaign_status[status]
+	print("[sim agregado campanhas] iniciadas=%d concluidas=%d abandonadas=%d redirecionadas=%d status_final=%s" % [
+		total_started, total_completed, total_abandoned, total_retargeted, final_status_totals,
+	])
+
 	# Unico assert desta fase: correcao (numero invalido), nunca balanceamento
 	# ou comportamento esperado — ver comentario de topo do arquivo.
 	for r in all_results:
@@ -216,6 +242,7 @@ func _run_seed(seed_value: int) -> Dictionary:
 		var war_before := _war_pairs(primary, rivals)
 		var cities_before := _city_counts(primary, rivals)
 		var research_before := _research_before(primary, rivals)
+		var campaigns_before := _campaign_status_pairs(primary, rivals)
 
 		# GameManager._on_turn_changed so decide producao/pesquisa/ataque pra
 		# rival_players (o jogador humano decide isso via UI de verdade) —
@@ -236,6 +263,7 @@ func _run_seed(seed_value: int) -> Dictionary:
 		RivalAI.decide_production(primary, grid, rivals[0])
 		RivalAI.decide_research(primary)
 		RivalAI.decide_war(primary, grid, rivals[0])
+		RivalAI.decide_campaign(primary, grid, rivals[0]) # Roadmap "Parte C" C3 -- mesmo lugar/ordem de GameManager.gd (logo apos decide_war)
 		RivalAI.decide_trade(primary, grid, rivals[0])
 
 		GameManager._on_turn_changed(TurnManager.turn_number, 0)
@@ -276,7 +304,7 @@ func _run_seed(seed_value: int) -> Dictionary:
 		if not rivals.is_empty():
 			RivalAI.take_turn(primary, grid, rivals[0])
 
-		_record_turn(m, grid, turn_index, primary, rivals, war_before, cities_before, research_before)
+		_record_turn(m, grid, turn_index, primary, rivals, war_before, cities_before, research_before, campaigns_before)
 
 		if GameManager.state == GameManager.GameState.GAME_OVER:
 			m.ended_turn = turn_index + 1
@@ -308,6 +336,20 @@ func _war_pairs(primary: PlayerData, rivals: Array[PlayerData]) -> Dictionary:
 	for rival in rivals:
 		pairs[rival] = primary.is_at_war_with(rival)
 	return pairs
+
+## Roadmap "Parte C" C3 — snapshot PRE-turno do status/alvo da campanha nas
+## duas direcoes (primary->rival, rival->primary), mesmo padrao de
+## _war_pairs, pra _record_campaign_changes diffar contra o pos-turno.
+## target_coord so importa quando status != "" (sem campanha nenhuma).
+func _campaign_snapshot(player: PlayerData, opponent: PlayerData) -> Dictionary:
+	var campaign: Dictionary = player.war_campaigns.get(opponent, {})
+	return {"status": campaign.get("status", ""), "target_coord": campaign.get("target_coord", Vector2i.ZERO)}
+
+func _campaign_status_pairs(primary: PlayerData, rivals: Array[PlayerData]) -> Dictionary:
+	var out := {}
+	for rival in rivals:
+		out[rival] = [_campaign_snapshot(primary, rival), _campaign_snapshot(rival, primary)]
+	return out
 
 func _city_counts(primary: PlayerData, rivals: Array[PlayerData]) -> Dictionary:
 	var counts := {}
@@ -346,6 +388,10 @@ func _new_metrics() -> Dictionary:
 		"frontier_claims_near_lair_danger": 0, # Roadmap 2.0 (fecha Parte A): quantos desses estavam perto de covil perigoso ativo
 		"research_choices_total": 0, # Roadmap "Parte B" B3: quantas vezes current_research foi de "" pra uma tech nova nesse turno, qualquer civ
 		"research_choices_matching_identity": 0, # B3: dessas, quantas tem eixo derivado com civilization_axis_strength > 0 pra aquela civ
+		"campaigns_started": 0, # Roadmap "Parte C" C3: "" -> ACTIVE
+		"campaigns_completed": 0, # ACTIVE -> COMPLETED
+		"campaigns_abandoned": 0, # ACTIVE -> ABANDONED
+		"campaigns_retargeted": 0, # ACTIVE -> ACTIVE com target_coord diferente (invalidacao com substituto)
 	}
 
 ## Roadmap 2.0 Parte 1 (A1) — benchmark do bonus de recurso na pontuacao de
@@ -427,7 +473,40 @@ func _record_research_choices(m: Dictionary, research_before: Dictionary, primar
 				if axis != "" and CityIdentity.civilization_axis_strength(player, axis) > 0.0:
 					m.research_choices_matching_identity += 1
 
-func _record_turn(m: Dictionary, grid: HexGrid, turn_index: int, primary: PlayerData, rivals: Array[PlayerData], war_before: Dictionary, cities_before: Dictionary, research_before: Dictionary) -> void:
+## Roadmap "Parte C" C3 — diff PRE/POS-turno do status/alvo de campanha nas
+## duas direcoes (primary->rival, rival->primary), mesmo padrao dual-direcao
+## de _log_war_target. So impressao/contagem, nenhum assert novo (contrato
+## observacional de sempre).
+func _record_campaign_changes(m: Dictionary, primary: PlayerData, rivals: Array[PlayerData], campaigns_before: Dictionary, turn_number: int) -> void:
+	for rival in rivals:
+		var directions = [[primary, rival, campaigns_before[rival][0]], [rival, primary, campaigns_before[rival][1]]]
+		for entry in directions:
+			var attacker: PlayerData = entry[0]
+			var opponent: PlayerData = entry[1]
+			var before: Dictionary = entry[2]
+			var before_status: String = before.status
+			var now := _campaign_snapshot(attacker, opponent)
+			var now_status: String = now.status
+			if before_status != RivalAI.CAMPAIGN_STATUS_ACTIVE and now_status == RivalAI.CAMPAIGN_STATUS_ACTIVE:
+				# Cobre tanto a PRIMEIRA campanha (before_status=="") quanto
+				# uma NOVA instancia nascendo depois de uma terminal
+				# (COMPLETED/ABANDONED, ver contrato de decide_campaign) --
+				# sem isso, campanhas reiniciadas ficavam silenciosamente de
+				# fora da contagem de "iniciada" (achado real do harness:
+				# concluidas > iniciadas antes deste fix).
+				m.campaigns_started += 1
+				print("[sim campanha T%d] %s -> alvo=%s status=iniciada" % [turn_number, _label(attacker, primary), now.target_coord])
+			elif before_status == RivalAI.CAMPAIGN_STATUS_ACTIVE and now_status == RivalAI.CAMPAIGN_STATUS_COMPLETED:
+				m.campaigns_completed += 1
+				print("[sim campanha T%d] %s -> alvo=%s status=concluida" % [turn_number, _label(attacker, primary), now.target_coord])
+			elif before_status == RivalAI.CAMPAIGN_STATUS_ACTIVE and now_status == RivalAI.CAMPAIGN_STATUS_ABANDONED:
+				m.campaigns_abandoned += 1
+				print("[sim campanha T%d] %s -> alvo=%s status=abandonada" % [turn_number, _label(attacker, primary), before.target_coord])
+			elif before_status == RivalAI.CAMPAIGN_STATUS_ACTIVE and now_status == RivalAI.CAMPAIGN_STATUS_ACTIVE and before.target_coord != now.target_coord:
+				m.campaigns_retargeted += 1
+				print("[sim campanha T%d] %s -> alvo=%s status=redirecionada" % [turn_number, _label(attacker, primary), now.target_coord])
+
+func _record_turn(m: Dictionary, grid: HexGrid, turn_index: int, primary: PlayerData, rivals: Array[PlayerData], war_before: Dictionary, cities_before: Dictionary, research_before: Dictionary, campaigns_before: Dictionary) -> void:
 	var turn_number := turn_index + 1
 	var any_change := false
 
@@ -454,6 +533,7 @@ func _record_turn(m: Dictionary, grid: HexGrid, turn_index: int, primary: Player
 
 	_record_frontier_claims(m, grid, primary, rivals)
 	_record_research_choices(m, research_before, primary, rivals)
+	_record_campaign_changes(m, primary, rivals, campaigns_before, turn_number)
 
 	# Comercio (Fase 4A) — so conta CRIACAO uma vez por rota (a mesma
 	# TradeRoute aparece na lista dos 2 lados, ver Dictionary como set).
@@ -526,6 +606,16 @@ func _finalize_metrics(m: Dictionary, primary: PlayerData, rivals: Array[PlayerD
 	m.rival_role_counts = {}
 	for rival in rivals:
 		m.rival_role_counts[_label(rival, primary)] = RivalAI._role_counts(rival)
+
+	# Roadmap "Parte C" C3 — distribuicao FINAL de status de campanha (rival
+	# -> human, so dos rivais, mesmo motivo de rival_role_counts acima: o
+	# "Principal" tem o ponto cego documentado de 1-oponente-por-chamada) —
+	# so observacao, nenhuma distribuicao "certa" decidida a priori (ver
+	# bloco agregado em test_simulate_baseline_multi_seed_metrics).
+	m.final_campaign_status = {}
+	for rival in rivals:
+		var status: String = rival.war_campaigns.get(primary, {}).get("status", "sem_campanha")
+		m.final_campaign_status[status] = m.final_campaign_status.get(status, 0) + 1
 
 	# Roadmap 2.0 Parte 1 (A1) — "n/a" quando nenhum tile de fronteira foi
 	# reivindicado na simulacao inteira (nada pra medir), em vez de dividir

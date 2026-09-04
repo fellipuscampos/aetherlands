@@ -605,6 +605,184 @@ func test_conquer_zero_resource_zero_role_fit_preserves_base_score():
 	assert_eq(best.objective, RivalAI.WAR_OBJECTIVE_CONQUER)
 	assert_almost_eq(best.score, 2.0, 0.001) # strength_advantage(0) + proximity(1.0) + vulnerability(1.0), formula pre-C2 exata
 
+## Roadmap "Parte C" C3 — campanhas de guerra: memoria PERSISTENTE do
+## objetivo (PlayerData.war_campaigns), ao contrario de _best_war_objective
+## (C2, sempre transiente). before_each ja deixa human/rival em guerra.
+
+func test_campaign_still_viable_true_at_boundary_score():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo") # sem muralha, sem recurso, dentro do alcance de proximidade
+	var role_counts := RivalAI._role_counts(rival) # sem unidades -> todos os papeis em 0
+
+	var viable := RivalAI._campaign_still_viable(rival, hex_grid, human, target, RivalAI.WAR_OBJECTIVE_CONQUER)
+
+	assert_true(viable, "strength_advantage(0)+proximity(1.0)+vulnerability(1.0) = 1.0 >= 0.75, deveria continuar viavel")
+
+func test_campaign_still_viable_false_below_threshold():
+	_make_unit("warrior", human, Vector2i(0, 0)) # enemy_strength > 0, rival sem unidade nenhuma -> strength_advantage = -1.0
+	var far_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[Vector2i(12, 0)] = far_tile
+	var target := hex_grid.found_city(Vector2i(12, 0), human, "Alvo") # sem cidade propria do rival -> proximidade=0; muralhado -> vulnerabilidade=0
+	target.buildings["walls"] = true
+
+	var viable := RivalAI._campaign_still_viable(rival, hex_grid, human, target, RivalAI.WAR_OBJECTIVE_CONQUER)
+
+	assert_false(viable, "strength_advantage(-1.0) sozinho ja fica abaixo de 0.75")
+
+func test_decide_campaign_creates_campaign_when_war_declared_and_objective_exists():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo") # sem muralha -> score 2.0 >= WAR_SCORE_THRESHOLD
+	rival.known_enemy_cities[target.coord] = true
+
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	assert_true(rival.war_campaigns.has(human))
+	var campaign: Dictionary = rival.war_campaigns[human]
+	assert_eq(campaign.status, RivalAI.CAMPAIGN_STATUS_ACTIVE)
+	assert_eq(campaign.target_coord, target.coord)
+	assert_eq(campaign.objective, RivalAI.WAR_OBJECTIVE_CONQUER)
+
+func test_decide_campaign_does_nothing_at_peace_with_no_existing_campaign():
+	human.enemies.erase(rival)
+	rival.enemies.erase(human)
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.known_enemy_cities[target.coord] = true
+
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	assert_true(rival.war_campaigns.is_empty(), "em paz e sem campanha existente, nao deveria criar nenhuma")
+
+func test_decide_campaign_does_not_create_campaign_below_war_score_threshold():
+	# sem cidade propria do rival (proximidade=0), alvo muralhado (vulnerabilidade=0),
+	# sem recurso, sem unidade nenhuma dos dois lados -> score = 0.0 < 1.5
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	target.buildings["walls"] = true
+	rival.known_enemy_cities[target.coord] = true
+
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	assert_true(rival.war_campaigns.is_empty())
+
+func test_advance_campaign_marks_completed_when_target_captured_by_player():
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+	hex_grid.capture_city(target, rival)
+
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_COMPLETED)
+
+func test_advance_campaign_retargets_when_invalidated_by_third_party_capture():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival") # sem isso, proximidade fica 0 pra qualquer alvo (rival.cities vazio) e o substituto nao bateria o limiar
+	var target_a := hex_grid.found_city(Vector2i(5, 0), human, "Alvo A")
+	var target_b := hex_grid.found_city(Vector2i(1, -1), human, "Alvo B") # sem muralha, perto -> substituto viavel
+	rival.known_enemy_cities[target_a.coord] = true
+	rival.known_enemy_cities[target_b.coord] = true
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target_a.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+	var third := PlayerData.new(CivilizationData.new())
+	hex_grid.capture_city(target_a, third) # nem player nem opponent -> invalidado, nao concluido
+
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	var campaign: Dictionary = rival.war_campaigns[human]
+	assert_eq(campaign.status, RivalAI.CAMPAIGN_STATUS_ACTIVE)
+	assert_eq(campaign.target_coord, target_b.coord, "deveria reavaliar e trocar pro unico alvo restante ainda do oponente")
+
+func test_advance_campaign_abandons_when_invalidated_with_no_replacement():
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.known_enemy_cities[target.coord] = true
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+	var third := PlayerData.new(CivilizationData.new())
+	hex_grid.capture_city(target, third)
+
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ABANDONED, "sem nenhum outro alvo conhecido do oponente, deveria abandonar")
+
+func test_advance_campaign_abandons_when_no_longer_viable():
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo") # ainda do oponente, so deixou de ser viavel
+	target.buildings["walls"] = true
+	_make_unit("warrior", human, Vector2i(0, 0)) # rival sem unidade nenhuma -> strength_advantage = -1.0
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ABANDONED)
+
+## Prova da regra "persistencia e o padrao, nunca troca oportunista" (C3,
+## ponto #6 do usuario): campanha continua no alvo original mesmo depois de
+## uma cidade objetivamente MELHOR ser escoutada, desde que o alvo original
+## continue do oponente e ainda viavel.
+func test_advance_campaign_persists_target_when_better_target_appears():
+	var target_a := hex_grid.found_city(Vector2i(5, 0), human, "Alvo Original") # sem muralha, perto -> score 2.0, viavel
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target_a.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+	var target_b := hex_grid.found_city(Vector2i(1, -1), human, "Alvo Melhor")
+	var resource_coords = [Vector2i(50, 0), Vector2i(51, 0), Vector2i(52, 0), Vector2i(53, 0)]
+	for coord in resource_coords:
+		var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+		tile.resource = "iron"
+		hex_grid.tiles[coord] = tile
+	target_b.owned_tiles.append_array(resource_coords)
+	rival.known_enemy_cities[target_a.coord] = true
+	rival.known_enemy_cities[target_b.coord] = true
+
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	var campaign: Dictionary = rival.war_campaigns[human]
+	assert_eq(campaign.target_coord, target_a.coord, "alvo original ainda do oponente e viavel -- nao deveria trocar so porque um alvo melhor apareceu")
+	assert_eq(campaign.objective, RivalAI.WAR_OBJECTIVE_CONQUER)
+	assert_eq(campaign.status, RivalAI.CAMPAIGN_STATUS_ACTIVE)
+
+func test_decide_campaign_starts_fresh_campaign_after_previous_one_terminal_while_still_at_war():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.known_enemy_cities[target.coord] = true
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(99, 99), # alvo antigo, ja nao importa
+		"status": RivalAI.CAMPAIGN_STATUS_ABANDONED,
+	}
+
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	var campaign: Dictionary = rival.war_campaigns[human]
+	assert_eq(campaign.status, RivalAI.CAMPAIGN_STATUS_ACTIVE, "guerra continua e ha objetivo valido -- deveria nascer uma NOVA instancia de campanha")
+	assert_eq(campaign.target_coord, target.coord)
+
+func test_choose_campaign_target_returns_null_without_active_campaign():
+	assert_null(RivalAI._choose_campaign_target(rival, human))
+
+func test_choose_campaign_target_returns_active_target_coord():
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	assert_eq(RivalAI._choose_campaign_target(rival, human), target.coord)
+
 ## Roadmap 2.0 Parte 1 (B2) — pontuacao de guerra soma riqueza de recursos
 ## do alvo. Muralha na cidade-alvo zera o termo de vulnerabilidade de
 ## proposito, pra isolar o efeito do termo de recursos (sem isso, o score

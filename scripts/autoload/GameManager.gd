@@ -334,6 +334,11 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		RivalAI.decide_production(rival, hex_grid, human_player)
 		RivalAI.decide_research(rival)
 		RivalAI.decide_war(rival, hex_grid, human_player)
+		# Roadmap "Parte C" C3 — logo apos decide_war de proposito: uma
+		# guerra recem-declarada ja ganha campanha (objetivo+alvo
+		# persistentes) antes do take_turn/combate deste mesmo turno rodar
+		# mais abaixo (ver RivalAI.decide_campaign).
+		RivalAI.decide_campaign(rival, hex_grid, human_player)
 		RivalAI.decide_trade(rival, hex_grid, human_player)
 
 	for player in players:

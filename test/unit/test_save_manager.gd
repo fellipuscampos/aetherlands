@@ -465,3 +465,44 @@ func test_save_and_load_preserves_embarked_state_on_a_unit_at_sea():
 	assert_true(ok)
 	assert_eq(GameManager.human_player.units.size(), 1)
 	assert_true(GameManager.human_player.units[0].embarked, "unidade embarcada sobre agua deveria continuar embarcada apos carregar")
+
+## Roadmap "Parte C" C3 — diferente de B4 (personalidade, derivada do
+## map_seed, ZERO codigo de serializacao novo), campanha de guerra e estado
+## novo de verdade -- a asserção de round-trip importa aqui.
+func test_save_and_load_restores_war_campaign():
+	var coords = hex_grid.tiles.keys()
+	var target_coord: Vector2i = coords[3]
+	_make_unit("warrior", rival, coords[2]) # so pra check_game_over() nao fechar o jogo no load
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES,
+		"target_coord": target_coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(ok)
+	var loaded_rival: PlayerData = GameManager.rival_players[0]
+	assert_true(loaded_rival.war_campaigns.has(GameManager.human_player), "a chave deveria ter sido religada ao PlayerData humano VIVO pos-load, nao a um objeto obsoleto")
+	var campaign: Dictionary = loaded_rival.war_campaigns[GameManager.human_player]
+	assert_eq(campaign.objective, RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES)
+	assert_eq(campaign.target_coord, target_coord)
+	assert_eq(campaign.status, RivalAI.CAMPAIGN_STATUS_ACTIVE)
+
+func test_save_and_load_with_no_campaign_omits_war_campaign_key():
+	_make_unit("warrior", rival, hex_grid.tiles.keys()[0]) # so pra check_game_over() nao fechar o jogo no load
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(ok)
+	assert_true(GameManager.rival_players[0].war_campaigns.is_empty(), "rival sem campanha nenhuma deveria voltar do load sem nenhuma entrada")
