@@ -382,16 +382,20 @@ func _record_frontier_claims(m: Dictionary, grid: HexGrid, primary: PlayerData, 
 ## opponent->attacker) porque a transicao pra guerra detectada aqui pode
 ## ter vindo do lado do `primary` (decide_war manual do harness) OU do
 ## lado do `rival` (decide_war interno de GameManager._on_turn_changed).
+## Roadmap "Parte C" C2 — troca (nao so acrescenta) a busca de alvo por
+## RivalAI._best_war_objective: pos-C2, a guerra declarada pode nao mais ser
+## contra a cidade mais PROXIMA (pontuacao deixou de ser distancia-
+## primaria) — usar _nearest_known_enemy_city aqui de novo mostraria o alvo
+## errado. So impressao (objetivo/score), nenhum assert novo, mesmo
+## contrato observacional do resto do harness.
 func _log_war_target(grid: HexGrid, primary: PlayerData, rival: PlayerData, turn_number: int) -> void:
 	for pair in [[primary, rival], [rival, primary]]:
 		var attacker: PlayerData = pair[0]
 		var opponent: PlayerData = pair[1]
-		var target_coord = RivalAI._nearest_known_enemy_city(attacker, opponent, grid)
-		if target_coord == null:
+		var best = RivalAI._best_war_objective(attacker, grid, opponent)
+		if best == null:
 			continue
-		var target_city := grid.get_city_at(target_coord)
-		if target_city == null:
-			continue
+		var target_city: City = best.city
 		var seen := {}
 		seen[target_city.coord] = true
 		for c in target_city.owned_tiles:
@@ -401,8 +405,8 @@ func _log_war_target(grid: HexGrid, primary: PlayerData, rival: PlayerData, turn
 			var data := grid.get_tile(coord)
 			if data and data.resource != "":
 				resource_count += 1
-		print("[sim guerra T%d] %s -> alvo=%s territorio=%d recursos_controlados=%d" % [
-			turn_number, _label(attacker, primary), target_city.city_name, target_city.owned_tiles.size(), resource_count
+		print("[sim guerra T%d] %s -> alvo=%s objetivo=%s territorio=%d recursos_controlados=%d score=%.2f" % [
+			turn_number, _label(attacker, primary), target_city.city_name, best.objective, target_city.owned_tiles.size(), resource_count, best.score
 		])
 
 ## Roadmap "Parte B" B3 — deteccao da transicao "" -> tech_id por civ por

@@ -257,6 +257,103 @@ const WAR_SCORE_THRESHOLD := 1.5
 ## sorteio disfarcado de avaliacao.
 const WAR_DECLARE_CHANCE_WHEN_READY := 0.2
 const WAR_PROXIMITY_RANGE := 10 # cidade conhecida alem disso nao conta como "perto o bastante" pra abrir guerra
+## Roadmap "Parte C" C2 — 2+ unidades do papel certo ja conta como "tenho o
+## suficiente" (fit=1.0), mesma normalizacao de WAR_RESOURCE_RICHNESS_NORM
+## pro eixo de composicao (ver _role_fit_bonus). RESSALVA: ponto de partida
+## calibravel, nao invariante de dominio — ver comentario de WAR_WEIGHT_
+## ROLE_FIT em _best_war_objective.
+const WAR_ROLE_FIT_NORM := 2.0
+
+## Todas as cidades do oponente ja escoutadas (nao so a mais perto, ver
+## _nearest_known_enemy_city — continua existindo intacta, ainda usada por
+## decide_trade). Mesma nocao de "conhecida" de sempre (known_enemy_cities),
+## filtrando cidade que sumiu ou trocou de dono (recapturada).
+static func _known_enemy_cities_of(player: PlayerData, opponent: PlayerData, hex_grid: HexGrid) -> Array[City]:
+	var result: Array[City] = []
+	for coord in player.known_enemy_cities.keys():
+		var city := hex_grid.get_city_at(coord)
+		if city and city.owner_player == opponent:
+			result.append(city)
+	return result
+
+## Papel que ESTE alvo exige: muralha de pe -> cerco (preciso furar defesa);
+## sem muralha -> cavalaria (mobilidade converte janela de oportunidade
+## aberta em ataque de verdade antes que feche). Mesmo papel pros DOIS tipos
+## de objetivo de proposito (ver _best_war_objective) -- a acao militar e
+## identica nos dois, so o MOTIVO da guerra difere. HEURISTICA de C2, nao
+## verdade estrutural do dominio (ao contrario de ArmyComposition.roles_
+## for_kind, que deriva de propriedades ja existentes de UnitData) — tratar
+## como hipotese de balanceamento sujeita a revisao pelo harness, nao como
+## invariante.
+static func _role_fit_bonus(target_city: City, role_counts: Dictionary) -> float:
+	var needed_role: String = ArmyComposition.ROLE_SIEGE if target_city.buildings.has("walls") else ArmyComposition.ROLE_CAVALRY
+	var have: float = role_counts.get(needed_role, 0)
+	return clamp(have / WAR_ROLE_FIT_NORM, 0.0, 1.0)
+
+const WAR_OBJECTIVE_CONQUER := "conquer"
+const WAR_OBJECTIVE_SECURE_RESOURCES := "secure_resources"
+## Ordem importa pro desempate deterministico em _best_war_objective (CONQUER
+## primeiro): quando os dois objetivos empatam pro MESMO alvo (sempre que
+## resource_richness == 0), CONQUER vence -- "sem recurso pra proteger, e so
+## uma conquista".
+const WAR_OBJECTIVES: Array[String] = [WAR_OBJECTIVE_CONQUER, WAR_OBJECTIVE_SECURE_RESOURCES]
+## Recurso pesa o DOBRO quando o objetivo E "garantir recursos" -- motivo
+## primario, nao mais um sinal entre outros (WAR_WEIGHT_RESOURCES continua
+## valendo pra CONQUER, onde recurso e so bonus de oportunidade).
+const WAR_WEIGHT_RESOURCES_SECURE := 2.0
+const WAR_RESOURCE_WEIGHT_BY_OBJECTIVE := {
+	WAR_OBJECTIVE_CONQUER: WAR_WEIGHT_RESOURCES,
+	WAR_OBJECTIVE_SECURE_RESOURCES: WAR_WEIGHT_RESOURCES_SECURE,
+}
+## Roadmap "Parte C" C2 -- conecta ArmyComposition (C1) a decide_war como
+## sinal SEPARADO de _total_military_strength: forca total = quanto poder
+## tenho; role_fit = se tenho o TIPO certo de poder pro que ESTE alvo exige
+## (muralha -> cerco; alvo aberto -> mobilidade). Pequeno de proposito (ver
+## hierarquia numerica no plano) -- nunca cruza o limiar sozinho nem vira a
+## escolha entre dois alvos que ja divergem num termo binario primario.
+## RESSALVA (pedido explicito do usuario): "muralha->cerco / sem muralha->
+## cavalaria" e uma HEURISTICA ESTRATEGICA nova desta fatia, nao uma
+## propriedade de dominio ja existente como attack_range/movement_points
+## sao pra ArmyComposition -- e este peso (0.3) e WAR_ROLE_FIT_NORM (2.0)
+## sao pontos de partida CALIBRAVEIS, nao valores corretos por definicao. O
+## harness decide se fazem sentido, nunca calibrar dentro desta fatia.
+const WAR_WEIGHT_ROLE_FIT := 0.3
+
+## Melhor par (cidade conhecida, tipo de objetivo) contra `opponent`, ou null
+## se nao ha nenhuma cidade conhecida. strength_advantage e role_counts sao
+## calculados UMA vez (nivel-jogador, mesma simplificacao de _military_
+## deficit); proximidade/vulnerabilidade/riqueza/role_fit sao por CIDADE,
+## reusados pelos dois objetivos. Retorna {"city","coord","objective","score"}
+## -- valor TRANSIENTE, nunca guardado (recomputado sempre que alguem precisa
+## saber "qual seria o objetivo agora": decide_war e o log do harness).
+static func _best_war_objective(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData):
+	var candidates := _known_enemy_cities_of(player, opponent, hex_grid)
+	if candidates.is_empty():
+		return null
+
+	var own_strength := _total_military_strength(player)
+	var enemy_strength := _total_military_strength(opponent)
+	var strength_advantage: float = clamp((own_strength - enemy_strength) / max(own_strength + enemy_strength, 1.0), -1.0, 1.0)
+	var role_counts := _role_counts(player)
+
+	var best = null
+	for city in candidates:
+		var proximity := 1.0 if _distance_to_nearest_own_city(player, city.coord) <= WAR_PROXIMITY_RANGE else 0.0
+		var vulnerability := 1.0 if not city.buildings.has("walls") else 0.0
+		var resource_richness := _city_resource_richness(city, hex_grid)
+		var role_fit := _role_fit_bonus(city, role_counts)
+		for objective in WAR_OBJECTIVES:
+			var resource_weight: float = WAR_RESOURCE_WEIGHT_BY_OBJECTIVE[objective]
+			var score := (
+				WAR_WEIGHT_STRENGTH * strength_advantage
+				+ WAR_WEIGHT_PROXIMITY * proximity
+				+ WAR_WEIGHT_VULNERABILITY * vulnerability
+				+ resource_weight * resource_richness
+				+ WAR_WEIGHT_ROLE_FIT * role_fit
+			)
+			if best == null or score > best.score:
+				best = {"city": city, "coord": city.coord, "objective": objective, "score": score}
+	return best
 
 ## Avalia se vale abrir guerra contra `opponent` — so roda enquanto AINDA
 ## em paz (guerra ja em andamento nao precisa ser "decidida" de novo,
@@ -266,25 +363,26 @@ const WAR_PROXIMITY_RANGE := 10 # cidade conhecida alem disso nao conta como "pe
 ## inimiga JA CONHECIDA (PlayerData.known_enemy_cities), nao ha decisao
 ## nenhuma a tomar: um rival nunca declara guerra as cegas contra alguem
 ## que nunca viu.
+##
+## Roadmap "Parte C" C2 — antes escolhia so a cidade conhecida MAIS PERTO
+## (_nearest_known_enemy_city, ainda existe, ainda usada por decide_trade);
+## agora delega em _best_war_objective, que avalia TODAS as cidades
+## conhecidas do oponente contra os dois tipos de objetivo (CONQUER,
+## SECURE_RESOURCES) e escolhe o melhor par — "existe um objetivo concreto
+## que justifica guerra e que eu tenho capacidade razoavel de perseguir?",
+## nao mais so "tenho vontade de guerra?". Objetivo e sempre TRANSIENTE
+## (recalculado aqui, nunca guardado em PlayerData/Diplomacy) — a unica
+## visibilidade externa e o log do harness (test_simulation_balance.gd).
+## O que acontece DEPOIS da guerra declarada (_choose_target/_engage) nao
+## muda nada — o objetivo so afeta QUAL guerra e declarada e POR QUE, nunca
+## a execucao militar em si (isso fica pra C3, campanha multi-turno).
 static func decide_war(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
 	if player.is_at_war_with(opponent):
 		return
-	var target_coord = _nearest_known_enemy_city(player, opponent, hex_grid)
-	if target_coord == null:
+	var best = _best_war_objective(player, hex_grid, opponent)
+	if best == null:
 		return
-
-	var own_strength := _total_military_strength(player)
-	var enemy_strength := _total_military_strength(opponent)
-	var strength_advantage: float = clamp((own_strength - enemy_strength) / max(own_strength + enemy_strength, 1.0), -1.0, 1.0)
-
-	var proximity := 1.0 if _distance_to_nearest_own_city(player, target_coord) <= WAR_PROXIMITY_RANGE else 0.0
-
-	var target_city := hex_grid.get_city_at(target_coord)
-	var vulnerability := 1.0 if (target_city and not target_city.buildings.has("walls")) else 0.0
-	var resource_richness := _city_resource_richness(target_city, hex_grid) if target_city else 0.0
-
-	var score := WAR_WEIGHT_STRENGTH * strength_advantage + WAR_WEIGHT_PROXIMITY * proximity + WAR_WEIGHT_VULNERABILITY * vulnerability + WAR_WEIGHT_RESOURCES * resource_richness
-	if score >= WAR_SCORE_THRESHOLD and randf() < WAR_DECLARE_CHANCE_WHEN_READY:
+	if best.score >= WAR_SCORE_THRESHOLD and randf() < WAR_DECLARE_CHANCE_WHEN_READY:
 		Diplomacy.declare_war(player, opponent)
 
 ## Roadmap 2.0 Parte 1 (B2) — quantos recursos estrategicos DIFERENTES

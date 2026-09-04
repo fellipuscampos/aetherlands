@@ -447,6 +447,164 @@ func test_handle_settler_does_not_found_next_to_a_human_city():
 
 	assert_null(hex_grid.get_city_at(Vector2i(1, 0)), "assentador nao deveria ter fundado colado na cidade humana")
 
+## Roadmap "Parte C" C2 — _known_enemy_cities_of/_role_fit_bonus. Cobre so
+## as funcoes puras aqui; _best_war_objective/decide_war ficam nas proximas
+## etapas (ver plano), depois de validar esta base isoladamente.
+
+func test_known_enemy_cities_of_returns_all_known_cities_belonging_to_opponent():
+	var third_party := PlayerData.new(CivilizationData.new())
+	var city_a := hex_grid.found_city(Vector2i(0, 0), human, "Alvo A")
+	var city_b := hex_grid.found_city(Vector2i(5, 0), human, "Alvo B")
+	var other_city := hex_grid.found_city(Vector2i(10, 0), third_party, "Terceiro")
+	rival.known_enemy_cities[city_a.coord] = true
+	rival.known_enemy_cities[city_b.coord] = true
+	rival.known_enemy_cities[other_city.coord] = true
+
+	var result := RivalAI._known_enemy_cities_of(rival, human, hex_grid)
+
+	assert_eq(result.size(), 2)
+	assert_true(city_a in result)
+	assert_true(city_b in result)
+	assert_false(other_city in result)
+
+func test_known_enemy_cities_of_excludes_recaptured_city():
+	var city := hex_grid.found_city(Vector2i(0, 0), human, "Cidade")
+	rival.known_enemy_cities[city.coord] = true
+	city.owner_player = rival # recapturada: nao pertence mais ao "opponent" human
+
+	var result := RivalAI._known_enemy_cities_of(rival, human, hex_grid)
+
+	assert_true(result.is_empty(), "cidade recapturada nao deveria contar como alvo conhecido do antigo dono")
+
+func test_role_fit_bonus_rewards_siege_for_walled_target():
+	var city := hex_grid.found_city(Vector2i(0, 0), human, "Cidade Muralhada")
+	city.buildings["walls"] = true
+	var counts := {ArmyComposition.ROLE_SIEGE: 0}
+	assert_almost_eq(RivalAI._role_fit_bonus(city, counts), 0.0, 0.001)
+	counts[ArmyComposition.ROLE_SIEGE] = 1
+	assert_almost_eq(RivalAI._role_fit_bonus(city, counts), 0.5, 0.001)
+	counts[ArmyComposition.ROLE_SIEGE] = 2
+	assert_almost_eq(RivalAI._role_fit_bonus(city, counts), 1.0, 0.001)
+
+func test_role_fit_bonus_rewards_cavalry_for_undefended_target():
+	var city := hex_grid.found_city(Vector2i(0, 0), human, "Cidade Aberta")
+	var counts := {ArmyComposition.ROLE_CAVALRY: 2}
+	assert_almost_eq(RivalAI._role_fit_bonus(city, counts), 1.0, 0.001)
+
+func test_role_fit_bonus_is_role_specific_not_general_military_presence():
+	var city := hex_grid.found_city(Vector2i(0, 0), human, "Cidade Muralhada")
+	city.buildings["walls"] = true
+	var counts := {ArmyComposition.ROLE_CAVALRY: 5, ArmyComposition.ROLE_SIEGE: 0}
+	assert_almost_eq(RivalAI._role_fit_bonus(city, counts), 0.0, 0.001, "muralha exige cerco, nao importa quanta cavalaria o atacante tenha")
+
+## Roadmap "Parte C" C2 — _best_war_objective: selecao do melhor par
+## (cidade, objetivo) entre MULTIPLAS cidades conhecidas (nao so a mais
+## perto, ver plano). decide_war ainda nao foi reescrito pra usar isto —
+## fica isolado ate a proxima etapa, mesma disciplina de C1.
+
+func test_best_war_objective_returns_null_with_no_known_enemy_cities():
+	assert_null(RivalAI._best_war_objective(rival, hex_grid, human))
+
+func test_best_war_objective_picks_best_scoring_city_among_multiple_known():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var good_target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo Bom") # perto, indefeso
+	var resource_coords = [Vector2i(50, 0), Vector2i(51, 0), Vector2i(52, 0), Vector2i(53, 0)]
+	for coord in resource_coords:
+		var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+		tile.resource = "iron"
+		hex_grid.tiles[coord] = tile
+	good_target.owned_tiles.append_array(resource_coords)
+
+	var far_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[Vector2i(12, 0)] = far_tile
+	var bad_target := hex_grid.found_city(Vector2i(12, 0), human, "Alvo Ruim") # longe, muralhado, sem recurso
+	bad_target.buildings["walls"] = true
+
+	rival.known_enemy_cities[good_target.coord] = true
+	rival.known_enemy_cities[bad_target.coord] = true
+
+	var best = RivalAI._best_war_objective(rival, hex_grid, human)
+
+	assert_eq(best.coord, good_target.coord, "cidade perto+indefesa+rica em recurso deveria vencer a longe+muralhada+sem recurso")
+
+func test_best_war_objective_prefers_secure_resources_when_target_is_resource_rich():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	target.buildings["walls"] = true # isola vulnerabilidade=0, mesmo truque do teste de B2 abaixo
+	var resource_coords = [Vector2i(50, 0), Vector2i(51, 0), Vector2i(52, 0), Vector2i(53, 0)]
+	for coord in resource_coords:
+		var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+		tile.resource = "iron"
+		hex_grid.tiles[coord] = tile
+	target.owned_tiles.append_array(resource_coords)
+	rival.known_enemy_cities[target.coord] = true
+
+	var best = RivalAI._best_war_objective(rival, hex_grid, human)
+
+	assert_eq(best.objective, RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES)
+
+func test_best_war_objective_prefers_conquer_when_target_has_no_resources():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	target.buildings["walls"] = true
+	rival.known_enemy_cities[target.coord] = true
+
+	var best = RivalAI._best_war_objective(rival, hex_grid, human)
+
+	assert_eq(best.objective, RivalAI.WAR_OBJECTIVE_CONQUER, "sem recurso nenhum, os dois objetivos empatam e o desempate deterministico cai pra CONQUER")
+
+## Hierarquia numerica (ver plano, Invariantes 1 e 2) — valores exatos, nao
+## so a desigualdade em prosa, mesmo padrao do teste equivalente de C1
+## (test_score_production_candidate_military_deficit_alone_beats_threat_
+## plus_role_gap_combined).
+
+func test_role_fit_alone_never_crosses_war_threshold_from_zero_baseline():
+	# strength_advantage=0 (2 catapultas de cada lado, mesma forca total),
+	# sem cidade propria pro rival -> proximidade=0 (distancia vira 999999),
+	# alvo muralhado -> vulnerabilidade=0, sem recurso -> resources=0,
+	# 2 catapultas do rival -> role_fit=1.0 (papel de cerco maximo).
+	_make_unit("catapult", rival, Vector2i(0, 0))
+	_make_unit("catapult", rival, Vector2i(1, 0))
+	_make_unit("catapult", human, Vector2i(-1, 0))
+	_make_unit("catapult", human, Vector2i(0, -1))
+	var target := hex_grid.found_city(Vector2i(1, -1), human, "Alvo")
+	target.buildings["walls"] = true
+	rival.known_enemy_cities[target.coord] = true
+
+	var best = RivalAI._best_war_objective(rival, hex_grid, human)
+
+	assert_almost_eq(best.score, 0.3, 0.001)
+	assert_lt(best.score, RivalAI.WAR_SCORE_THRESHOLD, "role_fit maximizado sozinho nao deveria chegar perto do limiar de guerra")
+
+func test_close_undefended_target_beats_far_defended_target_with_maxed_role_fit():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var close_undefended := hex_grid.found_city(Vector2i(5, 0), human, "Candidato A") # perto, indefeso, sem role certo
+	var far_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[Vector2i(12, 0)] = far_tile
+	var far_defended := hex_grid.found_city(Vector2i(12, 0), human, "Candidato B") # longe, muralhado
+	far_defended.buildings["walls"] = true
+	_make_unit("catapult", rival, Vector2i(1, 0))
+	_make_unit("catapult", rival, Vector2i(1, -1)) # 2 catapultas -> role_fit maximo (1.0) especificamente pro alvo B (muralhado)
+
+	rival.known_enemy_cities[close_undefended.coord] = true
+	rival.known_enemy_cities[far_defended.coord] = true
+
+	var best = RivalAI._best_war_objective(rival, hex_grid, human)
+
+	assert_eq(best.coord, close_undefended.coord, "vantagem binaria real (proximidade+vulnerabilidade) nao deveria perder pra role_fit maximo isolado")
+
+func test_conquer_zero_resource_zero_role_fit_preserves_base_score():
+	# Vale so quando resource_richness == 0 -- com recurso > 0 o termo ja
+	# existia na formula antiga tambem, nao e uma equivalencia nova.
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo") # sem muralha, sem recurso
+	rival.known_enemy_cities[target.coord] = true
+
+	var best = RivalAI._best_war_objective(rival, hex_grid, human)
+
+	assert_eq(best.objective, RivalAI.WAR_OBJECTIVE_CONQUER)
+	assert_almost_eq(best.score, 2.0, 0.001) # strength_advantage(0) + proximity(1.0) + vulnerability(1.0), formula pre-C2 exata
+
 ## Roadmap 2.0 Parte 1 (B2) — pontuacao de guerra soma riqueza de recursos
 ## do alvo. Muralha na cidade-alvo zera o termo de vulnerabilidade de
 ## proposito, pra isolar o efeito do termo de recursos (sem isso, o score
