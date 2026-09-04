@@ -199,6 +199,57 @@ func test_save_and_load_restores_difficulty():
 	for r in GameManager.rival_players:
 		assert_almost_eq(r.yield_multiplier, GameManager.DIFFICULTY_MULTIPLIERS.hard, 0.01)
 
+## Roadmap "Parte B" B4 — nao e um teste de "round-trip" no sentido usual:
+## personalidade NUNCA e serializada (ver CivilizationPersonality.gd,
+## comentario de topo). O que isto prova e RECONSTRUCAO DETERMINISTICA apos
+## load: save -> load restaura map_seed -> setup_players() deriva de novo
+## -> resultado bate com o estado anterior ao save. Usa GameManager.
+## setup_players() de verdade (nao o atalho de PlayerData.new() direto que
+## before_each usa pros outros testes deste arquivo) porque personalidade
+## so existe depois desse fluxo real.
+func test_save_and_load_reconstructs_the_identical_personality():
+	GameManager.rival_count = 2
+	GameManager.setup_players(hex_grid) # sobrescreve human/rival do before_each com o fluxo real
+	var coords := hex_grid.tiles.keys()
+	_make_unit("warrior", GameManager.human_player, coords[0])
+	for i in range(GameManager.rival_players.size()):
+		_make_unit("warrior", GameManager.rival_players[i], coords[i + 1])
+
+	var human_personality_before: Dictionary = GameManager.human_player.personality.duplicate()
+	var rival_personalities_before := []
+	for rival in GameManager.rival_players:
+		rival_personalities_before.append(rival.personality.duplicate())
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	assert_true(SaveManager.load_game(loaded_grid, TEST_SAVE_PATH))
+
+	assert_eq(GameManager.human_player.personality, human_personality_before, "personalidade do humano deveria ser reconstruida identica apos o load")
+	for i in range(GameManager.rival_players.size()):
+		assert_eq(GameManager.rival_players[i].personality, rival_personalities_before[i], "personalidade do rival %d deveria ser reconstruida identica apos o load" % i)
+
+## Confirma que a propriedade "zero codigo de serializacao" e real, nao uma
+## coincidencia de valores: o JSON salvo nao tem NENHUMA chave
+## "personality" em lugar nenhum.
+func test_save_file_never_contains_a_personality_key():
+	GameManager.rival_count = 2
+	GameManager.setup_players(hex_grid)
+	var coords := hex_grid.tiles.keys()
+	_make_unit("warrior", GameManager.human_player, coords[0])
+	for i in range(GameManager.rival_players.size()):
+		_make_unit("warrior", GameManager.rival_players[i], coords[i + 1])
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var file := FileAccess.open(TEST_SAVE_PATH, FileAccess.READ)
+	var text := file.get_as_text()
+	file.close()
+
+	assert_false(text.contains("personality"), "o arquivo de save nao deveria conter a chave 'personality' em lugar nenhum")
+
 ## Regressao: predio POSICIONADO no mapa (building_coords, ver
 ## SelectionManager.start_building_placement) precisa sobreviver ao save/
 ## load com o modelo 3D recriado no MESMO tile — sem isso o predio ficaria

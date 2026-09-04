@@ -352,6 +352,23 @@ const RESEARCH_WEIGHT_CONTINUATION := 1.0
 ## agrava-lo sem medir primeiro (ver metrica research_choices_matching_
 ## identity em test_simulation_balance.gd).
 const RESEARCH_WEIGHT_IDENTITY := 0.2
+## Roadmap "Parte B" B4.2 — personalidade (CivilizationPersonality,
+## PROSPECTIVA) soma como um TERCEIRO termo aditivo, ao lado de
+## RESEARCH_WEIGHT_IDENTITY (CityIdentity.civilization_axis_strength,
+## RETROSPECTIVA) — os dois convivem, nenhum substitui o outro (mandato do
+## usuario: "personalidade e uma intencao persistente; identidade e
+## evidencia historica"). Peso MENOR que RESEARCH_WEIGHT_IDENTITY de
+## proposito: personalidade e uma intencao sorteada sem nenhuma evidencia
+## de jogo por tras (identidade pelo menos reflete predios de verdade
+## construidos) — harness-validate-later, mesma disciplina de todo o
+## resto. IDENTITY + PERSONALITY somados (0.2 + 0.15 = 0.35) continuam bem
+## abaixo de CONTINUATION (1.0), entao uma continuacao de cadeia real
+## SEMPRE vence os dois combinados no maximo (ver teste "nunca sobrepoe").
+## INVARIANTE PROTEGIDA: personalidade NUNCA deve ser alterada pela
+## identidade (nunca "personality += civilization_axis_strength" nem
+## aprendizado/deriva nenhum) — as duas sao entradas INDEPENDENTES aqui,
+## nunca uma alimentando a outra.
+const RESEARCH_WEIGHT_PERSONALITY := 0.15
 
 ## Eixo de identidade de UMA tecnologia, DERIVADO (nunca uma tabela nova
 ## hand-authored — mesmo espirito de CityIdentity inteira e do lair-danger
@@ -409,7 +426,12 @@ static func _score_research_candidate(tech: TechData, player: PlayerData) -> flo
 			break
 	var axis := _tech_identity_axis(tech)
 	var identity_strength := 0.0 if axis == "" else CityIdentity.civilization_axis_strength(player, axis)
-	return RESEARCH_WEIGHT_CONTINUATION * (1.0 if continues_chain else 0.0) + RESEARCH_WEIGHT_IDENTITY * identity_strength
+	var personality_strength: float = 0.0 if axis == "" else player.personality.get(axis, 0.0)
+	return (
+		RESEARCH_WEIGHT_CONTINUATION * (1.0 if continues_chain else 0.0)
+		+ RESEARCH_WEIGHT_IDENTITY * identity_strength
+		+ RESEARCH_WEIGHT_PERSONALITY * personality_strength
+	)
 
 ## Sem nenhuma pesquisa em andamento, escolhe a tecnologia disponivel de
 ## MAIOR pontuacao (ver _score_research_candidate) — nao mais um sorteio

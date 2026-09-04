@@ -504,3 +504,67 @@ func test_score_research_candidate_identity_has_no_effect_for_unmapped_tech():
 		"tech sem eixo de identidade nao deveria pontuar diferente so por causa da identidade da civ"
 	)
 	city.queue_free()
+
+## Roadmap "Parte B" B4.2 — mesmo padrao do teste equivalente de identidade
+## (B3): tech sem eixo pontua igual com personalidade vazia e personalidade
+## no maximo em qualquer eixo.
+func test_score_research_candidate_personality_has_no_effect_for_unmapped_tech():
+	var navegacao: TechData = TechDatabase.get_tech("navegacao")
+	var player_no_personality := PlayerData.new(CivilizationData.new())
+
+	var player_max_personality := PlayerData.new(CivilizationData.new())
+	player_max_personality.personality[CityIdentity.AXIS_MILITAR] = 1.0
+
+	assert_eq(
+		RivalAI._score_research_candidate(navegacao, player_no_personality),
+		RivalAI._score_research_candidate(navegacao, player_max_personality),
+		"tech sem eixo de identidade nao deveria pontuar diferente so por causa da personalidade da civ"
+	)
+
+## Tech com eixo soma exatamente RESEARCH_WEIGHT_PERSONALITY * personality[axis]
+## quando identidade e continuacao estao zeradas (civ sem cidade, sem
+## pesquisa em andamento).
+func test_score_research_candidate_adds_personality_term_for_mapped_tech():
+	var quartel: TechData = TechDatabase.get_tech("quartel") # unlocks_unit "men_at_arms" -> barracks -> militar
+	var player := PlayerData.new(CivilizationData.new())
+	player.personality[CityIdentity.AXIS_MILITAR] = 1.0
+
+	var score := RivalAI._score_research_candidate(quartel, player)
+
+	assert_almost_eq(score, RivalAI.RESEARCH_WEIGHT_PERSONALITY * 1.0, 0.001)
+
+## Identidade (B3, retrospectiva) e personalidade (B4, prospectiva) sao
+## independentes e ADITIVAS — nenhuma anula a outra, os dois termos aparecem
+## juntos no score (mandato do usuario: "as duas convivem").
+func test_score_research_candidate_personality_and_identity_are_independent_and_additive():
+	var invocacao: TechData = TechDatabase.get_tech("invocacao_espiritos") # unlocks_unit "mage" -> arcane_tower -> arcana
+	var player := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.buildings["sages_tower"] = true # arcana 1/6, identidade > 0
+	player.cities.append(city)
+	player.personality[CityIdentity.AXIS_ARCANA] = 0.5
+
+	var identity_strength := CityIdentity.civilization_axis_strength(player, CityIdentity.AXIS_ARCANA)
+	var expected := RivalAI.RESEARCH_WEIGHT_IDENTITY * identity_strength + RivalAI.RESEARCH_WEIGHT_PERSONALITY * 0.5
+	var score := RivalAI._score_research_candidate(invocacao, player)
+
+	assert_almost_eq(score, expected, 0.001, "identidade e personalidade deveriam somar juntas, nenhuma zerando a outra")
+	city.queue_free()
+
+## Espelha o "nunca sobrepoe" de B3: mesmo com identidade E personalidade
+## no maximo simultaneo (0.2+0.15=0.35), uma continuacao de cadeia real
+## (score 1.0) ainda vence.
+func test_decide_research_personality_never_overrides_stronger_continuation():
+	var player := PlayerData.new(CivilizationData.new())
+	player.researched_techs["celeiro"] = true # abre "oficina" (industrial), unica continuacao disponivel
+
+	var city := City.new()
+	for id in ["walls", "barracks", "archery_range", "stable", "siege_workshop"]:
+		city.buildings[id] = true # militar 1.0, identidade perfeita
+	player.cities.append(city)
+	player.personality[CityIdentity.AXIS_MILITAR] = 1.0 # personalidade tambem no maximo
+
+	RivalAI.decide_research(player)
+
+	assert_eq(player.current_research, "oficina", "continuacao de cadeia deve vencer mesmo com identidade E personalidade militar no maximo simultaneo, ambas noutra tech de raiz")
+	city.queue_free()

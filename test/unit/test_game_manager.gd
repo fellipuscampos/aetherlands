@@ -109,6 +109,68 @@ func test_setup_players_gives_each_rival_a_distinct_civ_name():
 
 	hex_grid.queue_free()
 
+## Roadmap "Parte B" B4 — setup_players() gera personalidade (Civilization
+## Personality.generate) pra humano e todo rival, derivada de hex_grid.
+## map_seed. O valor exato bate com generate(race, map_seed+OFFSET[+slot])
+## — este UNICO teste ja protege o contrato de nao-colisao de slot (humano
+## =+0, rival no indice i=+i+1): se dois slots colidissem, a igualdade
+## exata falharia.
+func test_setup_players_personality_matches_civilization_personality_generate_for_the_grids_map_seed():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	hex_grid.map_seed = 4242
+	GameManager.rival_count = 3
+
+	GameManager.setup_players(hex_grid)
+
+	var human := GameManager.human_player
+	assert_eq(human.personality, CivilizationPersonality.generate(human.civ.race, hex_grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET))
+	for i in range(GameManager.rival_players.size()):
+		var rival := GameManager.rival_players[i]
+		assert_eq(rival.personality, CivilizationPersonality.generate(rival.civ.race, hex_grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET + i + 1))
+
+	hex_grid.queue_free()
+
+func test_setup_players_assigns_a_personality_with_all_five_axes_to_everyone():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.rival_count = 3
+
+	GameManager.setup_players(hex_grid)
+
+	assert_eq(GameManager.human_player.personality.size(), 5)
+	for rival in GameManager.rival_players:
+		assert_eq(rival.personality.size(), 5)
+
+	hex_grid.queue_free()
+
+## Guarda de regressao da propriedade central de B4: regenerar com o MESMO
+## map_seed reproduz a personalidade IDENTICA — e o que garante que um
+## save/load nunca muda a personalidade de ninguem, sem precisar guardar
+## campo nenhum (ver test_save_manager.gd pro fluxo real de save/load).
+func test_setup_players_personality_is_deterministic_for_the_same_map_seed():
+	var hex_grid_a := HexGrid.new()
+	hex_grid_a._ready()
+	hex_grid_a.map_seed = 777
+	GameManager.rival_count = 3
+	GameManager.setup_players(hex_grid_a)
+	var human_personality_a := GameManager.human_player.personality.duplicate()
+	var rival_personalities_a := []
+	for rival in GameManager.rival_players:
+		rival_personalities_a.append(rival.personality.duplicate())
+
+	var hex_grid_b := HexGrid.new()
+	hex_grid_b._ready()
+	hex_grid_b.map_seed = 777
+	GameManager.setup_players(hex_grid_b)
+
+	assert_eq(GameManager.human_player.personality, human_personality_a)
+	for i in range(GameManager.rival_players.size()):
+		assert_eq(GameManager.rival_players[i].personality, rival_personalities_a[i])
+
+	hex_grid_a.queue_free()
+	hex_grid_b.queue_free()
+
 ## Cada rival e uma civilizacao de fantasia de verdade (anao/orc/elfo, ver
 ## GameManager.RIVAL_CIVS), nao mais uma copia generica do reino do
 ## jogador — setup_players() precisa copiar o campo `race` novo pro

@@ -149,6 +149,12 @@ func setup_players(grid: HexGrid) -> void:
 	human_civ.color = Color(0.2, 0.45, 0.85)
 	human_civ.race = human_race
 	human_player = PlayerData.new(human_civ)
+	# Roadmap "Parte B" B4 — personalidade DERIVADA de grid.map_seed, nunca
+	# de randi() proprio (ver CivilizationPersonality.gd, comentario de
+	# topo, pra por que isso dispensa SaveManager por completo). Slot 0
+	# reservado pro humano; cada rival abaixo usa slot i+1 — nunca colidem
+	# entre si nem com o humano.
+	human_player.personality = CivilizationPersonality.generate(human_civ.race, hex_grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET)
 	players.append(human_player)
 
 	var count = clamp(rival_count, 1, RIVAL_CIVS.size())
@@ -162,6 +168,7 @@ func setup_players(grid: HexGrid) -> void:
 		rival_civ.race = info.get("race", "")
 		var rival := PlayerData.new(rival_civ)
 		rival.yield_multiplier = mult
+		rival.personality = CivilizationPersonality.generate(rival_civ.race, hex_grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET + i + 1)
 		players.append(rival)
 		rival_players.append(rival)
 

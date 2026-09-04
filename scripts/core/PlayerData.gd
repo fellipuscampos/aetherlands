@@ -6,6 +6,21 @@ extends RefCounted
 ## muda durante a partida: tesouro, unidades e cidades vivas.
 
 var civ: CivilizationData
+
+## Personalidade civilizacional (Roadmap Parte B, B4) — eixo
+## (CityIdentity.AXIS_*) -> forca 0.0-1.0, sorteada UMA VEZ por
+## GameManager.setup_players() (ver CivilizationPersonality.generate) e
+## depois estavel a partida inteira — diferente de CityIdentity.
+## civilization_axis_strength(), que e recalculada toda chamada a partir de
+## City.buildings. NUNCA serializada em SaveManager.gd de proposito: e
+## re-derivada de HexGrid.map_seed toda vez que setup_players() roda (jogo
+## novo OU load), ver comentario de topo de CivilizationPersonality.gd.
+## Dicionario vazio == sem personalidade ainda gerada (nunca acontece em
+## jogo real pos-setup_players, mas e o estado de todo PlayerData de teste
+## construido direto via PlayerData.new(...), mesma convencao de "" em
+## CityIdentity.dominant_axis() pra "generalista/sem sinal").
+var personality: Dictionary = {} # String (CityIdentity.AXIS_*) -> float
+
 var gold: float = 0.0
 
 ## Economia arcana (Ponto 3): saldo gasto pra conjurar feiticos do Grimorio
