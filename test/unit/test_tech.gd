@@ -338,6 +338,57 @@ func test_decide_research_prioritizes_continuing_an_already_started_chain():
 
 	assert_eq(player.current_research, "oficina", "com Celeiro pronto, deveria priorizar Oficina sobre qualquer tech de raiz sem pre-requisito")
 
+## Roadmap "Parte B" B3 — prova que identidade e SO uma preferencia, nunca
+## um bloqueio nem uma prioridade mais forte que a estrutura da arvore:
+## mesmo com a civ tendo forca MAXIMA (1.0) no eixo militar (bate perfeito
+## com "quartel", tech de raiz), a IA ainda prioriza "oficina" (continuacao
+## de cadeia, eixo industrial, identidade ZERO) — RESEARCH_WEIGHT_
+## CONTINUATION (1.0) > RESEARCH_WEIGHT_IDENTITY (0.2) mesmo no auge da
+## identidade garante isso por construcao.
+func test_decide_research_identity_never_overrides_stronger_continuation():
+	var player := PlayerData.new(CivilizationData.new())
+	player.researched_techs["celeiro"] = true # abre "oficina" (industrial), unica continuacao disponivel
+
+	var city := City.new()
+	for id in ["walls", "barracks", "archery_range", "stable", "siege_workshop"]:
+		city.buildings[id] = true # eixo militar em 1.0 -- identidade perfeita, mas pra OUTRA tech (quartel)
+	player.cities.append(city)
+
+	RivalAI.decide_research(player)
+
+	assert_eq(player.current_research, "oficina", "continuacao de cadeia deve vencer mesmo com identidade militar em 1.0 batendo perfeito noutra tech de raiz")
+	city.queue_free()
+
+## Roadmap "Parte B" B3 — prova de monotonicidade: aumentar a forca do
+## eixo militar da civ so pode AUMENTAR a pontuacao de uma tech militar
+## (quartel), nunca diminuir nem travar nada. A segunda metade prova
+## "nunca inalcancavel": mesmo no auge da identidade militar, uma tech de
+## outro eixo (celeiro/agricola) continua no pool disponivel normalmente.
+func test_decide_research_score_increases_monotonically_with_matching_identity_and_never_excludes_others():
+	var player := PlayerData.new(CivilizationData.new())
+	var quartel: TechData = TechDatabase.get_tech("quartel") # unlocks_unit "men_at_arms" -> barracks -> eixo militar
+
+	var score_with_no_identity := RivalAI._score_research_candidate(quartel, player)
+
+	var city := City.new()
+	city.buildings["barracks"] = true # militar 1/5 = 0.2
+	player.cities.append(city)
+	var score_with_partial_identity := RivalAI._score_research_candidate(quartel, player)
+
+	for id in ["walls", "archery_range", "stable", "siege_workshop"]:
+		city.buildings[id] = true # militar 5/5 = 1.0
+	var score_with_full_identity := RivalAI._score_research_candidate(quartel, player)
+
+	assert_lt(score_with_no_identity, score_with_partial_identity, "identidade militar parcial deve aumentar a pontuacao de uma tech militar")
+	assert_lt(score_with_partial_identity, score_with_full_identity, "identidade militar mais forte ainda -> pontuacao ainda maior, sempre crescente")
+
+	var available_ids := []
+	for t in TechDatabase.available_techs(player.researched_techs):
+		available_ids.append(t.id)
+	assert_true("celeiro" in available_ids, "tech de outro eixo (agricola) continua disponivel mesmo com identidade militar no maximo -- preferencia nunca remove opcoes")
+
+	city.queue_free()
+
 ## Regressao: antes da arvore de tecnologia, a IA sorteava Arqueiro/
 ## Cavaleiro desde o primeiro turno. Desde a Fase 1 do roadmap de gameplay
 ## (RivalAI.decide_production pontuado, respeitando City.can_build/

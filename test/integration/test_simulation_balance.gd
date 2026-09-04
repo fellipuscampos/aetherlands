@@ -95,7 +95,7 @@ func test_simulate_baseline_multi_seed_metrics():
 	for seed_value in SEEDS:
 		var result := _run_seed(seed_value)
 		all_results.append(result)
-		print("[sim seed=%d] fim=T%d 1a_guerra=%s guerras=%d dur_media_guerra=%.1f estagnado=%s eliminados=%s predios=%s cidades_finais=%s ouro_medio=%s rotas_criadas=%d rotas_ativas_fim=%d rotas_canceladas=%d fronteira_com_recurso=%s" % [
+		print("[sim seed=%d] fim=T%d 1a_guerra=%s guerras=%d dur_media_guerra=%.1f estagnado=%s eliminados=%s predios=%s cidades_finais=%s ouro_medio=%s rotas_criadas=%d rotas_ativas_fim=%d rotas_canceladas=%d fronteira_com_recurso=%s fronteira_perto_de_covil=%s eixo_dominante=%s pesquisas_identity_match=%d/%d(%.0f%%)" % [
 			seed_value,
 			result.ended_turn if result.ended_turn != -1 else TURN_COUNT,
 			("T%d" % result.first_war_turn) if result.first_war_turn != -1 else "nenhuma",
@@ -110,6 +110,11 @@ func test_simulate_baseline_multi_seed_metrics():
 			result.routes_active_at_end,
 			result.routes_cancelled,
 			result.frontier_claim_resource_pct,
+			result.frontier_claim_lair_danger_pct,
+			result.dominant_axis_counts,
+			result.research_choices_matching_identity,
+			result.research_choices_total,
+			result.research_choice_identity_match_pct * 100.0,
 		])
 
 	var seeds_with_war := 0
@@ -165,6 +170,7 @@ func _run_seed(seed_value: int) -> Dictionary:
 	for turn_index in range(TURN_COUNT):
 		var war_before := _war_pairs(primary, rivals)
 		var cities_before := _city_counts(primary, rivals)
+		var research_before := _research_before(primary, rivals)
 
 		# GameManager._on_turn_changed so decide producao/pesquisa/ataque pra
 		# rival_players (o jogador humano decide isso via UI de verdade) —
@@ -225,7 +231,7 @@ func _run_seed(seed_value: int) -> Dictionary:
 		if not rivals.is_empty():
 			RivalAI.take_turn(primary, grid, rivals[0])
 
-		_record_turn(m, grid, turn_index, primary, rivals, war_before, cities_before)
+		_record_turn(m, grid, turn_index, primary, rivals, war_before, cities_before, research_before)
 
 		if GameManager.state == GameManager.GameState.GAME_OVER:
 			m.ended_turn = turn_index + 1
@@ -265,6 +271,19 @@ func _city_counts(primary: PlayerData, rivals: Array[PlayerData]) -> Dictionary:
 		counts[rival] = rival.cities.size()
 	return counts
 
+## Roadmap "Parte B" B3 — snapshot de current_research ANTES do turno, mesmo
+## padrao de war_before/cities_before acima. current_research so transiciona
+## "" -> tech_id (escolha nova) ou tech_id -> "" (pesquisa completou) — nunca
+## pula de uma tech pra outra direto (ver GameManager._process_research/
+## RivalAI.decide_research) — entao comparar antes/depois basta pra detectar
+## uma escolha nova.
+func _research_before(primary: PlayerData, rivals: Array[PlayerData]) -> Dictionary:
+	var before := {}
+	before[primary] = primary.current_research
+	for rival in rivals:
+		before[rival] = rival.current_research
+	return before
+
 func _new_metrics() -> Dictionary:
 	return {
 		"first_war_turn": -1,
@@ -279,6 +298,9 @@ func _new_metrics() -> Dictionary:
 		"prev_owned_tiles": {}, # City -> Dictionary(coord->true), snapshot do turno anterior (Roadmap 2.0 Parte 1, A1)
 		"frontier_claims_total": 0, # A1: tiles NOVOS de territorio por turno (exclui o anel inicial de found_city)
 		"frontier_claims_with_resource": 0, # A1: quantos desses tinham recurso
+		"frontier_claims_near_lair_danger": 0, # Roadmap 2.0 (fecha Parte A): quantos desses estavam perto de covil perigoso ativo
+		"research_choices_total": 0, # Roadmap "Parte B" B3: quantas vezes current_research foi de "" pra uma tech nova nesse turno, qualquer civ
+		"research_choices_matching_identity": 0, # B3: dessas, quantas tem eixo derivado com civilization_axis_strength > 0 pra aquela civ
 	}
 
 ## Roadmap 2.0 Parte 1 (A1) — benchmark do bonus de recurso na pontuacao de
@@ -299,6 +321,8 @@ func _record_frontier_claims(m: Dictionary, grid: HexGrid, primary: PlayerData, 
 						var data := grid.get_tile(coord)
 						if data and data.resource != "":
 							m.frontier_claims_with_resource += 1
+						if grid.get_lair_danger_at(coord) > 0.0:
+							m.frontier_claims_near_lair_danger += 1
 			var snapshot := {}
 			for coord in city.owned_tiles:
 				snapshot[coord] = true
@@ -336,7 +360,25 @@ func _log_war_target(grid: HexGrid, primary: PlayerData, rival: PlayerData, turn
 			turn_number, _label(attacker, primary), target_city.city_name, target_city.owned_tiles.size(), resource_count
 		])
 
-func _record_turn(m: Dictionary, grid: HexGrid, turn_index: int, primary: PlayerData, rivals: Array[PlayerData], war_before: Dictionary, cities_before: Dictionary) -> void:
+## Roadmap "Parte B" B3 — deteccao da transicao "" -> tech_id por civ por
+## turno (current_research so transiciona assim, ou de volta pra "" quando
+## a pesquisa completa — nunca pula de uma tech pra outra direto), MESMO
+## padrao de diff turno-a-turno de _record_frontier_claims (snapshot do
+## turno anterior, aqui research_before em vez de prev_owned_tiles). So
+## observacional (research_choices_total/matching_identity), nenhum assert
+## de comportamento — mesma disciplina do resto deste harness.
+func _record_research_choices(m: Dictionary, research_before: Dictionary, primary: PlayerData, rivals: Array[PlayerData]) -> void:
+	for player in ([primary] as Array[PlayerData]) + rivals:
+		var before: String = research_before.get(player, "")
+		if before == "" and player.current_research != "":
+			m.research_choices_total += 1
+			var tech := TechDatabase.get_tech(player.current_research)
+			if tech:
+				var axis := RivalAI._tech_identity_axis(tech)
+				if axis != "" and CityIdentity.civilization_axis_strength(player, axis) > 0.0:
+					m.research_choices_matching_identity += 1
+
+func _record_turn(m: Dictionary, grid: HexGrid, turn_index: int, primary: PlayerData, rivals: Array[PlayerData], war_before: Dictionary, cities_before: Dictionary, research_before: Dictionary) -> void:
 	var turn_number := turn_index + 1
 	var any_change := false
 
@@ -362,6 +404,7 @@ func _record_turn(m: Dictionary, grid: HexGrid, turn_index: int, primary: Player
 			any_change = true
 
 	_record_frontier_claims(m, grid, primary, rivals)
+	_record_research_choices(m, research_before, primary, rivals)
 
 	# Comercio (Fase 4A) — so conta CRIACAO uma vez por rota (a mesma
 	# TradeRoute aparece na lista dos 2 lados, ver Dictionary como set).
@@ -403,11 +446,22 @@ func _finalize_metrics(m: Dictionary, primary: PlayerData, rivals: Array[PlayerD
 	m.final_cities = {}
 	m.avg_gold = {}
 	m.eliminated = []
+	# Roadmap "Parte B" (B1/B2) — distribuicao observacional de dominant_
+	# axis entre TODAS as cidades finais (humano + rivais juntos), mesmo
+	# padrao "so pra olhar" das metricas de fronteira/comercio acima — nao
+	# ha comportamento "certo" prometido ainda pra travar um assert em
+	# cima. Interessa em particular ver se arcana (balde de 6 predios)
+	# fica estruturalmente rara perto de agricola/industrial/comercial
+	# (baldes de 1 predio cada, chegam a dominante com um unico predio).
+	m.dominant_axis_counts = {}
 	for player in ([primary] as Array[PlayerData]) + rivals:
 		var label := _label(player, primary)
 		var total_buildings := 0
 		for city in player.cities:
 			total_buildings += city.buildings.size()
+			var axis := CityIdentity.dominant_axis(city)
+			var key: String = axis if axis != "" else "generalista"
+			m.dominant_axis_counts[key] = m.dominant_axis_counts.get(key, 0) + 1
 		m.buildings_built[label] = total_buildings
 		m.final_cities[label] = player.cities.size()
 		m.avg_gold[label] = m.gold_sum.get(player, 0.0) / float(final_turn)
@@ -421,8 +475,17 @@ func _finalize_metrics(m: Dictionary, primary: PlayerData, rivals: Array[PlayerD
 	# por zero.
 	if m.frontier_claims_total > 0:
 		m.frontier_claim_resource_pct = "%.0f%%" % (100.0 * float(m.frontier_claims_with_resource) / float(m.frontier_claims_total))
+		m.frontier_claim_lair_danger_pct = "%.0f%%" % (100.0 * float(m.frontier_claims_near_lair_danger) / float(m.frontier_claims_total))
 	else:
 		m.frontier_claim_resource_pct = "n/a"
+		m.frontier_claim_lair_danger_pct = "n/a"
+
+	# Roadmap "Parte B" B3 — responde empiricamente "com o peso inicial
+	# (RESEARCH_WEIGHT_IDENTITY=0.2), quanto a identidade realmente
+	# influencia a pesquisa?": ~0% seria irrelevante, ~90% seria trilho
+	# disfarcado. Teto estrutural real fica abaixo de 100% de qualquer
+	# forma (7 das 21 techs nao tem eixo de identidade nenhum).
+	m.research_choice_identity_match_pct = (float(m.research_choices_matching_identity) / float(m.research_choices_total)) if m.research_choices_total > 0 else 0.0
 
 	# Comercio (Fase 4A) — "rotas ativas no fim" + "canceladas" (criadas
 	# menos ainda-ativas, proxy simples: nao distingue guerra de outra

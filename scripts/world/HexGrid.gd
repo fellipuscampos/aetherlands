@@ -1281,6 +1281,36 @@ func is_under_rival_pressure(coord: Vector2i, player: PlayerData) -> bool:
 			return true
 	return false
 
+## Roadmap 2.0 (fecha Parte A) — proxy MINIMO de "quao perigoso e ficar
+## perto deste covil", mesmo espirito de is_under_rival_pressure acima
+## (distancia hexagonal crua, sem campo de forca/influencia). Um covil so
+## entra na conta se get_unit_at(lair_coord) != null: um covil em
+## lair_coords cujo guardiao ja morreu (mas ainda nao foi "destruido"
+## andando em cima, ver destroy_lair) nao e mais perigoso, mesmo que ainda
+## conste na lista. Pega o MAX entre os covis qualificados dentro do raio,
+## NUNCA a soma — dois acampamentos de Goblin proximos nao deveriam
+## assustar mais que um unico covil de Dragao, o pior vizinho manda. attack
+## de MonsterDatabase.KIND_DATA (nao min_threat, que e limiar de SPAWN, nao
+## forca de combate) normalizado pelo attack do Dragao (16.0, o mais forte
+## hoje) pra caber em 0..1.
+const LAIR_DANGER_RADIUS := 4
+
+func get_lair_danger_at(coord: Vector2i) -> float:
+	var max_danger := 0.0
+	var strongest_attack: float = MonsterDatabase.KIND_DATA["dragon"].attack
+	for lair_coord in lair_coords:
+		if get_unit_at(lair_coord) == null:
+			continue
+		if HexMetrics.axial_distance(coord, lair_coord) > LAIR_DANGER_RADIUS:
+			continue
+		var kind: String = lair_kind_by_coord.get(lair_coord, "")
+		var info: Dictionary = MonsterDatabase.KIND_DATA.get(kind, {})
+		var attack: float = info.get("attack", 0.0)
+		var danger := attack / strongest_attack
+		if danger > max_danger:
+			max_danger = danger
+	return max_danger
+
 ## Roadmap 2.0 Parte 1 (C3) — pre-condicao espacial pro modo "Embarcar" (ver
 ## SelectionManager.toggle_embark_selected): `coord` tem pelo menos um
 ## vizinho de agua (HexTileData.can_be_embarked_on()). Nao da pra exigir

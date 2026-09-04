@@ -430,3 +430,77 @@ func test_score_settle_candidate_penalizes_tile_under_rival_pressure():
 	var score = RivalAI._score_settle_candidate(pressured_coord, hex_grid, rival)
 
 	assert_lt(score, 0.0, "tile sob pressao de cidade rival (do jogador humano) deveria pontuar abaixo de zero")
+
+## Roadmap 2.0 (fecha Parte A) — mesma penalizacao, agora por covil de
+## monstro perigoso ativo em vez de cidade rival.
+func test_score_settle_candidate_penalizes_tile_near_active_lair():
+	var lair_coord := Vector2i(0, 0)
+	hex_grid.lair_coords.append(lair_coord)
+	hex_grid.lair_kind_by_coord[lair_coord] = "dragon"
+	hex_grid.spawn_monster_at(lair_coord, "dragon", true)
+	var candidate := Vector2i(HexGrid.LAIR_DANGER_RADIUS, 0)
+
+	var score = RivalAI._score_settle_candidate(candidate, hex_grid, rival)
+
+	assert_lt(score, 0.0, "tile perto de covil de Dragao ativo deveria pontuar abaixo de zero")
+
+## Leva a exclusao do guardiao morto (HexGrid.get_lair_danger_at) ate a
+## formula de assentamento da IA, nao so a consulta crua do HexGrid.
+func test_score_settle_candidate_ignores_lair_with_dead_defender():
+	var lair_coord := Vector2i(0, 0)
+	hex_grid.lair_coords.append(lair_coord)
+	hex_grid.lair_kind_by_coord[lair_coord] = "dragon" # sem spawn_monster_at -- guardiao "morto"
+	var candidate := Vector2i(HexGrid.LAIR_DANGER_RADIUS, 0)
+
+	var score = RivalAI._score_settle_candidate(candidate, hex_grid, rival)
+
+	assert_eq(score, 0.0, "covil sem defensor vivo nao deveria penalizar o candidato")
+
+## Roadmap "Parte B" (B3) — RivalAI._tech_identity_axis: eixo DERIVADO de
+## unlocks_building/unlocks_unit (via BuildingDatabase.building_that_trains),
+## nunca uma tabela nova. Nao depende de hex_grid/human/rival do fixture,
+## so de TechDatabase/BuildingDatabase/CityIdentity.
+func test_tech_identity_axis_derives_from_unlocks_building():
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("celeiro")), CityIdentity.AXIS_AGRICOLA)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("oficina")), CityIdentity.AXIS_INDUSTRIAL)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("mercado")), CityIdentity.AXIS_COMERCIAL)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("muralhas")), CityIdentity.AXIS_MILITAR)
+
+func test_tech_identity_axis_derives_from_unlocks_unit_via_trainer_building():
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("quartel")), CityIdentity.AXIS_MILITAR)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("arquearia")), CityIdentity.AXIS_MILITAR)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("estabulo")), CityIdentity.AXIS_MILITAR)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("constructos_de_guerra")), CityIdentity.AXIS_MILITAR)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("invocacao_espiritos")), CityIdentity.AXIS_ARCANA)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("pacto_florestal")), CityIdentity.AXIS_ARCANA)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("forja_runica")), CityIdentity.AXIS_ARCANA)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("lordes_dos_ventos")), CityIdentity.AXIS_ARCANA)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("necromancia_pratica")), CityIdentity.AXIS_ARCANA)
+
+func test_tech_identity_axis_resolves_batedor_montado_via_stable_fallback():
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("batedor_montado")), CityIdentity.AXIS_MILITAR, "scout treina no Estabulo (fallback de BuildingDatabase.building_that_trains, mesmo de B2), deveria herdar o eixo militar")
+
+func test_tech_identity_axis_is_empty_for_techs_without_building_or_unit_unlock():
+	for id in ["canalizacao_base", "navegacao", "cataclismo_elemental", "transcendencia_florestal", "alquimia_botanica", "transmutacao_rocha", "geomancia"]:
+		assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech(id)), "", "%s nao desbloqueia predio nem unidade, nao deveria ter eixo de identidade" % id)
+
+## Protege a propriedade "sem predio/unidade, identidade nao inventa
+## preferencia" — pontuacao de uma tech sem eixo e EXATAMENTE igual com a
+## civ sem identidade nenhuma e com a civ no auge de qualquer eixo.
+## Especialmente relevante com 7 das 21 techs caindo nesse caso.
+func test_score_research_candidate_identity_has_no_effect_for_unmapped_tech():
+	var navegacao: TechData = TechDatabase.get_tech("navegacao")
+	var player_no_identity := PlayerData.new(CivilizationData.new())
+
+	var player_max_identity := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	for id in ["walls", "barracks", "archery_range", "stable", "siege_workshop"]:
+		city.buildings[id] = true
+	player_max_identity.cities.append(city)
+
+	assert_eq(
+		RivalAI._score_research_candidate(navegacao, player_no_identity),
+		RivalAI._score_research_candidate(navegacao, player_max_identity),
+		"tech sem eixo de identidade nao deveria pontuar diferente so por causa da identidade da civ"
+	)
+	city.queue_free()

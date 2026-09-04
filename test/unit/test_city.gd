@@ -60,6 +60,49 @@ func test_production_cost_matches_unit_database():
 	assert_eq(city.production_cost(), UnitDatabase.create_unit("cavalry").production_cost)
 	city.queue_free()
 
+## Roadmap "Parte B" (B2) — desconto militar de identidade se aplica MESMO
+## SEM hex_grid (diferente dos descontos de recurso de ResourceDatabase),
+## porque so depende de buildings LOCAIS da propria cidade.
+func test_production_cost_applies_militar_identity_discount_without_hex_grid():
+	var city := City.new()
+	for id in ["walls", "barracks", "archery_range", "stable", "siege_workshop"]:
+		city.buildings[id] = true
+	city.set_production("men_at_arms")
+	var base_cost = UnitDatabase.create_unit("men_at_arms").production_cost
+
+	assert_almost_eq(city.production_cost(), base_cost * (1.0 - CityIdentity.MILITAR_UNIT_COST_DISCOUNT_MAX), 0.01, "desconto militar deveria se aplicar mesmo sem hex_grid nenhum")
+
+	city.queue_free()
+
+## Confirma que o desconto de identidade militar e o desconto de recurso
+## (Ferro, ver ResourceDatabase.heavy_unit_cost_multiplier) empilham
+## MULTIPLICATIVAMENTE, nenhum dos dois sozinho ja explica o custo final —
+## mesmo padrao de raca x dificuldade x predio ja empilhando em
+## collect_yields().
+func test_production_cost_stacks_militar_identity_with_iron_discount():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	tile.resource = "iron"
+	hex_grid.tiles[center] = tile
+
+	var player := PlayerData.new(CivilizationData.new())
+	var city := hex_grid.found_city(center, player, "Capital")
+	city.buildings["barracks"] = true # militar 1/5, identidade sozinha ja desconta
+	city.set_production("men_at_arms") # esta no ResourceDatabase.IRON_DISCOUNT_KINDS
+	var base_cost = UnitDatabase.create_unit("men_at_arms").production_cost
+
+	var identity_only = base_cost * CityIdentity.militar_unit_cost_multiplier(city, "men_at_arms")
+	var iron_only = base_cost * ResourceDatabase.heavy_unit_cost_multiplier(player, hex_grid)
+	var actual = city.production_cost(hex_grid)
+
+	assert_lt(actual, identity_only, "com hex_grid e Ferro controlado, o custo deveria ficar ABAIXO do que so o desconto de identidade explicaria")
+	assert_lt(actual, iron_only, "deveria ficar ABAIXO do que so o desconto de Ferro explicaria")
+	assert_almost_eq(actual, base_cost * CityIdentity.militar_unit_cost_multiplier(city, "men_at_arms") * ResourceDatabase.heavy_unit_cost_multiplier(player, hex_grid), 0.01, "os dois descontos deveriam empilhar multiplicativamente")
+
+	hex_grid.queue_free()
+
 ## Regressao: cidade deve mesmo crescer com comida suficiente acumulada
 ## (a base de todo o loop de expansao do jogo).
 func test_process_turn_accumulates_food_and_grows_population():
@@ -193,6 +236,94 @@ func test_best_unassigned_neighbor_also_prefers_resource_tile():
 	hex_grid.queue_free()
 	city.queue_free()
 
+## Roadmap 2.0 (fecha Parte A) — dois candidatos de mesmo yield (Planicie),
+## um perto de um covil de Dragao ativo (dentro de LAIR_DANGER_RADIUS), o
+## outro longe — a cidade deveria reivindicar o tile LONGE do covil.
+func test_claim_frontier_tile_avoids_tile_near_active_lair():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var safe_coord := Vector2i(1, 0)
+	var near_lair_coord := Vector2i(-1, 0)
+	hex_grid.tiles[safe_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[near_lair_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var lair_coord := Vector2i(-5, 0) # distancia 4 (== LAIR_DANGER_RADIUS) de near_lair_coord, 6 de safe_coord
+	hex_grid.lair_coords.append(lair_coord)
+	hex_grid.lair_kind_by_coord[lair_coord] = "dragon"
+	hex_grid.spawn_monster_at(lair_coord, "dragon", true)
+
+	var player := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = player
+	city.owned_tiles = [center]
+
+	city._claim_frontier_tile(hex_grid)
+
+	assert_eq(city.owned_tiles, [center, safe_coord], "deveria reivindicar o tile longe do covil de Dragao, nao o vizinho dele")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+## A tensao "trade-off, nao bloqueio" pedida pelo usuario: um tile de
+## recurso colado num covil de Dragao ainda deveria vencer um tile sem
+## recurso e sem covil por perto, se o bonus de recurso superar a
+## penalidade de perigo.
+func test_claim_frontier_tile_still_prefers_resource_tile_despite_nearby_dangerous_lair():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var plain_coord := Vector2i(1, 0)
+	hex_grid.tiles[plain_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var resource_coord := Vector2i(-1, 0)
+	var resource_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	resource_tile.resource = "iron"
+	hex_grid.tiles[resource_coord] = resource_tile
+	var lair_coord := Vector2i(-5, 0) # distancia 4 de resource_coord, 6 de plain_coord
+	hex_grid.lair_coords.append(lair_coord)
+	hex_grid.lair_kind_by_coord[lair_coord] = "dragon"
+	hex_grid.spawn_monster_at(lair_coord, "dragon", true)
+
+	var player := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = player
+	city.owned_tiles = [center]
+
+	city._claim_frontier_tile(hex_grid)
+
+	assert_eq(city.owned_tiles, [center, resource_coord], "bonus de recurso (+4) deveria superar a penalidade de perigo de Dragao (-3), mesmo tile sem recurso/sem covil rendendo mais yield bruto")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+## Mesma checagem de test_claim_frontier_tile_avoids_tile_near_active_lair,
+## agora via _best_unassigned_neighbor — confirma que a penalidade de covil
+## se aplica aos dois call sites de _tile_claim_score, nao so a um.
+func test_best_unassigned_neighbor_also_avoids_lair_danger():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var safe_coord := Vector2i(1, 0)
+	var near_lair_coord := Vector2i(-1, 0)
+	hex_grid.tiles[safe_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	hex_grid.tiles[near_lair_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var lair_coord := Vector2i(-5, 0)
+	hex_grid.lair_coords.append(lair_coord)
+	hex_grid.lair_kind_by_coord[lair_coord] = "dragon"
+	hex_grid.spawn_monster_at(lair_coord, "dragon", true)
+
+	var city := City.new()
+	city.coord = center
+
+	var best = city._best_unassigned_neighbor(hex_grid)
+
+	assert_eq(best, safe_coord)
+
+	hex_grid.queue_free()
+	city.queue_free()
+
 func test_process_turn_spawns_unit_once_production_cost_is_reached():
 	var hex_grid := HexGrid.new()
 	var coord := Vector2i(0, 0)
@@ -237,6 +368,39 @@ func test_collect_yields_guarantees_minimum_production_on_zero_yield_city_tile()
 
 	hex_grid.queue_free()
 	city.queue_free()
+
+## Roadmap "Parte B" (B1/B2) — CityIdentity.apply_yield_bonus() de verdade
+## chamada dentro de collect_yields(). Compara DUAS cidades EQUIVALENTES
+## (mesmo tile central, mesma ausencia de tiles trabalhados), uma com
+## Celeiro construido e outra sem — nao basta checar "o yield reflete algum
+## bonus", precisa isolar o bonus de IDENTIDADE do bonus de YIELD que o
+## proprio Celeiro ja da via BuildingDatabase.total_bonus (+1 comida), que
+## e um efeito SEPARADO e ja coberto por outros testes.
+func test_collect_yields_applies_agricola_identity_bonus_on_top_of_granary_own_yield():
+	var hex_grid := HexGrid.new()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var city_without_granary := City.new()
+	city_without_granary.coord = coord
+	var food_without_granary = city_without_granary.collect_yields(hex_grid).food
+
+	var city_with_granary := City.new()
+	city_with_granary.coord = coord
+	city_with_granary.buildings["granary"] = true
+	var food_with_granary = city_with_granary.collect_yields(hex_grid).food
+
+	# Diferenca esperada = bonus de YIELD do Celeiro (+1 comida, ver
+	# BuildingDatabase) DEPOIS multiplicado pelo bonus de IDENTIDADE
+	# agricola (a comida INTEIRA e multiplicada, nao so a parte do Celeiro,
+	# ver CityIdentity.apply_yield_bonus) — nao a soma simples dos dois.
+	var expected_food = (food_without_granary + 1.0) * (1.0 + CityIdentity.AGRICOLA_FOOD_BONUS_MAX)
+	assert_almost_eq(food_with_granary, expected_food, 0.01, "comida com Celeiro deveria refletir TANTO o bonus de yield do predio QUANTO o bonus de identidade agricola por cima")
+	assert_gt(food_with_granary, food_without_granary + 1.0, "o bonus de identidade deveria somar ALEM do bonus de yield puro do Celeiro")
+
+	hex_grid.queue_free()
+	city_without_granary.queue_free()
+	city_with_granary.queue_free()
 
 ## Mesmo cenario acima, mas verificando que process_turn() de fato ACUMULA
 ## producao turno apos turno em vez de ficar travado — e nao so que
@@ -1255,7 +1419,10 @@ func test_collect_yields_includes_building_bonus():
 
 	var yields = city.collect_yields(hex_grid)
 
-	assert_almost_eq(yields.food, 4.0, 0.01, "3 (tile) + 1 (Celeiro) = 4")
+	# 3 (tile) + 1 (Celeiro) = 4, DEPOIS multiplicado pelo bonus de
+	# identidade agricola (Roadmap Parte B, CityIdentity.gd — Celeiro
+	# sozinho ja da forca agricola 1.0/1.0): 4 * (1 + 0.10) = 4.4.
+	assert_almost_eq(yields.food, 4.0 * (1.0 + CityIdentity.AGRICOLA_FOOD_BONUS_MAX), 0.01, "3 (tile) + 1 (Celeiro), com bonus de identidade agricola por cima")
 
 	hex_grid.queue_free()
 	city.queue_free()
@@ -1282,7 +1449,11 @@ func test_collect_yields_includes_mana_from_worked_resource_and_building():
 
 	var yields = city.collect_yields(hex_grid)
 
-	assert_almost_eq(yields.mana, 5.0, 0.01, "2 (nodulo arcano trabalhado) + 3 (Torre dos Sabios) = 5")
+	# 2 (nodulo arcano trabalhado) + 3 (Torre dos Sabios) = 5, DEPOIS
+	# multiplicado pelo bonus de identidade arcana (Roadmap Parte B,
+	# CityIdentity.gd — Torre dos Sabios sozinha da forca arcana 1.0/6.0):
+	# 5 * (1 + 0.15 * (1/6)) = 5.125.
+	assert_almost_eq(yields.mana, 5.0 * (1.0 + CityIdentity.ARCANA_MANA_BONUS_MAX * (1.0 / 6.0)), 0.01, "2 (nodulo arcano trabalhado) + 3 (Torre dos Sabios), com bonus de identidade arcana por cima")
 
 	hex_grid.queue_free()
 	city.queue_free()

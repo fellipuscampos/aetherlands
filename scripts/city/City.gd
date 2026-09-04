@@ -262,6 +262,14 @@ func production_cost(hex_grid: HexGrid = null) -> float:
 	if building:
 		return building.production_cost
 	var cost: float = UnitDatabase.create_unit(production_item).production_cost
+	# Identidade militar de cidade (Roadmap Parte B, B2) — so depende de
+	# buildings LOCAIS desta cidade (CityIdentity.axis_strength), diferente
+	# dos descontos de recurso abaixo (que precisam varrer tiles
+	# controlados via hex_grid); por isso se aplica em QUALQUER chamada,
+	# mesmo sem hex_grid (HUD, rush-buy via _production_remaining(), debug
+	# inclusive) — a cidade nao precisa "saber" do hex_grid pra saber quais
+	# predios ela mesma ja tem.
+	cost *= CityIdentity.militar_unit_cost_multiplier(self, production_item)
 	if hex_grid and owner_player:
 		if production_item == "cavalry":
 			cost *= ResourceDatabase.cavalry_cost_multiplier(owner_player, hex_grid)
@@ -508,6 +516,12 @@ func collect_yields(hex_grid: HexGrid) -> Dictionary:
 	# multiplicador independente por cima.
 	var race: String = owner_player.civ.race if (owner_player and owner_player.civ) else ""
 	RaceEconomy.apply_yield_bonus(totals, race, worked_has_hills, worked_has_iron)
+	# Identidade de cidade (Roadmap Parte B, B1/B2) — MESMO padrao de
+	# "segundo multiplicador independente" da raca acima, so que por CIDADE
+	# (derivado de buildings, ver CityIdentity.gd) em vez de por civilizacao
+	# inteira. Multiplicacao comuta, a ordem entre este bonus e o racial nao
+	# muda o resultado.
+	CityIdentity.apply_yield_bonus(totals, self)
 	return totals
 
 ## Unidade hostil (monstro neutro OU unidade de outro jogador em guerra
@@ -651,15 +665,28 @@ func auto_assign_worked_tiles(hex_grid: HexGrid) -> void:
 ## ja tem esse padrao de "medir antes de recalibrar").
 const FRONTIER_RESOURCE_SCORE_BONUS := 4.0
 
+## Roadmap 2.0 (fecha Parte A) — penaliza (NUNCA bloqueia) tile perto de um
+## covil de monstro perigoso ATIVO, mesmo tratamento aditivo do bonus de
+## recurso acima: um tile de recurso colado num covil de Dragao ainda pode
+## compensar e ser reivindicado, se o bonus de recurso superar essa
+## penalidade — essa TENSAO e o ponto ("recurso perto de covil perigoso"
+## vira escolha real, nao proibicao), pedido explicito do usuario. Peso
+## nao calibrado por medicao ainda (ver harness, test_simulation_balance.gd).
+const FRONTIER_LAIR_DANGER_WEIGHT := 3.0
+
 ## Formula de pontuacao de rendimento compartilhada por _best_unassigned_
 ## neighbor (trabalho) e _claim_frontier_tile (posse) abaixo — ver
 ## comentario de _claim_frontier_tile pra por que as duas precisam ficar em
-## sincronia.
-func _tile_claim_score(data: HexTileData) -> float:
+## sincronia. Deliberadamente compartilhada: representa "qual tile e melhor
+## pra esta cidade" de forma generica, entao o bonus de recurso e a
+## penalidade de covil (HexGrid.get_lair_danger_at) valem igual pra
+## trabalho E posse — nao e um efeito colateral acidental.
+func _tile_claim_score(data: HexTileData, hex_grid: HexGrid, coord: Vector2i) -> float:
 	var y = effective_tile_yield(data)
 	var score = y.food * 1.5 + y.production * 1.3 + y.gold
 	if data.resource != "":
 		score += FRONTIER_RESOURCE_SCORE_BONUS
+	score -= hex_grid.get_lair_danger_at(coord) * FRONTIER_LAIR_DANGER_WEIGHT
 	return score
 
 func _best_unassigned_neighbor(hex_grid: HexGrid):
@@ -671,7 +698,7 @@ func _best_unassigned_neighbor(hex_grid: HexGrid):
 		var data: HexTileData = hex_grid.get_tile(n)
 		if data == null or not data.can_be_worked():
 			continue
-		var score = _tile_claim_score(data)
+		var score = _tile_claim_score(data, hex_grid, n)
 		if score > best_score:
 			best_score = score
 			best_coord = n
@@ -709,7 +736,7 @@ func _claim_frontier_tile(hex_grid: HexGrid) -> void:
 		var data: HexTileData = hex_grid.get_tile(n)
 		if data == null:
 			continue
-		var score = _tile_claim_score(data)
+		var score = _tile_claim_score(data, hex_grid, n)
 		if score > best_score:
 			best_score = score
 			best_coord = n

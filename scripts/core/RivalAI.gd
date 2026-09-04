@@ -327,36 +327,118 @@ static func decide_trade(player: PlayerData, hex_grid: HexGrid, opponent: Player
 			TradeManager.propose_route(city, target_city, hex_grid)
 			return
 
-## Sem nenhuma pesquisa em andamento, escolhe uma tecnologia disponivel ao
-## acaso (pre-requisitos ja cumpridos) — mesma logica simples de
-## decide_production, so garante que a IA sempre tenha algo na fila em vez
-## de desperdicar ciencia gerada por turno (ver GameManager._process_research).
-## Roadmap de gameplay Fase 4A — achado do harness de simulacao (Fase 0):
-## sorteio uniforme entre TODAS as disponiveis fazia Mercado (Celeiro ->
-## Oficina -> Mercado, 3 pesquisas especificas em sequencia) nunca ser
-## alcancado nem em 200 turnos, mesmo com ciencia de sobra — cada elo
-## tinha que ser sorteado espeficamente entre ~10+ opcoes concorrentes
-## toda vez que a pesquisa anterior terminava. Fix pequeno e generico (nao
-## exclusivo de Celeiro/Oficina/Mercado, vale pra qualquer cadeia,
-## inclusive as magicas): tech cujo PRE-REQUISITO ja foi cumprido (ou
-## seja, "abriu" por causa de algo que a propria civ acabou de pesquisar)
-## ganha prioridade sobre tech de raiz (sem pre-requisito, sempre
-## disponivel desde o inicio, entao nunca urgente) — continuar uma cadeia
-## em andamento antes de comecar outra do zero.
+## Roadmap "Parte B" B3 — pesos da pontuacao de PESQUISA (mesmo estilo
+## nomeado/comentado de SCORE_WEIGHT_*/WAR_WEIGHT_* acima, ver decide_
+## production/decide_war). CONTINUATION preserva o comportamento ja
+## validado de Fase 4A ("tech cujo pre-requisito ja foi cumprido ganha
+## prioridade sobre tech de raiz") — antes era um pool de DOIS grupos
+## (continuations if not empty else available) com sorteio aleatorio
+## DENTRO do grupo escolhido; agora e um TERMO pontuado, o que permite o
+## termo de identidade (abaixo) somar por cima sem reintroduzir randi().
+const RESEARCH_WEIGHT_CONTINUATION := 1.0
+## Pequeno de proposito — nunca deveria, sozinho, superar uma continuacao
+## de cadeia real (ver teste "nunca sobrepoe"). Harness-validate-later,
+## mesma disciplina de todo o resto do sistema ("variavel sistemica
+## pequena -> decisao existente -> formula aditiva -> teste comportamental
+## -> harness antes de calibrar", ver AGRICOLA_FOOD_BONUS_MAX etc em
+## CityIdentity.gd). civilization_axis_strength() e 0.0-1.0, entao o termo
+## de identidade sozinho nunca ultrapassa RESEARCH_WEIGHT_IDENTITY — bem
+## abaixo de RESEARCH_WEIGHT_CONTINUATION=1.0, pra uma continuacao de
+## cadeia SEMPRE vencer um match de identidade PERFEITO sozinho. Risco de
+## loop de reforco (Celeiro cedo -> agricola dominante no achado de B1/B2
+## -> se isto favorecer tech agricola -> economia melhor -> mais
+## capacidade de construcao -> MAIS agricola dominante) e exatamente por
+## isso que NAO tentamos "corrigir" o vies de agricola aqui, so evitar
+## agrava-lo sem medir primeiro (ver metrica research_choices_matching_
+## identity em test_simulation_balance.gd).
+const RESEARCH_WEIGHT_IDENTITY := 0.2
+
+## Eixo de identidade de UMA tecnologia, DERIVADO (nunca uma tabela nova
+## hand-authored — mesmo espirito de CityIdentity inteira e do lair-danger
+## de Parte A: "predios nunca encolhem, nao armazene, derive"). Regra:
+## - se a tech desbloqueia um PREDIO (unlocks_building != ""), o eixo e o
+##   balde de CityIdentity.AXIS_BUILDINGS que contem esse predio;
+## - senao, se desbloqueia uma UNIDADE (unlocks_unit != ""), resolve o
+##   predio que treina essa unidade (BuildingDatabase.building_that_trains
+##   — MESMO mecanismo que CityIdentity.militar_unit_cost_multiplier ja usa
+##   pra ir de unidade -> predio treinador -> eixo, inclusive o fallback
+##   scout/human_knight -> Estabulo) e usa o balde DESSE predio;
+## - senao (feitico puro, bonus de bioma puro, terrain_transform puro, ou
+##   standalone sem desbloqueio nenhum) -> "" (sem sinal de identidade).
+## bonus_terrain_types e IGNORADO de proposito mesmo quando presente —
+## misturar "sabor de rendimento" com "arvore de predios" como dois tipos
+## diferentes de sinal tornaria a regra ambigua; so building/unit unlocks
+## contam, uma regra so, mecanicamente fundamentada.
+##
+## Invariante verificada (nao assumida): checa unlocks_building ANTES de
+## unlocks_unit, o que so e seguro se nenhuma tech tiver os dois setados
+## ao mesmo tempo — conferido direto em TechDatabase.gd (14 atribuicoes de
+## unlocks_building/unlocks_unit, 14 variaveis de tech DISTINTAS, nenhuma
+## repetida). Se isso mudar no futuro, a funcao continua funcionando (so
+## ignora unlocks_unit nesse caso), mas os testes de derivacao servem de
+## sentinela caso essa prioridade precise ser revisitada.
+##
+## Mora aqui (RivalAI.gd), NAO em CityIdentity.gd (que fica cega pra
+## tecnologia de proposito, nunca aprende sobre TechData) nem em
+## TechDatabase.gd/TechData.gd (que ficam cegos pra identidade de
+## proposito, nenhum campo novo) — esta e a UNICA peca do sistema com
+## permissao de conhecer os dois lados, porque e a UNICA que decide
+## pesquisa (jogador humano escolhe livre pela HUD/TechTree, sem
+## pontuacao nenhuma envolvida, sem gating de identidade).
+static func _tech_identity_axis(tech: TechData) -> String:
+	if tech.unlocks_building != "":
+		return _axis_for_building(tech.unlocks_building)
+	if tech.unlocks_unit != "":
+		var trainer: BuildingData = BuildingDatabase.building_that_trains(tech.unlocks_unit)
+		if trainer != null:
+			return _axis_for_building(trainer.id)
+	return ""
+
+static func _axis_for_building(building_id: String) -> String:
+	for axis in CityIdentity.AXES:
+		if building_id in CityIdentity.AXIS_BUILDINGS[axis]:
+			return axis
+	return ""
+
+## Pontuacao de UM candidato de pesquisa (ver RESEARCH_WEIGHT_* acima).
+static func _score_research_candidate(tech: TechData, player: PlayerData) -> float:
+	var continues_chain := false
+	for prereq_id in tech.prerequisites:
+		if player.researched_techs.has(prereq_id):
+			continues_chain = true
+			break
+	var axis := _tech_identity_axis(tech)
+	var identity_strength := 0.0 if axis == "" else CityIdentity.civilization_axis_strength(player, axis)
+	return RESEARCH_WEIGHT_CONTINUATION * (1.0 if continues_chain else 0.0) + RESEARCH_WEIGHT_IDENTITY * identity_strength
+
+## Sem nenhuma pesquisa em andamento, escolhe a tecnologia disponivel de
+## MAIOR pontuacao (ver _score_research_candidate) — nao mais um sorteio
+## cego. Empate resolvido pela ordem de iteracao de `available` (que segue
+## TechDatabase.all_techs(), ordem de insercao estavel — deterministico,
+## nao randi(), mesmo padrao de _score_settle_candidate/_score_production_
+## candidate). Roadmap de gameplay Fase 4A — achado do harness de simulacao
+## (Fase 0): sorteio uniforme entre TODAS as disponiveis fazia Mercado
+## (Celeiro -> Oficina -> Mercado, 3 pesquisas especificas em sequencia)
+## nunca ser alcancado nem em 200 turnos — o termo RESEARCH_WEIGHT_
+## CONTINUATION preserva exatamente esse fix (continuar uma cadeia em
+## andamento ganha prioridade sobre tech de raiz). Roadmap "Parte B" B3
+## acrescenta o termo RESEARCH_WEIGHT_IDENTITY por cima, na MESMA formula —
+## nunca um pool separado, nunca um bloqueio (preferencia, nunca
+## exclusividade).
 static func decide_research(player: PlayerData) -> void:
 	if player.current_research != "":
 		return
 	var available = TechDatabase.available_techs(player.researched_techs)
 	if available.is_empty():
 		return
-	var continuations: Array = []
+	var best_tech: TechData = null
+	var best_score := -INF
 	for tech in available:
-		for prereq_id in tech.prerequisites:
-			if player.researched_techs.has(prereq_id):
-				continuations.append(tech)
-				break
-	var pool = continuations if not continuations.is_empty() else available
-	player.current_research = pool[randi() % pool.size()].id
+		var score := _score_research_candidate(tech, player)
+		if score > best_score:
+			best_score = score
+			best_tech = tech
+	player.current_research = best_tech.id
 
 ## So a parte de "preparar" o turno da IA (visibilidade atual + atualizar
 ## cidades inimigas escoutadas), SEM mover nenhuma unidade ainda — extraido
@@ -561,6 +643,11 @@ static func _handle_settler(unit: Unit, hex_grid: HexGrid, player: PlayerData) -
 ## pela ordem de iteracao de Dictionary.keys() (determinístico, nao
 ## randi()), pra manter os testes previsiveis.
 const SETTLE_RIVAL_PRESSURE_PENALTY := 2.0
+## Roadmap 2.0 (fecha Parte A) — constante PROPRIA, nao reusa SETTLE_RIVAL_
+## PRESSURE_PENALTY: sao fenomenos diferentes (unidade neutra hostil vs.
+## civ rival), mesmo que a FORMA da penalidade seja identica (aditiva,
+## nunca bloqueio, ver HexGrid.get_lair_danger_at).
+const SETTLE_LAIR_DANGER_WEIGHT := 3.0
 
 static func _score_settle_candidate(coord: Vector2i, hex_grid: HexGrid, player: PlayerData) -> float:
 	var score := 0.0
@@ -570,6 +657,7 @@ static func _score_settle_candidate(coord: Vector2i, hex_grid: HexGrid, player: 
 			score += 1.0
 	if hex_grid.is_under_rival_pressure(coord, player):
 		score -= SETTLE_RIVAL_PRESSURE_PENALTY
+	score -= hex_grid.get_lair_danger_at(coord) * SETTLE_LAIR_DANGER_WEIGHT
 	return score
 
 ## Roadmap 2.0 Parte 1 (A3) — corrigido pra olhar TODAS as cidades do mapa
