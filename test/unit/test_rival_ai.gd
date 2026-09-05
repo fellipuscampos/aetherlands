@@ -900,6 +900,102 @@ func test_handle_attacker_falls_back_when_campaign_target_invalidated():
 
 	assert_lt(enemy.hp, enemy.unit_data.max_hp, "alvo invalido deveria cair pro comportamento tatico existente, sem crash")
 
+## Roadmap "Parte D" D1 — decide_peace: encerramento autonomo de guerra por
+## desgaste (war_weariness). before_each ja deixa human/rival em guerra.
+## Os testes de "aceita"/"recusa" dao ao rival 2 unidades contra 0 do
+## humano (ou o inverso) pra isolar exatamente o que _accepts_peace ja
+## decide hoje (contagem de unidade) — decide_peace nao reimplementa essa
+## heuristica, so decide SE tenta.
+
+func test_decide_peace_does_nothing_at_peace():
+	human.enemies.erase(rival)
+	rival.enemies.erase(human)
+	rival.war_weariness = 100.0 # mesmo com desgaste maximo
+
+	var result = RivalAI.decide_peace(rival, human)
+
+	assert_eq(result, RivalAI.PEACE_DECISION_NOT_AT_WAR)
+	assert_false(rival.is_at_war_with(human))
+
+func test_decide_peace_does_not_propose_below_offer_threshold():
+	_make_unit("warrior", rival, Vector2i(0, 0))
+	_make_unit("warrior", rival, Vector2i(1, 0)) # rival mais forte -- humano aceitaria SE a proposta chegasse
+	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD - 1.0
+
+	var result = RivalAI.decide_peace(rival, human)
+
+	assert_eq(result, RivalAI.PEACE_DECISION_BELOW_THRESHOLD)
+	assert_true(rival.is_at_war_with(human), "abaixo do limiar de oferta, nao deveria nem tentar propor (mesmo que a proposta fosse aceita)")
+
+func test_decide_peace_proposes_at_offer_threshold_and_ends_war_when_accepted():
+	_make_unit("warrior", rival, Vector2i(0, 0))
+	_make_unit("warrior", rival, Vector2i(1, 0)) # rival mais forte -- humano aceita
+	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+
+	var result = RivalAI.decide_peace(rival, human)
+
+	assert_eq(result, RivalAI.PEACE_DECISION_ACCEPTED)
+	assert_false(rival.is_at_war_with(human))
+	assert_false(human.is_at_war_with(rival), "paz precisa ser simetrica nos dois lados")
+
+func test_decide_peace_leaves_war_active_when_refused():
+	_make_unit("warrior", human, Vector2i(0, 0))
+	_make_unit("warrior", human, Vector2i(1, 0)) # humano mais forte -- recusa
+	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+
+	var result = RivalAI.decide_peace(rival, human)
+
+	assert_eq(result, RivalAI.PEACE_DECISION_REFUSED)
+	assert_true(rival.is_at_war_with(human), "humano em vantagem numerica deveria recusar -- guerra continua, sem erro nem estado novo")
+
+func test_decide_peace_does_not_touch_active_war_campaign():
+	_make_unit("warrior", rival, Vector2i(0, 0))
+	_make_unit("warrior", rival, Vector2i(1, 0))
+	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(5, 0),
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	var result = RivalAI.decide_peace(rival, human)
+
+	assert_eq(result, RivalAI.PEACE_DECISION_ACCEPTED, "pre-condicao: paz deveria ter sido aceita")
+	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ACTIVE, "campanha ativa deveria sobreviver intacta a uma paz aceita -- fica so como registro, C3 continua separado de diplomacia")
+
+func test_decide_peace_ignores_terminal_campaign_status():
+	_make_unit("warrior", rival, Vector2i(0, 0))
+	_make_unit("warrior", rival, Vector2i(1, 0))
+	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(5, 0),
+		"status": RivalAI.CAMPAIGN_STATUS_ABANDONED,
+	}
+
+	var result = RivalAI.decide_peace(rival, human)
+
+	assert_eq(result, RivalAI.PEACE_DECISION_ACCEPTED, "campanha abandonada nao deveria impedir a decisao de paz")
+
+## Documenta a escolha de ordem em GameManager.gd (decide_peace roda ANTES
+## de Diplomacy.process_war_weariness_and_upkeep no mesmo turno) em vez de
+## deixar a defasagem parecer acidental: desgaste ganho MAIS TARDE no mesmo
+## turno so afeta a decisao do turno SEGUINTE.
+func test_decide_peace_does_not_react_to_weariness_gained_later_same_turn():
+	_make_unit("warrior", rival, Vector2i(0, 0))
+	_make_unit("warrior", rival, Vector2i(1, 0))
+	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD - 0.5 # abaixo do limiar quando decide_peace roda
+
+	var result = RivalAI.decide_peace(rival, human) # fase de decisao do turno T
+
+	assert_eq(result, RivalAI.PEACE_DECISION_BELOW_THRESHOLD)
+	assert_true(rival.is_at_war_with(human))
+
+	Diplomacy.process_war_weariness_and_upkeep(rival) # fase economica do MESMO turno T
+
+	assert_true(rival.war_weariness >= RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD, "pre-condicao: agora deveria estar acima do limiar")
+	assert_true(rival.is_at_war_with(human), "atualizar war_weariness sozinho nao decide nada -- so a PROXIMA chamada de decide_peace (turno seguinte) reagiria a isso")
+
 ## Roadmap 2.0 Parte 1 (B2) — pontuacao de guerra soma riqueza de recursos
 ## do alvo. Muralha na cidade-alvo zera o termo de vulnerabilidade de
 ## proposito, pra isolar o efeito do termo de recursos (sem isso, o score

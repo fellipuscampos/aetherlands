@@ -533,6 +533,58 @@ static func _campaign_attack_target(player: PlayerData, hex_grid: HexGrid, oppon
 		return null
 	return target_coord
 
+const PEACE_DECISION_NOT_AT_WAR := "not_at_war"
+const PEACE_DECISION_BELOW_THRESHOLD := "below_threshold"
+const PEACE_DECISION_ACCEPTED := "accepted"
+const PEACE_DECISION_REFUSED := "refused"
+## Limiar de OFERTA de paz (Roadmap "Parte D", D1) — distinto de Diplomacy.
+## WAR_WEARINESS_ACCEPTS_PEACE_THRESHOLD (40.0, "aceito SE me propuserem").
+## Deliberadamente MAIOR: "estou cansado o bastante pra tomar a iniciativa"
+## e uma barra mais alta que "aceito se pedirem" — sem essa assimetria, uma
+## guerra entraria num ciclo de proposta/aceite assim que os dois lados
+## cruzassem o MESMO limiar. Ponto de partida observavel via harness, nao
+## calibrado (mesmo espirito de WAR_WEIGHT_ROLE_FIT/CAMPAIGN_ABANDON_
+## SCORE_THRESHOLD).
+const WAR_WEARINESS_OFFER_PEACE_THRESHOLD := 60.0
+
+## Roadmap "Parte D" D1 — encerramento autonomo de guerra. So considera o
+## humano como oponente (mesmo escopo de decide_war/decide_campaign: rivais
+## nunca guerreiam entre si, ver Diplomacy.gd). Deliberadamente simples
+## nesta fatia: so desgaste de guerra (war_weariness, ja existente e ja
+## atualizado por Diplomacy.process_war_weariness_and_upkeep), sem segunda
+## dimensao de "incapaz estrategicamente" ainda.
+##
+## Diplomacy._accepts_peace() NUNCA e tocado — continua significando so
+## "aceito uma proposta que recebi", nunca "eu decido propor". Isso importa
+## porque _accepts_peace ja tem um segundo consumidor semantico
+## (TradeManager.propose_route, decide se um rival aceita uma ROTA DE
+## COMERCIO, reaproveitando a mesma heuristica) — mudar sua assinatura ou
+## semantica quebraria comercio junto.
+##
+## Recusa da proposta (Diplomacy.propose_peace -> _accepts_peace) e um
+## resultado NORMAL, nao um erro: guerra continua, nenhum estado novo
+## criado, tenta de novo no proximo turno se o desgaste continuar alto —
+## nao existe (nem precisa existir) um "peace_offer_pending".
+##
+## NUNCA mexe em war_campaigns — campanha e guerra continuam conceitos
+## separados (C3): uma campanha ACTIVE sobrevive intacta a uma paz aceita
+## (fica so como registro/estado persistente ate uma fatia futura decidir
+## o que fazer com isso — gap conhecido, deliberadamente NAO resolvido
+## aqui); uma campanha ja COMPLETED/ABANDONED nao impede nem exige a
+## decisao de paz.
+##
+## Retorna um dos PEACE_DECISION_* acima — valor TRANSIENTE (nunca guardado
+## em PlayerData), so pra quem chamou (harness/testes) poder observar o que
+## aconteceu sem precisar reconstruir isso a partir de efeito colateral.
+static func decide_peace(player: PlayerData, opponent: PlayerData) -> String:
+	if not player.is_at_war_with(opponent):
+		return PEACE_DECISION_NOT_AT_WAR
+	if player.war_weariness < WAR_WEARINESS_OFFER_PEACE_THRESHOLD:
+		return PEACE_DECISION_BELOW_THRESHOLD
+	if Diplomacy.propose_peace(player, opponent):
+		return PEACE_DECISION_ACCEPTED
+	return PEACE_DECISION_REFUSED
+
 ## Roadmap 2.0 Parte 1 (B2) — quantos recursos estrategicos DIFERENTES
 ## `city` controla (proprio tile + owned_tiles), normalizado 0.0-1.0 por
 ## WAR_RESOURCE_RICHNESS_NORM. Ressalva conhecida (nao resolvida agora, ver

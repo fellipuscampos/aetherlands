@@ -339,6 +339,13 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		# persistentes) antes do take_turn/combate deste mesmo turno rodar
 		# mais abaixo (ver RivalAI.decide_campaign).
 		RivalAI.decide_campaign(rival, hex_grid, human_player)
+		# Roadmap "Parte D" D1 — depois de decide_campaign de proposito: le o
+		# war_weariness ACUMULADO ATE O FIM DO TURNO ANTERIOR (Diplomacy.
+		# process_war_weariness_and_upkeep so atualiza mais abaixo, na fase
+		# economica deste MESMO turno) — mesma disciplina temporal de
+		# "decisao ve o mundo ate o fim do turno anterior" que decide_war/
+		# decide_campaign ja seguem.
+		RivalAI.decide_peace(rival, human_player)
 		RivalAI.decide_trade(rival, hex_grid, human_player)
 
 	for player in players:

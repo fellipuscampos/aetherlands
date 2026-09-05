@@ -95,7 +95,7 @@ func test_simulate_baseline_multi_seed_metrics():
 	for seed_value in SEEDS:
 		var result := _run_seed(seed_value)
 		all_results.append(result)
-		print("[sim seed=%d] fim=T%d 1a_guerra=%s guerras=%d dur_media_guerra=%.1f estagnado=%s eliminados=%s predios=%s cidades_finais=%s ouro_medio=%s rotas_criadas=%d rotas_ativas_fim=%d rotas_canceladas=%d fronteira_com_recurso=%s fronteira_perto_de_covil=%s eixo_dominante=%s pesquisas_identity_match=%d/%d(%.0f%%) composicao_rivais=%s campanhas_iniciadas=%d campanhas_concluidas=%d campanhas_abandonadas=%d campanhas_redirecionadas=%d campanha_status_final=%s" % [
+		print("[sim seed=%d] fim=T%d 1a_guerra=%s guerras=%d dur_media_guerra=%.1f estagnado=%s eliminados=%s predios=%s cidades_finais=%s ouro_medio=%s rotas_criadas=%d rotas_ativas_fim=%d rotas_canceladas=%d fronteira_com_recurso=%s fronteira_perto_de_covil=%s eixo_dominante=%s pesquisas_identity_match=%d/%d(%.0f%%) composicao_rivais=%s campanhas_iniciadas=%d campanhas_concluidas=%d campanhas_abandonadas=%d campanhas_redirecionadas=%d campanha_status_final=%s paz_primary=%s guerras_encerradas_por_paz=%d weariness_na_paz=%s" % [
 			seed_value,
 			result.ended_turn if result.ended_turn != -1 else TURN_COUNT,
 			("T%d" % result.first_war_turn) if result.first_war_turn != -1 else "nenhuma",
@@ -121,6 +121,9 @@ func test_simulate_baseline_multi_seed_metrics():
 			result.campaigns_abandoned,
 			result.campaigns_retargeted,
 			result.final_campaign_status,
+			result.peace_proposals_by_primary,
+			result.wars_ended_by_peace,
+			result.war_weariness_at_peace,
 		])
 
 	var seeds_with_war := 0
@@ -202,6 +205,25 @@ func test_simulate_baseline_multi_seed_metrics():
 		total_started, total_completed, total_abandoned, total_retargeted, final_status_totals,
 	])
 
+	# Roadmap "Parte D" D1 -- pergunta central nao e "60.0 e o numero certo?"
+	# e sim "o mecanismo produz guerras que terminam sozinhas, sem
+	# intervencao humana?". Sem assert de balanceamento, mesma disciplina.
+	var total_accepted := 0
+	var total_refused := 0
+	var total_below_threshold := 0
+	var total_wars_ended := 0
+	var all_weariness_at_peace: Array = []
+	for r in all_results:
+		total_accepted += r.peace_proposals_by_primary.accepted
+		total_refused += r.peace_proposals_by_primary.refused
+		total_below_threshold += r.peace_proposals_by_primary.below_threshold
+		total_wars_ended += r.wars_ended_by_peace
+		all_weariness_at_peace.append_array(r.war_weariness_at_peace)
+	print("[sim agregado paz] primary_aceitas=%d primary_recusadas=%d primary_abaixo_limiar=%d guerras_encerradas_por_paz_total=%d weariness_media_na_paz=%.1f" % [
+		total_accepted, total_refused, total_below_threshold, total_wars_ended,
+		_avg(all_weariness_at_peace),
+	])
+
 	# Unico assert desta fase: correcao (numero invalido), nunca balanceamento
 	# ou comportamento esperado — ver comentario de topo do arquivo.
 	for r in all_results:
@@ -264,6 +286,17 @@ func _run_seed(seed_value: int) -> Dictionary:
 		RivalAI.decide_research(primary)
 		RivalAI.decide_war(primary, grid, rivals[0])
 		RivalAI.decide_campaign(primary, grid, rivals[0]) # Roadmap "Parte C" C3 -- mesmo lugar/ordem de GameManager.gd (logo apos decide_war)
+		# Roadmap "Parte D" D1 -- mesmo lugar/ordem de GameManager.gd (logo
+		# apos decide_campaign). So pro "primary" de proposito, mesmo motivo
+		# de decide_war/decide_campaign acima -- cada rival ja recebe sua
+		# propria chamada de dentro de GameManager._on_turn_changed. So a
+		# direcao primary->rivals[0] fica com contagem PRECISA de tentativa/
+		# aceite/recusa (capturamos o retorno aqui); a direcao rival->primary
+		# so aparece indiretamente via _record_peace_outcome (guerra
+		# encerrada = alguma decide_peace autonoma teve sucesso, ja que
+		# nenhum outro caminho deste harness chama Diplomacy.propose_peace).
+		var peace_result := RivalAI.decide_peace(primary, rivals[0])
+		_record_peace_decision(m, peace_result)
 		RivalAI.decide_trade(primary, grid, rivals[0])
 
 		GameManager._on_turn_changed(TurnManager.turn_number, 0)
@@ -331,6 +364,19 @@ func _spawn_capital(grid: HexGrid, player: PlayerData, origin: Vector2i, claimed
 
 ## --- Metricas -----------------------------------------------------------
 
+## Roadmap "Parte D" D1 -- contagem PRECISA da direcao primary->rivals[0]
+## (unica onde temos o retorno direto de RivalAI.decide_peace neste
+## harness). PEACE_DECISION_NOT_AT_WAR nao conta nada -- e o estado normal
+## fora de guerra, nao um evento.
+func _record_peace_decision(m: Dictionary, result: String) -> void:
+	match result:
+		RivalAI.PEACE_DECISION_ACCEPTED:
+			m.peace_proposals_by_primary.accepted += 1
+		RivalAI.PEACE_DECISION_REFUSED:
+			m.peace_proposals_by_primary.refused += 1
+		RivalAI.PEACE_DECISION_BELOW_THRESHOLD:
+			m.peace_proposals_by_primary.below_threshold += 1
+
 func _war_pairs(primary: PlayerData, rivals: Array[PlayerData]) -> Dictionary:
 	var pairs := {}
 	for rival in rivals:
@@ -392,6 +438,9 @@ func _new_metrics() -> Dictionary:
 		"campaigns_completed": 0, # ACTIVE -> COMPLETED
 		"campaigns_abandoned": 0, # ACTIVE -> ABANDONED
 		"campaigns_retargeted": 0, # ACTIVE -> ACTIVE com target_coord diferente (invalidacao com substituto)
+		"peace_proposals_by_primary": {"accepted": 0, "refused": 0, "below_threshold": 0}, # Roadmap "Parte D" D1 -- so direcao primary->rivals[0], contagem PRECISA (retorno direto de decide_peace)
+		"wars_ended_by_peace": 0, # D1 -- diff-based, cobre as DUAS direcoes (ver comentario em _record_turn)
+		"war_weariness_at_peace": [], # D1 -- um valor por guerra encerrada
 	}
 
 ## Roadmap 2.0 Parte 1 (A1) — benchmark do bonus de recurso na pontuacao de
@@ -524,6 +573,18 @@ func _record_turn(m: Dictionary, grid: HexGrid, turn_index: int, primary: Player
 			var started: int = m.open_wars.get(rival, turn_number)
 			m.war_durations.append(turn_number - started)
 			m.open_wars.erase(rival)
+			# Roadmap "Parte D" D1 -- neste harness, NENHUM outro caminho
+			# alem de RivalAI.decide_peace chama Diplomacy.propose_peace
+			# (nao ha UI/clique humano aqui), entao toda guerra que termina
+			# e por construcao um encerramento AUTONOMO -- cobre as duas
+			# direcoes (primary->rival E rival->primary), diferente de
+			# peace_proposals_by_primary acima (so uma direcao, contagem
+			# precisa). Weariness capturada AQUI ja reflete o upkeep deste
+			# MESMO turno (GameManager._on_turn_changed ja rodou antes de
+			# _record_turn) -- proxy aproximado do momento da decisao, nao
+			# o valor exato que decide_peace viu (que era o de T-1).
+			m.wars_ended_by_peace += 1
+			m.war_weariness_at_peace.append(max(primary.war_weariness, rival.war_weariness))
 
 	if primary.cities.size() != cities_before[primary]:
 		any_change = true
