@@ -494,24 +494,44 @@ static func _campaign_still_viable(player: PlayerData, hex_grid: HexGrid, oppone
 	var score := _score_war_target(player, hex_grid, target_city, objective, strength_advantage, role_counts)
 	return score >= CAMPAIGN_ABANDON_SCORE_THRESHOLD
 
-## Fundacao pra proxima fatia de C3 -- "existe uma preferencia ESTRATEGICA
-## pra este oponente agora?" Retorna o target_coord da campanha ATIVA, ou
-## null. Deliberadamente NAO chamado por _choose_target/_handle_attacker
-## nesta fatia -- so prova que a camada estrategica responde; integracao
-## tatica fica pra depois (hierarquia OBJETIVO -> ALVO ESTRATEGICO -> ALVOS
-## TATICOS -> COMBATE, so as duas primeiras camadas nesta fatia).
+## "Existe uma preferencia ESTRATEGICA pra este oponente agora?" Retorna o
+## target_coord da campanha ATIVA, ou null. Consumida taticamente desde
+## Roadmap "Parte C" C4 via _campaign_attack_target (que soma a checagem de
+## frescor que esta funcao nao faz sozinha) — ver _handle_attacker.
 ##
-## LACUNA CONHECIDA (aceita nesta fatia): se o humano propuser paz e o rival
-## aceitar enquanto a campanha esta ACTIVE, nada aqui reage -- decide_
-## campaign continuaria reavaliando uma campanha agora irrelevante nos
-## turnos seguintes. Inofensivo hoje porque esta funcao nao esta ligada a
-## nenhum comportamento tatico ainda; vira problema da PROXIMA fatia de C3,
-## quando _choose_campaign_target passar a ser consumida de verdade.
+## LACUNA CONHECIDA (aceita, ainda nao resolvida): se o humano propuser paz
+## e o rival aceitar enquanto a campanha esta ACTIVE, nada aqui reage —
+## decide_campaign continuaria reavaliando uma campanha agora irrelevante
+## nos turnos seguintes, e _campaign_attack_target continuaria direcionando
+## unidades pra ela (a checagem de frescor so olha posse de cidade, nao
+## estado diplomatico). Inofensivo em termos de crash/comportamento invalido
+## (a unidade so continuaria "perseguindo" um alvo que tecnicamente nao e
+## mais hostil) — corrigir isso e trabalho de uma fatia futura que conecte
+## campanha a Diplomacy.gd, deliberadamente fora de escopo ate aqui.
 static func _choose_campaign_target(player: PlayerData, opponent: PlayerData):
 	var campaign: Dictionary = player.war_campaigns.get(opponent, {})
 	if campaign.get("status", "") != CAMPAIGN_STATUS_ACTIVE:
 		return null
 	return campaign.target_coord
+
+## Roadmap "Parte C" C4 — resolve o target_coord da campanha ATIVA pra uso
+## TATICO. Diferente de _choose_campaign_target, que so devolve o coord cru:
+## aqui confirma que o coord AINDA corresponde a uma cidade de verdade do
+## `opponent` agora mesmo -- o status da campanha so e reavaliado 1x por
+## turno em decide_campaign/_advance_campaign, mas o mundo pode ja ter
+## mudado dentro do MESMO turno (ex: outra unidade capturou o alvo mais
+## cedo na mesma passada de execucao, especialmente no caminho escalonado —
+## ver GameManager._process()/stagger_ai_turns, que drena uma unidade por
+## vez). Devolve null se nao ha campanha ativa OU se o alvo guardado ja nao
+## e uma cidade do oponente.
+static func _campaign_attack_target(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData):
+	var target_coord = _choose_campaign_target(player, opponent)
+	if target_coord == null:
+		return null
+	var target_city := hex_grid.get_city_at(target_coord)
+	if target_city == null or target_city.owner_player != opponent:
+		return null
+	return target_coord
 
 ## Roadmap 2.0 Parte 1 (B2) — quantos recursos estrategicos DIFERENTES
 ## `city` controla (proprio tile + owned_tiles), normalizado 0.0-1.0 por
@@ -771,12 +791,24 @@ static func _scout_enemy_cities(player: PlayerData, opponent: PlayerData, visibl
 		if visible.has(city.coord):
 			player.known_enemy_cities[city.coord] = true
 
+## Roadmap "Parte C" C4 — uma campanha ATIVA (ver _campaign_attack_target)
+## vira a prioridade tatica: tenta o alvo estrategico primeiro, so cai pro
+## _choose_target generico (intocado, nunca sabe que campanha existe) se
+## nao ha campanha, ela esta terminal, ou o alvo guardado ja nao e uma
+## cidade do oponente. Alvo de campanha valido mas fora de PERCEPTION_RANGE
+## desta unidade especifica NAO cai pro _choose_target como segunda
+## tentativa -- decisao deliberada (aprovada): o resto da funcao (checagem
+## de alcance/escolta/movimento abaixo) e identico ao caminho sem campanha,
+## entao a unidade so fica parada esse turno, exatamente como ja acontecia
+## quando _choose_target sozinho escolhia algo longe demais.
 static func _handle_attacker(unit: Unit, hex_grid: HexGrid, player: PlayerData, opponent: PlayerData, visible: Dictionary) -> void:
 	if unit.hp < unit.unit_data.max_hp * RETREAT_HP_FRACTION:
 		_retreat(unit, hex_grid, player)
 		return
 
-	var target_coord = _choose_target(unit, hex_grid, player, opponent, visible)
+	var target_coord = _campaign_attack_target(player, hex_grid, opponent)
+	if target_coord == null:
+		target_coord = _choose_target(unit, hex_grid, player, opponent, visible)
 	if target_coord == null:
 		return
 

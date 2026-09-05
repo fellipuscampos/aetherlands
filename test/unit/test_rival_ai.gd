@@ -783,6 +783,123 @@ func test_choose_campaign_target_returns_active_target_coord():
 
 	assert_eq(RivalAI._choose_campaign_target(rival, human), target.coord)
 
+## Roadmap "Parte C" C4 — _campaign_attack_target: mesma base de
+## _choose_campaign_target, mais a checagem de frescor (o coord ainda
+## corresponde a uma cidade de verdade do oponente agora).
+
+func test_campaign_attack_target_null_without_campaign():
+	assert_null(RivalAI._campaign_attack_target(rival, hex_grid, human))
+
+func test_campaign_attack_target_null_with_terminal_status():
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ABANDONED,
+	}
+
+	assert_null(RivalAI._campaign_attack_target(rival, hex_grid, human))
+
+func test_campaign_attack_target_null_when_target_coord_no_longer_opponent_city():
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(99, 99), # sem cidade nenhuma nesse coord
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	assert_null(RivalAI._campaign_attack_target(rival, hex_grid, human))
+
+func test_campaign_attack_target_returns_coord_when_active_and_still_opponent_city():
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	assert_eq(RivalAI._campaign_attack_target(rival, hex_grid, human), target.coord)
+
+## Roadmap "Parte C" C4 — integracao em _handle_attacker. As duas cidades
+## indefesas conhecidas (city_b inserida PRIMEIRO em known_enemy_cities,
+## city_a depois) exploram o fato de _choose_target nao ter criterio de
+## "mais perto" -- ele devolve a PRIMEIRA que bater o criterio na ordem de
+## insercao do Dictionary, entao sem campanha ele pegaria city_b. So a
+## integracao de C4 faz a escolha mudar pra city_a quando ela e o alvo da
+## campanha.
+
+func test_handle_attacker_prioritizes_campaign_target_over_choose_target():
+	var attacker = _make_unit("warrior", rival, Vector2i(0, 0))
+	var city_b := hex_grid.found_city(Vector2i(1, 0), human, "Cidade Normal") # _choose_target pegaria esta
+	var city_a := hex_grid.found_city(Vector2i(1, -1), human, "Alvo da Campanha")
+	rival.known_enemy_cities[city_b.coord] = true
+	rival.known_enemy_cities[city_a.coord] = true
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": city_a.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+	var city_a_hp_before := city_a.hp
+	var city_b_hp_before := city_b.hp
+
+	RivalAI._handle_attacker(attacker, hex_grid, rival, human, {})
+
+	assert_lt(city_a.hp, city_a_hp_before, "campanha deveria redirecionar o ataque pro alvo estrategico")
+	assert_eq(city_b.hp, city_b_hp_before, "cidade que _choose_target normalmente escolheria nao deveria ser atacada")
+
+func test_handle_attacker_advances_toward_campaign_target_when_out_of_range():
+	var attacker = _make_unit("warrior", rival, Vector2i(0, 0))
+	var target_city := hex_grid.found_city(Vector2i(5, 0), human, "Alvo Distante") # fora do attack_range=1, dentro de PERCEPTION_RANGE=5
+	rival.known_enemy_cities[target_city.coord] = true
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target_city.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	RivalAI._handle_attacker(attacker, hex_grid, rival, human, {})
+
+	assert_ne(attacker.coord, Vector2i(0, 0), "deveria avancar em direcao ao alvo da campanha")
+
+func test_handle_attacker_uses_choose_target_when_no_campaign():
+	var attacker = _make_unit("warrior", rival, Vector2i(0, 0))
+	var enemy = _make_unit("warrior", human, Vector2i(1, 0))
+
+	RivalAI._handle_attacker(attacker, hex_grid, rival, human, {enemy.coord: true})
+
+	assert_lt(enemy.hp, enemy.unit_data.max_hp, "sem campanha, deveria continuar usando _choose_target normalmente")
+
+func test_handle_attacker_ignores_terminal_campaign():
+	var attacker = _make_unit("warrior", rival, Vector2i(0, 0))
+	var city_b := hex_grid.found_city(Vector2i(1, 0), human, "Cidade Normal") # _choose_target deveria escolher esta
+	var city_a := hex_grid.found_city(Vector2i(1, -1), human, "Alvo Antigo da Campanha")
+	rival.known_enemy_cities[city_b.coord] = true
+	rival.known_enemy_cities[city_a.coord] = true
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": city_a.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ABANDONED,
+	}
+	var city_a_hp_before := city_a.hp
+	var city_b_hp_before := city_b.hp
+
+	RivalAI._handle_attacker(attacker, hex_grid, rival, human, {})
+
+	assert_eq(city_a.hp, city_a_hp_before, "campanha abandonada nao deveria mais direcionar ataques")
+	assert_lt(city_b.hp, city_b_hp_before, "deveria cair pro comportamento normal de _choose_target")
+
+func test_handle_attacker_falls_back_when_campaign_target_invalidated():
+	var attacker = _make_unit("warrior", rival, Vector2i(0, 0))
+	var enemy = _make_unit("warrior", human, Vector2i(1, 0))
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(99, 99), # sem cidade nenhuma do oponente ali
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	RivalAI._handle_attacker(attacker, hex_grid, rival, human, {enemy.coord: true})
+
+	assert_lt(enemy.hp, enemy.unit_data.max_hp, "alvo invalido deveria cair pro comportamento tatico existente, sem crash")
+
 ## Roadmap 2.0 Parte 1 (B2) — pontuacao de guerra soma riqueza de recursos
 ## do alvo. Muralha na cidade-alvo zera o termo de vulnerabilidade de
 ## proposito, pra isolar o efeito do termo de recursos (sem isso, o score

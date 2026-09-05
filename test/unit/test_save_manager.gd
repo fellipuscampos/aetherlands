@@ -506,3 +506,37 @@ func test_save_and_load_with_no_campaign_omits_war_campaign_key():
 
 	assert_true(ok)
 	assert_true(GameManager.rival_players[0].war_campaigns.is_empty(), "rival sem campanha nenhuma deveria voltar do load sem nenhuma entrada")
+
+## Roadmap "Parte C" C4 — fecha o circuito que C3 preparou: nao basta o
+## target_coord sobreviver ao save/load (ja provado por test_save_and_load_
+## restores_war_campaign), a EXECUCAO tatica (RivalAI.take_turn ->
+## _handle_attacker -> _campaign_attack_target) precisa realmente obedecer
+## o valor restaurado, lido do PlayerData humano VIVO pos-load.
+func test_save_and_load_war_campaign_directs_unit_behavior_after_load():
+	var target_coord: Vector2i = hex_grid.tiles.keys()[3]
+	var attacker_coord: Vector2i = hex_grid.get_neighbors(target_coord)[0]
+	hex_grid.found_city(target_coord, human, "Alvo")
+	rival.known_enemy_cities[target_coord] = true
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target_coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+	_make_unit("warrior", rival, attacker_coord)
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+	assert_true(ok)
+
+	var loaded_rival: PlayerData = GameManager.rival_players[0]
+	var loaded_target_city := loaded_grid.get_city_at(target_coord)
+	assert_not_null(loaded_target_city, "pre-condicao: cidade-alvo deveria existir no mapa carregado")
+	var loaded_hp_before := loaded_target_city.hp
+
+	RivalAI.take_turn(loaded_rival, loaded_grid, GameManager.human_player)
+
+	assert_lt(loaded_target_city.hp, loaded_hp_before, "unidade deveria obedecer o target_coord da campanha restaurada, nao um alvo escolhido do zero")
