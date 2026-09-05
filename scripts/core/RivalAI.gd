@@ -384,6 +384,19 @@ static func _best_war_objective(player: PlayerData, hex_grid: HexGrid, opponent:
 ## muda nada — o objetivo so afeta QUAL guerra e declarada e POR QUE, nunca
 ## a execucao militar em si (isso fica pra C3, ver decide_campaign abaixo,
 ## chamado sempre logo em seguida no mesmo loop de GameManager).
+## Roadmap "Parte D" D2 — feedback de UI puramente aditivo: eventos de
+## guerra/campanha/paz do rival so chegam ao jogador HUMANO. Checagem
+## explicita (nao so uma suposicao de "opponent e sempre humano") de
+## proposito — preserva a possibilidade futura de C2 ganhar rival-vs-rival
+## sem a UI humana "ouvir" uma guerra que nao e dela. sfx_kind="" sempre:
+## nao existe som dedicado pra diplomacia/campanha ainda (ver AudioManager.
+## SFX_PATHS, so 6 kinds fixos) — inventar um sairia do escopo aditivo
+## desta fatia.
+static func _notify_human(opponent: PlayerData, text: String) -> void:
+	if opponent != GameManager.human_player:
+		return
+	EventBus.notify.emit(text, "")
+
 static func decide_war(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
 	if player.is_at_war_with(opponent):
 		return
@@ -392,6 +405,7 @@ static func decide_war(player: PlayerData, hex_grid: HexGrid, opponent: PlayerDa
 		return
 	if best.score >= WAR_SCORE_THRESHOLD and randf() < WAR_DECLARE_CHANCE_WHEN_READY:
 		Diplomacy.declare_war(player, opponent)
+		_notify_human(opponent, "%s declarou guerra!" % player.civ.civ_name)
 
 const CAMPAIGN_STATUS_ACTIVE := "active"
 const CAMPAIGN_STATUS_COMPLETED := "completed"
@@ -448,6 +462,22 @@ static func _start_campaign(player: PlayerData, hex_grid: HexGrid, opponent: Pla
 		"target_coord": best.coord,
 		"status": CAMPAIGN_STATUS_ACTIVE,
 	}
+	_notify_human(opponent, _campaign_start_message(player, best.objective, best.city))
+
+## Roadmap "Parte D" D2 — traduz objetivo tecnico (WAR_OBJECTIVE_*) pra
+## linguagem de jogo, sem expor "secure_resources"/target_coord ao jogador.
+static func _campaign_start_message(player: PlayerData, objective: String, target_city: City) -> String:
+	if objective == WAR_OBJECTIVE_SECURE_RESOURCES:
+		return "%s iniciou uma campanha para controlar os recursos de %s." % [player.civ.civ_name, target_city.city_name]
+	return "%s iniciou uma campanha para conquistar %s." % [player.civ.civ_name, target_city.city_name]
+
+## Roadmap "Parte D" D2 — um so lugar pro texto de abandono, chamado dos
+## DOIS pontos de _advance_campaign que levam a CAMPAIGN_STATUS_ABANDONED
+## (invalidado sem substituto, ou inviavel) — o toast nao distingue qual
+## dos dois motivos foi, detalhe de implementacao que nao interessa ao
+## jogador.
+static func _notify_campaign_abandoned(player: PlayerData, opponent: PlayerData) -> void:
+	_notify_human(opponent, "%s abandonou sua campanha contra %s." % [player.civ.civ_name, opponent.civ.civ_name])
 
 ## Persistencia e o padrao -- nenhum ramo troca de alvo so porque outro
 ## candidato parece melhor agora (isso seria troca oportunista, proibida).
@@ -461,6 +491,7 @@ static func _advance_campaign(player: PlayerData, hex_grid: HexGrid, opponent: P
 
 	if owner == player:
 		campaign.status = CAMPAIGN_STATUS_COMPLETED
+		_notify_human(opponent, "%s concluiu sua campanha contra %s." % [player.civ.civ_name, opponent.civ.civ_name])
 		return
 
 	if owner != opponent:
@@ -472,6 +503,7 @@ static func _advance_campaign(player: PlayerData, hex_grid: HexGrid, opponent: P
 		var best = _best_war_objective(player, hex_grid, opponent)
 		if best == null or best.score < WAR_SCORE_THRESHOLD:
 			campaign.status = CAMPAIGN_STATUS_ABANDONED
+			_notify_campaign_abandoned(player, opponent)
 		else:
 			campaign.objective = best.objective
 			campaign.target_coord = best.coord
@@ -479,6 +511,7 @@ static func _advance_campaign(player: PlayerData, hex_grid: HexGrid, opponent: P
 
 	if not _campaign_still_viable(player, hex_grid, opponent, target_city, campaign.objective):
 		campaign.status = CAMPAIGN_STATUS_ABANDONED
+		_notify_campaign_abandoned(player, opponent)
 	# senao: nada muda -- mantem alvo/objetivo.
 
 ## "Ainda vale perseguir?" -- reusa a MESMA formula ponderada de
@@ -582,7 +615,9 @@ static func decide_peace(player: PlayerData, opponent: PlayerData) -> String:
 	if player.war_weariness < WAR_WEARINESS_OFFER_PEACE_THRESHOLD:
 		return PEACE_DECISION_BELOW_THRESHOLD
 	if Diplomacy.propose_peace(player, opponent):
+		_notify_human(opponent, "%s propôs paz e ela foi aceita." % player.civ.civ_name)
 		return PEACE_DECISION_ACCEPTED
+	_notify_human(opponent, "%s propôs paz, mas ela foi recusada." % player.civ.civ_name)
 	return PEACE_DECISION_REFUSED
 
 ## Roadmap 2.0 Parte 1 (B2) — quantos recursos estrategicos DIFERENTES

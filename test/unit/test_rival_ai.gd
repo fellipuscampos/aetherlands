@@ -996,6 +996,163 @@ func test_decide_peace_does_not_react_to_weariness_gained_later_same_turn():
 	assert_true(rival.war_weariness >= RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD, "pre-condicao: agora deveria estar acima do limiar")
 	assert_true(rival.is_at_war_with(human), "atualizar war_weariness sozinho nao decide nada -- so a PROXIMA chamada de decide_peace (turno seguinte) reagiria a isso")
 
+## Roadmap "Parte D" D2 — feedback de UI puramente aditivo (EventBus.notify)
+## nos pontos de mutacao de guerra/campanha/paz. watch_signals(EventBus) e
+## assert_signal_emit_count e o padrao ja estabelecido neste projeto (ver
+## test_game_manager.gd/test_settings.gd).
+
+func test_decide_war_notifies_human_when_rival_declares_war():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival") # sem isso, proximidade fica 0 e o score nunca cruza WAR_SCORE_THRESHOLD
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.known_enemy_cities[target.coord] = true
+	human.enemies.erase(rival)
+	rival.enemies.erase(human) # comeca em paz -- decide_war precisa decidir declarar
+
+	watch_signals(EventBus) # DEPOIS do found_city (que ja emite "Cidade fundada" pro dono humano) -- so queremos contar o notify de decide_war
+	for i in range(300):
+		RivalAI.decide_war(rival, hex_grid, human)
+		if rival.is_at_war_with(human):
+			break
+
+	assert_true(rival.is_at_war_with(human), "pre-condicao: guerra deveria ter sido declarada")
+	assert_signal_emit_count(EventBus, "notify", 1)
+
+func test_decide_war_does_not_notify_when_opponent_is_not_the_human():
+	var third := PlayerData.new(CivilizationData.new())
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), third, "Alvo")
+	rival.known_enemy_cities[target.coord] = true
+
+	watch_signals(EventBus)
+	for i in range(300):
+		RivalAI.decide_war(rival, hex_grid, third)
+		if rival.is_at_war_with(third):
+			break
+
+	assert_true(rival.is_at_war_with(third), "pre-condicao: guerra deveria ter sido declarada")
+	assert_signal_emit_count(EventBus, "notify", 0)
+
+func test_decide_campaign_notifies_human_on_start():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.known_enemy_cities[target.coord] = true
+
+	watch_signals(EventBus) # DEPOIS do found_city, mesmo motivo do teste de decide_war acima
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	assert_signal_emit_count(EventBus, "notify", 1)
+
+func test_decide_campaign_notifies_human_on_completion():
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+	hex_grid.capture_city(target, rival)
+
+	watch_signals(EventBus) # DEPOIS de found_city/capture_city (HexGrid.gd tambem emite notify quando o humano funda/perde uma cidade)
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	assert_signal_emit_count(EventBus, "notify", 1)
+
+func test_decide_campaign_notifies_human_on_abandon_invalid_target():
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+	var third := PlayerData.new(CivilizationData.new())
+	hex_grid.capture_city(target, third) # invalidado, sem substituto conhecido
+
+	watch_signals(EventBus)
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ABANDONED, "pre-condicao")
+	assert_signal_emit_count(EventBus, "notify", 1)
+
+func test_decide_campaign_notifies_human_on_abandon_no_longer_viable():
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	target.buildings["walls"] = true
+	_make_unit("warrior", human, Vector2i(0, 0))
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	watch_signals(EventBus)
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ABANDONED, "pre-condicao")
+	assert_signal_emit_count(EventBus, "notify", 1)
+
+func test_decide_campaign_does_not_notify_when_still_active():
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": target.coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	watch_signals(EventBus)
+	RivalAI.decide_campaign(rival, hex_grid, human)
+
+	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ACTIVE, "pre-condicao: alvo ainda valido e viavel, nada deveria mudar")
+	assert_signal_emit_count(EventBus, "notify", 0)
+
+func test_decide_campaign_does_not_notify_for_non_human_opponent():
+	watch_signals(EventBus)
+	var third := PlayerData.new(CivilizationData.new())
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), third, "Alvo")
+	rival.known_enemy_cities[target.coord] = true
+	Diplomacy.declare_war(rival, third)
+
+	RivalAI.decide_campaign(rival, hex_grid, third)
+
+	assert_true(rival.war_campaigns.has(third), "pre-condicao: campanha deveria ter sido criada")
+	assert_signal_emit_count(EventBus, "notify", 0)
+
+func test_decide_peace_notifies_human_on_acceptance():
+	watch_signals(EventBus)
+	_make_unit("warrior", rival, Vector2i(0, 0))
+	_make_unit("warrior", rival, Vector2i(1, 0)) # rival mais forte -- humano aceita
+	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+
+	RivalAI.decide_peace(rival, human)
+
+	assert_signal_emit_count(EventBus, "notify", 1)
+
+func test_decide_peace_notifies_human_on_refusal():
+	watch_signals(EventBus)
+	_make_unit("warrior", human, Vector2i(0, 0))
+	_make_unit("warrior", human, Vector2i(1, 0)) # humano mais forte -- recusa
+	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+
+	RivalAI.decide_peace(rival, human)
+
+	assert_signal_emit_count(EventBus, "notify", 1)
+
+func test_decide_peace_does_not_notify_below_threshold():
+	watch_signals(EventBus)
+	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD - 1.0
+
+	RivalAI.decide_peace(rival, human)
+
+	assert_signal_emit_count(EventBus, "notify", 0)
+
+func test_decide_peace_does_not_notify_when_already_at_peace():
+	watch_signals(EventBus)
+	human.enemies.erase(rival)
+	rival.enemies.erase(human)
+	rival.war_weariness = 100.0
+
+	RivalAI.decide_peace(rival, human)
+
+	assert_signal_emit_count(EventBus, "notify", 0)
+
 ## Roadmap 2.0 Parte 1 (B2) — pontuacao de guerra soma riqueza de recursos
 ## do alvo. Muralha na cidade-alvo zera o termo de vulnerabilidade de
 ## proposito, pra isolar o efeito do termo de recursos (sem isso, o score
