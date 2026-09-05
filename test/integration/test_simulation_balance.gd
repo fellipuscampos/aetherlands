@@ -242,6 +242,34 @@ func test_simulate_baseline_multi_seed_metrics():
 		_avg(all_weariness_below_threshold), all_weariness_below_threshold.size(),
 	])
 
+	# D3 (revisao) -- weariness de quem RECEBE a oferta (rivals[0]), o dado
+	# que Diplomacy._accepts_peace realmente usa (ver comentario em
+	# _record_peace_decision). Verificacao direta da mecanica documentada
+	# em _accepts_peace: aceita se units.size() <= proposer OU
+	# war_weariness >= WAR_WEARINESS_ACCEPTS_PEACE_THRESHOLD (40.0) -- e um
+	# OR, entao receiver_weariness>=40 DEVERIA aparecer SO do lado aceito
+	# (nunca do lado recusado, ja que >=40 sozinho ja garante aceite
+	# independente de contagem de unidades). refusadas_com_weariness_alto
+	# != 0 seria sinal de bug na mecanica (ou na leitura deste harness dela),
+	# nao uma questao de calibracao.
+	var all_receiver_weariness_accepted: Array = []
+	var all_receiver_weariness_refused: Array = []
+	var all_receiver_weariness_below_threshold: Array = []
+	for r in all_results:
+		all_receiver_weariness_accepted.append_array(r.receiver_weariness_at_offer.accepted)
+		all_receiver_weariness_refused.append_array(r.receiver_weariness_at_offer.refused)
+		all_receiver_weariness_below_threshold.append_array(r.receiver_weariness_at_offer.below_threshold)
+	var refused_with_high_receiver_weariness := 0
+	for w in all_receiver_weariness_refused:
+		if w >= Diplomacy.WAR_WEARINESS_ACCEPTS_PEACE_THRESHOLD:
+			refused_with_high_receiver_weariness += 1
+	print("[sim agregado paz oferta (receptor)] weariness_media_aceita=%.1f(n=%d) weariness_media_recusada=%.1f(n=%d) weariness_media_abaixo_limiar=%.1f(n=%d) recusadas_com_weariness_alto=%d" % [
+		_avg(all_receiver_weariness_accepted), all_receiver_weariness_accepted.size(),
+		_avg(all_receiver_weariness_refused), all_receiver_weariness_refused.size(),
+		_avg(all_receiver_weariness_below_threshold), all_receiver_weariness_below_threshold.size(),
+		refused_with_high_receiver_weariness,
+	])
+
 	# D3 -- suspeita ja levantada pelo usuario (secure_resources dominando
 	# conquer): agregado aqui responde com numero real em vez de impressao
 	# seed-a-seed espalhada. Ver ressalva de aproximacao em _log_war_target.
@@ -359,9 +387,19 @@ func _run_seed(seed_value: int) -> Dictionary:
 		# so aparece indiretamente via _record_peace_outcome (guerra
 		# encerrada = alguma decide_peace autonoma teve sucesso, ja que
 		# nenhum outro caminho deste harness chama Diplomacy.propose_peace).
+		# D3 -- os dois lados capturados no MESMO instante, antes de
+		# decide_peace/propose_peace rodarem: `weariness_at_offer` (primary)
+		# so decide SE a oferta acontece (gate em decide_peace contra
+		# WAR_WEARINESS_OFFER_PEACE_THRESHOLD); `receiver_weariness_at_offer`
+		# (rivals[0]) e o dado que de fato entra em Diplomacy._accepts_peace
+		# (aceita se ai_player.units.size() <= proposer.units.size() OU
+		# ai_player.war_weariness >= WAR_WEARINESS_ACCEPTS_PEACE_THRESHOLD) --
+		# confundir os dois foi o erro apontado na revisao do D3 (weariness
+		# do PROPONENTE nao tem por que prever aceite/recusa).
 		var weariness_at_offer: float = primary.war_weariness
+		var receiver_weariness_at_offer: float = rivals[0].war_weariness
 		var peace_result := RivalAI.decide_peace(primary, rivals[0])
-		_record_peace_decision(m, peace_result, weariness_at_offer)
+		_record_peace_decision(m, peace_result, weariness_at_offer, receiver_weariness_at_offer)
 		RivalAI.decide_trade(primary, grid, rivals[0])
 
 		GameManager._on_turn_changed(TurnManager.turn_number, 0)
@@ -439,17 +477,24 @@ func _spawn_capital(grid: HexGrid, player: PlayerData, origin: Vector2i, claimed
 ## pra distinguir "recusado com weariness alto" de "recusado com weariness
 ## baixo" -- weariness_at_peace (acima) so existe quando a guerra JA
 ## terminou, nao serve pra olhar recusas.
-func _record_peace_decision(m: Dictionary, result: String, weariness_at_offer: float) -> void:
+## D3 (revisao) -- `receiver_weariness_at_offer` e rivals[0].war_weariness no
+## MESMO instante, o valor que de fato alimenta Diplomacy._accepts_peace do
+## lado de quem recebe a oferta (ver comentario no ponto de chamada) --
+## weariness_at_offer sozinho nao serve pra checar a mecanica de aceite.
+func _record_peace_decision(m: Dictionary, result: String, weariness_at_offer: float, receiver_weariness_at_offer: float) -> void:
 	match result:
 		RivalAI.PEACE_DECISION_ACCEPTED:
 			m.peace_proposals_by_primary.accepted += 1
 			m.war_weariness_at_offer.accepted.append(weariness_at_offer)
+			m.receiver_weariness_at_offer.accepted.append(receiver_weariness_at_offer)
 		RivalAI.PEACE_DECISION_REFUSED:
 			m.peace_proposals_by_primary.refused += 1
 			m.war_weariness_at_offer.refused.append(weariness_at_offer)
+			m.receiver_weariness_at_offer.refused.append(receiver_weariness_at_offer)
 		RivalAI.PEACE_DECISION_BELOW_THRESHOLD:
 			m.peace_proposals_by_primary.below_threshold += 1
 			m.war_weariness_at_offer.below_threshold.append(weariness_at_offer)
+			m.receiver_weariness_at_offer.below_threshold.append(receiver_weariness_at_offer)
 
 func _war_pairs(primary: PlayerData, rivals: Array[PlayerData]) -> Dictionary:
 	var pairs := {}
@@ -516,6 +561,7 @@ func _new_metrics() -> Dictionary:
 		"wars_ended_by_peace": 0, # D1 -- diff-based, cobre as DUAS direcoes (ver comentario em _record_turn)
 		"war_weariness_at_peace": [], # D1 -- um valor por guerra encerrada
 		"war_weariness_at_offer": {"accepted": [], "refused": [], "below_threshold": []}, # Roadmap "Parte D" D3 -- weariness do PRIMARY no momento exato da chamada a decide_peace (antes de qualquer efeito), separado por desfecho -- mesma direcao PRECISA de peace_proposals_by_primary acima
+		"receiver_weariness_at_offer": {"accepted": [], "refused": [], "below_threshold": []}, # D3 (revisao) -- weariness de rivals[0] (quem RECEBE a oferta) no mesmo instante -- este, nao o do primary acima, e o valor que Diplomacy._accepts_peace realmente compara contra WAR_WEARINESS_ACCEPTS_PEACE_THRESHOLD
 		"war_objective_counts": {}, # D3 -- objetivo (WAR_OBJECTIVE_*) de toda guerra que comeca, contado nas DUAS direcoes por _log_war_target (mesma aproximacao ja aceita ali -- ver comentario da funcao)
 		"campaign_start_turn": {}, # D3 -- attacker -> opponent -> turno de inicio, so pra calcular duracao (nao serializado nem lido em nenhum outro lugar)
 		"campaign_durations": [], # D3 -- turnos entre ACTIVE e COMPLETED/ABANDONED, uma entrada por campanha encerrada (retargeting NAO reinicia a contagem -- mede o ciclo de vida inteiro ate o desfecho terminal)
