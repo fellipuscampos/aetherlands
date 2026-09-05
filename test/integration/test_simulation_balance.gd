@@ -224,6 +224,52 @@ func test_simulate_baseline_multi_seed_metrics():
 		_avg(all_weariness_at_peace),
 	])
 
+	# Roadmap "Parte D" D3 -- baseline pedida pelo usuario: so medir, nao
+	# calibrar nenhum peso/threshold ainda com base num unico cenario. As
+	# quatro impressoes abaixo (weariness na OFERTA, objetivo de guerra,
+	# duracao de campanha, personalidade x pesquisa) fecham a lista de
+	# metricas combinada com o usuario nesta fatia.
+	var all_weariness_accepted: Array = []
+	var all_weariness_refused: Array = []
+	var all_weariness_below_threshold: Array = []
+	for r in all_results:
+		all_weariness_accepted.append_array(r.war_weariness_at_offer.accepted)
+		all_weariness_refused.append_array(r.war_weariness_at_offer.refused)
+		all_weariness_below_threshold.append_array(r.war_weariness_at_offer.below_threshold)
+	print("[sim agregado paz oferta] weariness_media_aceita=%.1f(n=%d) weariness_media_recusada=%.1f(n=%d) weariness_media_abaixo_limiar=%.1f(n=%d)" % [
+		_avg(all_weariness_accepted), all_weariness_accepted.size(),
+		_avg(all_weariness_refused), all_weariness_refused.size(),
+		_avg(all_weariness_below_threshold), all_weariness_below_threshold.size(),
+	])
+
+	# D3 -- suspeita ja levantada pelo usuario (secure_resources dominando
+	# conquer): agregado aqui responde com numero real em vez de impressao
+	# seed-a-seed espalhada. Ver ressalva de aproximacao em _log_war_target.
+	var war_objective_totals := {}
+	for r in all_results:
+		for objective in r.war_objective_counts.keys():
+			war_objective_totals[objective] = war_objective_totals.get(objective, 0) + r.war_objective_counts[objective]
+	print("[sim agregado objetivo de guerra] %s" % [war_objective_totals])
+
+	# D3 -- duracao de campanha (turnos entre ACTIVE e o desfecho terminal),
+	# agregada entre todas as seeds, todas as campanhas encerradas.
+	var all_campaign_durations: Array = []
+	for r in all_results:
+		all_campaign_durations.append_array(r.campaign_durations)
+	print("[sim agregado duracao de campanha] media=%.1f(n=%d)" % [_avg(all_campaign_durations), all_campaign_durations.size()])
+
+	# D3 -- personalidade (intencao fixa) vs identidade (evidencia
+	# historica) como preditores de escolha de pesquisa, lado a lado.
+	var total_matching_personality := 0
+	var total_research_choices := 0
+	for r in all_results:
+		total_matching_personality += r.research_choices_matching_personality
+		total_research_choices += r.research_choices_total
+	print("[sim agregado pesquisa x personalidade] personalidade_match=%d/%d(%.0f%%)" % [
+		total_matching_personality, total_research_choices,
+		(100.0 * float(total_matching_personality) / float(total_research_choices)) if total_research_choices > 0 else 0.0,
+	])
+
 	# Unico assert desta fase: correcao (numero invalido), nunca balanceamento
 	# ou comportamento esperado — ver comentario de topo do arquivo.
 	for r in all_results:
@@ -240,6 +286,24 @@ func _run_seed(seed_value: int) -> Dictionary:
 	var rivals: Array[PlayerData] = []
 	for i in range(RIVAL_COUNT):
 		rivals.append(_make_player("Rival %d" % (i + 1), RIVAL_RACES[i % RIVAL_RACES.size()]))
+
+	# Roadmap "Parte D" D3 -- ACHADO DE INSTRUMENTACAO: PlayerData.personality
+	# comeca "{}" (ver comentario em PlayerData.gd, "nunca acontece em jogo
+	# real pos-setup_players, mas e o estado de todo PlayerData de teste
+	# construido direto via PlayerData.new(...)") e este harness SEMPRE
+	# construiu jogadores direto via PlayerData.new (_make_player abaixo),
+	# NUNCA passando por GameManager.setup_players(). Resultado: ate esta
+	# fatia, TODA metrica deste harness (inclusive B3, antes de D3 existir)
+	# rodou com personality vazia em TODOS os jogadores -- RESEARCH_WEIGHT_
+	# PERSONALITY (RivalAI.gd) nunca teve efeito nenhum aqui, mesmo a
+	# feature existindo e sendo exercitada normalmente no jogo de verdade.
+	# Fix: mesma formula EXATA de GameManager.setup_players() (map_seed +
+	# PERSONALITY_SEED_OFFSET pro humano, +i+1 por rival, na ordem de
+	# `rivals`) -- reproduz o jogo real em vez de inventar uma convencao
+	# nova so pro harness.
+	primary.personality = CivilizationPersonality.generate(primary.civ.race, grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET)
+	for i in range(rivals.size()):
+		rivals[i].personality = CivilizationPersonality.generate(rivals[i].civ.race, grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET + i + 1)
 
 	var claimed: Array[Vector2i] = []
 	_spawn_capital(grid, primary, Vector2i(0, 0), claimed)
@@ -295,8 +359,9 @@ func _run_seed(seed_value: int) -> Dictionary:
 		# so aparece indiretamente via _record_peace_outcome (guerra
 		# encerrada = alguma decide_peace autonoma teve sucesso, ja que
 		# nenhum outro caminho deste harness chama Diplomacy.propose_peace).
+		var weariness_at_offer: float = primary.war_weariness
 		var peace_result := RivalAI.decide_peace(primary, rivals[0])
-		_record_peace_decision(m, peace_result)
+		_record_peace_decision(m, peace_result, weariness_at_offer)
 		RivalAI.decide_trade(primary, grid, rivals[0])
 
 		GameManager._on_turn_changed(TurnManager.turn_number, 0)
@@ -368,14 +433,23 @@ func _spawn_capital(grid: HexGrid, player: PlayerData, origin: Vector2i, claimed
 ## (unica onde temos o retorno direto de RivalAI.decide_peace neste
 ## harness). PEACE_DECISION_NOT_AT_WAR nao conta nada -- e o estado normal
 ## fora de guerra, nao um evento.
-func _record_peace_decision(m: Dictionary, result: String) -> void:
+## D3 -- `weariness_at_offer` e o valor de primary.war_weariness capturado
+## pelo chamador ANTES de decide_peace rodar (mesmo instante que decide_peace
+## le internamente pra comparar com WAR_WEARINESS_OFFER_PEACE_THRESHOLD),
+## pra distinguir "recusado com weariness alto" de "recusado com weariness
+## baixo" -- weariness_at_peace (acima) so existe quando a guerra JA
+## terminou, nao serve pra olhar recusas.
+func _record_peace_decision(m: Dictionary, result: String, weariness_at_offer: float) -> void:
 	match result:
 		RivalAI.PEACE_DECISION_ACCEPTED:
 			m.peace_proposals_by_primary.accepted += 1
+			m.war_weariness_at_offer.accepted.append(weariness_at_offer)
 		RivalAI.PEACE_DECISION_REFUSED:
 			m.peace_proposals_by_primary.refused += 1
+			m.war_weariness_at_offer.refused.append(weariness_at_offer)
 		RivalAI.PEACE_DECISION_BELOW_THRESHOLD:
 			m.peace_proposals_by_primary.below_threshold += 1
+			m.war_weariness_at_offer.below_threshold.append(weariness_at_offer)
 
 func _war_pairs(primary: PlayerData, rivals: Array[PlayerData]) -> Dictionary:
 	var pairs := {}
@@ -441,6 +515,11 @@ func _new_metrics() -> Dictionary:
 		"peace_proposals_by_primary": {"accepted": 0, "refused": 0, "below_threshold": 0}, # Roadmap "Parte D" D1 -- so direcao primary->rivals[0], contagem PRECISA (retorno direto de decide_peace)
 		"wars_ended_by_peace": 0, # D1 -- diff-based, cobre as DUAS direcoes (ver comentario em _record_turn)
 		"war_weariness_at_peace": [], # D1 -- um valor por guerra encerrada
+		"war_weariness_at_offer": {"accepted": [], "refused": [], "below_threshold": []}, # Roadmap "Parte D" D3 -- weariness do PRIMARY no momento exato da chamada a decide_peace (antes de qualquer efeito), separado por desfecho -- mesma direcao PRECISA de peace_proposals_by_primary acima
+		"war_objective_counts": {}, # D3 -- objetivo (WAR_OBJECTIVE_*) de toda guerra que comeca, contado nas DUAS direcoes por _log_war_target (mesma aproximacao ja aceita ali -- ver comentario da funcao)
+		"campaign_start_turn": {}, # D3 -- attacker -> opponent -> turno de inicio, so pra calcular duracao (nao serializado nem lido em nenhum outro lugar)
+		"campaign_durations": [], # D3 -- turnos entre ACTIVE e COMPLETED/ABANDONED, uma entrada por campanha encerrada (retargeting NAO reinicia a contagem -- mede o ciclo de vida inteiro ate o desfecho terminal)
+		"research_choices_matching_personality": 0, # D3 -- mesmo padrao de research_choices_matching_identity, mas contra o eixo DOMINANTE de player.personality (intencao fixa da partida) em vez de CityIdentity (evidencia historica) -- ver CivilizationPersonality.gd
 	}
 
 ## Roadmap 2.0 Parte 1 (A1) — benchmark do bonus de recurso na pontuacao de
@@ -483,13 +562,20 @@ func _record_frontier_claims(m: Dictionary, grid: HexGrid, primary: PlayerData, 
 ## primaria) — usar _nearest_known_enemy_city aqui de novo mostraria o alvo
 ## errado. So impressao (objetivo/score), nenhum assert novo, mesmo
 ## contrato observacional do resto do harness.
-func _log_war_target(grid: HexGrid, primary: PlayerData, rival: PlayerData, turn_number: int) -> void:
+## D3 -- alem da impressao, agora tambem tabula best.objective em
+## m.war_objective_counts. Herda a MESMA aproximacao ja documentada acima
+## (checa as duas direcoes sem saber qual das duas de fato declarou) --
+## nao existe hoje um jeito barato de atribuir com precisao, entao o
+## agregado conta como "objetivo observado quando uma guerra comeca",
+## nao "objetivo que causou aquela guerra especifica".
+func _log_war_target(m: Dictionary, grid: HexGrid, primary: PlayerData, rival: PlayerData, turn_number: int) -> void:
 	for pair in [[primary, rival], [rival, primary]]:
 		var attacker: PlayerData = pair[0]
 		var opponent: PlayerData = pair[1]
 		var best = RivalAI._best_war_objective(attacker, grid, opponent)
 		if best == null:
 			continue
+		m.war_objective_counts[best.objective] = m.war_objective_counts.get(best.objective, 0) + 1
 		var target_city: City = best.city
 		var seen := {}
 		seen[target_city.coord] = true
@@ -511,6 +597,14 @@ func _log_war_target(grid: HexGrid, primary: PlayerData, rival: PlayerData, turn
 ## turno anterior, aqui research_before em vez de prev_owned_tiles). So
 ## observacional (research_choices_total/matching_identity), nenhum assert
 ## de comportamento — mesma disciplina do resto deste harness.
+## D3 — acrescenta matching_personality NA MESMA passada, mesmo contrato
+## (transicao "" -> tech_id), pra comparar os dois termos independentes que
+## RivalAI._score_research_candidate soma (RESEARCH_WEIGHT_IDENTITY vs
+## RESEARCH_WEIGHT_PERSONALITY): identidade e "o que a cidade ja construiu"
+## (CityIdentity, retrospectivo), personalidade e "a intencao sorteada pra
+## partida inteira" (CivilizationPersonality, ver _dominant_personality_axis
+## abaixo). Os dois podem divergir por civ (ex.: um Anao com personalidade
+## comercial que build errou pro industrial por pressao de guerra).
 func _record_research_choices(m: Dictionary, research_before: Dictionary, primary: PlayerData, rivals: Array[PlayerData]) -> void:
 	for player in ([primary] as Array[PlayerData]) + rivals:
 		var before: String = research_before.get(player, "")
@@ -521,11 +615,39 @@ func _record_research_choices(m: Dictionary, research_before: Dictionary, primar
 				var axis := RivalAI._tech_identity_axis(tech)
 				if axis != "" and CityIdentity.civilization_axis_strength(player, axis) > 0.0:
 					m.research_choices_matching_identity += 1
+				if axis != "" and axis == _dominant_personality_axis(player):
+					m.research_choices_matching_personality += 1
+
+## D3 — eixo de MAIOR player.personality (CivilizationPersonality.generate,
+## intencao fixa sorteada uma vez por partida), "" se todos os eixos
+## ficarem em 0.0 (na pratica quase nunca, ver JITTER_RANGE). Desempate
+## IDENTICO a CityIdentity.dominant_axis: primeiro de AXES na ordem
+## declarada, comparacao ESTRITA ">" (nao ">=").
+func _dominant_personality_axis(player: PlayerData) -> String:
+	var best_axis := ""
+	var best_strength := 0.0
+	for axis in CityIdentity.AXES:
+		var strength: float = player.personality.get(axis, 0.0)
+		if strength > best_strength:
+			best_strength = strength
+			best_axis = axis
+	return best_axis
 
 ## Roadmap "Parte C" C3 — diff PRE/POS-turno do status/alvo de campanha nas
 ## duas direcoes (primary->rival, rival->primary), mesmo padrao dual-direcao
 ## de _log_war_target. So impressao/contagem, nenhum assert novo (contrato
 ## observacional de sempre).
+## D3 — duracao em turnos entre o inicio registrado em m.campaign_start_turn
+## (por _record_campaign_changes, no exato turno em que virou ACTIVE) e o
+## turno terminal atual (COMPLETED ou ABANDONED). Silenciosamente no-op se
+## nao houver inicio registrado (nao deveria acontecer no fluxo normal, mas
+## harness nao deve travar/assertar em cima de um buraco de instrumentacao).
+func _record_campaign_duration(m: Dictionary, attacker: PlayerData, opponent: PlayerData, turn_number: int) -> void:
+	var by_opponent: Dictionary = m.campaign_start_turn.get(attacker, {})
+	if not by_opponent.has(opponent):
+		return
+	m.campaign_durations.append(turn_number - by_opponent[opponent])
+
 func _record_campaign_changes(m: Dictionary, primary: PlayerData, rivals: Array[PlayerData], campaigns_before: Dictionary, turn_number: int) -> void:
 	for rival in rivals:
 		var directions = [[primary, rival, campaigns_before[rival][0]], [rival, primary, campaigns_before[rival][1]]]
@@ -544,12 +666,17 @@ func _record_campaign_changes(m: Dictionary, primary: PlayerData, rivals: Array[
 				# fora da contagem de "iniciada" (achado real do harness:
 				# concluidas > iniciadas antes deste fix).
 				m.campaigns_started += 1
+				if not m.campaign_start_turn.has(attacker):
+					m.campaign_start_turn[attacker] = {}
+				m.campaign_start_turn[attacker][opponent] = turn_number # D3 -- pra _record_campaign_duration medir o ciclo de vida inteiro ate o desfecho terminal
 				print("[sim campanha T%d] %s -> alvo=%s status=iniciada" % [turn_number, _label(attacker, primary), now.target_coord])
 			elif before_status == RivalAI.CAMPAIGN_STATUS_ACTIVE and now_status == RivalAI.CAMPAIGN_STATUS_COMPLETED:
 				m.campaigns_completed += 1
+				_record_campaign_duration(m, attacker, opponent, turn_number)
 				print("[sim campanha T%d] %s -> alvo=%s status=concluida" % [turn_number, _label(attacker, primary), now.target_coord])
 			elif before_status == RivalAI.CAMPAIGN_STATUS_ACTIVE and now_status == RivalAI.CAMPAIGN_STATUS_ABANDONED:
 				m.campaigns_abandoned += 1
+				_record_campaign_duration(m, attacker, opponent, turn_number)
 				print("[sim campanha T%d] %s -> alvo=%s status=abandonada" % [turn_number, _label(attacker, primary), before.target_coord])
 			elif before_status == RivalAI.CAMPAIGN_STATUS_ACTIVE and now_status == RivalAI.CAMPAIGN_STATUS_ACTIVE and before.target_coord != now.target_coord:
 				m.campaigns_retargeted += 1
@@ -567,7 +694,7 @@ func _record_turn(m: Dictionary, grid: HexGrid, turn_index: int, primary: Player
 			if m.first_war_turn == -1:
 				m.first_war_turn = turn_number
 			m.open_wars[rival] = turn_number
-			_log_war_target(grid, primary, rival, turn_number)
+			_log_war_target(m, grid, primary, rival, turn_number)
 		elif was_at_war and not now_at_war:
 			any_change = true
 			var started: int = m.open_wars.get(rival, turn_number)
