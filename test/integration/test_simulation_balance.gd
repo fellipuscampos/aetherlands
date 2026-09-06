@@ -90,7 +90,7 @@ var _original_stagger: bool
 var _original_debug_mode: bool
 var _original_turn_number: int
 var _original_player_count: int
-var _original_war_weight_resources_secure: float # Roadmap "Parte D" D4.2 -- RivalAI.WAR_WEIGHT_RESOURCES_SECURE virou static var so pra este experimento poder sobrescreve-la; salvar/restaurar aqui (mesmo padrao dos autoloads acima) garante que volta a 2.0 mesmo se o teste falhar no meio
+var _original_war_objective_term_weights: Dictionary # Roadmap "Parte D" D4.2/D4.4 -- RivalAI.WAR_OBJECTIVE_TERM_WEIGHTS e static var so pra experimentos poderem sobrescreve-la; salvar (duplicate(true) -- e um Dictionary aninhado, precisa copia PROFUNDA) e restaurar aqui (mesmo padrao dos autoloads acima) garante que volta ao default mesmo se o teste falhar no meio
 
 func before_each():
 	_original_hex_grid = GameManager.hex_grid
@@ -102,7 +102,7 @@ func before_each():
 	_original_debug_mode = GameManager.debug_mode
 	_original_turn_number = TurnManager.turn_number
 	_original_player_count = TurnManager.player_count
-	_original_war_weight_resources_secure = RivalAI.WAR_WEIGHT_RESOURCES_SECURE
+	_original_war_objective_term_weights = RivalAI.WAR_OBJECTIVE_TERM_WEIGHTS.duplicate(true)
 
 func after_each():
 	GameManager.hex_grid = _original_hex_grid
@@ -111,7 +111,7 @@ func after_each():
 	GameManager.players = _original_players
 	GameManager.state = _original_state
 	GameManager.stagger_ai_turns = _original_stagger
-	RivalAI.WAR_WEIGHT_RESOURCES_SECURE = _original_war_weight_resources_secure
+	RivalAI.WAR_OBJECTIVE_TERM_WEIGHTS = _original_war_objective_term_weights
 	GameManager.debug_mode = _original_debug_mode
 	TurnManager.turn_number = _original_turn_number
 	TurnManager.player_count = _original_player_count
@@ -469,14 +469,16 @@ const WAR_OBJECTIVE_EXPERIMENT_VARIANTS := [
 ]
 
 ## D4.2 -- roda a MESMA matriz SEEDS/AI_RNG_SEEDS (D4.0) uma vez por
-## variante, sobrescrevendo SO RivalAI.WAR_WEIGHT_RESOURCES_SECURE entre
-## execucoes (restaurado em after_each mesmo se este teste falhar no meio).
-## Reusa _run_seed sem nenhuma modificacao -- a variante nao muda NADA na
-## montagem da partida, so o peso que a formula ja calibravel consulta.
+## variante, sobrescrevendo SO o peso de recursos de secure_resources
+## dentro de RivalAI.WAR_OBJECTIVE_TERM_WEIGHTS (mecanismo generalizado
+## por D4.4 -- ver RivalAI.gd) entre execucoes (restaurado em after_each
+## mesmo se este teste falhar no meio). Reusa _run_seed sem nenhuma
+## modificacao -- a variante nao muda NADA na montagem da partida, so o
+## peso que a formula ja calibravel consulta.
 func test_war_objective_weight_experiment_A_B_C_D():
 	var any_nan_or_negative := false
 	for variant in WAR_OBJECTIVE_EXPERIMENT_VARIANTS:
-		RivalAI.WAR_WEIGHT_RESOURCES_SECURE = variant.weight
+		RivalAI.WAR_OBJECTIVE_TERM_WEIGHTS[RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES].resources = variant.weight
 		var variant_results: Array = []
 		for i in range(SEEDS.size()):
 			var result := _run_seed(SEEDS[i], AI_RNG_SEEDS[i])
@@ -541,6 +543,135 @@ func _print_war_objective_experiment_variant(label: String, weight: float, resul
 		total_wars, campaigns_started, campaigns_completed, campaigns_abandoned,
 		_avg(campaign_durations), campaign_durations.size(),
 	])
+
+## Roadmap "Parte D" D4.4 -- experimento ESTRUTURAL combinado com o
+## usuario: em vez de so variar o peso de UM termo (D4.2), da a conquer e
+## secure_resources vetores de peso DIFERENTES, cada um SO com os termos
+## semanticamente relevantes pro seu motivo de guerra:
+##   conquer          = qualidade MILITAR do alvo -- strength, vulnerability,
+##                       proximity, role_fit. SEM resources.
+##   secure_resources = valor ECONOMICO do alvo -- resources, proximity,
+##                       strength, vulnerability. SEM role_fit.
+## Reusa 100% dos pesos JA EXISTENTES (RivalAI.WAR_WEIGHT_*) pra cada termo
+## incluido -- a unica coisa nova e QUAL termo cada objetivo considera,
+## nunca um numero novo (pedido explicito do usuario: "nao inventaria uma
+## nova formula arbitrariamente"). role_fit fica em conquer (nao em
+## secure_resources) de proposito -- D4.3 ja mostrou role_fit=0/221 nesta
+## populacao de exercito (100% corpo-a-corpo, achado de C1, ver comentario
+## la); mante-lo em conquer deixa a porta aberta pra ele finalmente ter
+## efeito quando C1 produzir cavalaria/cerco, sem usar isso como
+## justificativa pra mudar C2 agora (pedido explicito do usuario: "nao
+## usaria role_fit=0 como justificativa pra alterar C2 -- estariamos
+## tentando corrigir C1 indiretamente").
+##
+## Roda a MESMA matriz SEEDS/AI_RNG_SEEDS duas vezes: baseline (pesos de
+## producao, sem tocar em nada) e experimental (vetores acima), e
+## compara. NENHUMA constante e promovida pra producao -- WAR_OBJECTIVE_
+## TERM_WEIGHTS volta ao default em after_each mesmo se o teste falhar no
+## meio. Criterio de sucesso (pedido explicito do usuario): NAO e chegar
+## perto de 50/50 -- e ver se aparece QUALQUER decisao onde a melhor
+## cidade militar (conquer) e diferente da melhor cidade economica
+## (secure_resources). Ver war_objective_different_best_city no diagnostico
+## abaixo.
+func test_war_objective_structural_experiment_D4_4():
+	var baseline_results: Array = []
+	for i in range(SEEDS.size()):
+		baseline_results.append(_run_seed(SEEDS[i], AI_RNG_SEEDS[i]))
+	_print_war_objective_structural_diagnostic("baseline_atual", baseline_results)
+
+	RivalAI.WAR_OBJECTIVE_TERM_WEIGHTS = {
+		RivalAI.WAR_OBJECTIVE_CONQUER: {
+			"strength": RivalAI.WAR_WEIGHT_STRENGTH,
+			"proximity": RivalAI.WAR_WEIGHT_PROXIMITY,
+			"vulnerability": RivalAI.WAR_WEIGHT_VULNERABILITY,
+			"resources": 0.0, # D4.4 -- conquer deixa de considerar recursos (motivo puramente militar)
+			"role_fit": RivalAI.WAR_WEIGHT_ROLE_FIT,
+		},
+		RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES: {
+			"strength": RivalAI.WAR_WEIGHT_STRENGTH,
+			"proximity": RivalAI.WAR_WEIGHT_PROXIMITY,
+			"vulnerability": RivalAI.WAR_WEIGHT_VULNERABILITY,
+			"resources": RivalAI.WAR_WEIGHT_RESOURCES_SECURE,
+			"role_fit": 0.0, # D4.4 -- secure_resources deixa de considerar adequacao de exercito (motivo puramente economico)
+		},
+	}
+	var experimental_results: Array = []
+	for i in range(SEEDS.size()):
+		experimental_results.append(_run_seed(SEEDS[i], AI_RNG_SEEDS[i]))
+	_print_war_objective_structural_diagnostic("experimental_semantico", experimental_results)
+
+	var any_nan_or_negative := false
+	for r in baseline_results + experimental_results:
+		if r.nan_or_negative_yield:
+			any_nan_or_negative = true
+	assert_false(any_nan_or_negative, "yield/ouro negativo ou NaN detectado -- bug de correcao, nao questao de balanceamento")
+
+## D4.4 -- complementa _print_war_objective_experiment_variant (D4.2, que
+## ja cobre decisoes/vitorias/delta/macro) com os blocos que faltam pra
+## comparar baseline x experimento estrutural: componentes medios por
+## objetivo (D4.1), diagnostico de fatores crus (D4.3), e a pergunta
+## central desta fatia (cidade selecionada diverge entre objetivos?).
+## MESMOS campos, MESMA formatacao das fatias anteriores -- reusa as
+## funcoes ja escritas em vez de duplicar a agregacao uma terceira vez.
+func _print_war_objective_structural_diagnostic(label: String, results: Array) -> void:
+	_print_war_objective_experiment_variant(label, -1.0, results) # peso=-1.0 e so um marcador visual ("N/A") -- D4.4 muda o VETOR inteiro, nao um unico peso
+
+	var components_sum := {RivalAI.WAR_OBJECTIVE_CONQUER: {}, RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES: {}}
+	var same_best_city := 0
+	var different_best_city := 0
+	var total_decisions := 0
+	for r in results:
+		total_decisions += r.war_objective_decisions
+		same_best_city += r.war_objective_same_best_city
+		different_best_city += r.war_objective_different_best_city
+		for objective in r.war_objective_components_sum.keys():
+			for component_key in r.war_objective_components_sum[objective].keys():
+				components_sum[objective][component_key] = components_sum[objective].get(component_key, 0.0) + r.war_objective_components_sum[objective][component_key]
+	var conquer_avg_components := {}
+	var secure_avg_components := {}
+	if total_decisions > 0:
+		for component_key in components_sum[RivalAI.WAR_OBJECTIVE_CONQUER].keys():
+			conquer_avg_components[component_key] = components_sum[RivalAI.WAR_OBJECTIVE_CONQUER][component_key] / float(total_decisions)
+		for component_key in components_sum[RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES].keys():
+			secure_avg_components[component_key] = components_sum[RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES][component_key] / float(total_decisions)
+	print("[sim D4.4 %s componentes] conquer_media=%s secure_media=%s cidade_igual=%d cidade_diferente=%d" % [label, conquer_avg_components, secure_avg_components, same_best_city, different_best_city])
+
+	var all_strength_advantage: Array = []
+	var all_candidate_resource_richness: Array = []
+	var all_candidate_role_fit: Array = []
+	var total_candidate_samples := 0
+	var total_proximity_true := 0
+	var total_vulnerability_true := 0
+	var selected_raw_totals := {
+		RivalAI.WAR_OBJECTIVE_CONQUER: {"resource_richness": [], "proximity": [], "vulnerability": [], "role_fit": []},
+		RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES: {"resource_richness": [], "proximity": [], "vulnerability": [], "role_fit": []},
+	}
+	for r in results:
+		all_strength_advantage.append_array(r.war_objective_strength_advantage)
+		all_candidate_resource_richness.append_array(r.war_objective_candidate_resource_richness)
+		all_candidate_role_fit.append_array(r.war_objective_candidate_role_fit)
+		total_candidate_samples += r.war_objective_candidate_samples
+		total_proximity_true += r.war_objective_candidate_proximity_true
+		total_vulnerability_true += r.war_objective_candidate_vulnerability_true
+		for objective in r.war_objective_selected_raw.keys():
+			for factor_key in r.war_objective_selected_raw[objective].keys():
+				selected_raw_totals[objective][factor_key].append_array(r.war_objective_selected_raw[objective][factor_key])
+
+	print("[sim D4.4 %s fatores] amostras_candidato=%d strength_media=%.2f strength_mediana=%.2f proximity_verdadeiro=%d/%d(%.0f%%) vulnerability_verdadeiro=%d/%d(%.0f%%) resource_richness_hist=%s role_fit_hist=%s" % [
+		label, total_candidate_samples,
+		_avg(all_strength_advantage), _median(all_strength_advantage),
+		total_proximity_true, total_candidate_samples, (100.0 * float(total_proximity_true) / float(total_candidate_samples)) if total_candidate_samples > 0 else 0.0,
+		total_vulnerability_true, total_candidate_samples, (100.0 * float(total_vulnerability_true) / float(total_candidate_samples)) if total_candidate_samples > 0 else 0.0,
+		_histogram(all_candidate_resource_richness), _histogram(all_candidate_role_fit),
+	])
+
+	for objective in selected_raw_totals.keys():
+		var bucket: Dictionary = selected_raw_totals[objective]
+		var n: int = bucket.resource_richness.size()
+		print("[sim D4.4 %s selecionado=%s] n=%d resource_richness_media=%.2f proximity_media=%.2f vulnerability_media=%.2f role_fit_media=%.2f" % [
+			label, objective, n,
+			_avg(bucket.resource_richness), _avg(bucket.proximity), _avg(bucket.vulnerability), _avg(bucket.role_fit),
+		])
 
 ## --- Montagem de uma partida simulada ---------------------------------
 
@@ -842,6 +973,8 @@ func _new_metrics() -> Dictionary:
 			RivalAI.WAR_OBJECTIVE_CONQUER: {"resource_richness": [], "proximity": [], "vulnerability": [], "role_fit": []},
 			RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES: {"resource_richness": [], "proximity": [], "vulnerability": [], "role_fit": []},
 		}, # D4.3 -- fatores crus da cidade EFETIVAMENTE selecionada (RivalAI._best_war_objective), bucketado por qual objetivo venceu -- correlacao fator x objetivo escolhido pedida pelo usuario
+		"war_objective_same_best_city": 0, # Roadmap "Parte D" D4.4 -- melhor cidade de conquer == melhor cidade de secure_resources nesta decisao
+		"war_objective_different_best_city": 0, # D4.4 -- idem, mas DIVERGENTES -- pergunta central do experimento estrutural: existe alvo militarmente otimo != alvo economicamente otimo?
 	}
 
 ## Roadmap 2.0 Parte 1 (A1) — benchmark do bonus de recurso na pontuacao de
@@ -976,6 +1109,19 @@ func _record_war_objective_decision(m: Dictionary, hex_grid: HexGrid, player: Pl
 	m.war_objective_selected[selected.objective] = m.war_objective_selected.get(selected.objective, 0) + 1
 	_accumulate_components(m.war_objective_components_sum[RivalAI.WAR_OBJECTIVE_CONQUER], conquer_components)
 	_accumulate_components(m.war_objective_components_sum[RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES], secure_components)
+
+	# Roadmap "Parte D" D4.4 -- pergunta central do experimento estrutural:
+	# conquer e secure_resources concordam sobre QUAL cidade e a melhor, ou
+	# apontam pra cidades DIFERENTES? Com os pesos de producao de hoje isso
+	# quase nunca diverge (so o peso de recursos muda entre objetivos, o
+	# resto e identico -- MESMA cidade tende a vencer os dois). So fica
+	# interessante depois que os vetores de peso passam a incluir/excluir
+	# termos diferentes por objetivo (ver test_war_objective_structural_
+	# experiment_D4_4) -- por isso e medido sempre, nao so no experimento.
+	if best_city_by_objective[RivalAI.WAR_OBJECTIVE_CONQUER] == best_city_by_objective[RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES]:
+		m.war_objective_same_best_city += 1
+	else:
+		m.war_objective_different_best_city += 1
 
 	# Roadmap "Parte D" D4.3 -- diagnostico dos fatores CRUS (pre-peso),
 	# pedido explicito do usuario: "o problema e resources excessivamente

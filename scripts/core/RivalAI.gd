@@ -299,22 +299,12 @@ const WAR_OBJECTIVE_SECURE_RESOURCES := "secure_resources"
 const WAR_OBJECTIVES: Array[String] = [WAR_OBJECTIVE_CONQUER, WAR_OBJECTIVE_SECURE_RESOURCES]
 ## Recurso pesa o DOBRO quando o objetivo E "garantir recursos" -- motivo
 ## primario, nao mais um sinal entre outros (WAR_WEIGHT_RESOURCES continua
-## valendo pra CONQUER, onde recurso e so bonus de oportunidade).
-## Roadmap "Parte D" D4.2 -- static var (NAO const) EXCLUSIVAMENTE pra
-## permitir ao harness rodar um experimento A/B/C/D determinístico dentro
-## do MESMO processo (salva o valor original, sobrescreve, roda os MESMOS
-## SEEDS/AI_RNG_SEEDS de D4.0, restaura -- ver test_simulation_balance.gd,
-## test_war_objective_weight_experiment). Jogo real e todo o resto dos
-## testes NUNCA reatribuem isto -- comportamento de producao permanece
-## 2.0, idem antes desta fatia; so ganhou a CAPACIDADE de ser sobrescrito
-## por quem precisar comparar pesos sem editar codigo entre execucoes.
-## D4.1 ja confirmou que este peso e o UNICO responsavel pela dominancia
-## de secure_resources (demais termos identicos entre objetivos) -- D4.2
-## e o experimento controlado que usa esta capacidade, ainda sem escolher
-## um valor definitivo (ver "regra de ouro" combinada com o usuario).
-static var WAR_WEIGHT_RESOURCES_SECURE := 2.0
-static func _resource_weight_for_objective(objective: String) -> float:
-	return WAR_WEIGHT_RESOURCES_SECURE if objective == WAR_OBJECTIVE_SECURE_RESOURCES else WAR_WEIGHT_RESOURCES
+## valendo pra CONQUER, onde recurso e so bonus de oportunidade). Valor
+## DEFAULT consultado por WAR_OBJECTIVE_TERM_WEIGHTS abaixo -- permanece
+## const de proposito (D4.2 sobrescrevia isto direto; desde D4.4 quem
+## precisar de override sobrescreve WAR_OBJECTIVE_TERM_WEIGHTS, mecanismo
+## generalizado que substitui o D4.2 antigo).
+const WAR_WEIGHT_RESOURCES_SECURE := 2.0
 
 ## Roadmap "Parte C" C2 -- conecta ArmyComposition (C1) a decide_war como
 ## sinal SEPARADO de _total_military_strength: forca total = quanto poder
@@ -330,27 +320,46 @@ static func _resource_weight_for_objective(objective: String) -> float:
 ## harness decide se fazem sentido, nunca calibrar dentro desta fatia.
 const WAR_WEIGHT_ROLE_FIT := 0.3
 
-## Roadmap "Parte D" D4.1 -- extraido de dentro de _score_war_target (que
-## so somava os termos inline ate aqui) pra o harness poder inspecionar
-## CADA termo separadamente (diagnostico "secure_resources vence por peso
-## maior, ou por achar cidade melhor?") sem duplicar a formula: harness
-## chama esta funcao E _score_war_target diretamente, nunca reimplementa
-## nenhum termo. De proposito NAO um contrato estrutural novo de RivalAI --
-## so um passo intermediario do calculo ja existente, exposto pra quem
-## precisar dos termos (hoje: so o harness). _score_war_target continua
-## sendo a UNICA fonte de verdade do SCORE (soma destes termos); nenhum
-## chamador de producao (_best_war_objective, _campaign_still_viable)
-## muda.
+## Roadmap "Parte D" D4.2/D4.4 -- vetor de pesos completo POR OBJETIVO
+## (D4.2 so cobria o peso de recursos via WAR_WEIGHT_RESOURCES_SECURE;
+## D4.4 precisa poder zerar/realçar QUALQUER termo por objetivo pra testar
+## objetivos SEMANTICAMENTE diferentes, ex.: "conquer nao olha recursos,
+## secure_resources nao olha role_fit"). static var (NAO const) pelo MESMO
+## motivo de sempre: harness precisa rodar um experimento determinístico
+## dentro do MESMO processo (salva, sobrescreve, roda os MESMOS SEEDS/
+## AI_RNG_SEEDS de D4.0, restaura -- ver test_simulation_balance.gd).
+## Default REPRODUZ EXATAMENTE o comportamento de producao de hoje: os 3
+## termos compartilhados (strength/proximity/vulnerability) valem o MESMO
+## peso pros dois objetivos; so resources (WAR_WEIGHT_RESOURCES_SECURE >
+## WAR_WEIGHT_RESOURCES, decisao ja tomada em C2) e diferente. Jogo real e
+## todo o resto dos testes NUNCA reatribuem isto.
+static var WAR_OBJECTIVE_TERM_WEIGHTS := {
+	WAR_OBJECTIVE_CONQUER: {
+		"strength": WAR_WEIGHT_STRENGTH,
+		"proximity": WAR_WEIGHT_PROXIMITY,
+		"vulnerability": WAR_WEIGHT_VULNERABILITY,
+		"resources": WAR_WEIGHT_RESOURCES,
+		"role_fit": WAR_WEIGHT_ROLE_FIT,
+	},
+	WAR_OBJECTIVE_SECURE_RESOURCES: {
+		"strength": WAR_WEIGHT_STRENGTH,
+		"proximity": WAR_WEIGHT_PROXIMITY,
+		"vulnerability": WAR_WEIGHT_VULNERABILITY,
+		"resources": WAR_WEIGHT_RESOURCES_SECURE,
+		"role_fit": WAR_WEIGHT_ROLE_FIT,
+	},
+}
+
 ## Roadmap "Parte D" D4.3 -- os 4 fatores CRUS (pre-peso) que dependem so
-## de `city` (objective-independentes -- so o PESO do termo de recursos
-## muda por objetivo, nunca o resource_richness em si, ver
-## _resource_weight_for_objective). Extraido pra o harness poder medir a
-## DISTRIBUICAO real de cada fator (resources perto do teto? proximity
-## quase sempre 1.0? role_fit quase sempre 0.0?) sem repetir nenhum
-## calculo -- _war_target_score_components abaixo passa a chamar esta
-## funcao em vez de recalcular os mesmos 4 fatores inline. strength_
-## advantage fica de fora de proposito: e por PLAYER/OPONENTE, nao por
-## `city`, ja calculado 1x pelo chamador (mesmo padrao de sempre).
+## de `city` (objective-independentes -- o PESO de cada termo muda por
+## objetivo via WAR_OBJECTIVE_TERM_WEIGHTS acima, nunca o fator cru em
+## si). Extraido pra o harness poder medir a DISTRIBUICAO real de cada
+## fator (resources perto do teto? proximity quase sempre 1.0? role_fit
+## quase sempre 0.0?) sem repetir nenhum calculo -- _war_target_score_
+## components abaixo passa a chamar esta funcao em vez de recalcular os
+## mesmos 4 fatores inline. strength_advantage fica de fora de proposito:
+## e por PLAYER/OPONENTE, nao por `city`, ja calculado 1x pelo chamador
+## (mesmo padrao de sempre).
 static func _war_target_raw_factors(player: PlayerData, hex_grid: HexGrid, city: City, role_counts: Dictionary) -> Dictionary:
 	return {
 		"proximity": 1.0 if _distance_to_nearest_own_city(player, city.coord) <= WAR_PROXIMITY_RANGE else 0.0,
@@ -372,13 +381,13 @@ static func _war_target_raw_factors(player: PlayerData, hex_grid: HexGrid, city:
 ## muda.
 static func _war_target_score_components(player: PlayerData, hex_grid: HexGrid, city: City, objective: String, strength_advantage: float, role_counts: Dictionary) -> Dictionary:
 	var raw := _war_target_raw_factors(player, hex_grid, city, role_counts)
-	var resource_weight: float = _resource_weight_for_objective(objective)
+	var weights: Dictionary = WAR_OBJECTIVE_TERM_WEIGHTS[objective]
 	return {
-		"strength": WAR_WEIGHT_STRENGTH * strength_advantage,
-		"proximity": WAR_WEIGHT_PROXIMITY * raw.proximity,
-		"vulnerability": WAR_WEIGHT_VULNERABILITY * raw.vulnerability,
-		"resources": resource_weight * raw.resource_richness,
-		"role_fit": WAR_WEIGHT_ROLE_FIT * raw.role_fit,
+		"strength": weights.strength * strength_advantage,
+		"proximity": weights.proximity * raw.proximity,
+		"vulnerability": weights.vulnerability * raw.vulnerability,
+		"resources": weights.resources * raw.resource_richness,
+		"role_fit": weights.role_fit * raw.role_fit,
 	}
 
 ## Roadmap "Parte C" C3 — extraido de dentro do loop de _best_war_objective
