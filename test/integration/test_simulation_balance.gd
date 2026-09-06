@@ -576,6 +576,16 @@ func _print_war_objective_experiment_variant(label: String, weight: float, resul
 ## cidade militar (conquer) e diferente da melhor cidade economica
 ## (secure_resources). Ver war_objective_different_best_city no diagnostico
 ## abaixo.
+##
+## POS-PROMOCAO (D4.4+D4.5 foram promovidos a producao, ver
+## RivalAI.WAR_OBJECTIVE_TERM_WEIGHTS/WAR_OBJECTIVE_COMPARISON_MODE):
+## "baseline_atual" e "experimental_semantico" abaixo agora devem produzir
+## resultados IDENTICOS de proposito -- os pesos experimentais construidos
+## aqui sao os MESMOS que ja sao o default de producao. Isso e o
+## resultado ESPERADO (confirma que a promocao nao regrediu), nao um teste
+## quebrado -- o valor deste teste virou regressao/confirmacao, nao mais
+## A/B. Ver test_war_objective_comparison_mode_experiment_D4_5 pra A/B
+## real (modos de comparacao, esses sim ainda divergem do default).
 func test_war_objective_structural_experiment_D4_4():
 	var baseline_results: Array = []
 	for i in range(SEEDS.size()):

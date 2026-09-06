@@ -248,6 +248,12 @@ const WAR_WEIGHT_VULNERABILITY := 1.0
 ## somada aditivamente aos outros 3 termos, sem tocar no limiar/jitter
 ## abaixo — guerra passa a ter tambem um motivo economico/geografico, nao
 ## so forca relativa/proximidade/vulnerabilidade.
+## Roadmap "Parte D" D4.4 -- desde a divisao semantica promovida a
+## producao (ver WAR_OBJECTIVE_TERM_WEIGHTS), CONQUER deixou de
+## considerar recursos (motivo puramente militar) e este peso ficou SEM
+## CONSUMIDOR no perfil default -- preservado nomeado, nao apagado, pra
+## um experimento futuro que queira reintroduzir alguma sensibilidade a
+## recurso em conquer sem inventar um numero novo.
 const WAR_WEIGHT_RESOURCES := 1.0
 const WAR_RESOURCE_RICHNESS_NORM := 4.0
 const WAR_SCORE_THRESHOLD := 1.5
@@ -320,25 +326,39 @@ const WAR_WEIGHT_RESOURCES_SECURE := 2.0
 ## harness decide se fazem sentido, nunca calibrar dentro desta fatia.
 const WAR_WEIGHT_ROLE_FIT := 0.3
 
-## Roadmap "Parte D" D4.2/D4.4 -- vetor de pesos completo POR OBJETIVO
-## (D4.2 so cobria o peso de recursos via WAR_WEIGHT_RESOURCES_SECURE;
-## D4.4 precisa poder zerar/realçar QUALQUER termo por objetivo pra testar
-## objetivos SEMANTICAMENTE diferentes, ex.: "conquer nao olha recursos,
-## secure_resources nao olha role_fit"). static var (NAO const) pelo MESMO
-## motivo de sempre: harness precisa rodar um experimento determinístico
-## dentro do MESMO processo (salva, sobrescreve, roda os MESMOS SEEDS/
-## AI_RNG_SEEDS de D4.0, restaura -- ver test_simulation_balance.gd).
-## Default REPRODUZ EXATAMENTE o comportamento de producao de hoje: os 3
-## termos compartilhados (strength/proximity/vulnerability) valem o MESMO
-## peso pros dois objetivos; so resources (WAR_WEIGHT_RESOURCES_SECURE >
-## WAR_WEIGHT_RESOURCES, decisao ja tomada em C2) e diferente. Jogo real e
-## todo o resto dos testes NUNCA reatribuem isto.
+## Roadmap "Parte D" D4.2->D4.4 (PROMOVIDO A PRODUCAO) -- vetor de pesos
+## completo POR OBJETIVO. Ate D4.4, os dois objetivos compartilhavam
+## strength/proximity/vulnerability/role_fit e so o peso de resources
+## diferia -- D4.1 mediu que isso fazia secure_resources vencer 113/113
+## (peso maior, nunca "acha cidade melhor"); D4.2 confirmou que reduzir o
+## peso (2.0->1.25) nao mudava a decisao, so a margem, e que igualar
+## (1.0) tambem cortava guerras declaradas quase pela metade (efeito
+## colateral indesejado). D4.4 resolveu na raiz: os dois objetivos agora
+## tem TERMOS diferentes, nao so pesos diferentes --
+##   conquer          = qualidade MILITAR do alvo (strength, proximity,
+##                       vulnerability, role_fit) -- SEM resources.
+##   secure_resources = valor ECONOMICO do alvo (strength, proximity,
+##                       vulnerability, resources) -- SEM role_fit
+##                       (role_fit era 0/221 na amostra medida em D4.3,
+##                       gargalo de C1 -- composicao militar 100% corpo-a-
+##                       corpo -- nao usado como justificativa pra mudar
+##                       C2, ver D4.4).
+## WAR_WEIGHT_RESOURCES_SECURE continua 2.0 (nunca foi o problema, D4.2
+## ja provou isso) e WAR_WEIGHT_RESOURCES (peso antigo de conquer pra
+## recursos) fica sem consumidor no default -- preservado como constante
+## nomeada pra referencia historica/experimentos futuros, nunca lido pelo
+## perfil padrao. static var (nao const) preservado de proposito: e o
+## MECANISMO (nao so o numero) que D4.2/D4.4/D4.5 validaram, e mante-lo
+## sobrescrivel permite um proximo experimento sem editar codigo -- ver
+## test_simulation_balance.gd pros usos ja existentes (D4.2 ainda varia
+## SO o peso de recursos de secure_resources; D4.4/D4.5 usam este MESMO
+## vetor, que agora e o baseline real em vez de uma copia experimental).
 static var WAR_OBJECTIVE_TERM_WEIGHTS := {
 	WAR_OBJECTIVE_CONQUER: {
 		"strength": WAR_WEIGHT_STRENGTH,
 		"proximity": WAR_WEIGHT_PROXIMITY,
 		"vulnerability": WAR_WEIGHT_VULNERABILITY,
-		"resources": WAR_WEIGHT_RESOURCES,
+		"resources": 0.0,
 		"role_fit": WAR_WEIGHT_ROLE_FIT,
 	},
 	WAR_OBJECTIVE_SECURE_RESOURCES: {
@@ -346,7 +366,7 @@ static var WAR_OBJECTIVE_TERM_WEIGHTS := {
 		"proximity": WAR_WEIGHT_PROXIMITY,
 		"vulnerability": WAR_WEIGHT_VULNERABILITY,
 		"resources": WAR_WEIGHT_RESOURCES_SECURE,
-		"role_fit": WAR_WEIGHT_ROLE_FIT,
+		"role_fit": 0.0,
 	},
 }
 
@@ -398,28 +418,37 @@ static func _score_war_target(player: PlayerData, hex_grid: HexGrid, city: City,
 	var components := _war_target_score_components(player, hex_grid, city, objective, strength_advantage, role_counts)
 	return components.strength + components.proximity + components.vulnerability + components.resources + components.role_fit
 
-## Roadmap "Parte D" D4.5 -- MODO de comparacao entre os melhores
-## candidatos de CADA objetivo (Etapa 2 de _best_war_objective abaixo),
-## pluggavel pelo MESMO motivo/padrao de WAR_OBJECTIVE_TERM_WEIGHTS
-## (D4.2/D4.4): D4.4 provou que conquer/secure_resources ja tem semantica
-## distinta (92% dos casos apontam pra cidades diferentes), mas comparar
-## SCORE BRUTO entre objetivos com tetos diferentes (D4.4: conquer ficou
-## sem o termo de recursos, teto menor) e enviesado pra quem tem o teto
-## mais alto -- isto troca COMO comparar "melhor conquer" com "melhor
-## secure_resources", nunca COMO calcular cada um (isso continua sendo
-## _score_war_target/_war_target_score_components, intocados). "raw"
-## reproduz EXATAMENTE o comportamento de hoje (quality == score bruto) --
-## unico modo que existiu ate esta fatia, e o default.
+## Roadmap "Parte D" D4.5 (PROMOVIDO A PRODUCAO) -- MODO de comparacao
+## entre os melhores candidatos de CADA objetivo (Etapa 2 de
+## _best_war_objective abaixo), pluggavel pelo MESMO motivo/padrao de
+## WAR_OBJECTIVE_TERM_WEIGHTS. D4.4 provou que conquer/secure_resources
+## ja tem semantica distinta (92% dos casos apontam pra cidades
+## diferentes), mas comparar SCORE BRUTO entre objetivos com tetos
+## diferentes (conquer sem o termo de recursos = teto menor) e enviesado
+## pra quem tem o teto mais alto -- "raw" (o UNICO modo que existiu ate
+## D4.5) e essa comparacao antiga. "normalized_max" e o vencedor
+## experimental: score/teto proprio de cada objetivo, deixando conquer
+## vencer 6/113 decisoes (0 antes) SEM alterar guerras_declaradas (45,
+## identico) -- ver D4.5. "relative_margin" foi descartado (rejeitado
+## pra producao): rendia mais vitorias de conquer (8/113) mas cortava
+## guerras_declaradas quase pela metade, contaminando indiretamente
+## WAR_SCORE_THRESHOLD -- preservado como modo disponivel (nunca
+## deletado, ver "nao promoveria... salvo se quiser manter como
+## ferramenta de debug"), nunca o default.
 const WAR_OBJECTIVE_COMPARISON_RAW := "raw"
 ## score / teto TEORICO do objetivo (soma de peso*1.0 por termo -- todo
 ## fator cru e 0.0-1.0, exceto strength_advantage que vai ate -1.0, mas o
-## teto usa o melhor caso 1.0 pros dois objetivos por igual).
+## teto usa o melhor caso 1.0 pros dois objetivos por igual). Denominador
+## DERIVADO do proprio WAR_OBJECTIVE_TERM_WEIGHTS (ver
+## _war_objective_theoretical_max abaixo) -- nunca uma constante
+## calibrada a parte, nunca ajustada empiricamente pra favorecer
+## nenhum objetivo.
 const WAR_OBJECTIVE_COMPARISON_NORMALIZED_MAX := "normalized_max"
 ## score - MEDIA do score daquele objetivo entre TODOS os candidatos desta
 ## decisao -- "o quanto este candidato se destaca dentro do proprio pool",
-## em vez de um teto fixo.
+## em vez de um teto fixo. Disponivel, NAO promovido -- ver D4.5.
 const WAR_OBJECTIVE_COMPARISON_RELATIVE_MARGIN := "relative_margin"
-static var WAR_OBJECTIVE_COMPARISON_MODE := WAR_OBJECTIVE_COMPARISON_RAW
+static var WAR_OBJECTIVE_COMPARISON_MODE := WAR_OBJECTIVE_COMPARISON_NORMALIZED_MAX
 
 ## D4.5 -- teto teorico de um objetivo, so usado pelo modo
 ## "normalized_max" (ver WAR_OBJECTIVE_COMPARISON_MODE acima).
@@ -460,9 +489,11 @@ static func _war_objective_quality(score: float, objective: String, avg_score: f
 ## candidato dentro da sua propria semantica (MESMO loop de sempre, so
 ## agora guardando o melhor POR OBJETIVO em vez de um unico "melhor
 ## geral" correndo); Etapa 2, compara os dois melhores por "qualidade"
-## (pluggavel, ver _war_objective_quality). No modo default ("raw") isto
-## e matematicamente equivalente ao algoritmo antigo de passada unica
-## pra QUALQUER decisao ja coberta pelos testes existentes (verificado
+## (pluggavel, ver _war_objective_quality; default de producao e
+## "normalized_max" desde D4.5, ver WAR_OBJECTIVE_COMPARISON_MODE). No
+## modo "raw" (o unico que existia ANTES de D4.5) esta reestruturacao e
+## matematicamente equivalente ao algoritmo antigo de passada unica pra
+## QUALQUER decisao ja coberta pelos testes existentes (verificado
 ## rodando a suite inteira) -- a unica divergencia teorica possivel e um
 ## empate de score EXATO entre CIDADES DIFERENTES de objetivos diferentes,
 ## caso em que o antigo desempatava pela ordem de iteracao das cidades e
