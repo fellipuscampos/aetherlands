@@ -319,23 +319,38 @@ const WAR_RESOURCE_WEIGHT_BY_OBJECTIVE := {
 ## harness decide se fazem sentido, nunca calibrar dentro desta fatia.
 const WAR_WEIGHT_ROLE_FIT := 0.3
 
-## Roadmap "Parte C" C3 — extraido de dentro do loop de _best_war_objective
-## pra ser reusado tambem por _campaign_still_viable, MESMA formula, nunca
-## duas. strength_advantage/role_counts continuam calculados UMA vez pelo
-## CHAMADOR (nao aqui dentro), mesma razao de performance de sempre.
-static func _score_war_target(player: PlayerData, hex_grid: HexGrid, city: City, objective: String, strength_advantage: float, role_counts: Dictionary) -> float:
+## Roadmap "Parte D" D4.1 -- extraido de dentro de _score_war_target (que
+## so somava os termos inline ate aqui) pra o harness poder inspecionar
+## CADA termo separadamente (diagnostico "secure_resources vence por peso
+## maior, ou por achar cidade melhor?") sem duplicar a formula: harness
+## chama esta funcao E _score_war_target diretamente, nunca reimplementa
+## nenhum termo. De proposito NAO um contrato estrutural novo de RivalAI --
+## so um passo intermediario do calculo ja existente, exposto pra quem
+## precisar dos termos (hoje: so o harness). _score_war_target continua
+## sendo a UNICA fonte de verdade do SCORE (soma destes termos); nenhum
+## chamador de producao (_best_war_objective, _campaign_still_viable)
+## muda.
+static func _war_target_score_components(player: PlayerData, hex_grid: HexGrid, city: City, objective: String, strength_advantage: float, role_counts: Dictionary) -> Dictionary:
 	var proximity := 1.0 if _distance_to_nearest_own_city(player, city.coord) <= WAR_PROXIMITY_RANGE else 0.0
 	var vulnerability := 1.0 if not city.buildings.has("walls") else 0.0
 	var resource_richness := _city_resource_richness(city, hex_grid)
 	var role_fit := _role_fit_bonus(city, role_counts)
 	var resource_weight: float = WAR_RESOURCE_WEIGHT_BY_OBJECTIVE[objective]
-	return (
-		WAR_WEIGHT_STRENGTH * strength_advantage
-		+ WAR_WEIGHT_PROXIMITY * proximity
-		+ WAR_WEIGHT_VULNERABILITY * vulnerability
-		+ resource_weight * resource_richness
-		+ WAR_WEIGHT_ROLE_FIT * role_fit
-	)
+	return {
+		"strength": WAR_WEIGHT_STRENGTH * strength_advantage,
+		"proximity": WAR_WEIGHT_PROXIMITY * proximity,
+		"vulnerability": WAR_WEIGHT_VULNERABILITY * vulnerability,
+		"resources": resource_weight * resource_richness,
+		"role_fit": WAR_WEIGHT_ROLE_FIT * role_fit,
+	}
+
+## Roadmap "Parte C" C3 — extraido de dentro do loop de _best_war_objective
+## pra ser reusado tambem por _campaign_still_viable, MESMA formula, nunca
+## duas. strength_advantage/role_counts continuam calculados UMA vez pelo
+## CHAMADOR (nao aqui dentro), mesma razao de performance de sempre.
+static func _score_war_target(player: PlayerData, hex_grid: HexGrid, city: City, objective: String, strength_advantage: float, role_counts: Dictionary) -> float:
+	var components := _war_target_score_components(player, hex_grid, city, objective, strength_advantage, role_counts)
+	return components.strength + components.proximity + components.vulnerability + components.resources + components.role_fit
 
 ## Melhor par (cidade conhecida, tipo de objetivo) contra `opponent`, ou null
 ## se nao ha nenhuma cidade conhecida. strength_advantage e role_counts sao

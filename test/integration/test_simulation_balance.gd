@@ -304,6 +304,58 @@ func test_simulate_baseline_multi_seed_metrics():
 			war_objective_totals[objective] = war_objective_totals.get(objective, 0) + r.war_objective_counts[objective]
 	print("[sim agregado objetivo de guerra] %s" % [war_objective_totals])
 
+	# Roadmap "Parte D" D4.1 -- amostra bem maior que a de cima (TODO turno
+	# em paz avaliado, nao so guerras que de fato comecaram, ver
+	# _record_war_objective_decision) -- responde empiricamente "secure_
+	# resources vence por PESO (WAR_WEIGHT_RESOURCES_SECURE=2.0) ou por achar
+	# cidade melhor?": media dos componentes por objetivo separa os dois.
+	# NENHUMA constante mudada nesta fatia -- so medicao, mesma disciplina
+	# de sempre. Bins de delta sao um PONTO DE PARTIDA (pedido do usuario:
+	# "nao precisamos decidir bins definitivos ainda"), nao um contrato.
+	var total_objective_decisions := 0
+	var total_conquer_wins := 0
+	var total_secure_wins := 0
+	var total_objective_ties := 0
+	var all_objective_deltas: Array = []
+	var objective_selected_totals := {}
+	var objective_components_sum := {RivalAI.WAR_OBJECTIVE_CONQUER: {}, RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES: {}}
+	for r in all_results:
+		total_objective_decisions += r.war_objective_decisions
+		total_conquer_wins += r.war_objective_conquer_wins
+		total_secure_wins += r.war_objective_secure_wins
+		total_objective_ties += r.war_objective_ties
+		all_objective_deltas.append_array(r.war_objective_deltas)
+		for objective in r.war_objective_selected.keys():
+			objective_selected_totals[objective] = objective_selected_totals.get(objective, 0) + r.war_objective_selected[objective]
+		for objective in r.war_objective_components_sum.keys():
+			for component_key in r.war_objective_components_sum[objective].keys():
+				objective_components_sum[objective][component_key] = objective_components_sum[objective].get(component_key, 0.0) + r.war_objective_components_sum[objective][component_key]
+
+	var objective_delta_bins := {"< -1": 0, "[-1, 0)": 0, "[0, 1)": 0, ">= 1": 0}
+	for delta in all_objective_deltas:
+		if delta < -1.0:
+			objective_delta_bins["< -1"] += 1
+		elif delta < 0.0:
+			objective_delta_bins["[-1, 0)"] += 1
+		elif delta < 1.0:
+			objective_delta_bins["[0, 1)"] += 1
+		else:
+			objective_delta_bins[">= 1"] += 1
+
+	var conquer_avg_components := {}
+	var secure_avg_components := {}
+	if total_objective_decisions > 0:
+		for component_key in objective_components_sum[RivalAI.WAR_OBJECTIVE_CONQUER].keys():
+			conquer_avg_components[component_key] = objective_components_sum[RivalAI.WAR_OBJECTIVE_CONQUER][component_key] / float(total_objective_decisions)
+		for component_key in objective_components_sum[RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES].keys():
+			secure_avg_components[component_key] = objective_components_sum[RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES][component_key] / float(total_objective_decisions)
+
+	print("[sim agregado D4.1 objetivo] decisoes=%d conquer_venceu=%d secure_venceu=%d empates=%d delta_medio(secure-conquer)=%.2f delta_mediano=%.2f selecionado=%s delta_bins=%s" % [
+		total_objective_decisions, total_conquer_wins, total_secure_wins, total_objective_ties,
+		_avg(all_objective_deltas), _median(all_objective_deltas), objective_selected_totals, objective_delta_bins,
+	])
+	print("[sim agregado D4.1 componentes] conquer_media=%s secure_media=%s" % [conquer_avg_components, secure_avg_components])
+
 	# D3 -- duracao de campanha (turnos entre ACTIVE e o desfecho terminal),
 	# agregada entre todas as seeds, todas as campanhas encerradas.
 	var all_campaign_durations: Array = []
@@ -413,6 +465,14 @@ func _run_seed(seed_value: int, ai_rng_seed: int) -> Dictionary:
 		# por engano).
 		RivalAI.decide_production(primary, grid, rivals[0])
 		RivalAI.decide_research(primary)
+		# Roadmap "Parte D" D4.1 -- MESMA pre-condicao de decide_war (so em
+		# paz: ver "if player.is_at_war_with(opponent): return" no topo dele)
+		# porque queremos observar exatamente o que decide_war esta prestes a
+		# consultar, sem alterar nada -- puramente uma leitura, ANTES de
+		# decide_war rodar (se ele declarar guerra agora, o proximo turno ja
+		# nao teria mais candidato pra este par).
+		if not primary.is_at_war_with(rivals[0]):
+			_record_war_objective_decision(m, grid, primary, rivals[0])
 		RivalAI.decide_war(primary, grid, rivals[0])
 		RivalAI.decide_campaign(primary, grid, rivals[0]) # Roadmap "Parte C" C3 -- mesmo lugar/ordem de GameManager.gd (logo apos decide_war)
 		# Roadmap "Parte D" D1 -- mesmo lugar/ordem de GameManager.gd (logo
@@ -603,6 +663,13 @@ func _new_metrics() -> Dictionary:
 		"campaign_start_turn": {}, # D3 -- attacker -> opponent -> turno de inicio, so pra calcular duracao (nao serializado nem lido em nenhum outro lugar)
 		"campaign_durations": [], # D3 -- turnos entre ACTIVE e COMPLETED/ABANDONED, uma entrada por campanha encerrada (retargeting NAO reinicia a contagem -- mede o ciclo de vida inteiro ate o desfecho terminal)
 		"research_choices_matching_personality": 0, # D3 -- mesmo padrao de research_choices_matching_identity, mas contra o eixo DOMINANTE de player.personality (intencao fixa da partida) em vez de CityIdentity (evidencia historica) -- ver CivilizationPersonality.gd
+		"war_objective_decisions": 0, # Roadmap "Parte D" D4.1 -- quantas vezes best_conquer E best_secure_resources existiam os dois (>=1 candidato), primary->rivals[0], TODO turno em paz (nao so quando uma guerra de fato comecava, ao contrario de war_objective_counts acima)
+		"war_objective_conquer_wins": 0, # D4.1 -- best_conquer.score > best_secure.score
+		"war_objective_secure_wins": 0, # D4.1 -- best_secure.score > best_conquer.score
+		"war_objective_ties": 0, # D4.1 -- scores iguais (so acontece quando resource_richness==0 pros dois, ver WAR_OBJECTIVES sobre o desempate de _best_war_objective)
+		"war_objective_deltas": [], # D4.1 -- best_secure.score - best_conquer.score, uma entrada por decisao
+		"war_objective_selected": {}, # D4.1 -- objective -> quantas vezes RivalAI._best_war_objective (chamado de verdade, nao reimplementado) escolheu aquele objetivo nesta decisao
+		"war_objective_components_sum": {RivalAI.WAR_OBJECTIVE_CONQUER: {}, RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES: {}}, # D4.1 -- soma dos componentes (RivalAI._war_target_score_components) do MELHOR candidato de cada objetivo, por decisao -- vira media so no agregado final entre todas as seeds (ver test_simulate_baseline_multi_seed_metrics)
 	}
 
 ## Roadmap 2.0 Parte 1 (A1) — benchmark do bonus de recurso na pontuacao de
@@ -672,6 +739,75 @@ func _log_war_target(m: Dictionary, grid: HexGrid, primary: PlayerData, rival: P
 		print("[sim guerra T%d] %s -> alvo=%s objetivo=%s territorio=%d recursos_controlados=%d score=%.2f" % [
 			turn_number, _label(attacker, primary), target_city.city_name, best.objective, target_city.owned_tiles.size(), resource_count, best.score
 		])
+
+## Roadmap "Parte D" D4.1 -- diferente de _log_war_target acima (que so
+## dispara quando uma guerra de fato COMECA, amostra pequena e rara),
+## esta funcao roda TODO turno em que primary->rivals[0] ainda esta em paz
+## (mesma pre-condicao de decide_war, ver ponto de chamada), pra construir
+## uma amostra grande o bastante de "o que a formula preferiria agora" e
+## responder empiricamente se secure_resources domina por PESO
+## (WAR_WEIGHT_RESOURCES_SECURE=2.0) ou por achar cidades melhores.
+##
+## NUNCA reimplementa a formula: chama RivalAI._score_war_target (score
+## autoritativo) e RivalAI._war_target_score_components (termos) direto,
+## so duplica a iteracao trivial candidato x objetivo (MESMA estrutura de
+## _best_war_objective) pra conseguir o melhor candidato de CADA objetivo
+## separadamente -- _best_war_objective de producao so devolve o vencedor
+## geral, e mudar seu contrato de retorno so pra telemetria criaria
+## acoplamento desnecessario (pedido explicito do usuario). "selected" usa
+## RivalAI._best_war_objective DE VERDADE (nunca reimplementa o desempate)
+## pra garantir que bate exatamente com o que decide_war usaria.
+##
+## De proposito SO chamada daqui (contexto de decisao de GUERRA) -- nunca
+## de _campaign_still_viable/_advance_campaign, pra nao confundir
+## telemetria de manutencao de campanha com uma nova decisao de objetivo
+## (pedido explicito do usuario).
+func _record_war_objective_decision(m: Dictionary, hex_grid: HexGrid, player: PlayerData, opponent: PlayerData) -> void:
+	var candidates := RivalAI._known_enemy_cities_of(player, opponent, hex_grid)
+	if candidates.is_empty():
+		return
+
+	var own_strength := RivalAI._total_military_strength(player)
+	var enemy_strength := RivalAI._total_military_strength(opponent)
+	var strength_advantage: float = clamp((own_strength - enemy_strength) / max(own_strength + enemy_strength, 1.0), -1.0, 1.0)
+	var role_counts := RivalAI._role_counts(player)
+
+	var best_score_by_objective := {}
+	var best_city_by_objective := {}
+	for city in candidates:
+		for objective in RivalAI.WAR_OBJECTIVES:
+			var score: float = RivalAI._score_war_target(player, hex_grid, city, objective, strength_advantage, role_counts)
+			if not best_score_by_objective.has(objective) or score > best_score_by_objective[objective]:
+				best_score_by_objective[objective] = score
+				best_city_by_objective[objective] = city
+
+	# Nunca deveria disparar -- WAR_OBJECTIVES sempre tem os dois e todo
+	# candidato e avaliado nos dois -- guarda so por seguranca.
+	if not best_score_by_objective.has(RivalAI.WAR_OBJECTIVE_CONQUER) or not best_score_by_objective.has(RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES):
+		return
+
+	var conquer_score: float = best_score_by_objective[RivalAI.WAR_OBJECTIVE_CONQUER]
+	var secure_score: float = best_score_by_objective[RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES]
+	var conquer_components := RivalAI._war_target_score_components(player, hex_grid, best_city_by_objective[RivalAI.WAR_OBJECTIVE_CONQUER], RivalAI.WAR_OBJECTIVE_CONQUER, strength_advantage, role_counts)
+	var secure_components := RivalAI._war_target_score_components(player, hex_grid, best_city_by_objective[RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES], RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES, strength_advantage, role_counts)
+	var selected = RivalAI._best_war_objective(player, hex_grid, opponent)
+
+	m.war_objective_decisions += 1
+	var delta: float = secure_score - conquer_score
+	m.war_objective_deltas.append(delta)
+	if delta > 0.0:
+		m.war_objective_secure_wins += 1
+	elif delta < 0.0:
+		m.war_objective_conquer_wins += 1
+	else:
+		m.war_objective_ties += 1
+	m.war_objective_selected[selected.objective] = m.war_objective_selected.get(selected.objective, 0) + 1
+	_accumulate_components(m.war_objective_components_sum[RivalAI.WAR_OBJECTIVE_CONQUER], conquer_components)
+	_accumulate_components(m.war_objective_components_sum[RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES], secure_components)
+
+func _accumulate_components(sum: Dictionary, components: Dictionary) -> void:
+	for key in components.keys():
+		sum[key] = sum.get(key, 0.0) + components[key]
 
 ## Roadmap "Parte B" B3 — deteccao da transicao "" -> tech_id por civ por
 ## turno (current_research so transiciona assim, ou de volta pra "" quando
@@ -927,3 +1063,16 @@ func _avg(values: Array) -> float:
 	for v in values:
 		total += v
 	return total / float(values.size())
+
+## Roadmap "Parte D" D4.1 -- media sozinha esconde distribuicao bimodal
+## (pedido explicito do usuario: "nao somente a media"); mediana complementa
+## sem precisar decidir bins definitivos antecipadamente.
+func _median(values: Array) -> float:
+	if values.is_empty():
+		return 0.0
+	var sorted_values := values.duplicate()
+	sorted_values.sort()
+	var count := sorted_values.size()
+	if count % 2 == 1:
+		return sorted_values[count / 2]
+	return (sorted_values[count / 2 - 1] + sorted_values[count / 2]) / 2.0
