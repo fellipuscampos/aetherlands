@@ -91,6 +91,7 @@ var _original_debug_mode: bool
 var _original_turn_number: int
 var _original_player_count: int
 var _original_war_objective_term_weights: Dictionary # Roadmap "Parte D" D4.2/D4.4 -- RivalAI.WAR_OBJECTIVE_TERM_WEIGHTS e static var so pra experimentos poderem sobrescreve-la; salvar (duplicate(true) -- e um Dictionary aninhado, precisa copia PROFUNDA) e restaurar aqui (mesmo padrao dos autoloads acima) garante que volta ao default mesmo se o teste falhar no meio
+var _original_war_objective_comparison_mode: String # Roadmap "Parte D" D4.5 -- idem, pra RivalAI.WAR_OBJECTIVE_COMPARISON_MODE
 
 func before_each():
 	_original_hex_grid = GameManager.hex_grid
@@ -103,6 +104,7 @@ func before_each():
 	_original_turn_number = TurnManager.turn_number
 	_original_player_count = TurnManager.player_count
 	_original_war_objective_term_weights = RivalAI.WAR_OBJECTIVE_TERM_WEIGHTS.duplicate(true)
+	_original_war_objective_comparison_mode = RivalAI.WAR_OBJECTIVE_COMPARISON_MODE
 
 func after_each():
 	GameManager.hex_grid = _original_hex_grid
@@ -112,6 +114,7 @@ func after_each():
 	GameManager.state = _original_state
 	GameManager.stagger_ai_turns = _original_stagger
 	RivalAI.WAR_OBJECTIVE_TERM_WEIGHTS = _original_war_objective_term_weights
+	RivalAI.WAR_OBJECTIVE_COMPARISON_MODE = _original_war_objective_comparison_mode
 	GameManager.debug_mode = _original_debug_mode
 	TurnManager.turn_number = _original_turn_number
 	TurnManager.player_count = _original_player_count
@@ -672,6 +675,65 @@ func _print_war_objective_structural_diagnostic(label: String, results: Array) -
 			label, objective, n,
 			_avg(bucket.resource_richness), _avg(bucket.proximity), _avg(bucket.vulnerability), _avg(bucket.role_fit),
 		])
+
+## Roadmap "Parte D" D4.5 -- experimento de COMPARACAO combinado com o
+## usuario. D4.4 provou a semantica dos objetivos (92% cidade_diferente),
+## mas a comparacao por soma bruta e enviesada pro objetivo de teto maior
+## -- este experimento mantem a semantica de D4.4 CONGELADA (pedido
+## explicito do usuario: "nao mexeria novamente nos pesos dos componentes
+## antes desse experimento... precisamos preservar essa propriedade e
+## corrigir somente a camada de selecao") e so varia
+## RivalAI.WAR_OBJECTIVE_COMPARISON_MODE:
+##   A raw             -- score bruto (o que D4.4 ja mediu)
+##   B normalized_max  -- score / teto teorico do proprio objetivo
+##   C relative_margin -- score - media do proprio objetivo no pool desta decisao
+## Pergunta (nao resposta pre-decidida): existe um modo em que conquer
+## consiga vencer QUANDO o alvo militar se destaca mais que os alvos
+## economicos se destacam, sem produzir mudanca absurda na frequencia de
+## guerra? NAO buscamos 50/50 -- olhamos selecionado={conquer:N} > 0 e
+## guerras_declaradas/campanhas (ja reportados por
+## _print_war_objective_structural_diagnostic) lado a lado.
+const WAR_OBJECTIVE_COMPARISON_VARIANTS := [
+	{"label": "A_raw"},
+	{"label": "B_normalized_max"},
+	{"label": "C_relative_margin"},
+]
+
+func test_war_objective_comparison_mode_experiment_D4_5():
+	RivalAI.WAR_OBJECTIVE_TERM_WEIGHTS = {
+		RivalAI.WAR_OBJECTIVE_CONQUER: {
+			"strength": RivalAI.WAR_WEIGHT_STRENGTH,
+			"proximity": RivalAI.WAR_WEIGHT_PROXIMITY,
+			"vulnerability": RivalAI.WAR_WEIGHT_VULNERABILITY,
+			"resources": 0.0, # MESMA semantica de D4.4 -- congelada, nao mexida aqui
+			"role_fit": RivalAI.WAR_WEIGHT_ROLE_FIT,
+		},
+		RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES: {
+			"strength": RivalAI.WAR_WEIGHT_STRENGTH,
+			"proximity": RivalAI.WAR_WEIGHT_PROXIMITY,
+			"vulnerability": RivalAI.WAR_WEIGHT_VULNERABILITY,
+			"resources": RivalAI.WAR_WEIGHT_RESOURCES_SECURE,
+			"role_fit": 0.0,
+		},
+	}
+	var modes := {
+		"A_raw": RivalAI.WAR_OBJECTIVE_COMPARISON_RAW,
+		"B_normalized_max": RivalAI.WAR_OBJECTIVE_COMPARISON_NORMALIZED_MAX,
+		"C_relative_margin": RivalAI.WAR_OBJECTIVE_COMPARISON_RELATIVE_MARGIN,
+	}
+
+	var any_nan_or_negative := false
+	for variant in WAR_OBJECTIVE_COMPARISON_VARIANTS:
+		RivalAI.WAR_OBJECTIVE_COMPARISON_MODE = modes[variant.label]
+		var variant_results: Array = []
+		for i in range(SEEDS.size()):
+			var result := _run_seed(SEEDS[i], AI_RNG_SEEDS[i])
+			variant_results.append(result)
+			if result.nan_or_negative_yield:
+				any_nan_or_negative = true
+		_print_war_objective_structural_diagnostic(variant.label, variant_results)
+
+	assert_false(any_nan_or_negative, "yield/ouro negativo ou NaN detectado -- bug de correcao, nao questao de balanceamento")
 
 ## --- Montagem de uma partida simulada ---------------------------------
 

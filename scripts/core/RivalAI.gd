@@ -398,6 +398,50 @@ static func _score_war_target(player: PlayerData, hex_grid: HexGrid, city: City,
 	var components := _war_target_score_components(player, hex_grid, city, objective, strength_advantage, role_counts)
 	return components.strength + components.proximity + components.vulnerability + components.resources + components.role_fit
 
+## Roadmap "Parte D" D4.5 -- MODO de comparacao entre os melhores
+## candidatos de CADA objetivo (Etapa 2 de _best_war_objective abaixo),
+## pluggavel pelo MESMO motivo/padrao de WAR_OBJECTIVE_TERM_WEIGHTS
+## (D4.2/D4.4): D4.4 provou que conquer/secure_resources ja tem semantica
+## distinta (92% dos casos apontam pra cidades diferentes), mas comparar
+## SCORE BRUTO entre objetivos com tetos diferentes (D4.4: conquer ficou
+## sem o termo de recursos, teto menor) e enviesado pra quem tem o teto
+## mais alto -- isto troca COMO comparar "melhor conquer" com "melhor
+## secure_resources", nunca COMO calcular cada um (isso continua sendo
+## _score_war_target/_war_target_score_components, intocados). "raw"
+## reproduz EXATAMENTE o comportamento de hoje (quality == score bruto) --
+## unico modo que existiu ate esta fatia, e o default.
+const WAR_OBJECTIVE_COMPARISON_RAW := "raw"
+## score / teto TEORICO do objetivo (soma de peso*1.0 por termo -- todo
+## fator cru e 0.0-1.0, exceto strength_advantage que vai ate -1.0, mas o
+## teto usa o melhor caso 1.0 pros dois objetivos por igual).
+const WAR_OBJECTIVE_COMPARISON_NORMALIZED_MAX := "normalized_max"
+## score - MEDIA do score daquele objetivo entre TODOS os candidatos desta
+## decisao -- "o quanto este candidato se destaca dentro do proprio pool",
+## em vez de um teto fixo.
+const WAR_OBJECTIVE_COMPARISON_RELATIVE_MARGIN := "relative_margin"
+static var WAR_OBJECTIVE_COMPARISON_MODE := WAR_OBJECTIVE_COMPARISON_RAW
+
+## D4.5 -- teto teorico de um objetivo, so usado pelo modo
+## "normalized_max" (ver WAR_OBJECTIVE_COMPARISON_MODE acima).
+static func _war_objective_theoretical_max(objective: String) -> float:
+	var weights: Dictionary = WAR_OBJECTIVE_TERM_WEIGHTS[objective]
+	return weights.strength + weights.proximity + weights.vulnerability + weights.resources + weights.role_fit
+
+## D4.5 -- traduz um score bruto em "qualidade" comparavel ENTRE
+## objetivos, conforme WAR_OBJECTIVE_COMPARISON_MODE. `avg_score` (so
+## usado pelo modo relative_margin) e a media do score DAQUELE objetivo
+## entre todos os candidatos avaliados nesta decisao (calculada pelo
+## chamador, ver _best_war_objective).
+static func _war_objective_quality(score: float, objective: String, avg_score: float) -> float:
+	match WAR_OBJECTIVE_COMPARISON_MODE:
+		WAR_OBJECTIVE_COMPARISON_NORMALIZED_MAX:
+			var theoretical_max := _war_objective_theoretical_max(objective)
+			return score / theoretical_max if theoretical_max > 0.0 else 0.0
+		WAR_OBJECTIVE_COMPARISON_RELATIVE_MARGIN:
+			return score - avg_score
+		_:
+			return score
+
 ## Melhor par (cidade conhecida, tipo de objetivo) contra `opponent`, ou null
 ## se nao ha nenhuma cidade conhecida. strength_advantage e role_counts sao
 ## calculados UMA vez (nivel-jogador, mesma simplificacao de _military_
@@ -405,6 +449,26 @@ static func _score_war_target(player: PlayerData, hex_grid: HexGrid, city: City,
 ## pelos dois objetivos. Retorna {"city","coord","objective","score"} --
 ## valor TRANSIENTE, nunca guardado (recomputado sempre que alguem precisa
 ## saber "qual seria o objetivo agora": decide_war e o log do harness).
+## `score` no retorno e SEMPRE o score BRUTO do vencedor (nunca "quality"),
+## de proposito: decide_war compara isso contra WAR_SCORE_THRESHOLD, um
+## limiar calibrado na mesma escala de score de sempre -- so QUEM vence
+## entre os dois objetivos passa a poder ser decidido por uma medida
+## diferente (D4.5), nao a escala em que o limiar de guerra opera.
+##
+## Roadmap "Parte D" D4.5 -- reestruturado em DUAS etapas explicitas
+## (pedido do usuario): Etapa 1, cada objetivo acha seu proprio melhor
+## candidato dentro da sua propria semantica (MESMO loop de sempre, so
+## agora guardando o melhor POR OBJETIVO em vez de um unico "melhor
+## geral" correndo); Etapa 2, compara os dois melhores por "qualidade"
+## (pluggavel, ver _war_objective_quality). No modo default ("raw") isto
+## e matematicamente equivalente ao algoritmo antigo de passada unica
+## pra QUALQUER decisao ja coberta pelos testes existentes (verificado
+## rodando a suite inteira) -- a unica divergencia teorica possivel e um
+## empate de score EXATO entre CIDADES DIFERENTES de objetivos diferentes,
+## caso em que o antigo desempatava pela ordem de iteracao das cidades e
+## este desempata sempre a favor de CONQUER (MESMA direcao do desempate ja
+## documentado pra empate na MESMA cidade) -- nunca observado nos dados
+## reais de D4.1-D4.4 (resource_richness nunca foi 0 na amostra).
 static func _best_war_objective(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData):
 	var candidates := _known_enemy_cities_of(player, opponent, hex_grid)
 	if candidates.is_empty():
@@ -415,12 +479,28 @@ static func _best_war_objective(player: PlayerData, hex_grid: HexGrid, opponent:
 	var strength_advantage: float = clamp((own_strength - enemy_strength) / max(own_strength + enemy_strength, 1.0), -1.0, 1.0)
 	var role_counts := _role_counts(player)
 
-	var best = null
+	var best_by_objective := {}
+	var score_sum_by_objective := {}
+	var score_count_by_objective := {}
 	for city in candidates:
 		for objective in WAR_OBJECTIVES:
 			var score := _score_war_target(player, hex_grid, city, objective, strength_advantage, role_counts)
-			if best == null or score > best.score:
-				best = {"city": city, "coord": city.coord, "objective": objective, "score": score}
+			score_sum_by_objective[objective] = score_sum_by_objective.get(objective, 0.0) + score
+			score_count_by_objective[objective] = score_count_by_objective.get(objective, 0) + 1
+			if not best_by_objective.has(objective) or score > best_by_objective[objective].score:
+				best_by_objective[objective] = {"city": city, "coord": city.coord, "objective": objective, "score": score}
+
+	var best = null
+	var best_quality := -INF
+	for objective in WAR_OBJECTIVES:
+		if not best_by_objective.has(objective):
+			continue
+		var candidate_best: Dictionary = best_by_objective[objective]
+		var avg_score: float = score_sum_by_objective[objective] / float(score_count_by_objective[objective])
+		var quality := _war_objective_quality(candidate_best.score, objective, avg_score)
+		if best == null or quality > best_quality:
+			best = candidate_best
+			best_quality = quality
 	return best
 
 ## Avalia se vale abrir guerra contra `opponent` — so roda enquanto AINDA
