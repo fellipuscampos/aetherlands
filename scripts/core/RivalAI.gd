@@ -341,18 +341,44 @@ const WAR_WEIGHT_ROLE_FIT := 0.3
 ## sendo a UNICA fonte de verdade do SCORE (soma destes termos); nenhum
 ## chamador de producao (_best_war_objective, _campaign_still_viable)
 ## muda.
+## Roadmap "Parte D" D4.3 -- os 4 fatores CRUS (pre-peso) que dependem so
+## de `city` (objective-independentes -- so o PESO do termo de recursos
+## muda por objetivo, nunca o resource_richness em si, ver
+## _resource_weight_for_objective). Extraido pra o harness poder medir a
+## DISTRIBUICAO real de cada fator (resources perto do teto? proximity
+## quase sempre 1.0? role_fit quase sempre 0.0?) sem repetir nenhum
+## calculo -- _war_target_score_components abaixo passa a chamar esta
+## funcao em vez de recalcular os mesmos 4 fatores inline. strength_
+## advantage fica de fora de proposito: e por PLAYER/OPONENTE, nao por
+## `city`, ja calculado 1x pelo chamador (mesmo padrao de sempre).
+static func _war_target_raw_factors(player: PlayerData, hex_grid: HexGrid, city: City, role_counts: Dictionary) -> Dictionary:
+	return {
+		"proximity": 1.0 if _distance_to_nearest_own_city(player, city.coord) <= WAR_PROXIMITY_RANGE else 0.0,
+		"vulnerability": 1.0 if not city.buildings.has("walls") else 0.0,
+		"resource_richness": _city_resource_richness(city, hex_grid),
+		"role_fit": _role_fit_bonus(city, role_counts),
+	}
+
+## Roadmap "Parte D" D4.1 -- extraido de dentro de _score_war_target (que
+## so somava os termos inline ate aqui) pra o harness poder inspecionar
+## CADA termo separadamente (diagnostico "secure_resources vence por peso
+## maior, ou por achar cidade melhor?") sem duplicar a formula: harness
+## chama esta funcao E _score_war_target diretamente, nunca reimplementa
+## nenhum termo. De proposito NAO um contrato estrutural novo de RivalAI --
+## so um passo intermediario do calculo ja existente, exposto pra quem
+## precisar dos termos (hoje: so o harness). _score_war_target continua
+## sendo a UNICA fonte de verdade do SCORE (soma destes termos); nenhum
+## chamador de producao (_best_war_objective, _campaign_still_viable)
+## muda.
 static func _war_target_score_components(player: PlayerData, hex_grid: HexGrid, city: City, objective: String, strength_advantage: float, role_counts: Dictionary) -> Dictionary:
-	var proximity := 1.0 if _distance_to_nearest_own_city(player, city.coord) <= WAR_PROXIMITY_RANGE else 0.0
-	var vulnerability := 1.0 if not city.buildings.has("walls") else 0.0
-	var resource_richness := _city_resource_richness(city, hex_grid)
-	var role_fit := _role_fit_bonus(city, role_counts)
+	var raw := _war_target_raw_factors(player, hex_grid, city, role_counts)
 	var resource_weight: float = _resource_weight_for_objective(objective)
 	return {
 		"strength": WAR_WEIGHT_STRENGTH * strength_advantage,
-		"proximity": WAR_WEIGHT_PROXIMITY * proximity,
-		"vulnerability": WAR_WEIGHT_VULNERABILITY * vulnerability,
-		"resources": resource_weight * resource_richness,
-		"role_fit": WAR_WEIGHT_ROLE_FIT * role_fit,
+		"proximity": WAR_WEIGHT_PROXIMITY * raw.proximity,
+		"vulnerability": WAR_WEIGHT_VULNERABILITY * raw.vulnerability,
+		"resources": resource_weight * raw.resource_richness,
+		"role_fit": WAR_WEIGHT_ROLE_FIT * raw.role_fit,
 	}
 
 ## Roadmap "Parte C" C3 — extraido de dentro do loop de _best_war_objective

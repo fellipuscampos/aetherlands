@@ -359,6 +359,76 @@ func test_simulate_baseline_multi_seed_metrics():
 	])
 	print("[sim agregado D4.1 componentes] conquer_media=%s secure_media=%s" % [conquer_avg_components, secure_avg_components])
 
+	# Roadmap "Parte D" D4.3 -- diagnostico dos fatores CRUS, sem nenhuma
+	# mudanca de gameplay: "o vies vem de resources dominante, role_fit
+	# raramente aplicavel, binarizacao de proximity/vulnerability, ou da
+	# natureza dos alvos disponiveis?" (pergunta combinada com o usuario).
+	# resource_richness/role_fit usam histograma por VALOR EXATO (nao bins)
+	# porque os dois sao discretos por construcao (count/NORM clampado --
+	# ver _city_resource_richness/_role_fit_bonus), nao continuos de
+	# verdade; proximity/vulnerability sao BINARIOS por construcao, entao
+	# "distribuicao" e so a fracao que deu 1.0. strength_advantage e o
+	# unico genuinamente continuo, por isso ganha bins de range.
+	var all_strength_advantage: Array = []
+	var all_candidate_resource_richness: Array = []
+	var all_candidate_role_fit: Array = []
+	var total_candidate_samples := 0
+	var total_proximity_true := 0
+	var total_vulnerability_true := 0
+	var selected_raw_totals := {
+		RivalAI.WAR_OBJECTIVE_CONQUER: {"resource_richness": [], "proximity": [], "vulnerability": [], "role_fit": []},
+		RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES: {"resource_richness": [], "proximity": [], "vulnerability": [], "role_fit": []},
+	}
+	for r in all_results:
+		all_strength_advantage.append_array(r.war_objective_strength_advantage)
+		all_candidate_resource_richness.append_array(r.war_objective_candidate_resource_richness)
+		all_candidate_role_fit.append_array(r.war_objective_candidate_role_fit)
+		total_candidate_samples += r.war_objective_candidate_samples
+		total_proximity_true += r.war_objective_candidate_proximity_true
+		total_vulnerability_true += r.war_objective_candidate_vulnerability_true
+		for objective in r.war_objective_selected_raw.keys():
+			for factor_key in r.war_objective_selected_raw[objective].keys():
+				selected_raw_totals[objective][factor_key].append_array(r.war_objective_selected_raw[objective][factor_key])
+
+	var resource_richness_hist := _histogram(all_candidate_resource_richness)
+	var role_fit_hist := _histogram(all_candidate_role_fit)
+	var role_fit_positive := 0
+	for v in all_candidate_role_fit:
+		if v > 0.0:
+			role_fit_positive += 1
+
+	var strength_bins := {"[-1.0, -0.5)": 0, "[-0.5, 0.0)": 0, "[0.0, 0.5)": 0, "[0.5, 1.0]": 0}
+	for v in all_strength_advantage:
+		if v < -0.5:
+			strength_bins["[-1.0, -0.5)"] += 1
+		elif v < 0.0:
+			strength_bins["[-0.5, 0.0)"] += 1
+		elif v < 0.5:
+			strength_bins["[0.0, 0.5)"] += 1
+		else:
+			strength_bins["[0.5, 1.0]"] += 1
+
+	print("[sim agregado D4.3 fatores] amostras_candidato=%d strength_media=%.2f strength_mediana=%.2f strength_bins=%s proximity_verdadeiro=%d/%d(%.0f%%) vulnerability_verdadeiro=%d/%d(%.0f%%) resource_richness_hist=%s role_fit_hist=%s role_fit_positivo=%d/%d(%.0f%%)" % [
+		total_candidate_samples,
+		_avg(all_strength_advantage), _median(all_strength_advantage), strength_bins,
+		total_proximity_true, total_candidate_samples, (100.0 * float(total_proximity_true) / float(total_candidate_samples)) if total_candidate_samples > 0 else 0.0,
+		total_vulnerability_true, total_candidate_samples, (100.0 * float(total_vulnerability_true) / float(total_candidate_samples)) if total_candidate_samples > 0 else 0.0,
+		resource_richness_hist, role_fit_hist,
+		role_fit_positive, all_candidate_role_fit.size(), (100.0 * float(role_fit_positive) / float(all_candidate_role_fit.size())) if not all_candidate_role_fit.is_empty() else 0.0,
+	])
+
+	# D4.3 -- correlacao fator x objetivo EFETIVAMENTE selecionado (nao so
+	# o "melhor por objetivo" de D4.1 acima) -- responde "quando conquer
+	# de fato venceu (empate/desempate), o que era diferente daquela
+	# decisao?".
+	for objective in selected_raw_totals.keys():
+		var bucket: Dictionary = selected_raw_totals[objective]
+		var n: int = bucket.resource_richness.size()
+		print("[sim agregado D4.3 selecionado=%s] n=%d resource_richness_media=%.2f proximity_media=%.2f vulnerability_media=%.2f role_fit_media=%.2f" % [
+			objective, n,
+			_avg(bucket.resource_richness), _avg(bucket.proximity), _avg(bucket.vulnerability), _avg(bucket.role_fit),
+		])
+
 	# D3 -- duracao de campanha (turnos entre ACTIVE e o desfecho terminal),
 	# agregada entre todas as seeds, todas as campanhas encerradas.
 	var all_campaign_durations: Array = []
@@ -762,6 +832,16 @@ func _new_metrics() -> Dictionary:
 		"war_objective_deltas": [], # D4.1 -- best_secure.score - best_conquer.score, uma entrada por decisao
 		"war_objective_selected": {}, # D4.1 -- objective -> quantas vezes RivalAI._best_war_objective (chamado de verdade, nao reimplementado) escolheu aquele objetivo nesta decisao
 		"war_objective_components_sum": {RivalAI.WAR_OBJECTIVE_CONQUER: {}, RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES: {}}, # D4.1 -- soma dos componentes (RivalAI._war_target_score_components) do MELHOR candidato de cada objetivo, por decisao -- vira media so no agregado final entre todas as seeds (ver test_simulate_baseline_multi_seed_metrics)
+		"war_objective_strength_advantage": [], # Roadmap "Parte D" D4.3 -- um valor por DECISAO (nao por candidato -- e o mesmo pra toda cidade na mesma decisao)
+		"war_objective_candidate_samples": 0, # D4.3 -- total de (decisao, candidato) avaliados, denominador de proximity_true/vulnerability_true abaixo
+		"war_objective_candidate_resource_richness": [], # D4.3 -- um valor por (decisao, candidato) -- TODOS os candidatos avaliados, nao so o melhor
+		"war_objective_candidate_role_fit": [], # D4.3 -- idem
+		"war_objective_candidate_proximity_true": 0, # D4.3 -- proximity e BINARIO por construcao (1.0 se <= WAR_PROXIMITY_RANGE, senao 0.0) -- contagem substitui histograma
+		"war_objective_candidate_vulnerability_true": 0, # D4.3 -- idem (1.0 se sem muralha)
+		"war_objective_selected_raw": {
+			RivalAI.WAR_OBJECTIVE_CONQUER: {"resource_richness": [], "proximity": [], "vulnerability": [], "role_fit": []},
+			RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES: {"resource_richness": [], "proximity": [], "vulnerability": [], "role_fit": []},
+		}, # D4.3 -- fatores crus da cidade EFETIVAMENTE selecionada (RivalAI._best_war_objective), bucketado por qual objetivo venceu -- correlacao fator x objetivo escolhido pedida pelo usuario
 	}
 
 ## Roadmap 2.0 Parte 1 (A1) — benchmark do bonus de recurso na pontuacao de
@@ -896,6 +976,34 @@ func _record_war_objective_decision(m: Dictionary, hex_grid: HexGrid, player: Pl
 	m.war_objective_selected[selected.objective] = m.war_objective_selected.get(selected.objective, 0) + 1
 	_accumulate_components(m.war_objective_components_sum[RivalAI.WAR_OBJECTIVE_CONQUER], conquer_components)
 	_accumulate_components(m.war_objective_components_sum[RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES], secure_components)
+
+	# Roadmap "Parte D" D4.3 -- diagnostico dos fatores CRUS (pre-peso),
+	# pedido explicito do usuario: "o problema e resources excessivamente
+	# dominante, role_fit raramente aplicavel, binarizacao de proximity/
+	# vulnerability, ou a natureza dos alvos disponiveis?". strength_
+	# advantage e por DECISAO (player vs opponent, nao muda por cidade);
+	# os outros 4 sao por CANDIDATO (RivalAI._war_target_raw_factors, MESMA
+	# funcao que _war_target_score_components agora reusa -- nunca
+	# reimplementa nenhum termo). Amostra TODOS os candidatos avaliados
+	# nesta decisao, nao so os dois melhores, pra descrever o pool real de
+	# alvos -- e separadamente a cidade que FOI selecionada, pra
+	# correlacionar fator x objetivo escolhido.
+	m.war_objective_strength_advantage.append(strength_advantage)
+	for city in candidates:
+		var raw := RivalAI._war_target_raw_factors(player, hex_grid, city, role_counts)
+		m.war_objective_candidate_samples += 1
+		m.war_objective_candidate_resource_richness.append(raw.resource_richness)
+		m.war_objective_candidate_role_fit.append(raw.role_fit)
+		if raw.proximity > 0.0:
+			m.war_objective_candidate_proximity_true += 1
+		if raw.vulnerability > 0.0:
+			m.war_objective_candidate_vulnerability_true += 1
+	var selected_raw := RivalAI._war_target_raw_factors(player, hex_grid, selected.city, role_counts)
+	var selected_bucket: Dictionary = m.war_objective_selected_raw[selected.objective]
+	selected_bucket.resource_richness.append(selected_raw.resource_richness)
+	selected_bucket.proximity.append(selected_raw.proximity)
+	selected_bucket.vulnerability.append(selected_raw.vulnerability)
+	selected_bucket.role_fit.append(selected_raw.role_fit)
 
 func _accumulate_components(sum: Dictionary, components: Dictionary) -> void:
 	for key in components.keys():
@@ -1168,3 +1276,16 @@ func _median(values: Array) -> float:
 	if count % 2 == 1:
 		return sorted_values[count / 2]
 	return (sorted_values[count / 2 - 1] + sorted_values[count / 2]) / 2.0
+
+## Roadmap "Parte D" D4.3 -- histograma por VALOR EXATO (chave formatada
+## "%.2f", nao faixa), pra fatores DISCRETOS por construcao (resource_
+## richness/role_fit sao count/NORM clampado -- um punhado de valores
+## possiveis, nao um continuo de verdade). Bins de faixa (ver strength_
+## bins em test_simulate_baseline_multi_seed_metrics) so fazem sentido pra
+## fator genuinamente continuo.
+func _histogram(values: Array) -> Dictionary:
+	var hist := {}
+	for v in values:
+		var key := "%.2f" % v
+		hist[key] = hist.get(key, 0) + 1
+	return hist
