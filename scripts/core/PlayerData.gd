@@ -93,6 +93,36 @@ var war_campaigns: Dictionary = {} # PlayerData (opponent) -> Dictionary
 ## compartilhado por referencia, nao duplicado).
 var trade_routes: Array[TradeRoute] = []
 
+## Roadmap "Fase F" F1/F2 -- estado persistente das duas vitorias
+## alternativas de SUSTENTACAO (Dominacao nao precisa de estado novo: e so
+## ausencia de units/cities de todo rival, ja coberto por
+## GameManager.check_game_over). Os dois streaks sao HISTORICO acumulado
+## (turnos consecutivos), atualizados UMA vez por turno real -- nunca na
+## chamada extra de check_game_over que roda logo apos um ataque do
+## jogador humano, que so DETECTA uma vitoria ja atingida sem avancar
+## tempo (F2, ponto explicito do usuario: duas cadencias de chamada nao
+## podem incrementar o streak duas vezes no mesmo turno).
+const NO_RITUAL_CITY_COORD := Vector2i(999999, 999999) # mesmo padrao de City.NO_PENDING_COORD/SelectionManager._hovered_coord -- Vector2i nao tem null
+
+## Turnos consecutivos com territorio >= X% do mundo habitavel (Dominio
+## Territorial) -- zera assim que o percentual cai abaixo do limiar em
+## qualquer turno (nenhuma pausa/reserva de progresso, decisao de F1).
+var territorial_streak: int = 0
+
+## Ritual do Nodulo (Ascensao Arcana): `arcane_ritual_active` vira true
+## quando o custo INICIAL de mana e pago (sustentacao comeca a contar
+## dali). `arcane_ritual_city_coord` aponta pra cidade-sede por
+## COORDENADA, nunca referencia de City (MESMO principio de
+## war_campaigns.target_coord acima, decisao explicita de F2) -- resolver
+## a cidade atual naquele coord na hora de verificar deixa captura/
+## destruicao invalidar o ritual naturalmente, sem precisar de um sinal
+## separado de "cidade perdida". `arcane_ritual_streak` e turnos
+## consecutivos sustentados desde a ativacao -- zera se a cidade-sede cai
+## OU os Nodulos controlados ficam abaixo de 3 (decisao de F1).
+var arcane_ritual_active: bool = false
+var arcane_ritual_city_coord: Vector2i = NO_RITUAL_CITY_COORD
+var arcane_ritual_streak: int = 0
+
 func _init(civ_data: CivilizationData) -> void:
 	civ = civ_data
 
