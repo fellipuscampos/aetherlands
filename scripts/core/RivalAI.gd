@@ -300,11 +300,22 @@ const WAR_OBJECTIVES: Array[String] = [WAR_OBJECTIVE_CONQUER, WAR_OBJECTIVE_SECU
 ## Recurso pesa o DOBRO quando o objetivo E "garantir recursos" -- motivo
 ## primario, nao mais um sinal entre outros (WAR_WEIGHT_RESOURCES continua
 ## valendo pra CONQUER, onde recurso e so bonus de oportunidade).
-const WAR_WEIGHT_RESOURCES_SECURE := 2.0
-const WAR_RESOURCE_WEIGHT_BY_OBJECTIVE := {
-	WAR_OBJECTIVE_CONQUER: WAR_WEIGHT_RESOURCES,
-	WAR_OBJECTIVE_SECURE_RESOURCES: WAR_WEIGHT_RESOURCES_SECURE,
-}
+## Roadmap "Parte D" D4.2 -- static var (NAO const) EXCLUSIVAMENTE pra
+## permitir ao harness rodar um experimento A/B/C/D determinístico dentro
+## do MESMO processo (salva o valor original, sobrescreve, roda os MESMOS
+## SEEDS/AI_RNG_SEEDS de D4.0, restaura -- ver test_simulation_balance.gd,
+## test_war_objective_weight_experiment). Jogo real e todo o resto dos
+## testes NUNCA reatribuem isto -- comportamento de producao permanece
+## 2.0, idem antes desta fatia; so ganhou a CAPACIDADE de ser sobrescrito
+## por quem precisar comparar pesos sem editar codigo entre execucoes.
+## D4.1 ja confirmou que este peso e o UNICO responsavel pela dominancia
+## de secure_resources (demais termos identicos entre objetivos) -- D4.2
+## e o experimento controlado que usa esta capacidade, ainda sem escolher
+## um valor definitivo (ver "regra de ouro" combinada com o usuario).
+static var WAR_WEIGHT_RESOURCES_SECURE := 2.0
+static func _resource_weight_for_objective(objective: String) -> float:
+	return WAR_WEIGHT_RESOURCES_SECURE if objective == WAR_OBJECTIVE_SECURE_RESOURCES else WAR_WEIGHT_RESOURCES
+
 ## Roadmap "Parte C" C2 -- conecta ArmyComposition (C1) a decide_war como
 ## sinal SEPARADO de _total_military_strength: forca total = quanto poder
 ## tenho; role_fit = se tenho o TIPO certo de poder pro que ESTE alvo exige
@@ -335,7 +346,7 @@ static func _war_target_score_components(player: PlayerData, hex_grid: HexGrid, 
 	var vulnerability := 1.0 if not city.buildings.has("walls") else 0.0
 	var resource_richness := _city_resource_richness(city, hex_grid)
 	var role_fit := _role_fit_bonus(city, role_counts)
-	var resource_weight: float = WAR_RESOURCE_WEIGHT_BY_OBJECTIVE[objective]
+	var resource_weight: float = _resource_weight_for_objective(objective)
 	return {
 		"strength": WAR_WEIGHT_STRENGTH * strength_advantage,
 		"proximity": WAR_WEIGHT_PROXIMITY * proximity,

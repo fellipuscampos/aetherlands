@@ -90,6 +90,7 @@ var _original_stagger: bool
 var _original_debug_mode: bool
 var _original_turn_number: int
 var _original_player_count: int
+var _original_war_weight_resources_secure: float # Roadmap "Parte D" D4.2 -- RivalAI.WAR_WEIGHT_RESOURCES_SECURE virou static var so pra este experimento poder sobrescreve-la; salvar/restaurar aqui (mesmo padrao dos autoloads acima) garante que volta a 2.0 mesmo se o teste falhar no meio
 
 func before_each():
 	_original_hex_grid = GameManager.hex_grid
@@ -101,6 +102,7 @@ func before_each():
 	_original_debug_mode = GameManager.debug_mode
 	_original_turn_number = TurnManager.turn_number
 	_original_player_count = TurnManager.player_count
+	_original_war_weight_resources_secure = RivalAI.WAR_WEIGHT_RESOURCES_SECURE
 
 func after_each():
 	GameManager.hex_grid = _original_hex_grid
@@ -109,6 +111,7 @@ func after_each():
 	GameManager.players = _original_players
 	GameManager.state = _original_state
 	GameManager.stagger_ai_turns = _original_stagger
+	RivalAI.WAR_WEIGHT_RESOURCES_SECURE = _original_war_weight_resources_secure
 	GameManager.debug_mode = _original_debug_mode
 	TurnManager.turn_number = _original_turn_number
 	TurnManager.player_count = _original_player_count
@@ -379,6 +382,95 @@ func test_simulate_baseline_multi_seed_metrics():
 	# ou comportamento esperado — ver comentario de topo do arquivo.
 	for r in all_results:
 		assert_false(r.nan_or_negative_yield, "yield/ouro negativo ou NaN detectado numa das seeds — bug de correcao, nao questao de balanceamento")
+
+## Roadmap "Parte D" D4.2 -- variantes do experimento A/B/C/D combinado com
+## o usuario. "A" repete o baseline (2.0) DE PROPOSITO -- serve de controle
+## interno: com o RNG deterministico de D4.0, os numeros de A aqui devem
+## bater com os que D4.1 ja reportou (mesma SEEDS/AI_RNG_SEEDS, mesmo peso).
+## "D" (1.0) e o controle SEM vantagem alguma entre os dois objetivos.
+## Nenhum valor aqui e proposto como definitivo -- ver "regra de ouro"
+## combinada com o usuario: o objetivo e mapear a faixa, nao escolher um
+## numero ainda.
+const WAR_OBJECTIVE_EXPERIMENT_VARIANTS := [
+	{"label": "A_baseline_2.00", "weight": 2.0},
+	{"label": "B_1.50", "weight": 1.5},
+	{"label": "C_1.25", "weight": 1.25},
+	{"label": "D_1.00_controle", "weight": 1.0},
+]
+
+## D4.2 -- roda a MESMA matriz SEEDS/AI_RNG_SEEDS (D4.0) uma vez por
+## variante, sobrescrevendo SO RivalAI.WAR_WEIGHT_RESOURCES_SECURE entre
+## execucoes (restaurado em after_each mesmo se este teste falhar no meio).
+## Reusa _run_seed sem nenhuma modificacao -- a variante nao muda NADA na
+## montagem da partida, so o peso que a formula ja calibravel consulta.
+func test_war_objective_weight_experiment_A_B_C_D():
+	var any_nan_or_negative := false
+	for variant in WAR_OBJECTIVE_EXPERIMENT_VARIANTS:
+		RivalAI.WAR_WEIGHT_RESOURCES_SECURE = variant.weight
+		var variant_results: Array = []
+		for i in range(SEEDS.size()):
+			var result := _run_seed(SEEDS[i], AI_RNG_SEEDS[i])
+			variant_results.append(result)
+			if result.nan_or_negative_yield:
+				any_nan_or_negative = true
+		_print_war_objective_experiment_variant(variant.label, variant.weight, variant_results)
+
+	# Mesmo assert de correcao do teste de baseline acima (nunca
+	# balanceamento) -- se uma variante de peso produzisse NaN/negativo,
+	# seria bug de correcao na formula, nao uma questao de calibracao.
+	assert_false(any_nan_or_negative, "yield/ouro negativo ou NaN detectado numa das seeds/variantes -- bug de correcao, nao questao de balanceamento")
+
+## D4.2 -- agregado por VARIANTE (nao por seed, ao contrario do baseline
+## acima) com exatamente os campos combinados com o usuario: decisoes,
+## vitorias/empates por objetivo, distribuicao de delta (media+mediana+
+## bins), objetivo efetivamente selecionado, e o "comportamento macro"
+## (guerras declaradas, ciclo de vida de campanha) -- pra responder as
+## DUAS perguntas separadas (a formula deixa de ser enviesada? isso muda o
+## comportamento observavel?), nao so a primeira.
+func _print_war_objective_experiment_variant(label: String, weight: float, results: Array) -> void:
+	var total_decisions := 0
+	var conquer_wins := 0
+	var secure_wins := 0
+	var ties := 0
+	var deltas: Array = []
+	var selected_totals := {}
+	var total_wars := 0
+	var campaigns_started := 0
+	var campaigns_completed := 0
+	var campaigns_abandoned := 0
+	var campaign_durations: Array = []
+	for r in results:
+		total_decisions += r.war_objective_decisions
+		conquer_wins += r.war_objective_conquer_wins
+		secure_wins += r.war_objective_secure_wins
+		ties += r.war_objective_ties
+		deltas.append_array(r.war_objective_deltas)
+		for objective in r.war_objective_selected.keys():
+			selected_totals[objective] = selected_totals.get(objective, 0) + r.war_objective_selected[objective]
+		total_wars += r.war_count
+		campaigns_started += r.campaigns_started
+		campaigns_completed += r.campaigns_completed
+		campaigns_abandoned += r.campaigns_abandoned
+		campaign_durations.append_array(r.campaign_durations)
+
+	var delta_bins := {"< -1": 0, "[-1, 0)": 0, "[0, 1)": 0, ">= 1": 0}
+	for delta in deltas:
+		if delta < -1.0:
+			delta_bins["< -1"] += 1
+		elif delta < 0.0:
+			delta_bins["[-1, 0)"] += 1
+		elif delta < 1.0:
+			delta_bins["[0, 1)"] += 1
+		else:
+			delta_bins[">= 1"] += 1
+
+	print("[sim D4.2 experimento %s peso=%.2f] decisoes=%d conquer_venceu=%d secure_venceu=%d empates=%d delta_medio(secure-conquer)=%.2f delta_mediano=%.2f delta_bins=%s selecionado=%s guerras_declaradas=%d campanhas_iniciadas=%d campanhas_concluidas=%d campanhas_abandonadas=%d duracao_media_campanha=%.1f(n=%d)" % [
+		label, weight,
+		total_decisions, conquer_wins, secure_wins, ties,
+		_avg(deltas), _median(deltas), delta_bins, selected_totals,
+		total_wars, campaigns_started, campaigns_completed, campaigns_abandoned,
+		_avg(campaign_durations), campaign_durations.size(),
+	])
 
 ## --- Montagem de uma partida simulada ---------------------------------
 
