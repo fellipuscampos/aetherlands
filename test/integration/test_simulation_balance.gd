@@ -53,6 +53,29 @@ extends GutTest
 const TURN_COUNT := 200
 const SEEDS := [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010,
 	1011, 1012, 1013, 1014, 1015]
+## Roadmap "Parte D" D4.0 -- ANTES desta fatia, este harness NAO era
+## reproduzivel: SEEDS so controlava HexGrid.generate_map (terreno/recursos/
+## covis/personalidade, tudo via RNG seedado local) mas RivalAI.decide_war
+## (WAR_DECLARE_CHANCE_WHEN_READY) e RivalAI.decide_trade
+## (TRADE_PROPOSE_CHANCE_PER_TURN) -- os UNICOS dois pontos de decisao de IA
+## que consultam o RNG global (randf() sem seed proprio, auditado em toda
+## RivalAI.gd) -- rodavam com o RNG global do Godot, que varia a cada
+## execucao do processo. Resultado pratico: comparar "config A" vs "config
+## B" na mesma seed_value dava trajetorias DIFERENTES desde o primeiro
+## randf(), contaminando qualquer diff com ruido de sorte em vez de isolar
+## o efeito da mudanca de peso/threshold (ver D3, "existe uma questao de
+## determinismo do RNG pra comparacoes A/B").
+##
+## Fix: `seed(ai_rng_seed)` global (Godot @GlobalScope.seed(), reseeda O
+## MESMO RNG global que decide_war/decide_trade consultam) chamado em
+## _run_seed logo ANTES do loop de turnos comecar -- ver comentario la.
+## AI_RNG_SEEDS fica PAREADO 1:1 com SEEDS de proposito (mesmo indice):
+## simples o bastante pra baseline (map + comportamento variam juntos,
+## imitando "15 partidas diferentes"), mas _run_seed aceita os dois eixos
+## SEPARADOS -- um experimento futuro que queira isolar "quanto do
+## resultado e sorte de dado, mesmo mapa" so precisa variar AI_RNG_SEEDS
+## sozinho contra o MESMO SEEDS.
+const AI_RNG_SEEDS := SEEDS
 const STAGNATION_WINDOW := 35 # M do plano: turnos sem guerra/territorio mudando pra considerar estagnado
 const MAP_SIZE := 41 # bem menor que TitleScreen.MAP_SIZES.large (320x84) de proposito — harness precisa rodar 15 seeds x 200 turnos em tempo razoavel, nao precisa dos continentes especiais (Vulcanico/Cristal) pra medir IA/economia/guerra
 const RIVAL_COUNT := 3 # + o "primary" = 4 civs, mesmo teto pratico de GameManager.rival_count hoje
@@ -89,11 +112,13 @@ func after_each():
 	GameManager.debug_mode = _original_debug_mode
 	TurnManager.turn_number = _original_turn_number
 	TurnManager.player_count = _original_player_count
+	randomize() # D4.0 -- _run_seed fixa o RNG global (seed()) pra reprodutibilidade; devolve ao acaso pra nao vazar determinismo pra qualquer coisa que rode DEPOIS deste arquivo no mesmo processo
 
 func test_simulate_baseline_multi_seed_metrics():
 	var all_results: Array = []
-	for seed_value in SEEDS:
-		var result := _run_seed(seed_value)
+	for i in range(SEEDS.size()):
+		var seed_value: int = SEEDS[i]
+		var result := _run_seed(seed_value, AI_RNG_SEEDS[i])
 		all_results.append(result)
 		print("[sim seed=%d] fim=T%d 1a_guerra=%s guerras=%d dur_media_guerra=%.1f estagnado=%s eliminados=%s predios=%s cidades_finais=%s ouro_medio=%s rotas_criadas=%d rotas_ativas_fim=%d rotas_canceladas=%d fronteira_com_recurso=%s fronteira_perto_de_covil=%s eixo_dominante=%s pesquisas_identity_match=%d/%d(%.0f%%) composicao_rivais=%s campanhas_iniciadas=%d campanhas_concluidas=%d campanhas_abandonadas=%d campanhas_redirecionadas=%d campanha_status_final=%s paz_primary=%s guerras_encerradas_por_paz=%d weariness_na_paz=%s" % [
 			seed_value,
@@ -305,7 +330,18 @@ func test_simulate_baseline_multi_seed_metrics():
 
 ## --- Montagem de uma partida simulada ---------------------------------
 
-func _run_seed(seed_value: int) -> Dictionary:
+## D4.0 -- `seed_value` continua controlando SO o cenario (mapa/recursos/
+## covis/personalidade, via HexGrid.generate_map + CivilizationPersonality,
+## nenhum dos dois toca o RNG global). `ai_rng_seed` e o eixo NOVO e
+## SEPARADO: reseeda o RNG global (ver chamada a seed() abaixo) que
+## RivalAI.decide_war/decide_trade consultam -- os dois UNICOS pontos de
+## decisao de IA que usam randf() sem RNG proprio. Nenhuma chamada entre
+## a criacao do grid e o loop de turnos consome RNG global (auditado:
+## WorldSetup.find_start_tile/find_spawn_tile, _spawn_capital,
+## CivilizationPersonality.generate usam so RNG local/seedado), entao
+## reseedar bem antes do loop comecar e seguro e determina 100% da
+## sequencia de decisoes de IA dali em diante.
+func _run_seed(seed_value: int, ai_rng_seed: int) -> Dictionary:
 	var grid := HexGrid.new()
 	grid._ready()
 	grid.generate_map(MAP_SIZE, MAP_SIZE, seed_value)
@@ -351,6 +387,7 @@ func _run_seed(seed_value: int) -> Dictionary:
 	TurnManager.turn_number = 1
 	TurnManager.player_count = 1
 
+	seed(ai_rng_seed) # D4.0 -- ver docstring desta funcao; PRECISA vir depois de todo o setup de cenario acima (que nao toca RNG global) e ANTES do loop de turnos abaixo (que toca, via decide_war/decide_trade)
 	var m := _new_metrics()
 	for turn_index in range(TURN_COUNT):
 		var war_before := _war_pairs(primary, rivals)
