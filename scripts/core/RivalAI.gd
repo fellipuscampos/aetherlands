@@ -479,6 +479,28 @@ static func _campaign_start_message(player: PlayerData, objective: String, targe
 static func _notify_campaign_abandoned(player: PlayerData, opponent: PlayerData) -> void:
 	_notify_human(opponent, "%s abandonou sua campanha contra %s." % [player.civ.civ_name, opponent.civ.civ_name])
 
+## Roadmap "Parte E" E1 -- ponte entre Diplomacy (paz) e war_campaigns
+## (C3/C4), fechando a LACUNA CONHECIDA documentada em
+## _choose_campaign_target e em decide_peace (ver abaixo): paz resolvida
+## agora invalida QUALQUER campanha ACTIVE entre as duas civs, nas DUAS
+## direcoes. Transicao EXPLICITA ACTIVE -> ABANDONED -- nunca passa por
+## _advance_campaign (sem reavaliar objetivo, sem RNG, sem retarget: a paz
+## sozinha ja e motivo suficiente pra abandonar, independente de qualquer
+## pontuacao de guerra). Chamada de Diplomacy.propose_peace() logo apos a
+## paz ser efetivada -- UNICO ponto de entrada, cobre humano->rival (HUD)
+## e rival->humano (decide_peace) sem duplicar esta logica em nenhum
+## chamador.
+static func end_campaigns_on_peace(a: PlayerData, b: PlayerData) -> void:
+	_abandon_campaign_if_active(a, b)
+	_abandon_campaign_if_active(b, a)
+
+static func _abandon_campaign_if_active(player: PlayerData, opponent: PlayerData) -> void:
+	var campaign: Dictionary = player.war_campaigns.get(opponent, {})
+	if campaign.get("status", "") != CAMPAIGN_STATUS_ACTIVE:
+		return
+	campaign.status = CAMPAIGN_STATUS_ABANDONED
+	_notify_campaign_abandoned(player, opponent)
+
 ## Persistencia e o padrao -- nenhum ramo troca de alvo so porque outro
 ## candidato parece melhor agora (isso seria troca oportunista, proibida).
 ## So reavalia quando o alvo em si fica invalido (capturado por QUALQUER UM,
@@ -532,15 +554,14 @@ static func _campaign_still_viable(player: PlayerData, hex_grid: HexGrid, oppone
 ## Roadmap "Parte C" C4 via _campaign_attack_target (que soma a checagem de
 ## frescor que esta funcao nao faz sozinha) — ver _handle_attacker.
 ##
-## LACUNA CONHECIDA (aceita, ainda nao resolvida): se o humano propuser paz
-## e o rival aceitar enquanto a campanha esta ACTIVE, nada aqui reage —
-## decide_campaign continuaria reavaliando uma campanha agora irrelevante
-## nos turnos seguintes, e _campaign_attack_target continuaria direcionando
-## unidades pra ela (a checagem de frescor so olha posse de cidade, nao
-## estado diplomatico). Inofensivo em termos de crash/comportamento invalido
-## (a unidade so continuaria "perseguindo" um alvo que tecnicamente nao e
-## mais hostil) — corrigir isso e trabalho de uma fatia futura que conecte
-## campanha a Diplomacy.gd, deliberadamente fora de escopo ate aqui.
+## RESOLVIDO no Roadmap "Parte E" E1 (Diplomacy.propose_peace chama
+## RivalAI.end_campaigns_on_peace logo apos aplicar a paz): uma paz aceita
+## agora forca ACTIVE -> ABANDONED nas duas direcoes ANTES do proximo
+## decide_campaign/_campaign_attack_target rodar, entao esta funcao nunca
+## mais devolve o target_coord de uma campanha contra um oponente em paz.
+## Ficava documentado aqui como LACUNA CONHECIDA desde C4 -- historico
+## mantido pra quem vier depois entender POR QUE end_campaigns_on_peace
+## existe.
 static func _choose_campaign_target(player: PlayerData, opponent: PlayerData):
 	var campaign: Dictionary = player.war_campaigns.get(opponent, {})
 	if campaign.get("status", "") != CAMPAIGN_STATUS_ACTIVE:
@@ -599,12 +620,14 @@ const WAR_WEARINESS_OFFER_PEACE_THRESHOLD := 60.0
 ## criado, tenta de novo no proximo turno se o desgaste continuar alto —
 ## nao existe (nem precisa existir) um "peace_offer_pending".
 ##
-## NUNCA mexe em war_campaigns — campanha e guerra continuam conceitos
-## separados (C3): uma campanha ACTIVE sobrevive intacta a uma paz aceita
-## (fica so como registro/estado persistente ate uma fatia futura decidir
-## o que fazer com isso — gap conhecido, deliberadamente NAO resolvido
-## aqui); uma campanha ja COMPLETED/ABANDONED nao impede nem exige a
-## decisao de paz.
+## Ate o Roadmap "Parte E" E1, esta funcao NUNCA mexia em war_campaigns por
+## conta propria (campanha e guerra eram conceitos separados desde C3).
+## Desde E1, decide_peace herda esse efeito de graca via
+## Diplomacy.propose_peace() (que agora chama RivalAI.end_campaigns_on_peace
+## internamente): uma paz aceita aqui TAMBEM abandona qualquer campanha
+## ACTIVE entre os dois lados, sem decide_peace precisar saber disso -- um
+## so ponto de verdade, ver end_campaigns_on_peace. Uma campanha ja
+## COMPLETED/ABANDONED continua sem impedir nem exigir a decisao de paz.
 ##
 ## Retorna um dos PEACE_DECISION_* acima — valor TRANSIENTE (nunca guardado
 ## em PlayerData), so pra quem chamou (harness/testes) poder observar o que

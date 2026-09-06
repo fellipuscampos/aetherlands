@@ -160,3 +160,141 @@ func test_process_war_weariness_and_upkeep_charges_nothing_at_peace():
 	Diplomacy.process_war_weariness_and_upkeep(player)
 
 	assert_eq(player.gold, 50.0, "em paz, nao deveria haver manutencao de guerra nenhuma")
+
+## Roadmap "Parte E" E1 -- ponte entre paz e war_campaigns (RivalAI.gd C3/
+## C4). Testado aqui, via Diplomacy.propose_peace() DIRETAMENTE (nao so
+## RivalAI.decide_peace nem HUD.gd), porque este e o UNICO ponto que
+## precisa carregar o contrato "paz resolvida encerra campanha ACTIVE" --
+## os dois chamadores (decide_peace, HUD) so herdam o efeito.
+func test_propose_peace_abandons_active_campaign_of_proposer():
+	var proposer = PlayerData.new(CivilizationData.new())
+	var ai_player = PlayerData.new(CivilizationData.new())
+	Diplomacy.declare_war(proposer, ai_player) # nenhum dos dois com unidades -- empate (0<=0) ja e o suficiente pra _accepts_peace aceitar, ver test_propose_peace_is_accepted_on_a_tie acima
+	proposer.war_campaigns[ai_player] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(3, 3),
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	assert_true(Diplomacy.propose_peace(proposer, ai_player))
+
+	assert_eq(proposer.war_campaigns[ai_player].status, RivalAI.CAMPAIGN_STATUS_ABANDONED)
+
+func test_propose_peace_abandons_active_campaign_of_receiver():
+	var proposer = PlayerData.new(CivilizationData.new())
+	var ai_player = PlayerData.new(CivilizationData.new())
+	Diplomacy.declare_war(proposer, ai_player)
+	ai_player.war_campaigns[proposer] = {
+		"objective": RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES,
+		"target_coord": Vector2i(7, 2),
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	assert_true(Diplomacy.propose_peace(proposer, ai_player))
+
+	assert_eq(ai_player.war_campaigns[proposer].status, RivalAI.CAMPAIGN_STATUS_ABANDONED)
+
+func test_propose_peace_abandons_active_campaigns_in_both_directions_at_once():
+	var proposer = PlayerData.new(CivilizationData.new())
+	var ai_player = PlayerData.new(CivilizationData.new())
+	Diplomacy.declare_war(proposer, ai_player)
+	proposer.war_campaigns[ai_player] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(3, 3),
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+	ai_player.war_campaigns[proposer] = {
+		"objective": RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES,
+		"target_coord": Vector2i(7, 2),
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	assert_true(Diplomacy.propose_peace(proposer, ai_player))
+
+	assert_eq(proposer.war_campaigns[ai_player].status, RivalAI.CAMPAIGN_STATUS_ABANDONED, "direcao proposer->ai_player")
+	assert_eq(ai_player.war_campaigns[proposer].status, RivalAI.CAMPAIGN_STATUS_ABANDONED, "direcao ai_player->proposer")
+
+func test_propose_peace_leaves_completed_campaign_untouched():
+	var proposer = PlayerData.new(CivilizationData.new())
+	var ai_player = PlayerData.new(CivilizationData.new())
+	Diplomacy.declare_war(proposer, ai_player)
+	proposer.war_campaigns[ai_player] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(3, 3),
+		"status": RivalAI.CAMPAIGN_STATUS_COMPLETED,
+	}
+
+	assert_true(Diplomacy.propose_peace(proposer, ai_player))
+
+	assert_eq(proposer.war_campaigns[ai_player].status, RivalAI.CAMPAIGN_STATUS_COMPLETED, "objetivo ja cumprido -- paz nao deveria reescrever um desfecho diferente")
+
+func test_propose_peace_leaves_already_abandoned_campaign_untouched():
+	var proposer = PlayerData.new(CivilizationData.new())
+	var ai_player = PlayerData.new(CivilizationData.new())
+	Diplomacy.declare_war(proposer, ai_player)
+	proposer.war_campaigns[ai_player] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(3, 3),
+		"status": RivalAI.CAMPAIGN_STATUS_ABANDONED,
+	}
+
+	assert_true(Diplomacy.propose_peace(proposer, ai_player))
+
+	assert_eq(proposer.war_campaigns[ai_player].status, RivalAI.CAMPAIGN_STATUS_ABANDONED, "ja abandonada -- so um no-op, nunca um segundo abandono")
+
+func test_propose_peace_refused_leaves_active_campaign_intact():
+	var proposer = PlayerData.new(CivilizationData.new())
+	var ai_player = PlayerData.new(CivilizationData.new())
+	Diplomacy.declare_war(proposer, ai_player)
+	_add_fake_units(proposer, 1)
+	_add_fake_units(ai_player, 3) # ai_player "ganhando" -- recusa
+	proposer.war_campaigns[ai_player] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(3, 3),
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	assert_false(Diplomacy.propose_peace(proposer, ai_player), "pre-condicao: recusada")
+
+	assert_eq(proposer.war_campaigns[ai_player].status, RivalAI.CAMPAIGN_STATUS_ACTIVE, "paz recusada nao deveria mexer em campanha nenhuma -- guerra continua de verdade")
+
+func test_propose_peace_when_already_at_peace_does_not_touch_campaigns():
+	var a = PlayerData.new(CivilizationData.new())
+	var b = PlayerData.new(CivilizationData.new())
+	# Estado artificial (uma campanha ACTIVE nunca deveria sobreviver ate
+	# aqui em paz de verdade, ver end_campaigns_on_peace) so pra confirmar
+	# que o atalho trivial (linha 28 de Diplomacy.gd) continua sem tocar em
+	# nada alem de guerra -- comportamento existente preservado por E1.
+	a.war_campaigns[b] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(3, 3),
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	assert_true(Diplomacy.propose_peace(a, b))
+
+	assert_eq(a.war_campaigns[b].status, RivalAI.CAMPAIGN_STATUS_ACTIVE, "atalho de ja-em-paz nao deveria ter side effect nenhum em campanha")
+
+## Confirma que o abandono de campanha gera exatamente UM toast por
+## campanha ACTIVE encerrada (nunca zero, nunca dois) -- ver
+## RivalAI._abandon_campaign_if_active/_notify_campaign_abandoned.
+## GameManager.human_player precisa apontar pra quem RECEBE a notificacao
+## (ver RivalAI._notify_human) -- salvo/restaurado manualmente porque este
+## arquivo normalmente nao mexe em autoloads.
+func test_propose_peace_emits_exactly_one_notify_per_abandoned_campaign():
+	var original_human_player: PlayerData = GameManager.human_player
+	var proposer = PlayerData.new(CivilizationData.new())
+	var ai_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player = proposer # proposer "recebe" a campanha do ai_player, ver comentario acima
+	Diplomacy.declare_war(proposer, ai_player)
+	ai_player.war_campaigns[proposer] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(3, 3),
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	watch_signals(EventBus)
+	Diplomacy.propose_peace(proposer, ai_player)
+
+	assert_signal_emit_count(EventBus, "notify", 1, "uma campanha ACTIVE abandonada -- exatamente um toast, sem duplicar")
+	GameManager.human_player = original_human_player

@@ -948,7 +948,14 @@ func test_decide_peace_leaves_war_active_when_refused():
 	assert_eq(result, RivalAI.PEACE_DECISION_REFUSED)
 	assert_true(rival.is_at_war_with(human), "humano em vantagem numerica deveria recusar -- guerra continua, sem erro nem estado novo")
 
-func test_decide_peace_does_not_touch_active_war_campaign():
+## Roadmap "Parte E" E1 -- ANTES desta fatia, uma campanha ACTIVE
+## sobrevivia intacta a uma paz aceita (era o comportamento documentado e
+## aceito desde C3/D1, ver git blame). Desde E1, decide_peace herda de
+## Diplomacy.propose_peace() o encerramento automatico da campanha -- este
+## teste agora exercita e trava o contrato NOVO. Cobertura mais central
+## (via Diplomacy.propose_peace diretamente, nas duas direcoes) fica em
+## test_diplomacy.gd.
+func test_decide_peace_abandons_active_war_campaign_on_acceptance():
 	_make_unit("warrior", rival, Vector2i(0, 0))
 	_make_unit("warrior", rival, Vector2i(1, 0))
 	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
@@ -961,7 +968,7 @@ func test_decide_peace_does_not_touch_active_war_campaign():
 	var result = RivalAI.decide_peace(rival, human)
 
 	assert_eq(result, RivalAI.PEACE_DECISION_ACCEPTED, "pre-condicao: paz deveria ter sido aceita")
-	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ACTIVE, "campanha ativa deveria sobreviver intacta a uma paz aceita -- fica so como registro, C3 continua separado de diplomacia")
+	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ABANDONED, "paz aceita deveria abandonar a campanha ACTIVE contra o novo parceiro de paz (E1)")
 
 func test_decide_peace_ignores_terminal_campaign_status():
 	_make_unit("warrior", rival, Vector2i(0, 0))
@@ -1134,6 +1141,27 @@ func test_decide_peace_notifies_human_on_refusal():
 	RivalAI.decide_peace(rival, human)
 
 	assert_signal_emit_count(EventBus, "notify", 1)
+
+## Roadmap "Parte E" E1 -- paz aceita com uma campanha ACTIVE do rival
+## contra o humano deveria gerar DOIS toasts distintos (paz + abandono),
+## nunca um so combinado nem o abandono duplicado. A campanha do lado do
+## humano (se existisse) NAO gera toast -- mesma regra de sempre em
+## _notify_human, ja coberta por outros testes deste arquivo.
+func test_decide_peace_also_notifies_campaign_abandoned_when_active():
+	watch_signals(EventBus)
+	_make_unit("warrior", rival, Vector2i(0, 0))
+	_make_unit("warrior", rival, Vector2i(1, 0)) # rival mais forte -- humano aceita
+	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
+		"target_coord": Vector2i(5, 0),
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+
+	RivalAI.decide_peace(rival, human)
+
+	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ABANDONED, "pre-condicao")
+	assert_signal_emit_count(EventBus, "notify", 2, "paz aceita + campanha abandonada -- dois eventos distintos, um toast cada")
 
 func test_decide_peace_does_not_notify_below_threshold():
 	watch_signals(EventBus)

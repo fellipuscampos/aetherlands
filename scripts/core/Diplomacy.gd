@@ -24,6 +24,12 @@ static func declare_war(a: PlayerData, b: PlayerData) -> void:
 ## `proposer` costuma ser o jogador humano; `other` o rival sendo
 ## abordado. Retorna true (e ja aplica a paz nos dois lados) se aceita.
 ## Se os dois ja estao em paz, conta como sucesso trivial.
+## Roadmap "Parte E" E1 -- UNICO ponto de entrada que encerra guerra: por
+## isso e aqui (e nao em HUD.gd nem em RivalAI.decide_peace, os dois
+## chamadores) que RivalAI.end_campaigns_on_peace roda, cobrindo humano->
+## rival e rival->humano sem duplicar a logica em nenhum dos dois. Diplomacy
+## de proposito NAO sabe o formato de war_campaigns (isso pertence ao
+## sistema de campanha, C3/C4) -- so chama o helper e segue.
 static func propose_peace(proposer: PlayerData, other: PlayerData) -> bool:
 	if not proposer.is_at_war_with(other):
 		return true
@@ -31,6 +37,7 @@ static func propose_peace(proposer: PlayerData, other: PlayerData) -> bool:
 		return false
 	proposer.enemies.erase(other)
 	other.enemies.erase(proposer)
+	RivalAI.end_campaigns_on_peace(proposer, other)
 	return true
 
 ## Aceita se estiver em desvantagem numerica (menos unidades que quem

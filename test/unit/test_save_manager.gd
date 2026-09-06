@@ -494,6 +494,36 @@ func test_save_and_load_restores_war_campaign():
 	assert_eq(campaign.target_coord, target_coord)
 	assert_eq(campaign.status, RivalAI.CAMPAIGN_STATUS_ACTIVE)
 
+## Roadmap "Parte E" E1 -- confirma que o status ABANDONED produzido pelo
+## encerramento automatico de campanha (Diplomacy.propose_peace ->
+## RivalAI.end_campaigns_on_peace) sobrevive ao mesmo round-trip ja provado
+## pra ACTIVE acima (test_save_and_load_restores_war_campaign). Nenhum
+## codigo de serializacao novo -- status e so mais uma String -- mas vale
+## a asserção depois de mudar QUEM escreve nesse campo.
+func test_save_and_load_restores_campaign_abandoned_by_peace():
+	var coords = hex_grid.tiles.keys()
+	var target_coord: Vector2i = coords[3]
+	_make_unit("warrior", rival, coords[2]) # rival com 1 unidade, humano com 0 -- humano aceita a paz (e so pra check_game_over() nao fechar o jogo no load)
+	rival.war_campaigns[human] = {
+		"objective": RivalAI.WAR_OBJECTIVE_SECURE_RESOURCES,
+		"target_coord": target_coord,
+		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
+	}
+	assert_true(Diplomacy.propose_peace(rival, human), "pre-condicao: paz deveria ter sido aceita (humano em desvantagem numerica)")
+	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ABANDONED, "pre-condicao")
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(ok)
+	var loaded_rival: PlayerData = GameManager.rival_players[0]
+	var campaign: Dictionary = loaded_rival.war_campaigns[GameManager.human_player]
+	assert_eq(campaign.status, RivalAI.CAMPAIGN_STATUS_ABANDONED)
+
 func test_save_and_load_with_no_campaign_omits_war_campaign_key():
 	_make_unit("warrior", rival, hex_grid.tiles.keys()[0]) # so pra check_game_over() nao fechar o jogo no load
 
