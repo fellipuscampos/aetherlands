@@ -23,6 +23,8 @@ var _original_turn_player_index: int
 var _original_map_width: int
 var _original_map_height: int
 var _original_difficulty: String
+var _original_world_events: Array[WorldEvent]
+var _original_world_event_next_id: int
 
 func before_each():
 	_original_hex_grid = GameManager.hex_grid
@@ -35,6 +37,10 @@ func before_each():
 	_original_map_width = GameManager.map_width
 	_original_map_height = GameManager.map_height
 	_original_difficulty = GameManager.difficulty
+	_original_world_events = WorldEventManager.active_events
+	_original_world_event_next_id = WorldEventManager._next_event_id
+	WorldEventManager.active_events = []
+	WorldEventManager._next_event_id = 0
 	_created_units = []
 	_created_hex_grids = []
 
@@ -68,6 +74,8 @@ func after_each():
 	GameManager.map_width = _original_map_width
 	GameManager.map_height = _original_map_height
 	GameManager.difficulty = _original_difficulty
+	WorldEventManager.active_events = _original_world_events
+	WorldEventManager._next_event_id = _original_world_event_next_id
 
 func _make_unit(kind: String, player: PlayerData, coord: Vector2i) -> Unit:
 	var unit := Unit.new()
@@ -664,3 +672,92 @@ func test_save_and_load_war_campaign_directs_unit_behavior_after_load():
 	RivalAI.take_turn(loaded_rival, loaded_grid, GameManager.human_player)
 
 	assert_lt(loaded_target_city.hp, loaded_hp_before, "unidade deveria obedecer o target_coord da campanha restaurada, nao um alvo escolhido do zero")
+
+## --- World Event System (v17, ver docs/WORLD_EVENT_CONTRACT.md) -----------
+## Nenhum evento concreto existe ainda (DragonEvent vem no Step 5) --
+## _construct_event() do WorldEventManager retorna null pra qualquer tipo,
+## entao um evento registrado nunca sobrevive a reconstrucao ainda (mesmo
+## comportamento ja coberto em test_world_event_manager.gd, aqui testado
+## END-TO-END pelo SaveManager de verdade). O que PRECISA sobreviver desde
+## ja e o que nao depende de reconstrucao de tipo nenhum: o contador
+## _next_event_id (senao um evento novo criado apos um load colidiria com
+## o id de um evento salvo antes do load).
+
+## O teste mais importante deste bloco (destacado explicitamente): registrar
+## eventos, salvar, carregar, e confirmar que um evento NOVO criado depois
+## do load continua a numeracao de onde parou, nunca reaproveitando um id
+## ja usado antes de salvar.
+func test_save_and_load_restores_next_event_id_avoiding_collision_with_new_events():
+	for i in range(5):
+		WorldEventManager.register_event(WorldEvent.new())
+	assert_eq(WorldEventManager._next_event_id, 5, "pre-condicao: 5 eventos registrados deveriam consumir os ids 0-4")
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	assert_true(SaveManager.load_game(loaded_grid, TEST_SAVE_PATH))
+
+	assert_eq(WorldEventManager._next_event_id, 5, "o contador deveria sobreviver ao save/load, mesmo os 5 eventos originais nao sobrevivendo (nenhum tipo concreto existe ainda)")
+
+	var new_event := WorldEvent.new()
+	WorldEventManager.register_event(new_event)
+	assert_eq(new_event.event_id, 5, "um evento novo apos o load nao deveria colidir com nenhum dos 5 ids usados antes de salvar")
+
+func test_save_game_writes_world_event_manager_state_to_disk():
+	WorldEventManager.register_event(WorldEvent.new())
+	WorldEventManager.register_event(WorldEvent.new())
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var file := FileAccess.open(TEST_SAVE_PATH, FileAccess.READ)
+	var data = JSON.parse_string(file.get_as_text())
+	file.close()
+
+	assert_true(data.has("world_events"), "o save deveria ter uma chave world_events dedicada (v17)")
+	assert_eq(int(data.world_events.next_event_id), 2)
+	assert_eq(data.world_events.events.size(), 2, "os 2 eventos registrados deveriam aparecer no arquivo, mesmo que ainda nao sobrevivam a reconstrucao no load")
+
+## Fallback pra um save sem a chave world_events (contrato, "Persistencia"
+## -> "Fallback/teste de saves antigos") -- um dict de save montado a mao
+## sem essa chave (ou, na pratica, qualquer coisa que chegue incompleta a
+## from_save_dict) nunca deveria travar o load inteiro.
+func test_save_and_load_defaults_safely_when_world_events_key_is_absent():
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var file := FileAccess.open(TEST_SAVE_PATH, FileAccess.READ)
+	var data = JSON.parse_string(file.get_as_text())
+	file.close()
+	data.erase("world_events") # simula um save sem esta chave
+	file = FileAccess.open(TEST_SAVE_PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify(data))
+	file.close()
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(ok, "ausencia da chave world_events nao deveria travar o load inteiro")
+	assert_eq(WorldEventManager.active_events.size(), 0)
+	assert_eq(WorldEventManager._next_event_id, 0)
+
+## Nenhum tipo concreto existe ainda -- um evento de tipo desconhecido no
+## save nao deveria impedir o load do RESTO do jogo (mapa/jogadores/
+## cidades), so o proprio evento e que nao sobrevive.
+func test_save_and_load_succeeds_even_with_an_unreconstructable_event_in_the_file():
+	var event := WorldEvent.new()
+	event.event_type = "some_future_event_type"
+	WorldEventManager.register_event(event)
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(ok, "um evento de tipo desconhecido no save nao deveria impedir o load do resto do jogo")
+	assert_eq(WorldEventManager.active_events.size(), 0, "o proprio evento nao sobrevive ainda -- nenhum tipo concreto existe (DragonEvent vem no Step 5)")
+	assert_eq(WorldEventManager._next_event_id, 1, "o contador continua correto mesmo com o evento em si descartado")

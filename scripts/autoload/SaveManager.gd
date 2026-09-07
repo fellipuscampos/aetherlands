@@ -8,7 +8,7 @@ extends Node
 ## depois reaplica hp/movimento/producao por cima.
 
 const SAVE_PATH := "user://savegame.json"
-const SAVE_VERSION := 16 # v16: estado das vitorias de sustentacao (PlayerData.territorial_streak/arcane_ritual_active/arcane_ritual_city_coord/arcane_ritual_streak, ver Roadmap "Fase F" F1/F2/F4) salvo por jogador, humano E rival -- (v15: campanha de guerra persistente por rival (PlayerData.war_campaigns, ver RivalAI.decide_campaign) salva contra o humano -- unico oponente possivel, ver comentario de _serialize_player -- (v14: raca do jogador (GameManager.human_race, ver TitleScreen/CivilizationData.race) salva pra sobreviver a um load (v13: economia arcana (PlayerData.mana/mana_income_per_turn, ver Ponto 3) salva por jogador (v12: recarga de feiticos (PlayerData.spell_cooldowns, ver SpellManager) salva por jogador (v11: territorio dinamico de cidade (City.owned_tiles, ver HexGrid.city_territory_tiles) salvo por cidade (v10: covis destruidos (LairStructure/HexGrid.destroy_lair) salvos em cleared_lair_coords (v9: acampamentos barbaros — monstro neutro ganha is_camp_boss/behavior_state/movement_left (v8: monstros neutros (guardiao + reforco/patrulha) e o RNG de turno dos covis salvos por inteiro, no lugar de so a lista de covis ja limpos (v7: mapa retangular (map_width/map_height no lugar de map_radius) (v6: predios posicionados no mapa; v5: covis de monstro limpos; v4: predios de cidade; v3: dificuldade; v2: lista de rivais + diplomacia + veterania de unidade))))))))))
+const SAVE_VERSION := 17 # v17: World Event System (WorldEventManager.active_events/_next_event_id, ver docs/WORLD_EVENT_CONTRACT.md) -- nenhum evento concreto existe ainda (DragonEvent vem depois), mas o formato de save ja precisa existir desde o primeiro commit do sistema, nao ser retrofitado depois (regra explicita do contrato) -- (v16: estado das vitorias de sustentacao (PlayerData.territorial_streak/arcane_ritual_active/arcane_ritual_city_coord/arcane_ritual_streak, ver Roadmap "Fase F" F1/F2/F4) salvo por jogador, humano E rival -- (v15: campanha de guerra persistente por rival (PlayerData.war_campaigns, ver RivalAI.decide_campaign) salva contra o humano -- unico oponente possivel, ver comentario de _serialize_player -- (v14: raca do jogador (GameManager.human_race, ver TitleScreen/CivilizationData.race) salva pra sobreviver a um load (v13: economia arcana (PlayerData.mana/mana_income_per_turn, ver Ponto 3) salva por jogador (v12: recarga de feiticos (PlayerData.spell_cooldowns, ver SpellManager) salva por jogador (v11: territorio dinamico de cidade (City.owned_tiles, ver HexGrid.city_territory_tiles) salvo por cidade (v10: covis destruidos (LairStructure/HexGrid.destroy_lair) salvos em cleared_lair_coords (v9: acampamentos barbaros — monstro neutro ganha is_camp_boss/behavior_state/movement_left (v8: monstros neutros (guardiao + reforco/patrulha) e o RNG de turno dos covis salvos por inteiro, no lugar de so a lista de covis ja limpos (v7: mapa retangular (map_width/map_height no lugar de map_radius) (v6: predios posicionados no mapa; v5: covis de monstro limpos; v4: predios de cidade; v3: dificuldade; v2: lista de rivais + diplomacia + veterania de unidade)))))))))))
 
 ## path e parametrizavel so pros testes GUT usarem um arquivo isolado, sem
 ## tocar no save de verdade do jogador — o jogo em si sempre usa SAVE_PATH.
@@ -46,6 +46,7 @@ func save_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 		"monster_rng_state": str(hex_grid.monster_turn_rng.state),
 		"human": _serialize_player(GameManager.human_player, false),
 		"rivals": rivals,
+		"world_events": WorldEventManager.to_save_dict(),
 	}
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
@@ -136,6 +137,13 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 	# visivel pra QUALQUER cidade inimiga ate o proximo turno.
 	hex_grid.refresh_construction_markers() # restaura o marcador de obra pra predio que ainda estava em producao ao salvar
 	hex_grid.recompute_fog(GameManager.human_player)
+	# World Event System (ver docs/WORLD_EVENT_CONTRACT.md) -- so RESTAURA
+	# estado (from_save_dict), NUNCA chama advance_turn() aqui: carregar um
+	# save nao pode fazer um evento avancar, mesma regra ja seguida pelas
+	# vitorias de sustentacao (check_victories() abaixo so detecta, nunca
+	# avanca streak nenhum). .get(..., {}) tolera um save sem esta chave
+	# (ex.: um dict de save montado a mao por teste) sem travar o load.
+	WorldEventManager.from_save_dict(data.get("world_events", {}))
 	GameManager.check_victories()
 	return true
 
