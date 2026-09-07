@@ -218,6 +218,15 @@ func test_has_arcane_sanctuary_false_without_it():
 	player.cities.append(_make_city(Vector2i(0, 0)))
 	assert_false(VictoryConditions.has_arcane_sanctuary(player))
 
+## Fecha o desacoplamento: SANCTUARY_BUILDING_ID agora aponta pra um predio
+## de verdade registrado em BuildingDatabase (Roadmap Fase F, "Santuario do
+## Nodulo") -- antes deste registro has_arcane_sanctuary() SEMPRE retornava
+## false pra qualquer cidade real, ja que nenhuma cidade jamais teria esse
+## building_id em City.buildings.
+func test_sanctuary_building_id_resolves_to_a_real_building():
+	var sanctuary = BuildingDatabase.get_building(VictoryConditions.SANCTUARY_BUILDING_ID)
+	assert_not_null(sanctuary, "VictoryConditions.SANCTUARY_BUILDING_ID deveria apontar pra um predio real de BuildingDatabase")
+
 func test_arcane_progress_averages_four_fractions():
 	var grid := _make_grid_with_tiles({Vector2i(0, 0): HexTileData.TerrainType.GRASSLAND})
 	var player = PlayerData.new(CivilizationData.new())

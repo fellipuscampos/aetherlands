@@ -51,7 +51,7 @@ const AXIS_BUILDINGS := {
 	AXIS_INDUSTRIAL: ["workshop"],
 	AXIS_COMERCIAL: ["market"],
 	AXIS_MILITAR: ["walls", "barracks", "archery_range", "stable", "siege_workshop"],
-	AXIS_ARCANA: ["sages_tower", "arcane_tower", "griffin_roost", "druid_grove", "runic_anvil", "shadow_crypt"],
+	AXIS_ARCANA: ["sages_tower", "arcane_tower", "griffin_roost", "druid_grove", "runic_anvil", "shadow_crypt", "arcane_sanctuary"],
 }
 
 ## Pesos de B2 abaixo — NAO calibrados, ponto de partida no mesmo intervalo

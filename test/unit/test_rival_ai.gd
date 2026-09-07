@@ -1350,7 +1350,7 @@ func test_score_research_candidate_personality_and_identity_are_independent_and_
 	var invocacao: TechData = TechDatabase.get_tech("invocacao_espiritos") # unlocks_unit "mage" -> arcane_tower -> arcana
 	var player := PlayerData.new(CivilizationData.new())
 	var city := City.new()
-	city.buildings["sages_tower"] = true # arcana 1/6, identidade > 0
+	city.buildings["sages_tower"] = true # arcana 1/7, identidade > 0
 	player.cities.append(city)
 	player.personality[CityIdentity.AXIS_ARCANA] = 0.5
 

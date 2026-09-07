@@ -39,6 +39,26 @@ func test_total_bonus_sums_mana_from_the_sages_tower():
 	assert_eq(bonus.production, 0)
 	assert_eq(bonus.gold, 0)
 
+## Santuario do Nodulo (Roadmap Fase F, F1): habilita o Ritual do Nodulo
+## (VictoryConditions.has_arcane_sanctuary) — custo e bonus de mana sao
+## valores iniciais de gameplay, ainda NAO calibrados (ver F7).
+func test_total_bonus_sums_mana_from_the_arcane_sanctuary():
+	var built = {"arcane_sanctuary": true}
+	var bonus = BuildingDatabase.total_bonus(built)
+	assert_eq(bonus.mana, 2)
+	assert_eq(bonus.food, 0)
+	assert_eq(bonus.production, 0)
+	assert_eq(bonus.gold, 0)
+
+func test_arcane_sanctuary_has_no_tech_gate_and_baseline_cost():
+	var sanctuary = BuildingDatabase.get_building("arcane_sanctuary")
+	assert_not_null(sanctuary)
+	assert_eq(sanctuary.display_name, "Santuário do Nódulo")
+	assert_almost_eq(sanctuary.production_cost, 45.0, 0.01)
+	assert_eq(sanctuary.trains_unit, "", "Santuario e predio de rendimento, nao treina tropa")
+	assert_eq(sanctuary.requires_building, "", "sem pre-requisito de predio, ver tech gate = nenhum")
+	assert_null(TechDatabase.tech_that_unlocks_building("arcane_sanctuary"), "sem tech gate, pedido explicito do usuario")
+
 func test_defense_bonus_for_sums_walls():
 	var built = {"walls": true, "granary": true} # granary nao contribui pra defesa
 	assert_almost_eq(BuildingDatabase.defense_bonus_for(built), 0.5, 0.01)
@@ -126,7 +146,7 @@ func test_only_walls_is_self_placed():
 ## de kind nenhum.
 func test_yield_buildings_do_not_train_any_unit():
 	for b in BuildingDatabase.all_buildings():
-		if b.id in ["granary", "workshop", "market", "walls", "sages_tower"]:
+		if b.id in ["granary", "workshop", "market", "walls", "sages_tower", "arcane_sanctuary"]:
 			assert_eq(b.trains_unit, "", "%s nao deveria travar producao de unidade nenhuma" % b.display_name)
 
 ## Cada tropa de combate (todo kind de UnitDatabase.PLAYER_TRAINABLE_KINDS

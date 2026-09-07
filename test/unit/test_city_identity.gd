@@ -31,9 +31,9 @@ func test_axis_strength_militar_is_normalized_per_bucket_size():
 func test_axis_strength_arcana_is_normalized_per_bucket_size():
 	var city := City.new()
 	city.buildings["sages_tower"] = true
-	assert_almost_eq(CityIdentity.axis_strength(city, CityIdentity.AXIS_ARCANA), 1.0 / 6.0, 0.001)
+	assert_almost_eq(CityIdentity.axis_strength(city, CityIdentity.AXIS_ARCANA), 1.0 / 7.0, 0.001)
 	city.buildings["arcane_tower"] = true
-	assert_almost_eq(CityIdentity.axis_strength(city, CityIdentity.AXIS_ARCANA), 2.0 / 6.0, 0.001)
+	assert_almost_eq(CityIdentity.axis_strength(city, CityIdentity.AXIS_ARCANA), 2.0 / 7.0, 0.001)
 	city.queue_free()
 
 func test_axis_strength_militar_full_bucket_reaches_one():
@@ -131,9 +131,9 @@ func test_apply_yield_bonus_comercial_only_affects_gold():
 func test_apply_yield_bonus_arcana_scales_with_partial_strength():
 	var totals := {"food": 10.0, "production": 10.0, "gold": 10.0, "mana": 10.0}
 	var city := City.new()
-	city.buildings["sages_tower"] = true # arcana 1/6
+	city.buildings["sages_tower"] = true # arcana 1/7
 	CityIdentity.apply_yield_bonus(totals, city)
-	assert_almost_eq(totals.mana, 10.0 * (1.0 + CityIdentity.ARCANA_MANA_BONUS_MAX * (1.0 / 6.0)), 0.01)
+	assert_almost_eq(totals.mana, 10.0 * (1.0 + CityIdentity.ARCANA_MANA_BONUS_MAX * (1.0 / 7.0)), 0.01)
 	city.queue_free()
 
 func test_militar_unit_cost_multiplier_is_one_without_barracks():

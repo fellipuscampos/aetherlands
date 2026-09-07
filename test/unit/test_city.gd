@@ -1009,6 +1009,16 @@ func test_can_build_sages_tower_never_requires_research():
 	assert_true(city.can_build("sages_tower"))
 	city.queue_free()
 
+## Santuario do Nodulo (Roadmap Fase F, F1): mesmo mecanismo da Torre dos
+## Sabios acima, "tech gate: nenhum" foi decisao explicita do usuario — o
+## Santuario precisa estar sempre disponivel pra nao adicionar mais um
+## gargalo estrutural em cima do que o F7 ja apontou (schools/nodes prontos,
+## sanctuary=0% em todo seed por FALTA do predio, nao por gate faltando).
+func test_can_build_arcane_sanctuary_never_requires_research():
+	var city := City.new()
+	assert_true(city.can_build("arcane_sanctuary"))
+	city.queue_free()
+
 ## Colonizador nao tem predio de treino associado (BuildingDatabase.
 ## building_that_trains("settler") == null) — precisa continuar sempre
 ## produzivel, e o unico kind seguro pro default de uma cidade nova.
@@ -1451,9 +1461,10 @@ func test_collect_yields_includes_mana_from_worked_resource_and_building():
 
 	# 2 (nodulo arcano trabalhado) + 3 (Torre dos Sabios) = 5, DEPOIS
 	# multiplicado pelo bonus de identidade arcana (Roadmap Parte B,
-	# CityIdentity.gd — Torre dos Sabios sozinha da forca arcana 1.0/6.0):
-	# 5 * (1 + 0.15 * (1/6)) = 5.125.
-	assert_almost_eq(yields.mana, 5.0 * (1.0 + CityIdentity.ARCANA_MANA_BONUS_MAX * (1.0 / 6.0)), 0.01, "2 (nodulo arcano trabalhado) + 3 (Torre dos Sabios), com bonus de identidade arcana por cima")
+	# CityIdentity.gd — Torre dos Sabios sozinha da forca arcana 1.0/7.0
+	# desde que o Santuario do Nodulo entrou no balde, Roadmap Fase F):
+	# 5 * (1 + 0.15 * (1/7)) = 5.10714...
+	assert_almost_eq(yields.mana, 5.0 * (1.0 + CityIdentity.ARCANA_MANA_BONUS_MAX * (1.0 / 7.0)), 0.01, "2 (nodulo arcano trabalhado) + 3 (Torre dos Sabios), com bonus de identidade arcana por cima")
 
 	hex_grid.queue_free()
 	city.queue_free()

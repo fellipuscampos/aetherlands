@@ -139,11 +139,11 @@ const ARCANE_SCHOOLS: Array[String] = ["Arcanismo", "Alquimia", "Transmutação"
 const ARCANE_SCHOOLS_REQUIRED := 4
 const ARCANE_NODES_REQUIRED := 3
 const ARCANE_SUSTAIN_TURNS := 5
-## Ainda NAO existe em BuildingDatabase -- fica pra uma fatia de conteudo
-## separada (definir custo/tech/icone/modelo 3D). A checagem abaixo
-## funciona corretamente de qualquer forma: nenhuma cidade jamais tera
-## este building_id ate o registro existir, entao has_arcane_sanctuary
-## simplesmente retorna false ate la -- nenhum acoplamento invertido.
+## Registrado em BuildingDatabase (Roadmap Fase F, "Santuario do Nodulo") --
+## sem tech gate, custo/bonus de mana sao valores iniciais de gameplay ainda
+## NAO calibrados (ver F7). O desacoplamento por id continua de proposito:
+## VictoryConditions nao importa BuildingDatabase, so compara o mesmo
+## building_id que City.buildings ja usa como chave.
 const SANCTUARY_BUILDING_ID := "arcane_sanctuary"
 
 ## Roadmap "Fase F" F3 -- pontos de partida CALIBRAVEIS (pedido explicito

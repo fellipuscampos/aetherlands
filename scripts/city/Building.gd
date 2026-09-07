@@ -54,6 +54,8 @@ func _build_visual() -> void:
 			_build_griffin_roost(accent_color)
 		"druid_grove":
 			_build_druid_grove(accent_color)
+		"arcane_sanctuary":
+			_build_arcane_sanctuary(accent_color)
 
 ## Fator de escala UNICO pra todo modelo do KayKit Medieval Hexagon Pack —
 ## pedido do usuario apos ver o resultado da primeira tentativa (altura-alvo
@@ -474,3 +476,59 @@ func _build_druid_grove(_accent_color: Color) -> void:
 		stone.material_override = stone_mat
 		stone.position = Vector3(sin(angle) * 0.28, 0.05, cos(angle) * 0.28)
 		add_child(stone)
+
+## Santuario do Nodulo: dais de pedra baixo + pedestal com um cristal arcano
+## flutuante no topo (roxo, cor FIXA que representa o proprio nodulo magico —
+## nao a civilizacao, mesmo principio do orbe branco-azulado da Torre Arcana)
+## e quatro obeliscos baixos tingidos na cor da civilizacao ao redor da base,
+## marcando de quem e o santuario — mesma logica do toldo do Mercado/bandeira
+## do Quartel, so que em pedra em vez de pano.
+func _build_arcane_sanctuary(accent_color: Color) -> void:
+	var dais := MeshInstance3D.new()
+	var dais_mesh := CylinderMesh.new()
+	dais_mesh.top_radius = 0.32
+	dais_mesh.bottom_radius = 0.34
+	dais_mesh.height = 0.06
+	dais.mesh = dais_mesh
+	var dais_mat := StandardMaterial3D.new()
+	dais_mat.albedo_color = Color(0.55, 0.55, 0.58)
+	dais.material_override = dais_mat
+	dais.position.y = 0.03
+	add_child(dais)
+
+	var pedestal := MeshInstance3D.new()
+	var pedestal_mesh := CylinderMesh.new()
+	pedestal_mesh.top_radius = 0.05
+	pedestal_mesh.bottom_radius = 0.07
+	pedestal_mesh.height = 0.28
+	pedestal.mesh = pedestal_mesh
+	var pedestal_mat := StandardMaterial3D.new()
+	pedestal_mat.albedo_color = Color(0.4, 0.4, 0.42)
+	pedestal.material_override = pedestal_mat
+	pedestal.position.y = 0.2
+	add_child(pedestal)
+
+	var crystal := MeshInstance3D.new()
+	var crystal_mesh := SphereMesh.new()
+	crystal_mesh.radius = 0.13
+	crystal_mesh.height = 0.32
+	crystal.mesh = crystal_mesh
+	var crystal_mat := StandardMaterial3D.new()
+	crystal_mat.albedo_color = Color(0.6, 0.35, 0.85)
+	crystal.material_override = crystal_mat
+	crystal.position.y = 0.5
+	add_child(crystal)
+
+	var obelisk_mat := StandardMaterial3D.new()
+	obelisk_mat.albedo_color = accent_color.darkened(0.15)
+	for i in range(4):
+		var angle = deg_to_rad(i * 90.0 + 45.0)
+		var obelisk := MeshInstance3D.new()
+		var obelisk_mesh := CylinderMesh.new()
+		obelisk_mesh.top_radius = 0.01
+		obelisk_mesh.bottom_radius = 0.03
+		obelisk_mesh.height = 0.18
+		obelisk.mesh = obelisk_mesh
+		obelisk.material_override = obelisk_mat
+		obelisk.position = Vector3(sin(angle) * 0.3, 0.09, cos(angle) * 0.3)
+		add_child(obelisk)

@@ -260,6 +260,20 @@ static func _build_all() -> Dictionary:
 	shadow_crypt.trains_unit = "shadow_summoner"
 	buildings[shadow_crypt.id] = shadow_crypt
 
+	# Predio de RENDIMENTO (mesma familia da Torre dos Sabios acima — sem
+	# trains_unit, sem tech nenhuma associada, ver City.can_build) que
+	# habilita o Ritual do Nodulo (ver VictoryConditions.SANCTUARY_BUILDING_ID
+	# / has_arcane_sanctuary). Custo e bonus de mana sao valores iniciais de
+	# gameplay (ainda NAO calibrados, ver Roadmap Fase F) — so o suficiente
+	# pra existir e o F7 poder medir o efeito real. Sem "santuario/nodulo"
+	# na Hexagon Pack; continua procedural (Building._build_arcane_sanctuary).
+	var arcane_sanctuary := BuildingData.new()
+	arcane_sanctuary.id = "arcane_sanctuary"
+	arcane_sanctuary.display_name = "Santuário do Nódulo"
+	arcane_sanctuary.production_cost = 45.0
+	arcane_sanctuary.bonus_mana = 2
+	buildings[arcane_sanctuary.id] = arcane_sanctuary
+
 	return buildings
 
 static func _all() -> Dictionary:
