@@ -8,7 +8,7 @@ extends Node
 ## depois reaplica hp/movimento/producao por cima.
 
 const SAVE_PATH := "user://savegame.json"
-const SAVE_VERSION := 15 # v15: campanha de guerra persistente por rival (PlayerData.war_campaigns, ver RivalAI.decide_campaign) salva contra o humano -- unico oponente possivel, ver comentario de _serialize_player -- (v14: raca do jogador (GameManager.human_race, ver TitleScreen/CivilizationData.race) salva pra sobreviver a um load (v13: economia arcana (PlayerData.mana/mana_income_per_turn, ver Ponto 3) salva por jogador (v12: recarga de feiticos (PlayerData.spell_cooldowns, ver SpellManager) salva por jogador (v11: territorio dinamico de cidade (City.owned_tiles, ver HexGrid.city_territory_tiles) salvo por cidade (v10: covis destruidos (LairStructure/HexGrid.destroy_lair) salvos em cleared_lair_coords (v9: acampamentos barbaros — monstro neutro ganha is_camp_boss/behavior_state/movement_left (v8: monstros neutros (guardiao + reforco/patrulha) e o RNG de turno dos covis salvos por inteiro, no lugar de so a lista de covis ja limpos (v7: mapa retangular (map_width/map_height no lugar de map_radius) (v6: predios posicionados no mapa; v5: covis de monstro limpos; v4: predios de cidade; v3: dificuldade; v2: lista de rivais + diplomacia + veterania de unidade)))))))))
+const SAVE_VERSION := 16 # v16: estado das vitorias de sustentacao (PlayerData.territorial_streak/arcane_ritual_active/arcane_ritual_city_coord/arcane_ritual_streak, ver Roadmap "Fase F" F1/F2/F4) salvo por jogador, humano E rival -- (v15: campanha de guerra persistente por rival (PlayerData.war_campaigns, ver RivalAI.decide_campaign) salva contra o humano -- unico oponente possivel, ver comentario de _serialize_player -- (v14: raca do jogador (GameManager.human_race, ver TitleScreen/CivilizationData.race) salva pra sobreviver a um load (v13: economia arcana (PlayerData.mana/mana_income_per_turn, ver Ponto 3) salva por jogador (v12: recarga de feiticos (PlayerData.spell_cooldowns, ver SpellManager) salva por jogador (v11: territorio dinamico de cidade (City.owned_tiles, ver HexGrid.city_territory_tiles) salvo por cidade (v10: covis destruidos (LairStructure/HexGrid.destroy_lair) salvos em cleared_lair_coords (v9: acampamentos barbaros — monstro neutro ganha is_camp_boss/behavior_state/movement_left (v8: monstros neutros (guardiao + reforco/patrulha) e o RNG de turno dos covis salvos por inteiro, no lugar de so a lista de covis ja limpos (v7: mapa retangular (map_width/map_height no lugar de map_radius) (v6: predios posicionados no mapa; v5: covis de monstro limpos; v4: predios de cidade; v3: dificuldade; v2: lista de rivais + diplomacia + veterania de unidade))))))))))
 
 ## path e parametrizavel so pros testes GUT usarem um arquivo isolado, sem
 ## tocar no save de verdade do jogador — o jogo em si sempre usa SAVE_PATH.
@@ -252,6 +252,15 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 		"spell_cooldowns": player.spell_cooldowns,
 		"mana": player.mana,
 		"mana_income_per_turn": player.mana_income_per_turn,
+		# Roadmap "Fase F" F1/F2/F4 — estado das duas vitorias de sustentacao,
+		# QUALQUER jogador (humano ou rival, diferente de war_campaign abaixo
+		# que e so-contra-humano): territorial_streak e arcane_ritual_* sao
+		# historico acumulado de verdade, perder isso ao salvar/carregar
+		# "roubaria" turnos de sustentacao ja conquistados.
+		"territorial_streak": player.territorial_streak,
+		"arcane_ritual_active": player.arcane_ritual_active,
+		"arcane_ritual_city_coord": [player.arcane_ritual_city_coord.x, player.arcane_ritual_city_coord.y],
+		"arcane_ritual_streak": player.arcane_ritual_streak,
 	}
 	if is_rival:
 		result["at_war_with_human"] = player.is_at_war_with(GameManager.human_player)
@@ -348,6 +357,16 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 		player.spell_cooldowns[spell_name] = int(cooldowns[spell_name])
 	player.mana = float(saved.get("mana", 0.0))
 	player.mana_income_per_turn = float(saved.get("mana_income_per_turn", 0.0))
+	# Roadmap "Fase F" F1/F2/F4 — get(..., default) com o MESMO default do
+	# campo em PlayerData.gd: save ANTIGO (de antes destes 4 campos
+	# existirem) carrega um jogador sem sustentacao nenhuma em andamento em
+	# vez de quebrar, mesmo padrao de fallback ja usado pra hp/shield acima.
+	player.territorial_streak = int(saved.get("territorial_streak", 0))
+	player.arcane_ritual_active = saved.get("arcane_ritual_active", false)
+	player.arcane_ritual_streak = int(saved.get("arcane_ritual_streak", 0))
+	var ritual_coord = saved.get("arcane_ritual_city_coord", null)
+	if ritual_coord != null:
+		player.arcane_ritual_city_coord = Vector2i(int(ritual_coord[0]), int(ritual_coord[1]))
 	# Roadmap "Parte C" C3 — cabe na funcao UNICA compartilhada (chamada pra
 	# humano E cada rival) sem branch de is_rival: pro humano, a chave nunca
 	# foi escrita em _serialize_player, entao "war_campaign" sempre resolve

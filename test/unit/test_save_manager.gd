@@ -524,6 +524,100 @@ func test_save_and_load_restores_campaign_abandoned_by_peace():
 	var campaign: Dictionary = loaded_rival.war_campaigns[GameManager.human_player]
 	assert_eq(campaign.status, RivalAI.CAMPAIGN_STATUS_ABANDONED)
 
+## Roadmap "Fase F" F1/F2/F4 — territorial_streak/arcane_ritual_* sao
+## HISTORICO acumulado de verdade (turnos de sustentacao ja conquistados);
+## perder isso ao salvar/carregar "roubaria" progresso legitimo. Mesma
+## disciplina de round-trip de test_save_and_load_restores_war_campaign
+## acima. Da unidade a AMBOS human e rival (nao so rival, diferente do
+## padrao de war_campaign) -- com os dois em 0 unidades/cidades,
+## check_victories() no fim do load() declararia Dominancia pra qualquer
+## um dos dois so pela fixture, mascarando o que este teste quer provar.
+func test_save_and_load_restores_territorial_streak():
+	_make_unit("warrior", human, hex_grid.tiles.keys()[0])
+	_make_unit("warrior", rival, hex_grid.tiles.keys()[1])
+	rival.territorial_streak = 3
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(ok)
+	assert_eq(GameManager.rival_players[0].territorial_streak, 3)
+
+func test_save_and_load_restores_active_arcane_ritual_mid_sustain():
+	var ritual_coord: Vector2i = hex_grid.tiles.keys()[3]
+	_make_unit("warrior", human, hex_grid.tiles.keys()[0])
+	_make_unit("warrior", rival, hex_grid.tiles.keys()[1])
+	rival.arcane_ritual_active = true
+	rival.arcane_ritual_city_coord = ritual_coord
+	rival.arcane_ritual_streak = 3
+	rival.mana = 42.0
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(ok)
+	var loaded_rival: PlayerData = GameManager.rival_players[0]
+	assert_true(loaded_rival.arcane_ritual_active)
+	assert_eq(loaded_rival.arcane_ritual_city_coord, ritual_coord)
+	assert_eq(loaded_rival.arcane_ritual_streak, 3)
+	assert_almost_eq(loaded_rival.mana, 42.0, 0.001)
+
+## O teste mais importante desta fatia (pedido explicito do usuario):
+## carregar no MEIO de um ritual ativo nao pode ganhar nem perder um
+## turno artificialmente. SaveManager.load_game() so chama
+## check_victories() (deteccao PURA) -- NUNCA _update_victory_state()
+## (quem incrementaria o streak) -- entao o streak precisa sair do load
+## EXATAMENTE como foi salvo, nem +1 nem resetado, e sem declarar vitoria
+## so por estar a 1 turno do limiar.
+func test_save_and_load_mid_ritual_does_not_advance_or_reset_the_streak():
+	var ritual_coord: Vector2i = hex_grid.tiles.keys()[3]
+	_make_unit("warrior", human, hex_grid.tiles.keys()[0])
+	_make_unit("warrior", rival, hex_grid.tiles.keys()[1])
+	rival.arcane_ritual_active = true
+	rival.arcane_ritual_city_coord = ritual_coord
+	rival.arcane_ritual_streak = VictoryConditions.ARCANE_SUSTAIN_TURNS - 1 # 1 turno do limiar
+	rival.mana = 1000.0
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(ok)
+	var loaded_rival: PlayerData = GameManager.rival_players[0]
+	assert_eq(loaded_rival.arcane_ritual_streak, VictoryConditions.ARCANE_SUSTAIN_TURNS - 1, "carregar nao pode avancar o streak sozinho")
+	assert_true(loaded_rival.arcane_ritual_active, "carregar 1 turno abaixo do limiar nao pode interromper o ritual sozinho")
+	assert_eq(GameManager.state, GameManager.GameState.PLAYING, "1 turno abaixo do limiar -- carregar nao deveria declarar vitoria sozinho")
+
+func test_save_and_load_with_no_ritual_defaults_to_inactive():
+	_make_unit("warrior", human, hex_grid.tiles.keys()[0])
+	_make_unit("warrior", rival, hex_grid.tiles.keys()[1])
+	# nenhum campo de vitoria setado -- equivalente a um save de ANTES da v16 existir
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(ok)
+	var loaded_rival: PlayerData = GameManager.rival_players[0]
+	assert_false(loaded_rival.arcane_ritual_active)
+	assert_eq(loaded_rival.arcane_ritual_streak, 0)
+	assert_eq(loaded_rival.territorial_streak, 0)
+	assert_eq(loaded_rival.arcane_ritual_city_coord, PlayerData.NO_RITUAL_CITY_COORD)
+
 func test_save_and_load_with_no_campaign_omits_war_campaign_key():
 	_make_unit("warrior", rival, hex_grid.tiles.keys()[0]) # so pra check_game_over() nao fechar o jogo no load
 
