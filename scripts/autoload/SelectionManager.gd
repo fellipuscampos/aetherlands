@@ -243,7 +243,7 @@ func _handle_spell_targeting_click(coord: Vector2i) -> void:
 		var message = SpellManager.cast(GameManager.human_player, spell_name, target, hex_grid, TurnManager.turn_number)
 		EventBus.notify.emit(message, "combat")
 		hex_grid.recompute_fog(GameManager.human_player)
-		GameManager.check_game_over()
+		GameManager.check_victories()
 	hex_grid.show_selection_marker(coord)
 	EventBus.tile_selected.emit(coord, hex_grid.get_tile(coord))
 
@@ -510,7 +510,7 @@ func _attack_from_selected(coord: Vector2i) -> void:
 			CombatResolver.resolve_city_attack(attacker, defender_city, hex_grid)
 
 	hex_grid.recompute_fog(GameManager.human_player)
-	GameManager.check_game_over()
+	GameManager.check_victories()
 
 	if is_instance_valid(attacker) and not attacker.is_queued_for_deletion():
 		_select_unit(attacker)

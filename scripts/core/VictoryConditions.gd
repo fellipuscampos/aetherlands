@@ -21,6 +21,17 @@ extends RefCounted
 ## target nem nenhum outro termo estrategico de IA (camadas diferentes,
 ## mesmo principio que ja separa CityIdentity de CivilizationPersonality).
 
+## Roadmap "Fase F" F3 -- identificadores usados por
+## GameManager.check_victories()/EventBus.victory_achieved (nao lidos por
+## nenhuma funcao deste arquivo, so exportados pra quem integra ter um
+## nome comum em vez de strings soltas repetidas). VICTORY_TYPE_DEBUG e
+## exclusivo do botao "forcar fim de jogo" (GameManager.
+## debug_force_game_over) -- nunca produzido por check_victories().
+const VICTORY_TYPE_DOMINANCE := "dominance"
+const VICTORY_TYPE_TERRITORIAL := "territorial"
+const VICTORY_TYPE_ARCANE := "arcane"
+const VICTORY_TYPE_DEBUG := "debug"
+
 ## --- Dominacao ----------------------------------------------------------
 
 ## Todo jogador ALEM de `player` (na lista completa, humano+rivais) esta
@@ -134,6 +145,15 @@ const ARCANE_SUSTAIN_TURNS := 5
 ## este building_id ate o registro existir, entao has_arcane_sanctuary
 ## simplesmente retorna false ate la -- nenhum acoplamento invertido.
 const SANCTUARY_BUILDING_ID := "arcane_sanctuary"
+
+## Roadmap "Fase F" F3 -- pontos de partida CALIBRAVEIS (pedido explicito
+## do usuario, mesma disciplina de TERRITORIAL_VICTORY_THRESHOLD acima e
+## de D4: "os dois valores de mana ficam deliberadamente pra calibracao
+## posterior"). Consumidos por GameManager.activate_arcane_ritual (custo
+## inicial) e GameManager._update_arcane_ritual (manutencao por turno) --
+## nunca lidos por nenhuma funcao deste arquivo.
+const ARCANE_RITUAL_ACTIVATION_COST := 100.0
+const ARCANE_RITUAL_UPKEEP_COST_PER_TURN := 10.0
 
 ## Quantas das 7 escolas magicas `player` ja tem PELO MENOS uma tech
 ## pesquisada -- "escola pesquisada" e por tech.school, nao por uma

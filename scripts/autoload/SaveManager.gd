@@ -136,7 +136,7 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 	# visivel pra QUALQUER cidade inimiga ate o proximo turno.
 	hex_grid.refresh_construction_markers() # restaura o marcador de obra pra predio que ainda estava em producao ao salvar
 	hex_grid.recompute_fog(GameManager.human_player)
-	GameManager.check_game_over()
+	GameManager.check_victories()
 	return true
 
 func _serialize_explored(hex_grid: HexGrid) -> Array:

@@ -484,27 +484,117 @@ func _finish_turn() -> void:
 	hex_grid.refresh_construction_markers(_completed_building_coords_this_turn)
 	_completed_building_coords_this_turn.clear()
 	hex_grid.recompute_fog(human_player)
-	check_game_over()
+	_update_victory_state()
+	check_victories()
 
-## Publico: tambem chamado logo apos um ataque do jogador (SelectionManager),
-## para a vitoria/derrota aparecer na hora em vez de so no fim do turno.
-func check_game_over() -> void:
+## Roadmap "Fase F" F3 -- avanca o estado TEMPORAL das duas vitorias de
+## sustentacao (Dominacao nao precisa: e so ausencia de units/cities,
+## sempre atual). Chamado SO daqui (uma vez por turno REAL) -- nunca dos
+## outros 3 lugares que chamam check_victories() pra deteccao instantanea
+## (SelectionManager x2, SaveManager.load_game) -- carregar um save ou o
+## jogador atacar nao pode fazer um turno "passar" pra fins de streak
+## (pedido explicito do usuario).
+func _update_victory_state() -> void:
+	for player in ([human_player] as Array[PlayerData]) + rival_players:
+		_update_territorial_streak(player)
+		_update_arcane_ritual(player)
+
+func _update_territorial_streak(player: PlayerData) -> void:
+	if VictoryConditions.is_territorial_threshold_met(player, hex_grid):
+		player.territorial_streak += 1
+	else:
+		player.territorial_streak = 0
+
+## Ritual inativo: nada a fazer (ativacao e ACAO explicita do jogador, ver
+## activate_arcane_ritual abaixo -- nunca automatica, nunca decidida por
+## esta funcao). Ritual ativo: reavalia as 3 condicoes de sustentacao
+## (cidade-sede ainda e do jogador, >=3 Nodulos, mana suficiente pra
+## manutencao) TODO turno -- qualquer uma falhando interrompe por
+## completo (active=false + streak=0, decisao explicita do usuario: "nao
+## existe ritual pausado", nunca so um streak que zera enquanto o ritual
+## continua "esperando" as condicoes voltarem).
+func _update_arcane_ritual(player: PlayerData) -> void:
+	if not player.arcane_ritual_active:
+		return
+	var city := hex_grid.get_city_at(player.arcane_ritual_city_coord)
+	var city_intact := city != null and city.owner_player == player
+	var nodes_ok := VictoryConditions.arcane_nodes_controlled(player, hex_grid) >= VictoryConditions.ARCANE_NODES_REQUIRED
+	var mana_ok := player.mana >= VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN
+	if city_intact and nodes_ok and mana_ok:
+		player.mana -= VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN
+		player.arcane_ritual_streak += 1
+	else:
+		player.arcane_ritual_active = false
+		player.arcane_ritual_streak = 0
+
+## Acao explicita do jogador ("Ativar Ritual" na UI, ainda nao construida
+## -- ver Fase F passo 6/7) -- NUNCA automatica, nunca decidida por
+## _update_victory_state/IA (pedido explicito do usuario: decisao de IA
+## fica pra uma fatia futura). Escolhe a PRIMEIRA cidade do jogador com o
+## Santuario como sede (nao ha suporte a multiplas sedes simultaneas
+## nesta fatia). Retorna false SEM mutar nada se qualquer pre-requisito
+## falhar (pre-requisitos, Santuario construido, ou mana insuficiente pro
+## custo inicial).
+func activate_arcane_ritual(player: PlayerData) -> bool:
+	if player.arcane_ritual_active:
+		return false
+	if not VictoryConditions.meets_arcane_ritual_prerequisites(player, hex_grid):
+		return false
+	var sanctuary_city: City = null
+	for city in player.cities:
+		if city.buildings.has(VictoryConditions.SANCTUARY_BUILDING_ID):
+			sanctuary_city = city
+			break
+	if sanctuary_city == null:
+		return false
+	if player.mana < VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST:
+		return false
+	player.mana -= VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST
+	player.arcane_ritual_active = true
+	player.arcane_ritual_city_coord = sanctuary_city.coord
+	player.arcane_ritual_streak = 0
+	return true
+
+## Roadmap "Fase F" F3 -- substitui a antiga check_game_over() (so
+## Dominacao) como autoridade UNICA de vitoria: agora verifica as TRES
+## condicoes desde o turno 1, sempre em paralelo (nenhuma excecao "so
+## checa Dominacao quando resta 1 jogador", decisao explicita do
+## usuario). Ordem de deteccao FIXA e DOCUMENTADA como regra tecnica de
+## desempate, NUNCA como prioridade estrategica entre vitorias (pedido
+## explicito do usuario): jogadores na ordem [humano] + rivais (ordem da
+## lista), tipos na ordem Dominacao -> Territorial -> Arcana: primeiro
+## par (jogador, tipo) verdadeiro encontrado vence. So chamada aqui
+## (deteccao PURA, nunca escreve streak) -- ver _update_victory_state
+## acima pra quem de fato avanca o estado temporal.
+func check_victories() -> void:
 	if state == GameState.GAME_OVER:
 		return
-	var any_rival_alive = false
-	for rival in rival_players:
-		if rival.units.size() > 0 or rival.cities.size() > 0:
-			any_rival_alive = true
-			break
-	var human_alive = human_player.units.size() > 0 or human_player.cities.size() > 0
-	if not any_rival_alive:
-		_end_game(true)
-	elif not human_alive:
-		_end_game(false)
+	var players_in_order: Array[PlayerData] = ([human_player] as Array[PlayerData]) + rival_players
+	for player in players_in_order:
+		if VictoryConditions.is_dominance_achieved(player, players_in_order):
+			_end_game(player, VictoryConditions.VICTORY_TYPE_DOMINANCE)
+			return
+		if VictoryConditions.is_territorial_dominance_achieved(player):
+			_end_game(player, VictoryConditions.VICTORY_TYPE_TERRITORIAL)
+			return
+		if VictoryConditions.is_arcane_ascension_achieved(player):
+			_end_game(player, VictoryConditions.VICTORY_TYPE_ARCANE)
+			return
 
-func _end_game(victory: bool) -> void:
+## `winner` pode ser QUALQUER jogador (humano ou rival) desde F3 -- antes
+## so existia vitoria/derrota do lado humano. `victory` (EventBus.
+## game_over, sinal ANTIGO) continua servindo os consumidores legados
+## (HUD/AudioManager/botao de debug/testes ja existentes, todos so
+## perguntam "o humano ganhou?"), calculado aqui a partir de `winner` pra
+## nao duplicar essa logica em cada chamador. victory_achieved (sinal
+## NOVO) carrega o contexto completo pra quem precisar dele (F1/F2 passo
+## 7, tela de resultado detalhada) -- os dois sinais sao emitidos JUNTOS,
+## nunca um sem o outro.
+func _end_game(winner: PlayerData, victory_type: String) -> void:
 	state = GameState.GAME_OVER
+	var victory := winner == human_player
 	EventBus.game_over.emit(victory)
+	EventBus.victory_achieved.emit(winner, victory_type)
 
 ## --- Debug (HUD.gd, botao "Debug" so em builds de desenvolvimento via
 ## OS.is_debug_build()) ---
@@ -541,10 +631,14 @@ func set_debug_mode(enabled: bool) -> void:
 ## Forca o fim de jogo na hora, sem esperar eliminar unidade/cidade
 ## nenhuma de verdade — reaproveita _end_game() (mesmo sinal
 ## EventBus.game_over que o fim de jogo real usa), so pula a checagem de
-## check_game_over(). Util pra testar a tela de vitoria/derrota sem
-## precisar jogar uma partida inteira.
+## check_victories(). Util pra testar a tela de vitoria/derrota sem
+## precisar jogar uma partida inteira. `winner` sintetico (humano se
+## `victory`, senao o primeiro rival se houver algum) so pra _end_game
+## ter alguem pra apontar -- VICTORY_TYPE_DEBUG deixa claro pra qualquer
+## consumidor de victory_achieved que isso NUNCA veio de check_victories.
 func debug_force_game_over(victory: bool) -> void:
-	_end_game(victory)
+	var winner: PlayerData = human_player if victory else (rival_players[0] if not rival_players.is_empty() else null)
+	_end_game(winner, VictoryConditions.VICTORY_TYPE_DEBUG)
 
 ## Completa a pesquisa atual do jogador humano na hora. Reaproveita
 ## _process_research() de verdade (mesmo toast de "Tecnologia
