@@ -347,6 +347,10 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		# decide_campaign ja seguem.
 		RivalAI.decide_peace(rival, human_player)
 		RivalAI.decide_trade(rival, hex_grid, human_player)
+		# Roadmap "Fase F"/G — independente das decisoes de guerra acima de
+		# proposito (decisao explicita do usuario: a Ascensao Arcana nao
+		# pesa risco de guerra, so "tenho condicoes de tentar?").
+		RivalAI.decide_arcane_ritual(rival, hex_grid)
 
 	for player in players:
 		_process_research(player)

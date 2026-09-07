@@ -125,7 +125,7 @@ static func decide_production(player: PlayerData, hex_grid: HexGrid, opponent: P
 
 		var best_id := ""
 		var best_score := -INF
-		for candidate_id in _production_candidates(player, city):
+		for candidate_id in _production_candidates(player, city, hex_grid):
 			var score := _score_production_candidate(candidate_id, defense_need, threat, military_deficit, role_counts)
 			if candidate_id == racial_unique_kind:
 				score += SCORE_RACIAL_UNIT_TIE_BREAK
@@ -139,9 +139,19 @@ static func decide_production(player: PlayerData, hex_grid: HexGrid, opponent: P
 ## pre-requisito de predio + slot livre, mesmo gate do jogador) mais toda
 ## unidade militar que ela ja pode TREINAR (City.can_train — predio de
 ## treino presente — E com tech propria pesquisada, player.has_unlocked).
-static func _production_candidates(player: PlayerData, city: City) -> Array:
+## Excecao: arcane_sanctuary (Roadmap Fase F/G) so entra nos candidatos
+## quando a CIVILIZACAO ja cumpre VictoryConditions.
+## meets_arcane_ritual_prerequisites — decisao explicita do usuario: nao e
+## um novo balanceamento, e filtrar um candidato obviamente prematuro (a IA
+## nao deveria gastar producao numa infraestrutura cujo beneficio de
+## vitoria esta muito distante, so pelo +2 mana modesto). O gate e
+## civilizacional, nao por cidade — qual cidade especifica constroi
+## continua responsabilidade normal da pontuacao abaixo.
+static func _production_candidates(player: PlayerData, city: City, hex_grid: HexGrid) -> Array:
 	var candidates: Array = []
 	for building in BuildingDatabase.all_buildings():
+		if building.id == VictoryConditions.SANCTUARY_BUILDING_ID and not VictoryConditions.meets_arcane_ritual_prerequisites(player, hex_grid):
+			continue
 		if city.can_build(building.id):
 			candidates.append(building.id)
 	for kind in _military_kinds_for(player):
@@ -897,6 +907,26 @@ static func decide_trade(player: PlayerData, hex_grid: HexGrid, opponent: Player
 		if TradeManager.active_route_count(city) < city.max_trade_routes(hex_grid):
 			TradeManager.propose_route(city, target_city, hex_grid)
 			return
+
+## Roadmap "Fase F"/G — decisao MINIMA de IA pra Ascensao Arcana: responde
+## so "tenho condicoes de tentar?", nunca "e seguro tentar?" (decisao
+## explicita do usuario). Sem peso de guerra, forca militar ou previsao de
+## sustentacao: o proprio ritual ja tem mecanismo de risco embutido
+## (GameManager._update_arcane_ritual interrompe sozinho se a cidade cair
+## ou os nodulos caírem abaixo de 3) — se a IA estiver em guerra, ela deve
+## poder assumir esse risco como o jogador humano assumiria. Exige mana pra
+## ativacao MAIS uma manutencao inteira (nao as 5 sustentadas — isso e
+## condicao por turno, decidida dinamicamente turno a turno) pra nao
+## comecar conscientemente um ritual que seria interrompido no primeiro
+## processamento de turno por falta de mana.
+static func decide_arcane_ritual(player: PlayerData, hex_grid: HexGrid) -> void:
+	if player.arcane_ritual_active:
+		return
+	if not VictoryConditions.meets_arcane_ritual_prerequisites(player, hex_grid):
+		return
+	if player.mana < VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST + VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN:
+		return
+	GameManager.activate_arcane_ritual(player)
 
 ## Roadmap "Parte B" B3 — pesos da pontuacao de PESQUISA (mesmo estilo
 ## nomeado/comentado de SCORE_WEIGHT_*/WAR_WEIGHT_* acima, ver decide_

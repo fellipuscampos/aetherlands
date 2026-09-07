@@ -1378,3 +1378,91 @@ func test_decide_research_personality_never_overrides_stronger_continuation():
 
 	assert_eq(player.current_research, "oficina", "continuacao de cadeia deve vencer mesmo com identidade E personalidade militar no maximo simultaneo, ambas noutra tech de raiz")
 	city.queue_free()
+
+## --- Roadmap "Fase F"/G: decisao minima de IA pra Ascensao Arcana --------
+
+func _grant_arcane_ritual_prerequisites(city: City) -> void:
+	var node_coords: Array[Vector2i] = [Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)]
+	for coord in node_coords:
+		hex_grid.tiles[coord].resource = "mana_node"
+	city.owned_tiles = node_coords
+	for tech_id in ["canalizacao_base", "alquimia_botanica", "transmutacao_rocha", "geomancia"]:
+		rival.researched_techs[tech_id] = true
+
+## Decisao explicita do usuario: nao e um novo peso de balanceamento, e um
+## filtro de candidato obviamente prematuro — a IA nao deveria gastar
+## producao numa infraestrutura cujo beneficio de vitoria esta muito
+## distante, so pelo +2 mana modesto.
+func test_production_candidates_excludes_sanctuary_without_arcane_prerequisites():
+	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
+	var candidates = RivalAI._production_candidates(rival, city, hex_grid)
+	assert_false("arcane_sanctuary" in candidates, "sem os pre-requisitos do ritual, o Santuario nao deveria competir na producao")
+
+func test_production_candidates_includes_sanctuary_once_arcane_prerequisites_are_met():
+	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
+	_grant_arcane_ritual_prerequisites(city)
+	var candidates = RivalAI._production_candidates(rival, city, hex_grid)
+	assert_true("arcane_sanctuary" in candidates, "com os pre-requisitos do ritual cumpridos, o Santuario deveria poder competir na producao")
+
+## Especificacao fechada pelo usuario: "tenho condicoes de tentar?", nunca
+## "e seguro tentar?" — pre-requisitos + Santuario construido + mana pra
+## ativacao MAIS uma manutencao inteira (pra nao comecar um ritual que seria
+## interrompido no proprio primeiro processamento de turno por falta de
+## mana).
+func test_decide_arcane_ritual_activates_once_prerequisites_sanctuary_and_mana_are_met():
+	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
+	city.buildings[VictoryConditions.SANCTUARY_BUILDING_ID] = true
+	_grant_arcane_ritual_prerequisites(city)
+	rival.mana = VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST + VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN
+
+	RivalAI.decide_arcane_ritual(rival, hex_grid)
+
+	assert_true(rival.arcane_ritual_active, "com pre-requisitos + Santuario + mana suficiente pra ativacao e uma manutencao, a IA deveria ativar o ritual")
+
+func test_decide_arcane_ritual_does_not_activate_without_the_sanctuary():
+	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
+	_grant_arcane_ritual_prerequisites(city)
+	rival.mana = VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST + VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN
+
+	RivalAI.decide_arcane_ritual(rival, hex_grid)
+
+	assert_false(rival.arcane_ritual_active, "sem o Santuario construido, meets_arcane_ritual_prerequisites nao cobre isso, mas activate_arcane_ritual ainda deveria recusar")
+
+## Falta exatamente a manutencao de UM turno em cima do custo de ativacao —
+## a IA nao deveria comecar conscientemente um ritual que ja seria
+## interrompido no primeiro processamento de turno por falta de mana.
+func test_decide_arcane_ritual_does_not_activate_without_mana_for_one_full_upkeep():
+	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
+	city.buildings[VictoryConditions.SANCTUARY_BUILDING_ID] = true
+	_grant_arcane_ritual_prerequisites(city)
+	rival.mana = VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST # falta a manutencao
+
+	RivalAI.decide_arcane_ritual(rival, hex_grid)
+
+	assert_false(rival.arcane_ritual_active, "mana so pra ativacao, sem sobra pra uma manutencao, nao deveria ativar")
+
+func test_decide_arcane_ritual_does_nothing_when_already_active():
+	rival.arcane_ritual_active = true
+	rival.mana = 1000.0
+
+	RivalAI.decide_arcane_ritual(rival, hex_grid)
+
+	assert_almost_eq(rival.mana, 1000.0, 0.01, "ritual ja ativo: decide_arcane_ritual nao deveria descontar mana nem mexer em mais nada")
+
+## Decisao explicita do usuario: SEM peso de guerra — a Ascensao Arcana
+## responde so "tenho condicoes de tentar?", nunca "e seguro tentar?". O
+## proprio ritual ja tem mecanismo de risco embutido (GameManager.
+## _update_arcane_ritual interrompe sozinho se a cidade cair ou os nodulos
+## carem abaixo de 3); before_each ja coloca human x rival em guerra
+## (Diplomacy.declare_war), entao este teste confirma a premissa antes de
+## provar que ela nao bloqueia a ativacao.
+func test_decide_arcane_ritual_activates_even_while_at_war():
+	assert_true(rival.is_at_war_with(human), "premissa do before_each: human e rival ja deveriam estar em guerra")
+	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
+	city.buildings[VictoryConditions.SANCTUARY_BUILDING_ID] = true
+	_grant_arcane_ritual_prerequisites(city)
+	rival.mana = VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST + VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN
+
+	RivalAI.decide_arcane_ritual(rival, hex_grid)
+
+	assert_true(rival.arcane_ritual_active, "estar em guerra nao deveria impedir a IA de ativar o ritual — sem peso de guerra nesta decisao, por design")
