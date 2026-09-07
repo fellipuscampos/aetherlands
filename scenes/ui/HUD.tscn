@@ -636,10 +636,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -220.0
-offset_top = -110.0
-offset_right = 220.0
-offset_bottom = 110.0
+offset_left = -260.0
+offset_top = -260.0
+offset_right = 260.0
+offset_bottom = 260.0
 grow_horizontal = 2
 grow_vertical = 2
 visible = false
@@ -654,6 +654,29 @@ theme_type_variation = &"PanelTitle"
 text = ""
 horizontal_alignment = 1
 autowrap_mode = 3
+
+[node name="GameOverTitleLabel" type="Label" parent="GameOverPanel/GameOverBox"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+text = ""
+
+[node name="GameOverSummaryLabel" type="Label" parent="GameOverPanel/GameOverBox"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+text = ""
+
+[node name="GameOverSnapshotScroll" type="ScrollContainer" parent="GameOverPanel/GameOverBox"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="GameOverSnapshotRows" type="VBoxContainer" parent="GameOverPanel/GameOverBox/GameOverSnapshotScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
 
 [node name="RestartButton" type="Button" parent="GameOverPanel/GameOverBox"]
 layout_mode = 2

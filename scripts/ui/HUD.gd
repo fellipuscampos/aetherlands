@@ -120,6 +120,12 @@ extends Control
 @onready var found_city_button: Button = $UnitPanel/UnitBox/FoundCityButton
 @onready var game_over_panel: PanelContainer = $GameOverPanel
 @onready var game_over_label: Label = $GameOverPanel/GameOverBox/GameOverLabel
+## Roadmap "Fase F" F6 -- titulo/resumo/snapshot CONGELADOS no momento da
+## vitoria (ver _on_victory_achieved), separados do game_over_label
+## legado acima (que continua so com o veredito basico + estatisticas).
+@onready var game_over_title_label: Label = $GameOverPanel/GameOverBox/GameOverTitleLabel
+@onready var game_over_summary_label: Label = $GameOverPanel/GameOverBox/GameOverSummaryLabel
+@onready var game_over_snapshot_rows: VBoxContainer = $GameOverPanel/GameOverBox/GameOverSnapshotScroll/GameOverSnapshotRows
 @onready var restart_button: Button = $GameOverPanel/GameOverBox/RestartButton
 @onready var overlay_backdrop: ColorRect = $OverlayBackdrop
 @onready var debug_button: Button = $ActionBar/ActionBarBox/DebugButton
@@ -203,6 +209,14 @@ func _ready() -> void:
 	EventBus.tile_selected.connect(_on_tile_selected)
 	EventBus.unit_selected.connect(_on_unit_selected)
 	EventBus.game_over.connect(_on_game_over)
+	# Roadmap "Fase F" F6 -- GameManager._end_game() emite game_over.emit()
+	# ANTES de victory_achieved.emit() (nunca o contrario) -- entao pra toda
+	# vitoria de verdade, _on_game_over ja rodou (mostrou o painel, texto
+	# basico) antes de _on_victory_achieved popular titulo/resumo/snapshot
+	# detalhados por cima. A ordem destas duas linhas de connect() aqui NAO
+	# importa pra essa garantia -- quem decide e a ordem de EMISSAO em
+	# _end_game, nao a ordem de conexao.
+	EventBus.victory_achieved.connect(_on_victory_achieved)
 	EventBus.notify.connect(_on_notify)
 	# fog_updated dispara ao fim de start_new_game/recompute_fog — cobre o
 	# caso do primeiro turno, onde turn_changed ainda nao foi emitido.
@@ -571,11 +585,20 @@ func _on_victory_close_pressed() -> void:
 ## LE VictoryConditions.*_progress, nunca calcula uma condicao de vitoria
 ## por conta propria, nunca escreve em PlayerData. Sem gating de fog-of-
 ## war nesta fatia (decisao explicita de F2: visibilidade total de todos
-## os jogadores). Uma linha-titulo (nome da civ) + 3 linhas de progresso
-## por jogador (Dominacao/Territorial/Arcana, NESSA ordem -- mesma ordem
-## fixa de check_victories()).
+## os jogadores). LIVE -- chamada toda vez que o painel abre, ver F6 pra
+## contraste com o snapshot CONGELADO de _on_victory_achieved abaixo.
 func _refresh_victory_panel() -> void:
-	for child in victory_rows.get_children():
+	_build_victory_progress_rows(victory_rows)
+
+## Roadmap "Fase F" F6 -- MESMA construcao de linhas de _refresh_victory_
+## panel, extraida pra ser reusada tambem pelo snapshot CONGELADO da tela
+## de resultado (_on_victory_achieved abaixo) sem duplicar a leitura de
+## VictoryConditions em dois lugares. `target` e o container que recebe
+## as linhas -- o painel "Vitória" (ao vivo) e o snapshot de fim de jogo
+## (congelado no momento da vitoria) usam a MESMA logica de montagem,
+## cada um no seu proprio VBoxContainer, nunca compartilhado.
+func _build_victory_progress_rows(target: VBoxContainer) -> void:
+	for child in target.get_children():
 		child.queue_free()
 
 	var human = GameManager.human_player
@@ -588,11 +611,11 @@ func _refresh_victory_panel() -> void:
 		var name_label := Label.new()
 		name_label.text = player.civ.civ_name
 		name_label.theme_type_variation = &"PanelTitle"
-		victory_rows.add_child(name_label)
+		target.add_child(name_label)
 
-		_add_victory_progress_row("Dominação", VictoryConditions.dominance_progress(player, players))
-		_add_victory_progress_row("Domínio Territorial", VictoryConditions.territorial_progress(player, hex_grid))
-		_add_victory_progress_row("Ascensão Arcana", VictoryConditions.arcane_progress(player, hex_grid))
+		_add_victory_progress_row(target, "Dominação", VictoryConditions.dominance_progress(player, players))
+		_add_victory_progress_row(target, "Domínio Territorial", VictoryConditions.territorial_progress(player, hex_grid))
+		_add_victory_progress_row(target, "Ascensão Arcana", VictoryConditions.arcane_progress(player, hex_grid))
 
 ## `progress` e SEMPRE 0.0-1.0 (contrato comum das 3 funcoes de
 ## VictoryConditions), mas o SIGNIFICADO por tras de cada numero e
@@ -604,7 +627,7 @@ func _refresh_victory_panel() -> void:
 ## assumir que cada tipo de vitoria tem a mesma semantica" -- a
 ## semantica fica inteiramente do lado de VictoryConditions, aqui so
 ## chega o numero final).
-func _add_victory_progress_row(label_text: String, progress: float) -> void:
+func _add_victory_progress_row(target: VBoxContainer, label_text: String, progress: float) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 
@@ -626,7 +649,7 @@ func _add_victory_progress_row(label_text: String, progress: float) -> void:
 	value_label.custom_minimum_size = Vector2(48, 0)
 	row.add_child(value_label)
 
-	victory_rows.add_child(row)
+	target.add_child(row)
 
 ## Formatacao PURA (nenhuma dependencia de cena/PlayerData/HexGrid) --
 ## unit-testavel sem instanciar o HUD inteiro. Clampa e arredonda: nunca
@@ -635,6 +658,70 @@ func _add_victory_progress_row(label_text: String, progress: float) -> void:
 ## clampada -- so territorial_progress e).
 static func format_victory_progress_percentage(progress: float) -> String:
 	return "%d%%" % int(round(clamp(progress, 0.0, 1.0) * 100.0))
+
+## Roadmap "Fase F" F6 -- titulo da tela de resultado. `winner` pode ser
+## null (VICTORY_TYPE_DEBUG forcando derrota sem nenhum rival existir,
+## ver GameManager.debug_force_game_over) -- cai num titulo generico em
+## vez de quebrar. PURA (nenhuma dependencia de cena) -- unit-testavel
+## direto.
+static func format_victory_title(winner: PlayerData, victory_type: String) -> String:
+	if victory_type == VictoryConditions.VICTORY_TYPE_DEBUG:
+		return "Fim de jogo forçado (Debug)"
+	if winner == null:
+		return "Fim de jogo"
+	var victory_name: String
+	match victory_type:
+		VictoryConditions.VICTORY_TYPE_DOMINANCE:
+			victory_name = "Dominação"
+		VictoryConditions.VICTORY_TYPE_TERRITORIAL:
+			victory_name = "Domínio Territorial"
+		VictoryConditions.VICTORY_TYPE_ARCANE:
+			victory_name = "Ascensão Arcana"
+		_:
+			victory_name = victory_type
+	return "%s alcançou %s" % [winner.civ.civ_name, victory_name]
+
+## Roadmap "Fase F" F6 -- resumo FIXO por tipo (pedido explicito do
+## usuario), nunca gerado a partir do estado de UM jogador especifico --
+## so interpola as CONSTANTES ja existentes de VictoryConditions (numero
+## de escolas/nodulos/turnos exigidos), nunca calcula nada sobre a
+## partida. Texto narrativo/procedural fica pra F6 (identidade/lore),
+## combinado explicitamente como fora de escopo aqui.
+static func format_victory_summary(victory_type: String) -> String:
+	match victory_type:
+		VictoryConditions.VICTORY_TYPE_DOMINANCE:
+			return "Eliminou todos os reinos rivais."
+		VictoryConditions.VICTORY_TYPE_TERRITORIAL:
+			return "Controlou pelo menos %d%% do mundo habitável por %d turnos consecutivos." % [
+				int(round(VictoryConditions.TERRITORIAL_VICTORY_THRESHOLD * 100.0)),
+				VictoryConditions.TERRITORIAL_SUSTAIN_TURNS,
+			]
+		VictoryConditions.VICTORY_TYPE_ARCANE:
+			return "Pesquisou %d das 7 escolas mágicas, controlou %d Nódulos Arcanos e sustentou o Ritual do Nódulo por %d turnos." % [
+				VictoryConditions.ARCANE_SCHOOLS_REQUIRED,
+				VictoryConditions.ARCANE_NODES_REQUIRED,
+				VictoryConditions.ARCANE_SUSTAIN_TURNS,
+			]
+		VictoryConditions.VICTORY_TYPE_DEBUG:
+			return "Fim de jogo disparado manualmente pelo modo debug -- nenhuma condição de vitória real foi avaliada."
+		_:
+			return ""
+
+## Roadmap "Fase F" F6 -- CONGELA o snapshot no momento exato da vitoria:
+## chamado UMA vez, so pelo sinal EventBus.victory_achieved (nunca
+## re-chamado por nenhum refresh posterior da HUD). Popula Labels/
+## ProgressBars ESTATICOS (game_over_snapshot_rows) que NAO tem nenhuma
+## ligacao viva com VictoryConditions depois deste ponto -- diferente do
+## painel "Vitória" (_refresh_victory_panel), que consulta de novo toda
+## vez que abre. E exatamente essa diferenca que garante o contrato
+## pedido explicito do usuario: a tela de resultado continua mostrando
+## os valores do MOMENTO da vitoria mesmo que o estado do jogo mude
+## depois (partida ja acabou, mas os nodes worldwide/PlayerData podem
+## teoricamente continuar existindo/mudando ate a cena ser trocada).
+func _on_victory_achieved(winner: PlayerData, victory_type: String) -> void:
+	game_over_title_label.text = format_victory_title(winner, victory_type)
+	game_over_summary_label.text = format_victory_summary(victory_type)
+	_build_victory_progress_rows(game_over_snapshot_rows)
 
 func _on_grimoire_pressed() -> void:
 	if grimoire_panel.visible:
@@ -1344,7 +1431,14 @@ func _on_game_over(victory: bool) -> void:
 			GameManager.human_player.units.size(), int(GameManager.human_player.gold)
 		]
 
+	# Roadmap "Fase F" F6 -- texto generico de proposito (nao mais "todos os
+	## reinos rivais foram derrotados"/"seu reino caiu"): desde que Territorial
+	## e Arcana existem, um fim de jogo pode nao ter eliminacao nenhuma
+	## envolvida, e este handler nao sabe QUAL vitoria aconteceu (so um bool
+	## human-perspective, ver EventBus.game_over) -- o veredito ESPECIFICO
+	## (quem, como) fica com _on_victory_achieved logo abaixo, que roda em
+	## seguida pra toda vitoria de verdade.
 	if victory:
-		game_over_label.text = "VITORIA!\nTodos os reinos rivais foram derrotados." + summary
+		game_over_label.text = "VITÓRIA!" + summary
 	else:
-		game_over_label.text = "DERROTA...\nSeu reino caiu." + summary
+		game_over_label.text = "DERROTA..." + summary

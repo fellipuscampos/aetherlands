@@ -149,6 +149,87 @@ func test_victory_panel_row_count_matches_player_count_after_refresh():
 	assert_eq(hud.victory_rows.get_child_count(), 4, "1 jogador (so o humano) x (1 nome + 3 linhas de progresso)")
 	hex_grid.queue_free()
 
+## Roadmap "Fase F" F6 -- tela de resultado final: titulo + resumo fixo +
+## snapshot CONGELADO das 3 progressões de todos os jogadores.
+
+func test_format_victory_title_for_each_type():
+	var winner = PlayerData.new(CivilizationData.new())
+	winner.civ.civ_name = "Anões"
+	assert_eq(hud.format_victory_title(winner, VictoryConditions.VICTORY_TYPE_DOMINANCE), "Anões alcançou Dominação")
+	assert_eq(hud.format_victory_title(winner, VictoryConditions.VICTORY_TYPE_TERRITORIAL), "Anões alcançou Domínio Territorial")
+	assert_eq(hud.format_victory_title(winner, VictoryConditions.VICTORY_TYPE_ARCANE), "Anões alcançou Ascensão Arcana")
+
+## `winner` pode ser null (debug_force_game_over(false) sem nenhum rival
+## existir, ver GameManager.gd) -- nao deveria quebrar nem mostrar um
+## veredito de vitoria real.
+func test_format_victory_title_handles_debug_and_null_winner():
+	assert_eq(hud.format_victory_title(null, VictoryConditions.VICTORY_TYPE_DEBUG), "Fim de jogo forçado (Debug)")
+	assert_eq(hud.format_victory_title(null, VictoryConditions.VICTORY_TYPE_DOMINANCE), "Fim de jogo")
+
+## Resumo e FIXO por tipo (pedido explicito do usuario) mas le as
+## CONSTANTES de VictoryConditions em vez de hardcodar os numeros de novo
+## -- confirma que os dois nunca podem divergir silenciosamente.
+func test_format_victory_summary_reads_victoryconditions_constants():
+	assert_eq(hud.format_victory_summary(VictoryConditions.VICTORY_TYPE_DOMINANCE), "Eliminou todos os reinos rivais.")
+	assert_eq(hud.format_victory_summary(VictoryConditions.VICTORY_TYPE_TERRITORIAL), "Controlou pelo menos %d%% do mundo habitável por %d turnos consecutivos." % [
+		int(round(VictoryConditions.TERRITORIAL_VICTORY_THRESHOLD * 100.0)), VictoryConditions.TERRITORIAL_SUSTAIN_TURNS,
+	])
+	assert_eq(hud.format_victory_summary(VictoryConditions.VICTORY_TYPE_ARCANE), "Pesquisou %d das 7 escolas mágicas, controlou %d Nódulos Arcanos e sustentou o Ritual do Nódulo por %d turnos." % [
+		VictoryConditions.ARCANE_SCHOOLS_REQUIRED, VictoryConditions.ARCANE_NODES_REQUIRED, VictoryConditions.ARCANE_SUSTAIN_TURNS,
+	])
+
+func test_on_victory_achieved_populates_title_summary_and_snapshot():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.hex_grid = hex_grid
+	var human = PlayerData.new(CivilizationData.new())
+	human.civ.civ_name = "Reino de Teste"
+	GameManager.human_player = human
+	GameManager.rival_players = []
+
+	hud._on_victory_achieved(human, VictoryConditions.VICTORY_TYPE_DOMINANCE)
+
+	assert_eq(hud.game_over_title_label.text, "Reino de Teste alcançou Dominação")
+	assert_eq(hud.game_over_summary_label.text, "Eliminou todos os reinos rivais.")
+	assert_eq(hud.game_over_snapshot_rows.get_child_count(), 4, "1 jogador x (1 nome + 3 linhas de progresso)")
+	hex_grid.queue_free()
+
+## O CONTRATO mais importante desta fatia (pedido explicito do usuario):
+## a tela de resultado precisa continuar mostrando os valores do MOMENTO
+## da vitoria, mesmo que o jogo mude depois. _on_victory_achieved congela
+## o snapshot em Labels/ProgressBars ESTATICOS (game_over_snapshot_rows)
+## -- diferente do painel "Vitória" ao vivo (_refresh_victory_panel), que
+## le VictoryConditions de novo toda vez que e chamado.
+func test_game_over_snapshot_does_not_change_after_later_state_mutation_or_live_panel_refresh():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.hex_grid = hex_grid
+	var human = PlayerData.new(CivilizationData.new())
+	var rival = PlayerData.new(CivilizationData.new()) # sem unidade/cidade -- 1 de 1 rival ja eliminado = 100% dominancia
+	GameManager.human_player = human
+	GameManager.rival_players = [rival]
+
+	hud._on_victory_achieved(human, VictoryConditions.VICTORY_TYPE_DOMINANCE)
+	var frozen_dominance_row: HBoxContainer = hud.game_over_snapshot_rows.get_child(1)
+	assert_eq(frozen_dominance_row.get_child(2).text, "100%", "pre-condicao: 1 de 1 rival eliminado")
+
+	# Estado muda DEPOIS da vitoria (ex.: algum callback tardio antes da
+	# troca de cena) -- um rival novo e vivo derrubaria a dominancia do
+	# humano pra 50% (1 de 2 eliminados) SE recalculada.
+	var new_rival = PlayerData.new(CivilizationData.new())
+	new_rival.units.append(null)
+	GameManager.rival_players = [rival, new_rival]
+
+	# O painel AO VIVO reflete a mudanca (prova que a mudanca de estado e
+	# real, nao um erro de teste)...
+	hud._refresh_victory_panel()
+	var live_dominance_row: HBoxContainer = hud.victory_rows.get_child(1)
+	assert_ne(live_dominance_row.get_child(2).text, "100%", "pre-condicao: o painel AO VIVO deveria refletir o novo rival")
+
+	# ...mas o snapshot CONGELADO da tela de resultado NAO muda.
+	assert_eq(frozen_dominance_row.get_child(2).text, "100%", "snapshot de fim de jogo nao deveria mudar depois da vitoria")
+	hex_grid.queue_free()
+
 ## Regressao principal reportada pelo usuario: painel de fim de jogo
 ## aparecendo POR CIMA de um overlay ainda aberto. _on_game_over() agora
 ## fecha qualquer overlay ANTES de mostrar o proprio.
