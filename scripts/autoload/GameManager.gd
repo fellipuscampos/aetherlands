@@ -351,6 +351,11 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		# proposito (decisao explicita do usuario: a Ascensao Arcana nao
 		# pesa risco de guerra, so "tenho condicoes de tentar?").
 		RivalAI.decide_arcane_ritual(rival, hex_grid)
+		# Roadmap "Fase Macro" 5B.2 -- generico por proposito (qualquer
+		# WorldEvent em Preparation, nao so DragonEvent especificamente).
+		var rival_civ_index: int = players.find(rival)
+		for event in WorldEventManager.active_events:
+			RivalAI.decide_world_event_participation(rival, rival_civ_index, event)
 
 	for player in players:
 		_process_research(player)
@@ -576,6 +581,25 @@ func activate_arcane_ritual(player: PlayerData) -> bool:
 	player.arcane_ritual_city_coord = sanctuary_city.coord
 	player.arcane_ritual_streak = 0
 	return true
+
+## Acao explicita do jogador humano (futura UI: prompt de Preparation, ver
+## docs/DRAGON_EVENT_DESIGN.md) -- decide participar ou nao do PRIMEIRO
+## WorldEvent em Preparation que o humano ainda nao respondeu. Generico
+## por proposito (opera sobre WorldEvent/participants, nunca sabe que
+## "event" e' especificamente um DragonEvent) -- mesmo principio do lado
+## IA (RivalAI.decide_world_event_participation). Retorna false sem mutar
+## nada se nao houver evento elegivel (nenhum em Preparation, ou o humano
+## ja decidiu).
+func respond_to_world_event(participate: bool) -> bool:
+	var human_civ_index: int = players.find(human_player)
+	for event in WorldEventManager.active_events:
+		if event.phase != WorldEvent.PHASE_PREPARATION:
+			continue
+		if event.participants.has(human_civ_index):
+			continue
+		event.participants[human_civ_index] = {"decision": participate}
+		return true
+	return false
 
 ## Roadmap "Fase F" F3 -- substitui a antiga check_game_over() (so
 ## Dominacao) como autoridade UNICA de vitoria: agora verifica as TRES

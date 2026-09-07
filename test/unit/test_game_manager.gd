@@ -1088,6 +1088,51 @@ func test_event_rng_stays_reproducible_regardless_of_ai_rng_activity_in_real_tur
 
 	setup.hex_grid.queue_free()
 
+## --- Roadmap "Fase Macro" 5B.2: participacao (humano + IA) ---------------
+
+func test_respond_to_world_event_records_the_humans_decision():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_PREPARATION
+	WorldEventManager.register_event(event)
+
+	var recorded := GameManager.respond_to_world_event(true)
+
+	assert_true(recorded)
+	var human_index: int = GameManager.players.find(GameManager.human_player)
+	assert_eq(event.participants.get(human_index), {"decision": true})
+	setup.hex_grid.queue_free()
+
+func test_respond_to_world_event_returns_false_without_an_eligible_event():
+	_setup_minimal_hex_grid_with_one_rival()
+	assert_false(GameManager.respond_to_world_event(true), "sem evento nenhum em Preparation, nao deveria haver nada pra responder")
+
+func test_respond_to_world_event_does_not_overwrite_an_existing_decision():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_PREPARATION
+	WorldEventManager.register_event(event)
+	var human_index: int = GameManager.players.find(GameManager.human_player)
+	event.participants[human_index] = {"decision": false}
+
+	assert_false(GameManager.respond_to_world_event(true), "ja havia uma decisao registrada -- nao deveria haver nada NOVO pra responder")
+	assert_eq(event.participants[human_index], {"decision": false})
+	setup.hex_grid.queue_free()
+
+## Integracao: _finish_turn() precisa consultar RivalAI.decide_world_event_
+## participation pra cada rival, nao so o humano via UI futura.
+func test_finish_turn_collects_rival_participation_during_preparation():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_PREPARATION
+	WorldEventManager.register_event(event)
+
+	GameManager._on_turn_changed(0, 0)
+
+	var rival_index: int = GameManager.players.find(setup.rival)
+	assert_eq(event.participants.get(rival_index), {"decision": true})
+	setup.hex_grid.queue_free()
+
 ## Blocker #1 do contrato comportamental do Dragao (docs/DRAGON_EVENT_
 ## DESIGN.md) integrado de verdade: _finish_turn() precisa consultar o
 ## trigger (WorldEventManager.maybe_spawn_dragon), nao so avancar eventos

@@ -285,3 +285,34 @@ func test_maybe_spawn_dragon_blocks_on_any_non_completed_dragon_phase():
 		assert_eq(WorldEventManager.active_events.size(), 1, "fase %s deveria bloquear um novo Dragao-evento" % phase)
 		assert_eq(WorldEventManager.active_events[0], existing)
 	grid.queue_free()
+
+## --- debug_force_dragon_event (SO debug/playtest manual, ver HUD
+## DebugPanel) -----------------------------------------------------------
+
+func test_debug_force_dragon_event_creates_a_dragon_ignoring_the_trigger():
+	var grid := _make_small_grid()
+
+	WorldEventManager.debug_force_dragon_event(grid) # turno 0, bem antes de DRAGON_TRIGGER_MIN_TURN
+
+	assert_eq(WorldEventManager.active_events.size(), 1, "debug deveria ignorar should_spawn_dragon por completo")
+	assert_true(WorldEventManager.active_events[0] is DragonEvent)
+	grid.queue_free()
+
+func test_debug_force_dragon_event_does_not_change_the_normal_trigger():
+	var grid := _make_small_grid()
+
+	WorldEventManager.debug_force_dragon_event(grid)
+
+	assert_false(WorldEventTrigger.should_spawn_dragon(grid.map_seed, 0), "o trigger de producao normal nao deveria ser afetado pelo atalho de debug")
+	grid.queue_free()
+
+func test_debug_force_dragon_event_respects_the_single_active_dragon_guard():
+	var grid := _make_small_grid()
+	var existing := DragonEvent.new()
+	WorldEventManager.register_event(existing)
+
+	WorldEventManager.debug_force_dragon_event(grid)
+
+	assert_eq(WorldEventManager.active_events.size(), 1)
+	assert_eq(WorldEventManager.active_events[0], existing)
+	grid.queue_free()

@@ -12,6 +12,9 @@ var _original_human_player: PlayerData
 var _original_debug_mode: bool
 var _original_hex_grid: HexGrid # Roadmap "Fase F" F5 -- so os testes de VictoryPanel tocam nisso; salvar/restaurar aqui evita vazar um HexGrid ja liberado (queue_free) pros testes seguintes do mesmo arquivo
 var _original_rival_players: Array[PlayerData]
+var _original_players: Array[PlayerData]
+var _original_world_events: Array[WorldEvent]
+var _original_world_event_next_id: int
 
 func before_each():
 	_original_state = GameManager.state
@@ -19,6 +22,11 @@ func before_each():
 	_original_debug_mode = GameManager.debug_mode
 	_original_hex_grid = GameManager.hex_grid
 	_original_rival_players = GameManager.rival_players
+	_original_players = GameManager.players
+	_original_world_events = WorldEventManager.active_events
+	_original_world_event_next_id = WorldEventManager._next_event_id
+	WorldEventManager.active_events = []
+	WorldEventManager._next_event_id = 0
 	var hud_scene: PackedScene = load("res://scenes/ui/HUD.tscn")
 	hud = hud_scene.instantiate()
 	add_child_autofree(hud)
@@ -29,7 +37,10 @@ func after_each():
 	GameManager.debug_mode = _original_debug_mode
 	GameManager.hex_grid = _original_hex_grid
 	GameManager.rival_players = _original_rival_players
+	GameManager.players = _original_players
 	GameManager.is_turn_processing = false
+	WorldEventManager.active_events = _original_world_events
+	WorldEventManager._next_event_id = _original_world_event_next_id
 
 func test_close_topmost_overlay_returns_false_when_nothing_is_open():
 	assert_false(hud.close_topmost_overlay())
@@ -874,3 +885,113 @@ func test_selecting_an_exploring_unit_shows_the_explore_button_pressed():
 	assert_true(hud.explore_button.button_pressed)
 	assert_false(hud.fortify_button.button_pressed)
 	unit.queue_free()
+
+## --- Roadmap "Fase Macro" 5B.2: prompt minimo de Preparation --------------
+## (docs/DRAGON_EVENT_DESIGN.md: "Não precisa ser bonita. Precisa funcionar.")
+
+func test_format_world_event_prompt_for_dragon_names_target_and_turns_left():
+	var target := PlayerData.new(CivilizationData.new())
+	target.civ.civ_name = "Reino dos Anões"
+	var players: Array[PlayerData] = [target]
+	var event := DragonEvent.new()
+	event.target_civ_index = 0
+	event.turn_deadline = 13
+
+	var text: String = hud.format_world_event_prompt(event, players, 10)
+
+	assert_true("Reino dos Anões" in text)
+	assert_true("3 turno" in text, "faltam 13-10=3 turnos")
+
+func test_format_world_event_prompt_handles_no_target_locked_yet():
+	var event := DragonEvent.new() # target_civ_index continua -1
+	var no_players: Array[PlayerData] = []
+	var text: String = hud.format_world_event_prompt(event, no_players, 10)
+	assert_true("uma civilização desconhecida" in text)
+
+func test_format_world_event_prompt_never_shows_a_negative_turn_count():
+	var event := DragonEvent.new()
+	event.turn_deadline = 5
+	var no_players: Array[PlayerData] = []
+	var text: String = hud.format_world_event_prompt(event, no_players, 10) # turno atual JA passou do prazo
+	assert_true("0 turno" in text, "nunca deveria mostrar contagem negativa")
+
+func test_world_event_panel_is_hidden_by_default():
+	assert_false(hud.world_event_panel.visible)
+
+func test_world_event_panel_appears_when_a_dragon_is_in_preparation():
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.players = [human]
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_PREPARATION
+	WorldEventManager.register_event(event)
+
+	hud._refresh_world_event_panel()
+
+	assert_true(hud.world_event_panel.visible)
+
+func test_world_event_panel_hides_once_the_human_has_already_decided():
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.players = [human]
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_PREPARATION
+	event.participants[0] = {"decision": true}
+	WorldEventManager.register_event(event)
+
+	hud._refresh_world_event_panel()
+
+	assert_false(hud.world_event_panel.visible)
+
+func test_world_event_panel_hides_when_no_event_is_in_preparation():
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.players = [human]
+
+	hud._refresh_world_event_panel()
+
+	assert_false(hud.world_event_panel.visible)
+
+func test_pressing_participate_records_the_decision_and_hides_the_panel():
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.players = [human]
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_PREPARATION
+	WorldEventManager.register_event(event)
+	hud._refresh_world_event_panel()
+	assert_true(hud.world_event_panel.visible, "pre-condicao")
+
+	hud._on_world_event_participate_pressed()
+
+	assert_eq(event.participants.get(0), {"decision": true})
+	assert_false(hud.world_event_panel.visible)
+
+func test_pressing_decline_records_the_decision_and_hides_the_panel():
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.players = [human]
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_PREPARATION
+	WorldEventManager.register_event(event)
+	hud._refresh_world_event_panel()
+
+	hud._on_world_event_decline_pressed()
+
+	assert_eq(event.participants.get(0), {"decision": false})
+	assert_false(hud.world_event_panel.visible)
+
+## SO debug/playtest manual -- confirma que o botao de debug realmente cria
+## o evento (a logica de guarda/ignorar trigger ja e' coberta em
+## test_world_event_manager.gd).
+func test_debug_force_dragon_button_creates_a_dragon_event():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	hex_grid.tiles[Vector2i(0, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	GameManager.hex_grid = hex_grid
+
+	hud._on_debug_force_dragon_pressed()
+
+	assert_eq(WorldEventManager.active_events.size(), 1)
+	assert_true(WorldEventManager.active_events[0] is DragonEvent)
+	hex_grid.queue_free()

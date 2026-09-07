@@ -928,6 +928,22 @@ static func decide_arcane_ritual(player: PlayerData, hex_grid: HexGrid) -> void:
 		return
 	GameManager.activate_arcane_ritual(player)
 
+## Roadmap "Fase Macro" 5B.2 -- decisao MINIMA/provisoria de participacao
+## em eventos mundiais (docs/DRAGON_EVENT_DESIGN.md): SEMPRE participa,
+## uma unica vez por evento, assim que ele entra em Preparation. Regra de
+## verdade (avaliar risco, forca militar propria, recompensa esperada)
+## fica pra depois de jogarmos com o vertical slice minimo -- decisao
+## explicita do usuario: nao calibrar antes de existir algo jogavel.
+## Generica por proposito (opera sobre WorldEvent/participants, nunca sabe
+## que "event" e' especificamente um DragonEvent) -- contrato, principio
+## "eventos operam sobre civilizacoes", nao sobre um tipo de evento so.
+static func decide_world_event_participation(player: PlayerData, civ_index: int, event: WorldEvent) -> void:
+	if event.phase != WorldEvent.PHASE_PREPARATION:
+		return
+	if event.participants.has(civ_index):
+		return
+	event.participants[civ_index] = {"decision": true}
+
 ## Roadmap "Parte B" B3 — pesos da pontuacao de PESQUISA (mesmo estilo
 ## nomeado/comentado de SCORE_WEIGHT_*/WAR_WEIGHT_* acima, ver decide_
 ## production/decide_war). CONTINUATION preserva o comportamento ja

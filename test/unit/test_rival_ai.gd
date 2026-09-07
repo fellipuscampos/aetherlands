@@ -1466,3 +1466,30 @@ func test_decide_arcane_ritual_activates_even_while_at_war():
 	RivalAI.decide_arcane_ritual(rival, hex_grid)
 
 	assert_true(rival.arcane_ritual_active, "estar em guerra nao deveria impedir a IA de ativar o ritual — sem peso de guerra nesta decisao, por design")
+
+## --- Roadmap "Fase Macro" 5B.2: decisao minima de participacao em
+## eventos mundiais -------------------------------------------------------
+
+func test_decide_world_event_participation_participates_during_preparation():
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_PREPARATION
+
+	RivalAI.decide_world_event_participation(rival, 1, event)
+
+	assert_eq(event.participants.get(1), {"decision": true})
+
+func test_decide_world_event_participation_does_nothing_outside_preparation():
+	for phase in [WorldEvent.PHASE_DORMANT, WorldEvent.PHASE_ANNOUNCED, WorldEvent.PHASE_ACTIVE, WorldEvent.PHASE_RESOLUTION, WorldEvent.PHASE_COMPLETED]:
+		var event := DragonEvent.new()
+		event.phase = phase
+		RivalAI.decide_world_event_participation(rival, 1, event)
+		assert_false(event.participants.has(1), "fase %s nao deveria coletar decisao nenhuma" % phase)
+
+func test_decide_world_event_participation_only_decides_once():
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_PREPARATION
+	event.participants[1] = {"decision": false} # decisao ja registrada por outro caminho
+
+	RivalAI.decide_world_event_participation(rival, 1, event)
+
+	assert_eq(event.participants[1], {"decision": false}, "nao deveria sobrescrever uma decisao ja tomada")

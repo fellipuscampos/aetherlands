@@ -77,6 +77,18 @@ func _has_active_dragon() -> bool:
 			return true
 	return false
 
+## SO DEBUG (ver HUD DebugPanel, "Forçar Dragão") -- cria um DragonEvent
+## imediatamente, ignorando WorldEventTrigger.should_spawn_dragon por
+## completo. NUNCA muda o trigger de producao normal -- so um atalho pra
+## playtest manual do vertical slice sem esperar turno minimo/RNG. Mesma
+## guarda de maybe_spawn_dragon (nunca dois Dragoes-evento ao mesmo tempo).
+func debug_force_dragon_event(hex_grid: HexGrid) -> void:
+	if _has_active_dragon():
+		return
+	var event := DragonEvent.new()
+	event.origin_region = WorldEventTrigger.choose_dragon_origin_region(hex_grid.map_seed, TurnManager.turn_number, hex_grid)
+	register_event(event)
+
 ## Estado MINIMO/reconstruivel (contrato secao 3) -- `_next_event_id`
 ## precisa ser persistido junto, senao um evento novo criado apos carregar
 ## um save poderia colidir com o event_id de um evento antigo ainda ativo.

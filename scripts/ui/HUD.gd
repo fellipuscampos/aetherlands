@@ -105,6 +105,16 @@ extends Control
 @onready var victory_close_button: Button = $VictoryPanel/VictoryBox/VictoryHeader/VictoryCloseButton
 @onready var grimoire_button: Button = $ActionBar/ActionBarBox/GrimoireButton
 @onready var grimoire_panel: PanelContainer = $GrimoirePanel
+## Roadmap "Fase Macro" 5B.2 -- prompt minimo de Preparation (docs/DRAGON_
+## EVENT_DESIGN.md): so aparece enquanto existir um WorldEvent em
+## Preparation que o humano ainda nao respondeu (ver _refresh_world_event_
+## panel). Nao e' um overlay bloqueante como os outros paineis -- fica
+## visivel/escondido sozinho conforme o estado do evento muda a cada turno.
+@onready var world_event_panel: PanelContainer = $WorldEventPanel
+@onready var world_event_title_label: Label = $WorldEventPanel/WorldEventBox/WorldEventTitleLabel
+@onready var world_event_text_label: Label = $WorldEventPanel/WorldEventBox/WorldEventTextLabel
+@onready var world_event_participate_button: Button = $WorldEventPanel/WorldEventBox/WorldEventButtons/WorldEventParticipateButton
+@onready var world_event_decline_button: Button = $WorldEventPanel/WorldEventBox/WorldEventButtons/WorldEventDeclineButton
 @onready var grimoire_rows: VBoxContainer = $GrimoirePanel/GrimoireBox/GrimoireRows
 @onready var grimoire_close_button: Button = $GrimoirePanel/GrimoireBox/GrimoireHeader/GrimoireCloseButton
 @onready var unit_panel: PanelContainer = $UnitPanel
@@ -137,6 +147,11 @@ extends Control
 @onready var debug_complete_research_button: Button = $DebugPanel/DebugBox/DebugCompleteResearchButton
 @onready var debug_win_button: Button = $DebugPanel/DebugBox/DebugWinButton
 @onready var debug_lose_button: Button = $DebugPanel/DebugBox/DebugLoseButton
+## Roadmap "Fase Macro" 5B.2 -- SO debug/playtest manual (docs/DRAGON_
+## EVENT_DESIGN.md). Nunca muda WorldEventTrigger.should_spawn_dragon (o
+## trigger de producao continua intacto); so da um atalho pra ver o
+## vertical slice sem esperar turno 30+/RNG.
+@onready var debug_force_dragon_button: Button = $DebugPanel/DebugBox/DebugForceDragonButton
 
 var _viewed_city: City = null
 ## Guarda se UnitPanel estava visivel ANTES de abrir um overlay (pedido do
@@ -190,6 +205,8 @@ func _ready() -> void:
 	victory_close_button.pressed.connect(_on_victory_close_pressed)
 	grimoire_button.pressed.connect(_on_grimoire_pressed)
 	grimoire_close_button.pressed.connect(_on_grimoire_close_pressed)
+	world_event_participate_button.pressed.connect(_on_world_event_participate_pressed)
+	world_event_decline_button.pressed.connect(_on_world_event_decline_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
 	debug_button.pressed.connect(_on_debug_pressed)
 	debug_close_button.pressed.connect(_on_debug_close_pressed)
@@ -199,6 +216,7 @@ func _ready() -> void:
 	debug_complete_research_button.pressed.connect(_on_debug_complete_research_pressed)
 	debug_win_button.pressed.connect(_on_debug_win_pressed)
 	debug_lose_button.pressed.connect(_on_debug_lose_pressed)
+	debug_force_dragon_button.pressed.connect(_on_debug_force_dragon_pressed)
 	tech_tree_magic.category = "magic"
 	tech_tree_doutrina.category = "doutrina"
 	tech_tabs.set_tab_title(0, "Magia")
@@ -218,6 +236,12 @@ func _ready() -> void:
 	# _end_game, nao a ordem de conexao.
 	EventBus.victory_achieved.connect(_on_victory_achieved)
 	EventBus.notify.connect(_on_notify)
+	# Roadmap "Fase Macro" 5B.2 -- os DOIS sinais podem mudar se o painel
+	# deveria estar visivel (announced nao muda fase por si, so cria o
+	# evento; phase_changed cobre toda transicao real, inclusive pra fora
+	# de Preparation, escondendo o painel de novo).
+	EventBus.world_event_announced.connect(_on_world_event_changed)
+	EventBus.world_event_phase_changed.connect(_on_world_event_phase_changed)
 	# fog_updated dispara ao fim de start_new_game/recompute_fog — cobre o
 	# caso do primeiro turno, onde turn_changed ainda nao foi emitido.
 	EventBus.fog_updated.connect(_refresh_stats)
@@ -880,6 +904,9 @@ func _on_debug_win_pressed() -> void:
 func _on_debug_lose_pressed() -> void:
 	GameManager.debug_force_game_over(false)
 
+func _on_debug_force_dragon_pressed() -> void:
+	WorldEventManager.debug_force_dragon_event(GameManager.hex_grid)
+
 ## Emite o pedido de reinicio (Main.gd regenera mapa/jogo de forma sincrona
 ## nesse mesmo emit) e so entao atualiza a propria HUD com o estado novo.
 func _on_restart_pressed() -> void:
@@ -915,6 +942,12 @@ func _on_turn_changed(turn_number: int, _player_index: int) -> void:
 		_refresh_diplomacy_panel()
 	if grimoire_panel.visible:
 		_refresh_grimoire_panel()
+	# Roadmap "Fase Macro" 5B.2 -- NAO condicionado a world_event_panel.
+	# visible (diferente dos paineis acima): precisa rodar todo turno pra
+	# o texto de contagem regressiva ("faltam N turnos") ficar correto
+	# mesmo enquanto a fase nao muda (Preparation dura varios turnos sem
+	# emitir phase_changed nenhum nesse meio-tempo).
+	_refresh_world_event_panel()
 	# Regressao: o painel da cidade so se atualizava ao clicar de novo no
 	# tile (_on_produce_pressed/_on_worked_tile_pressed chamavam isso, mas
 	# _on_turn_changed nao) — produzir um predio parecia "nao fazer nada"
@@ -969,6 +1002,53 @@ func _on_notify(text: String, _sfx_kind: String) -> void:
 	tween.tween_callback(label.queue_free)
 
 	_refresh_stats()
+
+## Roadmap "Fase Macro" 5B.2 -- prompt minimo de Preparation (docs/DRAGON_
+## EVENT_DESIGN.md: "Não precisa ser bonita. Precisa funcionar."). So
+## chamado por _refresh_world_event_panel, nunca decide fase nenhuma --
+## WorldEvent/DragonEvent continuam a UNICA autoridade sobre o proprio
+## estado, mesmo principio ja usado por VictoryConditions -> HUD (nunca o
+## contrario).
+func _on_world_event_changed(_event: WorldEvent) -> void:
+	_refresh_world_event_panel()
+
+func _on_world_event_phase_changed(_event: WorldEvent, _old_phase: String, _new_phase: String) -> void:
+	_refresh_world_event_panel()
+
+func _refresh_world_event_panel() -> void:
+	var event := _find_preparation_event_awaiting_human_decision()
+	if event == null:
+		world_event_panel.visible = false
+		return
+	world_event_panel.visible = true
+	world_event_text_label.text = format_world_event_prompt(event, GameManager.players, TurnManager.turn_number)
+
+## Puro/testavel -- so formata texto, nunca calcula fase/alvo/prazo (esses
+## continuam vivendo so em WorldEvent/DragonEvent).
+static func format_world_event_prompt(event: WorldEvent, players: Array[PlayerData], current_turn: int) -> String:
+	if event is DragonEvent:
+		var dragon := event as DragonEvent
+		var target_name := "uma civilização desconhecida"
+		if dragon.target_civ_index >= 0 and dragon.target_civ_index < players.size():
+			target_name = players[dragon.target_civ_index].civ.civ_name
+		var turns_left: int = max(event.turn_deadline - current_turn, 0)
+		return "Um Dragão se aproxima e provavelmente atacará %s primeiro. Faltam %d turno(s) para decidir. Deseja participar da expedição para detê-lo?" % [target_name, turns_left]
+	return "Um evento mundial está em preparação. Deseja participar?"
+
+func _find_preparation_event_awaiting_human_decision() -> WorldEvent:
+	var human_index: int = GameManager.players.find(GameManager.human_player)
+	for event in WorldEventManager.active_events:
+		if event.phase == WorldEvent.PHASE_PREPARATION and not event.participants.has(human_index):
+			return event
+	return null
+
+func _on_world_event_participate_pressed() -> void:
+	GameManager.respond_to_world_event(true)
+	_refresh_world_event_panel()
+
+func _on_world_event_decline_pressed() -> void:
+	GameManager.respond_to_world_event(false)
+	_refresh_world_event_panel()
 
 func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 	_viewed_city = null
