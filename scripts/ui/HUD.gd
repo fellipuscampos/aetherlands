@@ -98,6 +98,11 @@ extends Control
 @onready var diplomacy_panel: PanelContainer = $DiplomacyPanel
 @onready var diplomacy_rows: VBoxContainer = $DiplomacyPanel/DiplomacyBox/DiplomacyRows
 @onready var diplomacy_close_button: Button = $DiplomacyPanel/DiplomacyBox/DiplomacyHeader/DiplomacyCloseButton
+## Roadmap "Fase F" F1/F2/F5 -- mesmo padrao de overlay do Diplomacy acima.
+@onready var victory_button: Button = $ActionBar/ActionBarBox/VictoryButton
+@onready var victory_panel: PanelContainer = $VictoryPanel
+@onready var victory_rows: VBoxContainer = $VictoryPanel/VictoryBox/VictoryRows
+@onready var victory_close_button: Button = $VictoryPanel/VictoryBox/VictoryHeader/VictoryCloseButton
 @onready var grimoire_button: Button = $ActionBar/ActionBarBox/GrimoireButton
 @onready var grimoire_panel: PanelContainer = $GrimoirePanel
 @onready var grimoire_rows: VBoxContainer = $GrimoirePanel/GrimoireBox/GrimoireRows
@@ -175,6 +180,8 @@ func _ready() -> void:
 	tech_close_button.pressed.connect(_on_tech_close_pressed)
 	diplomacy_button.pressed.connect(_on_diplomacy_pressed)
 	diplomacy_close_button.pressed.connect(_on_diplomacy_close_pressed)
+	victory_button.pressed.connect(_on_victory_pressed)
+	victory_close_button.pressed.connect(_on_victory_close_pressed)
 	grimoire_button.pressed.connect(_on_grimoire_pressed)
 	grimoire_close_button.pressed.connect(_on_grimoire_close_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
@@ -407,6 +414,7 @@ func _on_save_pressed() -> void:
 func _close_overlay_panels() -> void:
 	tech_panel.visible = false
 	diplomacy_panel.visible = false
+	victory_panel.visible = false
 	grimoire_panel.visible = false
 	game_over_panel.visible = false
 	debug_panel.visible = false
@@ -446,7 +454,7 @@ func _show_overlay(panel: Control) -> void:
 ## usuario). Devolve true se fechou algo, pra quem chamou saber que ja
 ## "consumiu" o ESC e nao precisa mais abrir a pausa.
 func close_topmost_overlay() -> bool:
-	if tech_panel.visible or diplomacy_panel.visible or grimoire_panel.visible or debug_panel.visible:
+	if tech_panel.visible or diplomacy_panel.visible or victory_panel.visible or grimoire_panel.visible or debug_panel.visible:
 		_close_overlay_panels()
 		return true
 	return false
@@ -546,6 +554,87 @@ func _on_declare_war_pressed(rival: PlayerData) -> void:
 	Diplomacy.declare_war(GameManager.human_player, rival)
 	EventBus.notify.emit("Voce declarou guerra a %s!" % rival.civ.civ_name, "combat")
 	_refresh_diplomacy_panel()
+
+func _on_victory_pressed() -> void:
+	if victory_panel.visible:
+		_close_overlay_panels()
+		return
+	_show_overlay(victory_panel)
+	_refresh_victory_panel()
+
+func _on_victory_close_pressed() -> void:
+	_close_overlay_panels()
+
+## Roadmap "Fase F" F1/F2/F5 -- camada de APRESENTACAO pura sobre
+## VictoryConditions (pedido explicito do usuario): "VictoryConditions ->
+## progress/read-only -> Victory UI", NUNCA o contrario -- esta funcao so
+## LE VictoryConditions.*_progress, nunca calcula uma condicao de vitoria
+## por conta propria, nunca escreve em PlayerData. Sem gating de fog-of-
+## war nesta fatia (decisao explicita de F2: visibilidade total de todos
+## os jogadores). Uma linha-titulo (nome da civ) + 3 linhas de progresso
+## por jogador (Dominacao/Territorial/Arcana, NESSA ordem -- mesma ordem
+## fixa de check_victories()).
+func _refresh_victory_panel() -> void:
+	for child in victory_rows.get_children():
+		child.queue_free()
+
+	var human = GameManager.human_player
+	var hex_grid = GameManager.hex_grid
+	if human == null or hex_grid == null:
+		return
+	var players: Array[PlayerData] = ([human] as Array[PlayerData]) + GameManager.rival_players
+
+	for player in players:
+		var name_label := Label.new()
+		name_label.text = player.civ.civ_name
+		name_label.theme_type_variation = &"PanelTitle"
+		victory_rows.add_child(name_label)
+
+		_add_victory_progress_row("Dominação", VictoryConditions.dominance_progress(player, players))
+		_add_victory_progress_row("Domínio Territorial", VictoryConditions.territorial_progress(player, hex_grid))
+		_add_victory_progress_row("Ascensão Arcana", VictoryConditions.arcane_progress(player, hex_grid))
+
+## `progress` e SEMPRE 0.0-1.0 (contrato comum das 3 funcoes de
+## VictoryConditions), mas o SIGNIFICADO por tras de cada numero e
+## diferente por tipo (Territorial e uma razao simples contra o limiar;
+## Arcana e a media de 4 fracoes; Dominacao e a fracao de rivais
+## eliminados) -- esta funcao so formata o numero JA normalizado, nunca
+## reinterpreta o que ele significa por tipo (pedido explicito do
+## usuario: "a UI deve consumir 0.0-1.0 como contrato, mas nao deve
+## assumir que cada tipo de vitoria tem a mesma semantica" -- a
+## semantica fica inteiramente do lado de VictoryConditions, aqui so
+## chega o numero final).
+func _add_victory_progress_row(label_text: String, progress: float) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+
+	var label := Label.new()
+	label.text = label_text
+	label.size_flags_horizontal = SIZE_EXPAND_FILL
+	row.add_child(label)
+
+	var bar := ProgressBar.new()
+	bar.min_value = 0.0
+	bar.max_value = 100.0
+	bar.value = clamp(progress, 0.0, 1.0) * 100.0
+	bar.custom_minimum_size = Vector2(120, 0)
+	bar.show_percentage = false
+	row.add_child(bar)
+
+	var value_label := Label.new()
+	value_label.text = format_victory_progress_percentage(progress)
+	value_label.custom_minimum_size = Vector2(48, 0)
+	row.add_child(value_label)
+
+	victory_rows.add_child(row)
+
+## Formatacao PURA (nenhuma dependencia de cena/PlayerData/HexGrid) --
+## unit-testavel sem instanciar o HUD inteiro. Clampa e arredonda: nunca
+## mostra >100% nem negativo mesmo se o progresso bruto de entrada
+## passar disso (ver VictoryConditions.territorial_percentage, que NAO e
+## clampada -- so territorial_progress e).
+static func format_victory_progress_percentage(progress: float) -> String:
+	return "%d%%" % int(round(clamp(progress, 0.0, 1.0) * 100.0))
 
 func _on_grimoire_pressed() -> void:
 	if grimoire_panel.visible:
@@ -712,6 +801,7 @@ func _on_restart_pressed() -> void:
 	end_turn_button.disabled = false
 	tech_button.disabled = false
 	diplomacy_button.disabled = false
+	victory_button.disabled = false
 	grimoire_button.disabled = false
 	debug_button.disabled = false
 	unit_panel.visible = false
@@ -1243,6 +1333,7 @@ func _on_game_over(victory: bool) -> void:
 	end_turn_button.disabled = true
 	tech_button.disabled = true
 	diplomacy_button.disabled = true
+	victory_button.disabled = true
 	grimoire_button.disabled = true
 	debug_button.disabled = true
 

@@ -10,11 +10,15 @@ var hud: Control
 var _original_state
 var _original_human_player: PlayerData
 var _original_debug_mode: bool
+var _original_hex_grid: HexGrid # Roadmap "Fase F" F5 -- so os testes de VictoryPanel tocam nisso; salvar/restaurar aqui evita vazar um HexGrid ja liberado (queue_free) pros testes seguintes do mesmo arquivo
+var _original_rival_players: Array[PlayerData]
 
 func before_each():
 	_original_state = GameManager.state
 	_original_human_player = GameManager.human_player
 	_original_debug_mode = GameManager.debug_mode
+	_original_hex_grid = GameManager.hex_grid
+	_original_rival_players = GameManager.rival_players
 	var hud_scene: PackedScene = load("res://scenes/ui/HUD.tscn")
 	hud = hud_scene.instantiate()
 	add_child_autofree(hud)
@@ -23,6 +27,8 @@ func after_each():
 	GameManager.state = _original_state
 	GameManager.human_player = _original_human_player
 	GameManager.debug_mode = _original_debug_mode
+	GameManager.hex_grid = _original_hex_grid
+	GameManager.rival_players = _original_rival_players
 	GameManager.is_turn_processing = false
 
 func test_close_topmost_overlay_returns_false_when_nothing_is_open():
@@ -54,6 +60,94 @@ func test_opening_a_second_overlay_closes_the_first_one():
 
 	assert_false(hud.tech_panel.visible, "abrir diplomacia deveria fechar tecnologia")
 	assert_true(hud.diplomacy_panel.visible)
+
+## Roadmap "Fase F" F1/F2/F5 -- painel de progresso de vitoria, mesmo
+## padrao de overlay "so um por vez" de Tecnologia/Diplomacia acima.
+
+func test_victory_panel_opens_and_closes():
+	assert_false(hud.victory_panel.visible)
+
+	hud._on_victory_pressed()
+	assert_true(hud.victory_panel.visible)
+	assert_true(hud.overlay_backdrop.visible)
+
+	hud._on_victory_pressed()
+	assert_false(hud.victory_panel.visible)
+
+func test_opening_victory_panel_closes_diplomacy():
+	hud._on_diplomacy_pressed()
+	assert_true(hud.diplomacy_panel.visible)
+
+	hud._on_victory_pressed()
+
+	assert_false(hud.diplomacy_panel.visible)
+	assert_true(hud.victory_panel.visible)
+
+## format_victory_progress_percentage e PURA (nenhuma dependencia de
+## cena/PlayerData/HexGrid) -- testada direto, sem precisar de
+## _refresh_victory_panel nem GameManager nenhum. Clampa e arredonda:
+## nunca mostra >100% nem negativo mesmo com entrada fora de [0,1].
+func test_format_victory_progress_percentage_at_zero_intermediate_and_full():
+	assert_eq(hud.format_victory_progress_percentage(0.0), "0%")
+	assert_eq(hud.format_victory_progress_percentage(0.5), "50%")
+	assert_eq(hud.format_victory_progress_percentage(1.0), "100%")
+
+func test_format_victory_progress_percentage_rounds_and_clamps():
+	assert_eq(hud.format_victory_progress_percentage(0.336), "34%", "arredonda pro inteiro mais proximo")
+	assert_eq(hud.format_victory_progress_percentage(1.5), "100%", "nunca mostra mais que 100% mesmo com entrada fora do contrato")
+	assert_eq(hud.format_victory_progress_percentage(-0.2), "0%", "nunca mostra negativo")
+
+## Estrutura: 1 label de nome + 3 linhas (Dominacao/Territorial/Arcana,
+## NESSA ordem -- mesma ordem fixa de check_victories()) por jogador.
+## Reusa VictoryConditions.dominance_progress de verdade (nenhum calculo
+## duplicado aqui) pra confirmar que o valor chega correto na linha —
+## 1 de 2 rivais eliminados da um valor exato (50%) facil de verificar
+## sem precisar montar um cenario territorial/arcano.
+func test_victory_panel_builds_header_and_three_rows_per_player_with_correct_values():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.hex_grid = hex_grid
+	var human = PlayerData.new(CivilizationData.new())
+	human.civ.civ_name = "Reino de Teste"
+	var alive_rival = PlayerData.new(CivilizationData.new())
+	alive_rival.units.append(null)
+	var eliminated_rival = PlayerData.new(CivilizationData.new()) # sem unidade/cidade -- ja eliminado
+	GameManager.human_player = human
+	GameManager.rival_players = [alive_rival, eliminated_rival]
+
+	hud._refresh_victory_panel()
+
+	assert_eq(hud.victory_rows.get_child_count(), 12, "3 jogadores x (1 nome + 3 linhas de progresso)")
+	assert_eq(hud.victory_rows.get_child(0).text, "Reino de Teste", "primeiro bloco e sempre o humano")
+	var human_dominance_row: HBoxContainer = hud.victory_rows.get_child(1)
+	assert_eq(human_dominance_row.get_child(0).text, "Dominação")
+	# humano: 1 de 2 rivais eliminados = 50%
+	assert_eq(human_dominance_row.get_child(2).text, "50%")
+	assert_almost_eq(human_dominance_row.get_child(1).value, 50.0, 0.01)
+	var human_territorial_row: HBoxContainer = hud.victory_rows.get_child(2)
+	assert_eq(human_territorial_row.get_child(0).text, "Domínio Territorial")
+	var human_arcane_row: HBoxContainer = hud.victory_rows.get_child(3)
+	assert_eq(human_arcane_row.get_child(0).text, "Ascensão Arcana")
+
+	hex_grid.queue_free()
+
+## NAO testa "refresh 2x sem passar frame nenhum": _refresh_victory_panel
+## usa queue_free() (MESMO padrao de _refresh_diplomacy_panel, ver
+## comentario la) pra limpar linhas antigas, que so libera de verdade no
+## proximo frame -- chamar 2x seguidas SEM deixar um frame passar
+## inflaria a contagem por construcao, nao por bug (uso real sempre tem
+## uma interacao do jogador entre dois refreshes, atravessando frames).
+func test_victory_panel_row_count_matches_player_count_after_refresh():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.hex_grid = hex_grid
+	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.rival_players = []
+
+	hud._refresh_victory_panel()
+
+	assert_eq(hud.victory_rows.get_child_count(), 4, "1 jogador (so o humano) x (1 nome + 3 linhas de progresso)")
+	hex_grid.queue_free()
 
 ## Regressao principal reportada pelo usuario: painel de fim de jogo
 ## aparecendo POR CIMA de um overlay ainda aberto. _on_game_over() agora
