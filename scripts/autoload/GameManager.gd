@@ -494,7 +494,17 @@ func _finish_turn() -> void:
 	# que um evento aplique neste turno (cidade destruida, territorio
 	# alterado, recurso concedido) ja estar refletida na checagem de
 	# vitoria do MESMO turno. Reusa GameManager.players (ja mantido por
-	# setup_players()) em vez de reconstruir a lista aqui.
+	# setup_players()) em vez de reconstruir a lista aqui. maybe_spawn_dragon
+	# roda ANTES de advance_turn de proposito -- um Dragao recem-criado ja
+	# ganha seu primeiro tick de FSM (Dormant->Announced) neste MESMO
+	# turno, em vez de ficar Dormant um turno inteiro sem motivo: o turno em
+	# que o trigger dispara e' o mesmo turno em que o mundo anuncia o
+	# evento, sem um estado "criado mas ainda invisivel" por perder um
+	# tick. DECISAO TEMPORAL DE IMPLEMENTACAO (nao do contrato) -- fica
+	# registrada aqui porque precisa ser consistente com o que
+	# turn_started/turn_deadline (Blocker #2, 5B.2) vierem a assumir sobre
+	# "em que turno o relogio do evento comeca a contar".
+	WorldEventManager.maybe_spawn_dragon(hex_grid, TurnManager.turn_number)
 	WorldEventManager.advance_turn(hex_grid, players)
 	_update_victory_state()
 	check_victories()

@@ -199,11 +199,89 @@ func test_from_save_dict_ignores_unknown_event_type_without_crashing():
 func test_from_save_dict_reconstructs_a_dragon_event():
 	WorldEventManager.from_save_dict({
 		"next_event_id": 1,
-		"events": [{"event_type": "dragon", "event_id": 0, "phase": WorldEvent.PHASE_ACTIVE, "lair_coord": [5, 6]}],
+		"events": [{"event_type": "dragon", "event_id": 0, "phase": WorldEvent.PHASE_ACTIVE, "origin_region": [5, 6]}],
 	})
 
 	assert_eq(WorldEventManager.active_events.size(), 1)
 	var event: WorldEvent = WorldEventManager.active_events[0]
 	assert_true(event is DragonEvent, "deveria reconstruir a subclasse DragonEvent, nao um WorldEvent generico")
 	assert_eq(event.phase, WorldEvent.PHASE_ACTIVE)
-	assert_eq((event as DragonEvent).lair_coord, Vector2i(5, 6))
+	assert_eq((event as DragonEvent).origin_region, Vector2i(5, 6))
+
+## --- maybe_spawn_dragon (Blocker #1 do contrato comportamental do
+## Dragao, docs/DRAGON_EVENT_DESIGN.md) -----------------------------------
+
+func _make_small_grid() -> HexGrid:
+	var grid := HexGrid.new()
+	grid._ready()
+	for x in range(5):
+		for y in range(5):
+			grid.tiles[Vector2i(x, y)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	grid.map_seed = 12345
+	return grid
+
+func test_maybe_spawn_dragon_does_nothing_before_the_trigger_turn():
+	var grid := _make_small_grid()
+
+	WorldEventManager.maybe_spawn_dragon(grid, 0)
+
+	assert_eq(WorldEventManager.active_events.size(), 0)
+	grid.queue_free()
+
+func test_maybe_spawn_dragon_creates_a_dragon_event_once_the_trigger_fires():
+	var grid := _make_small_grid()
+	var turn := WorldEventTrigger.DRAGON_TRIGGER_MIN_TURN
+	while not WorldEventTrigger.should_spawn_dragon(grid.map_seed, turn):
+		turn += 1
+		assert_lt(turn, WorldEventTrigger.DRAGON_TRIGGER_MIN_TURN + 5000, "nenhum turno disparou o trigger num intervalo razoavel -- provavel bug na condicao ou na semente de teste")
+
+	WorldEventManager.maybe_spawn_dragon(grid, turn)
+
+	assert_eq(WorldEventManager.active_events.size(), 1)
+	var event: WorldEvent = WorldEventManager.active_events[0]
+	assert_true(event is DragonEvent)
+	assert_true(grid.tiles.has((event as DragonEvent).origin_region), "regiao de origem deveria ser um tile real do mapa")
+	assert_eq((event as DragonEvent).spawn_coord, DragonEvent.NO_COORD, "tile exato nao deveria existir antes da transicao pra Active")
+	grid.queue_free()
+
+## Guarda minima de v1 (decisao de implementacao, nao do contrato): nunca
+## dois Dragoes-evento ativos ao mesmo tempo.
+func test_maybe_spawn_dragon_never_creates_a_second_dragon_while_one_is_active():
+	var grid := _make_small_grid()
+	var existing := DragonEvent.new()
+	WorldEventManager.register_event(existing)
+
+	var turn := WorldEventTrigger.DRAGON_TRIGGER_MIN_TURN
+	while not WorldEventTrigger.should_spawn_dragon(grid.map_seed, turn):
+		turn += 1
+		assert_lt(turn, WorldEventTrigger.DRAGON_TRIGGER_MIN_TURN + 5000)
+
+	WorldEventManager.maybe_spawn_dragon(grid, turn)
+
+	assert_eq(WorldEventManager.active_events.size(), 1, "nao deveria criar um segundo Dragao-evento enquanto um ja esta ativo")
+	assert_eq(WorldEventManager.active_events[0], existing)
+	grid.queue_free()
+
+## O guard considera QUALQUER Dragao-evento NAO CONCLUIDO como bloqueio --
+## nao so quando esta em Active (o teste acima ja cobre o default Dormant
+## implicitamente, mas nao deixa isso explicito). Confirma Announced e
+## Preparation tambem bloqueiam, nao so Active/Resolution.
+func test_maybe_spawn_dragon_blocks_on_any_non_completed_dragon_phase():
+	var grid := _make_small_grid()
+	var turn := WorldEventTrigger.DRAGON_TRIGGER_MIN_TURN
+	while not WorldEventTrigger.should_spawn_dragon(grid.map_seed, turn):
+		turn += 1
+		assert_lt(turn, WorldEventTrigger.DRAGON_TRIGGER_MIN_TURN + 5000)
+
+	for phase in [WorldEvent.PHASE_DORMANT, WorldEvent.PHASE_ANNOUNCED, WorldEvent.PHASE_PREPARATION, WorldEvent.PHASE_ACTIVE, WorldEvent.PHASE_RESOLUTION]:
+		WorldEventManager.active_events.clear()
+		WorldEventManager._next_event_id = 0
+		var existing := DragonEvent.new()
+		existing.phase = phase
+		WorldEventManager.register_event(existing)
+
+		WorldEventManager.maybe_spawn_dragon(grid, turn)
+
+		assert_eq(WorldEventManager.active_events.size(), 1, "fase %s deveria bloquear um novo Dragao-evento" % phase)
+		assert_eq(WorldEventManager.active_events[0], existing)
+	grid.queue_free()

@@ -1087,3 +1087,24 @@ func test_event_rng_stays_reproducible_regardless_of_ai_rng_activity_in_real_tur
 	assert_eq(roll_a, roll_b, "o roll do evento pro mesmo turno nao deveria mudar so porque o RNG global de IA seguiu um caminho diferente")
 
 	setup.hex_grid.queue_free()
+
+## Blocker #1 do contrato comportamental do Dragao (docs/DRAGON_EVENT_
+## DESIGN.md) integrado de verdade: _finish_turn() precisa consultar o
+## trigger (WorldEventManager.maybe_spawn_dragon), nao so avancar eventos
+## ja existentes.
+func test_finish_turn_spawns_a_dragon_event_once_the_trigger_condition_is_met():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	setup.hex_grid.map_seed = 54321
+
+	var turn := WorldEventTrigger.DRAGON_TRIGGER_MIN_TURN
+	while not WorldEventTrigger.should_spawn_dragon(setup.hex_grid.map_seed, turn):
+		turn += 1
+		assert_lt(turn, WorldEventTrigger.DRAGON_TRIGGER_MIN_TURN + 5000, "nenhum turno disparou o trigger num intervalo razoavel")
+	TurnManager.turn_number = turn
+
+	GameManager._on_turn_changed(0, 0)
+
+	assert_eq(WorldEventManager.active_events.size(), 1, "_finish_turn() deveria ter consultado o trigger e criado o Dragao-evento")
+	assert_true(WorldEventManager.active_events[0] is DragonEvent)
+
+	setup.hex_grid.queue_free()

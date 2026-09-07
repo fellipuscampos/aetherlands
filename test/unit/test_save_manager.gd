@@ -776,7 +776,7 @@ func test_save_and_load_restores_a_dragon_event_in_its_exact_phase_and_state():
 	_make_unit("warrior", rival, hex_grid.tiles.keys()[2])
 	var event := DragonEvent.new()
 	event.phase = WorldEvent.PHASE_ACTIVE
-	event.lair_coord = Vector2i(3, 4)
+	event.origin_region = Vector2i(3, 4)
 	WorldEventManager.register_event(event)
 
 	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
@@ -790,7 +790,7 @@ func test_save_and_load_restores_a_dragon_event_in_its_exact_phase_and_state():
 	var loaded_event: WorldEvent = WorldEventManager.active_events[0]
 	assert_true(loaded_event is DragonEvent)
 	assert_eq(loaded_event.phase, WorldEvent.PHASE_ACTIVE, "load nao deveria ter avancado o evento nenhuma fase")
-	assert_eq((loaded_event as DragonEvent).lair_coord, Vector2i(3, 4), "estado especifico deveria sobreviver identico")
+	assert_eq((loaded_event as DragonEvent).origin_region, Vector2i(3, 4), "estado especifico deveria sobreviver identico")
 
 	# So DEPOIS do load, um turno de verdade deveria avancar o evento --
 	# prova que a evolucao so acontece via _finish_turn(), nunca via load.

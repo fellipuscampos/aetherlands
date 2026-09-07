@@ -6,13 +6,11 @@ extends Node
 ## (ver GameManager._finish_turn(), ordem exata no contrato secao 1) e
 ## ouve o EventBus.
 ##
-## Escopo deliberadamente MINIMO (Fase Macro, Step 2): so prova que o
-## sistema consegue possuir, avancar, concluir, emitir e remover eventos
-## de forma deterministica e isolada. Nenhuma logica especifica de Dragao,
-## spawn de monstro, selecao de alvo, regra de participacao, UI, chamada a
-## GameManager, ou registro generico de tipos multiplos entra aqui ainda
-## -- isso e' o proximo passo (DragonEvent), sempre EM CIMA desta
-## fundacao, nunca misturado a ela.
+## Escopo genérico (Fase Macro, Steps 2-4): possuir, avançar, concluir,
+## emitir e remover eventos de forma determinística e isolada. A partir do
+## Step 5B.1, `maybe_spawn_dragon` cobre EXCLUSIVAMENTE o Blocker #1 do
+## contrato comportamental do Dragão (docs/DRAGON_EVENT_DESIGN.md) --
+## seleção de alvo, participação, UI, e combate continuam fora daqui.
 
 var active_events: Array[WorldEvent] = []
 var _next_event_id: int = 0
@@ -54,6 +52,30 @@ func advance_turn(hex_grid: HexGrid, players: Array[PlayerData]) -> void:
 		if event.is_completed():
 			EventBus.world_event_completed.emit(event, event.result)
 			remove_event(event)
+
+## Verifica se o mundo deve criar um Dragao-evento neste turno (ver
+## WorldEventTrigger, Blocker #1 do contrato comportamental) e, se sim,
+## cria+registra o DragonEvent com sua regiao de origem ja definida --
+## nunca o tile exato (isso so acontece na transicao pra Active, Blocker
+## #3, ainda nao implementado). Nao cria um segundo Dragao-evento enquanto
+## um ja estiver ativo -- guarda minima de v1 (decisao de implementacao,
+## nao do contrato): evita duas expedicoes de Dragao simultaneas
+## competindo pela mesma narrativa; reavaliar se/quando quisermos multiplos
+## eventos simultaneos de verdade.
+func maybe_spawn_dragon(hex_grid: HexGrid, turn: int) -> void:
+	if _has_active_dragon():
+		return
+	if not WorldEventTrigger.should_spawn_dragon(hex_grid.map_seed, turn):
+		return
+	var event := DragonEvent.new()
+	event.origin_region = WorldEventTrigger.choose_dragon_origin_region(hex_grid.map_seed, turn, hex_grid)
+	register_event(event)
+
+func _has_active_dragon() -> bool:
+	for event in active_events:
+		if event is DragonEvent:
+			return true
+	return false
 
 ## Estado MINIMO/reconstruivel (contrato secao 3) -- `_next_event_id`
 ## precisa ser persistido junto, senao um evento novo criado apos carregar
