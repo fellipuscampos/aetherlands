@@ -347,6 +347,24 @@ func test_city_is_captured_once_its_hp_reaches_zero():
 	assert_false(rival.cities.has(city))
 	city.queue_free()
 
+## Roadmap "Fase Macro" 5B.3-B -- atacante NEUTRO (Dragao/monstro, owner_
+## player == null): raid, nunca captura. Sem este guard, hex_grid.
+## capture_city(city, null) quebraria (new_owner.cities.append sobre
+## null) -- protege exatamente o caminho que o Dragao passou a exercitar
+## pela primeira vez (nenhum monstro atacava cidade diretamente antes).
+func test_neutral_attacker_never_captures_a_city_even_at_zero_hp():
+	var attacker = hex_grid.spawn_monster_at(Vector2i(0, 0), "dragon")
+	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
+	city.hp = 2.0 # qualquer ataque mataria uma cidade normal
+
+	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
+
+	assert_eq(city.owner_player, rival, "ataque neutro nunca deveria capturar a cidade")
+	assert_true(rival.cities.has(city))
+	assert_almost_eq(city.hp, 1.0, 0.01, "cidade fica extremamente fragil, mas nunca chega a 0/muda de dono")
+	attacker.queue_free()
+	city.queue_free()
+
 func test_attacker_loses_all_movement_after_attacking_a_city():
 	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
 	attacker.movement_left = 2.0

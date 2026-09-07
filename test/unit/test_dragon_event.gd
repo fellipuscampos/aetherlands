@@ -141,13 +141,14 @@ func test_preparation_only_advances_to_active_the_turn_after_the_deadline():
 	event.advance_turn(grid, players)
 	assert_eq(event.phase, WorldEvent.PHASE_ACTIVE)
 
-## Active (5B.3-A: so presenca fisica, sem movimento/combate ainda) e
-## Resolution (5B.4 ainda nao existe: placeholder minimo) continuam
-## avancando uma fase por chamada -- 5B.3-B/5B.4 substituem o CONTEUDO
-## dessas fases, nunca a arquitetura ao redor. Sem hex_grid/dragon_unit
-## real aqui de proposito -- so confirma a transicao de fase em si; o
-## nascimento/remocao de verdade da Unit tem sua propria secao de testes
-## abaixo.
+## Active/Resolution continuam avancando uma fase por chamada (5B.3-B
+## substituiu o CONTEUDO dessas fases -- movimento/combate/raid reais --
+## nunca a arquitetura ao redor). Sem hex_grid/dragon_unit real aqui de
+## proposito -- dragon_unit == null e' tratado por _take_dragon_turn como
+## "ja morreu/nunca chegou a existir" (mesmo caminho de "defeated" usado
+## quando uma unidade mata o Dragao fora do proprio tick, ver secao 5B.3-B
+## abaixo) -- so confirma a transicao de fase em si; o nascimento/remocao
+## de verdade da Unit tem sua propria secao de testes abaixo.
 func test_active_and_resolution_still_advance_one_phase_per_call():
 	TurnManager.turn_number = 10
 	var event := DragonEvent.new()
@@ -155,10 +156,10 @@ func test_active_and_resolution_still_advance_one_phase_per_call():
 
 	event.advance_turn(null, [])
 	assert_eq(event.phase, WorldEvent.PHASE_RESOLUTION)
+	assert_eq(event.result, {"outcome": "defeated"}, "dragon_unit nulo e' tratado como 'ja nao esta mais aqui', mesmo caminho de uma morte em combate fora do tick")
 
 	event.advance_turn(null, [])
 	assert_eq(event.phase, WorldEvent.PHASE_COMPLETED)
-	assert_eq(event.result, {"outcome": "vanished"}, "placeholder minimo de 5B.3-A -- desfecho de verdade e' 5B.4")
 
 func test_advance_turn_does_nothing_once_completed():
 	var event := DragonEvent.new()
@@ -435,3 +436,221 @@ func test_dragon_event_rng_is_deterministic_and_independent_of_its_own_state():
 	event_b.origin_region = Vector2i(50, 50) # estado especifico diferente, mesmo event_id
 
 	assert_eq(event_a.event_rng(777, 10).randi(), event_b.event_rng(777, 10).randi(), "o RNG do evento depende so de map_seed+event_id+turno, nunca do proprio estado especifico (origin_region)")
+
+## --- 5B.3-B: movimento, combate e raid ---------------------------------
+## IA deliberadamente MINIMA (decisao explicita do usuario): luta se tiver
+## inimigo em alcance, senao avanca/raida a cidade-alvo. attack_range do
+## Dragao e' 1 (corpo-a-corpo -- MonsterDatabase.KIND_DATA["dragon"] nunca
+## sobrescreve UnitData.attack_range, que default e' 1), entao "em alcance"
+## aqui sempre significa "adjacente". Vector2i(1, 0) e' uma direcao de
+## vizinho valida (HexGrid.NEIGHBOR_DIRS) -- mesma convencao ja usada em
+## test_combat_resolver.gd.
+
+## Funda a cidade-alvo ANTES de nascer o Dragao (precisa existir a tempo da
+## trava de alvo em Announced->Preparation) numa coordenada distante o
+## bastante pra garantir que precisa de mais de um turno de movimento.
+func test_active_moves_the_dragon_closer_to_the_target_city_each_turn():
+	var grid := _make_hex_grid(8)
+	var target_player := PlayerData.new(CivilizationData.new())
+	var city := grid.found_city(Vector2i(6, 0), target_player, "Alvo")
+	var event := DragonEvent.new()
+	event.origin_region = Vector2i(0, 0)
+	_advance_to_active(event, grid, [target_player])
+	var distance_before: float = HexMetrics.axial_distance(event.dragon_unit.coord, city.coord)
+
+	event.advance_turn(grid, [target_player])
+
+	var distance_after: float = HexMetrics.axial_distance(event.dragon_unit.coord, city.coord)
+	assert_lt(distance_after, distance_before, "o Dragao deveria ter avancado em direcao a cidade-alvo")
+	assert_eq(event.phase, WorldEvent.PHASE_ACTIVE, "ainda longe demais pra raidar ou terminar")
+
+## Inimigo em alcance tem prioridade sobre perseguir a cidade -- o Dragao
+## luta em vez de se mover, mesmo tendo uma cidade-alvo definida.
+func test_active_fights_an_enemy_unit_in_range_instead_of_moving_toward_the_city():
+	var grid := _make_hex_grid(6)
+	var target_player := PlayerData.new(CivilizationData.new())
+	grid.found_city(Vector2i(5, 0), target_player, "Alvo")
+	var event := DragonEvent.new()
+	event.origin_region = Vector2i(0, 0)
+	_advance_to_active(event, grid, [target_player])
+	var dragon_coord := event.dragon_unit.coord
+	var enemy := grid.spawn_unit(dragon_coord + Vector2i(1, 0), UnitDatabase.create_unit("warrior"), target_player)
+	var enemy_hp_before := enemy.hp
+
+	event.advance_turn(grid, [target_player])
+
+	assert_eq(event.dragon_unit.coord, dragon_coord, "deveria ter lutado, nao se movido")
+	assert_lt(enemy.hp, enemy_hp_before, "o inimigo adjacente deveria ter sido atacado")
+
+## Cidade-alvo adjacente desde o nascimento -- o primeiro tick em Active ja
+## deveria raidar em vez de tentar se mover (contrato: raid, nunca
+## conquista -- ver CombatResolver.resolve_city_attack).
+func test_active_raids_the_city_when_the_dragon_is_already_in_range():
+	var grid := _make_hex_grid(6)
+	var target_player := PlayerData.new(CivilizationData.new())
+	var origin := Vector2i(0, 0)
+	var city := grid.found_city(origin + Vector2i(1, 0), target_player, "Alvo")
+	var event := DragonEvent.new()
+	event.origin_region = origin
+	_advance_to_active(event, grid, [target_player])
+	var hp_before := city.hp
+
+	event.advance_turn(grid, [target_player])
+
+	assert_lt(city.hp, hp_before, "a cidade deveria ter sofrido dano do raid")
+	assert_eq(city.owner_player, target_player, "raid nunca captura (contrato: Dragao nao e' uma unidade de conquista)")
+	assert_eq(event.raids_done, 1)
+	assert_eq(event.current_target_city_coord, DragonEvent.NO_COORD, "depois de raidar, precisa voltar a procurar um alvo (mesmo que seja a mesma cidade de novo)")
+	assert_eq(event.phase, WorldEvent.PHASE_ACTIVE, "1 raid < DEVASTATION_RAID_LIMIT, ainda deveria continuar ativo")
+	assert_not_null(event.dragon_unit, "o Dragao continua vivo depois de raidar")
+
+## Depois de DEVASTATION_RAID_LIMIT raids bem-sucedidos, o evento se
+## resolve sozinho (outcome "devastated") -- unica civ-alvo, unica cidade,
+## entao cada tick em Active volta a escolher e raidar a mesma cidade.
+func test_reaching_the_devastation_raid_limit_resolves_the_event():
+	var grid := _make_hex_grid(6)
+	var target_player := PlayerData.new(CivilizationData.new())
+	var origin := Vector2i(0, 0)
+	grid.found_city(origin + Vector2i(1, 0), target_player, "Alvo")
+	var event := DragonEvent.new()
+	event.origin_region = origin
+	_advance_to_active(event, grid, [target_player])
+
+	for i in range(DragonEvent.DEVASTATION_RAID_LIMIT):
+		event.advance_turn(grid, [target_player])
+
+	assert_eq(event.raids_done, DragonEvent.DEVASTATION_RAID_LIMIT)
+	assert_eq(event.phase, WorldEvent.PHASE_RESOLUTION)
+	assert_eq(event.result, {"outcome": "devastated"})
+
+## Resolution ainda fecha o ciclo removendo a Unit do mapa, mesmo quando o
+## desfecho foi "devastated" em vez do skeleton generico de 5B.3-A.
+func test_resolution_removes_the_dragon_after_devastation():
+	var grid := _make_hex_grid(6)
+	var target_player := PlayerData.new(CivilizationData.new())
+	var origin := Vector2i(0, 0)
+	grid.found_city(origin + Vector2i(1, 0), target_player, "Alvo")
+	var event := DragonEvent.new()
+	event.origin_region = origin
+	_advance_to_active(event, grid, [target_player])
+	for i in range(DragonEvent.DEVASTATION_RAID_LIMIT):
+		event.advance_turn(grid, [target_player])
+	var spawn_coord := event.spawn_coord
+
+	event.advance_turn(grid, [target_player]) # Resolution -> Completed
+
+	assert_null(grid.get_unit_at(spawn_coord))
+	assert_null(event.dragon_unit)
+	assert_eq(event.phase, WorldEvent.PHASE_COMPLETED)
+
+## Se uma unidade matar o Dragao durante o turno de outro jogador (fora do
+## controle do proprio DragonEvent), CombatResolver.resolve ja removeu a
+## Unit do mapa sozinho -- o proximo tick em Active precisa detectar isso
+## (hp <= 0.0 ou a Unit ja sumida) e se resolver como "defeated" sem
+## crashar tentando usar dragon_unit.coord de uma Unit ja removida.
+func test_active_resolves_as_defeated_when_the_dragon_was_already_killed():
+	var grid := _make_hex_grid(6)
+	var target_player := PlayerData.new(CivilizationData.new())
+	var event := DragonEvent.new()
+	event.origin_region = Vector2i(0, 0)
+	_advance_to_active(event, grid, [target_player])
+	event.dragon_unit.hp = 0.0
+	grid.remove_unit(event.dragon_unit) # simula o que CombatResolver.resolve ja teria feito
+
+	event.advance_turn(grid, [target_player])
+
+	assert_eq(event.phase, WorldEvent.PHASE_RESOLUTION)
+	assert_eq(event.result, {"outcome": "defeated"})
+
+	event.advance_turn(grid, [target_player]) # Resolution -> Completed, nao deveria tentar remover de novo
+
+	assert_eq(event.phase, WorldEvent.PHASE_COMPLETED)
+	assert_null(event.dragon_unit)
+
+## Caso raro nao previsto no contrato original: a civ-alvo perde todas as
+## cidades (destruidas/civ eliminada) enquanto o Dragao ainda esta Active.
+## Tratado como fim do evento em vez de travar procurando um alvo que nunca
+## vai aparecer.
+func test_active_resolves_as_no_target_when_the_target_civ_has_no_cities():
+	var grid := _make_hex_grid(6)
+	var target_player := PlayerData.new(CivilizationData.new()) # sem cidade nenhuma
+	var event := DragonEvent.new()
+	event.origin_region = Vector2i(0, 0)
+	_advance_to_active(event, grid, [target_player])
+
+	event.advance_turn(grid, [target_player])
+
+	assert_eq(event.phase, WorldEvent.PHASE_RESOLUTION)
+	assert_eq(event.result, {"outcome": "no_target"})
+
+## --- _choose_target_city em isolamento ----------------------------------
+
+func test_choose_target_city_keeps_pursuing_the_same_city_over_a_closer_one():
+	var grid := _make_hex_grid(6)
+	var player := PlayerData.new(CivilizationData.new())
+	var far_city := grid.found_city(Vector2i(5, 0), player, "Longe")
+	grid.found_city(Vector2i(1, 0), player, "Perto")
+	var event := DragonEvent.new()
+	event.target_civ_index = 0
+	event.dragon_unit = grid.spawn_monster_at(Vector2i(0, 0), "dragon")
+	event.current_target_city_coord = far_city.coord
+
+	var chosen := event._choose_target_city([player])
+
+	assert_eq(chosen, far_city, "deveria continuar perseguindo a cidade ja escolhida, mesmo existindo uma mais proxima")
+
+func test_choose_target_city_falls_back_to_nearest_when_not_pursuing_anything():
+	var grid := _make_hex_grid(6)
+	var player := PlayerData.new(CivilizationData.new())
+	grid.found_city(Vector2i(5, 0), player, "Longe")
+	var near_city := grid.found_city(Vector2i(1, 0), player, "Perto")
+	var event := DragonEvent.new()
+	event.target_civ_index = 0
+	event.dragon_unit = grid.spawn_monster_at(Vector2i(0, 0), "dragon")
+
+	var chosen := event._choose_target_city([player])
+
+	assert_eq(chosen, near_city)
+
+## --- Contaminacao de ownership atraves de movimento/combate/raid --------
+## Extensao do requisito ja coberto em 5B.3-A (spawn): o Dragao tambem
+## nunca deveria aparecer em player.units ao se mover, lutar ou raidar --
+## nao so ao nascer.
+func test_dragon_never_appears_in_any_players_units_through_movement_combat_and_raid():
+	var grid := _make_hex_grid(8)
+	var target_player := PlayerData.new(CivilizationData.new())
+	var other_player := PlayerData.new(CivilizationData.new())
+	var origin := Vector2i(0, 0)
+	var city := grid.found_city(origin + Vector2i(1, 0), target_player, "Alvo")
+	var event := DragonEvent.new()
+	event.origin_region = origin
+	_advance_to_active(event, grid, [target_player, other_player])
+
+	for i in range(DragonEvent.DEVASTATION_RAID_LIMIT + 1):
+		if event.is_completed():
+			break
+		event.advance_turn(grid, [target_player, other_player])
+		assert_false(target_player.units.has(event.dragon_unit), "Dragao nunca deveria aparecer em player.units")
+		assert_false(other_player.units.has(event.dragon_unit))
+
+	assert_eq(event.result, {"outcome": "devastated"})
+
+## --- Persistencia de progresso de raid (contrato, secao 3) --------------
+
+func test_to_save_dict_and_from_save_dict_round_trip_raid_progress():
+	var event := DragonEvent.new()
+	event.raids_done = 2
+	event.current_target_city_coord = Vector2i(4, 4)
+
+	var saved := event.to_save_dict()
+	var loaded := DragonEvent.new()
+	loaded.from_save_dict(saved)
+
+	assert_eq(loaded.raids_done, 2)
+	assert_eq(loaded.current_target_city_coord, Vector2i(4, 4))
+
+func test_from_save_dict_defaults_raid_progress_when_missing():
+	var event := DragonEvent.new()
+	event.from_save_dict({}) # simula um dict incompleto/de outro tipo de evento
+	assert_eq(event.raids_done, 0)
+	assert_eq(event.current_target_city_coord, DragonEvent.NO_COORD)

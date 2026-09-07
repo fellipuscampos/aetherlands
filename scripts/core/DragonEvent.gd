@@ -1,17 +1,21 @@
 class_name DragonEvent
 extends WorldEvent
 
-## Fase 5B.3-A do roadmap (Fase Macro, "O Mundo Esta Vivo"): o Dragao ganha
-## presenca FISICA real no mundo -- Announced/Preparation (5B.2) ja tinham
-## comportamento real; agora a transicao pra Active cria uma `Unit` de
-## verdade no mapa. Escopo desta fatia e' SO nascimento/presenca (spawn
-## deterministico, ownership neutro, visual, selecao/inspecao via sistemas
-## ja existentes, save/load, remocao ao terminar) -- movimento, combate e
-## escolha de proximo alvo (5B.3-B) ainda NAO existem aqui. Reusa
-## HexGrid.spawn_monster_at/MonsterDatabase (mesma base de stats/visual do
-## Dragao-monstro comum) SEM tocar em lair_coords/global_cap/qualquer
-## bookkeeping de ecologia -- essa funcao ja e' pura o bastante pra isso
-## (confirmado lendo HexGrid.gd: so cria a Unit, nunca mexe em lair).
+## Fase 5B.3-B do roadmap (Fase Macro, "O Mundo Esta Vivo"): o Dragao agora
+## se MOVE, LUTA e RAIDA cidades durante Active -- 5B.3-A ja cobria
+## nascimento/presenca fisica (spawn, ownership neutro, save/load,
+## remocao). IA deliberadamente MINIMA (decisao explicita do usuario:
+## "não tentar resolver ainda uma IA inteligente"): sem avaliar risco,
+## sem fugir de combate desfavoravel, sem contribuicao de participantes
+## ainda (isso e' um passo futuro). Reusa o MAXIMO possivel do que ja
+## existe -- RivalAI.move_unit_toward (movimento, ja usado por MonsterAI
+## pra monstros neutros), MonsterAI._hostile_in_attack_range (deteccao de
+## alvo inimigo), CombatResolver.resolve/resolve_city_attack (combate de
+## verdade, com contra-ataque/morte/regras de terreno de graca) -- nunca
+## um "dragon_damage_city()" paralelo. A UNICA mudanca no combate
+## compartilhado foi um guard em CombatResolver.resolve_city_attack pra
+## nunca capturar uma cidade quando o atacante e' neutro (ver esse
+## arquivo) -- decisao explicita: raid, nunca conquista.
 
 const EVENT_TYPE := "dragon"
 
@@ -72,13 +76,33 @@ var target_civ_index: int = -1
 ## construcao, nao por um cuidado especial aqui.
 var dragon_unit: Unit = null
 
+## PROVISORIO/NAO CALIBRADO -- quantos raids bem-sucedidos ate o Dragao
+## "terminar sozinho" (Resolution: "devastated"), pra existir uma condicao
+## de termino alem de "foi derrotado". Numero exato e' tuning, nao design
+## -- decisao explicita do usuario: nao calibrar antes do primeiro
+## playtest.
+const DEVASTATION_RAID_LIMIT := 3
+
+## Quantos raids bem-sucedidos ja aconteceram nesta incursao -- persistido
+## (ver to_save_dict) pra sobreviver a um save/load em pleno Active.
+var raids_done: int = 0
+
+## Cidade que o Dragao esta perseguindo AGORA (dentro da civ travada em
+## target_civ_index) -- NO_COORD quando ainda nao escolheu ou acabou de
+## raidar uma e precisa escolher de novo (docs/DRAGON_EVENT_DESIGN.md:
+## "depois de uma incursao, ele precisa continuar procurando outro
+## destino" -- limpar isto e' o mecanismo exato disso). Guarda so a
+## COORDENADA (nunca a City, mesmo principio de "coordenada, nao
+## referencia" ja usado em todo o resto do save).
+var current_target_city_coord: Vector2i = NO_COORD
+
 func _init() -> void:
 	event_type = EVENT_TYPE
 
-## Announced/Preparation (5B.2) e a criacao fisica na entrada de Active
-## (5B.3-A) tem comportamento real. Active em si (mover, atacar, escolher
-## proximo alvo) e Resolution (desfecho de verdade) continuam o skeleton
-## da 5A -- 5B.3-B/5B.4 substituem isso, nunca a arquitetura ao redor.
+## Announced/Preparation (5B.2), nascimento fisico (5B.3-A) e agora
+## movimento/combate/raid (5B.3-B) tem comportamento real. Resolution
+## ainda so fecha o ciclo (remove a Unit) -- desfecho detalhado
+## (recompensas, consequencias persistentes) e' 5B.4.
 func advance_turn(hex_grid: HexGrid, players: Array[PlayerData]) -> void:
 	match phase:
 		WorldEvent.PHASE_DORMANT:
@@ -101,20 +125,88 @@ func advance_turn(hex_grid: HexGrid, players: Array[PlayerData]) -> void:
 				phase = WorldEvent.PHASE_ACTIVE
 				EventBus.notify.emit("O Dragão despertou! As montanhas estremecem quando a criatura surge dos céus.", "")
 		WorldEvent.PHASE_ACTIVE:
-			# 5B.3-A: so nascimento/presenca fisica -- movimento, combate e
-			# escolha de proximo alvo (5B.3-B) ainda nao existem. Skeleton:
-			# um tick de presenca e' suficiente pra provar o ciclo
-			# nascer->existir->terminar antes de 5B.3-B substituir isto por
-			# comportamento de verdade.
-			phase = WorldEvent.PHASE_RESOLUTION
+			_take_dragon_turn(hex_grid, players)
 		WorldEvent.PHASE_RESOLUTION:
-			# Desfecho de verdade (derrotado/fugiu/devastou) e' 5B.4 --
-			# placeholder MINIMO aqui so pra fechar o ciclo e remover a
-			# Unit do mapa (contrato: "remover a Unit quando o evento
-			# termina").
-			result = {"outcome": "vanished"}
+			# Desfecho DETALHADO (recompensas, consequencias persistentes)
+			# e' 5B.4 -- result.outcome ja foi decidido em _take_dragon_turn
+			# ("defeated"/"devastated"/"no_target"). Aqui so fecha o ciclo:
+			# remove a Unit do mapa se ainda estiver viva (se morreu em
+			# combate, CombatResolver.resolve ja chamou hex_grid.remove_unit
+			# sozinho -- _remove_dragon_unit e' seguro contra dupla remocao).
 			_remove_dragon_unit(hex_grid)
 			phase = WorldEvent.PHASE_COMPLETED
+
+## Um "turno" do Dragao: luta se tiver inimigo em alcance; senao escolhe
+## uma cidade-alvo (dentro da civ travada) e ou raida (se em alcance) ou
+## avanca em direcao a ela. IA deliberadamente MINIMA -- sem avaliar
+## favorabilidade de combate (RivalAI.is_favorable_attack de proposito NAO
+## usado aqui: o Dragao e' uma ameaca que nao foge), sem escolher entre
+## multiplas cidades por qualquer criterio alem de distancia.
+func _take_dragon_turn(hex_grid: HexGrid, players: Array[PlayerData]) -> void:
+	if dragon_unit == null or dragon_unit.hp <= 0.0:
+		# Morreu em combate ANTES deste tick (uma unidade interceptou o
+		# Dragao durante o turno de outro jogador) -- CombatResolver.
+		# resolve ja removeu a Unit do mapa sozinho quando isso aconteceu.
+		result = {"outcome": "defeated"}
+		phase = WorldEvent.PHASE_RESOLUTION
+		return
+
+	var enemy: Unit = MonsterAI._hostile_in_attack_range(dragon_unit, hex_grid)
+	if enemy != null:
+		CombatResolver.resolve(dragon_unit, enemy, hex_grid)
+		if dragon_unit.hp <= 0.0:
+			result = {"outcome": "defeated"}
+			phase = WorldEvent.PHASE_RESOLUTION
+		return
+
+	var target_city := _choose_target_city(players)
+	if target_city == null:
+		# Civ-alvo sem cidade nenhuma (todas destruidas/civ eliminada) --
+		# nao ha mais o que fazer. Caso raro, nao previsto no contrato
+		# original; tratado aqui como fim do evento em vez de travar.
+		result = {"outcome": "no_target"}
+		phase = WorldEvent.PHASE_RESOLUTION
+		return
+	current_target_city_coord = target_city.coord
+
+	if _city_in_attack_range(hex_grid, target_city):
+		CombatResolver.resolve_city_attack(dragon_unit, target_city, hex_grid)
+		raids_done += 1
+		# "Depois de uma incursao, ele precisa continuar procurando outro
+		# destino" -- limpa a perseguicao atual; o PROXIMO tick escolhe de
+		# novo (pode ser a mesma cidade, se for a unica que resta).
+		current_target_city_coord = NO_COORD
+		if raids_done >= DEVASTATION_RAID_LIMIT:
+			result = {"outcome": "devastated"}
+			phase = WorldEvent.PHASE_RESOLUTION
+		return
+
+	RivalAI.move_unit_toward(dragon_unit, hex_grid, target_city.coord)
+
+## Prioridade 1: a MESMA cidade ja sendo perseguida (persiste enquanto ela
+## continuar existindo e pertencendo a civ-alvo). Prioridade 2: a cidade
+## mais proxima do Dragao AGORA, dentro da MESMA civ-alvo (target_civ_index
+## nunca muda, Blocker #3) -- formula provisoria, igual ao resto desta
+## fase. null se a civ-alvo nao tiver cidade nenhuma.
+func _choose_target_city(players: Array[PlayerData]) -> City:
+	if target_civ_index < 0 or target_civ_index >= players.size():
+		return null
+	var target_player: PlayerData = players[target_civ_index]
+	if current_target_city_coord != NO_COORD:
+		for city in target_player.cities:
+			if city.coord == current_target_city_coord:
+				return city
+	var best: City = null
+	var best_distance := INF
+	for city in target_player.cities:
+		var distance: float = HexMetrics.axial_distance(dragon_unit.coord, city.coord)
+		if distance < best_distance:
+			best_distance = distance
+			best = city
+	return best
+
+func _city_in_attack_range(hex_grid: HexGrid, city: City) -> bool:
+	return city.coord in hex_grid.tiles_in_range(dragon_unit.coord, dragon_unit.unit_data.attack_range)
 
 ## Civilizacao com a cidade mais proxima de origin_region -- formula
 ## PROVISORIA (Blocker #3 continua aberto pra formula definitiva). -1 se
@@ -171,8 +263,13 @@ func _is_valid_spawn_tile(hex_grid: HexGrid, coord: Vector2i) -> bool:
 		return false
 	return true
 
+## Segura contra dupla remocao: se o Dragao morreu em combate (outcome
+## "defeated"), CombatResolver.resolve JA chamou hex_grid.remove_unit --
+## checar hex_grid.get_unit_at(...) == dragon_unit antes de remover de novo
+## evita operar numa Unit ja removida do mapa (ainda valida como objeto,
+## queue_free() e' adiado, mas nao deveria ser tratada como presente).
 func _remove_dragon_unit(hex_grid: HexGrid) -> void:
-	if dragon_unit != null and is_instance_valid(dragon_unit):
+	if dragon_unit != null and is_instance_valid(dragon_unit) and hex_grid.get_unit_at(dragon_unit.coord) == dragon_unit:
 		hex_grid.remove_unit(dragon_unit)
 	dragon_unit = null
 
@@ -193,6 +290,8 @@ func to_save_dict() -> Dictionary:
 	data["origin_region"] = [origin_region.x, origin_region.y]
 	data["spawn_coord"] = [spawn_coord.x, spawn_coord.y]
 	data["target_civ_index"] = target_civ_index
+	data["raids_done"] = raids_done
+	data["current_target_city_coord"] = [current_target_city_coord.x, current_target_city_coord.y]
 	return data
 
 func from_save_dict(data: Dictionary) -> void:
@@ -202,3 +301,6 @@ func from_save_dict(data: Dictionary) -> void:
 	var spawn: Array = data.get("spawn_coord", [NO_COORD.x, NO_COORD.y])
 	spawn_coord = Vector2i(int(spawn[0]), int(spawn[1]))
 	target_civ_index = int(data.get("target_civ_index", -1))
+	raids_done = int(data.get("raids_done", 0))
+	var target_city: Array = data.get("current_target_city_coord", [NO_COORD.x, NO_COORD.y])
+	current_target_city_coord = Vector2i(int(target_city[0]), int(target_city[1]))

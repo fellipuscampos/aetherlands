@@ -194,7 +194,21 @@ static func resolve_city_attack(attacker: Unit, city: City, hex_grid: HexGrid) -
 	hex_grid.spawn_damage_popup(city.coord, damage)
 
 	if city.hp <= 0.0:
-		hex_grid.capture_city(city, attacker.owner_player) # emite seu proprio EventBus.notify
+		# Roadmap "Fase Macro" 5B.3-B -- atacante NEUTRO (Dragao/monstro,
+		# attacker.owner_player == null): raid, NUNCA captura -- decisao
+		# explicita do usuario (docs/DRAGON_EVENT_DESIGN.md: "nao quero que
+		# o Dragao destrua a cidade como uma unidade de conquista"). Sem
+		# este guard, hex_grid.capture_city(city, null) quebraria mesmo
+		# (new_owner.cities.append(city) sobre null) -- nunca acontecia
+		# antes porque nenhum monstro jamais atacava uma cidade diretamente
+		# (MonsterAI so pilha tiles ao redor, ver comentario de topo do
+		# arquivo). Cidade fica extremamente fragil (1 HP) mas nunca muda
+		# de dono por um ataque neutro.
+		if attacker.owner_player == null:
+			city.hp = 1.0
+			city._update_life_bars()
+		else:
+			hex_grid.capture_city(city, attacker.owner_player) # emite seu proprio EventBus.notify
 		return
 
 	if defender_is_human:
