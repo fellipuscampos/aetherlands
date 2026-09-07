@@ -991,6 +991,16 @@ func _on_notify(text: String, _sfx_kind: String) -> void:
 	var label := Label.new()
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# Roadmap "Fase Macro" 5B.2 -- achado de playtest visual: sem autowrap,
+	# um texto mais longo que a NotificationStack (largura fixa, ver
+	# HUD.tscn) forcava o container inteiro a crescer alem da propria
+	# ancora, cortando o texto pra fora dos dois lados da tela (so
+	# acontecia com notificacoes de uma frase so, como "Jogo salvo.";
+	# nunca apareceu ate os toasts narrativos do Dragao, mais longos).
+	# SIZE_EXPAND_FILL garante que o Label realmente ocupe a largura fixa
+	# do container em vez de encolher pro texto de uma so palavra.
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)
