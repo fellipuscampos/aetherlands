@@ -144,6 +144,15 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 	# avanca streak nenhum). .get(..., {}) tolera um save sem esta chave
 	# (ex.: um dict de save montado a mao por teste) sem travar o load.
 	WorldEventManager.from_save_dict(data.get("world_events", {}))
+	# Roadmap "Fase Macro" 5B.3-A -- a Unit fisica de um DragonEvent em
+	# Active nunca e' serializada diretamente (e' so mais um monstro
+	# neutro pro save generico, ja restaurado acima em _deserialize_
+	# neutral_units); precisa so ser RE-LINKADA ao evento por spawn_coord,
+	# depois que os dois lados (monstros neutros E o proprio evento) ja
+	# existem de novo.
+	for event in WorldEventManager.active_events:
+		if event is DragonEvent:
+			(event as DragonEvent).relink_unit(hex_grid)
 	GameManager.check_victories()
 	return true
 

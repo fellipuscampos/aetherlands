@@ -1,13 +1,14 @@
 extends GutTest
 
 ## Cobre DragonEvent: skeleton generico (FSM/persistencia/determinismo,
-## Step 5A), Blocker #1 (identidade/origem/spawn, Step 5B.1), e agora o
-## primeiro vertical slice jogavel (Step 5B.2, docs/DRAGON_EVENT_DESIGN.md)
-## -- Announced e Preparation com comportamento real (alvo travado, prazo
-## de turnos de verdade), valores deliberadamente PROVISORIOS. Active/
-## Resolution continuam o skeleton da 5A (5B.3/5B.4 substituem depois).
-## Trigger/spawn em si (WorldEventTrigger) tem seu proprio arquivo de
-## teste; participacao (RivalAI/GameManager) tambem tem os seus.
+## Step 5A), Blocker #1 (identidade/origem/spawn, Step 5B.1), Announced/
+## Preparation reais (Step 5B.2), e agora nascimento/presenca fisica real
+## do Dragao como Unit (Step 5B.3-A, docs/DRAGON_EVENT_DESIGN.md) --
+## spawn_coord deterministico, ownership neutro, remocao ao terminar.
+## Movimento/combate/proximo alvo (5B.3-B) e desfecho de verdade (5B.4)
+## continuam fora de escopo. Trigger/spawn de REGIAO (WorldEventTrigger)
+## tem seu proprio arquivo de teste; participacao (RivalAI/GameManager)
+## tambem tem os seus.
 
 ## Spy SO de teste -- conta chamadas a advance_turn() enquanto ainda se
 ## comporta como um DragonEvent de verdade (chama super()). Existe so pra
@@ -22,22 +23,39 @@ class _DragonEventAdvanceSpy extends DragonEvent:
 
 var _original_turn_number: int
 var _created_cities: Array[City] = []
+var _created_hex_grids: Array[HexGrid] = []
 
 func before_each():
 	_original_turn_number = TurnManager.turn_number
 	_created_cities = []
+	_created_hex_grids = []
 
 func after_each():
 	TurnManager.turn_number = _original_turn_number
 	for city in _created_cities:
 		if is_instance_valid(city):
 			city.queue_free()
+	for grid in _created_hex_grids:
+		if is_instance_valid(grid):
+			grid.queue_free()
 
 func _make_city(coord: Vector2i) -> City:
 	var city := City.new()
 	city.coord = coord
 	_created_cities.append(city)
 	return city
+
+## Grid pequeno, todo GRASSLAND (nunca bloqueia unidade terrestre) -- valido
+## como tile de spawn em qualquer coordenada dele por padrao, a menos que
+## um teste especifico ocupe/bloqueie um tile de proposito.
+func _make_hex_grid(radius: int = 3) -> HexGrid:
+	var grid := HexGrid.new()
+	grid._ready()
+	for x in range(-radius, radius + 1):
+		for y in range(-radius, radius + 1):
+			grid.tiles[Vector2i(x, y)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	_created_hex_grids.append(grid)
+	return grid
 
 func test_new_dragon_event_has_event_type_dragon():
 	var event := DragonEvent.new()
@@ -107,24 +125,30 @@ func test_target_stays_minus_one_when_no_player_has_any_city():
 ## prazo.
 func test_preparation_only_advances_to_active_the_turn_after_the_deadline():
 	TurnManager.turn_number = 10
+	var grid := _make_hex_grid()
 	var event := DragonEvent.new()
 	event.origin_region = Vector2i(0, 0)
 	var players: Array[PlayerData] = []
-	event.advance_turn(null, players) # -> Announced
-	event.advance_turn(null, players) # -> Preparation, deadline = 13
+	event.advance_turn(grid, players) # -> Announced
+	event.advance_turn(grid, players) # -> Preparation, deadline = 13
 
 	for turn in range(11, DragonEvent.PREPARATION_DURATION_TURNS + 11):
 		TurnManager.turn_number = turn
-		event.advance_turn(null, players)
+		event.advance_turn(grid, players)
 		assert_eq(event.phase, WorldEvent.PHASE_PREPARATION, "turno %d ainda deveria estar dentro do prazo (deadline=%d)" % [turn, event.turn_deadline])
 
 	TurnManager.turn_number = event.turn_deadline + 1
-	event.advance_turn(null, players)
+	event.advance_turn(grid, players)
 	assert_eq(event.phase, WorldEvent.PHASE_ACTIVE)
 
-## Active/Resolution continuam o skeleton da 5A (sem efeito sobre o mundo)
-## ate 5B.3/5B.4 existirem.
-func test_active_and_resolution_still_advance_one_phase_per_call_as_a_skeleton():
+## Active (5B.3-A: so presenca fisica, sem movimento/combate ainda) e
+## Resolution (5B.4 ainda nao existe: placeholder minimo) continuam
+## avancando uma fase por chamada -- 5B.3-B/5B.4 substituem o CONTEUDO
+## dessas fases, nunca a arquitetura ao redor. Sem hex_grid/dragon_unit
+## real aqui de proposito -- so confirma a transicao de fase em si; o
+## nascimento/remocao de verdade da Unit tem sua propria secao de testes
+## abaixo.
+func test_active_and_resolution_still_advance_one_phase_per_call():
 	TurnManager.turn_number = 10
 	var event := DragonEvent.new()
 	event.phase = WorldEvent.PHASE_ACTIVE
@@ -134,6 +158,7 @@ func test_active_and_resolution_still_advance_one_phase_per_call_as_a_skeleton()
 
 	event.advance_turn(null, [])
 	assert_eq(event.phase, WorldEvent.PHASE_COMPLETED)
+	assert_eq(event.result, {"outcome": "vanished"}, "placeholder minimo de 5B.3-A -- desfecho de verdade e' 5B.4")
 
 func test_advance_turn_does_nothing_once_completed():
 	var event := DragonEvent.new()
@@ -141,6 +166,153 @@ func test_advance_turn_does_nothing_once_completed():
 	event.advance_turn(null, [])
 	assert_eq(event.phase, WorldEvent.PHASE_COMPLETED)
 	assert_true(event.is_completed())
+
+## --- 5B.3-A: nascimento e presenca fisica do Dragao -------------------------
+
+## Chega ate o exato instante em que Preparation vira Active, sem passar
+## por ele -- pra isolar o teste no momento do spawn.
+func _advance_to_active(event: DragonEvent, grid: HexGrid, players: Array[PlayerData]) -> void:
+	TurnManager.turn_number = 10
+	event.advance_turn(grid, players) # -> Announced
+	event.advance_turn(grid, players) # -> Preparation, deadline = 13
+	TurnManager.turn_number = event.turn_deadline + 1
+	event.advance_turn(grid, players) # -> Active, spawna a Unit
+
+func test_preparation_to_active_spawns_a_real_unit_at_a_valid_tile():
+	var grid := _make_hex_grid()
+	var event := DragonEvent.new()
+	event.origin_region = Vector2i(0, 0)
+
+	_advance_to_active(event, grid, [])
+
+	assert_eq(event.phase, WorldEvent.PHASE_ACTIVE)
+	assert_eq(event.spawn_coord, Vector2i(0, 0), "origin_region ja e' valido, deveria nascer exatamente ali")
+	assert_not_null(event.dragon_unit)
+	assert_eq(grid.get_unit_at(event.spawn_coord), event.dragon_unit)
+
+## Ownership neutro (contrato: "nao pertence a nenhuma civilizacao") --
+## HexGrid.spawn_monster_at ja garante isso, este teste protege contra
+## regressao se alguem trocar spawn_monster_at por spawn_unit por engano.
+func test_spawned_dragon_unit_belongs_to_no_civilization():
+	var grid := _make_hex_grid()
+	var event := DragonEvent.new()
+	event.origin_region = Vector2i(0, 0)
+
+	_advance_to_active(event, grid, [])
+
+	assert_null(event.dragon_unit.owner_player)
+
+func test_spawned_dragon_unit_uses_the_shared_monster_database_stats():
+	var grid := _make_hex_grid()
+	var event := DragonEvent.new()
+	event.origin_region = Vector2i(0, 0)
+
+	_advance_to_active(event, grid, [])
+
+	var expected := MonsterDatabase.create_monster("dragon", false)
+	assert_eq(event.dragon_unit.unit_data.attack, expected.attack)
+	assert_eq(event.dragon_unit.unit_data.defense, expected.defense)
+	assert_eq(event.dragon_unit.hp, expected.max_hp)
+
+## O requisito mais importante desta secao: nascer/existir/remover o
+## Dragao NUNCA deveria alterar player.units nem qualquer colecao de
+## civilizacao -- ele nao e' "a unidade do jogador 0" por acidente.
+func test_spawning_the_dragon_never_touches_any_players_units():
+	var grid := _make_hex_grid()
+	var human := PlayerData.new(CivilizationData.new())
+	var rival := PlayerData.new(CivilizationData.new())
+	var human_units_before := human.units.duplicate()
+	var rival_units_before := rival.units.duplicate()
+	var event := DragonEvent.new()
+	event.origin_region = Vector2i(0, 0)
+
+	_advance_to_active(event, grid, [human, rival])
+
+	assert_eq(human.units, human_units_before)
+	assert_eq(rival.units, rival_units_before)
+
+func test_choose_spawn_coord_prefers_origin_region_when_valid():
+	var grid := _make_hex_grid()
+	var event := DragonEvent.new()
+	event.origin_region = Vector2i(1, 1)
+	assert_eq(event._choose_spawn_coord(grid), Vector2i(1, 1))
+
+## Regiao ocupada por outra Unit -- deveria expandir pra um vizinho valido
+## em vez de nascer em cima de uma unidade ja existente.
+func test_choose_spawn_coord_avoids_a_tile_already_occupied_by_a_unit():
+	var grid := _make_hex_grid()
+	var origin := Vector2i(0, 0)
+	grid.spawn_monster_at(origin, "goblin")
+
+	var event := DragonEvent.new()
+	event.origin_region = origin
+	var chosen := event._choose_spawn_coord(grid)
+
+	assert_ne(chosen, origin, "tile ja ocupado, deveria ter escolhido outro")
+	assert_null(grid.get_unit_at(chosen), "pre-condicao do teste: o tile escolhido precisa estar livre de verdade")
+
+## Regiao bloqueada por terreno (ex.: oceano) -- deveria expandir em aneis
+## ate achar um tile de terra firme valido.
+func test_choose_spawn_coord_expands_past_terrain_that_blocks_land_units():
+	var grid := _make_hex_grid()
+	var origin := Vector2i(0, 0)
+	grid.tiles[origin] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+
+	var event := DragonEvent.new()
+	event.origin_region = origin
+	var chosen := event._choose_spawn_coord(grid)
+
+	assert_ne(chosen, origin)
+	var data: HexTileData = grid.get_tile(chosen)
+	assert_false(data.blocks_land_units(), "o tile escolhido precisa ser valido pra unidade terrestre")
+
+func test_choose_spawn_coord_is_deterministic_for_the_same_grid():
+	var grid := _make_hex_grid()
+	var origin := Vector2i(0, 0)
+	grid.tiles[origin] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	var event := DragonEvent.new()
+	event.origin_region = origin
+
+	assert_eq(event._choose_spawn_coord(grid), event._choose_spawn_coord(grid))
+
+## Active -> Resolution -> Completed precisa remover a Unit do mapa
+## (contrato: "remover a Unit quando o evento termina").
+func test_resolution_removes_the_dragon_unit_from_the_map():
+	var grid := _make_hex_grid()
+	var event := DragonEvent.new()
+	event.origin_region = Vector2i(0, 0)
+	_advance_to_active(event, grid, [])
+	var spawn_coord := event.spawn_coord
+	assert_not_null(grid.get_unit_at(spawn_coord), "pre-condicao: a Unit deveria existir em Active")
+
+	event.advance_turn(grid, []) # Active -> Resolution
+	event.advance_turn(grid, []) # Resolution -> Completed, remove a Unit
+
+	assert_null(grid.get_unit_at(spawn_coord), "a Unit deveria ter sido removida do mapa")
+	assert_null(event.dragon_unit)
+
+## --- Re-link pos save/load (SaveManager.relink_unit) ------------------------
+
+func test_relink_unit_finds_the_unit_the_generic_neutral_save_already_restored():
+	var grid := _make_hex_grid()
+	var spawn_coord := Vector2i(2, 2)
+	var restored_unit := grid.spawn_monster_at(spawn_coord, "dragon") # simula o que _deserialize_neutral_units ja fez antes de relink_unit rodar
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_ACTIVE
+	event.spawn_coord = spawn_coord
+	event.dragon_unit = null # como viria de from_save_dict -- nunca serializado
+
+	event.relink_unit(grid)
+
+	assert_eq(event.dragon_unit, restored_unit)
+
+func test_relink_unit_is_a_safe_no_op_before_the_dragon_ever_spawned():
+	var grid := _make_hex_grid()
+	var event := DragonEvent.new() # spawn_coord ainda e' NO_COORD (Dormant/Announced/Preparation)
+
+	event.relink_unit(grid)
+
+	assert_null(event.dragon_unit)
 
 ## --- Notificacoes (texto minimo, ver docs/DRAGON_EVENT_DESIGN.md) ----------
 
@@ -165,6 +337,20 @@ func test_preparation_transition_emits_a_notification_naming_the_target():
 	assert_signal_emitted(EventBus, "notify")
 	var params = get_signal_parameters(EventBus, "notify", 0)
 	assert_true(("Reino de Teste" in params[0]), "a notificacao deveria nomear a civilizacao-alvo")
+
+func test_preparation_to_active_transition_emits_a_notification():
+	var grid := _make_hex_grid()
+	var event := DragonEvent.new()
+	event.origin_region = Vector2i(0, 0)
+	TurnManager.turn_number = 10
+	event.advance_turn(grid, []) # -> Announced
+	event.advance_turn(grid, []) # -> Preparation
+	TurnManager.turn_number = event.turn_deadline + 1
+
+	watch_signals(EventBus)
+	event.advance_turn(grid, []) # -> Active, nasce a Unit
+
+	assert_signal_emitted(EventBus, "notify")
 
 ## --- Persistencia (contrato, secao 3) ---------------------------------------
 

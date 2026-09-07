@@ -797,3 +797,30 @@ func test_save_and_load_restores_a_dragon_event_in_its_exact_phase_and_state():
 	GameManager._on_turn_changed(TurnManager.turn_number, 0)
 
 	assert_eq(loaded_event.phase, WorldEvent.PHASE_RESOLUTION, "um turno real DEPOIS do load deveria avancar exatamente uma fase")
+
+## Roadmap "Fase Macro" 5B.3-A: a Unit fisica do Dragao nunca e' serializada
+## diretamente -- sobrevive ao load pelo mesmo caminho generico de
+## monstros neutros (HexGrid.neutral_units), e SaveManager.load_game()
+## precisa RE-LINKAR event.dragon_unit a ela depois, usando spawn_coord.
+func test_save_and_load_relinks_the_dragon_unit_to_the_reconstructed_event():
+	_make_unit("warrior", human, hex_grid.tiles.keys()[1])
+	_make_unit("warrior", rival, hex_grid.tiles.keys()[2])
+	var spawn_coord: Vector2i = hex_grid.tiles.keys()[3]
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_ACTIVE
+	event.origin_region = spawn_coord
+	event.spawn_coord = spawn_coord
+	event.dragon_unit = hex_grid.spawn_monster_at(spawn_coord, "dragon")
+	WorldEventManager.register_event(event)
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	assert_true(SaveManager.load_game(loaded_grid, TEST_SAVE_PATH))
+
+	var loaded_event: DragonEvent = WorldEventManager.active_events[0]
+	assert_not_null(loaded_event.dragon_unit, "relink_unit deveria ter encontrado a Unit restaurada pelo save generico de monstros neutros")
+	assert_eq(loaded_event.dragon_unit, loaded_grid.get_unit_at(spawn_coord))
+	assert_eq(loaded_event.dragon_unit.unit_data.visual_kind, "dragon")
