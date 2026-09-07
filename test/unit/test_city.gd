@@ -236,6 +236,106 @@ func test_best_unassigned_neighbor_also_prefers_resource_tile():
 	hex_grid.queue_free()
 	city.queue_free()
 
+## --- Roadmap "Fase F"/G: mana passa a participar de _tile_claim_score ----
+## F7 (diagnostico causal, ver conversa) achou um erro arquitetural GENERICO
+## nesta formula: mana e um yield valido de effective_tile_yield(), mas
+## nunca entrava na pontuacao de posse/trabalho de tile — 5/15 seeds nunca
+## passavam de 2/3 Nodulos Arcanos mesmo com fartura deles no mapa (seed
+## 1010: 14 Nodulos, so 1 jamais reivindicado por qualquer jogador). A
+## formula raciocina sobre YIELD (data.resource == "mana_node" de proposito
+## NAO aparece em lugar nenhum abaixo), nunca sobre o NOME do recurso — pra
+## nao acoplar esta heuristica generica a um recurso especifico e ja cobrir
+## qualquer terreno/efeito futuro que produza mana.
+
+func test_tile_claim_score_adds_a_bonus_proportional_to_mana():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	var plain_hills = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	var mana_hills = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	mana_hills.resource = "mana_node" # +2 de mana (ResourceDatabase.YIELDS)
+	var city := City.new()
+	city.owner_player = PlayerData.new(CivilizationData.new())
+
+	var plain_score = city._tile_claim_score(plain_hills, hex_grid, coord)
+	var mana_score = city._tile_claim_score(mana_hills, hex_grid, coord)
+
+	# diferenca = +4 generico de recurso (FRONTIER_RESOURCE_SCORE_BONUS) +
+	# 2 de mana * MANA_TILE_WEIGHT -- as duas dimensoes somam, nenhuma
+	# substitui a outra (mesmo principio ja usado por resource/lair).
+	var expected_diff: float = City.FRONTIER_RESOURCE_SCORE_BONUS + 2.0 * City.MANA_TILE_WEIGHT
+	assert_almost_eq(mana_score - plain_score, expected_diff, 0.01)
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+func test_tile_claim_score_resource_bonus_is_independent_of_mana():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	var plain_hills = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	var iron_hills = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	iron_hills.resource = "iron" # +2 producao, ZERO mana (ResourceDatabase.YIELDS)
+	var city := City.new()
+	city.owner_player = PlayerData.new(CivilizationData.new())
+
+	var plain_score = city._tile_claim_score(plain_hills, hex_grid, coord)
+	var iron_score = city._tile_claim_score(iron_hills, hex_grid, coord)
+
+	# ferro rende producao (yield normal, peso 1.3) + o mesmo +4 generico de
+	# recurso -- nenhuma contribuicao de mana, ja que ferro nao rende mana.
+	var expected_diff: float = 2.0 * 1.3 + City.FRONTIER_RESOURCE_SCORE_BONUS
+	assert_almost_eq(iron_score - plain_score, expected_diff, 0.01, "bonus de recurso continua fixo em +4, independente de mana -- ferro nao rende mana nenhum")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+func test_tile_claim_score_matches_plain_yield_formula_for_tiles_without_mana():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	var data = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var city := City.new()
+	city.owner_player = PlayerData.new(CivilizationData.new())
+
+	var y = city.effective_tile_yield(data)
+	assert_almost_eq(y.mana, 0.0, 0.01, "planicie sem recurso nao deveria render mana nenhum")
+	var score = city._tile_claim_score(data, hex_grid, coord)
+	assert_almost_eq(score, y.food * 1.5 + y.production * 1.3 + y.gold, 0.01, "sem mana nem recurso, a formula deveria continuar identica a formula antiga")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
+## Integracao: Nodulo Arcano preferido a uma Colina EQUIVALENTE (mesmo
+## terreno, mesma ausencia de perigo) que so nao tem recurso nenhum --
+## isola o termo de mana do resto do cenario (a diferenca entre os dois
+## coords e SO o recurso/mana, nada mais).
+func test_claim_frontier_tile_prefers_mana_node_over_an_equivalent_tile_without_it():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var center := Vector2i(0, 0)
+	hex_grid.tiles[center] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var mana_coord = HexGrid.NEIGHBOR_DIRS[0]
+	var mana_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	mana_tile.resource = "mana_node"
+	hex_grid.tiles[mana_coord] = mana_tile
+	var plain_coord = HexGrid.NEIGHBOR_DIRS[1]
+	hex_grid.tiles[plain_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS) # mesmo terreno, sem recurso
+	for dir in HexGrid.NEIGHBOR_DIRS.slice(2):
+		hex_grid.tiles[dir] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var player := PlayerData.new(CivilizationData.new())
+	var city := City.new()
+	city.owner_player = player
+	city.owned_tiles = [center]
+
+	city._claim_frontier_tile(hex_grid)
+
+	assert_eq(city.owned_tiles, [center, mana_coord], "Nodulo Arcano deveria ser preferido a uma Colina equivalente sem recurso nenhum")
+
+	hex_grid.queue_free()
+	city.queue_free()
+
 ## Roadmap 2.0 (fecha Parte A) — dois candidatos de mesmo yield (Planicie),
 ## um perto de um covil de Dragao ativo (dentro de LAIR_DANGER_RADIUS), o
 ## outro longe — a cidade deveria reivindicar o tile LONGE do covil.

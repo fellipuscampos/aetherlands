@@ -760,7 +760,7 @@ func test_victory_conditions_diagnostic_F7():
 	for i in range(SEEDS.size()):
 		var result := _run_seed(SEEDS[i], AI_RNG_SEEDS[i])
 		all_results.append(result)
-		print("[sim F7 seed=%d] vencedor=%s tipo=%s turno_fim=%s dominancia_max=%.0f%%(T%d) rivais_eliminados_max=%d territorial_max=%.0f%%(T%d) territorial_max_raw=%.0f%% arcana_max=%.0f%%(T%d) arcana_escolas=%.0f%% arcana_nodulos=%.0f%% arcana_santuario=%.0f%% arcana_streak=%.0f%%" % [
+		print("[sim F7 seed=%d] vencedor=%s tipo=%s turno_fim=%s dominancia_max=%.0f%%(T%d) rivais_eliminados_max=%d territorial_max=%.0f%%(T%d) territorial_max_raw=%.0f%% arcana_max=%.0f%%(T%d) arcana_escolas=%.0f%% arcana_nodulos=%.0f%% arcana_santuario=%.0f%% arcana_streak=%.0f%% santuario_construido_por=%d ritual_ativacoes=%d ritual_streak_chegou_a=[1:%d 2:%d 3:%d 4:%d 5:%d]" % [
 			SEEDS[i],
 			result.victory_winner_label if result.victory_winner_label != "" else "ninguem",
 			result.victory_type if result.victory_type != "" else "-",
@@ -774,6 +774,11 @@ func test_victory_conditions_diagnostic_F7():
 			result.max_arcane_nodes_fraction * 100.0,
 			result.max_arcane_sanctuary_fraction * 100.0,
 			result.max_arcane_streak_fraction * 100.0,
+			result.arcane_sanctuary_built_by_count,
+			result.arcane_ritual_activation_events,
+			result.arcane_streak_reached_counts[1], result.arcane_streak_reached_counts[2],
+			result.arcane_streak_reached_counts[3], result.arcane_streak_reached_counts[4],
+			result.arcane_streak_reached_counts[5],
 		])
 
 	# --- Distribuicao de vitorias -----------------------------------------
@@ -834,6 +839,34 @@ func test_victory_conditions_diagnostic_F7():
 	print("[sim F7 agregado arcana] progresso_max_medio=%.1f%% escolas_max_medio=%.1f%% nodulos_max_medio=%.1f%% santuario_max_medio=%.1f%% streak_max_medio=%.1f%% seeds>=50%%=%d seeds>=75%%=%d seeds>=90%%=%d" % [
 		_avg(arcane_maxes) * 100.0, _avg(arcane_schools_maxes) * 100.0, _avg(arcane_nodes_maxes) * 100.0, _avg(arcane_sanctuary_maxes) * 100.0, _avg(arcane_streak_maxes) * 100.0,
 		_count_at_least(arcane_maxes, thresholds[0]), _count_at_least(arcane_maxes, thresholds[1]), _count_at_least(arcane_maxes, thresholds[2]),
+	])
+
+	# --- Funil de ativacao/sustentacao (Roadmap "Fase F"/G, pedido explicito
+	# do usuario apos a decisao minima de IA entrar em producao): separa
+	# "nao constroi" de "constroi mas nao ativa" de "ativa mas nao sustenta"
+	# de "sustenta" (streak=5, equivale a vencer por Arcana) -- contagens
+	# ABSOLUTAS somadas pelas 15 seeds (jogadores distintos/eventos/
+	# tentativas), nao fracao de seeds. ---
+	var total_sanctuary_builders := 0
+	var total_activation_events := 0
+	var total_streak_reached := {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+	var seeds_with_sanctuary := 0
+	var seeds_with_activation := 0
+	for r in all_results:
+		total_sanctuary_builders += r.arcane_sanctuary_built_by_count
+		total_activation_events += r.arcane_ritual_activation_events
+		for level in total_streak_reached.keys():
+			total_streak_reached[level] += r.arcane_streak_reached_counts[level]
+		if r.arcane_sanctuary_built_by_count > 0:
+			seeds_with_sanctuary += 1
+		if r.arcane_ritual_activation_events > 0:
+			seeds_with_activation += 1
+	print("[sim F7 agregado funil arcano] jogadores_que_construiram_santuario=%d seeds_com_santuario=%d/%d eventos_de_ativacao=%d seeds_com_ativacao=%d/%d" % [
+		total_sanctuary_builders, seeds_with_sanctuary, all_results.size(),
+		total_activation_events, seeds_with_activation, all_results.size(),
+	])
+	print("[sim F7 agregado funil arcano] tentativas_que_chegaram_a_streak: 1=%d 2=%d 3=%d 4=%d 5(vitoria)=%d" % [
+		total_streak_reached[1], total_streak_reached[2], total_streak_reached[3], total_streak_reached[4], total_streak_reached[5],
 	])
 
 	# Unico assert desta fase: correcao, nunca balanceamento -- mesma
@@ -966,6 +999,11 @@ func _run_seed(seed_value: int, ai_rng_seed: int) -> Dictionary:
 		var peace_result := RivalAI.decide_peace(primary, rivals[0])
 		_record_peace_decision(m, peace_result, weariness_at_offer, receiver_weariness_at_offer)
 		RivalAI.decide_trade(primary, grid, rivals[0])
+		# Roadmap "Fase F"/G -- mesmo lugar/ordem de GameManager.gd (logo apos
+		# decide_trade); cada rival ja recebe sua propria chamada de dentro de
+		# GameManager._on_turn_changed, so o "primary" precisa da chamada
+		# manual aqui, mesmo motivo de todas as decide_* acima.
+		RivalAI.decide_arcane_ritual(primary, grid)
 
 		GameManager._on_turn_changed(TurnManager.turn_number, 0)
 
@@ -1185,6 +1223,27 @@ func _new_metrics() -> Dictionary:
 		"max_arcane_nodes_fraction": 0.0,
 		"max_arcane_sanctuary_fraction": 0.0,
 		"max_arcane_streak_fraction": 0.0,
+		# Roadmap "Fase F"/G -- separa o funil pedido explicitamente pelo
+		# usuario apos a decisao minima de IA entrar em producao: nao
+		# constroi -> constroi mas nao ativa -> ativa mas nao sustenta ->
+		# sustenta (streak=5, equivale a vencer por Arcana, ver
+		# GameManager.check_victories). "arcane_sanctuary_built_by_count"
+		# conta JOGADORES DISTINTOS (0-2 nesta arena 1v1) que tiveram
+		# has_arcane_sanctuary()==true em algum turno desta seed --
+		# distingue de max_arcane_sanctuary_fraction (so diz SE alguem
+		# construiu, nunca QUANTOS). "arcane_ritual_activation_events" conta
+		# EVENTOS de ativacao (toda transicao inativo->ativo, inclusive
+		# reativacao apos interrupcao). "arcane_streak_reached_counts" conta,
+		# por TENTATIVA de ritual (uma tentativa = um trecho continuo com
+		# arcane_ritual_active=true), quantas chegaram a cada streak 1-5
+		# (cumulativo: uma tentativa que chega a 5 tambem conta pra 1-4) --
+		# ve _arcane_attempt_state (scratch interno, nao reportado) pra como
+		# a tentativa e rastreada turno a turno.
+		"arcane_sanctuary_built_by_count": 0,
+		"arcane_ritual_activation_events": 0,
+		"arcane_streak_reached_counts": {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+		"_arcane_sanctuary_builders": {}, # PlayerData -> true, scratch pra dedupe de built_by_count
+		"_arcane_attempt_state": {}, # PlayerData -> {"active": bool, "max_streak": int, "counted": bool}, scratch pra rastrear tentativa em andamento
 	}
 
 ## Roadmap 2.0 Parte 1 (A1) — benchmark do bonus de recurso na pontuacao de
@@ -1503,6 +1562,31 @@ func _record_victory_progress(m: Dictionary, hex_grid: HexGrid, primary: PlayerD
 			m.max_arcane_progress = arcane_progress
 			m.max_arcane_progress_turn = turn_number
 
+		# Roadmap "Fase F"/G -- funil pedido pelo usuario apos a decisao
+		# minima de IA entrar em producao (ver comentario de _new_metrics).
+		if VictoryConditions.has_arcane_sanctuary(player) and not m._arcane_sanctuary_builders.has(player):
+			m._arcane_sanctuary_builders[player] = true
+			m.arcane_sanctuary_built_by_count += 1
+		var attempt: Dictionary = m._arcane_attempt_state.get(player, {"active": false, "max_streak": 0})
+		if player.arcane_ritual_active:
+			if not attempt.active:
+				m.arcane_ritual_activation_events += 1
+			attempt.active = true
+			attempt.max_streak = max(attempt.max_streak, player.arcane_ritual_streak)
+		elif attempt.active:
+			_credit_arcane_streak_reached(m, attempt.max_streak)
+			attempt = {"active": false, "max_streak": 0}
+		m._arcane_attempt_state[player] = attempt
+
+## Cumulativo de proposito (ver comentario de _new_metrics): uma tentativa
+## que chegou a streak=5 tambem soma pra 1/2/3/4 -- responde "quantas
+## tentativas chegaram A PELO MENOS este nivel", nao "pararam exatamente
+## aqui".
+func _credit_arcane_streak_reached(m: Dictionary, max_streak: int) -> void:
+	for level in range(1, VictoryConditions.ARCANE_SUSTAIN_TURNS + 1):
+		if max_streak >= level:
+			m.arcane_streak_reached_counts[level] += 1
+
 ## D4.1-style: quando GameManager.state ja virou GAME_OVER (check_victories
 ## ja rodou dentro de _on_turn_changed->_finish_turn ANTES deste ponto do
 ## loop), re-deriva QUEM/QUAL tipo causou isso chamando as MESMAS funcoes
@@ -1591,6 +1675,16 @@ func _record_turn(m: Dictionary, grid: HexGrid, turn_index: int, primary: Player
 		m.last_change_turn = turn_number
 
 func _finalize_metrics(m: Dictionary, primary: PlayerData, rivals: Array[PlayerData]) -> void:
+	# Roadmap "Fase F"/G -- credita qualquer tentativa de ritual AINDA ATIVA
+	# no fim da simulacao (inclusive uma vitoria por Arcana: o loop de
+	# _run_seed quebra assim que GAME_OVER aparece, sem passar por uma
+	# transicao ativo->inativo — sem este flush, a tentativa vencedora nunca
+	# seria creditada em arcane_streak_reached_counts).
+	for player in ([primary] as Array[PlayerData]) + rivals:
+		var attempt: Dictionary = m._arcane_attempt_state.get(player, {"active": false, "max_streak": 0})
+		if attempt.active:
+			_credit_arcane_streak_reached(m, attempt.max_streak)
+
 	var final_turn: int = m.ended_turn if m.ended_turn != -1 else TURN_COUNT
 	# Guerra ainda aberta no fim da simulacao conta com duracao ate o
 	# ultimo turno rodado, em vez de ficar de fora da media.

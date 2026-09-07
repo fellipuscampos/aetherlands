@@ -674,16 +674,34 @@ const FRONTIER_RESOURCE_SCORE_BONUS := 4.0
 ## nao calibrado por medicao ainda (ver harness, test_simulation_balance.gd).
 const FRONTIER_LAIR_DANGER_WEIGHT := 3.0
 
+## Roadmap "Fase F"/G -- investigacao causal do gargalo de Nodulo Arcano
+## (F7 pos-decisao-minima de IA: 0 seeds nunca passavam de 2/3 Nodulos,
+## seed 1010 tinha 14 no mapa e so 1 jamais foi reivindicado por ninguem)
+## encontrou um erro arquitetural GENERICO nesta formula, nao algo
+## especifico de Arcana: mana e um yield valido de effective_tile_yield()
+## (ver comentario la — vem so de recurso/tech, nunca do bioma sozinho),
+## mas nunca entrava na pontuacao de posse/trabalho de tile. Valor inicial
+## EXPERIMENTAL, nao calibrado — mesma disciplina de FRONTIER_RESOURCE_
+## SCORE_BONUS/FRONTIER_LAIR_DANGER_WEIGHT acima (ver harness, test_
+## simulation_balance.gd F7, proximo passo: rodar a MESMA matriz de novo).
+const MANA_TILE_WEIGHT := 1.5
+
 ## Formula de pontuacao de rendimento compartilhada por _best_unassigned_
 ## neighbor (trabalho) e _claim_frontier_tile (posse) abaixo — ver
 ## comentario de _claim_frontier_tile pra por que as duas precisam ficar em
 ## sincronia. Deliberadamente compartilhada: representa "qual tile e melhor
 ## pra esta cidade" de forma generica, entao o bonus de recurso e a
 ## penalidade de covil (HexGrid.get_lair_danger_at) valem igual pra
-## trabalho E posse — nao e um efeito colateral acidental.
+## trabalho E posse — nao e um efeito colateral acidental. Raciocina sobre
+## YIELD, nunca sobre o NOME do recurso (decisao explicita do usuario: "a
+## formula deve raciocinar sobre yield, nao sobre o nome do recurso") --
+## `if data.resource == "mana_node"` de proposito NAO aparece aqui, tanto
+## pra nao acoplar esta heuristica generica a um recurso especifico quanto
+## pra ja cobrir qualquer terreno/efeito futuro que produza mana sem
+## precisar mexer nesta formula de novo.
 func _tile_claim_score(data: HexTileData, hex_grid: HexGrid, coord: Vector2i) -> float:
 	var y = effective_tile_yield(data)
-	var score = y.food * 1.5 + y.production * 1.3 + y.gold
+	var score = y.food * 1.5 + y.production * 1.3 + y.gold + y.mana * MANA_TILE_WEIGHT
 	if data.resource != "":
 		score += FRONTIER_RESOURCE_SCORE_BONUS
 	score -= hex_grid.get_lair_danger_at(coord) * FRONTIER_LAIR_DANGER_WEIGHT
