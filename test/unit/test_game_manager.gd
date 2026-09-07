@@ -5,6 +5,29 @@ extends GutTest
 ## padrao, nunca entre si), e check_game_over() so declara vitoria quando
 ## TODOS os rivais forem eliminados — nao mais um unico rival fixo.
 
+## Stub SO de teste (Roadmap Fase Macro, World Event System Step 4) -- conta
+## quantas vezes advance_turn() foi chamado e guarda o ultimo hex_grid/
+## players recebidos, pra provar a integracao generica com GameManager sem
+## nenhum evento concreto (DragonEvent) existir ainda.
+class _StubWorldEvent extends WorldEvent:
+	var advance_calls: int = 0
+	var last_hex_grid: HexGrid = null
+	var last_players: Array[PlayerData] = []
+	func advance_turn(received_hex_grid: HexGrid, received_players: Array[PlayerData]) -> void:
+		advance_calls += 1
+		last_hex_grid = received_hex_grid
+		last_players = received_players
+
+## Elimina `target` (unidades + cidades) durante o proprio advance_turn() --
+## simula um evento cuja consequencia deveria ja valer pra checagem de
+## vitoria do MESMO turno (ver GameManager._finish_turn(), ordem exigida
+## pelo contrato).
+class _EliminatesPlayerEvent extends WorldEvent:
+	var target: PlayerData
+	func advance_turn(_hex_grid: HexGrid, _players: Array[PlayerData]) -> void:
+		target.units.clear()
+		target.cities.clear()
+
 var _original_state
 var _original_players: Array[PlayerData]
 var _original_human_player: PlayerData
@@ -19,6 +42,8 @@ var _original_difficulty: String
 var _original_human_race: String
 var _original_debug_mode: bool
 var _original_stagger_ai_turns: bool
+var _original_world_events: Array[WorldEvent]
+var _original_world_event_next_id: int
 
 func before_each():
 	_original_state = GameManager.state
@@ -35,6 +60,10 @@ func before_each():
 	_original_human_race = GameManager.human_race
 	_original_debug_mode = GameManager.debug_mode
 	_original_stagger_ai_turns = GameManager.stagger_ai_turns
+	_original_world_events = WorldEventManager.active_events
+	_original_world_event_next_id = WorldEventManager._next_event_id
+	WorldEventManager.active_events = []
+	WorldEventManager._next_event_id = 0
 
 func after_each():
 	GameManager.state = _original_state
@@ -53,6 +82,8 @@ func after_each():
 	GameManager.stagger_ai_turns = _original_stagger_ai_turns
 	GameManager.is_turn_processing = false
 	GameManager._ai_turn_queue = []
+	WorldEventManager.active_events = _original_world_events
+	WorldEventManager._next_event_id = _original_world_event_next_id
 	GameManager._ai_batch_timer = 0.0
 
 func test_setup_players_creates_requested_number_of_rivals():
@@ -950,3 +981,109 @@ func test_start_new_game_at_large_size_keeps_civs_inside_the_main_zone():
 			assert_eq(hex_grid._zone_for(unit.coord), hex_grid._Zone.MAIN, "unidade de %s em %s deveria estar na zona Principal" % [player.civ.civ_name, str(unit.coord)])
 
 	hex_grid.queue_free()
+
+## --- World Event System (Roadmap Fase Macro, Step 4) -----------------------
+## Testa a integracao GENERICA com GameManager (docs/WORLD_EVENT_CONTRACT.md,
+## secao 1 e 6) -- nenhum evento concreto (DragonEvent) existe ainda.
+
+func _setup_minimal_hex_grid_with_one_rival() -> Dictionary:
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var human_coord := Vector2i(0, 0)
+	var rival_coord := Vector2i(10, 0)
+	hex_grid.tiles[human_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	hex_grid.tiles[rival_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	var rival := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.hex_grid = hex_grid
+	GameManager.rival_players = [rival]
+	GameManager.players = [GameManager.human_player, rival]
+	hex_grid.found_city(human_coord, GameManager.human_player, "Capital")
+	hex_grid.found_city(rival_coord, rival, "Capital Rival")
+	return {"hex_grid": hex_grid, "rival": rival}
+
+## Regra temporal do contrato: eventos avancam exatamente uma vez por turno
+## REAL, so de dentro de _finish_turn().
+func test_finish_turn_advances_world_events_exactly_once_per_real_turn():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	var event := _StubWorldEvent.new()
+	WorldEventManager.register_event(event)
+
+	GameManager._on_turn_changed(0, 0)
+	assert_eq(event.advance_calls, 1)
+
+	GameManager._on_turn_changed(0, 0)
+	assert_eq(event.advance_calls, 2)
+
+	setup.hex_grid.queue_free()
+
+## Contrato, secao 6: "GameManager orquestra... reusa o campo players que ja
+## mantem, sem reconstruir a lista" -- confirma que o MESMO hex_grid/array
+## players do GameManager chegam ao evento, nao uma copia reconstruida.
+func test_finish_turn_passes_the_real_hex_grid_and_players_to_world_events():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	var event := _StubWorldEvent.new()
+	WorldEventManager.register_event(event)
+
+	GameManager._on_turn_changed(0, 0)
+
+	assert_eq(event.last_hex_grid, GameManager.hex_grid)
+	assert_eq(event.last_players, GameManager.players)
+
+	setup.hex_grid.queue_free()
+
+## Regra temporal do contrato: "Nenhuma chamada de UI, preview, save/load ou
+## verificacao de vitoria pode avancar um evento" -- check_victories() e o
+## ponto compartilhado pelos outros 3 call sites (SelectionManager x2,
+## SaveManager.load_game), entao provar que ELE sozinho nunca avanca nenhum
+## evento cobre os 3 de uma vez, sem precisar simular cada um.
+func test_check_victories_alone_never_advances_world_events():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	var event := _StubWorldEvent.new()
+	WorldEventManager.register_event(event)
+
+	GameManager.check_victories()
+
+	assert_eq(event.advance_calls, 0, "check_victories() sozinho nunca deveria avancar evento nenhum -- so _finish_turn() pode")
+
+	setup.hex_grid.queue_free()
+
+## Motivo exato da ordem escolhida no contrato (secao 1): uma consequencia
+## que um evento aplica NESTE turno (aqui, "elimina o rival") precisa estar
+## refletida na checagem de vitoria do MESMO turno -- prova concreta via
+## Dominacao, nao so uma alegacao de ordem de chamadas.
+func test_finish_turn_reflects_a_world_events_consequences_in_the_same_turns_victory_check():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	var rival: PlayerData = setup.rival
+	var event := _EliminatesPlayerEvent.new()
+	event.target = rival
+	WorldEventManager.register_event(event)
+
+	GameManager._on_turn_changed(0, 0)
+
+	assert_eq(GameManager.state, GameManager.GameState.GAME_OVER, "a eliminacao do rival pelo evento deveria ja valer pra checagem de vitoria do MESMO turno")
+
+	setup.hex_grid.queue_free()
+
+## Determinismo (contrato secao 4), agora em INTEGRACAO: o RNG proprio do
+## evento continua reproduzivel pro mesmo turno mesmo com RivalAI de
+## verdade consumindo o RNG global de decisao por caminhos DIFERENTES --
+## nao so em isolamento (ja provado em test_world_event.gd).
+func test_event_rng_stays_reproducible_regardless_of_ai_rng_activity_in_real_turns():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	var event := _StubWorldEvent.new()
+	WorldEventManager.register_event(event)
+
+	seed(111)
+	GameManager._on_turn_changed(0, 0) # RivalAI.decide_war/decide_trade ja consomem o RNG global aqui
+	var turn_after_run: int = TurnManager.turn_number
+	var roll_a := event.event_rng(setup.hex_grid.map_seed, turn_after_run).randi()
+
+	seed(999) # reseed BEM diferente -- simula uma sequencia de decisoes de IA totalmente diferente
+	for i in range(20):
+		randi()
+	var roll_b := event.event_rng(setup.hex_grid.map_seed, turn_after_run).randi()
+
+	assert_eq(roll_a, roll_b, "o roll do evento pro mesmo turno nao deveria mudar so porque o RNG global de IA seguiu um caminho diferente")
+
+	setup.hex_grid.queue_free()

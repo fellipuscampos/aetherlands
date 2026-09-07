@@ -488,6 +488,14 @@ func _finish_turn() -> void:
 	hex_grid.refresh_construction_markers(_completed_building_coords_this_turn)
 	_completed_building_coords_this_turn.clear()
 	hex_grid.recompute_fog(human_player)
+	# World Event System (docs/WORLD_EVENT_CONTRACT.md, secao 1) -- ordem
+	# exata do contrato: DEPOIS que o mapa deste turno ja esta final (fog/
+	# marcadores) e ANTES da checagem de vitoria, pra qualquer consequencia
+	# que um evento aplique neste turno (cidade destruida, territorio
+	# alterado, recurso concedido) ja estar refletida na checagem de
+	# vitoria do MESMO turno. Reusa GameManager.players (ja mantido por
+	# setup_players()) em vez de reconstruir a lista aqui.
+	WorldEventManager.advance_turn(hex_grid, players)
 	_update_victory_state()
 	check_victories()
 
