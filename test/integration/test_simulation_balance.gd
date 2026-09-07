@@ -745,6 +745,109 @@ func test_war_objective_comparison_mode_experiment_D4_5():
 
 	assert_false(any_nan_or_negative, "yield/ouro negativo ou NaN detectado -- bug de correcao, nao questao de balanceamento")
 
+## Roadmap "Fase F" F7 -- primeiro retrato quantitativo das 3 vitorias
+## INTEGRADAS ao jogo de verdade (nao um teste isolado de VictoryConditions
+## -- GameManager._update_victory_state/check_victories ja rodam de dentro
+## de _on_turn_changed desde a promocao de F3, entao esta seed so estava
+## sem observacao, nao sem comportamento). Mesma matriz determinística
+## SEEDS/AI_RNG_SEEDS de D4.0. REGRA DE OURO (pedido explicito do
+## usuario): nenhuma constante de gameplay muda aqui -- so medicao. Uma
+## distribuicao enviesada (ex.: Dominacao 80%/Territorial 15%/Arcana 5%)
+## NAO e evidencia suficiente de desbalanceamento sozinha -- e o ponto de
+## partida pra uma investigacao causal futura.
+func test_victory_conditions_diagnostic_F7():
+	var all_results: Array = []
+	for i in range(SEEDS.size()):
+		var result := _run_seed(SEEDS[i], AI_RNG_SEEDS[i])
+		all_results.append(result)
+		print("[sim F7 seed=%d] vencedor=%s tipo=%s turno_fim=%s dominancia_max=%.0f%%(T%d) rivais_eliminados_max=%d territorial_max=%.0f%%(T%d) territorial_max_raw=%.0f%% arcana_max=%.0f%%(T%d) arcana_escolas=%.0f%% arcana_nodulos=%.0f%% arcana_santuario=%.0f%% arcana_streak=%.0f%%" % [
+			SEEDS[i],
+			result.victory_winner_label if result.victory_winner_label != "" else "ninguem",
+			result.victory_type if result.victory_type != "" else "-",
+			("T%d" % result.ended_turn) if result.ended_turn != -1 else "limite(T%d)" % TURN_COUNT,
+			result.max_dominance_progress * 100.0, result.max_dominance_progress_turn,
+			result.max_rivals_eliminated,
+			result.max_territorial_progress * 100.0, result.max_territorial_progress_turn,
+			result.max_territorial_percentage_raw * 100.0,
+			result.max_arcane_progress * 100.0, result.max_arcane_progress_turn,
+			result.max_arcane_schools_fraction * 100.0,
+			result.max_arcane_nodes_fraction * 100.0,
+			result.max_arcane_sanctuary_fraction * 100.0,
+			result.max_arcane_streak_fraction * 100.0,
+		])
+
+	# --- Distribuicao de vitorias -----------------------------------------
+	var wins_by_type := {
+		VictoryConditions.VICTORY_TYPE_DOMINANCE: 0,
+		VictoryConditions.VICTORY_TYPE_TERRITORIAL: 0,
+		VictoryConditions.VICTORY_TYPE_ARCANE: 0,
+	}
+	var no_winner_count := 0
+	var winning_turns: Array = []
+	for r in all_results:
+		if r.victory_type == "":
+			no_winner_count += 1
+		else:
+			wins_by_type[r.victory_type] = wins_by_type.get(r.victory_type, 0) + 1
+			winning_turns.append(r.ended_turn)
+	print("[sim F7 agregado vitorias] dominancia=%d territorial=%d arcana=%d sem_vencedor=%d total=%d" % [
+		wins_by_type[VictoryConditions.VICTORY_TYPE_DOMINANCE], wins_by_type[VictoryConditions.VICTORY_TYPE_TERRITORIAL],
+		wins_by_type[VictoryConditions.VICTORY_TYPE_ARCANE], no_winner_count, all_results.size(),
+	])
+	print("[sim F7 agregado turno de vitoria] medio=%.1f mediano=%.1f (so entre seeds COM vencedor, n=%d)" % [
+		_avg(winning_turns), _median(winning_turns), winning_turns.size(),
+	])
+
+	# --- "Chegou perto": contagem de seeds por faixa de progresso maximo,
+	# pra cada vitoria (pedido explicito: >=50%/75%/90%, sem sugerir que
+	# esses cortes sejam definitivos). ---
+	var dominance_maxes: Array = []
+	var territorial_progress_maxes: Array = []
+	var territorial_raw_maxes: Array = []
+	var arcane_maxes: Array = []
+	var arcane_schools_maxes: Array = []
+	var arcane_nodes_maxes: Array = []
+	var arcane_sanctuary_maxes: Array = []
+	var arcane_streak_maxes: Array = []
+	var rivals_eliminated_maxes: Array = []
+	for r in all_results:
+		dominance_maxes.append(r.max_dominance_progress)
+		territorial_progress_maxes.append(r.max_territorial_progress)
+		territorial_raw_maxes.append(r.max_territorial_percentage_raw)
+		arcane_maxes.append(r.max_arcane_progress)
+		arcane_schools_maxes.append(r.max_arcane_schools_fraction)
+		arcane_nodes_maxes.append(r.max_arcane_nodes_fraction)
+		arcane_sanctuary_maxes.append(r.max_arcane_sanctuary_fraction)
+		arcane_streak_maxes.append(r.max_arcane_streak_fraction)
+		rivals_eliminated_maxes.append(r.max_rivals_eliminated)
+
+	var thresholds := [0.5, 0.75, 0.9]
+
+	print("[sim F7 agregado dominancia] progresso_max_medio=%.1f%% rivais_eliminados_max_medio=%.2f seeds>=50%%=%d seeds>=75%%=%d seeds>=90%%=%d" % [
+		_avg(dominance_maxes) * 100.0, _avg(rivals_eliminated_maxes),
+		_count_at_least(dominance_maxes, thresholds[0]), _count_at_least(dominance_maxes, thresholds[1]), _count_at_least(dominance_maxes, thresholds[2]),
+	])
+	print("[sim F7 agregado territorial] progresso_max_medio=%.1f%% percentual_raw_max_medio=%.1f%% seeds>=50%%=%d seeds>=75%%=%d seeds>=90%%=%d" % [
+		_avg(territorial_progress_maxes) * 100.0, _avg(territorial_raw_maxes) * 100.0,
+		_count_at_least(territorial_progress_maxes, thresholds[0]), _count_at_least(territorial_progress_maxes, thresholds[1]), _count_at_least(territorial_progress_maxes, thresholds[2]),
+	])
+	print("[sim F7 agregado arcana] progresso_max_medio=%.1f%% escolas_max_medio=%.1f%% nodulos_max_medio=%.1f%% santuario_max_medio=%.1f%% streak_max_medio=%.1f%% seeds>=50%%=%d seeds>=75%%=%d seeds>=90%%=%d" % [
+		_avg(arcane_maxes) * 100.0, _avg(arcane_schools_maxes) * 100.0, _avg(arcane_nodes_maxes) * 100.0, _avg(arcane_sanctuary_maxes) * 100.0, _avg(arcane_streak_maxes) * 100.0,
+		_count_at_least(arcane_maxes, thresholds[0]), _count_at_least(arcane_maxes, thresholds[1]), _count_at_least(arcane_maxes, thresholds[2]),
+	])
+
+	# Unico assert desta fase: correcao, nunca balanceamento -- mesma
+	# disciplina de sempre.
+	for r in all_results:
+		assert_false(r.nan_or_negative_yield, "yield/ouro negativo ou NaN detectado -- bug de correcao, nao questao de balanceamento")
+
+func _count_at_least(values: Array, threshold: float) -> int:
+	var count := 0
+	for v in values:
+		if v >= threshold:
+			count += 1
+	return count
+
 ## --- Montagem de uma partida simulada ---------------------------------
 
 ## D4.0 -- `seed_value` continua controlando SO o cenario (mapa/recursos/
@@ -903,9 +1006,15 @@ func _run_seed(seed_value: int, ai_rng_seed: int) -> Dictionary:
 			RivalAI.take_turn(primary, grid, rivals[0])
 
 		_record_turn(m, grid, turn_index, primary, rivals, war_before, cities_before, research_before, campaigns_before)
+		# Roadmap "Fase F" F7 -- roda TODO turno (nao so quando GAME_OVER),
+		# pra medir "chegou perto" tambem nas seeds que nunca vencem.
+		_record_victory_progress(m, grid, primary, rivals, turn_index + 1)
 
 		if GameManager.state == GameManager.GameState.GAME_OVER:
 			m.ended_turn = turn_index + 1
+			var victory_result := _detect_victory_result(primary, rivals)
+			m.victory_winner_label = victory_result.winner_label
+			m.victory_type = victory_result.type
 			break
 		TurnManager.turn_number += 1
 
@@ -1047,6 +1156,35 @@ func _new_metrics() -> Dictionary:
 		}, # D4.3 -- fatores crus da cidade EFETIVAMENTE selecionada (RivalAI._best_war_objective), bucketado por qual objetivo venceu -- correlacao fator x objetivo escolhido pedida pelo usuario
 		"war_objective_same_best_city": 0, # Roadmap "Parte D" D4.4 -- melhor cidade de conquer == melhor cidade de secure_resources nesta decisao
 		"war_objective_different_best_city": 0, # D4.4 -- idem, mas DIVERGENTES -- pergunta central do experimento estrutural: existe alvo militarmente otimo != alvo economicamente otimo?
+		# Roadmap "Fase F" F7 -- diagnostico das 3 vitorias alternativas
+		# INTEGRADAS ao jogo de verdade (GameManager._update_victory_state/
+		# check_victories ja rodam dentro de _on_turn_changed->_finish_turn,
+		# sem nenhuma chamada nova aqui -- o harness so passou a REGISTRAR o
+		# que ja estava acontecendo desde a promocao de F3). "max_*_progress"
+		# e o maior valor 0.0-1.0 (VictoryConditions.*_progress) visto em
+		# QUALQUER jogador em QUALQUER turno desta seed; "_turn" e o turno em
+		# que esse maximo apareceu PELA PRIMEIRA vez. Metricas RAW (nao
+		# normalizadas por limiar/media) somam-se as normalizadas, pedido
+		# explicito do usuario: "nao apenas o progresso normalizado".
+		"victory_winner_label": "", # "" == nenhum vencedor ate TURN_COUNT
+		"victory_type": "", # VictoryConditions.VICTORY_TYPE_* ou "" -- ver _detect_victory_result
+		"max_dominance_progress": 0.0,
+		"max_dominance_progress_turn": -1,
+		"max_rivals_eliminated": 0, # RAW -- contagem, nao fracao
+		"max_territorial_progress": 0.0, # normalizado por TERRITORIAL_VICTORY_THRESHOLD, clampado em 1.0
+		"max_territorial_progress_turn": -1,
+		"max_territorial_percentage_raw": 0.0, # RAW -- % real do mapa habitavel, SEM normalizar pelo limiar
+		"max_arcane_progress": 0.0, # media das 4 fracoes abaixo
+		"max_arcane_progress_turn": -1,
+		# Os 4 componentes de Arcana rastreados INDEPENDENTEMENTE (cada um
+		# seu proprio maximo, nao necessariamente do MESMO jogador/turno que
+		# max_arcane_progress) -- pedido explicito do usuario: responder
+		# "qual requisito esta impedindo a condicao de acontecer?", nao so
+		# "a media chegou a X%".
+		"max_arcane_schools_fraction": 0.0,
+		"max_arcane_nodes_fraction": 0.0,
+		"max_arcane_sanctuary_fraction": 0.0,
+		"max_arcane_streak_fraction": 0.0,
 	}
 
 ## Roadmap 2.0 Parte 1 (A1) — benchmark do bonus de recurso na pontuacao de
@@ -1318,6 +1456,70 @@ func _record_campaign_changes(m: Dictionary, primary: PlayerData, rivals: Array[
 			elif before_status == RivalAI.CAMPAIGN_STATUS_ACTIVE and now_status == RivalAI.CAMPAIGN_STATUS_ACTIVE and before.target_coord != now.target_coord:
 				m.campaigns_retargeted += 1
 				print("[sim campanha T%d] %s -> alvo=%s status=redirecionada" % [turn_number, _label(attacker, primary), now.target_coord])
+
+## Roadmap "Fase F" F7 -- amostra TODO turno o progresso das 3 vitorias
+## pra TODOS os jogadores, mantendo so o MAXIMO visto (e o turno da
+## primeira vez que apareceu) por metrica -- NUNCA reimplementa nenhuma
+## formula: so chama VictoryConditions.*_progress/*_researched/
+## *_controlled/has_arcane_sanctuary diretamente, mesmo principio de D4.1
+## (_record_war_objective_decision). "eliminado" e um check trivial de 1
+## linha (units+cities vazios), ja inline em 3 lugares da producao
+## (VictoryConditions.is_dominance_achieved, RivalAI, HUD) -- nao e "a
+## formula" no sentido que _score_war_target e, entao repeti-lo aqui nao
+## viola a disciplina de reuso.
+func _record_victory_progress(m: Dictionary, hex_grid: HexGrid, primary: PlayerData, rivals: Array[PlayerData], turn_number: int) -> void:
+	var players: Array[PlayerData] = ([primary] as Array[PlayerData]) + rivals
+
+	for player in players:
+		var dominance_progress := VictoryConditions.dominance_progress(player, players)
+		if dominance_progress > m.max_dominance_progress:
+			m.max_dominance_progress = dominance_progress
+			m.max_dominance_progress_turn = turn_number
+		var eliminated_count := 0
+		for other in players:
+			if other != player and other.units.is_empty() and other.cities.is_empty():
+				eliminated_count += 1
+		if eliminated_count > m.max_rivals_eliminated:
+			m.max_rivals_eliminated = eliminated_count
+
+		var territorial_percentage_raw := VictoryConditions.territorial_percentage(player, hex_grid)
+		if territorial_percentage_raw > m.max_territorial_percentage_raw:
+			m.max_territorial_percentage_raw = territorial_percentage_raw
+		var territorial_progress := VictoryConditions.territorial_progress(player, hex_grid)
+		if territorial_progress > m.max_territorial_progress:
+			m.max_territorial_progress = territorial_progress
+			m.max_territorial_progress_turn = turn_number
+
+		var schools_fraction: float = min(float(VictoryConditions.arcane_schools_researched(player)) / float(VictoryConditions.ARCANE_SCHOOLS_REQUIRED), 1.0)
+		var nodes_fraction: float = min(float(VictoryConditions.arcane_nodes_controlled(player, hex_grid)) / float(VictoryConditions.ARCANE_NODES_REQUIRED), 1.0)
+		var sanctuary_fraction: float = 1.0 if VictoryConditions.has_arcane_sanctuary(player) else 0.0
+		var streak_fraction: float = min(float(player.arcane_ritual_streak) / float(VictoryConditions.ARCANE_SUSTAIN_TURNS), 1.0)
+		m.max_arcane_schools_fraction = max(m.max_arcane_schools_fraction, schools_fraction)
+		m.max_arcane_nodes_fraction = max(m.max_arcane_nodes_fraction, nodes_fraction)
+		m.max_arcane_sanctuary_fraction = max(m.max_arcane_sanctuary_fraction, sanctuary_fraction)
+		m.max_arcane_streak_fraction = max(m.max_arcane_streak_fraction, streak_fraction)
+		var arcane_progress := VictoryConditions.arcane_progress(player, hex_grid)
+		if arcane_progress > m.max_arcane_progress:
+			m.max_arcane_progress = arcane_progress
+			m.max_arcane_progress_turn = turn_number
+
+## D4.1-style: quando GameManager.state ja virou GAME_OVER (check_victories
+## ja rodou dentro de _on_turn_changed->_finish_turn ANTES deste ponto do
+## loop), re-deriva QUEM/QUAL tipo causou isso chamando as MESMAS funcoes
+## puras na MESMA ordem fixa de GameManager.check_victories -- nunca
+## reimplementa o desempate do zero, so espelha a mesma sequencia
+## documentada la (jogadores [primary]+rivais, tipos Dominacao->
+## Territorial->Arcana).
+func _detect_victory_result(primary: PlayerData, rivals: Array[PlayerData]) -> Dictionary:
+	var players_in_order: Array[PlayerData] = ([primary] as Array[PlayerData]) + rivals
+	for player in players_in_order:
+		if VictoryConditions.is_dominance_achieved(player, players_in_order):
+			return {"winner_label": _label(player, primary), "type": VictoryConditions.VICTORY_TYPE_DOMINANCE}
+		if VictoryConditions.is_territorial_dominance_achieved(player):
+			return {"winner_label": _label(player, primary), "type": VictoryConditions.VICTORY_TYPE_TERRITORIAL}
+		if VictoryConditions.is_arcane_ascension_achieved(player):
+			return {"winner_label": _label(player, primary), "type": VictoryConditions.VICTORY_TYPE_ARCANE}
+	return {"winner_label": "", "type": ""}
 
 func _record_turn(m: Dictionary, grid: HexGrid, turn_index: int, primary: PlayerData, rivals: Array[PlayerData], war_before: Dictionary, cities_before: Dictionary, research_before: Dictionary, campaigns_before: Dictionary) -> void:
 	var turn_number := turn_index + 1
