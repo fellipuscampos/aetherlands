@@ -20,3 +20,12 @@ signal restart_requested
 signal notify(text: String, sfx_kind: String)
 signal fog_updated
 signal minimap_clicked(world_pos: Vector3)
+## World Event System (docs/WORLD_EVENT_CONTRACT.md) -- emitidos so por
+## WorldEventManager (ver comentario de topo la), nunca por um WorldEvent
+## diretamente (mesma disciplina de victory_achieved: o sinal carrega o
+## objeto vivo + um resultado, nunca um snapshot duplicado). result no
+## sinal completed e so o resultado FINAL do evento (WorldEvent.result),
+## nunca uma copia permanente do estado do evento inteiro.
+signal world_event_announced(event: WorldEvent)
+signal world_event_phase_changed(event: WorldEvent, old_phase: String, new_phase: String)
+signal world_event_completed(event: WorldEvent, result: Dictionary)

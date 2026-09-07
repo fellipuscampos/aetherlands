@@ -29,6 +29,7 @@ SelectionManager="*res://scripts/autoload/SelectionManager.gd"
 Settings="*res://scripts/autoload/Settings.gd"
 AudioManager="*res://scripts/autoload/AudioManager.gd"
 SaveManager="*res://scripts/autoload/SaveManager.gd"
+WorldEventManager="*res://scripts/autoload/WorldEventManager.gd"
 
 [display]
 
