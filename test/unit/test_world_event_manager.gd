@@ -183,12 +183,27 @@ func test_from_save_dict_defaults_safely_for_a_save_without_events():
 	assert_eq(WorldEventManager.active_events.size(), 0)
 	assert_eq(WorldEventManager._next_event_id, 0)
 
-## Nenhum tipo concreto existe ainda (Step 2 e generico; DragonEvent vem
-## depois) -- um event_type desconhecido no save deveria ser ignorado,
-## nunca travar o load inteiro (mesmo se um save futuro tiver "dragon"
-## antes desta build conhecer DragonEvent).
+## Um event_type desconhecido no save (nunca "dragon" -- esse ja e
+## reconstruivel, ver DragonEvent -- mas um tipo futuro que uma build mais
+## antiga nao conhece ainda) deveria ser ignorado, nunca travar o load
+## inteiro.
 func test_from_save_dict_ignores_unknown_event_type_without_crashing():
-	WorldEventManager.from_save_dict({"next_event_id": 3, "events": [{"event_type": "dragon", "event_id": 0}]})
+	WorldEventManager.from_save_dict({"next_event_id": 3, "events": [{"event_type": "some_future_event_type", "event_id": 0}]})
 
-	assert_eq(WorldEventManager.active_events.size(), 0, "nenhum tipo concreto existe ainda -- deveria ser ignorado, nao travar o load")
+	assert_eq(WorldEventManager.active_events.size(), 0, "tipo desconhecido deveria ser ignorado, nao travar o load")
 	assert_eq(WorldEventManager._next_event_id, 3)
+
+## DragonEvent (ver DragonEvent.gd) e o unico tipo concreto reconstruivel
+## hoje -- confirma a reconstrucao polimorfica de verdade, nao so a
+## ausencia de crash.
+func test_from_save_dict_reconstructs_a_dragon_event():
+	WorldEventManager.from_save_dict({
+		"next_event_id": 1,
+		"events": [{"event_type": "dragon", "event_id": 0, "phase": WorldEvent.PHASE_ACTIVE, "lair_coord": [5, 6]}],
+	})
+
+	assert_eq(WorldEventManager.active_events.size(), 1)
+	var event: WorldEvent = WorldEventManager.active_events[0]
+	assert_true(event is DragonEvent, "deveria reconstruir a subclasse DragonEvent, nao um WorldEvent generico")
+	assert_eq(event.phase, WorldEvent.PHASE_ACTIVE)
+	assert_eq((event as DragonEvent).lair_coord, Vector2i(5, 6))

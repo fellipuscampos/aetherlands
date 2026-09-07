@@ -83,12 +83,13 @@ func from_save_dict(data: Dictionary) -> void:
 		event.from_save_dict(saved)
 		active_events.append(event)
 
-## Reconstrucao polimorfica por event_type (contrato secao 3) -- hoje
-## nenhum evento concreto existe ainda (Step 2 e generico; DragonEvent e
-## o proximo passo), entao nao ha caso de verdade nenhum aqui -- so o
-## fallback null. Ganha o primeiro caso real ("dragon" -> DragonEvent.
-## new()) quando DragonEvent existir; vira uma tabela de registro so se/
-## quando o numero de tipos concretos justificar (mesma disciplina de nao
-## introduzir mecanismo antes de precisar).
-func _construct_event(_event_type: String) -> WorldEvent:
-	return null
+## Reconstrucao polimorfica por event_type (contrato secao 3) -- um match
+## simples e suficiente com um so tipo concreto (DragonEvent); vira uma
+## tabela de registro so se/quando o numero de tipos concretos justificar
+## (mesma disciplina de nao introduzir mecanismo antes de precisar).
+func _construct_event(event_type: String) -> WorldEvent:
+	match event_type:
+		DragonEvent.EVENT_TYPE:
+			return DragonEvent.new()
+		_:
+			return null

@@ -761,3 +761,39 @@ func test_save_and_load_succeeds_even_with_an_unreconstructable_event_in_the_fil
 	assert_true(ok, "um evento de tipo desconhecido no save nao deveria impedir o load do resto do jogo")
 	assert_eq(WorldEventManager.active_events.size(), 0, "o proprio evento nao sobrevive ainda -- nenhum tipo concreto existe (DragonEvent vem no Step 5)")
 	assert_eq(WorldEventManager._next_event_id, 1, "o contador continua correto mesmo com o evento em si descartado")
+
+## --- DragonEvent (Step 5A) end-to-end -- sequencia completa pedida pelo
+## usuario: criar -> colocar em fase intermediaria -> salvar -> carregar ->
+## confirmar mesma fase E mesmo estado especifico -> confirmar que NENHUM
+## avanco ocorreu durante o load -> so ENTAO avancar um turno de verdade ->
+## confirmar que a evolucao so acontece a partir dai.
+func test_save_and_load_restores_a_dragon_event_in_its_exact_phase_and_state():
+	# So pra check_victories() nao fechar o jogo por Dominacao trivial (um
+	# dos dois lados sem NENHUMA unidade/cidade "perderia" sozinho) antes
+	# do _on_turn_changed() do fim do teste -- os DOIS lados precisam de
+	# pelo menos uma unidade, nao so o rival.
+	_make_unit("warrior", human, hex_grid.tiles.keys()[1])
+	_make_unit("warrior", rival, hex_grid.tiles.keys()[2])
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_ACTIVE
+	event.lair_coord = Vector2i(3, 4)
+	WorldEventManager.register_event(event)
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	assert_true(SaveManager.load_game(loaded_grid, TEST_SAVE_PATH))
+
+	assert_eq(WorldEventManager.active_events.size(), 1, "DragonEvent e reconstruivel -- deveria sobreviver ao load")
+	var loaded_event: WorldEvent = WorldEventManager.active_events[0]
+	assert_true(loaded_event is DragonEvent)
+	assert_eq(loaded_event.phase, WorldEvent.PHASE_ACTIVE, "load nao deveria ter avancado o evento nenhuma fase")
+	assert_eq((loaded_event as DragonEvent).lair_coord, Vector2i(3, 4), "estado especifico deveria sobreviver identico")
+
+	# So DEPOIS do load, um turno de verdade deveria avancar o evento --
+	# prova que a evolucao so acontece via _finish_turn(), nunca via load.
+	GameManager._on_turn_changed(TurnManager.turn_number, 0)
+
+	assert_eq(loaded_event.phase, WorldEvent.PHASE_RESOLUTION, "um turno real DEPOIS do load deveria avancar exatamente uma fase")
