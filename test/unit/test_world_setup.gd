@@ -69,6 +69,7 @@ func test_find_start_tile_never_returns_a_tile_guarded_by_a_monster():
 	var start = WorldSetup.find_start_tile(hex_grid, Vector2i(0, 0))
 
 	assert_eq(start, Vector2i(1, 0), "deveria pular o tile guardado por um monstro e escolher o proximo melhor")
+	guardian.queue_free()
 	hex_grid.queue_free()
 
 ## Cobre WorldSetup.find_spawn_tile: pedido do usuario ("quando terminar de

@@ -399,6 +399,23 @@ void vertex() {
 	// partir de um relevo que nem esta sendo desenhado mais.
 	NORMAL = mix(NORMAL, bump_normal, is_top_face * shape_mask);
 
+	// Pedido do usuario ("a nevoa nao deve deixar reconstruir o continente
+	// pelas bordas expostas dos tiles ocultos"): a PAREDE do prisma (a
+	// "saia" que desce ate abaixo do nivel da agua, ver LAND_PRISM_DEPTH_
+	// FACTOR) nunca era achatada aqui — so is_top_face entrava no mix acima,
+	// entao uma parede exposta na costa (tile de terra fora de visao ao
+	// lado de agua) mantinha o normal HORIZONTAL original mesmo com o TOPO
+	// vizinho e a AGUA vizinha (ver water_shader.gdshader) achatados pra
+	// normal vertical (0,1,0). Cor identica (cinza de nevoa) nos tres, mas
+	// N.L diferente sob luz direcional desenhava uma linha escura seguindo
+	// EXATAMENTE o contorno real da costa por baixo da nevoa — confirmado
+	// isolando o efeito num teste descartavel (a linha some com a luz
+	// direcional zerada, sobra so com ela ligada). Fora da costa nenhuma
+	// parede fica exposta pra comecar (tiles planos vizinhos tem o mesmo
+	// base_height, a saia fica enterrada), entao este fix so muda algo
+	// visivel exatamente onde o vazamento acontecia.
+	NORMAL = mix(NORMAL, vec3(0.0, 1.0, 0.0), (1.0 - is_top_face) * (1.0 - shape_mask));
+
 	v_local_y = VERTEX.y;
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	// Normal em espaco mundo so pros pesos do triplanar e a deteccao de

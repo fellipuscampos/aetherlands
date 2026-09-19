@@ -117,6 +117,28 @@ func test_promotion_heals_a_fraction_of_max_hp():
 	var expected = min(5.0 + attacker.unit_data.max_hp * Unit.PROMOTION_HEAL_FRACTION, attacker.unit_data.max_hp)
 	assert_almost_eq(attacker.hp, expected, 0.01)
 
+## Roadmap "Fase Macro" 5B.3-G v3 -- pedido explicito do usuario apos
+## playtest: "parece que o dragao tem regeneracao de vida... causei 1 de
+## dano nele, e ele se curou quando foi pra outra cidade". Causa real:
+## register_kill() cura uma fracao do HP MAXIMO a cada promocao de
+## veterania (ver teste acima) -- nada excluia o Dragao (world_event_
+## managed=true) disso, entao matar uma unidade fraca em combate normal
+## podia cruzar um limiar de kills e curar a vida de volta, parecendo
+## regeneracao. Boss scriptado (stats fixos em MonsterDatabase) nunca
+## deveria acumular veterania como uma unidade normal.
+func test_world_event_managed_attacker_never_gains_veterancy_or_heals_from_a_kill():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	attacker.world_event_managed = true
+	attacker.hp = 5.0 # bem abaixo do maximo (12) -- se curasse, ficaria evidente
+	var defender = _make_unit("warrior", rival, Vector2i(1, 0))
+	defender.hp = 0.5 # qualquer dano mata -- cruzaria o limiar de promocao numa unidade normal
+
+	CombatResolver.resolve(attacker, defender, hex_grid)
+
+	assert_eq(attacker.kills, 0, "unidade gerenciada por World Event nunca deveria acumular abates")
+	assert_eq(attacker.veterancy_level, 0, "nunca deveria subir de nivel")
+	assert_eq(attacker.hp, 5.0, "nunca deveria curar por promocao -- e' a 'regeneracao' relatada pelo usuario")
+
 func test_defender_that_survives_and_kills_attacker_gets_credit():
 	var attacker = _make_unit("settler", human, Vector2i(0, 0))
 	attacker.unit_data.attack = 1.0
@@ -164,6 +186,89 @@ func test_flanking_ignores_units_that_are_not_the_attackers_allies():
 	var result_with_enemy_nearby = CombatResolver.predict(attacker, defender, hex_grid)
 
 	assert_almost_eq(result_with_enemy_nearby.damage_to_defender, result_alone.damage_to_defender, 0.01, "unidade do lado do defensor nao deveria contar como flanqueamento do atacante")
+
+## --- Roadmap "Fase Macro" 5B.3-D (Dragon World Event): dano em area -------
+## resolve_with_splash() reusa resolve()/predict() de verdade pro alvo
+## primario (sem NENHUMA mudanca de formula) e aplica uma FRACAO do mesmo
+## dano previsto a outros inimigos do atacante num raio ao redor dele --
+## generico (DragonEvent e' so' o primeiro chamador), nunca uma formula
+## nova nem uma copia da logica de combate.
+
+func test_resolve_with_splash_deals_the_full_predicted_damage_to_the_primary_target():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var primary = _make_unit("warrior", rival, Vector2i(1, 0))
+	primary.hp = 1000.0 # sobrevive de proposito, pra medir o dano exato sem morrer/remover
+	var expected = CombatResolver.predict(attacker, primary, hex_grid).damage_to_defender
+
+	CombatResolver.resolve_with_splash(attacker, primary, hex_grid, 1, 0.4)
+
+	assert_almost_eq(primary.hp, 1000.0 - expected, 0.01, "alvo primario recebe o dano PREVISTO normal, sem nenhuma mudanca")
+
+func test_resolve_with_splash_deals_a_fraction_of_that_damage_to_a_nearby_enemy():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var primary = _make_unit("warrior", rival, Vector2i(1, 0))
+	primary.hp = 1000.0
+	var secondary = _make_unit("warrior", rival, Vector2i(2, 0)) # vizinho do alvo primario, dentro do raio 1
+	secondary.hp = 1000.0
+	var expected_secondary_damage = CombatResolver.predict(attacker, secondary, hex_grid).damage_to_defender * 0.4
+
+	CombatResolver.resolve_with_splash(attacker, primary, hex_grid, 1, 0.4)
+
+	assert_almost_eq(secondary.hp, 1000.0 - expected_secondary_damage, 0.01, "unidade proxima deveria receber uma FRACAO do dano, nunca o dano cheio")
+	assert_lt(secondary.hp, 1000.0, "pre-condicao: o secundario precisa ter tomado ALGUM dano")
+
+func test_resolve_with_splash_never_damages_the_primary_target_twice():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var primary = _make_unit("warrior", rival, Vector2i(1, 0))
+	primary.hp = 1000.0
+	var expected = CombatResolver.predict(attacker, primary, hex_grid).damage_to_defender
+
+	CombatResolver.resolve_with_splash(attacker, primary, hex_grid, 1, 0.4)
+
+	# Se o alvo primario fosse contado de novo no loop de splash (ele
+	# proprio esta a distancia 0 do seu proprio tile, dentro de qualquer
+	# raio >= 0), o dano total seria MAIOR que o previsto sozinho.
+	assert_almost_eq(primary.hp, 1000.0 - expected, 0.01, "o alvo primario nunca deveria ser atingido de novo pelo proprio splash")
+
+func test_resolve_with_splash_removes_secondary_units_that_die():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var primary = _make_unit("warrior", rival, Vector2i(1, 0))
+	primary.hp = 1000.0
+	var secondary = _make_unit("warrior", rival, Vector2i(2, 0))
+	secondary.hp = 0.3 # menor que o menor dano de splash possivel (min 1.0 de dano primario * 0.4)
+
+	CombatResolver.resolve_with_splash(attacker, primary, hex_grid, 1, 0.4)
+
+	assert_null(hex_grid.get_unit_at(Vector2i(2, 0)), "unidade secundaria morta pelo splash deveria ser removida do mapa")
+
+func test_resolve_with_splash_ignores_allies_and_other_neutrals():
+	hex_grid.tiles[Vector2i(0, 1)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND) # vizinho extra do alvo primario, fora do setup padrao
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var primary = _make_unit("warrior", rival, Vector2i(1, 0))
+	primary.hp = 1000.0
+	var ally = _make_unit("warrior", human, Vector2i(2, 0)) # mesmo dono do atacante
+	ally.hp = 5.0
+	var neutral = hex_grid.spawn_monster_at(Vector2i(0, 1), "goblin") # sem dono nenhum
+	neutral.hp = 5.0
+
+	CombatResolver.resolve_with_splash(attacker, primary, hex_grid, 1, 0.4)
+
+	assert_almost_eq(ally.hp, 5.0, 0.01, "aliado do atacante nunca deveria tomar dano de area")
+	assert_almost_eq(neutral.hp, 5.0, 0.01, "outro neutro nunca deveria tomar dano de area")
+	neutral.queue_free()
+
+func test_resolve_with_splash_skips_area_damage_entirely_if_the_attacker_dies_to_the_counter_attack():
+	var attacker = _make_unit("settler", human, Vector2i(0, 0))
+	attacker.unit_data.attack = 1.0
+	attacker.hp = 0.5 # qualquer contra-ataque mata
+	var primary = _make_unit("warrior", rival, Vector2i(1, 0))
+	var secondary = _make_unit("warrior", rival, Vector2i(2, 0))
+	secondary.hp = 1000.0
+
+	CombatResolver.resolve_with_splash(attacker, primary, hex_grid, 1, 0.4)
+
+	assert_true(attacker.hp <= 0.0, "pre-condicao: o atacante precisa ter morrido no contra-ataque")
+	assert_almost_eq(secondary.hp, 1000.0, 0.01, "um atacante ja morto nao deveria continuar aplicando dano em area")
 
 ## Mago (unit_data.ignores_terrain_defense) atira magia que ignora o bonus
 ## de defesa de terreno do defensor — colina (defense_bonus 0.5) protege
@@ -323,6 +428,64 @@ func test_attacking_undefended_city_without_walls_damages_hp_directly():
 
 	assert_almost_eq(city.hp, hp_before - 4.0, 0.01)
 	assert_eq(city.shield, 0.0, "sem Muralhas construida, a cidade nao deveria ter escudo nenhum")
+	city.queue_free()
+
+## --- Roadmap "Fase Macro" 5B.3-G: capa de dano por raid (max_damage_
+## fraction_of_current_hp) -- pedido explicito do usuario apos o playtest
+## do Dragao: "ele não deveria destruir a cidade, só causar dano... não
+## fazer a vida da cidade chegar a 0 na primeira passada".
+
+func test_resolve_city_attack_without_a_cap_behaves_exactly_as_before():
+	# Parametro omitido == default 1.0 == SEM capa nenhuma -- jogador/rival
+	# continuam identicos a antes desta mudanca. HP inicial alto o bastante
+	# pra NAO chegar a zero (senao um atacante nao-neutro capturaria a
+	# cidade e capture_city() curaria o hp de volta pro maximo -- ver
+	# test_capturing_a_city_via_attack_resets_hp_and_shield_for_new_owner --
+	# o que testaria a cura de captura, nao a ausencia de capa).
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	attacker.unit_data.attack = 10.0
+	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
+	city.hp = 20.0
+
+	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
+
+	assert_almost_eq(city.hp, 10.0, 0.01, "sem capa, o dano bruto (10) deveria ser aplicado por inteiro (comportamento identico a antes)")
+	city.queue_free()
+
+func test_resolve_city_attack_with_a_cap_limits_damage_to_a_fraction_of_current_hp():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	attacker.unit_data.attack = 50.0 # dano bruto bem maior que a capa permitiria
+	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
+	city.hp = 20.0
+
+	CombatResolver.resolve_city_attack(attacker, city, hex_grid, 0.35)
+
+	assert_almost_eq(city.hp, 20.0 - 20.0 * 0.35, 0.01, "o dano deveria ser limitado a 35% do HP ATUAL da cidade, nunca o dano bruto inteiro")
+	city.queue_free()
+
+func test_resolve_city_attack_cap_never_reduces_damage_below_one():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
+	city.hp = 5.0
+
+	CombatResolver.resolve_city_attack(attacker, city, hex_grid, 0.01) # capa agressiva de proposito
+
+	assert_almost_eq(city.hp, 4.0, 0.01, "mesmo com uma capa agressiva, o ataque precisa continuar causando pelo menos 1.0 de dano de verdade")
+	city.queue_free()
+
+func test_resolve_city_attack_cap_still_respects_shield_first():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	attacker.unit_data.attack = 50.0
+	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
+	city.buildings["walls"] = true
+	city.shield = city.max_shield()
+	var shield_before = city.shield
+	var hp_before = city.hp
+
+	CombatResolver.resolve_city_attack(attacker, city, hex_grid, 0.35)
+
+	assert_lt(city.shield, shield_before, "o escudo ainda deveria absorver o dano (capado) primeiro")
+	assert_almost_eq(city.hp, hp_before, 0.01, "escudo cheio deveria ter absorvido todo o dano capado, sem sobrar nada pra vida")
 	city.queue_free()
 
 func test_city_is_not_captured_by_a_single_attack_that_does_not_zero_its_hp():

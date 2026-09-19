@@ -110,7 +110,11 @@ static func player_habitable_tiles(player: PlayerData, hex_grid: HexGrid) -> int
 ## contra mapa sem tile habitavel nenhum (nunca deveria acontecer, so
 ## defensivo).
 static func territorial_percentage(player: PlayerData, hex_grid: HexGrid) -> float:
-	var total := total_habitable_tiles(hex_grid)
+	# hex_grid.total_habitable_tiles_cached() (nao total_habitable_tiles()
+	# direto) -- mesmo resultado, so memoizado -- ver o comentario do cache
+	# em HexGrid.gd pro custo real que isso evita (varredura do mapa
+	# inteiro, chamada uma vez por jogador todo fim de turno).
+	var total := hex_grid.total_habitable_tiles_cached()
 	if total <= 0:
 		return 0.0
 	return float(player_habitable_tiles(player, hex_grid)) / float(total)
@@ -158,11 +162,18 @@ const ARCANE_RITUAL_UPKEEP_COST_PER_TURN := 10.0
 ## Quantas das 7 escolas magicas `player` ja tem PELO MENOS uma tech
 ## pesquisada -- "escola pesquisada" e por tech.school, nao por uma
 ## tech-capstone especifica (decisao de F1: qualquer tech daquela escola
-## conta, preserva "escolha estrategica" entre as 7).
+## conta, preserva "escolha estrategica" entre as 7). Le MagicDatabase/
+## researched_magic (nao mais TechDatabase/researched_techs) desde a
+## separacao estrutural das duas arvores de pesquisa -- reapontamento
+## MINIMO pra essa funcao continuar funcionando exatamente como antes,
+## nenhum limiar/logica de vitoria mudou (ARCANE_SCHOOLS/filtro mantidos
+## por seguranca, ainda que hoje toda tech de MagicDatabase ja esteja
+## nessa lista).
 static func arcane_schools_researched(player: PlayerData) -> int:
 	var schools_seen := {}
-	for tech in TechDatabase.all_techs():
-		if tech.school in ARCANE_SCHOOLS and player.researched_techs.has(tech.id):
+	for id in player.researched_magic:
+		var tech := MagicDatabase.get_tech(id)
+		if tech and tech.school in ARCANE_SCHOOLS:
 			schools_seen[tech.school] = true
 	return schools_seen.size()
 

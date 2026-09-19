@@ -8,7 +8,7 @@ extends RefCounted
 ## Theme na hora (sem precisar de um arquivo .tres pra manter em sincronia
 ## manualmente) — HUD/TitleScreen/PauseMenu setam `theme = UITheme.build()`
 ## no proprio _ready(), e todo Control filho (incluindo os paineis
-## instanciados dentro deles, como SettingsPanel) herda automaticamente.
+## instanciados dentro deles, como SettingsScreen) herda automaticamente.
 ##
 ## Paleta "pergaminho antigo": fundo marrom bem escuro quase preto, texto
 ## cor de pergaminho, contorno dourado/bronze — combina com o tema

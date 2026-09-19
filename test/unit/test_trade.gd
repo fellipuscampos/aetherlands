@@ -1,5 +1,12 @@
 extends GutTest
 
+var _owned_players: Array[PlayerData] = []
+
+func _track_player(civ: CivilizationData) -> PlayerData:
+	var player := PlayerData.new(civ)
+	_owned_players.append(player)
+	return player
+
 ## Comercio, MVP fechado (roadmap de gameplay Fase 4A, ver TradeManager.gd/
 ## TradeRoute.gd). Escopo deliberadamente minimo: rota ponto-a-ponto entre
 ## duas cidades, renda pequena de comida/producao/ouro todo turno enquanto
@@ -15,6 +22,9 @@ func before_each():
 	hex_grid.tiles[Vector2i(5, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
 
 func after_each():
+	for player in _owned_players:
+		player.release_relations()
+	_owned_players.clear()
 	hex_grid.queue_free()
 
 func _city_with_market(coord: Vector2i, player: PlayerData, name: String) -> City:
@@ -23,8 +33,8 @@ func _city_with_market(coord: Vector2i, player: PlayerData, name: String) -> Cit
 	return city
 
 func test_propose_route_succeeds_between_cities_of_different_players_at_peace_with_market():
-	var a := PlayerData.new(CivilizationData.new())
-	var b := PlayerData.new(CivilizationData.new())
+	var a := _track_player(CivilizationData.new())
+	var b := _track_player(CivilizationData.new())
 	var city_a := _city_with_market(Vector2i(0, 0), a, "Cidade A")
 	var city_b := _city_with_market(Vector2i(5, 0), b, "Cidade B")
 
@@ -35,7 +45,7 @@ func test_propose_route_succeeds_between_cities_of_different_players_at_peace_wi
 	assert_true(b.trade_routes.has(route))
 
 func test_propose_route_fails_between_cities_of_the_same_player():
-	var a := PlayerData.new(CivilizationData.new())
+	var a := _track_player(CivilizationData.new())
 	var city_a := _city_with_market(Vector2i(0, 0), a, "Cidade A")
 	var city_b := _city_with_market(Vector2i(5, 0), a, "Cidade B")
 
@@ -44,8 +54,8 @@ func test_propose_route_fails_between_cities_of_the_same_player():
 	assert_null(route, "nao deveria haver rota de comercio de uma civ com ela mesma")
 
 func test_propose_route_fails_when_at_war():
-	var a := PlayerData.new(CivilizationData.new())
-	var b := PlayerData.new(CivilizationData.new())
+	var a := _track_player(CivilizationData.new())
+	var b := _track_player(CivilizationData.new())
 	Diplomacy.declare_war(a, b)
 	var city_a := _city_with_market(Vector2i(0, 0), a, "Cidade A")
 	var city_b := _city_with_market(Vector2i(5, 0), b, "Cidade B")
@@ -57,8 +67,8 @@ func test_propose_route_fails_when_at_war():
 ## Pedido do usuario: "Mercado ganha um segundo efeito real: aumenta o
 ## numero maximo de rotas simultaneas" — sem ele, capacidade e 0.
 func test_propose_route_fails_without_market_in_either_city():
-	var a := PlayerData.new(CivilizationData.new())
-	var b := PlayerData.new(CivilizationData.new())
+	var a := _track_player(CivilizationData.new())
+	var b := _track_player(CivilizationData.new())
 	var city_a := hex_grid.found_city(Vector2i(0, 0), a, "Cidade A") # sem Mercado
 	var city_b := _city_with_market(Vector2i(5, 0), b, "Cidade B")
 
@@ -67,10 +77,10 @@ func test_propose_route_fails_without_market_in_either_city():
 	assert_null(route, "sem Mercado numa das pontas, a rota nao deveria caber")
 
 func test_propose_route_fails_when_a_citys_capacity_is_full():
-	var a := PlayerData.new(CivilizationData.new())
-	var b := PlayerData.new(CivilizationData.new())
-	var c := PlayerData.new(CivilizationData.new())
-	var d := PlayerData.new(CivilizationData.new())
+	var a := _track_player(CivilizationData.new())
+	var b := _track_player(CivilizationData.new())
+	var c := _track_player(CivilizationData.new())
+	var d := _track_player(CivilizationData.new())
 	var city_a := _city_with_market(Vector2i(0, 0), a, "Cidade A") # capacidade 2 (1 Mercado)
 	hex_grid.tiles[Vector2i(6, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
 	hex_grid.tiles[Vector2i(7, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
@@ -87,8 +97,8 @@ func test_propose_route_fails_when_a_citys_capacity_is_full():
 ## Mesma heuristica de Diplomacy._accepts_peace (reaproveitada, nao
 ## reinventada) — uma civ "ganhando" (mais unidades) recusa a proposta.
 func test_propose_route_is_refused_by_a_much_stronger_civ():
-	var proposer := PlayerData.new(CivilizationData.new())
-	var other := PlayerData.new(CivilizationData.new())
+	var proposer := _track_player(CivilizationData.new())
+	var other := _track_player(CivilizationData.new())
 	for i in range(3):
 		other.units.append(null)
 	var city_a := _city_with_market(Vector2i(0, 0), proposer, "Cidade A")
@@ -99,8 +109,8 @@ func test_propose_route_is_refused_by_a_much_stronger_civ():
 	assert_null(route, "civ muito mais forte deveria recusar a proposta, mesma heuristica de aceitar paz")
 
 func test_process_all_routes_applies_income_to_both_cities_and_owners():
-	var a := PlayerData.new(CivilizationData.new())
-	var b := PlayerData.new(CivilizationData.new())
+	var a := _track_player(CivilizationData.new())
+	var b := _track_player(CivilizationData.new())
 	var city_a := _city_with_market(Vector2i(0, 0), a, "Cidade A")
 	var city_b := _city_with_market(Vector2i(5, 0), b, "Cidade B")
 	TradeManager.propose_route(city_a, city_b)
@@ -118,8 +128,8 @@ func test_process_all_routes_applies_income_to_both_cities_and_owners():
 ## O elo mais importante pedido pelo usuario: guerra declarada entre as
 ## duas pontas cancela a rota no proximo processamento de turno.
 func test_process_all_routes_removes_route_when_war_is_declared():
-	var a := PlayerData.new(CivilizationData.new())
-	var b := PlayerData.new(CivilizationData.new())
+	var a := _track_player(CivilizationData.new())
+	var b := _track_player(CivilizationData.new())
 	var city_a := _city_with_market(Vector2i(0, 0), a, "Cidade A")
 	var city_b := _city_with_market(Vector2i(5, 0), b, "Cidade B")
 	var route := TradeManager.propose_route(city_a, city_b)
@@ -132,9 +142,9 @@ func test_process_all_routes_removes_route_when_war_is_declared():
 	assert_false(b.trade_routes.has(route), "guerra deveria cancelar a rota do outro lado tambem")
 
 func test_process_all_routes_removes_route_when_a_city_is_captured():
-	var a := PlayerData.new(CivilizationData.new())
-	var b := PlayerData.new(CivilizationData.new())
-	var c := PlayerData.new(CivilizationData.new())
+	var a := _track_player(CivilizationData.new())
+	var b := _track_player(CivilizationData.new())
+	var c := _track_player(CivilizationData.new())
 	var city_a := _city_with_market(Vector2i(0, 0), a, "Cidade A")
 	var city_b := _city_with_market(Vector2i(5, 0), b, "Cidade B")
 	var route := TradeManager.propose_route(city_a, city_b)
@@ -147,8 +157,8 @@ func test_process_all_routes_removes_route_when_a_city_is_captured():
 	assert_false(c.trade_routes.has(route), "novo dono nao herda a rota do antigo")
 
 func test_active_route_count_reflects_routes_touching_a_city():
-	var a := PlayerData.new(CivilizationData.new())
-	var b := PlayerData.new(CivilizationData.new())
+	var a := _track_player(CivilizationData.new())
+	var b := _track_player(CivilizationData.new())
 	var city_a := _city_with_market(Vector2i(0, 0), a, "Cidade A")
 	var city_b := _city_with_market(Vector2i(5, 0), b, "Cidade B")
 
@@ -160,12 +170,12 @@ func test_active_route_count_reflects_routes_touching_a_city():
 	assert_eq(TradeManager.active_route_count(city_b), 1)
 
 func test_max_trade_routes_is_zero_without_market():
-	var player := PlayerData.new(CivilizationData.new())
+	var player := _track_player(CivilizationData.new())
 	var city := hex_grid.found_city(Vector2i(0, 0), player, "Capital")
 	assert_eq(city.max_trade_routes(), 0)
 
 func test_max_trade_routes_with_market():
-	var player := PlayerData.new(CivilizationData.new())
+	var player := _track_player(CivilizationData.new())
 	var city := _city_with_market(Vector2i(0, 0), player, "Capital")
 	assert_eq(city.max_trade_routes(), City.MARKET_ROUTE_CAPACITY_BONUS)
 
@@ -173,10 +183,10 @@ func test_max_trade_routes_with_market():
 ## uma cidade com 2+ fontes de Seda controladas aceita uma rota ALEM da
 ## capacidade base do Mercado (que sozinha ja estaria cheia).
 func test_propose_route_succeeds_over_market_capacity_with_enough_silk():
-	var a := PlayerData.new(CivilizationData.new())
-	var b := PlayerData.new(CivilizationData.new())
-	var c := PlayerData.new(CivilizationData.new())
-	var d := PlayerData.new(CivilizationData.new())
+	var a := _track_player(CivilizationData.new())
+	var b := _track_player(CivilizationData.new())
+	var c := _track_player(CivilizationData.new())
+	var d := _track_player(CivilizationData.new())
 	var city_a := _city_with_market(Vector2i(0, 0), a, "Cidade A") # capacidade base 2 (1 Mercado)
 	# owned_tiles setado A MAO (nao via anel automatico de found_city, que
 	# so pega vizinhos JA presentes em hex_grid.tiles no momento da

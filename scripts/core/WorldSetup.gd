@@ -1,6 +1,8 @@
 class_name WorldSetup
 extends RefCounted
 
+const NO_SPAWN_COORD := Vector2i(999999, 999999)
+
 ## Encontra um bom tile inicial (terreno habitavel) mais proximo de uma
 ## origem desejada, com fallback progressivo se nao achar o ideal.
 ## `excluded` (coords ja reivindicados por OUTRA civ nesta mesma geracao de
@@ -32,10 +34,15 @@ static func find_start_tile(hex_grid: HexGrid, origin: Vector2i, excluded: Array
 
 ## Consome um Colonizador e funda uma cidade no lugar dele. Compartilhado
 ## entre o jogador (SelectionManager) e a IA rival (RivalAI) para nao
-## duplicar a regra de nomeacao/consumo em dois lugares.
+## duplicar a regra de nomeacao/consumo em dois lugares. Task 22: a regra de
+## distancia/terreno/territorio (CitySite.rejection_reason) vale AQUI, pros
+## dois lados -- devolve null (sem consumir o colonizador) quando o local nao
+## e' valido.
 static func found_city_from_settler(hex_grid: HexGrid, unit: Unit) -> City:
 	var player = unit.owner_player
 	var coord = unit.coord
+	if CitySite.rejection_reason(hex_grid, coord, player) != "":
+		return null
 	hex_grid.remove_unit(unit)
 	var city_number = player.cities.size() + 1
 	return hex_grid.found_city(coord, player, player.civ.civ_name + " - Cidade " + str(city_number))
@@ -52,8 +59,14 @@ static func found_city_from_settler(hex_grid: HexGrid, unit: Unit) -> City:
 static func find_spawn_tile(hex_grid: HexGrid, coord: Vector2i) -> Vector2i:
 	for n in hex_grid.get_neighbors(coord):
 		if _is_valid_spawn(hex_grid, n):
+			var source := hex_grid.get_city_at(coord)
+			var destination := hex_grid.get_city_at(n)
+			if destination and (source == null or destination.owner_player != source.owner_player):
+				continue
 			return n
-	return coord
+	if hex_grid.get_unit_at(coord) == null and (hex_grid.get_city_at(coord) != null or _is_valid_spawn(hex_grid, coord)):
+		return coord
+	return NO_SPAWN_COORD
 
 static func _is_valid_spawn(hex_grid: HexGrid, coord: Vector2i) -> bool:
 	if hex_grid.get_unit_at(coord) != null:

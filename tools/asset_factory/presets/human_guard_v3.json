@@ -1,0 +1,29 @@
+{
+  "species": "human",
+  "class": "guard",
+  "style": "human",
+  "engine": "v3",
+  "seed": 42,
+
+  "body": {
+    "height": 1.8,
+    "limb_thickness": 1.0,
+    "shoulder_width_ratio": 0.26,
+    "angularity": 0.85
+  },
+
+  "equipment": {
+    "weapon": "sword",
+    "shield": "hexagonal",
+    "helmet": true
+  },
+
+  "palette": {
+    "civilization": "human_default"
+  },
+
+  "output": {
+    "name": "human_guard_v3",
+    "directory": "assets/generated/humans/guard_v3"
+  }
+}

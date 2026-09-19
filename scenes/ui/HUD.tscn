@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="HUD_gd"]
 [ext_resource type="Script" path="res://scripts/ui/Minimap.gd" id="Minimap_gd"]
-[ext_resource type="Script" path="res://scripts/ui/TechTree.gd" id="TechTree_gd"]
+[ext_resource type="Script" path="res://scripts/ui/MagicSchoolBoard.gd" id="TechTree_gd"]
+[ext_resource type="Script" path="res://scripts/ui/TechTierBoard.gd" id="TechTierBoard_gd"]
 
 [node name="HUD" type="Control"]
 layout_mode = 1
@@ -60,6 +61,26 @@ layout_mode = 2
 theme_type_variation = &"MutedLabel"
 text = "FPS: 0"
 
+[node name="TopBarSpacer" type="Control" parent="TopBar/TopBarRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="IconGroup" type="HBoxContainer" parent="TopBar/TopBarRow"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DiplomacyButton" type="Button" parent="TopBar/TopBarRow/IconGroup"]
+layout_mode = 2
+custom_minimum_size = Vector2(40, 40)
+tooltip_text = "Diplomacia"
+text = "DIP"
+
+[node name="VictoryButton" type="Button" parent="TopBar/TopBarRow/IconGroup"]
+layout_mode = 2
+custom_minimum_size = Vector2(40, 40)
+tooltip_text = "Vitória"
+text = "VIT"
+
 [node name="NotificationStack" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchor_left = 0.5
@@ -78,10 +99,10 @@ anchor_left = 0.0
 anchor_top = 1.0
 anchor_right = 0.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -308.0
-offset_right = 216.0
-offset_bottom = -128.0
+offset_left = 8.0
+offset_top = -72.0
+offset_right = 268.0
+offset_bottom = -8.0
 grow_vertical = 0
 script = ExtResource("Minimap_gd")
 
@@ -93,8 +114,8 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -608.0
-offset_top = -220.0
+offset_left = -688.0
+offset_top = -310.0
 offset_right = -208.0
 offset_bottom = -16.0
 grow_horizontal = 0
@@ -277,8 +298,8 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -608.0
-offset_top = -220.0
+offset_left = -688.0
+offset_top = -310.0
 offset_right = -208.0
 offset_bottom = -16.0
 grow_horizontal = 0
@@ -330,7 +351,7 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -200.0
-offset_top = -320.0
+offset_top = -180.0
 offset_right = -8.0
 offset_bottom = -8.0
 grow_horizontal = 0
@@ -340,6 +361,10 @@ grow_vertical = 0
 layout_mode = 2
 theme_override_constants/separation = 8
 
+[node name="MagicButton" type="Button" parent="ActionBar/ActionBarBox"]
+layout_mode = 2
+text = "Magia"
+
 [node name="TechButton" type="Button" parent="ActionBar/ActionBarBox"]
 layout_mode = 2
 text = "Tecnologia"
@@ -348,25 +373,8 @@ text = "Tecnologia"
 layout_mode = 2
 text = "Grimório"
 
-[node name="DiplomacyButton" type="Button" parent="ActionBar/ActionBarBox"]
-layout_mode = 2
-text = "Diplomacia"
-
-[node name="VictoryButton" type="Button" parent="ActionBar/ActionBarBox"]
-layout_mode = 2
-text = "Vitória"
-
-[node name="DebugButton" type="Button" parent="ActionBar/ActionBarBox"]
-layout_mode = 2
-text = "Debug"
-visible = false
-
 [node name="ActionBarSep" type="HSeparator" parent="ActionBar/ActionBarBox"]
 layout_mode = 2
-
-[node name="SaveButton" type="Button" parent="ActionBar/ActionBarBox"]
-layout_mode = 2
-text = "Salvar"
 
 [node name="EndTurnButton" type="Button" parent="ActionBar/ActionBarBox"]
 layout_mode = 2
@@ -383,12 +391,50 @@ mouse_filter = 0
 color = Color(0.01, 0.01, 0.01, 0.65)
 visible = false
 
+[node name="MagicPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+
+[node name="MagicBox" type="VBoxContainer" parent="MagicPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MagicHeader" type="HBoxContainer" parent="MagicPanel/MagicBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MagicHeaderSpacer" type="Label" parent="MagicPanel/MagicBox/MagicHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Árvore de Magia"
+theme_override_colors/font_color = Color(0.9, 0.91, 0.94, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="MagicCloseButton" type="Button" parent="MagicPanel/MagicBox/MagicHeader"]
+layout_mode = 2
+custom_minimum_size = Vector2(32, 32)
+text = "X"
+
+[node name="MagicScroll" type="ScrollContainer" parent="MagicPanel/MagicBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MagicTree" type="Control" parent="MagicPanel/MagicBox/MagicScroll"]
+layout_mode = 2
+script = ExtResource("TechTree_gd")
+
 [node name="TechPanel" type="PanelContainer" parent="."]
 layout_mode = 1
-anchor_left = 0.075
-anchor_top = 0.075
-anchor_right = 0.925
-anchor_bottom = 0.925
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 visible = false
@@ -401,64 +447,24 @@ theme_override_constants/separation = 8
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="TechTitleLabel" type="Label" parent="TechPanel/TechBox/TechHeader"]
+[node name="TechHeaderSpacer" type="Control" parent="TechPanel/TechBox/TechHeader"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_type_variation = &"PanelTitle"
-text = "Arvore de Tecnologia"
 
 [node name="TechCloseButton" type="Button" parent="TechPanel/TechBox/TechHeader"]
 layout_mode = 2
 custom_minimum_size = Vector2(32, 32)
 text = "X"
 
-[node name="TechCurrentLabel" type="Label" parent="TechPanel/TechBox"]
-layout_mode = 2
-autowrap_mode = 3
-text = "Pesquisando: nenhuma"
-
-[node name="TechLegend" type="HBoxContainer" parent="TechPanel/TechBox"]
-layout_mode = 2
-theme_override_constants/separation = 18
-
-[node name="TechLegendLocked" type="Label" parent="TechPanel/TechBox/TechLegend"]
-layout_mode = 2
-theme_type_variation = &"MutedLabel"
-text = "◻ Bloqueada"
-
-[node name="TechLegendAvailable" type="Label" parent="TechPanel/TechBox/TechLegend"]
-layout_mode = 2
-theme_type_variation = &"MutedLabel"
-text = "◻ Disponivel"
-
-[node name="TechLegendResearching" type="Label" parent="TechPanel/TechBox/TechLegend"]
-layout_mode = 2
-theme_type_variation = &"MutedLabel"
-text = "◻ Pesquisando"
-
-[node name="TechLegendDone" type="Label" parent="TechPanel/TechBox/TechLegend"]
-layout_mode = 2
-theme_type_variation = &"MutedLabel"
-text = "◻ Pesquisada"
-
-[node name="TechTabs" type="TabContainer" parent="TechPanel/TechBox"]
+[node name="DoutrinaScroll" type="ScrollContainer" parent="TechPanel/TechBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="MagicTab" type="ScrollContainer" parent="TechPanel/TechBox/TechTabs"]
+[node name="DoutrinaTree" type="VBoxContainer" parent="TechPanel/TechBox/DoutrinaScroll"]
 layout_mode = 2
-
-[node name="MagicTree" type="Control" parent="TechPanel/TechBox/TechTabs/MagicTab"]
-layout_mode = 2
-script = ExtResource("TechTree_gd")
-
-[node name="DoutrinaTab" type="ScrollContainer" parent="TechPanel/TechBox/TechTabs"]
-visible = false
-layout_mode = 2
-
-[node name="DoutrinaTree" type="Control" parent="TechPanel/TechBox/TechTabs/DoutrinaTab"]
-layout_mode = 2
-script = ExtResource("TechTree_gd")
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+script = ExtResource("TechTierBoard_gd")
 
 [node name="DiplomacyPanel" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -540,10 +546,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -220.0
-offset_top = -110.0
-offset_right = 220.0
-offset_bottom = 110.0
+offset_left = -240.0
+offset_top = -170.0
+offset_right = 240.0
+offset_bottom = 170.0
 grow_horizontal = 2
 grow_vertical = 2
 visible = false
@@ -575,16 +581,160 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Não participar"
 
-[node name="GrimoirePanel" type="PanelContainer" parent="."]
+[node name="DragonAnnouncementPanel" type="PanelContainer" parent="."]
 layout_mode = 1
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -260.0
-offset_top = -200.0
+offset_left = -230.0
+offset_top = -140.0
+offset_right = 230.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+
+[node name="DragonAnnouncementBox" type="VBoxContainer" parent="DragonAnnouncementPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DragonAnnouncementBadgeLabel" type="Label" parent="DragonAnnouncementPanel/DragonAnnouncementBox"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+horizontal_alignment = 1
+text = "EVENTO MUNDIAL"
+
+[node name="DragonAnnouncementTitleLabel" type="Label" parent="DragonAnnouncementPanel/DragonAnnouncementBox"]
+layout_mode = 2
+theme_type_variation = &"PanelTitle"
+horizontal_alignment = 1
+text = "Dragão Avistado"
+
+[node name="DragonAnnouncementTextLabel" type="Label" parent="DragonAnnouncementPanel/DragonAnnouncementBox"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="DragonAnnouncementContinueButton" type="Button" parent="DragonAnnouncementPanel/DragonAnnouncementBox"]
+layout_mode = 2
+text = "Continuar"
+
+[node name="DragonResolutionPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = -190.0
+offset_right = 230.0
+offset_bottom = 190.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+
+[node name="DragonResolutionBox" type="VBoxContainer" parent="DragonResolutionPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DragonResolutionTitleLabel" type="Label" parent="DragonResolutionPanel/DragonResolutionBox"]
+layout_mode = 2
+theme_type_variation = &"PanelTitle"
+horizontal_alignment = 1
+text = "🐉 O DRAGÃO SE AFASTOU"
+
+[node name="DragonResolutionTextLabel" type="Label" parent="DragonResolutionPanel/DragonResolutionBox"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="DragonResolutionRankingHeaderLabel" type="Label" parent="DragonResolutionPanel/DragonResolutionBox"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "Contribuição dos reinos"
+visible = false
+
+[node name="DragonResolutionRankingBox" type="VBoxContainer" parent="DragonResolutionPanel/DragonResolutionBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="DragonResolutionContinueButton" type="Button" parent="DragonResolutionPanel/DragonResolutionBox"]
+layout_mode = 2
+text = "OK"
+
+[node name="WorldEventTracker" type="PanelContainer" parent="."]
+layout_mode = 1
+offset_left = 12.0
+offset_top = 56.0
 offset_right = 260.0
-offset_bottom = 200.0
+offset_bottom = 148.0
+visible = false
+
+[node name="WorldEventTrackerBox" type="VBoxContainer" parent="WorldEventTracker"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="WorldEventTrackerTitleLabel" type="Label" parent="WorldEventTracker/WorldEventTrackerBox"]
+layout_mode = 2
+theme_type_variation = &"PanelTitle"
+text = "Caçada ao Dragão"
+
+[node name="WorldEventTrackerStatusLabel" type="Label" parent="WorldEventTracker/WorldEventTrackerBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Status: -"
+
+[node name="WorldEventTrackerObjectiveLabel" type="Label" parent="WorldEventTracker/WorldEventTrackerBox"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="WorldEventTrackerTargetLabel" type="Label" parent="WorldEventTracker/WorldEventTrackerBox"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+autowrap_mode = 3
+
+[node name="DragonBossBar" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -140.0
+offset_top = 56.0
+offset_right = 140.0
+offset_bottom = 130.0
+grow_horizontal = 2
+visible = false
+
+[node name="DragonBossBarBox" type="VBoxContainer" parent="DragonBossBar"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="DragonBossBarNameLabel" type="Label" parent="DragonBossBar/DragonBossBarBox"]
+layout_mode = 2
+theme_type_variation = &"PanelTitle"
+horizontal_alignment = 1
+text = "Dragão Ancestral"
+
+[node name="DragonBossBarHealthBar" type="ProgressBar" parent="DragonBossBar/DragonBossBarBox"]
+layout_mode = 2
+show_percentage = false
+
+[node name="DragonBossBarHealthLabel" type="Label" parent="DragonBossBar/DragonBossBarBox"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_type_variation = &"MutedLabel"
+text = "0 / 0 HP"
+
+[node name="DragonBossBarTargetLabel" type="Label" parent="DragonBossBar/DragonBossBarBox"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_type_variation = &"MutedLabel"
+text = "Alvo: -"
+
+[node name="GrimoirePanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.18
+anchor_top = 0.07
+anchor_right = 0.82
+anchor_bottom = 0.93
 grow_horizontal = 2
 grow_vertical = 2
 visible = false
@@ -608,8 +758,14 @@ layout_mode = 2
 custom_minimum_size = Vector2(32, 32)
 text = "X"
 
-[node name="GrimoireRows" type="VBoxContainer" parent="GrimoirePanel/GrimoireBox"]
+[node name="GrimoireScroll" type="ScrollContainer" parent="GrimoirePanel/GrimoireBox"]
 layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="GrimoireRows" type="VBoxContainer" parent="GrimoirePanel/GrimoireBox/GrimoireScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
 [node name="DebugPanel" type="PanelContainer" parent="."]

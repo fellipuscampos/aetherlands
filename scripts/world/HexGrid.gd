@@ -31,7 +31,28 @@ const ICE_FLOE_BASE_COLOR := Color(0.75, 0.88, 0.95)
 ## aplica por pixel pro terreno solido (fog_explored_tint/desaturate/darken).
 const PROP_SEPIA_TINT := Color(0.55, 0.48, 0.36)
 const PROP_SEPIA_DESATURATE := 0.6
-const PROP_SEPIA_DARKEN := 0.4
+## Pedido do usuario ("nevoa... diferenciar melhor nunca-explorado e
+## explorado-mas-sem-visao"): 0.4 deixava EXPLORADO quase indistinguivel de
+## VISIVEL pra prop colorido (arvore, cavalo, icone de recurso). Causa: o
+## tom sepia AQUI so entra como MULTIPLICADOR de instancia (StandardMaterial3D.
+## vertex_color_use_as_albedo / Sprite3D.modulate / albedo_color, ver
+## _sepia_prop_color abaixo e os 4 chamadores: HexGrid._tint_props,
+## ResourcePropsManager.apply_fog/_precompute_horse_sepia_overrides,
+## ResourceIconManager.apply_fog) — multiplicar por (0.5, 0.46, 0.41) so
+## ESCURECE um pouco, nunca MUDA A MATIZ de uma textura verde saturada
+## (multiplicacao nao "puxa" pra marrom, so escala cada canal pra baixo na
+## MESMA proporcao relativa) — confirmado isolando o material numa cena a
+## parte (2 arvores lado a lado, cor de instancia branca vs a sepia
+## calculada: quase identicas). O terreno solido nao tem este problema
+## porque terrain.gdshader faz um BLEND/mix() de verdade pro tom sepia, nao
+## multiplicacao — mudar os props pro mesmo esquema exigiria um shader
+## proprio pra cada tipo de prop (arvore/recurso/cavalo), refatoracao ampla
+## desproporcional a um ajuste de nevoa. Escurecer bem mais forte (0.72, nao
+## so 0.4) e' a alavanca que SOBRA dentro do multiplicador: nao vira marrom
+## de verdade, mas fica visivelmente sombrio/apagado — silhueta escura
+## "lembrada", nitidamente diferente tanto de Visivel (cor plena) quanto de
+## Nao-explorado (alfa 0, prop some por completo).
+const PROP_SEPIA_DARKEN := 0.72
 
 ## Espelha peak_height de terrain.gdshader (default do uniform) — usado por
 ## _tile_surface_height pra saber a altura VISUAL real do centro de uma
@@ -199,6 +220,22 @@ var _resource_icon_manager: ResourceIconManager
 var _water_overlay_coord_cache: Array[Vector2i] = []
 ## Mesma ideia de _water_overlay_coord_cache, pra BIOME_OVERLAY_RESOLUTION.
 var _biome_overlay_coord_cache: Array[Vector2i] = []
+
+## Cache de VictoryConditions.total_habitable_tiles(self) -- -1 = "precisa
+## recalcular". So invalida quando o MAPA em si muda de tipo por tile
+## (generate_map/transform_tile_terrain), nunca por posse/territorio de
+## jogador (isso e' player_habitable_tiles, sempre recalculado, barato:
+## so' varre owned_tiles do proprio jogador, nao o mapa inteiro).
+## Perfilamento: GameManager._update_victory_state chama isto pra CADA
+## jogador (humano + rivais) todo fim de turno -- sem cache, 4 varreduras
+## completas do mapa (26880 tiles num mapa Grande) custavam ~135ms
+## sozinhas, a maior fatia de _on_turn_changed inteiro.
+var _cached_total_habitable_tiles: int = -1
+
+func total_habitable_tiles_cached() -> int:
+	if _cached_total_habitable_tiles < 0:
+		_cached_total_habitable_tiles = VictoryConditions.total_habitable_tiles(self)
+	return _cached_total_habitable_tiles
 ## Bytes RGBA de _water_overlay_texture pro caso SEM highlight nenhum
 ## (reachable/attackable/path/buildable todos vazios — o caso de
 ## recompute_fog/fim de turno) — nesse caso o tint fica sempre branco puro e
@@ -217,6 +254,13 @@ var _water_overlay_baseline_texture: ImageTexture
 ## sobrescreve o canal A (fog_level, o UNICO canal que muda de verdade a
 ## cada turno) em vez de recalcular lava/coast por pixel de novo.
 var _liquid_type_static_bytes: PackedByteArray = PackedByteArray()
+## Inverso de _water_overlay_coord_cache: coord -> indices de pixel (0..res²)
+## que caem naquele tile. Deixa _rebuild_water_overlay escrever SO os
+## pixels dos tiles destacados (~2 px por tile nesta resolucao) em cima do
+## baseline, em vez de varrer os 50176 pixels com 4 lookups de Dictionary
+## cada -- perfilamento: hover com unidade selecionada custava ~99ms por
+## tile novo sob o mouse (um congelamento de ~6 frames), quase tudo aqui.
+var _water_overlay_pixels_by_coord: Dictionary = {}
 var _water_overlay_texture: ImageTexture
 ## Mascara global de cor de bioma pro terreno solido (mesma estrategia da
 ## agua, pedido do usuario) — RGB = cor de bioma do tile, JA com o
@@ -242,6 +286,9 @@ var _buildings_root: Node3D
 var _construction_root: Node3D
 var _lairs_root: Node3D
 var _tints_root: Node3D
+var _magic_overlay: MagicOverlay
+var _changed_tree_props: Dictionary = {}
+var _dirty_terrain_visuals: Dictionary = {}
 var _city_tints: Dictionary = {} # City -> MeshInstance3D, tingimento do chao do territorio (ver _update_city_tint)
 ## Cache do shader de tingimento — evita um load() do disco por CIDADE a
 ## CADA turno (_update_city_tint roda pra toda cidade toda vez que a nevoa
@@ -266,13 +313,15 @@ var _construction_markers_pending_removal: Dictionary = {}
 ## por partida) — sem limpeza ativa de entrada expirada, igual
 ## _construction_markers nao se preocupa em podar chaves antigas.
 var _pillaged_tiles: Dictionary = {}
+## Alterações feitas durante a partida, reaplicadas sobre o mapa do seed.
+var terrain_changes: Dictionary = {} # Vector2i -> TerrainType
+var next_unit_id: int = 1
 var _selection_time := 0.0
 var _construction_time := 0.0 # sempre roda, diferente de _selection_time (so anda com unidade selecionada)
 var _hover_label: Label3D
 var _last_came_from: Dictionary = {} # Vector2i -> Vector2i, da ultima compute_reachable
 var _moisture_noise := FastNoiseLite.new() # biomas: seco x umido
 var _temp_jitter_noise := FastNoiseLite.new() # biomas: variacao local na faixa de temperatura
-var _resource_noise := FastNoiseLite.new() # onde recursos estrategicos/luxo aparecem
 var _volcanic_noise := FastNoiseLite.new() # bioma raro: Lava substituindo Montanhas
 var _arcane_noise := FastNoiseLite.new() # bioma raro: Campos de Cristal
 
@@ -300,7 +349,26 @@ const LAND_PRISM_DEPTH_FACTOR := 1.0
 const TREE_MODEL_SCENE := "res://assets/models/kaykit/nature/Tree_1_A_Color1.gltf"
 const TREE_MODEL_SCALE := 0.2
 
+## Pedido do usuario ("ARVORES/FLORESTAS": "praticamente todos os tiles do
+## bioma de selva recebem arvores... visualmente deixa o mapa muito
+## carregado, pode aumentar custo de renderizacao/objetos/ruido visual").
+## Antes, todo tile elegivel (Floresta/Taiga/Selva sem recurso) SEMPRE
+## ganhava 3-5 arvores — cobertura 100%, sem clareira nenhuma, grade densa
+## repetitiva tile-a-tile. Esta chance decide, POR TILE, se ele recebe
+## arvores ou fica como clareira (pedido explicito: "nao quero que vire uma
+## planicie com meia duzia de arvores" — o bioma ainda precisa ler como
+## floresta/selva). 0.6 e' a propria hipotese inicial do usuario, mas so
+## virou o valor final depois de testado visualmente (screenshot in-game
+## real, Selva e Floresta, mapa Grande) — nao foi aceito de olhos fechados:
+## nos dois biomas as clareiras ficaram legiveis (tiles de terreno nu
+## intercalados) sem o aglomerado perder cara de floresta/selva. NAO e' lei
+## permanente, so o que passou nesse teste: se um mapa real voltar a parecer
+## denso demais ou vazio demais, ajustar aqui e revalidar visualmente de novo.
+const TREE_TILE_COVERAGE_CHANCE := 0.6
+
 func _ready() -> void:
+	if _units_root != null:
+		return
 	add_to_group("hex_grid")
 	_hex_mesh = _build_hex_prism_mesh(hex_size, LAND_PRISM_DEPTH_FACTOR)
 	_tree_mesh = _load_tree_mesh()
@@ -351,7 +419,7 @@ func _process(delta: float) -> void:
 
 ## seed_value < 0 sorteia uma semente nova (jogo novo); Salvar/Carregar passa
 ## a semente guardada pra recriar exatamente o mesmo terreno.
-func generate_map(width: int, height: int, seed_value: int = -1) -> void:
+func generate_map(width: int, height: int, seed_value: int = -1, progress_callback: Callable = Callable()) -> void:
 	map_width = width
 	map_height = height
 	_clear_entities()
@@ -361,7 +429,10 @@ func generate_map(width: int, height: int, seed_value: int = -1) -> void:
 	# invalida os caches de pixel->coord (ver _water_overlay_coord_cache),
 	# senao um novo jogo/mapa reusaria o mapeamento antigo, errado.
 	_water_overlay_coord_cache = []
+	_water_overlay_pixels_by_coord = {}
 	_biome_overlay_coord_cache = []
+	_biome_overlay_pixels_by_coord = {}
+	_cached_total_habitable_tiles = -1
 	map_seed = seed_value if seed_value >= 0 else randi()
 	# Frequencias BAIXAS (nao mexem nos octaves fractais padrao do
 	# FastNoiseLite — 5 octavas de FBM por padrao) esticam o comprimento de
@@ -380,8 +451,8 @@ func generate_map(width: int, height: int, seed_value: int = -1) -> void:
 	_moisture_noise.frequency = moisture_noise_frequency
 	_temp_jitter_noise.seed = map_seed + 2000
 	_temp_jitter_noise.frequency = temperature_jitter_frequency
-	_resource_noise.seed = map_seed + 3000
-	_resource_noise.frequency = 0.8 # alta: recursos "espalhados", nao em blocos grandes (proposital, ver RESOURCE_NOISE_THRESHOLD)
+	# +3000 (antigo canal de _resource_noise) fica deliberadamente livre —
+	# recursos agora usam +8000, ver _assign_resources().
 	_volcanic_noise.seed = map_seed + 5000
 	_volcanic_noise.frequency = volcanic_noise_frequency
 	_arcane_noise.seed = map_seed + 6000
@@ -392,6 +463,8 @@ func generate_map(width: int, height: int, seed_value: int = -1) -> void:
 	# pra continuar a sequencia exata de onde o save parou, em vez de
 	# reiniciar do turno 0.
 	monster_turn_rng.seed = map_seed + 7000
+
+	await _report_generation_progress(progress_callback, 0.05, "Semeando o mundo...")
 
 	# Formato RETANGULAR de verdade (nao losango/hexagono). Armazenamento
 	# continua puramente axial (q, r) igual sempre foi (ver HexMetrics —
@@ -429,6 +502,8 @@ func generate_map(width: int, height: int, seed_value: int = -1) -> void:
 		elevation_by_coord[coord] = elevation
 		is_land_by_coord[coord] = elevation >= OCEAN_ELEVATION_THRESHOLD
 
+	await _report_generation_progress(progress_callback, 0.20, "Erguendo o relevo...")
+
 	# Passo 2: pra cada tile de terra, distancia (em tiles) ate a agua mais
 	# proxima (regioes litoraneas ficam mais umidas que o interior, e
 	# "vulcanico perto de oceano/fenda" precisa saber o que e costa) e o
@@ -438,6 +513,8 @@ func generate_map(width: int, height: int, seed_value: int = -1) -> void:
 	var coastal_distance := _coastal_distance_by_coord(coords, is_land_by_coord)
 	var land_component_size := _land_component_size_by_coord(coords, is_land_by_coord)
 
+	await _report_generation_progress(progress_callback, 0.35, "Traçando litorais...")
+
 	for coord in coords:
 		tiles[coord] = _generate_tile_data(
 			coord,
@@ -445,6 +522,8 @@ func generate_map(width: int, height: int, seed_value: int = -1) -> void:
 			coastal_distance.get(coord, COASTAL_DISTANCE_MAX),
 			land_component_size.get(coord, 0)
 		)
+
+	await _report_generation_progress(progress_callback, 0.55, "Semeando biomas...")
 
 	_smooth_isolated_biome_cells()
 	_ensure_biome_variety()
@@ -502,14 +581,56 @@ func generate_map(width: int, height: int, seed_value: int = -1) -> void:
 	# comentario la), entao rodar de novo aqui so limpa o colateral nos
 	# OUTROS tipos, nunca desfaz a promocao que acabou de acontecer.
 	_smooth_isolated_biome_cells()
+	await _report_generation_progress(progress_callback, 0.70, "Esculpindo montanhas e biomas especiais...")
+
+	# Bioma de TODO tile ja e' definitivo neste ponto (smoothing/variedade
+	# forcada/Mar de Lava ja rodaram acima) — so' agora e' seguro decidir
+	# recursos (ver _assign_resources), e precisa vir ANTES de
+	# _rebuild_multimesh() porque ela chama ResourcePropsManager.rebuild()/
+	# ResourceIconManager.rebuild() (ver _rebuild_props), que leem
+	# tiles[coord].resource pra construir os props/icones visuais.
+	_assign_resources()
+
 	_rebuild_multimesh()
+
+	await _report_generation_progress(progress_callback, 0.92, "Povoando o mundo...")
+
 	_spawn_monster_lairs()
+
+	await _report_generation_progress(progress_callback, 1.0, "Mundo pronto.")
+
+## Reporta progresso de generate_map() pra quem pediu (Main.gd, ver
+## LoadingScreen.gd) SEM afetar quem nao pediu — callback invalido (default
+## Callable(), todo teste/benchmark/SaveManager.load_game sem UI) sai no
+## primeiro `return` e a funcao inteira roda 100% sincrona, nenhum `await`
+## chega a executar. So quando ha um callback valido (fluxo real do jogo em
+## Main.gd) o `await get_tree().process_frame` de fato suspende — devolve o
+## controle pro loop principal do Godot entre uma fase pesada e outra pra
+## ele renderizar o frame (spinner/barra de progresso se movem de verdade)
+## e processar a fila de mensagens do SO (janela nao fica "Not Responding")
+## antes de seguir pra proxima fase. Alternativa descartada: gerar o mapa
+## numa Thread separada — Godot nao permite mexer em Node/MultiMesh (ver
+## _rebuild_multimesh) fora da thread principal sem cuidado extra, este e' o
+## jeito seguro/idiomatico de manter a UI viva durante trabalho sincrono
+## pesado sem reescrever o algoritmo de geracao.
+func _report_generation_progress(callback: Callable, fraction: float, phase: String) -> void:
+	if not callback.is_valid():
+		return
+	callback.call(fraction, phase)
+	await get_tree().process_frame
 
 ## Libera unidades/cidades/predios/contornos/marcadores de uma partida
 ## anterior antes de gerar um mapa novo (usado ao reiniciar) — sem isso os
 ## nodes antigos ficariam orfaos dentro das raizes, ainda ocupando tiles
 ## do mapa novo.
 func _clear_entities() -> void:
+	for prop in _changed_tree_props.values():
+		prop.free()
+	_changed_tree_props.clear()
+	_dirty_terrain_visuals.clear()
+	if is_instance_valid(_magic_overlay):
+		_magic_overlay.free()
+		_magic_overlay = null
 	if _units_root:
 		for child in _units_root.get_children():
 			child.queue_free()
@@ -544,6 +665,16 @@ func _clear_entities() -> void:
 	lairs_by_coord.clear()
 	cleared_lair_coords.clear()
 	_pillaged_tiles.clear()
+	terrain_changes.clear()
+
+## Encerramento de partida (GameManager.end_match(), "Voltar ao Menu
+## Principal") -- so ENTIDADES (unidades/cidades/predios/covis/marcadores),
+## NAO terreno/tiles/visibility (generate_map() proprio cuida disso na
+## proxima partida/load, ver linha ~358) -- reusa o MESMO teardown que ja
+## roda no inicio de toda geracao de mapa, agora exposto publico pra poder
+## ser chamado sem gerar um mapa novo em seguida.
+func reset_to_empty() -> void:
+	_clear_entities()
 
 func get_tile(coord: Vector2i) -> HexTileData:
 	return tiles.get(coord, null)
@@ -568,10 +699,14 @@ func is_tile_building_site(coord: Vector2i) -> bool:
 ## — chamado por GameManager quando City.process_turn() reporta um predio
 ## concluido com coord valido.
 func place_building(coord: Vector2i, building_id: String, owner_player: PlayerData) -> Building:
+	var previous: Building = buildings_by_coord.get(coord)
+	if is_instance_valid(previous):
+		previous.queue_free()
 	var building := Building.new()
 	_buildings_root.add_child(building)
 	building.setup(building_id, coord, owner_player)
 	building.position = world_for_coord(coord)
+	_clear_tile_decor_at(coord) # ver ARVORES E RECURSOS -- mesma logica de found_city acima
 	buildings_by_coord[coord] = building
 	return building
 
@@ -587,6 +722,31 @@ func world_for_coord(coord: Vector2i) -> Vector3:
 	var pos = HexMetrics.axial_to_world(coord.x, coord.y, hex_size)
 	var data = get_tile(coord)
 	pos.y = data.base_height if data else 0.0
+	return pos
+
+## ALTURA DOS TILES E POSICAO DAS UNIDADES (pedido do usuario: "alguns
+## personagens nao acompanham corretamente [a altura de Colina/Montanha] e
+## acabam com os pes dentro do terreno... crie uma solucao robusta, nao uma
+## correcao especifica pra um unico modelo"). Investigado antes de mexer:
+## world_for_coord() acima so devolve base_height (a base CRUA/plana do
+## prisma) -- Colina/Montanha (e as variantes Vulcanica/Cristal) ganham um
+## domo/pico VISUAL por cima disso so no shader (terrain.gdshader), que o
+## GDScript nunca via. ResourcePropsManager ja tinha essa MESMA causa raiz
+## (relatada como "recurso sem nada na celula") e ja resolvia com
+## _tile_surface_height() -- esta funcao e' so o mesmo calculo reaproveitado
+## como a posicao de mundo completa (X/Z inalterados, so Y correto), pra
+## QUALQUER personagem (conjurador, monstro, invocacao, unidade comum,
+## boss) ficar visualmente apoiado na superficie de verdade, nao na base
+## plana. Como sempre le tiles[coord] NA HORA (nunca cacheia), tambem cobre
+## "mudancas temporarias de terreno" de graca -- se o tile foi
+## transformado (ver transform_tile_terrain), a proxima vez que uma
+## unidade for reposicionada aqui ja pega a altura ATUAL, nao uma antiga.
+## Fora do escopo desta tarefa (nao pedido, nao mexido): Cidade/Predio/
+## covil continuam em world_for_coord puro -- ver Claude_updates.md.
+func world_surface_for_coord(coord: Vector2i) -> Vector3:
+	var pos = world_for_coord(coord)
+	if tiles.has(coord):
+		pos.y = _tile_surface_height(coord)
 	return pos
 
 ## Metade da largura/profundidade (eixos X/Z) que o mapa retangular ocupa
@@ -627,7 +787,7 @@ func compute_reachable(start: Vector2i, movement_points: float, owner: PlayerDat
 		if embarked and current != start and not flies and not get_tile(current).can_be_embarked_on():
 			continue
 		for n in get_neighbors(current):
-			if get_unit_at(n) != null:
+			if get_unit_at(n) != null or _is_lair_structure_at(n):
 				continue
 			var city_here = get_city_at(n)
 			if city_here != null and city_here.owner_player != owner:
@@ -691,19 +851,40 @@ func reconstruct_path(start: Vector2i, end: Vector2i) -> Array[Vector2i]:
 ## curto — qual desses empates especificos e escolhido pode variar em
 ## relacao a versao antiga, mas o CUSTO/numero de turnos pra completar nunca
 ## muda).
+## A* em cima do Dijkstra acima (perfilamento: ~43ms por chamada num mapa
+## Grande 320x84 pra um destino a ~30 tiles, e isto roda a CADA tile novo
+## sob o mouse fora do alcance do turno -- ver SelectionManager.handle_
+## world_hover -- alem de por unidade explorando/com ordem pendente todo
+## turno). Heuristica = distancia hexagonal ate `end`: admissivel E
+## consistente porque todo passo custa >= 1 (movement_cost e int >= 1,
+## flies paga 1.0 fixo), entao o primeiro pop de `end` continua sendo o
+## custo minimo exato, mesmo caminho de antes -- so expande uma fracao dos
+## nos. O heap guarda [f = g + h, coord]; g fica em cost_so_far, e um
+## `closed` set descarta pops repetidos (com heuristica consistente, a
+## primeira vez que um no sai do heap ja e definitiva).
 func compute_path(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool = false, embarked: bool = false) -> Array[Vector2i]:
 	var path: Array[Vector2i] = []
 	if start == end:
 		return path
+	# O destino passa pelas mesmas regras que cada aresta do A*. Se não
+	# pode ser ocupado, nenhuma busca pelo continente inteiro dará caminho.
+	var destination := get_tile(end)
+	var destination_city := get_city_at(end)
+	if destination == null or get_unit_at(end) != null or _is_lair_structure_at(end) or (destination_city != null and destination_city.owner_player != owner):
+		return path
+	if not flies and destination.blocks_land_units() and not (embarked and destination.can_be_embarked_on()):
+		return path
 	var cost_so_far := {start: 0.0}
 	var came_from := {start: start}
-	var heap: Array = [[0.0, start]] # array de [cost, coord], mantido como min-heap pelo indice 0
+	var closed := {}
+	var heap: Array = [[float(HexMetrics.axial_distance(start, end)), start]]
 	while heap.size() > 0:
 		var entry = _heap_pop_min(heap)
-		var current_cost: float = entry[0]
 		var current: Vector2i = entry[1]
-		if current_cost > cost_so_far.get(current, INF):
-			continue # entrada obsoleta: este no ja teve um custo melhor relaxado depois de entrar no heap
+		if closed.has(current):
+			continue
+		closed[current] = true
+		var current_cost: float = cost_so_far[current]
 		if current == end:
 			break
 		# Mesma regra de compute_reachable acima: terra so e permitida como
@@ -714,7 +895,7 @@ func compute_path(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool
 		if embarked and current != start and not flies and not get_tile(current).can_be_embarked_on():
 			continue
 		for n in get_neighbors(current):
-			if get_unit_at(n) != null:
+			if get_unit_at(n) != null or _is_lair_structure_at(n):
 				continue
 			var city_here = get_city_at(n)
 			if city_here != null and city_here.owner_player != owner:
@@ -727,7 +908,7 @@ func compute_path(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool
 			if not cost_so_far.has(n) or new_cost < cost_so_far[n]:
 				cost_so_far[n] = new_cost
 				came_from[n] = current
-				_heap_push(heap, new_cost, n)
+				_heap_push(heap, new_cost + float(HexMetrics.axial_distance(n, end)), n)
 	if not came_from.has(end):
 		return path
 	var step = end
@@ -774,18 +955,25 @@ func _heap_pop_min(heap: Array) -> Array:
 	return top
 
 func spawn_unit(coord: Vector2i, unit_data: UnitData, player: PlayerData) -> Unit:
+	if units_by_coord.has(coord) or coord == WorldSetup.NO_SPAWN_COORD:
+		return null
 	var unit := Unit.new()
 	_units_root.add_child(unit)
 	unit.setup(unit_data, player, coord)
-	unit.position = world_for_coord(coord)
+	unit.serial_id = next_unit_id
+	next_unit_id += 1
+	unit.position = world_surface_for_coord(coord)
 	units_by_coord[coord] = unit
 	player.units.append(unit)
+	_clear_tile_decor_at(coord) # ver MAGIAS, SPAWNS E ARVORES -- mesma politica de found_city/place_building, agora tambem pra unidade criada (treino, invocacao, etc)
 	return unit
 
 ## O estado LOGICO (coord/ocupacao/movimento) muda na hora — so a posicao
 ## visual desliza suavemente ate la. Fog, combate e IA usam unit.coord, que
 ## ja esta correto mesmo enquanto a animacao ainda esta rolando.
 func move_unit(unit: Unit, dest: Vector2i, cost: float) -> void:
+	var origin := unit.coord
+	var was_embarked := unit.embarked
 	units_by_coord.erase(unit.coord)
 	unit.coord = dest
 	unit.movement_left = max(0.0, unit.movement_left - cost)
@@ -798,7 +986,6 @@ func move_unit(unit: Unit, dest: Vector2i, cost: float) -> void:
 	# sem conseguir voltar a agua no mesmo trajeto.
 	if unit.embarked and not get_tile(dest).can_be_embarked_on():
 		unit.embarked = false
-	var target_pos = world_for_coord(dest)
 	# Unidade fora da nevoa (unit.visible == false, ver _apply_fog_to_entities)
 	# nao aparece na tela — animar o deslize dela com Tween e trabalho jogado
 	# fora (o Tween continua processando todo frame por MOVE_DURATION mesmo
@@ -809,21 +996,67 @@ func move_unit(unit: Unit, dest: Vector2i, cost: float) -> void:
 	# unidades de IA se movendo/agindo de uma vez que o usuario reportou como
 	# "muito travado" ao passar o turno.
 	if unit.visible:
-		unit.slide_to(target_pos)
+		unit.walk_path(_animation_waypoints(origin, dest, unit, was_embarked))
 	else:
-		unit.position = target_pos
+		unit.position = world_surface_for_coord(dest)
 	units_by_coord[dest] = unit
-	# Pilhagem de Covil (pedido do usuario: "mover unidade militar ate um
-	# covil ativo sem defensores destroi o covil"): move_unit so e chamado
-	# com um `dest` que ja passou por compute_reachable, que exclui
-	# qualquer tile OCUPADO (linha ~543 acima) — entao se dest esta em
-	# lair_coords aqui, o guardiao/reforco dali ja morreu ou foi afastado,
-	# exatamente a condicao pedida, sem precisar checar defensor de novo.
-	# owner_player != null exclui movimento de monstro (um Invasor
-	# marchando nunca deveria destruir covil alheio so por passar perto);
-	# attack > 0 exclui o Colonizador (pedido explicito: "unidade MILITAR").
-	if unit.owner_player != null and unit.unit_data.attack > 0.0 and dest in lair_coords:
-		_grant_lair_clear_reward(unit, dest)
+	# COVIS DE MONSTROS -- DESTRUICAO (rodada seguinte): "andar em cima do
+	# covil pra destrui-lo de graca" (o antigo gatilho aqui, via dest in
+	# lair_coords) foi SUBSTITUIDO por um ataque de verdade contra a
+	# estrutura (ver CombatResolver.resolve_lair_attack/SelectionManager.
+	# _attack_from_selected) -- a estrutura agora tem HP proprio e precisa
+	# ser atacada ate zerar, nao so' visitada. Nem chegaria a acontecer de
+	# qualquer forma: compute_reachable/compute_path (ver comentario deles)
+	# bloqueiam `dest` enquanto lairs_by_coord.has(dest), entao move_unit
+	# nunca mais e chamado com um lair ainda de pe como destino.
+
+## Sequencia de posicoes de mundo pra ANIMAR um deslocamento de `origin` ate
+## `dest` (usado por move_unit acima) — resolve o bug reportado pelo
+## usuario ("se ele vai andar 3 tiles ele desliza pro terceiro [direto]"):
+## move_unit e chamado com um `dest` que pode estar a VARIOS tiles de
+## distancia numa unica tacada (clique num tile alcancavel do turno em
+## SelectionManager._move_selected_to, ou a IA escolhendo o melhor tile
+## reachable em MonsterAI/RivalAI) — sem isto, so animava um salto reto
+## direto ate `dest`, pulando os tiles do meio visualmente (mesmo a logica
+## ja passando por eles). Vizinhos (o caso comum: um passo por vez em
+## qualquer loop de movimento, ver continue_move_order abaixo) usam o
+## atalho `[world_for_coord(dest)]` sem gastar um Dijkstra inteiro a toa —
+## Unit.walk_path ja encadeia chamadas separadas certinho (ver seu proprio
+## comentario), entao nao faz diferenca pra animacao final se o caminho de
+## varios tiles chega aqui como UMA chamada com N pontos ou como N chamadas
+## de 1 ponto. So tiles NAO-vizinhos reconstroem o caminho de verdade
+## (compute_path, mesmas regras de passagem de sempre, com o `embarked` de
+## ANTES desta chamada mudar o estado — a legalidade da travessia foi
+## decidida com esse valor). Se o caminho nao existir mais (ex: outra
+## unidade ocupou um tile do meio depois que este destino foi validado como
+## reachable, em outro momento do mesmo turno) cai de volta no salto
+## direto — isto e SO a animacao, nunca deveria bloquear o movimento em si
+## (a legalidade ja foi decidida por quem chamou move_unit).
+func _animation_waypoints(origin: Vector2i, dest: Vector2i, unit: Unit, embarked: bool) -> Array[Vector3]:
+	if HexMetrics.axial_distance(origin, dest) <= 1:
+		return [world_surface_for_coord(dest)]
+	var path := compute_path(origin, dest, unit.owner_player, unit.unit_data.flies, embarked)
+	if path.is_empty():
+		return [world_surface_for_coord(dest)]
+	var waypoints: Array[Vector3] = []
+	for coord in path:
+		waypoints.append(world_surface_for_coord(coord))
+	return waypoints
+
+## SO MODO DEBUG (GameManager.debug_mode, ver SelectionManager.
+## handle_world_click) — pedido do usuario: "eu nao tenho limite de andar
+## e ao clicar num lugar com a movimentacao meu boneco teletransporte pra
+## aquele lugar pra facilitar eu comparar os tamanhos in game". Ao
+## contrario de move_unit acima, NAO consome movement_left (debug = sem
+## limite) e NUNCA anima com slide_to — posiciona na hora, sem nenhuma
+## das outras regras de movimento normal (embarque/desembarque, recompensa
+## de covil, etc.) porque isso e uma ferramenta de posicionamento livre
+## pra teste visual, nao um movimento de jogo de verdade.
+func teleport_unit(unit: Unit, dest: Vector2i) -> void:
+	units_by_coord.erase(unit.coord)
+	unit.coord = dest
+	unit.position = world_surface_for_coord(dest)
+	units_by_coord[dest] = unit
 
 ## Consome um pedido de "mover ate" pendente (Unit.move_order_target) o
 ## quanto o movimento ATUAL da unidade permitir — chamado tanto na hora
@@ -967,19 +1200,46 @@ func destroy_lair(coord: Vector2i) -> void:
 		return
 	lair_coords.erase(coord)
 	lair_kind_by_coord.erase(coord)
+	lair_alert_until_turn.erase(coord) # ver alert_lair_near -- covil destruido nao fica "alertado" pra sempre
 	if lairs_by_coord.has(coord):
 		lairs_by_coord[coord].queue_free()
 		lairs_by_coord.erase(coord)
 	if not coord in cleared_lair_coords:
 		cleared_lair_coords.append(coord)
 
+## RECOMPENSAS DE COVIS (pedido do usuario: "ao destruir um covil, o
+## jogador deve receber algo relevante... ouro; recurso; mana;
+## experiencia; combinacao; recompensa especifica por tipo... evite
+## transformar covis numa maquina infinita de farm"). Combinacao de TRES
+## sistemas ja existentes, nunca um novo: ouro (ja existia), Mana
+## (PlayerData.mana, ver MonsterDatabase.clear_reward_mana -- so' os
+## kinds com identidade arcana ja estabelecida rendem algo, "recompensa
+## especifica por tipo" pedida), e experiencia (Unit.register_kill(),
+## mesmo sistema de veterania que combate normal ja usa -- destruir a
+## estrutura conta como uma vitoria de verdade pro atacante, universal
+## pra qualquer kind). "Recurso" (Ferro/Gemas/Seda/Cavalos) ficou de fora
+## de proposito -- eles so existem como YIELD de tile trabalhado, nao tem
+## estoque nenhum pra depositar; inventar um banco de recurso novo so pra
+## isso contradiria "coerente com os sistemas atuais". Nunca vira "farm
+## infinita": cada covil so paga isto UMA VEZ (destroy_lair remove o
+## covil de cleared_lair_coords pra sempre, nunca respawna, ver
+## SaveManager) -- diferente do gold_reward por kill individual (esse sim
+## repetivel via reforco, mas e' um sistema JA existente, fora do escopo
+## desta tarefa).
 func _grant_lair_clear_reward(unit: Unit, coord: Vector2i) -> void:
 	var kind = lair_kind_by_coord.get(coord, "")
 	var reward = MonsterDatabase.lair_clear_reward(kind)
+	var mana_reward = MonsterDatabase.lair_clear_mana_reward(kind)
 	destroy_lair(coord)
 	unit.owner_player.gold += reward
+	unit.owner_player.mana += mana_reward
+	unit.register_kill()
 	if unit.owner_player == GameManager.human_player:
-		EventBus.notify.emit("Voce destruiu um covil abandonado e saqueou %d ouro!" % int(reward), "combat")
+		var message = "Voce destruiu um covil abandonado e saqueou %d ouro" % int(reward)
+		if mana_reward > 0.0:
+			message += " e %d de mana" % int(mana_reward)
+		message += "!"
+		EventBus.notify.emit(message, "combat")
 
 func remove_unit(unit: Unit) -> void:
 	units_by_coord.erase(unit.coord)
@@ -993,7 +1253,9 @@ func found_city(coord: Vector2i, player: PlayerData, city_name: String, silent: 
 	var city := City.new()
 	_cities_root.add_child(city)
 	city.setup(player, coord, city_name, hex_size)
+	city.original_owner_index = GameManager.players.find(player)
 	city.position = world_for_coord(coord)
+	_clear_tile_decor_at(coord) # ver ARVORES E RECURSOS -- modelo da cidade nao pode nascer enterrado em arvore/recurso
 	cities_by_coord[coord] = city
 	player.cities.append(city)
 	# Territorio inicial (ver City.owned_tiles) — mesmo conjunto que
@@ -1040,6 +1302,7 @@ func is_tile_pillaged(coord: Vector2i, turn: int) -> bool:
 ## Cidade sem defensor pode ser tomada por uma unidade inimiga adjacente que
 ## ataque — sem isso, uma capital indefesa e inconquistavel na pratica.
 func capture_city(city: City, new_owner: PlayerData) -> void:
+	city.captured_developed = city.captured_developed or VictoryCampaign.developed(city)
 	var old_owner = city.owner_player
 	var city_display_name = city.city_name
 	if old_owner:
@@ -1055,6 +1318,10 @@ func capture_city(city: City, new_owner: PlayerData) -> void:
 	city.shield = city.max_shield()
 	city.change_owner(new_owner)
 	new_owner.cities.append(city)
+	for building_coord in city.building_coords.values():
+		var building := get_building_at(building_coord)
+		if building and building.owner_player != new_owner:
+			place_building(building_coord, building.building_id, new_owner)
 	_update_city_tint(city) # tingimento do territorio precisa seguir o novo dono
 	if new_owner == GameManager.human_player:
 		EventBus.notify.emit("Voce capturou %s!" % city_display_name, "city")
@@ -1071,6 +1338,28 @@ func show_selection_marker(coord: Vector2i) -> void:
 	_selection_marker.position = pos
 	_selection_marker.visible = true
 
+## Pedido do usuario: "unidades e cidades revelam uma regiao tao pequena
+## que mal e possivel observar o entorno". Cidade antes enxergava so 2
+## (`_mark_visible(city.coord, 2 + outpost_bonus, ...)`, literal solto no
+## meio da funcao, igual a unidade mais fraca do elenco e sem NENHUMA
+## diferenciacao por ser um assentamento fixo/estrategico) — 4 fica entre a
+## unidade base (3, apos o +1 uniforme em UnitDatabase.gd/MagicContent.gd/
+## UnitData.gd) e o Batedor/unidades voadoras (5, "olhos" dedicados de
+## exploracao, que continuam vendo mais longe de proposito). disco hexagonal
+## de raio 4 = 61 tiles, cobre confortavelmente o territorio de uma cidade
+## (comeca em 7 tiles — celula + 6 vizinhos, ver HexGrid.found_city — e
+## cresce aos poucos com populacao, ver City._claim_frontier_tile) mais uma
+## margem de alerta contra ameacas se aproximando, sem chegar a "enxergar o
+## mapa inteiro" (mapa Grande real: 96x60 = 5.760 hexagonos so' o
+## continente principal, ver TitleScreen.MAIN_ZONE_SIZE). Custo medido
+## (script descartavel, ver PERFORMANCE_GUIDE.md secao 1): compute_
+## visible_tiles isolado custa ~1ms mesmo com 40+ unidades/6 cidades num
+## mapa Grande — recompute_fog() inteiro custa ~42-46ms nesse mesmo cenario,
+## dominado quase todo pelo scan de fog/entidades sobre os 26880 tiles do
+## mapa (ja otimizado, ver secao 2.2/2.3), nao pelo raio de visao. Dobrar o
+## raio de cada unidade/cidade e' custo desprezivel perto disso.
+const CITY_VISION_RANGE := 4
+
 ## Uniao do raio de visao de todas as unidades/cidades de um jogador —
 ## calculo puro, sem tocar no dict `visibility` (que e so pra render/fog do
 ## jogador humano). Usado tambem pela IA rival pra saber o que ela realmente
@@ -1078,10 +1367,11 @@ func show_selection_marker(coord: Vector2i) -> void:
 ## conhecimento global do mapa.
 func compute_visible_tiles(player: PlayerData) -> Dictionary:
 	var visible_now := {}
+	var outpost_bonus := 1 if player.researched_techs.has("posto_avancado") else 0
 	for unit in player.units:
-		_mark_visible(unit.coord, unit.unit_data.vision_range, visible_now)
+		_mark_visible(unit.coord, unit.unit_data.vision_range + outpost_bonus, visible_now)
 	for city in player.cities:
-		_mark_visible(city.coord, 2, visible_now)
+		_mark_visible(city.coord, CITY_VISION_RANGE + outpost_bonus, visible_now)
 	return visible_now
 
 ## Debug: com isso ligado, recompute_fog() (chamada normalmente a cada
@@ -1115,7 +1405,15 @@ func recompute_fog(player: PlayerData) -> void:
 
 	_apply_fog_colors()
 	_apply_fog_to_entities(player)
+	refresh_magic_overlay(player)
 	EventBus.fog_updated.emit()
+
+func refresh_magic_overlay(player: PlayerData) -> void:
+	if _magic_overlay == null:
+		_magic_overlay = MagicOverlay.new()
+		_magic_overlay.name = "MagicEffects"
+		add_child(_magic_overlay)
+	_magic_overlay.refresh(self, player)
 
 ## Unidades/cidades/predios do proprio jogador sempre aparecem; os de
 ## outros so aparecem em tiles ATUALMENTE visiveis (nao basta ja ter
@@ -1123,10 +1421,10 @@ func recompute_fog(player: PlayerData) -> void:
 func _apply_fog_to_entities(player: PlayerData) -> void:
 	for coord in units_by_coord.keys():
 		var unit: Unit = units_by_coord[coord]
-		if unit.owner_player == player:
+		if unit.owner_player == player or unit.always_visible:
 			unit.visible = true
 		else:
-			unit.visible = visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
+			unit.visible = visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE and not MagicRuntime.concealed(unit, player, self)
 	for coord in cities_by_coord.keys():
 		var city: City = cities_by_coord[coord]
 		if city.owner_player == player:
@@ -1231,8 +1529,128 @@ func transform_tile_terrain(coord: Vector2i, new_terrain_type: int) -> void:
 		return
 	var new_tile: HexTileData = TerrainDatabase.create_tile(new_terrain_type)
 	tiles[coord] = new_tile
+	terrain_changes[coord] = new_terrain_type
+	# ALTURA DOS TILES E POSICAO DAS UNIDADES: "mudancas temporarias de
+	# terreno, quando aplicavel" -- se alguma unidade ja estava PARADA neste
+	# coord (ex: andou pra dentro de uma Floresta criada por magia, semanas
+	# antes dela expirar de volta pro terreno original via restore_region,
+	# que tambem chama esta funcao), a altura de superficie pode ter mudado
+	# embaixo dela sem nenhum move_unit/spawn rodar de novo. Reposiciona na
+	# hora pra nunca ficar flutuando/afundada apos a troca.
+	var occupant := get_unit_at(coord)
+	if occupant:
+		occupant.position = world_surface_for_coord(coord)
 	if _multimesh_instance and _coord_to_index.has(coord):
 		_multimesh_instance.multimesh.set_instance_color(_coord_to_index[coord], new_tile.color)
+		var mm := _multimesh_instance.multimesh
+		var index: int = _coord_to_index[coord]
+		var transform := mm.get_instance_transform(index)
+		transform.origin.y = new_tile.base_height
+		mm.set_instance_transform(index, transform)
+		var custom := mm.get_instance_custom_data(index)
+		custom.g = 2.0 if new_terrain_type == HexTileData.TerrainType.MOUNTAINS else (1.0 if new_terrain_type == HexTileData.TerrainType.HILLS else 0.0)
+		custom.a = _material_kind_for(new_terrain_type)
+		mm.set_instance_custom_data(index, custom)
+	# Terreno mudou de tipo -- pode ter cruzado a fronteira habitavel/
+	# intransponivel (ver total_habitable_tiles_cached abaixo). Nenhuma
+	# transformacao hoje cruza essa fronteira de verdade (Tundra/Deserto/
+	# Planicie sao todos habitaveis), mas invalidar aqui e O(1) e evita um
+	# cache desatualizado silencioso se isso mudar no futuro.
+	_cached_total_habitable_tiles = -1
+	if _dirty_terrain_visuals.is_empty():
+		_refresh_changed_terrain_visuals.call_deferred()
+	_dirty_terrain_visuals[coord] = true
+
+## Ver ARVORES E RECURSOS (pedido do usuario): "evite sobreposicao ruim
+## entre recursos, arvores, estruturas, cidades..." -- mesma tecnica que ja
+## preservava recursos (tile com recurso nunca ganha arvore, ver
+## _rebuild_props) aplicada a estrutura PERMANENTE que passa a ocupar um
+## tile DEPOIS que as arvores da geracao inicial ja foram plantadas
+## (cidade/predio nascem so depois de generate_map(); covil nasce ANTES,
+## mas ainda depois de _rebuild_props() dentro do proprio generate_map() —
+## ver ordem em generate_map()). Confirmado visualmente antes do fix:
+## capital/cidade de teste/covil plantados num tile de Floresta/Taiga/Selva
+## ficavam com arvores encostadas ou por cima do proprio modelo. So remove
+## a instancia (zera escala, mesma tecnica de _refresh_changed_terrain_
+## visuals abaixo) -- nao mexe no `.resource` do tile nem em nada mais.
+func _clear_tree_props_at(coord: Vector2i) -> void:
+	if _props_tree_instance and _tree_coord_to_index.has(coord):
+		for index in _tree_coord_to_index[coord]:
+			_props_tree_instance.multimesh.set_instance_transform(index, Transform3D(Basis().scaled(Vector3.ZERO), Vector3.ZERO))
+		_tree_coord_to_index.erase(coord)
+	if _changed_tree_props.has(coord):
+		_changed_tree_props[coord].free()
+		_changed_tree_props.erase(coord)
+
+## Ver ARVORES E RECURSOS -- envelope de _clear_tree_props_at acima que
+## TAMBEM limpa o prop 3D e o icone billboard de recurso do tile (ver
+## ResourcePropsManager.clear_prop_at/ResourceIconManager.clear_icon_at),
+## confirmado visualmente como o mesmo tipo de sobreposicao ruim (cristal
+## flutuando dentro do patio da cidade nova). Arvore e recurso nunca
+## coexistem no mesmo tile (ver _rebuild_props), entao chamar os dois aqui
+## e' seguro -- so um dos dois faz algo de verdade por tile.
+##
+## MAGIAS, SPAWNS E ARVORES (rodada seguinte): pedido do usuario foi "o
+## mesmo problema ocorre com invocacoes/monstros/entidades criadas por
+## magia... defina uma politica COERENTE pra spawn". Investigado antes de
+## mexer: nenhum spawn (spawn_unit/spawn_monster_at/MagicRuntime.summon)
+## jamais checou arvore pra decidir se um alvo e valido -- so
+## blocks_land_units()/unidade-ja-ali, entao um "nao consigo conjurar
+## aqui" nunca foi uma falha de verdade, so a criatura nascendo
+## visualmente enterrada numa arvore e parecendo que nada aconteceu (mesma
+## causa raiz da tarefa anterior, agora pra UNIDADE em vez de ESTRUTURA).
+## Em vez de uma regra so pra invocacao (o que criaria a MESMA
+## inconsistencia de novo pra treino normal de cidade), chamado direto em
+## spawn_unit()/spawn_monster_at() -- os dois pontos unicos por onde
+## QUALQUER unidade nova (treino, invocacao, reforco de covil, guardiao)
+## passa a existir no mapa -- pra uma politica de verdade coerente: toda
+## unidade nova sempre nasce visivel, nunca some atras de decoracao.
+func _clear_tile_decor_at(coord: Vector2i) -> void:
+	_clear_tree_props_at(coord)
+	if _resource_props_manager:
+		_resource_props_manager.clear_prop_at(coord)
+	if _resource_icon_manager:
+		_resource_icon_manager.clear_icon_at(coord)
+
+func _refresh_changed_terrain_visuals() -> void:
+	# Atualiza só os hexágonos alterados, após restaurar os recursos da região.
+	for coord in _dirty_terrain_visuals:
+		if not tiles.has(coord):
+			continue
+		_clear_tree_props_at(coord)
+		var tile: HexTileData = tiles[coord]
+		# Sem a chance de cobertura aqui (ver TREE_TILE_COVERAGE_CHANCE) de
+		# proposito -- este caminho e' UM tile por vez, resultado de um efeito
+		# magico deliberado (Metamorfose de Gaia/MagicRuntime), nao a geracao
+		# em massa do mapa que motivou a reducao de densidade. Um efeito unico
+		# e raro sempre mostrar arvore reforca a leitura "aqui aconteceu
+		# magia", em vez de arriscar renderizar como se nada tivesse mudado.
+		if tile.resource == "" and tile.terrain_type in [HexTileData.TerrainType.FOREST, HexTileData.TerrainType.TAIGA, HexTileData.TerrainType.JUNGLE] and _tree_mesh:
+			var mm := MultiMesh.new()
+			mm.transform_format = MultiMesh.TRANSFORM_3D
+			mm.use_colors = true
+			mm.mesh = _tree_mesh
+			mm.instance_count = 3
+			for index in range(3):
+				var angle := index * TAU / 3
+				var pos := world_for_coord(coord) + Vector3(cos(angle), 0, sin(angle)) * hex_size * 0.35
+				mm.set_instance_transform(index, Transform3D(Basis(Vector3.UP, angle).scaled(Vector3.ONE * TREE_MODEL_SCALE), pos))
+			var instance := MultiMeshInstance3D.new()
+			instance.multimesh = mm
+			var material := StandardMaterial3D.new()
+			material.albedo_texture = load("res://assets/models/kaykit/nature/forest_texture.png")
+			material.vertex_color_use_as_albedo = true
+			material.cull_mode = BaseMaterial3D.CULL_DISABLED
+			material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+			instance.material_override = material
+			add_child(instance)
+			_changed_tree_props[coord] = instance
+		if _resource_props_manager:
+			_resource_props_manager.refresh_height(coord)
+		if _resource_icon_manager:
+			_resource_icon_manager.refresh_tile(coord)
+	_dirty_terrain_visuals.clear()
+	_apply_prop_fog()
 
 func clear_highlight() -> void:
 	_reset_highlighted_terrain(_last_highlighted_land_coords)
@@ -1284,22 +1702,27 @@ func is_under_rival_pressure(coord: Vector2i, player: PlayerData) -> bool:
 ## Roadmap 2.0 (fecha Parte A) — proxy MINIMO de "quao perigoso e ficar
 ## perto deste covil", mesmo espirito de is_under_rival_pressure acima
 ## (distancia hexagonal crua, sem campo de forca/influencia). Um covil so
-## entra na conta se get_unit_at(lair_coord) != null: um covil em
-## lair_coords cujo guardiao ja morreu (mas ainda nao foi "destruido"
-## andando em cima, ver destroy_lair) nao e mais perigoso, mesmo que ainda
-## conste na lista. Pega o MAX entre os covis qualificados dentro do raio,
-## NUNCA a soma — dois acampamentos de Goblin proximos nao deveriam
-## assustar mais que um unico covil de Dragao, o pior vizinho manda. attack
-## de MonsterDatabase.KIND_DATA (nao min_threat, que e limiar de SPAWN, nao
-## forca de combate) normalizado pelo attack do Dragao (16.0, o mais forte
-## hoje) pra caber em 0..1.
+## entra na conta se ainda houver algum monstro vivo na AREA dele (ver
+## _count_live_monsters_near_lair) — um covil em lair_coords cujo guardiao
+## e qualquer reforco ja morreram (mas ainda nao foi "destruido" andando em
+## cima, ver destroy_lair) nao e mais perigoso, mesmo que ainda conste na
+## lista. Checar so `get_unit_at(lair_coord)` (a coordenada exata) deixou
+## de bastar depois de COVIS DE MONSTROS -- SOBREPOSICAO: o guardiao agora
+## nasce num VIZINHO, nao mais sempre na propria celula do covil (ver
+## _find_free_tile_for_lair_spawn), entao a celula exata quase sempre
+## aparece vazia mesmo com o covil ainda bem guardado. Pega o MAX entre os
+## covis qualificados dentro do raio, NUNCA a soma — dois acampamentos de
+## Goblin proximos nao deveriam assustar mais que um unico covil de Dragao,
+## o pior vizinho manda. attack de MonsterDatabase.KIND_DATA (nao
+## min_threat, que e limiar de SPAWN, nao forca de combate) normalizado
+## pelo attack do Dragao (16.0, o mais forte hoje) pra caber em 0..1.
 const LAIR_DANGER_RADIUS := 4
 
 func get_lair_danger_at(coord: Vector2i) -> float:
 	var max_danger := 0.0
 	var strongest_attack: float = MonsterDatabase.KIND_DATA["dragon"].attack
 	for lair_coord in lair_coords:
-		if get_unit_at(lair_coord) == null:
+		if _count_live_monsters_near_lair(lair_coord) == 0:
 			continue
 		if HexMetrics.axial_distance(coord, lair_coord) > LAIR_DANGER_RADIUS:
 			continue
@@ -1648,6 +2071,7 @@ func hide_hover_label() -> void:
 ## cada tile e escurecido exatamente uma vez, na malha certa.
 func _apply_fog_colors() -> void:
 	_apply_land_and_prop_fog()
+	_rebuild_liquid_type_texture()
 	_rebuild_water_overlay()
 
 func _apply_land_and_prop_fog() -> void:
@@ -1694,6 +2118,8 @@ func _apply_terrain_fog(mm: MultiMesh, coord_to_index: Dictionary) -> void:
 ## fracionario), EXPLORED vira sepia/dessaturado (_sepia_prop_color, mesmo
 ## espirito do tratamento de terreno), VISIBLE fica com a cor original.
 func _apply_prop_fog() -> void:
+	for coord in _changed_tree_props:
+		_tint_props(_changed_tree_props[coord].multimesh, {coord: [0, 1, 2]}, Color.WHITE)
 	if _props_tree_instance:
 		_tint_props(_props_tree_instance.multimesh, _tree_coord_to_index, Color.WHITE)
 	if _props_ice_floe_instance:
@@ -2293,8 +2719,6 @@ func _generate_tile_data(coord: Vector2i, elevation: float, coastal_distance: in
 				land_biome = _maybe_volcanic(land_biome, volcanic_value)
 
 		data = TerrainDatabase.create_tile(land_biome)
-
-	_maybe_assign_resource(data, coord, world)
 	return data
 
 ## Pura, igual _pick_biome — Mar Gelado e a variante polar do Oceano ("os
@@ -2397,9 +2821,7 @@ func _smooth_isolated_biome_cells() -> void:
 			return
 
 		for coord in changes.keys():
-			var world = HexMetrics.axial_to_world(coord.x, coord.y, hex_size)
 			var data = TerrainDatabase.create_tile(changes[coord])
-			_maybe_assign_resource(data, coord, world)
 			tiles[coord] = data
 
 ## LAVA/CRYSTAL removidos desta lista (pedido do usuario: "remova a
@@ -2775,9 +3197,7 @@ func _ensure_minimum_volcanic_peaks() -> void:
 ## depois, o bioma inteiro acabava sumindo do mapa — foi assim que
 ## Montanha sumiu de vez de uma semente durante os testes deste item).
 func _write_forced_tile(terrain_type: int, coord: Vector2i) -> void:
-	var world = HexMetrics.axial_to_world(coord.x, coord.y, hex_size)
 	var data = TerrainDatabase.create_tile(terrain_type)
-	_maybe_assign_resource(data, coord, world)
 	tiles[coord] = data
 
 ## Garantia pro Mar de Lava no tamanho Grande (roadmap item 32, pedido do
@@ -2819,9 +3239,7 @@ func _ensure_lava_sea_present() -> void:
 			break
 
 	for coord in to_convert:
-		var world = HexMetrics.axial_to_world(coord.x, coord.y, hex_size)
 		var data = TerrainDatabase.create_tile(HexTileData.TerrainType.LAVA_SEA)
-		_maybe_assign_resource(data, coord, world)
 		tiles[coord] = data
 
 ## Converte todo tile de Oceano (nao Mar Gelado/Mar de Lava, ver
@@ -2971,26 +3389,201 @@ func _find_cluster_neighbors(terrain_type: int, existing_cluster: Array, claimed
 			frontier.append(n)
 	return extra
 
-## Medido empiricamente rodando FastNoiseLite.get_noise_2d() com a mesma
-## frequencia (0.8) por milhares de amostras: 0.7 (o "chute" original) so
-## passa em ~0.03% dos tiles — na pratica, recurso nunca aparecia. 0.3 da
-## os ~12% pretendidos (confirmado em varias sementes diferentes).
-const RESOURCE_NOISE_THRESHOLD := 0.3
+## Raio minimo (em tiles) entre DUAS ocorrencias do MESMO recurso — pedido
+## do usuario: "a geracao atual frequentemente cria clusters exagerados...
+## seis cavalos praticamente grudados". NAO limita quantos recursos
+## DIFERENTES podem ficar perto (Ferro do lado de Nodulo Arcano em Colina
+## continua normal) nem quantas ocorrencias do mesmo recurso uma regiao rica
+## pode ter no total — so exige alguma distancia MINIMA entre elas, entao
+## "regiao boa de Ferro" continua existindo, so sem 4-5 tiles de Ferro
+## grudados formando um bloco.
+const RESOURCE_SAME_TYPE_MIN_DISTANCE := 2
 
-## Recurso estrategico/luxo esparso: so em tiles de terra firme cujo bioma
-## e elegivel (ResourceDatabase.ELIGIBILITY), e so onde o ruido de recurso
-## passa do limiar (~15% dos tiles elegiveis, dando uma distribuicao rala
-## em vez de blocos grandes). Qual recurso exato usa um hash deterministico
-## da coordenada em vez de mais uma chamada de ruido — mais barato e ainda
-## 100% reproduzivel pela map_seed.
-func _maybe_assign_resource(data: HexTileData, coord: Vector2i, world: Vector3) -> void:
-	var eligible = ResourceDatabase.eligible_resources(data.terrain_type)
-	if eligible.is_empty():
+## Pedido do usuario ("ANTI-CLUSTER DE RECURSOS... pode existir proximidade,
+## dois recursos iguais relativamente proximos podem ser interessantes, mas
+## sequencias exageradas de tiles adjacentes devem ser raras e justificadas,
+## nao o comportamento padrao"). Investigado ANTES de mudar nada: medindo o
+## mapa Grande real (3 seeds) a regra MIN_DISTANCE acima ja garante
+## min_dist_real=3 em TODO par do mesmo recurso (nunca 1 nem 2) — "grudado"
+## ja e impossivel hoje. O que ela NAO limita e quantos exemplares do MESMO
+## recurso podem se acumular numa regiao MAIOR (ex: 4-6 dentro de um raio 5
+## medidos na pratica), formando um "veio" perceptivel mesmo sem nenhum par
+## realmente encostado. Em vez de endurecer MIN_DISTANCE (isso mataria a
+## proximidade OCASIONAL que o usuario quer manter) ou trocar o algoritmo
+## inteiro por Poisson-disk/regioes (refatoracao ampla desnecessaria pra um
+## pipeline orcamento+peso-de-bioma que ja funciona), adiciona-se uma
+## penalidade de probabilidade PROGRESSIVA por vizinhanca — cada exemplar do
+## mesmo recurso ja existente dentro de RESOURCE_CLUSTER_RADIUS aumenta a
+## chance do candidato atual ser pulado, sem nunca ser 100% proibido. Um
+## unico vizinho no raio (o caso "proximidade interessante") quase nunca e'
+## rejeitado; 3+ vizinhos vira raro por design; a chance nunca passa do teto
+## (algum "veio" grande ainda pode acontecer, so raro/justificado pelo
+## sorteio, nunca o padrao).
+const RESOURCE_CLUSTER_RADIUS := 5
+const RESOURCE_CLUSTER_PENALTY_PER_NEARBY := 0.35
+const RESOURCE_CLUSTER_PENALTY_MAX := 0.9
+
+## Pedido do usuario ("orçamento global de recursos... em vez de aplicar
+## uma chance independente por tile, considere orçamento, densidade-alvo,
+## faixa mínima/máxima, distribuição ponderada... tamanho do mapa, número
+## de jogadores, tipo/raridade/importância estratégica do recurso, biomas
+## disponíveis"). Chamada UMA SO VEZ em generate_map(), depois que TODO
+## ajuste de bioma ja terminou (smoothing/variedade forcada/Mar de Lava —
+## o bioma de um tile podia mudar em varios pontos diferentes depois da
+## geracao inicial; antes cada um desses pontos tinha sua PROPRIA chamada
+## de reatribuicao de recurso pra tentar acompanhar, agora e' um lugar so,
+## quando o bioma de todo tile ja e' definitivo).
+##
+## Historico (sessao anterior): o sistema antigo dava uma chance
+## INDEPENDENTE por tile (ruido limiar ~12%) sem nocao nenhuma de quantos
+## recursos o MAPA deveria ter no total — um mapa maior sempre acumulava
+## proporcionalmente mais, mas sem piso/teto absoluto nem qualquer relacao
+## com numero de jogadores, e a variancia entre sementes nao era controlada
+## (mapas pequenos podiam sair bem mais escassos ou mais cheios so por
+## sorte do ruido). RESOURCE_BASE_DENSITY/RESOURCE_MIN_DIVISOR/
+## RESOURCE_MAX_DIVISOR abaixo substituem isso por uma CONTAGEM-ALVO
+## explicita por recurso.
+##
+## Densidade base por recurso reflete a importancia estrategica pretendida:
+## Ferro/Nodulo Arcano (descontos fortes de unidade pesada/feitico) e
+## Cavalos (pedido do usuario da rodada anterior: "abundante demais no mapa
+## inteiro", mantido deliberadamente o mais raro apesar de existir em 3
+## biomas) ficam mais escassos; Gemas/Seda (economia) um pouco mais comuns.
+const RESOURCE_BASE_DENSITY := {
+	"mana_node": 0.05,
+	"iron": 0.05,
+	"gems": 0.04,
+	"silk": 0.06,
+	"horses": 0.04,
+}
+
+## Mais raro/estrategico primeiro: quem processa primeiro reserva tiles do
+## PROPRIO bioma preferencial antes de um recurso mais comum que
+## compartilha o mesmo bioma (ex: Colina, Ferro x Nodulo Arcano) esgotar o
+## espaco disponivel.
+const RESOURCE_PROCESS_ORDER: Array[String] = ["mana_node", "iron", "gems", "silk", "horses"]
+
+## Faixa min/max ABSOLUTA por tipo de recurso, escalada pelo TAMANHO do
+## mapa (tiles totais) — pedido do usuario: "um mapa pequeno e um
+## gigantesco nao devem usar simplesmente a mesma quantidade absoluta".
+## O piso garante que um mapa pequeno ainda tenha alguns exemplares de
+## cada recurso elegivel (a densidade sozinha arredondaria pra 0 num mapa
+## minusculo); o teto evita que um mapa gigantesco acumule uma quantidade
+## desproporcional so por ter mais tiles elegiveis. Divisores calibrados
+## pro mapa Grande oficial (320x84 = 26880 tiles): piso 9, teto 54 —
+## dentro da faixa ja medida empiricamente como razoavel nas sessoes
+## anteriores (~30-65 por recurso antes deste ajuste).
+const RESOURCE_MIN_DIVISOR := 3000.0
+const RESOURCE_MAX_DIVISOR := 500.0
+
+## Sorteia, pra CADA recurso (na ordem de RESOURCE_PROCESS_ORDER), uma
+## contagem-alvo de tiles a partir da densidade base e da faixa min/max, e
+## reivindica esse tanto de tiles elegiveis — em vez da chance independente
+## por tile de antes. player_count (pedido do usuario: "numero de
+## jogadores") so' sobe o PISO (garante alguma chance de cada civ achar um
+## exemplar), nunca o TETO — mais jogadores competindo pelo MESMO teto e' o
+## proposito ("recursos raros devem continuar criando disputa" pedido de
+## rodada anterior), nao mais recurso disponivel pra todo mundo.
+func _assign_resources() -> void:
+	var total_tiles := tiles.size()
+	if total_tiles == 0:
 		return
-	if _resource_noise.get_noise_2d(world.x, world.z) <= RESOURCE_NOISE_THRESHOLD:
-		return
-	var index = int(abs(coord.x * 31 + coord.y * 17)) % eligible.size()
-	data.resource = eligible[index]
+	var min_per_type := maxi(1, int(round(total_tiles / RESOURCE_MIN_DIVISOR)))
+	var max_per_type := maxi(min_per_type + 3, int(round(total_tiles / RESOURCE_MAX_DIVISOR)))
+	var player_count := clampi(GameManager.rival_count + 1, 2, 8)
+	min_per_type = maxi(min_per_type, int(ceil(player_count * 0.5)))
+
+	var rng := RandomNumberGenerator.new()
+	rng.seed = map_seed + 8000 # canal proprio, mesmo padrao dos outros noises (seed+N)
+
+	# Uma unica varredura de `tiles` (nao uma por recurso, mapa Grande tem
+	# ~27 mil tiles — 5 passadas repetidas era custo real, ver PERFORMANCE_
+	# GUIDE.md) monta a lista de candidatos de TODOS os recursos de uma vez.
+	var sorted_coords: Array = tiles.keys()
+	sorted_coords.sort() # ordem deterministica antes do sorteio ponderado, independente de ordem de insercao no dict
+	var candidates_by_resource: Dictionary = {}
+	for resource_id in RESOURCE_PROCESS_ORDER:
+		candidates_by_resource[resource_id] = [] as Array[Vector2i]
+	for coord in sorted_coords:
+		var terrain_type: int = tiles[coord].terrain_type
+		for resource_id in RESOURCE_PROCESS_ORDER:
+			if ResourceDatabase.weight_for(resource_id, terrain_type) > 0.0:
+				candidates_by_resource[resource_id].append(coord)
+
+	for resource_id in RESOURCE_PROCESS_ORDER:
+		# Filtra os candidatos AINDA disponiveis agora (um recurso
+		# processado antes na ordem pode ja ter reivindicado alguns) --
+		# feito aqui (nao na varredura unica acima) pra a densidade-alvo
+		# abaixo continuar calculada sobre o pool REALMENTE disponivel pra
+		# este recurso, igual seria com uma varredura dedicada por recurso.
+		var candidates: Array[Vector2i] = []
+		for coord in (candidates_by_resource[resource_id] as Array[Vector2i]):
+			if tiles[coord].resource == "":
+				candidates.append(coord)
+		if candidates.is_empty():
+			continue
+		_weighted_shuffle(candidates, resource_id, rng)
+
+		var density: float = RESOURCE_BASE_DENSITY.get(resource_id, 0.05)
+		var target := clampi(int(round(candidates.size() * density)), min_per_type, max_per_type)
+
+		var placed := 0
+		for coord in candidates:
+			if placed >= target:
+				break
+			# Mesma regra anti-cluster de sempre (ver RESOURCE_SAME_TYPE_
+			# MIN_DISTANCE/_resource_nearby) — so' PULA o candidato (fica
+			# disponivel pro PROXIMO recurso da ordem, se tambem elegivel
+			# ali), nunca tenta "forcar" outro tipo nesta mesma passada.
+			if _resource_nearby(coord, resource_id, RESOURCE_SAME_TYPE_MIN_DISTANCE):
+				continue
+			# Penalidade SUAVE (ver comentario da constante) -- roda so' depois
+			# do corte duro acima (mais barato, filtra a maioria dos casos
+			# antes de pagar o raio maior desta checagem).
+			if _resource_cluster_reject(coord, resource_id, rng):
+				continue
+			tiles[coord].resource = resource_id
+			placed += 1
+
+## Distribuicao PONDERADA (pedido do usuario) sem reposicao: chave =
+## log(sorteio uniforme)/peso do bioma (Efraimidis-Spirakis), ordenada
+## decrescente. Tiles do bioma PREFERENCIAL de `resource_id` (peso mais
+## alto) tendem a vir primeiro — reivindicados pelo orcamento antes dos
+## secundarios — mas o resultado continua aleatorio: nunca "todo o bioma
+## preferencial primeiro, so depois o secundario" de forma rigida/previsivel.
+func _weighted_shuffle(candidates: Array[Vector2i], resource_id: String, rng: RandomNumberGenerator) -> void:
+	var keys := {}
+	for coord in candidates:
+		var w: float = maxf(0.001, ResourceDatabase.weight_for(resource_id, tiles[coord].terrain_type))
+		var u: float = maxf(0.0001, rng.randf())
+		keys[coord] = log(u) / w
+	candidates.sort_custom(func(a, b): return keys[a] > keys[b])
+
+## Usado so por _assign_resources acima (ver comentario la) -- confere
+## tiles DENTRO do raio (ja reivindicados nesta chamada de generate_map)
+## atras de outra ocorrencia do MESMO resource_id.
+func _resource_nearby(coord: Vector2i, resource_id: String, radius: int) -> bool:
+	for other in tiles_in_range(coord, radius):
+		var tile: HexTileData = tiles.get(other)
+		if tile != null and tile.resource == resource_id:
+			return true
+	return false
+
+## Ver comentario de RESOURCE_CLUSTER_RADIUS acima -- conta quantos
+## exemplares do MESMO resource_id ja existem dentro do raio (maior que
+## RESOURCE_SAME_TYPE_MIN_DISTANCE, que ja filtrou o caso mais proximo antes
+## disto rodar) e sorteia a rejeicao PROPORCIONAL a essa contagem, nunca
+## absoluta.
+func _resource_cluster_reject(coord: Vector2i, resource_id: String, rng: RandomNumberGenerator) -> bool:
+	var nearby_count := 0
+	for other in tiles_in_range(coord, RESOURCE_CLUSTER_RADIUS):
+		var tile: HexTileData = tiles.get(other)
+		if tile != null and tile.resource == resource_id:
+			nearby_count += 1
+	if nearby_count == 0:
+		return false
+	var reject_chance := minf(nearby_count * RESOURCE_CLUSTER_PENALTY_PER_NEARBY, RESOURCE_CLUSTER_PENALTY_MAX)
+	return rng.randf() < reject_chance
 
 const LAIR_MIN_DISTANCE_FROM_CENTER_FRACTION := 0.25 # nunca perto do (0,0), onde o humano comeca
 
@@ -3104,10 +3697,25 @@ func _spawn_monster_lairs() -> void:
 		# gerar um reforco do kind ERRADO ali (o tile "pertence" aos dois
 		# covis ao mesmo tempo pro proposito de spawn/contagem/patrulha).
 		candidates = candidates.filter(func(c): return HexMetrics.axial_distance(c, coord) > 2)
+		# COVIS DE MONSTROS -- SOBREPOSICAO (pedido do usuario: "o tile do
+		# covil deve ser reservado para o covil... monstros devem nascer ao
+		# redor, nunca em cima da estrutura"): o guardiao ORIGINAL nascia
+		# sempre EXATAMENTE em `coord`, o mesmo tile da LairStructure (duas
+		# malhas no mesmo lugar). Reusa _find_free_tile_for_lair_spawn (ja
+		# exclui o proprio lair_coord, ver comentario dela) -- MESMA politica
+		# de onde um monstro deste covil pode nascer, sem duplicar a regra.
+		# So cai de volta pro proprio `coord` (unico caso remanescente de
+		# sobreposicao) se a area AO REDOR estiver toda bloqueada -- ilha de
+		# 1 tile cercada de agua/lava incompativel, extremamente raro; um
+		# guardiao sobreposto ainda e' preferivel a nenhum guardiao.
+		var boss_flies: bool = MonsterDatabase.KIND_DATA.get(kind, {}).get("flies", false)
+		var boss_coord = _find_free_tile_for_lair_spawn(coord, boss_flies)
+		if boss_coord == null:
+			boss_coord = coord
 		# `true` (camp boss): o ocupante ORIGINAL do covil e um "chefao"
 		# reforcado (HP/ataque multiplicados, nunca se move) — ver
 		# MonsterDatabase.create_monster/CAMP_BOSS_*_MULTIPLIER.
-		spawn_monster_at(coord, kind, true)
+		spawn_monster_at(boss_coord, kind, true) # ja limpa decoracao do tile, ver _clear_tile_decor_at
 		var structure := LairStructure.new()
 		_lairs_root.add_child(structure)
 		structure.position = world_for_coord(coord)
@@ -3298,6 +3906,29 @@ func home_lair_for(coord: Vector2i) -> Vector2i:
 			return lair_coord
 	return NO_LAIR
 
+## AGGRO / TERRITORIO DE AMEACA (pedido do usuario: "o jogador ataca
+## membros do covil" precisa ser um dos gatilhos de reacao -- "monstros
+## precisam perceber que a civilizacao esta invadindo seu espaco"). Marca
+## o covil DONO de `coord` (se houver) como ALERTADO por LAIR_ALERT_
+## DURATION_TURNS turnos -- ver MonsterAI._guard_radius_for/
+## _raider_radius_for, que somam um bonus de raio de deteccao enquanto o
+## covil estiver alertado. O territorio inteiro fica mais vigilante depois
+## que UM membro apanha, em vez de cada monstro so perceber ameaca por
+## proximidade individual de sempre. Chamado por CombatResolver sempre que
+## um atacante de jogador causa dano a um monstro neutro (resolve/
+## resolve_with_splash), independente de matar ou nao.
+const LAIR_ALERT_DURATION_TURNS := 8
+var lair_alert_until_turn: Dictionary = {} # Vector2i (lair_coord) -> int (turno em que o alerta expira)
+
+func alert_lair_near(coord: Vector2i, turn: int) -> void:
+	var lair_coord := home_lair_for(coord)
+	if lair_coord == NO_LAIR:
+		return
+	lair_alert_until_turn[lair_coord] = turn + LAIR_ALERT_DURATION_TURNS
+
+func is_lair_alerted(lair_coord: Vector2i, turn: int) -> bool:
+	return turn < lair_alert_until_turn.get(lair_coord, -1)
+
 func _count_live_monsters_near_lair(lair_coord: Vector2i) -> int:
 	var count := 0
 	for coord in _lair_area(lair_coord):
@@ -3305,6 +3936,22 @@ func _count_live_monsters_near_lair(lair_coord: Vector2i) -> int:
 		if unit != null and unit.owner_player == null:
 			count += 1
 	return count
+
+## COVIS DE MONSTROS -- SOBREPOSICAO/DESTRUICAO: efeito colateral do
+## guardiao original agora nascer num VIZINHO em vez da propria celula do
+## covil (ver _find_free_tile_for_lair_spawn) -- ANTES disso, um covil so
+## podia ser "limpo" andando em cima dele porque o guardiao FISICAMENTE
+## ocupava `coord`, bloqueando compute_reachable/compute_path (que so
+## barram por get_unit_at != null) igual qualquer outro tile ocupado. Sem
+## o guardiao mais em cima, `coord` ficaria sempre livre pra movimento.
+## Rodada "DESTRUICAO": o bloqueio agora e' pela ESTRUTURA em si
+## (lairs_by_coord), nao mais so enquanto defendida — a LairStructure
+## passou a ter HP proprio (ver CombatResolver.resolve_lair_attack) e
+## precisa ser atacada deliberadamente ate zerar, nao apenas visitada
+## livremente assim que o ultimo guardiao morre. `coord` so volta a ser
+## andavel quando destroy_lair() remove a estrutura de vez.
+func _is_lair_structure_at(coord: Vector2i) -> bool:
+	return lairs_by_coord.has(coord)
 
 ## Quantos monstros de `kind` estao vivos em QUALQUER LUGAR do mapa agora
 ## (nao so perto de UM covil, diferente de _count_live_monsters_near_lair
@@ -3322,10 +3969,14 @@ func _count_alive_of_kind(kind: String) -> int:
 
 ## Tile livre (sem unidade, sem bloquear terrestre — a MENOS que `flies`
 ## seja verdadeiro, ver abaixo) na area do covil, escolhido aleatoriamente
-## entre os candidatos — null se a area inteira ja esta ocupada (covil no
-## limite ou cercado). Inclui a propria celula do covil: normalmente
-## ocupada pelo guardiao original, mas se ele ja foi derrotado o tile fica
-## livre pra um novo monstro reocupar o covil.
+## entre os candidatos — null se a area AO REDOR inteira ja esta ocupada
+## (covil no limite ou cercado).
+## COVIS DE MONSTROS -- SOBREPOSICAO (pedido do usuario: "o tile do covil
+## deve ser reservado para o covil... nunca ficar em cima da estrutura"):
+## `lair_coord` em si NUNCA entra nos candidatos, mesmo se o guardiao
+## original ja morreu — antes disso ficava livre pra um novo monstro
+## "reocupar o covil", exatamente a sobreposicao de duas malhas (monstro +
+## LairStructure) reportada. Reforco/patrulha agora so usam os 6 vizinhos.
 ## `flies` (do kind do proprio covil, ver _reinforce_lair) libera tile de
 ## Lava/Mar de Lava como candidato tambem — sem isso, um covil de Vivern/
 ## Dragao nascido em cima de lava (ver _spawn_monster_lairs) nunca
@@ -3333,6 +3984,8 @@ func _count_alive_of_kind(kind: String) -> int:
 func _find_free_tile_for_lair_spawn(lair_coord: Vector2i, flies: bool = false):
 	var candidates: Array[Vector2i] = []
 	for coord in _lair_area(lair_coord):
+		if coord == lair_coord:
+			continue
 		if get_unit_at(coord) != null:
 			continue
 		var data = get_tile(coord)
@@ -3367,10 +4020,25 @@ func _maybe_roam_lair(lair_coord: Vector2i) -> void:
 	var free_coords: Array[Vector2i] = []
 	for coord in area:
 		var unit = get_unit_at(coord)
-		if unit != null and unit.owner_player == null:
+		# Roadmap "Fase Macro" 5B.3-E -- world_event_managed (ex.: o Dragao
+		# de DragonEvent) tem IA propria em outro lugar; sem esta exclusao,
+		# se ele passasse voando/andando por perto de QUALQUER covil no
+		# mapa, podia ser sorteado aqui e teleportado pra um tile aleatorio
+		# dentro da area do covil -- reposicionamento silencioso, invisivel
+		# ao proprio DragonEvent (que so' sabe onde a Unit esta lendo
+		# dragon_unit.coord DEPOIS do fato).
+		if unit != null and unit.owner_player == null and not unit.world_event_managed:
 			occupants.append(unit)
 			continue
 		if unit != null or get_city_at(coord) != null:
+			continue
+		# COVIS DE MONSTROS -- SOBREPOSICAO: lair_coord reservado pra
+		# LairStructure, nunca destino de patrulha (mesma politica de
+		# _find_free_tile_for_lair_spawn) -- checado DEPOIS do get_unit_at
+		# acima de proposito, entao se algum monstro ja estiver la (caso
+		# raro de fallback, ver _spawn_monster_lairs), ele ainda pode ser
+		# sorteado como occupant e se AFASTAR dali, so nao pode ser destino.
+		if coord == lair_coord:
 			continue
 		var data = get_tile(coord)
 		if data != null and (not data.blocks_land_units() or (flies and data.is_lava())):
@@ -3384,9 +4052,9 @@ func _maybe_roam_lair(lair_coord: Vector2i) -> void:
 	# Mesmo motivo de move_unit acima: sem nevoa cobrindo o covil, o
 	# guardiao nem aparece na tela — nao vale animar.
 	if wanderer.visible:
-		wanderer.slide_to(world_for_coord(dest))
+		wanderer.slide_to(world_surface_for_coord(dest))
 	else:
-		wanderer.position = world_for_coord(dest)
+		wanderer.position = world_surface_for_coord(dest)
 	units_by_coord[dest] = wanderer
 
 ## Unica funcao que cria um monstro neutro de verdade (guardiao original OU
@@ -3402,8 +4070,9 @@ func spawn_monster_at(coord: Vector2i, kind: String, is_camp_boss: bool = false)
 	var unit := Unit.new()
 	_units_root.add_child(unit)
 	unit.setup(MonsterDatabase.create_monster(kind, is_camp_boss), null, coord, is_camp_boss)
-	unit.position = world_for_coord(coord)
+	unit.position = world_surface_for_coord(coord)
 	units_by_coord[coord] = unit
+	_clear_tile_decor_at(coord) # ver MAGIAS, SPAWNS E ARVORES -- mesma politica de spawn_unit acima
 	return unit
 
 ## Todo monstro neutro (owner_player == null) vivo no mapa agora — guardiao
@@ -3663,7 +4332,8 @@ func _rebuild_multimesh() -> void:
 	_rebuild_lava_tile_mask()
 
 	_rebuild_props()
-	_rebuild_water_overlay() # fog inicial (tudo UNSEEN, ver visibility) no plano recem-criado
+	_rebuild_liquid_type_texture() # fog inicial (tudo UNSEEN, ver visibility) no plano recem-criado
+	_rebuild_water_overlay() # destaque inicial (nenhum) no mesmo plano
 	_rebuild_biome_overlay() # idem, mascara inicial pro terreno solido
 
 	var half_extents = get_world_half_extents()
@@ -3806,6 +4476,7 @@ func _ensure_water_overlay_coord_cache() -> void:
 	baseline_bytes.resize(res * res * 4)
 	var type_static_bytes := PackedByteArray()
 	type_static_bytes.resize(res * res * 4)
+	var pixels_by_coord := {}
 	for py in range(res):
 		var v = float(py) / float(res - 1)
 		var world_z = lerp(-half_extents.y, half_extents.y, v)
@@ -3816,6 +4487,9 @@ func _ensure_water_overlay_coord_cache() -> void:
 			var world_x = lerp(-half_extents.x, half_extents.x, u)
 			var coord = HexMetrics.world_to_axial(world_x, world_z, hex_size)
 			cache[row_offset + px] = coord
+			if not pixels_by_coord.has(coord):
+				pixels_by_coord[coord] = PackedInt32Array()
+			pixels_by_coord[coord].append(row_offset + px)
 
 			var tile: HexTileData = tiles.get(coord)
 			var is_frozen = tile != null and tile.terrain_type == HexTileData.TerrainType.FROZEN_OCEAN
@@ -3835,6 +4509,7 @@ func _ensure_water_overlay_coord_cache() -> void:
 			type_static_bytes[idx + 2] = lava_byte
 			type_static_bytes[idx + 3] = 0
 	_water_overlay_coord_cache = cache
+	_water_overlay_pixels_by_coord = pixels_by_coord
 	_water_overlay_baseline_bytes = baseline_bytes
 	_water_overlay_baseline_texture = ImageTexture.create_from_image(
 		Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, baseline_bytes)
@@ -3846,6 +4521,9 @@ func _ensure_water_overlay_coord_cache() -> void:
 ## gerado; ver _liquid_type_static_bytes pro mesmo padrao na agua) — A fica
 ## sempre 0, placeholder sobrescrito toda chamada com o fog_level de verdade.
 var _biome_overlay_static_bytes: PackedByteArray = PackedByteArray()
+## Mesma ideia de _water_overlay_pixels_by_coord, pra BIOME_OVERLAY_RESOLUTION
+## -- ver _rebuild_biome_overlay abaixo.
+var _biome_overlay_pixels_by_coord: Dictionary = {}
 
 func _ensure_biome_overlay_coord_cache() -> void:
 	var res := BIOME_OVERLAY_RESOLUTION
@@ -3854,6 +4532,7 @@ func _ensure_biome_overlay_coord_cache() -> void:
 	var half_extents = get_world_half_extents()
 	var cache: Array[Vector2i] = []
 	cache.resize(res * res)
+	var pixels_by_coord := {}
 	var static_bytes := PackedByteArray()
 	static_bytes.resize(res * res * 4)
 	for py in range(res):
@@ -3866,6 +4545,9 @@ func _ensure_biome_overlay_coord_cache() -> void:
 			var world_x = lerp(-half_extents.x, half_extents.x, u)
 			var coord = HexMetrics.world_to_axial(world_x, world_z, hex_size)
 			cache[row_offset + px] = coord
+			if not pixels_by_coord.has(coord):
+				pixels_by_coord[coord] = PackedInt32Array()
+			pixels_by_coord[coord].append(row_offset + px)
 
 			var tile: HexTileData = tiles.get(coord)
 			var color := Color(0.05, 0.05, 0.05)
@@ -3878,6 +4560,7 @@ func _ensure_biome_overlay_coord_cache() -> void:
 			static_bytes[idx + 3] = 0
 	_biome_overlay_static_bytes = static_bytes
 	_biome_overlay_coord_cache = cache
+	_biome_overlay_pixels_by_coord = pixels_by_coord
 
 ## Perfilamento real (usuario: "cai de 140 pra 15/20 fps toda troca de
 ## turno") mostrou esta funcao sozinha custando ~120-250ms/chamada num mapa
@@ -3892,6 +4575,17 @@ func _ensure_biome_overlay_coord_cache() -> void:
 ## recompute_fog/fim de turno, o mais comum de todos) o resultado e SEMPRE
 ## identico ao baseline cacheado (_water_overlay_baseline_texture), entao
 ## reusa a MESMA textura em vez de reconstruir do zero.
+## SO o destaque (movimento/ataque/trajeto/construcao) da agua. A nevoa de
+## guerra da agua (canal A de liquid_type_texture) vive em _rebuild_liquid_
+## type_texture abaixo, chamada SO quando `visibility` muda de verdade
+## (_apply_fog_colors: fim de turno/debug) -- antes as duas eram
+## reconstruidas juntas aqui a CADA hover, e o fog era o mesmo em todas
+## elas (perfilamento: ~38ms dos ~99ms por hover so nesse loop inutil).
+## O destaque em si so escreve os pixels dos tiles destacados por cima do
+## baseline cacheado (ver _water_overlay_pixels_by_coord) -- ~2 px por
+## tile em vez de 50176 pixels com 4 lookups cada; resultado byte-a-byte
+## identico ao loop antigo (mesma ordem de lerp, mesmo alfa de Mar Gelado
+## que o baseline ja carrega).
 func _rebuild_water_overlay(reachable: Array = [], attackable: Array = [], path: Array = [], buildable: Array = []) -> void:
 	if _liquid_plane_instance == null:
 		return
@@ -3899,74 +4593,64 @@ func _rebuild_water_overlay(reachable: Array = [], attackable: Array = [], path:
 	_ensure_water_overlay_coord_cache()
 	var res := WATER_OVERLAY_RESOLUTION
 
-	var type_data := _liquid_type_static_bytes.duplicate()
-	for py in range(res):
-		var row_offset = py * res
-		var byte_row_offset = row_offset * 4
-		for px in range(res):
-			var coord = _water_overlay_coord_cache[row_offset + px]
-			# visibility so tem entrada pra coord que existe em `tiles` (ver
-			# recompute_fog/set_debug_fog_disabled) — _fog_level_for ja
-			# devolve 0.0 (UNSEEN) de graca pra qualquer coord ausente, entao
-			# nao precisa checar tiles.has(coord) antes, so' um lookup a
-			# menos por pixel.
-			var fog_level = _fog_level_for(coord)
-			type_data[byte_row_offset + px * 4 + 3] = int(round(clamp(fog_level, 0.0, 1.0) * 255.0))
-	var type_img := Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, type_data)
-	_liquid_type_texture = ImageTexture.create_from_image(type_img)
-
 	if reachable.is_empty() and attackable.is_empty() and path.is_empty() and buildable.is_empty():
 		_water_overlay_texture = _water_overlay_baseline_texture
 	else:
-		var reachable_set := {}
-		for c in reachable:
-			reachable_set[c] = true
-		var attackable_set := {}
-		for c in attackable:
-			attackable_set[c] = true
-		var path_set := {}
-		for c in path:
-			path_set[c] = true
-		var buildable_set := {}
+		var tints := {}
+		# Mesma ordem de aplicacao do loop antigo: um tile em mais de um
+		# conjunto acumula os lerps na mesma sequencia de antes.
 		for c in buildable:
-			buildable_set[c] = true
+			tints[c] = tints.get(c, Color.WHITE).lerp(Color(0.35, 0.7, 1.0), 0.55)
+		for c in path:
+			tints[c] = tints.get(c, Color.WHITE).lerp(Color(1.0, 1.0, 0.4), 0.7)
+		for c in attackable:
+			tints[c] = tints.get(c, Color.WHITE).lerp(Color(1.0, 0.2, 0.2), 0.5)
+		for c in reachable:
+			tints[c] = tints.get(c, Color.WHITE).lerp(Color(0.3, 1.0, 0.3), 0.5)
 
-		var overlay_data := PackedByteArray()
-		overlay_data.resize(res * res * 4)
-		for py in range(res):
-			var row_offset = py * res
-			var byte_row_offset = row_offset * 4
-			for px in range(res):
-				var coord = _water_overlay_coord_cache[row_offset + px]
-
-				# Nevoa de guerra em si NAO dimeriza mais aqui (ver comentario da
-				# funcao acima) — so o destaque de movimento/ataque/construcao
-				# continua sendo blend de cor por cima de uma base neutra,
-				# mesmo espirito de _highlight_coords pro terreno solido.
-				var tint := Color(1.0, 1.0, 1.0, 1.0)
-				if buildable_set.has(coord):
-					tint = tint.lerp(Color(0.35, 0.7, 1.0), 0.55)
-				if path_set.has(coord):
-					tint = tint.lerp(Color(1.0, 1.0, 0.4), 0.7)
-				if attackable_set.has(coord):
-					tint = tint.lerp(Color(1.0, 0.2, 0.2), 0.5)
-				if reachable_set.has(coord):
-					tint = tint.lerp(Color(0.3, 1.0, 0.3), 0.5)
-
-				var tile: HexTileData = tiles.get(coord)
-				var is_frozen = tile != null and tile.terrain_type == HexTileData.TerrainType.FROZEN_OCEAN
-				tint.a = 0.0 if is_frozen else 1.0
-
-				var idx = byte_row_offset + px * 4
-				overlay_data[idx] = int(round(clamp(tint.r, 0.0, 1.0) * 255.0))
-				overlay_data[idx + 1] = int(round(clamp(tint.g, 0.0, 1.0) * 255.0))
-				overlay_data[idx + 2] = int(round(clamp(tint.b, 0.0, 1.0) * 255.0))
-				overlay_data[idx + 3] = int(round(clamp(tint.a, 0.0, 1.0) * 255.0))
+		var overlay_data := _water_overlay_baseline_bytes.duplicate()
+		for coord in tints.keys():
+			var pixels: PackedInt32Array = _water_overlay_pixels_by_coord.get(coord, PackedInt32Array())
+			if pixels.is_empty():
+				continue
+			var tint: Color = tints[coord]
+			var r = int(round(clamp(tint.r, 0.0, 1.0) * 255.0))
+			var g = int(round(clamp(tint.g, 0.0, 1.0) * 255.0))
+			var b = int(round(clamp(tint.b, 0.0, 1.0) * 255.0))
+			for p in pixels:
+				var idx = p * 4
+				overlay_data[idx] = r
+				overlay_data[idx + 1] = g
+				overlay_data[idx + 2] = b
 		var overlay_img := Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, overlay_data)
 		_water_overlay_texture = ImageTexture.create_from_image(overlay_img)
 
 	var material: ShaderMaterial = _liquid_plane_instance.material_override
 	material.set_shader_parameter("overlay_texture", _water_overlay_texture)
+
+## Canal A (fog_level) de liquid_type_texture -- R/G/B (lava/coast) vem
+## prontos do template estatico. Chamada SO quando `visibility` muda
+## (ver _apply_fog_colors), nunca no hover.
+func _rebuild_liquid_type_texture() -> void:
+	if _liquid_plane_instance == null:
+		return
+	_ensure_water_overlay_coord_cache()
+	var res := WATER_OVERLAY_RESOLUTION
+	var type_data := _liquid_type_static_bytes.duplicate()
+	# Guiado por COORD unica (_water_overlay_pixels_by_coord, ~tiles.size()
+	# entradas -- inclui as poucas coords fora do mapa que algum pixel da
+	# grade acaba amostrando, exatamente as mesmas que o loop por pixel de
+	# antes cobria) em vez de por PIXEL (res²) -- computa _fog_level_for
+	# UMA vez por coord (nao uma vez por pixel, ~1.87 pixels/tile nesta
+	# resolucao) e replica o byte pros pixels daquele tile. Mesmo resultado
+	# byte-a-byte, so menos chamadas repetidas.
+	for coord in _water_overlay_pixels_by_coord.keys():
+		var fog_byte = int(round(clamp(_fog_level_for(coord), 0.0, 1.0) * 255.0))
+		for p in (_water_overlay_pixels_by_coord[coord] as PackedInt32Array):
+			type_data[p * 4 + 3] = fog_byte
+	var type_img := Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, type_data)
+	_liquid_type_texture = ImageTexture.create_from_image(type_img)
+	var material: ShaderMaterial = _liquid_plane_instance.material_override
 	# R (is_lava) desta textura so' alimenta mais lava_proximity (blend
 	# cosmetico da agua perto de lava) agora — a decisao de RAMO lava-vs-agua
 	# usa lava_tile_mask (1 texel por tile, ver _rebuild_lava_tile_mask),
@@ -4022,15 +4706,15 @@ func _rebuild_biome_overlay() -> void:
 	# so o canal A (fog_level) muda de turno a turno, entao e o UNICO valor
 	# recalculado por pixel aqui (mesmo padrao de _rebuild_water_overlay's
 	# type_data — perfilamento real mostrou isso cortando o custo desta
-	# funcao de ~27ms pra uma fracao disso).
+	# funcao de ~27ms pra uma fracao disso). Guiado por COORD unica
+	# (_biome_overlay_pixels_by_coord), nao por pixel -- mesma otimizacao
+	# de _rebuild_liquid_type_texture (~12ms -> uma fracao, _fog_level_for
+	# chamado uma vez por tile em vez de uma vez por pixel).
 	var data := _biome_overlay_static_bytes.duplicate()
-	for py in range(res):
-		var row_offset = py * res
-		var byte_row_offset = row_offset * 4
-		for px in range(res):
-			var coord = _biome_overlay_coord_cache[row_offset + px]
-			var fog_level := _fog_level_for(coord) # ver comentario equivalente em _rebuild_water_overlay
-			data[byte_row_offset + px * 4 + 3] = int(round(clamp(fog_level, 0.0, 1.0) * 255.0))
+	for coord in _biome_overlay_pixels_by_coord.keys():
+		var fog_byte = int(round(clamp(_fog_level_for(coord), 0.0, 1.0) * 255.0))
+		for p in (_biome_overlay_pixels_by_coord[coord] as PackedInt32Array):
+			data[p * 4 + 3] = fog_byte
 
 	var img := Image.create_from_data(res, res, false, Image.FORMAT_RGBA8, data)
 	_biome_overlay_texture = ImageTexture.create_from_image(img)
@@ -4181,7 +4865,10 @@ func _rebuild_props() -> void:
 		# icone billboard some atras da copa da arvore), tornando o tile
 		# ilegivel como "tem recurso aqui".
 		if data.terrain_type in TREE_TERRAINS:
-			if data.resource == "":
+			# Cobertura < 100% (ver TREE_TILE_COVERAGE_CHANCE) cria clareiras —
+			# pedido do usuario: bioma inteiro coberto de arvore-a-arvore lia
+			# como grade repetitiva/carregada, alem do custo de objetos extra.
+			if data.resource == "" and randf() < TREE_TILE_COVERAGE_CHANCE:
 				tree_coords.append(coord)
 		elif data.terrain_type == HexTileData.TerrainType.FROZEN_OCEAN:
 			# Nem todo tile de Mar Gelado ganha gelo flutuante (pedido do
@@ -4399,7 +5086,7 @@ func _load_tree_mesh() -> Mesh:
 	var inst := scene.instantiate()
 	var mesh_instance := _find_mesh_instance(inst)
 	var mesh: Mesh = mesh_instance.mesh
-	inst.queue_free()
+	inst.free()
 	return mesh
 
 func _find_mesh_instance(node: Node) -> MeshInstance3D:

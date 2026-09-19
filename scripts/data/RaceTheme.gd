@@ -31,19 +31,19 @@ const _TECH_NAMES := {
 	"dwarf": {
 		"quartel": "Salão do Clã",
 		"estabulo": "Currais de Javali",
-		"arquearia": "Mestria com Bestas",
+		"arqueiro": "Mestria com Bestas",
 		"batedor_montado": "Batedores das Minas",
 	},
 	"orc": {
 		"quartel": "Fossa de Guerra",
 		"estabulo": "Currais de Lobos",
-		"arquearia": "Caçada da Horda",
+		"arqueiro": "Caçada da Horda",
 		"batedor_montado": "Batedores Lupinos",
 	},
 	"elf": {
 		"quartel": "Salão da Guarda Solar",
 		"estabulo": "Estábulo dos Corcéis Celestes",
-		"arquearia": "Tradição do Arco de Luz",
+		"arqueiro": "Tradição do Arco de Luz",
 		"batedor_montado": "Batedores Solares",
 	},
 }
@@ -52,19 +52,19 @@ const _TECH_DESCRIPTIONS := {
 	"dwarf": {
 		"quartel": "Os anciões de cada clã da Liga cravam suas machadinhas na mesma mesa de ferro e juram guardar as galerias e as forjas com o mesmo fervor — o alicerce de uma milícia clânica disciplinada, sem magia nenhuma envolvida, só aço e teimosia.",
 		"estabulo": "Domar um javali das cavernas exige mais paciência que força — um mestre-tratador aprende a acalmar as presas e blindar o lombo do animal antes de qualquer curral abrigar uma montaria de guerra de verdade.",
-		"arquearia": "Dedos grossos demais para um arco élfico encontram sua resposta na alavanca e na corda tensa de uma besta — um armeiro do clã formaliza a mira, o gatilho e a manutenção do mecanismo até virar segunda natureza.",
+		"arqueiro": "Dedos grossos demais para um arco élfico encontram sua resposta na alavanca e na corda tensa de uma besta — um armeiro do clã formaliza a mira, o gatilho e a manutenção do mecanismo até virar segunda natureza.",
 		"batedor_montado": "Quem já se perdeu numa galeria sem fim sabe: um batedor de javali que conhece cada veio e desvio das minas vale mais que um exército inteiro andando às cegas.",
 	},
 	"orc": {
 		"quartel": "Os chefes de guerra da Horda cravam suas armas no chão de uma fossa comum e juram lealdade não a um rei, mas ao mais forte entre eles — o nascimento de uma milícia bruta, unida só pelo medo e pelo respeito.",
 		"estabulo": "Um lobo das terras selvagens não se doma, se domina — um caçador experiente aprende a impor sua vontade sobre a alcateia até ela aceitar carregar um guerreiro nas costas sem tentar arrancar sua garganta.",
-		"arquearia": "Puxar um arco curto correndo, sem parar para mirar direito, é um talento que se treina na caça de verdade, não em campo de tiro — a Horda formaliza o instinto do caçador em disciplina de guerra.",
+		"arqueiro": "Puxar um arco curto correndo, sem parar para mirar direito, é um talento que se treina na caça de verdade, não em campo de tiro — a Horda formaliza o instinto do caçador em disciplina de guerra.",
 		"batedor_montado": "Um batedor montado num lobo cheira o inimigo antes de vê-lo — a Horda aprende a soltar seus batedores mais rápidos e famintos bem à frente de qualquer invasão.",
 	},
 	"elf": {
 		"quartel": "Sob a bênção do Rei-Deus, os primeiros guardiões de Elenor juram proteger os templos e as fronteiras com a mesma disciplina de um rito sagrado — uma milícia teocrática, não uma simples milícia.",
 		"estabulo": "Os corcéis que pastam nos jardins suspensos de Elenor descendem, dizem os sacerdotes, de éguas abençoadas pelo próprio Sol — um mestre-cavalariço aprende os ritos necessários antes de qualquer um deles aceitar um cavaleiro.",
-		"arquearia": "Um arco comum solta flecha; um arco tocado pela Magia de Luz solta um fragmento do próprio Sol — a tradição arqueira de Elenor funde disciplina física e devoção religiosa em uma única técnica.",
+		"arqueiro": "Um arco comum solta flecha; um arco tocado pela Magia de Luz solta um fragmento do próprio Sol — a tradição arqueira de Elenor funde disciplina física e devoção religiosa em uma única técnica.",
 		"batedor_montado": "Vestidos de luz e velocidade, os batedores solares de Elenor cavalgam à frente de qualquer exército, carregando a visão do Rei-Deus para além do horizonte antes que qualquer sombra a alcance.",
 	},
 }
@@ -171,11 +171,19 @@ const STYLE_KITS := {
 	},
 }
 
+## `tech_id` pode vir de TechDatabase (mundana) OU MagicDatabase (magica) —
+## tenta as duas antes de cair no nome/descricao "cru" da tech.
+static func _tech_for(tech_id: String) -> TechData:
+	var tech: TechData = TechDatabase.get_tech(tech_id)
+	if tech == null:
+		tech = MagicDatabase.get_tech(tech_id)
+	return tech
+
 static func tech_name(tech_id: String, race: String) -> String:
-	return _TECH_NAMES.get(race, {}).get(tech_id, TechDatabase.get_tech(tech_id).display_name)
+	return _TECH_NAMES.get(race, {}).get(tech_id, _tech_for(tech_id).display_name)
 
 static func tech_description(tech_id: String, race: String) -> String:
-	return _TECH_DESCRIPTIONS.get(race, {}).get(tech_id, TechDatabase.get_tech(tech_id).description)
+	return _TECH_DESCRIPTIONS.get(race, {}).get(tech_id, _tech_for(tech_id).description)
 
 static func unit_name(kind: String, race: String) -> String:
 	return _UNIT_NAMES.get(race, {}).get(kind, UnitDatabase.create_unit(kind).unit_name)

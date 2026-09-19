@@ -1,0 +1,70 @@
+{
+  "species": "skeleton",
+  "class": "monster",
+  "style": "human",
+  "engine": "blocky",
+  "seed": 13,
+
+  "body": {
+    "height": 1.75,
+    "limb_thickness": 0.65,
+    "shoulder_width_ratio": 0.22,
+    "head_height_ratio": 0.16,
+    "head_width_ratio": 0.15,
+    "head_depth_ratio": 0.15,
+    "neck_height_ratio": 0.025,
+    "torso_height_ratio": 0.27,
+    "belly_fraction": 0.32,
+    "upper_leg_ratio": 0.205,
+    "lower_leg_ratio": 0.195,
+    "upper_arm_radius_ratio": 0.016,
+    "lower_arm_radius_ratio": 0.013,
+    "upper_leg_radius_ratio": 0.022,
+    "lower_leg_radius_ratio": 0.017,
+    "belly_width_mult": 0.22,
+    "limb_slenderness": 0.45,
+    "angularity": 1.0,
+    "slim_build": true,
+    "thin_arms": true,
+    "pointy_ears": false,
+    "round_extremities": false
+  },
+
+  "equipment": {
+    "weapon": "sword",
+    "shield": false,
+    "helmet": false,
+    "helmet_material": "leather",
+    "hair": false,
+    "gloves": true,
+    "armor": false,
+    "bare_skin": true,
+    "textured_skin": false,
+    "muscles": false,
+    "bone_marks": false,
+    "torn_cloth": false,
+    "leaves": false,
+    "foot_material": "skin",
+    "belt": false,
+    "skirt": false,
+    "headband": false,
+    "sash": false,
+    "pack": false,
+    "beard": false,
+    "fangs": true,
+    "eye_style": "hollow",
+    "nose": false
+  },
+
+  "palette": {
+    "civilization": "human_default",
+    "skin_color": [0.87, 0.84, 0.74],
+    "hair_color": [0.3, 0.3, 0.3],
+    "eye_color": [0.02, 0.02, 0.02]
+  },
+
+  "output": {
+    "name": "skeleton_blocky",
+    "directory": "assets/generated/skeletons/skeleton_blocky"
+  }
+}

@@ -59,9 +59,16 @@ var _ai_batch_timer: float = 0.0 # acumula delta ate AI_BATCH_INTERVAL, ver _pro
 var _completed_building_coords_this_turn: Array[Vector2i] = []
 
 var state: GameState = GameState.MENU
+var victory_rules_version: int = 1 # Saves antigos; start_new_game ativa as regras V1 de magia.
 var map_width: int = 25
 var map_height: int = 25
 var hex_grid: HexGrid
+## Setado por Main._ready() (mesmo padrao de hex_grid, ver setup_players) —
+## pedido do usuario: "minimapa... mostrar um indicador da regiao
+## atualmente visivel pela camera". Minimap.gd (HUD, cena irma de Main) nao
+## tem referencia direta a Main/CameraRig por nenhum outro caminho, mesma
+## situacao que ja existia pra hex_grid antes desta mudanca.
+var camera_rig: RTSCamera
 
 var players: Array[PlayerData] = []
 var human_player: PlayerData
@@ -110,13 +117,59 @@ const RIVAL_CIVS := [
 var difficulty: String = "normal"
 const DIFFICULTY_MULTIPLIERS := {"easy": 0.75, "normal": 1.0, "hard": 1.5}
 
+## Id do slot desta partida (ver SaveManager.new_slot_id/save_to_slot) --
+## atribuido por Main.gd toda vez que uma partida NOVA comeca ou um save e
+## CARREGADO; "Salvar Jogo" sempre sobrescreve este MESMO slot. "" fora de
+## uma partida (menu principal, ver end_match()).
+var current_save_slot: String = ""
+
 func _ready() -> void:
 	TurnManager.turn_changed.connect(_on_turn_changed)
 
 func start_new_game(grid: HexGrid) -> void:
+	victory_rules_version = 2
 	setup_players(grid)
 	_spawn_starting_forces()
 	hex_grid.recompute_fog(human_player)
+
+## Roadmap "sistema de menu de jogo moderno" -- pedido explicito do usuario:
+## "voltar pro menu principal de fato volta pro menu principal, atualmente
+## ele continua na partida mas mostrando as opcoes de menu, o que nao faz
+## sentido... o comportamento correto e fechar a partida". Antes disso,
+## "Voltar ao Menu Principal" (Main.gd) so escondia a HUD e mostrava a tela
+## de titulo -- a partida em si continuava viva por tras, incluindo um bug
+## real: _process() abaixo so e gateado por is_turn_processing, nunca por
+## `state`, entao uma IA no meio de um turno espalhado (stagger_ai_turns,
+## ver _ai_turn_queue) continuava sendo processada em segundo plano mesmo
+## depois do jogador "sair". end_match() encerra tudo de proposito, na
+## ordem: `state` primeiro (qualquer coisa que reaja ao encerramento ja ve
+## MENU), corta o dreno assincrono de IA ANTES de mexer nos dados que ele
+## esta iterando, depois eventos de mundo, depois entidades do mapa (ver
+## HexGrid.reset_to_empty(), mesmo teardown que generate_map() ja roda no
+## inicio de toda partida nova), so DEPOIS libera as referencias de
+## jogador (reset_to_empty() nao mexe nelas), e SelectionManager por
+## ultimo (limpa qualquer selecao apontando pra unidade/cidade que acabou
+## de sumir). Nao mexe em nos de cena (hud.visible, title_screen.visible)
+## de proposito -- isso continua responsabilidade exclusiva de Main.gd,
+## mesma divisao ja usada por start_new_game()/setup_players() (dados vs.
+## apresentacao).
+func end_match() -> void:
+	state = GameState.MENU
+	AudioManager.stop_match_audio()
+	is_turn_processing = false
+	_ai_turn_queue.clear()
+	_ai_batch_timer = 0.0
+	_completed_building_coords_this_turn.clear()
+	WorldEventManager.active_events.clear()
+	WorldEventManager._next_event_id = 0
+	if hex_grid != null:
+		hex_grid.reset_to_empty()
+	_release_player_relations()
+	players.clear()
+	rival_players.clear()
+	human_player = null
+	current_save_slot = ""
+	SelectionManager.reset()
 
 ## Nome de reino padrao quando o jogador deixa o campo de nome em branco na
 ## tela de configuracao — pedido/bug relatado pelo usuario: "escolhi outro
@@ -138,6 +191,10 @@ func _default_kingdom_name_for_race(race: String) -> String:
 ## por SaveManager.load_game() (que reconstroi unidades/cidades a partir do
 ## arquivo salvo em vez de usar o spawn padrao).
 func setup_players(grid: HexGrid) -> void:
+	_release_player_relations()
+	is_turn_processing = false
+	_ai_turn_queue.clear()
+	_completed_building_coords_this_turn.clear()
 	hex_grid = grid
 	state = GameState.PLAYING
 	players.clear()
@@ -147,7 +204,7 @@ func setup_players(grid: HexGrid) -> void:
 	human_civ.civ_name = human_kingdom_name if human_kingdom_name != "" else _default_kingdom_name_for_race(human_race)
 	human_civ.leader_name = "Rainha Elara"
 	human_civ.color = Color(0.2, 0.45, 0.85)
-	human_civ.race = human_race
+	human_civ.race = human_race if human_race in ["human", "elf", "dwarf", "orc"] else "human"
 	human_player = PlayerData.new(human_civ)
 	# Roadmap "Parte B" B4 — personalidade DERIVADA de grid.map_seed, nunca
 	# de randi() proprio (ver CivilizationPersonality.gd, comentario de
@@ -171,6 +228,8 @@ func setup_players(grid: HexGrid) -> void:
 		rival.personality = CivilizationPersonality.generate(rival_civ.race, hex_grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET + i + 1)
 		players.append(rival)
 		rival_players.append(rival)
+	for i in range(players.size()):
+		players[i].ai_rng.seed = hex_grid.map_seed + 83071 + i * 104729
 
 	# Diplomacia inicial: todo mundo comeca em PAZ (pedido do usuario: "vamos
 	# fazer com que todos comecem o jogo em paz, ao inves de comecar em
@@ -184,6 +243,17 @@ func setup_players(grid: HexGrid) -> void:
 	TurnManager.player_count = 1
 	TurnManager.turn_number = 1
 	TurnManager.current_player_index = 0
+
+func _release_player_relations() -> void:
+	for player in players:
+		player.release_relations()
+	for player in rival_players:
+		player.release_relations()
+	if human_player:
+		human_player.release_relations()
+
+func _exit_tree() -> void:
+	_release_player_relations()
 
 ## Unidade parada dentro da PROPRIA cidade recupera vida — vale tanto pro
 ## jogador quanto pro rival (nao e vantagem so da IA), e da uma razao de
@@ -218,34 +288,52 @@ func _apply_regen(unit: Unit) -> void:
 ## progresso se houver uma pesquisa em andamento — ciencia gerada sem
 ## nada selecionado e desperdicada, incentiva sempre ter algo na fila
 ## (RivalAI.decide_research cuida disso pro rival; o jogador escolhe pela
-## HUD).
+## HUD). current_research/research_progress sao um slot UNICO compartilhado
+## entre as duas arvores (Tecnologia/Magia, ver comentario de PlayerData)
+## — tenta resolver o id em TechDatabase primeiro, depois em MagicDatabase,
+## e grava a conclusao no dicionario correspondente.
+## Extraido de dentro de _process_research (Roadmap "polimento definitivo
+## V1") pra HUD.gd poder mostrar "Ciencia por turno" no cabecalho compacto
+## da aba Tecnologia sem duplicar a formula — MESMOS dois multiplicadores
+## (yield_multiplier de dificuldade + racial), nenhum comportamento novo.
+func science_per_turn_for(player: PlayerData) -> float:
+	var science := 0.0
+	for city in player.cities:
+		science += city.population * SCIENCE_PER_POPULATION
+	var race: String = player.civ.race if player.civ else ""
+	var mult := player.yield_multiplier * RaceEconomy.science_multiplier_for(race)
+	return science * mult
+
 func _process_research(player: PlayerData) -> void:
 	if player.current_research == "":
 		return
 	var tech: TechData = TechDatabase.get_tech(player.current_research)
+	var is_magic := false
+	if tech == null:
+		tech = MagicDatabase.get_tech(player.current_research)
+		is_magic = true
 	if tech == null:
 		player.current_research = ""
 		return
 
-	var science := 0.0
-	for city in player.cities:
-		science += city.population * SCIENCE_PER_POPULATION
 	# Roadmap de gameplay Fase 3: ciencia era a UNICA "yield" que nunca
 	# passava por multiplicador nenhum (nem o de dificuldade que ja existe
 	# pra IA, nem agora o racial do elfo) — pipeline paralela desde sempre
 	# desconectada de City.collect_yields(), ver comentario da funcao. Fix
 	# minimo: aplicar os MESMOS dois multiplicadores aqui tambem, sem
 	# precisar mover ciencia pra dentro de collect_yields de verdade.
-	var race: String = player.civ.race if player.civ else ""
-	var mult := player.yield_multiplier * RaceEconomy.science_multiplier_for(race)
-	player.research_progress += science * mult
+	player.research_progress += science_per_turn_for(player)
 
 	if player.research_progress >= tech.cost:
-		player.researched_techs[tech.id] = true
+		player.research_saved_progress.erase(tech.id)
+		if is_magic:
+			player.researched_magic[tech.id] = true
+		else:
+			player.researched_techs[tech.id] = true
 		player.research_progress = 0.0
 		player.current_research = ""
 		if player == human_player:
-			EventBus.notify.emit("Tecnologia pesquisada: %s" % tech.display_name, "confirm")
+			EventBus.notify.emit("%s: %s" % ["Conhecimento mágico descoberto" if is_magic else "Tecnologia pesquisada", tech.display_name], "confirm")
 
 func _spawn_starting_forces() -> void:
 	# claimed_starts impede que duas capitais (do humano ou de rivais
@@ -331,7 +419,27 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		unit.reset_movement()
 
 	for rival in rival_players:
-		RivalAI.decide_production(rival, hex_grid, human_player)
+		var rival_civ_index: int = players.find(rival)
+		# Roadmap "Fase Macro" 5B.3-G -- "Preparation = tempo de preparacao
+		# militar" / "IA precisa reagir ao Dragao". Calculado UMA vez aqui
+		# (nao dentro de decide_production) pra tambem reutilizar embaixo na
+		# interceptacao (RivalAI.defend_against_dragon), sem duplicar a
+		# checagem de ameaca. Generico o bastante pra qualquer DragonEvent
+		# ativo -- civ_threatened concentra a regra (Preparation: so a civ
+		# anunciada; Active: ja raidada ou com cidade perto do Dragao AGORA,
+		# ver DragonEvent.is_civ_threatened).
+		var threatening_dragon: DragonEvent = null
+		for event in WorldEventManager.active_events:
+			if event is DragonEvent and (event as DragonEvent).is_civ_threatened(rival_civ_index, players):
+				threatening_dragon = event as DragonEvent
+				break
+		# 5B.3-G v2 -- civ ameacada produz TROPAS especificamente (ver
+		# RivalAI.prepare_for_world_event/_troop_only_candidates), nunca
+		# mais so' uma pontuacao inclinada dentro da producao normal.
+		if threatening_dragon != null:
+			RivalAI.prepare_for_world_event(rival, hex_grid, human_player)
+		else:
+			RivalAI.decide_production(rival, hex_grid, human_player)
 		RivalAI.decide_research(rival)
 		RivalAI.decide_war(rival, hex_grid, human_player)
 		# Roadmap "Parte C" C3 — logo apos decide_war de proposito: uma
@@ -351,16 +459,36 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		# proposito (decisao explicita do usuario: a Ascensao Arcana nao
 		# pesa risco de guerra, so "tenho condicoes de tentar?").
 		RivalAI.decide_arcane_ritual(rival, hex_grid)
+		StrategicAI.cast_spells(rival, hex_grid)
+		for other in players:
+			if other == rival or other == human_player:
+				continue
+			RivalAI.decide_war(rival, hex_grid, other)
+			RivalAI.decide_campaign(rival, hex_grid, other)
+			RivalAI.decide_peace(rival, other)
+			RivalAI.decide_trade(rival, hex_grid, other)
 		# Roadmap "Fase Macro" 5B.2 -- generico por proposito (qualquer
 		# WorldEvent em Preparation, nao so DragonEvent especificamente).
-		var rival_civ_index: int = players.find(rival)
 		for event in WorldEventManager.active_events:
 			RivalAI.decide_world_event_participation(rival, rival_civ_index, event)
+		# 5B.3-G, "interceptacao real" -- so' quando o Dragao ja nasceu
+		# (Active) e esta civ esta ameacada; Preparation so' antecipa
+		# producao (acima), nao ha Unit nenhuma pra interceptar ainda.
+		if threatening_dragon != null and threatening_dragon.dragon_unit != null:
+			RivalAI.defend_against_dragon(rival, hex_grid, threatening_dragon.dragon_unit)
 
 	for player in players:
+		UnitAbilities.process_turn(player, hex_grid)
 		_process_research(player)
 		var mana_income := 0.0
+		# Task 21 -- avisa o jogador humano ANTES de a milicia atuar (a
+		# posicao dos monstros ainda e' a do fim do turno anterior).
+		if player == human_player:
+			CityDefense.warn_player(player, hex_grid, hex_grid.compute_visible_tiles(player), TurnManager.turn_number)
 		for city in player.cities.duplicate():
+			# Task 21 -- defesa propria da cidade (jogador e IA): golpe
+			# automatico no monstro adjacente, ver CityDefense.militia_strike.
+			CityDefense.militia_strike(city, hex_grid)
 			# Modo debug (ver set_debug_mode acima): "o tempo de fazer
 			# qualquer unidade e 1 turno" — completa a producao atual
 			# (unidade OU predio, mesmo criterio de City.process_turn) so
@@ -384,6 +512,8 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		player.mana += mana_income
 		player.mana_income_per_turn = mana_income
 		Diplomacy.process_war_weariness_and_upkeep(player)
+	for player in players:
+		MagicRuntime.process_turn(player, hex_grid)
 
 	# Roadmap de gameplay Fase 4A — FORA do loop `for player in players`
 	# acima de proposito: cada rota conecta 2 jogadores, processar dentro
@@ -445,8 +575,15 @@ func _build_monster_turn_items() -> Array:
 	MonsterAI.begin_turn(hex_grid)
 	var turn := TurnManager.turn_number
 	for unit in hex_grid.neutral_units():
-		if is_instance_valid(unit):
-			items.append({"kind": "monster", "unit": unit, "turn": turn})
+		if not is_instance_valid(unit):
+			continue
+		# Roadmap "Fase Macro" 5B.3-D -- mesma exclusao de MonsterAI.
+		# take_turn (ver comentario de Unit.world_event_managed): este e' o
+		# caminho de verdade usado no jogo real (stagger_ai_turns == true),
+		# entao o Dragao de DragonEvent NUNCA pode entrar nesta fila.
+		if unit.world_event_managed:
+			continue
+		items.append({"kind": "monster", "unit": unit, "turn": turn})
 	return items
 
 ## Drena ate AI_ACTIONS_PER_BATCH itens de _ai_turn_queue, no MAXIMO uma vez
@@ -523,6 +660,10 @@ func _finish_turn() -> void:
 ## (pedido explicito do usuario).
 func _update_victory_state() -> void:
 	for player in ([human_player] as Array[PlayerData]) + rival_players:
+		if victory_rules_version >= 2:
+			VictoryCampaign.announce_supremacy(player, players)
+			VictoryCampaign.advance(player, hex_grid)
+			continue
 		_update_territorial_streak(player)
 		_update_arcane_ritual(player)
 
@@ -563,6 +704,8 @@ func _update_arcane_ritual(player: PlayerData) -> void:
 ## falhar (pre-requisitos, Santuario construido, ou mana insuficiente pro
 ## custo inicial).
 func activate_arcane_ritual(player: PlayerData) -> bool:
+	if victory_rules_version >= 2:
+		return VictoryCampaign.start(player, hex_grid)
 	if player.arcane_ritual_active:
 		return false
 	if not VictoryConditions.meets_arcane_ritual_prerequisites(player, hex_grid):
@@ -620,12 +763,22 @@ func check_victories() -> void:
 		if VictoryConditions.is_dominance_achieved(player, players_in_order):
 			_end_game(player, VictoryConditions.VICTORY_TYPE_DOMINANCE)
 			return
+		if victory_rules_version >= 2:
+			if VictoryCampaign.supremacy_achieved(player, players_in_order):
+				_end_game(player, VictoryCampaign.SUPREMACY)
+				return
+			if player.arcane_ritual_active and player.arcane_ritual_streak >= VictoryCampaign.CHANNEL_TURNS:
+				_end_game(player, VictoryCampaign.TRANSCENDENCE)
+				return
+			continue
 		if VictoryConditions.is_territorial_dominance_achieved(player):
 			_end_game(player, VictoryConditions.VICTORY_TYPE_TERRITORIAL)
 			return
 		if VictoryConditions.is_arcane_ascension_achieved(player):
 			_end_game(player, VictoryConditions.VICTORY_TYPE_ARCANE)
 			return
+	if human_player and human_player.cities.is_empty() and human_player.units.is_empty():
+		_end_game(null, "eliminated")
 
 ## `winner` pode ser QUALQUER jogador (humano ou rival) desde F3 -- antes
 ## so existia vitoria/derrota do lado humano. `victory` (EventBus.
@@ -671,6 +824,8 @@ func set_debug_mode(enabled: bool) -> void:
 	if enabled and human_player != null:
 		for tech in TechDatabase.all_techs():
 			human_player.researched_techs[tech.id] = true
+		for tech in MagicDatabase.all_techs():
+			human_player.researched_magic[tech.id] = true
 		human_player.current_research = ""
 		human_player.research_progress = 0.0
 
@@ -695,6 +850,8 @@ func debug_complete_current_research() -> void:
 	if human_player == null or human_player.current_research == "":
 		return
 	var tech: TechData = TechDatabase.get_tech(human_player.current_research)
+	if tech == null:
+		tech = MagicDatabase.get_tech(human_player.current_research)
 	if tech == null:
 		return
 	human_player.research_progress = tech.cost

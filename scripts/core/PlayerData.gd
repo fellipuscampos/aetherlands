@@ -32,6 +32,9 @@ var gold: float = 0.0
 ## cidades toda vez que a barra superior redesenha.
 var mana: float = 0.0
 var mana_income_per_turn: float = 0.0
+var magic_effects: Array = [] # Somente dados JSON: regiões e terrenos temporários.
+var rituals: Array = [] # Histórico e canalizações persistentes.
+var completed_rituals: Dictionary = {}
 
 var units: Array[Unit] = []
 var cities: Array[City] = []
@@ -48,14 +51,39 @@ var yield_multiplier: float = 1.0
 ## so contam se estiverem VISIVEIS agora (ver HexGrid.compute_visible_tiles
 ## e RivalAI._choose_target). So a IA rival usa isso por enquanto.
 var known_enemy_cities: Dictionary = {} # Vector2i -> true
+var explored_tiles: Dictionary = {} # conhecimento individual da IA
+## Task 22 -- IA: ate que turno nao adianta procurar local de cidade de novo (ver RivalAI._has_settle_site). Estado de sessao, nao salvo.
+var settle_search_blocked_until: int = -1
 
-## Arvore de tecnologia (ver TechDatabase). research_progress acumula
-## "ciencia" (soma da populacao das cidades por turno — GameManager) ate
-## bater o custo de current_research; so entao entra em researched_techs e
-## current_research volta a "" pra escolher a proxima.
-var researched_techs: Dictionary = {} # id -> true
+## Duas arvores de pesquisa SEPARADAS (Tecnologia mundana, ver TechDatabase,
+## e Magia, ver MagicDatabase) — pedido do usuario: "uma pesquisa de
+## Tecnologia não seja confundida com Magia; uma pesquisa de Magia não seja
+## confundida com Tecnologia". researched_techs guarda ids de TechDatabase,
+## researched_magic guarda ids de MagicDatabase — nunca o mesmo id nas
+## duas. O slot de pesquisa ATIVA (current_research/research_progress)
+## continua UNICO e compartilhado entre as duas arvores de proposito (nao
+## dois simultaneos) — o jogador so pesquisa uma coisa de cada vez, seja
+## Tecnologia ou Magia, exatamente como antes da separacao; so muda pra
+## qual dicionario o id concluido vai (ver GameManager._process_research,
+## que resolve `current_research` tentando TechDatabase primeiro e depois
+## MagicDatabase).
+var researched_techs: Dictionary = {} # id de TechDatabase -> true
+var researched_magic: Dictionary = {} # id de MagicDatabase -> true
 var current_research: String = ""
 var research_progress: float = 0.0
+var research_saved_progress: Dictionary = {} # id -> pontos já investidos
+
+func select_research(id: String) -> bool:
+	var available := TechDatabase.available_techs(researched_techs) + MagicDatabase.available_techs(researched_magic)
+	if not available.any(func(t): return t.id == id):
+		return false
+	if current_research == id:
+		return true
+	if current_research != "":
+		research_saved_progress[current_research] = research_progress
+	current_research = id
+	research_progress = float(research_saved_progress.get(id, 0.0))
+	return true
 
 ## Recarga de feiticos/rituais (ver SpellDatabase/SpellManager): nome do
 ## feitico -> numero do turno em que volta a ficar disponivel. Ausencia da
@@ -93,6 +121,14 @@ var war_campaigns: Dictionary = {} # PlayerData (opponent) -> Dictionary
 ## compartilhado por referencia, nao duplicado).
 var trade_routes: Array[TradeRoute] = []
 
+## Remove os ciclos PlayerData -> inimigo/rota -> PlayerData ao encerrar.
+func release_relations() -> void:
+	enemies.clear()
+	war_campaigns.clear()
+	trade_routes.clear()
+	truces.clear()
+	war_reasons.clear()
+
 ## Roadmap "Fase F" F1/F2 -- estado persistente das duas vitorias
 ## alternativas de SUSTENTACAO (Dominacao nao precisa de estado novo: e so
 ## ausencia de units/cities de todo rival, ja coberto por
@@ -108,6 +144,7 @@ const NO_RITUAL_CITY_COORD := Vector2i(999999, 999999) # mesmo padrao de City.NO
 ## Territorial) -- zera assim que o percentual cai abaixo do limiar em
 ## qualquer turno (nenhuma pausa/reserva de progresso, decisao de F1).
 var territorial_streak: int = 0
+var supremacy_announced: bool = false
 
 ## Ritual do Nodulo (Ascensao Arcana): `arcane_ritual_active` vira true
 ## quando o custo INICIAL de mana e pago (sustentacao comeca a contar
@@ -122,12 +159,22 @@ var territorial_streak: int = 0
 var arcane_ritual_active: bool = false
 var arcane_ritual_city_coord: Vector2i = NO_RITUAL_CITY_COORD
 var arcane_ritual_streak: int = 0
+var arcane_ritual_units: Array[int] = []
+var arcane_last_tick: int = -1
+var ai_rng := RandomNumberGenerator.new()
+var truces: Dictionary = {} # PlayerData -> primeiro turno em que guerra volta a ser permitida
+var war_reasons: Dictionary = {} # PlayerData -> motivo público
 
 func _init(civ_data: CivilizationData) -> void:
 	civ = civ_data
 
+## Tenta TechDatabase primeiro, depois MagicDatabase — mesma semantica
+## fail-open das duas (kind sem tech associada em NENHUMA das duas arvores
+## fica sempre liberado, ver comentario de TechDatabase.is_unit_unlocked).
 func has_unlocked(kind: String) -> bool:
-	return TechDatabase.is_unit_unlocked(kind, researched_techs)
+	if TechDatabase.tech_that_unlocks(kind) != null:
+		return TechDatabase.is_unit_unlocked(kind, researched_techs)
+	return MagicDatabase.is_unit_unlocked(kind, researched_magic)
 
 func is_at_war_with(other: PlayerData) -> bool:
 	return enemies.has(other)

@@ -52,6 +52,13 @@ const PROMOTION_HEAL_FRACTION := 0.2
 const NO_MOVE_ORDER := Vector2i(-999999, -999999)
 
 var unit_data: UnitData
+var serial_id: int = 0
+var magic_cooldowns: Dictionary = {}
+var magic_status: Dictionary = {} # efeito -> turno de expiração exclusivo
+var summoner_id: int = 0
+var expires_turn: int = 0
+var ritual_id: String = ""
+var boss_target: Vector2i = Vector2i(999999, 999999)
 var owner_player: PlayerData
 var coord: Vector2i
 var movement_left: float = 0.0
@@ -75,6 +82,16 @@ var veterancy_level: int = 0
 ## precise persistir; carregar um save so limpa silenciosamente qualquer
 ## ordem em andamento).
 var move_order_target: Vector2i = NO_MOVE_ORDER
+
+## Colonizador da IA (ver CitySite.choose_site/RivalAI._handle_settler): local
+## de fundacao ja escolhido (histerese -- sem isso o colonizador trocaria de
+## alvo a cada passo, porque a pontuacao de candidatos empatados muda
+## conforme ele anda) e quantos turnos ja esperou sem achar nenhum local
+## aceitavel. Estado de sessao da IA, nao salvo (mesmo padrao de
+## move_order_target): carregar um save so faz o colonizador reavaliar.
+const NO_SETTLE_TARGET := Vector2i(-999999, -999999)
+var settle_target: Vector2i = NO_SETTLE_TARGET
+var settle_wait_turns: int = 0
 
 ## Modo "Fortificar" tipo Civilization (pedido do usuario: "um modo em que
 ## se você tiver ferido, você fica se curando um pouco todo turno... e em
@@ -132,13 +149,71 @@ var is_camp_boss: bool = false
 ## (owner_player == null); unidade de jogador/rival ignora este campo.
 var monster_behavior_state: String = ""
 
+## Roadmap "Fase Macro" 5B.3-C -- pedido do usuario apos reportar que o
+## Dragao "nunca aparece": WorldEventTrigger.choose_dragon_origin_region
+## sorteia a origem entre TODOS os tiles do mapa, entao a Unit quase
+## sempre nasce fora da area ja explorada do jogador -- HexGrid.
+## _apply_fog_to_entities so' torna uma unidade de outro dono visivel no
+## tile ATUALMENTE visivel (nao so' explorado), entao o Dragao ficava
+## invisivel pra sempre a menos que alguem escoteasse aquele tile exato.
+## true faz a unidade ignorar essa regra e aparecer sempre, mesmo em
+## territorio nunca visto -- pensado pra qualquer entidade de WORLD EVENT
+## (a Boss Bar ja anuncia HP/alvo independente de nevoa; esconder o modelo
+## fisico contradiz isso), nao exclusivo do Dragao especificamente. Unidade
+## comum de jogador/rival/monstro de covil NUNCA liga isto (default false).
+var always_visible: bool = false
+
+## Roadmap "Fase Macro" 5B.3-D -- BUG real encontrado apos o usuario
+## reportar "o Dragao desaparece sem mensagem": esta Unit e' neutra
+## (owner_player == null), MESMO criterio usado por qualquer monstro de
+## covil comum -- sem este campo, MonsterAI.take_turn()/GameManager.
+## _build_monster_turn_items() (o caminho de verdade usado no jogo real,
+## stagger_ai_turns == true) processavam esta Unit de novo com a IA
+## GENERICA de monstro (MonsterDatabase.KIND_DATA["dragon"].behavior ==
+## BEHAVIOR_HUNTER -- ver MonsterAI._take_hunter_turn), COMPLETAMENTE
+## independente do proprio DragonEvent: perseguia presa propria (raio 6,
+## bem maior que o alcance de ataque do Dragao), podia mover a Unit pra
+## longe do alvo que o DragonEvent estava perseguindo, e podia ate matar a
+## Unit via CombatResolver.resolve() comum (nao resolve_with_splash) --
+## tudo isso ANTES do proprio DragonEvent._take_dragon_turn() rodar no
+## mesmo turno, causando movimento/combate erratico e imprevisivel. true
+## faz MonsterAI ignorar esta Unit por completo (ela ja tem IA propria em
+## outro lugar) -- generico de proposito (qualquer entidade de WORLD
+## EVENT futura precisaria da mesma exclusao), nao exclusivo do Dragao.
+## Unidade comum de jogador/rival/monstro de covil NUNCA liga isto.
+var world_event_managed: bool = false
+
 ## Setter dispara a atualizacao visual da barra de vida sozinha — assim
 ## qualquer lugar que faca `unit.hp -= dano` (CombatResolver, etc.) ja
-## reflete na barra sem precisar lembrar de chamar nada extra.
+## reflete na barra sem precisar lembrar de chamar nada extra. Tambem
+## dispara a reacao visual de dano (ver _play_hit_reaction abaixo) sempre
+## que o valor NOVO for menor que o atual -- pedido do usuario: "os
+## personagens perdem vida isso funciona, mas... nao reagem... minha
+## sugestao é piscarem em vermelho... uma puladinha". Cobre TODA fonte de
+## dano existente hoje (CombatResolver: ataque, contra-ataque, splash do
+## Dragao; SpellManager: feitico de dano direto) e qualquer uma futura de
+## graca, sem precisar lembrar de chamar nada extra em cada uma -- mesmo
+## principio do comentario acima sobre a barra de vida. `_suppress_hit_
+## reaction` e o escape hatch pra restauracao administrativa de hp (ver
+## set_hp_silent abaixo) onde "o valor caiu" nao representa um golpe
+## acontecendo agora (ex: SaveManager sobrescrevendo o hp cheio do spawn
+## inicial pelo hp salvo).
 var hp: float = 10.0:
 	set(value):
+		if value < hp and not _suppress_hit_reaction:
+			_play_hit_reaction()
 		hp = value
 		_update_hp_bar()
+
+var _suppress_hit_reaction := false
+
+## Define hp SEM disparar a reacao visual de dano — ver comentario do
+## setter de hp acima. Unico uso hoje: SaveManager restaurando o hp salvo
+## por cima do hp cheio que Unit.setup() ja atribuiu no spawn.
+func set_hp_silent(value: float) -> void:
+	_suppress_hit_reaction = true
+	hp = value
+	_suppress_hit_reaction = false
 
 var _hp_bar_fg: MeshInstance3D
 var _hp_bar_bg: MeshInstance3D
@@ -153,13 +228,29 @@ func setup(data: UnitData, player: PlayerData, start_coord: Vector2i, camp_boss:
 	_build_visual()
 
 func reset_movement() -> void:
+	if ritual_id != "":
+		movement_left = 0
+		return
 	movement_left = unit_data.movement_points
 
 ## Chamado por CombatResolver quando esta unidade vence um combate (mata o
 ## alvo, ou sobrevive ao contra-ataque de quem morreu tentando mata-la).
 ## Cura uma fracao do HP maximo so quando sobe de nivel de verdade — nao
 ## em todo kill, senao viraria um jeito facil demais de curar sem recuar.
+## world_event_managed (Dragao de DragonEvent, ver comentario do campo
+## abaixo): pedido explicito do usuario apos playtest -- "parece que o
+## dragao tem regeneracao de vida... causei 1 de dano nele, e ele se curou
+## quando foi pra outra cidade". Bug real: register_kill() cura uma fracao
+## do HP MAXIMO a cada promocao de veterania (linha abaixo), e nada aqui
+## excluia o Dragao disso -- cada unidade fraca que ele matava em combate
+## normal (CombatResolver.resolve/resolve_with_splash, attacker.register_
+## kill()) podia cruzar um limiar de kills e curar a vida de volta. Um
+## boss scriptado (stats fixos em MonsterDatabase, nunca deveria "subir de
+## nivel" como uma unidade normal) -- nunca acumula kills/veterania nem
+## cura por promocao.
 func register_kill() -> void:
+	if world_event_managed:
+		return
 	kills += 1
 	var new_level = _level_for_kills(kills)
 	if new_level > veterancy_level:
@@ -181,45 +272,194 @@ func veterancy_title() -> String:
 func veterancy_multiplier() -> float:
 	return 1.0 + veterancy_level * VETERANCY_BONUS_PER_LEVEL
 
-## Anima a posicao ate `target_pos` (em vez de teletransportar) e vira a
-## unidade de frente pra direcao do movimento. Puramente visual — quem
-## chama isso (HexGrid.move_unit) ja atualizou coord/ocupacao na hora.
-func slide_to(target_pos: Vector3) -> void:
-	var direction = target_pos - position
-	direction.y = 0.0
+## Fila de trechos (um Vector3 por tile) ainda por animar — ver walk_path()
+## abaixo. Existe pra resolver o bug reportado pelo usuario: "se ele vai
+## andar 3 tiles ele desliza pro terceiro [quase instantaneo]", que tinha
+## DUAS causas na mesma familia: (1) HexGrid.move_unit podia ser chamado
+## com um `dest` a varios tiles de distancia numa unica tacada (clique num
+## tile alcancavel do turno, ou a IA escolhendo o melhor tile reachable) e
+## so animava um unico salto reto ate o destino final, pulando os tiles do
+## meio; (2) HexGrid.continue_move_order chama move_unit uma vez POR TILE
+## de um trajeto de varios tiles no MESMO turno, tudo na MESMA frame — cada
+## chamada antiga criava um Tween NOVO competindo pela propriedade
+## "position" antes do anterior sequer ter processado um frame, entao so o
+## ULTIMO tween criado aparecia visualmente (mesmo efeito liquido: pula
+## direto pro tile final). Uma fila resolve as duas: qualquer chamada nova
+## so ENFILEIRA trechos, nunca cria um Tween concorrente — um unico "motor"
+## (_advance_walk_queue) consome a fila um trecho de cada vez, entao andar
+## N tiles agora sempre demora N * MOVE_DURATION de verdade, nao importa se
+## vieram de uma chamada so (com N pontos) ou de N chamadas separadas.
+var _walk_queue: Array[Vector3] = []
+var _walking: bool = false
 
+## Anima a posicao por UM UNICO trecho ate `target_pos` — atalho pra
+## walk_path() com uma lista de um elemento so, pra quem so precisa mover
+## um tile (ver walk_path() pro caso geral de varios tiles em sequencia).
+func slide_to(target_pos: Vector3) -> void:
+	walk_path([target_pos])
+
+## Anima a posicao atravessando CADA ponto de `waypoints` em sequencia real
+## (nunca todos de uma vez) e vira a unidade de frente pra direcao de cada
+## trecho. Puramente visual — quem chama isso (HexGrid.move_unit) ja
+## atualizou coord/ocupacao na hora. Chamadas repetidas (mesmo na mesma
+## frame, ver _walk_queue acima) se acumulam na fila em vez de brigar por
+## um Tween so.
+func walk_path(waypoints: Array[Vector3]) -> void:
+	if waypoints.is_empty():
+		return
 	# create_tween() exige a unidade estar dentro da SceneTree (ex: testes
 	# GUT que criam Unit/HexGrid isolados, sem add_child). Sem isso o jogo
-	# de verdade nunca chama slide_to fora da arvore, mas nao custa nada
-	# nao quebrar se acontecer — so pula a animacao e teletransporta.
+	# de verdade nunca chama walk_path fora da arvore, mas nao custa nada
+	# nao quebrar se acontecer — so pula a animacao e teletransporta direto
+	# pro ULTIMO ponto.
 	if not is_inside_tree():
-		position = target_pos
+		var final_pos: Vector3 = waypoints[-1]
+		var direction = final_pos - position
+		direction.y = 0.0
+		position = final_pos
 		if direction.length() > 0.05:
 			rotation.y = atan2(direction.x, direction.z)
 		return
 
-	# Andar (pedido do usuario: "os mobs nao tem animacao de andando?") — so
-	# troca se ja nao estiver tocando (ver _play_animation), e volta pro
-	# Idle quando o tween termina. Fica meio "piscando" em Idle por 1 frame
-	# entre dois passos consecutivos de um caminho de varios tiles (cada
-	# tile chama slide_to() separado, ver HexGrid.move_unit) — aceitavel
-	# por enquanto, sincronizar direito exigiria HexGrid avisar "ainda tem
-	# mais passo vindo", fora do escopo desta rodada.
-	_play_animation(WALK_ANIMATION)
+	_walk_queue.append_array(waypoints)
+	if _walking:
+		return # ja tem um _advance_walk_queue rodando, ele vai pegar isso sozinho
+	_walking = true
+	_play_animation(moving_animation) # pedido do usuario: "os mobs nao tem animacao de andando?"
+	_advance_walk_queue()
 
+## "Motor" que consome _walk_queue um trecho de cada vez -- so este metodo
+## cria Tween novo, entao nunca ha dois Tweens de "position" competindo na
+## mesma unidade.
+func _advance_walk_queue() -> void:
+	if _walk_queue.is_empty():
+		_walking = false
+		_play_animation(idle_animation)
+		return
+	var target_pos: Vector3 = _walk_queue.pop_front()
+	var direction = target_pos - position
+	direction.y = 0.0
 	var tween = create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(self, "position", target_pos, MOVE_DURATION).set_trans(Tween.TRANS_SINE)
 	if direction.length() > 0.05:
 		var target_angle = atan2(direction.x, direction.z)
 		tween.tween_property(self, "rotation:y", target_angle, MOVE_DURATION * 0.6)
-	tween.finished.connect(func(): _play_animation(DEFAULT_ANIMATION))
+	tween.finished.connect(_advance_walk_queue)
+
+## Envolve SO o corpo (modelo externo OU geometria procedural, o que quer
+## que _build_procedural_body tenha acabado de montar) numa Node3D
+## dedicada, ANTES de construir base/barra de vida/icone -- ver
+## _play_hit_reaction abaixo, que anima a posicao LOCAL e o material_
+## overlay de tudo dentro de _visual_root. Sem este wrapper, a reacao de
+## dano teria que mexer em `self.position`/`self.rotation` diretamente,
+## que ja pertencem ao sistema de movimento (walk_path/_advance_walk_
+## queue) -- dois Tweens brigando pela MESMA propriedade e exatamente o
+## bug que acabamos de corrigir pro movimento (ver comentario de
+## _walk_queue). Reparentar DEPOIS de construir (em vez de mudar toda
+## _build_procedural_body/_build_model_body pra receber um `parent`
+## explicito) evita tocar as dezenas de add_child() espalhados por elas --
+## `reparent(_visual_root, false)` preserva o transform LOCAL de cada
+## filho ja construido (relativo a `self`), e como _visual_root nasce na
+## origem sem rotacao/escala, o transform GLOBAL de cada parte nao muda
+## nem um pixel.
+var _visual_root: Node3D
+var _marker_height: float = HP_BAR_Y
 
 func _build_visual() -> void:
 	_build_procedural_body()
+	var bounds = _model_aabb(self)
+	if bounds != null:
+		_marker_height = maxf(HP_BAR_Y, bounds.end.y + 0.12)
+	if unit_data.magic_school != "":
+		_build_school_emblem()
+	_visual_root = Node3D.new()
+	add_child(_visual_root)
+	move_child(_visual_root, 0)
+	for child in get_children():
+		if child != _visual_root:
+			child.reparent(_visual_root, false)
 	_build_base_disc()
 	_build_hp_bar()
 	_build_troop_icon()
+
+## Material overlay compartilhado (uma unica instancia pra TODA unidade do
+## jogo, criado uma vez so) -- GeometryInstance3D.material_overlay desenha
+## uma passada extra POR CIMA do material original de cada MeshInstance3D,
+## entao funciona identico em cima de qualquer material (corpo procedural
+## com StandardMaterial3D por caixa, .glb da KayKit, .glb da Asset Factory)
+## sem precisar conhecer/trocar o material de base de ninguem.
+static var _hit_flash_material: StandardMaterial3D
+
+static func _get_hit_flash_material() -> StandardMaterial3D:
+	if _hit_flash_material == null:
+		_hit_flash_material = StandardMaterial3D.new()
+		_hit_flash_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_hit_flash_material.albedo_color = Color(1.0, 0.08, 0.08, 0.7)
+		_hit_flash_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	return _hit_flash_material
+
+const HIT_HOP_HEIGHT := 0.12
+const HIT_HOP_UP_DURATION := 0.10
+const HIT_HOP_DOWN_DURATION := 0.16
+const HIT_FLASH_ON_DURATION := 0.08
+const HIT_FLASH_OFF_DURATION := 0.05
+
+## Tweens da reacao de dano em andamento (pulo + pisca) -- rastreados juntos
+## pra uma nova batida (ex: contra-ataque no mesmo turno) sempre MATAR
+## qualquer um ainda rodando antes de comecar de novo, em vez de dois
+## Tweens brigando pela mesma propriedade (mesma familia do bug de
+## movimento corrigido antes -- ver _walk_queue).
+var _hit_reaction_tweens: Array[Tween] = []
+
+## Reacao visual "eu tomei um golpe" (pedido do usuario, ver o comentario
+## do setter de hp acima): pisca vermelho + uma puladinha, os dois
+## puramente cosmeticos sobre _visual_root -- nunca tocam unit.position/
+## rotation (usados por hex-grid/movimento) nem unit.hp (ja mudou antes
+## desta chamada, ver o setter). Funciona em QUALQUER tipo de modelo
+## (procedural, KayKit, Asset Factory) porque so usa material_overlay e a
+## posicao local do wrapper, nunca o material/geometria de base de
+## ninguem.
+func _play_hit_reaction() -> void:
+	if not is_inside_tree() or _visual_root == null:
+		return
+	for t in _hit_reaction_tweens:
+		if t and t.is_valid():
+			t.kill()
+	_hit_reaction_tweens.clear()
+
+	var meshes: Array[MeshInstance3D] = []
+	_collect_mesh_instances(_visual_root, meshes)
+	for m in meshes:
+		m.material_overlay = null # limpa resto de um flash anterior interrompido
+
+	_visual_root.position.y = 0.0
+	var hop_tween := create_tween()
+	hop_tween.tween_property(_visual_root, "position:y", HIT_HOP_HEIGHT, HIT_HOP_UP_DURATION).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	hop_tween.tween_property(_visual_root, "position:y", 0.0, HIT_HOP_DOWN_DURATION).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	_hit_reaction_tweens.append(hop_tween)
+
+	var flash_mat := _get_hit_flash_material()
+	var flash_tween := create_tween()
+	flash_tween.tween_callback(_set_mesh_overlay.bind(meshes, flash_mat))
+	flash_tween.tween_interval(HIT_FLASH_ON_DURATION)
+	flash_tween.tween_callback(_set_mesh_overlay.bind(meshes, null))
+	flash_tween.tween_interval(HIT_FLASH_OFF_DURATION)
+	flash_tween.tween_callback(_set_mesh_overlay.bind(meshes, flash_mat))
+	flash_tween.tween_interval(HIT_FLASH_ON_DURATION)
+	flash_tween.tween_callback(_set_mesh_overlay.bind(meshes, null))
+	_hit_reaction_tweens.append(flash_tween)
+
+static func _set_mesh_overlay(meshes: Array[MeshInstance3D], mat: StandardMaterial3D) -> void:
+	for m in meshes:
+		if is_instance_valid(m):
+			m.material_overlay = mat
+
+func _collect_mesh_instances(node: Node, out: Array[MeshInstance3D]) -> void:
+	if node is MeshInstance3D:
+		out.append(node)
+	for child in node.get_children():
+		_collect_mesh_instances(child, out)
 
 ## Cor do corpo/base de uma unidade: cor da civilizacao pro jogador, ou —
 ## pra monstro neutro (owner_player == null) — a cor FIXA do proprio tipo
@@ -298,6 +538,24 @@ func _attach_race_signature_weapon(root: Node3D, race: String, kit: Dictionary, 
 const DEFAULT_ANIMATION := "Idle_A"
 const WALK_ANIMATION := "Walking_A"
 
+## Clipes de fato tocados por slide_to() abaixo -- campos DE INSTANCIA
+## (nao as constantes direto) pra uma unidade poder trocar seu proprio
+## "andar"/"parado" sem precisar mexer em slide_to(). Default = as MESMAS
+## constantes de sempre, ZERO mudanca de comportamento pra qualquer
+## unidade existente. Roadmap "Dragon Event v1 fechado" -- unico uso ate
+## agora: DragonEvent troca pra "Fly" enquanto travel_mode == FLYING
+## (pedido explicito do usuario, animacao de bater asas durante o voo),
+## sem duplicar/reescrever a logica de troca de animacao em si.
+var moving_animation: String = WALK_ANIMATION
+var idle_animation: String = DEFAULT_ANIMATION
+
+## "" ate hoje pra toda unidade (combate normal, CombatResolver.gd, nao
+## toca nenhuma animacao ainda) -- so o Dragao usa "Attack" hoje, tocado
+## manualmente por DragonEvent.gd. Unidades com UnitData.
+## attack_animation_override ganham esse nome aqui em _build_model_body(),
+## prontas pro dia que o combate normal tambem chamar _play_animation().
+var attack_animation: String = ""
+
 ## Segunda cena de animacao, sempre reaproveitada JUNTO da de UnitData.
 ## animation_scene_path (General) pra fechar Idle+Andar — mesmo rig
 ## compartilhado entre os dois arquivos e entre todo personagem/esqueleto
@@ -345,17 +603,48 @@ const MODEL_TARGET_HEIGHT := 0.7
 ## albedo_color por cima da textura pintada — tecnica de "atlas gradiente"
 ## da KayKit — e lavava tudo pra uma cor lisa, reportado pelo usuario: "ta
 ## todos sem texturas").
+## Modelos gerados pela 3D Asset Factory (tools/asset_factory) SEMPRE
+## salvam em res://assets/generated/ -- ao contrario do KayKit (pose de
+## bind mais aberta que a de pe, escala "real" inconsistente entre
+## personagens do pacote, ver MODEL_TARGET_HEIGHT acima), a Asset Factory
+## e NOSSA: a altura de cada personagem ja e um parametro explicito
+## (metros) no proprio preset JSON, com a MESMA convencao de unidade do
+## hex_size do jogo, e o bind pose usado pra exportar e o rest pose de
+## pe de verdade (sem esqueleto "em T" nem bracos abertos). Renormalizar
+## esses pra MODEL_TARGET_HEIGHT via aabb.size.y so reintroduz o problema
+## que esse sistema existe pra resolver -- e foi exatamente essa conta
+## (aabb.size.y incluindo arma equipada, cada personagem com uma silhueta
+## bem diferente) que rendeu Goblin/Esqueleto/Troll visivelmente maiores
+## no jogo do que qualquer formula previa, sem causa raiz encontrada
+## (pedido do usuario: "o caminho correto nao seria... deixar eles apenas
+## com o tamanho do modelo 3d deles?" -- sim). Pulando a normalizacao
+## pra esses: escala 1:1 direta (so multiplicada por model_scale_
+## multiplier, que continua disponivel como ajuste fino manual, default
+## 1.0 -- ver UnitData.gd).
+const ASSET_FACTORY_PATH_PREFIX := "res://assets/generated/"
+
 func _build_model_body() -> void:
 	var scene: PackedScene = load(unit_data.model_scene_path)
 	var model: Node3D = scene.instantiate()
 	add_child(model)
-	var aabb = _model_aabb(model)
-	if aabb != null and aabb.size.y > 0.0:
-		model.scale = Vector3.ONE * (MODEL_TARGET_HEIGHT / aabb.size.y)
+	if unit_data.model_scene_path.begins_with(ASSET_FACTORY_PATH_PREFIX):
+		model.scale = Vector3.ONE * unit_data.model_scale_multiplier
+	else:
+		var aabb = _model_aabb(model)
+		if aabb != null and aabb.size.y > 0.0:
+			model.scale = Vector3.ONE * (MODEL_TARGET_HEIGHT / aabb.size.y * unit_data.model_scale_multiplier)
+	if unit_data.model_yaw_offset_degrees != 0.0:
+		model.rotation.y += deg_to_rad(unit_data.model_yaw_offset_degrees)
 	if unit_data.animation_scene_path != "":
+		if unit_data.idle_animation_override != "":
+			idle_animation = unit_data.idle_animation_override
+		if unit_data.walk_animation_override != "":
+			moving_animation = unit_data.walk_animation_override
+		if unit_data.attack_animation_override != "":
+			attack_animation = unit_data.attack_animation_override
 		_anim_player = _build_animation_player(model)
 		if _anim_player:
-			_anim_player.play(DEFAULT_ANIMATION)
+			_anim_player.play(idle_animation)
 
 ## Bounding box combinado de toda malha dentro de `node`, em espaco LOCAL a
 ## `node` (nao depende da arvore de cena real). null se nao houver nenhum
@@ -386,9 +675,19 @@ func _model_aabb(node: Node, xform: Transform3D = Transform3D.IDENTITY):
 func _build_animation_player(model: Node) -> AnimationPlayer:
 	var library := AnimationLibrary.new()
 	_copy_animations_into(library, unit_data.animation_scene_path)
-	_copy_animations_into(library, WALK_ANIMATION_SCENE)
+	if unit_data.merge_shared_walk_animation:
+		_copy_animations_into(library, WALK_ANIMATION_SCENE)
 	if library.get_animation_list().is_empty():
 		return null
+	# glTF nao carrega "isso deve repetir" -- o importador da Godot sempre
+	# cria a Animation com loop_mode = NONE, entao Idle/Andar "travam" no
+	# ultimo frame apos um unico ciclo sem isso. So idle_animation/
+	# moving_animation (ja resolvidos pros nomes certos em _build_model_
+	# body(), antes desta chamada) -- Ataque/Morte ficam LOOP_NONE de
+	# proposito, tocam uma vez so.
+	for loop_anim_name in [idle_animation, moving_animation]:
+		if library.has_animation(loop_anim_name):
+			library.get_animation(loop_anim_name).loop_mode = Animation.LOOP_LINEAR
 	var player := AnimationPlayer.new()
 	model.add_child(player)
 	player.add_animation_library("", library)
@@ -756,35 +1055,15 @@ func _build_procedural_body() -> void:
 				wing.rotation_degrees = Vector3(0, 0, side * 35)
 				add_child(wing)
 		"dragon":
-			# Mesmo padrao do Vivern (corpo alongado + asas), so numa escala
-			# bem maior — pedido do usuario: "Dragao (Boss Raro)... atributos
-			# massivos", a silhueta precisa ler "muito maior" a distancia,
-			# nao so "outro voador vermelho".
-			var body := MeshInstance3D.new()
-			var mesh := CapsuleMesh.new()
-			mesh.radius = 0.4
-			mesh.height = 1.6
-			body.mesh = mesh
-			body.material_override = mat
-			body.position.y = 0.85
-			add_child(body)
-			for side in [-1.0, 1.0]:
-				var wing := MeshInstance3D.new()
-				var wing_mesh := PrismMesh.new()
-				wing_mesh.size = Vector3(0.95, 0.08, 0.5)
-				wing.mesh = wing_mesh
-				wing.material_override = mat
-				wing.position = Vector3(side * 0.55, 1.15, 0.0)
-				wing.rotation_degrees = Vector3(0, 0, side * 35)
-				add_child(wing)
-			var tail := MeshInstance3D.new()
-			var tail_mesh := PrismMesh.new()
-			tail_mesh.size = Vector3(0.2, 0.2, 0.8)
-			tail.mesh = tail_mesh
-			tail.material_override = mat
-			tail.position = Vector3(0, 0.6, -0.55)
-			tail.rotation_degrees = Vector3(90, 0, 0)
-			add_child(tail)
+			# Roadmap "Dragon Event v1 fechado" -- pedido explicito do
+			# usuario: "o sistema do Dragao ja esta bom o suficiente pra
+			# merecer um Dragao de verdade... Aetherlands Low Poly Modular
+			# -- primeiro prototipo do futuro sistema visual proprio do
+			# jogo". Substitui a capsula+asas+cauda placeholder por um
+			# corpo modular de verdade (ver _build_dragon_body abaixo) --
+			# geometria cubica/prismatica simples de proposito (silhueta
+			# forte, poucos materiais, nada de textura/realismo).
+			_build_dragon_body(mat)
 		"griffin":
 			var body := MeshInstance3D.new()
 			var body_mesh := CapsuleMesh.new()
@@ -816,7 +1095,7 @@ func _build_procedural_body() -> void:
 				wing.position = Vector3(side * 0.4, 0.55, -0.05)
 				wing.rotation_degrees = Vector3(0, 0, side * 40)
 				add_child(wing)
-		"treant":
+		"treant", "woodland_beast":
 			# Tronco na cor da civilizacao (mesmo padrao de "corpo principal"
 			# de todo outro kind), folhagem sempre verde fixo — nao faz
 			# sentido uma arvore ter folhas na cor do dono, so o "estandarte"
@@ -972,7 +1251,7 @@ func _build_procedural_body() -> void:
 			bow.position = Vector3(-0.14, 0.5, -0.05)
 			bow.rotation_degrees = Vector3(0, 0, 12)
 			add_child(bow)
-		"stone_golem":
+		"stone_golem", "arcane_golem", "grave_guardian":
 			# Silhueta larga e empilhada (torso grande + "cabeca" cubica
 			# menor por cima) — leitura de "bloco de pedra andante", o
 			# oposto do humanoide magro padrao.
@@ -991,6 +1270,20 @@ func _build_procedural_body() -> void:
 			head.material_override = mat
 			head.position.y = 0.72
 			add_child(head)
+		"storm_elemental":
+			for i in range(4):
+				var ring := MeshInstance3D.new()
+				var mesh := TorusMesh.new()
+				mesh.inner_radius = 0.14 + i * 0.08
+				mesh.outer_radius = mesh.inner_radius + 0.08
+				ring.mesh = mesh
+				var glow := StandardMaterial3D.new()
+				glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				glow.albedo_color = Color(0.4, 0.8, 1.0).lerp(Color.WHITE, i * 0.15)
+				ring.material_override = glow
+				ring.position.y = 0.35 + i * 0.35
+				ring.rotation.z = 0.15 * (i - 2)
+				add_child(ring)
 		"shadow_summoner":
 			# Silhueta fina e encapuzada (mesmo corte do Mago) mas com um
 			# orbe escuro flutuando acima da cabeca em vez de uma cabeca
@@ -1023,6 +1316,667 @@ func _build_procedural_body() -> void:
 			body.material_override = mat
 			body.position.y = 0.4
 			add_child(body)
+
+## ===========================================================================
+## "Aetherlands Low Poly Modular" -- primeiro prototipo do dragao (roadmap
+## "Dragon Event v1 fechado"). Toda a geometria fica sob um unico
+## DragonVisualRoot (nunca direto sob `self`) de proposito: `self.position`/
+## `self.rotation` continuam pertencendo EXCLUSIVAMENTE a slide_to() (o
+## tween de movimento pelo grid) -- se as animacoes abaixo tambem
+## escrevessem nessas propriedades, as duas ficariam brigando pelo mesmo
+## valor todo frame. Pivots nomeados (NeckPivot/HeadPivot/JawPivot/*Hip/
+## TailPivot/*WingPivot) sao o "esqueleto" barato desta unidade -- cada
+## um e' so' um Node3D vazio que os MeshInstance3D reais penduram embaixo,
+## e as animacoes (ver _build_dragon_animation_player) so' giram/deslocam
+## ESSES pivots, nunca a malha em si.
+## ===========================================================================
+func _build_dragon_body(mat: StandardMaterial3D) -> void:
+	var visual_root := Node3D.new()
+	visual_root.name = "DragonVisualRoot"
+	add_child(visual_root)
+
+	var horn_mat := StandardMaterial3D.new()
+	horn_mat.albedo_color = Color(0.88, 0.85, 0.78)
+	var eye_mat := StandardMaterial3D.new()
+	eye_mat.albedo_color = Color(1.0, 0.85, 0.1)
+	eye_mat.emission_enabled = true
+	eye_mat.emission = Color(1.0, 0.6, 0.0)
+	eye_mat.emission_energy_multiplier = 2.5
+	# Roadmap "Dragon Event v1 fechado" v2 -- pedido explicito do usuario:
+	# "se baseie um pouco nessa imagem" (referencia de um Dragao Ancestral
+	# roxo+laranja com espinhos na espinha/cauda e asas grandes e
+	# contrastantes). Segunda cor (accent) e' NOVA aqui -- silhueta v1 era
+	# monocromatica demais pra ler bem a distancia.
+	var accent_mat := StandardMaterial3D.new()
+	accent_mat.albedo_color = Color(0.95, 0.55, 0.08)
+
+	# --- Torso: v7 -- correcao explicita do usuario depois do v6 (malha
+	# lofted lisa): "eu quero ele composto de quadrados mesmo... ou faz
+	# igual uma geladeira usando 3 quadrados, ou faz o bagulho todo
+	# redondo, o estilo e' justamente low poly voxel fantasy" -- ou seja,
+	# NEM 2-3 blocos grandes (geladeira) NEM um tubo liso (v6 errou pro
+	# lado oposto): o estilo certo e' VARIOS blocos pequenos, cada um
+	# rotacionado pra seguir a curva (uma "escada" de cubos, nao uma
+	# superficie continua) -- ver `_add_segmented_boxes`, que reaproveita
+	# a mesma coluna/raios do v6 mas desenha um BoxMesh de verdade em cada
+	# ponto em vez de um anel de malha lisa.
+	var torso_spine: Array = [
+		Vector3(0, 0.66, -0.55),
+		Vector3(0, 0.67, -0.35),
+		Vector3(0, 0.70, -0.10),
+		Vector3(0, 0.76, 0.15),
+		Vector3(0, 0.81, 0.40),
+		Vector3(0, 0.85, 0.60),
+	]
+	var torso_radii: Array = [
+		Vector2(0.20, 0.18),
+		Vector2(0.27, 0.25),
+		Vector2(0.29, 0.27),
+		Vector2(0.27, 0.25),
+		Vector2(0.24, 0.22),
+		Vector2(0.18, 0.16),
+	]
+	_add_segmented_boxes(visual_root, torso_spine, torso_radii, mat)
+
+	# Barriga em PLACAS separadas (nao uma faixa unica) -- mais geometria
+	# de verdade, nao so' cor: cada placa e' um pouco menor que a anterior,
+	# com um pequeno vao entre elas (ritmo visual "couraça segmentada",
+	# pedido do usuario: "aplicasse modificações no modelo pra ficar mais
+	# desenvolvido... ta simples demais").
+	var belly_z := 0.62
+	for i in range(4):
+		var plate := MeshInstance3D.new()
+		var plate_mesh := BoxMesh.new()
+		var plate_width: float = 0.4 - i * 0.03
+		plate_mesh.size = Vector3(plate_width, 0.09, 0.22)
+		plate.mesh = plate_mesh
+		plate.material_override = accent_mat
+		plate.position = Vector3(0, 0.44, belly_z)
+		visual_root.add_child(plate)
+		belly_z -= 0.27
+
+	_add_spine_spikes(visual_root, accent_mat, [Vector3(0, 0.98, -0.4), Vector3(0, 1.0, -0.1), Vector3(0, 1.06, 0.2)])
+
+	# --- Placas de ombro (uma de cada lado, na base do peito) -- quebra a
+	# silhueta lisa do torso, mesmo espirito de "couraça" da barriga acima.
+	for side in [-1.0, 1.0]:
+		var shoulder_plate := MeshInstance3D.new()
+		var shoulder_plate_mesh := BoxMesh.new()
+		shoulder_plate_mesh.size = Vector3(0.1, 0.16, 0.16)
+		shoulder_plate.mesh = shoulder_plate_mesh
+		shoulder_plate.material_override = accent_mat
+		shoulder_plate.position = Vector3(side * 0.27, 0.95, 0.15)
+		shoulder_plate.rotation_degrees = Vector3(0, 0, side * 15)
+		visual_root.add_child(shoulder_plate)
+
+	# --- Pescoco: pivot na base (anima em Idle/Attack) + segmentos CUBICOS
+	# afunilando ate a cabeca -- cada segmento sobe um pouco de Y alem de
+	# avancar em Z, arqueando o pescoco pra CIMA e pra FRENTE (silhueta da
+	# referencia: pescoco curva antes da cabeca apontar forward), tudo via
+	# POSICIONAMENTO fixo das malhas -- o pivot em si continua girando a
+	# partir de 0 nas animacoes (Idle/Attack), sem precisar mudar nenhuma
+	# key existente.
+	# v4: arco bem mais dramatico (pedido do usuario: modelo "nao ta nada
+	# parecido" com a referencia, que tem a cabeca erguida BEM acima do
+	# corpo) -- cada segmento agora sobe quase o dobro em Y do que avanca
+	# em Z, entao o pescoco lê como um "S" subindo pra cima antes da
+	# cabeca, nao uma linha quase reta pra frente.
+	# v7: correcao explicita do usuario depois do v6 (malha lofted lisa) --
+	# "o pescoço tambem varios quadrados... o estilo e' justamente low
+	# poly voxel fantasy" -- volta a ser uma corrente de BoxMesh (agora 6,
+	# nao 3, pra "dar a sensação de ter curvas" com mais degraus), cada um
+	# rotacionado pra seguir a coluna via `_add_segmented_boxes`. O arco
+	# pra cima (S dramatico, pedido de v4) continua na propria curva da
+	# coluna (`neck_spine`), nao em rotacao do pivot -- o pivot continua
+	# girando a partir de 0 nas animacoes (Idle/Attack) sem precisar mudar
+	# nenhuma key existente.
+	var neck_pivot := Node3D.new()
+	neck_pivot.name = "NeckPivot"
+	neck_pivot.position = Vector3(0, 0.98, 0.6)
+	visual_root.add_child(neck_pivot)
+	var neck_spine: Array = [
+		Vector3(0, 0.0, 0.0),
+		Vector3(0, 0.10, 0.14),
+		Vector3(0, 0.24, 0.26),
+		Vector3(0, 0.40, 0.36),
+		Vector3(0, 0.54, 0.44),
+		Vector3(0, 0.64, 0.50),
+	]
+	var neck_radii: Array = [
+		Vector2(0.19, 0.19),
+		Vector2(0.17, 0.17),
+		Vector2(0.155, 0.155),
+		Vector2(0.135, 0.135),
+		Vector2(0.115, 0.115),
+		Vector2(0.10, 0.10),
+	]
+	_add_segmented_boxes(neck_pivot, neck_spine, neck_radii, mat)
+	for spine_pt in neck_spine.slice(1, neck_spine.size() - 1):
+		_add_spine_spikes(neck_pivot, accent_mat, [spine_pt + Vector3(0, 0.14, 0)], 0.8)
+	var neck_y: float = neck_spine[neck_spine.size() - 1].y
+	var neck_z: float = neck_spine[neck_spine.size() - 1].z
+
+	# --- Cabeca: cubo + focinho + mandibula articulada + chifres + olhos
+	# emissivos -- pendurada na PONTA do pescoco (anima JUNTO com ele).
+	var head_pivot := Node3D.new()
+	head_pivot.name = "HeadPivot"
+	head_pivot.position = Vector3(0, neck_y + 0.12, neck_z + 0.05)
+	neck_pivot.add_child(head_pivot)
+
+	var head_box := MeshInstance3D.new()
+	var head_mesh := BoxMesh.new()
+	head_mesh.size = Vector3(0.26, 0.24, 0.28)
+	head_box.mesh = head_mesh
+	head_box.material_override = mat
+	head_box.position = Vector3(0, 0, 0.1)
+	head_pivot.add_child(head_box)
+
+	var snout := MeshInstance3D.new()
+	var snout_mesh := BoxMesh.new()
+	snout_mesh.size = Vector3(0.16, 0.14, 0.22)
+	snout.mesh = snout_mesh
+	snout.material_override = mat
+	snout.position = Vector3(0, -0.02, 0.34)
+	head_pivot.add_child(snout)
+
+	var jaw_pivot := Node3D.new()
+	jaw_pivot.name = "JawPivot"
+	jaw_pivot.position = Vector3(0, -0.09, 0.28)
+	head_pivot.add_child(jaw_pivot)
+	var jaw := MeshInstance3D.new()
+	var jaw_mesh := BoxMesh.new()
+	jaw_mesh.size = Vector3(0.14, 0.06, 0.2)
+	jaw.mesh = jaw_mesh
+	jaw.material_override = mat
+	jaw.position = Vector3(0, -0.03, 0.1)
+	jaw_pivot.add_child(jaw)
+
+	# Presa inferior -- um unico detalhe pequeno, mas ajuda a cabeca ler
+	# "predador" em vez de "cubo com boca" (pedido do usuario: modelo mais
+	# desenvolvido).
+	var fang := MeshInstance3D.new()
+	var fang_mesh := PrismMesh.new()
+	fang_mesh.size = Vector3(0.025, 0.07, 0.025)
+	fang.mesh = fang_mesh
+	fang.material_override = horn_mat
+	fang.position = Vector3(0, 0.02, 0.19)
+	fang.rotation_degrees = Vector3(180, 0, 0)
+	jaw_pivot.add_child(fang)
+
+	for side in [-1.0, 1.0]:
+		var horn := MeshInstance3D.new()
+		var horn_mesh := PrismMesh.new()
+		horn_mesh.size = Vector3(0.05, 0.24, 0.05)
+		horn.mesh = horn_mesh
+		horn.material_override = horn_mat
+		horn.position = Vector3(side * 0.09, 0.16, -0.02)
+		horn.rotation_degrees = Vector3(-20, 0, side * -10)
+		head_pivot.add_child(horn)
+
+		# Sobrancelha/crista -- pequeno espinho de destaque acima do olho,
+		# entre o chifre e o focinho (referencia: "crista" ao longo da
+		# cabeca, nao so' chifres isolados).
+		var brow := MeshInstance3D.new()
+		var brow_mesh := PrismMesh.new()
+		brow_mesh.size = Vector3(0.04, 0.06, 0.09)
+		brow.mesh = brow_mesh
+		brow.material_override = accent_mat
+		brow.position = Vector3(side * 0.1, 0.09, 0.18)
+		brow.rotation_degrees = Vector3(15, 0, 0)
+		head_pivot.add_child(brow)
+
+		var eye := MeshInstance3D.new()
+		var eye_mesh := BoxMesh.new()
+		eye_mesh.size = Vector3(0.05, 0.05, 0.04)
+		eye.mesh = eye_mesh
+		eye.material_override = eye_mat
+		eye.position = Vector3(side * 0.12, 0.02, 0.2)
+		head_pivot.add_child(eye)
+
+	# --- Sopro de fogo: GPUParticles3D + luz, ambos DESLIGADOS por padrao
+	# (ver DragonEvent._play_fire_breath_vfx) -- pendurados na cabeca pra
+	# se mover/virar junto dela automaticamente, nunca reposicionados a
+	# mao por quem dispara o ataque.
+	var fire_emitter := GPUParticles3D.new()
+	fire_emitter.name = "FireBreathEmitter"
+	fire_emitter.position = Vector3(0, -0.02, 0.46)
+	fire_emitter.emitting = false
+	fire_emitter.one_shot = true
+	fire_emitter.amount = 40
+	fire_emitter.lifetime = 0.45
+	fire_emitter.explosiveness = 0.5
+	var fire_particle_mesh := SphereMesh.new()
+	fire_particle_mesh.radius = 0.05
+	fire_particle_mesh.height = 0.1
+	fire_emitter.draw_pass_1 = fire_particle_mesh
+	var fire_particle_mat := ParticleProcessMaterial.new()
+	fire_particle_mat.direction = Vector3(0, 0, 1)
+	fire_particle_mat.spread = 14.0
+	fire_particle_mat.initial_velocity_min = 2.5
+	fire_particle_mat.initial_velocity_max = 4.5
+	fire_particle_mat.gravity = Vector3(0, 0.6, 0)
+	fire_particle_mat.scale_min = 0.08
+	fire_particle_mat.scale_max = 0.24
+	fire_particle_mat.color = Color(1.0, 0.55, 0.05)
+	fire_emitter.process_material = fire_particle_mat
+	head_pivot.add_child(fire_emitter)
+
+	var fire_light := OmniLight3D.new()
+	fire_light.name = "FireBreathLight"
+	fire_light.light_color = Color(1.0, 0.6, 0.1)
+	fire_light.light_energy = 0.0 # 0 por padrao -- so' acende durante o ataque
+	fire_light.omni_range = 2.0
+	fire_light.position = Vector3(0, -0.02, 0.4)
+	head_pivot.add_child(fire_light)
+
+	# --- Pernas: 4, cada uma com pivot de quadril (anima em Walk) + coxa
+	# + canela, ambas caixas simples.
+	# v4: pernas mais longas erguendo o corpo bem acima do chao (pedido do
+	# usuario: modelo "nao ta nada parecido" com a referencia, que fica em
+	# pe de forma ereta, nao esparramada perto do chao); dianteiras presas
+	# mais alto que traseiras porque o peito agora fica acima do quadril.
+	var leg_hip_positions := {
+		"FrontLeftHipPivot": Vector3(-0.28, 0.42, 0.2),
+		"FrontRightHipPivot": Vector3(0.28, 0.42, 0.2),
+		"BackLeftHipPivot": Vector3(-0.28, 0.34, -0.35),
+		"BackRightHipPivot": Vector3(0.28, 0.34, -0.35),
+	}
+	# v7: pedido explicito do usuario -- "um quadrado pra pata, um acima
+	# pra ser a canela, outro pra ser a coxa, um pra ser o ombro" -- 4
+	# blocos distintos por perna (nao so' coxa+canela+garras soltas).
+	for leg_name in leg_hip_positions:
+		var hip_pivot := Node3D.new()
+		hip_pivot.name = leg_name
+		hip_pivot.position = leg_hip_positions[leg_name]
+		visual_root.add_child(hip_pivot)
+
+		var shoulder := MeshInstance3D.new()
+		var shoulder_mesh := BoxMesh.new()
+		shoulder_mesh.size = Vector3(0.17, 0.13, 0.17)
+		shoulder.mesh = shoulder_mesh
+		shoulder.material_override = mat
+		shoulder.position = Vector3(0, -0.01, 0)
+		hip_pivot.add_child(shoulder)
+
+		var thigh := MeshInstance3D.new()
+		var thigh_mesh := BoxMesh.new()
+		thigh_mesh.size = Vector3(0.14, 0.22, 0.14)
+		thigh.mesh = thigh_mesh
+		thigh.material_override = mat
+		thigh.position = Vector3(0, -0.18, 0)
+		hip_pivot.add_child(thigh)
+
+		var shin := MeshInstance3D.new()
+		var shin_mesh := BoxMesh.new()
+		shin_mesh.size = Vector3(0.11, 0.2, 0.11)
+		shin.mesh = shin_mesh
+		shin.material_override = mat
+		shin.position = Vector3(0, -0.39, 0.02)
+		hip_pivot.add_child(shin)
+
+		var paw := MeshInstance3D.new()
+		var paw_mesh := BoxMesh.new()
+		paw_mesh.size = Vector3(0.13, 0.09, 0.17)
+		paw.mesh = paw_mesh
+		paw.material_override = mat
+		paw.position = Vector3(0, -0.53, 0.06)
+		hip_pivot.add_child(paw)
+
+		# Garras -- 3 por pata, levemente espalhadas, apontando pra frente/
+		# baixo.
+		for claw_x in [-0.035, 0.0, 0.035]:
+			var claw := MeshInstance3D.new()
+			var claw_mesh := PrismMesh.new()
+			claw_mesh.size = Vector3(0.035, 0.08, 0.035)
+			claw.mesh = claw_mesh
+			claw.material_override = horn_mat
+			claw.position = Vector3(claw_x, -0.58, 0.12)
+			claw.rotation_degrees = Vector3(-75, 0, 0)
+			hip_pivot.add_child(claw)
+
+	# --- Cauda: pivot na base (anima em Idle/Walk) + segmentos CUBICOS
+	# progressivamente menores ate a ponta -- mais longa que a v1 (5
+	# segmentos, nao 4) com espinhos no topo de cada um, seguindo a
+	# referencia ("cauda longa, afunilando, com espinhos na espinha").
+	# v4: cauda agora sobe um pouco em Y conforme afunila (mesma tecnica do
+	# pescoco acima) -- pedido do usuario: modelo "nao ta nada parecido"
+	# com a referencia, que tem a cauda varrendo pra CIMA no ar, nao
+	# arrastando reta e murcha atras do corpo.
+	# v7: correcao explicita do usuario depois do v6 (malha lofted lisa) --
+	# "a cauda 6 quadrados, mas eles vao ficando menor pra deixar a
+	# sensação de ter curvas... o estilo e' justamente low poly voxel
+	# fantasy" -- exatamente os 6 pontos ja definidos abaixo, so' que cada
+	# um agora e' um BoxMesh de verdade (`_add_segmented_boxes`) em vez de
+	# um anel de malha lisa. A varredura pra cima (pedido de v4) continua
+	# na propria curva da coluna, nao em rotacao do pivot.
+	var tail_pivot := Node3D.new()
+	tail_pivot.name = "TailPivot"
+	tail_pivot.position = Vector3(0, 0.62, -0.6)
+	visual_root.add_child(tail_pivot)
+	var tail_spine: Array = [
+		Vector3(0, 0.0, 0.0),
+		Vector3(0, 0.05, -0.22),
+		Vector3(0, 0.11, -0.45),
+		Vector3(0, 0.17, -0.68),
+		Vector3(0, 0.23, -0.92),
+		Vector3(0, 0.30, -1.15),
+	]
+	var tail_radii: Array = [
+		Vector2(0.19, 0.19),
+		Vector2(0.16, 0.16),
+		Vector2(0.13, 0.13),
+		Vector2(0.10, 0.10),
+		Vector2(0.07, 0.07),
+		Vector2(0.04, 0.04),
+	]
+	_add_segmented_boxes(tail_pivot, tail_spine, tail_radii, mat)
+	for spine_pt in tail_spine.slice(1, tail_spine.size() - 1):
+		_add_spine_spikes(tail_pivot, accent_mat, [spine_pt + Vector3(0, 0.11, 0)], 0.7)
+	var tail_y: float = tail_spine[tail_spine.size() - 1].y
+	var tail_z: float = tail_spine[tail_spine.size() - 1].z
+
+	# Aba/leque na PONTA da cauda -- referencia tem um "spade" la, nao so'
+	# um cubo minusculo desaparecendo no nada.
+	var tail_fin := MeshInstance3D.new()
+	var tail_fin_mesh := PrismMesh.new()
+	tail_fin_mesh.size = Vector3(0.22, 0.18, 0.12)
+	tail_fin.mesh = tail_fin_mesh
+	tail_fin.material_override = accent_mat
+	tail_fin.position = Vector3(0, tail_y, tail_z - 0.03)
+	tail_fin.rotation_degrees = Vector3(0, 0, 90)
+	tail_pivot.add_child(tail_fin)
+
+	# --- Asas: v5 -- reconstruidas do zero (pedido explicito do usuario
+	# depois de ver o v4 em jogo: "as asas parecem dois papeis... faça um
+	# modelo atraves de uma solução robusta", nao mais um remendo em cima
+	# do anterior). Empilhar varios prismas finos em angulos escolhidos a
+	# mao (v1-v4) sempre ia continuar lendo como sticks soltos, porque
+	# cada peca e' plana e sem gradiente. A solução robusta: a membrana
+	# agora e' UMA malha poligonal real (SurfaceTool, formato de leque com
+	# a borda de tras recortada entre os "dedos") com cor por vertice
+	# (mais escura perto do corpo, mais clara na ponta) simulando volume
+	# sem depender de textura -- ver `_build_wing_membrane_mesh`. Um unico
+	# osso de borda de ataque vai do ombro direto ate a ponta (a linha reta
+	# que mais define a silhueta na referencia), orientado via
+	# `_basis_pointing` (matematica de direcao real, nao Euler angles
+	# escolhidos no olho) -- o mesmo helper orienta as nervuras (uma por
+	# "dedo", encaixada por baixo da malha, nao um graveto solto pra fora
+	# dela) e as garras na ponta.
+	for side in [-1.0, 1.0]:
+		var wing_pivot := Node3D.new()
+		wing_pivot.name = "LeftWingPivot" if side < 0 else "RightWingPivot"
+		wing_pivot.position = Vector3(side * 0.24, 0.85, -0.05)
+		wing_pivot.rotation_degrees = Vector3(-6, side * -10, 0)
+		visual_root.add_child(wing_pivot)
+
+		var root_pt := Vector3(0, 0, 0.08)
+		var lead_mid := Vector3(side * 0.5, 0.06, 0.22)
+		var tip_pt := Vector3(side * 1.05, 0.12, 0.08)
+		var fin1 := Vector3(side * 0.92, -0.05, -0.22)
+		var val1 := Vector3(side * 0.7, -0.15, -0.05)
+		var fin2 := Vector3(side * 0.55, -0.08, -0.32)
+		var val2 := Vector3(side * 0.35, -0.18, -0.1)
+		var fin3 := Vector3(side * 0.22, -0.1, -0.35)
+		var trailing_root := Vector3(0, -0.05, -0.15)
+
+		var membrane := MeshInstance3D.new()
+		var boundary: Array = [lead_mid, tip_pt, fin1, val1, fin2, val2, fin3, trailing_root]
+		membrane.mesh = _build_wing_membrane_mesh(root_pt, boundary, accent_mat.albedo_color, side < 0.0)
+		# Sem sombreamento (pedido do usuario: comparou com uma captura REAL
+		# em jogo e a asa apareceu quase preta) -- a cena real
+		# (scenes/main/Main.tscn) usa ambient_light_energy=0.22 (bem mais
+		# escuro que o meu rig de teste isolado, que usava 0.9), entao
+		# qualquer face virada pro lado errado do sol ficava quase sem luz
+		# nenhuma e o gradiente pintado por vertice desaparecia. Sem
+		# sombreamento, o gradiente sempre aparece exatamente como
+		# desenhado, independente da luz da cena.
+		var membrane_mat := StandardMaterial3D.new()
+		membrane_mat.vertex_color_use_as_albedo = true
+		membrane_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		membrane_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		membrane.material_override = membrane_mat
+		wing_pivot.add_child(membrane)
+
+		var leading_edge := MeshInstance3D.new()
+		var leading_edge_mesh := BoxMesh.new()
+		leading_edge_mesh.size = Vector3((tip_pt - root_pt).length(), 0.055, 0.08)
+		leading_edge.mesh = leading_edge_mesh
+		leading_edge.material_override = mat
+		leading_edge.position = (root_pt + tip_pt) * 0.5
+		leading_edge.transform.basis = _basis_pointing(tip_pt - root_pt, false)
+		wing_pivot.add_child(leading_edge)
+
+		# Nervuras -- uma por "dedo", encaixada por baixo da malha
+		# (encolhida a 85% do comprimento real pra nao furar a silhueta) +
+		# uma garra pequena na ponta de cada uma.
+		for finger_tip in [fin1, fin2, fin3]:
+			var rib := MeshInstance3D.new()
+			var rib_mesh := BoxMesh.new()
+			rib_mesh.size = Vector3((finger_tip - root_pt).length() * 0.85, 0.03, 0.035)
+			rib.mesh = rib_mesh
+			rib.material_override = mat
+			rib.position = root_pt.lerp(finger_tip, 0.42)
+			rib.transform.basis = _basis_pointing(finger_tip - root_pt, false)
+			wing_pivot.add_child(rib)
+
+			var claw_tip := MeshInstance3D.new()
+			var claw_tip_mesh := PrismMesh.new()
+			claw_tip_mesh.size = Vector3(0.03, 0.09, 0.03)
+			claw_tip.mesh = claw_tip_mesh
+			claw_tip.material_override = horn_mat
+			claw_tip.position = finger_tip
+			claw_tip.transform.basis = _basis_pointing(finger_tip - root_pt, true)
+			wing_pivot.add_child(claw_tip)
+
+	_anim_player = _build_dragon_animation_player()
+
+## Fileira de espinhos pequenos (PrismMesh) no topo de um segmento de
+## corpo -- pedido explicito do usuario: "se baseie um pouco nessa
+## imagem" (referencia tem espinhos ao longo de toda a espinha/cauda).
+## `local_positions` sao pontos NO ESPACO LOCAL de `parent` (o proprio
+## segmento) -- cada chamador decide quantos/onde, esta funcao so'
+## constroi a malha em si.
+func _add_spine_spikes(parent: Node3D, spike_mat: StandardMaterial3D, local_positions: Array, scale: float = 1.0) -> void:
+	for local_pos in local_positions:
+		var spike := MeshInstance3D.new()
+		var spike_mesh := PrismMesh.new()
+		spike_mesh.size = Vector3(0.06, 0.14, 0.06) * scale
+		spike.mesh = spike_mesh
+		spike.material_override = spike_mat
+		spike.position = local_pos
+		parent.add_child(spike)
+
+## Monta uma Basis que aponta o eixo LOCAL X (`along_y=false`, pra ossos
+## tipo BoxMesh cujo comprimento e' X) ou Y (`along_y=true`, pra garras
+## tipo PrismMesh cuja ponta e' Y) na direcao `direction` -- pedido
+## explicito do usuario ("solução robusta") em vez de orientar cada osso/
+## garra com Euler angles escolhidos no olho por peça, o que e' fragil e
+## dificil de acertar em pares simetricos left/right. `up_hint` evita uma
+## base degenerada quando `direction` fica quase paralelo a ele.
+static func _basis_pointing(direction: Vector3, along_y: bool, up_hint: Vector3 = Vector3.UP) -> Basis:
+	var axis := direction.normalized()
+	var hint := up_hint
+	if absf(axis.dot(hint)) > 0.98:
+		hint = Vector3.FORWARD
+	if along_y:
+		var x_axis := hint.cross(axis).normalized()
+		var z_axis := x_axis.cross(axis).normalized()
+		return Basis(x_axis, axis, z_axis)
+	var y_axis := axis.cross(hint).normalized()
+	var z_axis := axis.cross(y_axis).normalized()
+	return Basis(axis, y_axis, z_axis)
+
+## Constroi a membrana da asa como UMA malha poligonal real (leque de
+## triangulos a partir de `root`, formato recortado com "dedos" entre as
+## reentrancias), com cor por vertice indo de mais escura (perto do corpo,
+## `root`) a mais clara (ponta da asa) -- pedido do usuario depois de
+## "as asas parecem dois papeis": uma malha so' com gradiente le como
+## superficie tensionada com volume implicito, nao como pedacos de prisma
+## fino colados um do lado do outro. `flip_normals` inverte a normal
+## gerada -- necessario pro lado esquerdo, cujo espelhamento em X inverte
+## a lateralidade (winding) dos triangulos comparado ao lado direito.
+func _build_wing_membrane_mesh(root: Vector3, boundary: Array, base_color: Color, flip_normals: bool) -> ArrayMesh:
+	var root_color := base_color.darkened(0.35)
+	var tip_color := base_color.lightened(0.3)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in range(boundary.size() - 1):
+		var a: Vector3 = boundary[i]
+		var b: Vector3 = boundary[i + 1]
+		var a_t: float = float(i) / float(boundary.size() - 1)
+		var b_t: float = float(i + 1) / float(boundary.size() - 1)
+		st.set_color(root_color)
+		st.add_vertex(root)
+		st.set_color(root_color.lerp(tip_color, a_t))
+		st.add_vertex(a)
+		st.set_color(root_color.lerp(tip_color, b_t))
+		st.add_vertex(b)
+	st.generate_normals(flip_normals)
+	return st.commit()
+
+## Cria uma corrente de BoxMesh de verdade ao longo de `spine` (uma lista
+## de pontos formando a coluna central), um bloco por ponto, do tamanho
+## de `radii[i]` (largura/altura, Vector2) -- pedido explicito do usuario
+## depois de ver a v6 (uma malha lofted lisa): "eu quero ele composto de
+## quadrados mesmo... ou faz igual uma geladeira usando 3 quadrados, ou
+## faz o bagulho todo redondo, o estilo e' justamente low poly voxel
+## fantasy". Ou seja nem poucos blocos grandes (geladeira) nem uma
+## superficie continua (v6 errou pro lado oposto) -- o estilo certo e'
+## VARIOS blocos pequenos formando uma "escada" que sobe/afunila, cada um
+## ORIENTADO (via `_basis_pointing`) pra seguir a direcao local da coluna,
+## entao a propria rotacao de cada bloco acompanha a curva, nao so' a
+## posicao.
+func _add_segmented_boxes(parent: Node3D, spine: Array, radii: Array, seg_mat: StandardMaterial3D) -> void:
+	for i in range(spine.size()):
+		var center: Vector3 = spine[i]
+		var radius: Vector2 = radii[i]
+		var forward: Vector3
+		if i == 0:
+			forward = (spine[1] - spine[0])
+		elif i == spine.size() - 1:
+			forward = (spine[i] - spine[i - 1])
+		else:
+			forward = (spine[i + 1] - spine[i - 1])
+		var length := 0.0
+		if i > 0:
+			length = (spine[i] - spine[i - 1]).length()
+		if i < spine.size() - 1:
+			length = max(length, (spine[i + 1] - spine[i]).length())
+		if length <= 0.0:
+			length = radius.x
+		var box := MeshInstance3D.new()
+		var box_mesh := BoxMesh.new()
+		box_mesh.size = Vector3(length, radius.y * 2.0, radius.x * 2.0)
+		box.mesh = box_mesh
+		box.material_override = seg_mat
+		box.position = center
+		box.transform.basis = _basis_pointing(forward, false)
+		parent.add_child(box)
+
+## Uma track de VALUE por chamada -- `keys` e' um Array de [tempo, valor].
+## Extraido pra nao repetir add_track/track_set_path/track_insert_key em
+## cada uma das 5 animacoes abaixo (~20 tracks no total).
+static func _add_animation_track(animation: Animation, node_path: String, keys: Array) -> void:
+	var track := animation.add_track(Animation.TYPE_VALUE)
+	animation.track_set_path(track, NodePath(node_path))
+	for key in keys:
+		animation.track_insert_key(track, key[0], key[1])
+
+## 5 clipes -- pedido explicito do usuario: "para o primeiro Dragao
+## proprio, 5 animações são suficientes". Idle_A/Walking_A usam os MESMOS
+## nomes das constantes DEFAULT_ANIMATION/WALK_ANIMATION -- slide_to() ja
+## troca entre elas sozinho, sem NENHUMA mudanca no restante do arquivo
+## (mesmo mecanismo generico ja usado pelos modelos KayKit). Fly/Attack/
+## Death sao tocadas explicitamente por quem controla o Dragao (ver
+## DragonEvent) via _play_animation(), que ja no-opa com seguranca se
+## chamada em qualquer OUTRA unidade sem esses clipes.
+func _build_dragon_animation_player() -> AnimationPlayer:
+	var player := AnimationPlayer.new()
+	var library := AnimationLibrary.new()
+	library.add_animation("Idle_A", _build_dragon_idle_animation())
+	library.add_animation("Walking_A", _build_dragon_walk_animation())
+	library.add_animation("Fly", _build_dragon_fly_animation())
+	library.add_animation("Attack", _build_dragon_attack_animation())
+	library.add_animation("Death", _build_dragon_death_animation())
+	player.add_animation_library("", library)
+	add_child(player)
+	player.play("Idle_A")
+	return player
+
+## Respiracao leve: o corpo inteiro sobe/desce um pouco, pescoco balanca
+## suavemente -- looping, ~2s (bem mais lento que Walk/Fly, "parado mas
+## vivo").
+func _build_dragon_idle_animation() -> Animation:
+	var animation := Animation.new()
+	animation.length = 2.0
+	animation.loop_mode = Animation.LOOP_LINEAR
+	_add_animation_track(animation, "DragonVisualRoot:position:y", [[0.0, 0.0], [1.0, 0.03], [2.0, 0.0]])
+	_add_animation_track(animation, "DragonVisualRoot/NeckPivot:rotation:x", [[0.0, 0.0], [1.0, deg_to_rad(-4.0)], [2.0, 0.0]])
+	return animation
+
+## Trote de quadrupede simples: as 4 pernas alternam em 2 pares diagonais
+## (dianteira-esquerda+traseira-direita vs dianteira-direita+traseira-
+## esquerda) -- looping, ~0.6s (bem mais rapido que Idle, "andando de
+## verdade").
+func _build_dragon_walk_animation() -> Animation:
+	var animation := Animation.new()
+	animation.length = 0.6
+	animation.loop_mode = Animation.LOOP_LINEAR
+	var swing := deg_to_rad(22.0)
+	_add_animation_track(animation, "DragonVisualRoot/FrontLeftHipPivot:rotation:x", [[0.0, swing], [0.3, -swing], [0.6, swing]])
+	_add_animation_track(animation, "DragonVisualRoot/BackRightHipPivot:rotation:x", [[0.0, swing], [0.3, -swing], [0.6, swing]])
+	_add_animation_track(animation, "DragonVisualRoot/FrontRightHipPivot:rotation:x", [[0.0, -swing], [0.3, swing], [0.6, -swing]])
+	_add_animation_track(animation, "DragonVisualRoot/BackLeftHipPivot:rotation:x", [[0.0, -swing], [0.3, swing], [0.6, -swing]])
+	_add_animation_track(animation, "DragonVisualRoot:position:y", [[0.0, 0.0], [0.15, 0.02], [0.3, 0.0], [0.45, 0.02], [0.6, 0.0]])
+	return animation
+
+## Bater de asas -- looping, ~0.5s (rapido, "sustentando o proprio peso no
+## ar"). Cauda balanca suave em contraponto pra dar sensacao de peso;
+## pescoco fica mais esticado (postura de voo) que em Idle/Walk.
+func _build_dragon_fly_animation() -> Animation:
+	var animation := Animation.new()
+	animation.length = 0.5
+	animation.loop_mode = Animation.LOOP_LINEAR
+	var flap_up := deg_to_rad(-55.0)
+	var flap_down := deg_to_rad(15.0)
+	_add_animation_track(animation, "DragonVisualRoot/LeftWingPivot:rotation:z", [[0.0, flap_down], [0.25, flap_up], [0.5, flap_down]])
+	_add_animation_track(animation, "DragonVisualRoot/RightWingPivot:rotation:z", [[0.0, -flap_down], [0.25, -flap_up], [0.5, -flap_down]])
+	_add_animation_track(animation, "DragonVisualRoot/TailPivot:rotation:x", [[0.0, deg_to_rad(4.0)], [0.25, deg_to_rad(-4.0)], [0.5, deg_to_rad(4.0)]])
+	_add_animation_track(animation, "DragonVisualRoot/NeckPivot:rotation:x", [[0.0, deg_to_rad(8.0)]])
+	return animation
+
+## Cabeca/pescoco avancam + mandibula abre e fecha -- UMA VEZ (nao
+## looping), ~0.6s. Pedido do usuario: "a animação: cabeça abre → inclina
+## → pausa, e um sistema de partículas produz o jato de fogo" -- o VFX em
+## si (GPUParticles3D/luz) e' disparado separadamente por quem chama esta
+## animacao (ver DragonEvent._play_fire_breath_vfx), nunca por uma key de
+## animacao — mantém o disparo do efeito de fora do proprio clipe.
+func _build_dragon_attack_animation() -> Animation:
+	var animation := Animation.new()
+	animation.length = 0.6
+	animation.loop_mode = Animation.LOOP_NONE
+	_add_animation_track(animation, "DragonVisualRoot/NeckPivot:rotation:x", [[0.0, 0.0], [0.2, deg_to_rad(18.0)], [0.45, deg_to_rad(18.0)], [0.6, 0.0]])
+	_add_animation_track(animation, "DragonVisualRoot/NeckPivot:position:z", [[0.0, 0.0], [0.2, 0.12], [0.45, 0.12], [0.6, 0.0]])
+	_add_animation_track(animation, "DragonVisualRoot/NeckPivot/HeadPivot/JawPivot:rotation:x", [[0.0, 0.0], [0.25, deg_to_rad(35.0)], [0.5, deg_to_rad(35.0)], [0.6, 0.0]])
+	return animation
+
+## Corpo perde sustentacao e tomba -- UMA VEZ, ~1.2s. Anima `self`
+## diretamente (nao DragonVisualRoot) de proposito: e' a UNICA animacao
+## terminal (a Unit e' removida do mapa logo depois, DragonEvent.
+## _remove_dragon_unit), entao nao ha risco de brigar com slide_to() de
+## novo -- nao vai haver mais nenhum movimento depois desta. So' rotation
+## (sempre relativa a 0, seguro independente de pra onde o Dragao estava
+## virado) -- a QUEDA de verdade (position:y) fica de fora do clipe de
+## proposito e usa um Tween a parte com o valor ATUAL no momento da morte
+## (ver DragonEvent._play_dragon_death_effects) -- um valor de posicao
+## fixo AQUI ficaria congelado no Y de onde o corpo estava quando esta
+## Animation foi CONSTRUIDA (spawn), nao de onde ele morreu de verdade.
+func _build_dragon_death_animation() -> Animation:
+	var animation := Animation.new()
+	animation.length = 1.2
+	animation.loop_mode = Animation.LOOP_NONE
+	_add_animation_track(animation, ".:rotation:z", [[0.0, 0.0], [1.2, deg_to_rad(85.0)]])
+	return animation
 
 ## Disco colorido embaixo dos pes — indica de quem e a unidade sem precisar
 ## tingir o modelo real inteiro (o que destruiria a textura pintada dele,
@@ -1057,7 +2011,8 @@ func _build_hp_bar() -> void:
 	bg_mat.no_depth_test = true
 	bg_mat.render_priority = 1
 	_hp_bar_bg.material_override = bg_mat
-	_hp_bar_bg.position = Vector3(0, HP_BAR_Y, 0)
+	# Same calibrated-for-MODEL_TARGET_HEIGHT issue as TROOP_ICON_Y above.
+	_hp_bar_bg.position = Vector3(0, _marker_height, 0)
 	add_child(_hp_bar_bg)
 
 	var fg_mesh := QuadMesh.new()
@@ -1070,7 +2025,7 @@ func _build_hp_bar() -> void:
 	fg_mat.no_depth_test = true
 	fg_mat.render_priority = 2
 	_hp_bar_fg.material_override = fg_mat
-	_hp_bar_fg.position = Vector3(0, HP_BAR_Y, 0.001)
+	_hp_bar_fg.position = Vector3(0, _marker_height, 0.001)
 	add_child(_hp_bar_fg)
 
 	_update_hp_bar()
@@ -1118,7 +2073,12 @@ func _build_troop_icon() -> void:
 	sprite.double_sided = true
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 	sprite.pixel_size = 0.01 # menor que o badge de recurso (0.016) — flutua sobre uma unidade, nao um tile inteiro
-	sprite.position = Vector3(0, TROOP_ICON_Y, 0)
+	# TROOP_ICON_Y is calibrated for MODEL_TARGET_HEIGHT (0.7) -- scale it
+	# by the same per-unit multiplier the model itself got, or it stays
+	# floating at head/face height on any unit scaled bigger than that
+	# (model_scale_multiplier defaults to 1.0, so this is a no-op for
+	# every unit that doesn't set one).
+	sprite.position = Vector3(0, _marker_height + 0.2, 0)
 	add_child(sprite)
 
 static func _build_troop_icon_texture() -> ImageTexture:
@@ -1148,3 +2108,15 @@ static func _hit_crossed_swords(d: Vector2) -> bool:
 	var diag1: float = abs(d.x - d.y)
 	var diag2: float = abs(d.x + d.y)
 	return diag1 <= 1.6 or diag2 <= 1.6
+
+func _build_school_emblem() -> void:
+	var emblem := Label3D.new()
+	emblem.name = "SchoolEmblem"
+	emblem.text = {"sagrada": "SA", "infernal": "IN", "necromancia": "NE", "druidismo": "DR", "arcanismo": "AR", "elementalismo": "EL"}.get(unit_data.magic_school, "")
+	emblem.font_size = 28
+	emblem.outline_size = 5
+	emblem.pixel_size = 0.009
+	emblem.modulate = MagicOverlay.COLORS[unit_data.magic_school]
+	emblem.position.y = _marker_height + 0.55
+	emblem.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	add_child(emblem)

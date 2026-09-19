@@ -1,6 +1,11 @@
 class_name SpellData
 extends Resource
 
+@export var school: String = ""
+@export var effect: String = "" # Vazio identifica os efeitos legados.
+@export var category: String = "spell"
+@export var cast_range: int = 3
+
 ## Um ritual/feitico de verdade — dados de gameplay pro NOME que
 ## TechData.unlocks_spell ja registra (ver TechDatabase). Recurso puro de
 ## dados (mesmo padrao de TechData/UnitData/BuildingData) — quem interpreta

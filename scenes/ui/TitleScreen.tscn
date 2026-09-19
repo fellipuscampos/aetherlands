@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/TitleScreen.gd" id="TitleScreen_gd"]
-[ext_resource type="PackedScene" path="res://scenes/ui/SettingsPanel.tscn" id="SettingsPanel_scn"]
+[ext_resource type="PackedScene" path="res://scenes/ui/LoadGameScreen.tscn" id="LoadGameScreen_scn"]
+[ext_resource type="PackedScene" path="res://scenes/ui/SettingsScreen.tscn" id="SettingsScreen_scn"]
 
 [node name="TitleScreen" type="Control"]
 layout_mode = 1
@@ -19,52 +20,63 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.03, 0.04, 0.07, 0.82)
 
-[node name="CenterBox" type="CenterContainer" parent="."]
+[node name="MainPage" type="Control" parent="."]
 layout_mode = 1
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Box" type="VBoxContainer" parent="CenterBox"]
+[node name="CenterBox" type="CenterContainer" parent="MainPage"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="MainPage/CenterBox"]
 layout_mode = 2
 theme_override_constants/separation = 14
 custom_minimum_size = Vector2(320, 0)
 
-[node name="TitleLabel" type="Label" parent="CenterBox/Box"]
+[node name="TitleLabel" type="Label" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 40
 text = "Aetherlands"
 
-[node name="SubtitleLabel" type="Label" parent="CenterBox/Box"]
+[node name="SubtitleLabel" type="Label" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
 horizontal_alignment = 1
 autowrap_mode = 3
 text = "Um 4X medieval de fantasia"
 
-[node name="NewGameButton" type="Button" parent="CenterBox/Box"]
+[node name="NewGameButton" type="Button" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
 text = "Novo Jogo"
 
-[node name="LoadGameButton" type="Button" parent="CenterBox/Box"]
+[node name="LoadGameButton" type="Button" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
 text = "Carregar Jogo"
 
-[node name="SettingsButton" type="Button" parent="CenterBox/Box"]
+[node name="SettingsButton" type="Button" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
-text = "Configuracoes"
+text = "Configurações"
 
-[node name="QuitButton" type="Button" parent="CenterBox/Box"]
+[node name="QuitButton" type="Button" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
 text = "Sair"
 
-[node name="StatusLabel" type="Label" parent="CenterBox/Box"]
+[node name="StatusLabel" type="Label" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
 horizontal_alignment = 1
 autowrap_mode = 3
 modulate = Color(1.0, 0.55, 0.5, 1.0)
 text = ""
 
-[node name="SettingsPanel" parent="." instance=ExtResource("SettingsPanel_scn")]
+[node name="LoadGameScreen" parent="." instance=ExtResource("LoadGameScreen_scn")]
 layout_mode = 1
+
+[node name="SettingsScreen" parent="." instance=ExtResource("SettingsScreen_scn")]
+layout_mode = 1
+show_debug = false

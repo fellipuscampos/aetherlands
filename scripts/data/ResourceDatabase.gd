@@ -21,22 +21,79 @@ extends RefCounted
 ## "mana_node" (Nodulo Arcano, pedido do usuario — Ponto 3, "Economia
 ## Arcana"): mesmo mecanismo dos recursos estrategicos de sempre (bonus so
 ## quando o tile e trabalhado), so que rendendo MANA em vez de comida/
-## producao/ouro. Elegivel em Colinas/Floresta — reusa a mesma dispersao
-## por ruido+hash ja existente em HexGrid._maybe_assign_resource, nenhuma
-## logica de geracao de mapa nova precisou ser escrita, so essa entrada de
-## elegibilidade.
+## producao/ouro.
 ##
 ## Montanha removida da elegibilidade de Ferro/Nodulo Arcano (pedido do
 ## usuario: "faca recursos nao nascerem nas montanhas") — Colina continua
 ## elegivel pros dois.
-const ELIGIBILITY := {
-	HexTileData.TerrainType.HILLS: ["iron", "mana_node"],
-	HexTileData.TerrainType.GRASSLAND: ["horses"],
-	HexTileData.TerrainType.PLAINS: ["horses"],
-	HexTileData.TerrainType.SAVANNA: ["horses"],
-	HexTileData.TerrainType.FOREST: ["silk", "gems", "mana_node"],
-	HexTileData.TerrainType.JUNGLE: ["silk", "gems"],
-	HexTileData.TerrainType.TAIGA: ["gems"],
+##
+## Roadmap "revisar preferencia de recurso por bioma" (pedido do usuario:
+## "avalie seriamente se recursos devem possuir preferencias por bioma...
+## bioma preferencial, biomas secundarios, pequena chance global... evite
+## 'deserto = cristal garantido', prefira 'deserto aumenta
+## significativamente a chance'"). Antes disto ELIGIBILITY era uma lista
+## PLANA (elegivel ou nao, sem preferencia nenhuma dentro da lista — ver
+## HexGrid._maybe_assign_resource pre-fix, que escolhia entre os elegiveis
+## com peso IGUAL). Virou um peso por bioma (0.0..1.0, 1.0 = bioma
+## preferencial daquele recurso) — HexGrid._maybe_assign_resource faz um
+## sorteio PROPORCIONAL ao peso (deterministico pela map_seed, sem ruido
+## extra), nunca uma garantia: um bioma secundario com peso baixo ainda
+## pode vencer, so com chance menor. Pensado recurso a recurso (funcao,
+## raridade desejada, bioma tematicamente coerente):
+##
+## - Ferro (producao + desconto de unidade pesada): Colina continua o lar
+##   natural (minerio em terreno rochoso elevado, Montanha ja excluida por
+##   pedido anterior). Adicionado Tundra como secundario RARO — minerio em
+##   terreno rochoso frio tem precedente real (Escudo Canadense/Siberia) e
+##   Tundra nunca teve recurso nenhum ate agora (uma das "regioes inteiras
+##   sem recurso" observadas).
+## - Cavalos (comida+producao+desconto de Cavalaria): antes em 3 biomas
+##   com peso IGUAL — a causa raiz de "cavalos abundantes demais no mapa
+##   inteiro". Planicie vira o preferencial (estepe aberta classica);
+##   Campina/Savana continuam validos, so secundarios.
+## - Gemas (ouro + desconto de rush-buy): Selva continua preferencial
+##   (tesouro/joia em ruina tropical, tropo de fantasia). Deserto
+##   ADICIONADO como secundario forte — "cristais/gemas no deserto" e' o
+##   proprio exemplo do usuario, e Deserto tambem nunca teve recurso
+##   nenhum. Floresta continua secundaria; Taiga rebaixada a terciaria
+##   (gema em floresta gelada e' o encaixe tematico mais fraco dos 4).
+## - Seda (ouro + capacidade de rota): Selva preferencial (sericultura
+##   exotica/tropical), Floresta secundaria — ja fazia sentido tematico,
+##   sem mudanca de biomas, so formalizado como peso.
+## - Nodulo Arcano (mana + desconto de feitico): Colina/Floresta como
+##   secundarios existentes, mas faltava o encaixe tematico OBVIO —
+##   Campos de Cristal (TerrainType.CRYSTAL, bioma arcano dedicado do
+##   continente principal, ver comentario dele em HexTileData.gd: "combina
+##   com Torre Arcana/Mago") nunca tinha sido incluido. Vira o
+##   preferencial: e' um bioma ja RARO por design (so' substitui um bioma
+##   plano quando o ruido arcano passa de um limiar raro, ver HexGrid.
+##   _maybe_crystal/ARCANE_NOISE_THRESHOLD, mesma familia de raridade da
+##   Lava) — recurso raro concentrado num bioma raro, nao virou onipresente.
+const BIOME_WEIGHTS := {
+	"iron": {
+		HexTileData.TerrainType.HILLS: 1.0,
+		HexTileData.TerrainType.TUNDRA: 0.35,
+	},
+	"horses": {
+		HexTileData.TerrainType.PLAINS: 1.0,
+		HexTileData.TerrainType.GRASSLAND: 0.55,
+		HexTileData.TerrainType.SAVANNA: 0.55,
+	},
+	"gems": {
+		HexTileData.TerrainType.JUNGLE: 1.0,
+		HexTileData.TerrainType.DESERT: 0.7,
+		HexTileData.TerrainType.FOREST: 0.45,
+		HexTileData.TerrainType.TAIGA: 0.25,
+	},
+	"silk": {
+		HexTileData.TerrainType.JUNGLE: 1.0,
+		HexTileData.TerrainType.FOREST: 0.5,
+	},
+	"mana_node": {
+		HexTileData.TerrainType.CRYSTAL: 1.0,
+		HexTileData.TerrainType.HILLS: 0.4,
+		HexTileData.TerrainType.FOREST: 0.4,
+	},
 }
 
 const DISPLAY_NAMES := {
@@ -55,8 +112,21 @@ const YIELDS := {
 	"mana_node": {"food": 0, "production": 0, "gold": 0, "mana": 2},
 }
 
+## Mesma assercao de sempre pros chamadores existentes (Array de ids) —
+## deriva de BIOME_WEIGHTS pra ter UMA fonte de verdade so (ver comentario
+## dela acima), em vez de manter duas tabelas (elegibilidade + peso) que
+## pudessem desincronizar.
 static func eligible_resources(terrain_type: int) -> Array:
-	return ELIGIBILITY.get(terrain_type, [])
+	var result: Array = []
+	for resource_id in BIOME_WEIGHTS:
+		if BIOME_WEIGHTS[resource_id].has(terrain_type):
+			result.append(resource_id)
+	return result
+
+## Peso (0.0 = nao elegivel) de `resource_id` no bioma `terrain_type` — ver
+## HexGrid._maybe_assign_resource, sorteio proporcional ao peso.
+static func weight_for(resource_id: String, terrain_type: int) -> float:
+	return BIOME_WEIGHTS.get(resource_id, {}).get(terrain_type, 0.0)
 
 static func display_name(resource: String) -> String:
 	return DISPLAY_NAMES.get(resource, "")

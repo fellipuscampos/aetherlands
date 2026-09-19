@@ -3,6 +3,21 @@ extends RefCounted
 
 ## Fabrica de dados de terreno. Em uma proxima etapa isto pode virar
 ## recursos .tres editaveis no editor, sem mudar quem consome HexTileData.
+##
+## movement_cost e 1 pra TODO terreno de proposito (pedido do usuario: "tire
+## o peso do terreno... faca todo terreno ter peso 1") -- Colinas/Floresta/
+## Taiga/Selva/Montanhas/Picos ja foram 2 ou 3 antes disso; comentarios mais
+## antigos abaixo que ainda mencionam esses numeros sao so contexto
+## historico do porque cada bioma existe, nao refletem mais o custo real.
+## Lava/Mar de Lava tambem cairam pra 1 (eram 99, um valor so simbolico --
+## unidade terrestre ja nao entra ali de jeito nenhum via
+## HexTileData.blocks_land_units(), e unidade voadora sempre pagou 1.0 fixo
+## por tile independente de movement_cost, ver HexGrid.gd -- 99 nunca teve
+## efeito de jogo nenhum, so ficava esquisito numa tabela agora uniforme).
+## Passabilidade (o que BLOQUEIA unidade terrestre) continua controlada
+## separadamente por HexTileData.blocks_land_units() -- Oceano/Mar Gelado/
+## Costa/Lava/Mar de Lava continuam intransitaveis pra terrestre, so o
+## CUSTO de andar em cima de terreno permitido deixou de variar.
 static func create_tile(terrain_type: int) -> HexTileData:
 	var data := HexTileData.new()
 	data.terrain_type = terrain_type
@@ -33,7 +48,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			data.color = Color(0.58, 0.6, 0.52)
 		HexTileData.TerrainType.TAIGA:
 			data.display_name = "Taiga"
-			data.movement_cost = 2
+			data.movement_cost = 1
 			data.food_yield = 1
 			data.production_yield = 2
 			data.gold_yield = 0
@@ -58,7 +73,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			data.color = Color(0.68, 0.62, 0.32)
 		HexTileData.TerrainType.JUNGLE:
 			data.display_name = "Selva"
-			data.movement_cost = 2
+			data.movement_cost = 1
 			data.food_yield = 2
 			data.production_yield = 1
 			data.gold_yield = 0
@@ -83,7 +98,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			data.color = Color(0.36, 0.62, 0.28)
 		HexTileData.TerrainType.FOREST:
 			data.display_name = "Floresta"
-			data.movement_cost = 2
+			data.movement_cost = 1
 			data.food_yield = 1
 			data.production_yield = 2
 			data.gold_yield = 0
@@ -92,7 +107,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			data.color = Color(0.16, 0.4, 0.18)
 		HexTileData.TerrainType.HILLS:
 			data.display_name = "Colinas"
-			data.movement_cost = 2
+			data.movement_cost = 1
 			data.food_yield = 1
 			data.production_yield = 2
 			data.gold_yield = 0
@@ -101,7 +116,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			data.color = Color(0.55, 0.45, 0.3)
 		HexTileData.TerrainType.MOUNTAINS:
 			data.display_name = "Montanhas"
-			data.movement_cost = 3
+			data.movement_cost = 1
 			data.food_yield = 0
 			data.production_yield = 1
 			data.gold_yield = 0
@@ -126,7 +141,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			# habitavel", Gelo Eterno e a faixa "fria demais pra qualquer
 			# coisa" (ver HexGrid._pick_biome).
 			data.display_name = "Gelo Eterno"
-			data.movement_cost = 2
+			data.movement_cost = 1
 			data.food_yield = 0
 			data.production_yield = 0
 			data.gold_yield = 0
@@ -151,7 +166,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			# de caminhada de Terra Vulcanica/Solo de Cinzas, lendo como canal
 			# de rocha derretida em vez de mais um bloco plano igual ao resto).
 			data.display_name = "Lava"
-			data.movement_cost = 99
+			data.movement_cost = 1
 			data.food_yield = 0
 			data.production_yield = 0
 			data.gold_yield = 0
@@ -182,7 +197,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			# depressao onde a lava se acumula, nao um bloco solido igual.
 			# Intransitavel/sem yield, mesma logica de Lava (pedra).
 			data.display_name = "Mar de Lava"
-			data.movement_cost = 99
+			data.movement_cost = 1
 			data.food_yield = 0
 			data.production_yield = 0
 			data.gold_yield = 0
@@ -220,7 +235,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			# altura mais alto. Cor mais quente/avermelhada que Terra
 			# Vulcanica pura, sugerindo fluxo de lava ja solidificado.
 			data.display_name = "Colinas Vulcanicas"
-			data.movement_cost = 2
+			data.movement_cost = 1
 			data.food_yield = 0
 			data.production_yield = 2
 			data.gold_yield = 1
@@ -239,7 +254,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			# Vulcanica depois do escurecimento do shader — a CUPULA em si
 			# (relevo, nao cor) e o principal sinal visual de "isto e pico".
 			data.display_name = "Montanhas Vulcanicas"
-			data.movement_cost = 3
+			data.movement_cost = 1
 			data.food_yield = 0
 			data.production_yield = 1
 			data.gold_yield = 1
@@ -273,7 +288,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			# Cristal (ver HexGrid._material_kind_for) e ouro alto (cristal
 			# concentrado nos picos vale mais que nos campos abertos).
 			data.display_name = "Picos de Cristal"
-			data.movement_cost = 3
+			data.movement_cost = 1
 			data.food_yield = 0
 			data.production_yield = 1
 			data.gold_yield = 4

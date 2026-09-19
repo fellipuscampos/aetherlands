@@ -45,6 +45,8 @@ extends Resource
 ## exige tanto o Quartel construido QUANTO a propria tech "Estabulo"
 ## pesquisada). Ver City.can_build().
 @export var requires_building: String = ""
+## Uma melhoria aproveita o terreno da estrutura anterior.
+@export var upgrades_building: String = ""
 
 ## true so pra Muralhas por enquanto: em vez do fluxo normal de escolher um
 ## tile VIZINHO no mapa (SelectionManager.start_building_placement), a

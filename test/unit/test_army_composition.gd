@@ -46,14 +46,58 @@ func test_elf_ranger_is_ranged_and_cavalry():
 	# cavalaria" no modelo.
 	assert_eq(ArmyComposition.roles_for_kind("elf_ranger"), [ArmyComposition.ROLE_RANGED, ArmyComposition.ROLE_CAVALRY] as Array[String])
 
+## Roadmap "arvore de 10 niveis" — cerco deixou de ser so a Catapulta:
+## Balista/Ariete/Torre de Cerco/Trebuchet (via siege_workshop) e Bombarda/
+## Colosso de Cerco (via grand_arsenal, ver ArmyComposition.roles_for_kind)
+## tambem ganham ROLE_SIEGE agora.
+const SIEGE_KINDS := ["catapult", "balista", "ariete", "torre_de_cerco", "trebuchet", "bombarda", "colosso_de_cerco"]
+
 func test_only_catapult_has_siege_role():
 	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
-		if kind == "catapult":
+		if kind in SIEGE_KINDS:
 			continue
 		assert_false(ArmyComposition.ROLE_SIEGE in ArmyComposition.roles_for_kind(kind), kind)
 
+func test_siege_kinds_all_have_the_siege_role():
+	for kind in SIEGE_KINDS:
+		assert_true(ArmyComposition.ROLE_SIEGE in ArmyComposition.roles_for_kind(kind), kind)
+
+## Roadmap "arvore de 10 niveis" — Mercador/Engenheiro de Cerco/General sao
+## unidades de SUPORTE de proposito (attack 0.0, mesmo padrao do
+## Colonizador) — ainda sem tropa nenhuma pra defender, so utilidade.
+const NON_COMBAT_KINDS := ["settler", "mercador", "engenheiro_de_cerco", "general"]
+
 func test_every_trainable_combat_kind_has_at_least_one_role():
 	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
-		if kind == "settler":
+		if kind in NON_COMBAT_KINDS:
 			continue
 		assert_gt(ArmyComposition.roles_for_kind(kind).size(), 0, kind)
+
+func test_non_combat_kinds_have_no_role():
+	for kind in NON_COMBAT_KINDS:
+		assert_eq(ArmyComposition.roles_for_kind(kind), [] as Array[String], kind)
+
+## Cobertura de papel das 21 unidades novas da arvore de 10 niveis —
+## confirma que cada uma cai no papel descrito no desenho original.
+func test_new_melee_only_kinds():
+	var melee_only := ["lanceiro", "espadachim", "homem_de_escudo", "halberdier", "campeao", "campeao_do_reino"]
+	for kind in melee_only:
+		assert_eq(ArmyComposition.roles_for_kind(kind), [ArmyComposition.ROLE_MELEE] as Array[String], kind)
+
+func test_new_ranged_only_kinds():
+	assert_eq(ArmyComposition.roles_for_kind("besteiro"), [ArmyComposition.ROLE_RANGED] as Array[String])
+
+func test_new_melee_cavalry_kinds():
+	var melee_cavalry := ["batedor_montado", "cavaleiro_pesado", "cavaleiro_de_choque", "cavalaria_blindada", "cavaleiro_imperial"]
+	for kind in melee_cavalry:
+		assert_eq(ArmyComposition.roles_for_kind(kind), [ArmyComposition.ROLE_MELEE, ArmyComposition.ROLE_CAVALRY] as Array[String], kind)
+
+func test_new_ranged_siege_kinds():
+	var ranged_siege := ["balista", "trebuchet", "bombarda", "colosso_de_cerco"]
+	for kind in ranged_siege:
+		assert_eq(ArmyComposition.roles_for_kind(kind), [ArmyComposition.ROLE_RANGED, ArmyComposition.ROLE_SIEGE] as Array[String], kind)
+
+func test_new_melee_siege_kinds():
+	var melee_siege := ["ariete", "torre_de_cerco"]
+	for kind in melee_siege:
+		assert_eq(ArmyComposition.roles_for_kind(kind), [ArmyComposition.ROLE_MELEE, ArmyComposition.ROLE_SIEGE] as Array[String], kind)

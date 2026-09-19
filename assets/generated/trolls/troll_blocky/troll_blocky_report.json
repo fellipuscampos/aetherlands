@@ -1,0 +1,49 @@
+{
+  "preset": "tools/asset_factory/presets/troll_blocky.json",
+  "engine": "blocky",
+  "seed": 21,
+  "style": "human",
+  "output_glb": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\trolls\\troll_blocky\\troll_blocky.glb",
+  "file_size_bytes": 69400,
+  "mesh_stats": {
+    "vertices": 200,
+    "faces": 150,
+    "triangles_estimate": 300,
+    "materials": 12
+  },
+  "material_count": 12,
+  "bone_count": 18,
+  "bone_names": [
+    "Root",
+    "Pelvis",
+    "Spine",
+    "Chest",
+    "Neck",
+    "Head",
+    "UpperArm.L",
+    "LowerArm.L",
+    "Hand.L",
+    "UpperArm.R",
+    "LowerArm.R",
+    "Hand.R",
+    "UpperLeg.L",
+    "LowerLeg.L",
+    "Foot.L",
+    "UpperLeg.R",
+    "LowerLeg.R",
+    "Foot.R"
+  ],
+  "animations": [
+    "Idle",
+    "Walk",
+    "Attack",
+    "Death"
+  ],
+  "previews": {
+    "front": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\trolls\\troll_blocky\\preview_troll_blocky_front.png",
+    "side": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\trolls\\troll_blocky\\preview_troll_blocky_side.png",
+    "back": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\trolls\\troll_blocky\\preview_troll_blocky_back.png",
+    "top": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\trolls\\troll_blocky\\preview_troll_blocky_top.png"
+  },
+  "height_target": 3.6
+}

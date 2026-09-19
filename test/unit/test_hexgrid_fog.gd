@@ -43,20 +43,20 @@ func _make_unit(kind: String, player: PlayerData, coord: Vector2i) -> Unit:
 	return unit
 
 func test_compute_visible_tiles_includes_unit_vision_range():
-	_make_unit("warrior", human, Vector2i(0, 0)) # vision_range 2
+	_make_unit("warrior", human, Vector2i(0, 0)) # vision_range 3 (ver UnitDatabase.gd)
 
 	var visible = hex_grid.compute_visible_tiles(human)
 
-	assert_true(visible.has(Vector2i(2, 0)), "tile a 2 de distancia deveria estar dentro do alcance de visao do guerreiro")
-	assert_false(visible.has(Vector2i(3, 0)), "tile a 3 de distancia deveria estar fora do alcance de visao do guerreiro")
+	assert_true(visible.has(Vector2i(3, 0)), "tile a 3 de distancia deveria estar dentro do alcance de visao do guerreiro")
+	assert_false(visible.has(Vector2i(4, 0)), "tile a 4 de distancia deveria estar fora do alcance de visao do guerreiro")
 
 func test_compute_visible_tiles_includes_city_vision():
-	hex_grid.found_city(Vector2i(0, 0), human, "Capital") # cidade sempre enxerga 2 tiles
+	hex_grid.found_city(Vector2i(0, 0), human, "Capital") # cidade sempre enxerga HexGrid.CITY_VISION_RANGE (4) tiles
 
 	var visible = hex_grid.compute_visible_tiles(human)
 
-	assert_true(visible.has(Vector2i(2, 0)))
-	assert_false(visible.has(Vector2i(3, 0)))
+	assert_true(visible.has(Vector2i(4, 0)))
+	assert_false(visible.has(Vector2i(5, 0)))
 
 func test_recompute_fog_marks_currently_visible_tiles():
 	_make_unit("warrior", human, Vector2i(0, 0))
@@ -85,10 +85,26 @@ func test_enemy_unit_only_visible_when_tile_is_currently_visible():
 	hex_grid.recompute_fog(human)
 	assert_true(enemy.visible, "unidade inimiga em tile visivel deveria aparecer")
 
-	hex_grid.move_unit(scout, Vector2i(4, 0), 4.0) # afasta o unico observador humano
+	hex_grid.move_unit(scout, Vector2i(5, 0), 5.0) # afasta o unico observador humano pra fora do vision_range (3) dele
 	hex_grid.recompute_fog(human)
 
 	assert_false(enemy.visible, "unidade inimiga fora de visao atual nao deveria continuar aparecendo so por ja ter sido vista")
+
+## Roadmap "Fase Macro" 5B.3-C -- achado do usuario jogando manualmente:
+## "o Dragão nunca aparece". Causa raiz: WorldEventTrigger.choose_dragon_
+## origin_region sorteia a origem entre TODOS os tiles do mapa, entao a
+## Unit quase sempre nasce fora da area ja explorada -- sem always_visible,
+## ficava escondida pra sempre (Boss Bar ja anuncia HP/alvo independente
+## de nevoa, entao esconder o modelo fisico contradiz isso). Nenhum tile
+## precisa estar visivel/explorado nenhum -- always_visible ignora a regra
+## de nevoa por completo, diferente do scout de teste acima.
+func test_unit_with_always_visible_ignores_fog_even_never_seen():
+	var far_unit = _make_unit("warrior", rival, Vector2i(4, 0))
+	far_unit.always_visible = true
+
+	hex_grid.recompute_fog(human) # nenhuma unidade humana existe pra enxergar nada
+
+	assert_true(far_unit.visible, "always_visible deveria ignorar a regra normal de nevoa")
 
 func test_enemy_city_only_visible_when_tile_is_currently_visible():
 	var scout = _make_unit("warrior", human, Vector2i(1, 0))

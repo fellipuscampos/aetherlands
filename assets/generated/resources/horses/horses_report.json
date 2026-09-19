@@ -1,0 +1,12 @@
+{
+  "output_glb": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\resources\\horses\\horses.glb",
+  "file_size_bytes": 14580,
+  "vertices": 144,
+  "faces": 108,
+  "previews": {
+    "front": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\resources\\horses\\preview_horses_front.png",
+    "side": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\resources\\horses\\preview_horses_side.png",
+    "back": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\resources\\horses\\preview_horses_back.png",
+    "top": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\resources\\horses\\preview_horses_top.png"
+  }
+}

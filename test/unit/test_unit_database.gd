@@ -35,12 +35,12 @@ func test_player_trainable_kinds_has_no_duplicates():
 		assert_false(kind in seen, "%s apareceu duplicado no roster" % kind)
 		seen.append(kind)
 
-func test_create_unit_stone_golem_has_the_highest_defense_in_the_roster():
+func test_golem_variants_have_the_highest_defense_in_the_roster():
 	var golem = UnitDatabase.create_unit("stone_golem")
 	assert_eq(golem.unit_name, "Golem de Pedra")
 	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
 		var other = UnitDatabase.create_unit(kind)
-		assert_true(golem.defense >= other.defense, "Golem deveria ter a maior (ou igual) defesa do elenco, %s tem %s" % [kind, other.defense])
+		assert_true(maxf(golem.defense, UnitDatabase.create_unit("arcane_golem").defense) >= other.defense, "Golem deveria ter a maior (ou igual) defesa do elenco, %s tem %s" % [kind, other.defense])
 
 func test_create_unit_shadow_summoner_is_a_ranged_caster():
 	var summoner = UnitDatabase.create_unit("shadow_summoner")

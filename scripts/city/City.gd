@@ -1,6 +1,9 @@
 class_name City
 extends Node3D
 
+var original_owner_index: int = -1
+var captured_developed: bool = false
+
 ## Redesenho do sistema de comida (pedido do usuario): antes acumulava sem
 ## limite ate um limiar calculado por FOOD_TO_GROW_BASE*populacao. Agora
 ## toda cidade tem um TETO de armazenamento fixo (aumentado pelo Celeiro,
@@ -103,6 +106,9 @@ var shield: float = 0.0
 ## agora tem unidade inimiga adjacente; zera assim que ninguem ameacador
 ## fica adjacente por um turno.
 var _consecutive_siege_turns: int = 0
+## Ultimo turno em que o jogador foi avisado de monstros ameacando ESTA
+## cidade (ver CityDefense.warn_player) -- so' evita spam, nao e' salvo.
+var last_monster_warning_turn: int = -999
 ## Colonizador e Guarda sao os dois kinds SEM predio de treino associado
 ## (ver BuildingDatabase.building_that_trains) — Colonizador nao depende
 ## de nenhum predio, entao E o kind natural pro jogador escolher assim
@@ -241,6 +247,9 @@ func set_production(kind: String) -> void:
 			pending_building_coord = NO_PENDING_COORD
 		production_item = kind
 		stored_production = 0.0
+		var upgrade := BuildingDatabase.get_building(kind)
+		if upgrade and upgrade.upgrades_building != "":
+			pending_building_coord = building_coords.get(upgrade.upgrades_building, NO_PENDING_COORD)
 
 ## production_item pode ser um kind de unidade OU um id de predio
 ## (BuildingDatabase) — checa predio primeiro pra nao precisar de um
@@ -335,10 +344,21 @@ func rush_buy(hex_grid: HexGrid = null) -> bool:
 func max_building_slots() -> int:
 	return population
 
+func used_building_slots() -> int:
+	var count := 0
+	for id in buildings:
+		var building := BuildingDatabase.get_building(id)
+		if building == null or building.upgrades_building == "" or not buildings.has(building.upgrades_building):
+			count += 1
+	return count
+
 func can_build(building_id: String) -> bool:
 	if buildings.has(building_id):
 		return false
-	if buildings.size() >= max_building_slots():
+	var building := BuildingDatabase.get_building(building_id)
+	if building == null:
+		return false
+	if building.upgrades_building == "" and used_building_slots() >= max_building_slots():
 		return false
 	if not _prerequisite_building_present(building_id):
 		return false
@@ -378,19 +398,41 @@ func _prerequisite_building_present(building_id: String) -> bool:
 ## liberados junto com o resto da familia RENDIMENTO (so Torre dos Sabios
 ## continua sem tech nenhuma). Guarda nao depende de nenhum predio (ver
 ## BuildingDatabase.building_that_trains), entao nunca passa por aqui.
+## Tenta TechDatabase primeiro, depois MagicDatabase (ex: Torre dos Sabios/
+## Santuario Arcano podem estar gateados por uma tech magica, ver
+## MagicDatabase.tech_that_unlocks) — as duas arvores de pesquisa estao
+## separadas (ver PlayerData.researched_techs/researched_magic), entao o
+## dicionario consultado no final precisa bater com a base que resolveu
+## `tech`. ORDEM importa desde a arvore de 10 niveis (Roadmap): a tech de
+## unlocks_building (gate da CONSTRUCAO, ex: "quartel" -> barracks) e
+## checada ANTES da tech de unlocks_unit via trains_unit (gate do TREINO,
+## ex: "homem_de_armas" -> men_at_arms) — as duas passaram a ser techs
+## SEPARADAS pra cada predio de treino novo (antes uma tech so fazia as
+## duas coisas), entao construir o predio nao pode mais depender da tech
+## que libera a TROPA dele.
 func _tech_unlocked_for_building(building_id: String) -> bool:
+	if building_id == "arcane_sanctuary" and GameManager.victory_rules_version < 2:
+		return true
+	if building_id == "arcane_tower" and owner_player and owner_player.researched_magic.has("invocacao_espiritos"):
+		return true
 	var building: BuildingData = BuildingDatabase.get_building(building_id)
 	if building == null:
 		return true
-	var tech: TechData = TechDatabase.tech_that_unlocks(building.trains_unit)
+	var tech: TechData = TechDatabase.tech_that_unlocks_building(building_id)
+	var researched: Dictionary = owner_player.researched_techs if owner_player else {}
 	if tech == null:
-		# Predio SEM trains_unit (familia rendimento/defesa) pode MESMO
-		# ASSIM ter tech propria (ex: Muralhas, ver TechData.
-		# unlocks_building) — so nao passa pelo gate de trains_unit acima.
-		tech = TechDatabase.tech_that_unlocks_building(building_id)
+		# Predio sem tech de unlocks_building propria (ex: magico, ver
+		# comentario acima) cai no gate de unlocks_unit via trains_unit.
+		tech = TechDatabase.tech_that_unlocks(building.trains_unit)
+	if tech == null:
+		tech = MagicDatabase.tech_that_unlocks_building(building_id)
+		researched = owner_player.researched_magic if owner_player else {}
+	if tech == null:
+		tech = MagicDatabase.tech_that_unlocks(building.trains_unit)
+		researched = owner_player.researched_magic if owner_player else {}
 	if tech == null:
 		return true
-	return owner_player != null and owner_player.researched_techs.has(tech.id)
+	return owner_player != null and researched.has(tech.id)
 
 ## Cada tropa de combate so pode ser produzida se a cidade ja tiver o
 ## predio de treino correspondente construido (BuildingDatabase.
@@ -425,7 +467,10 @@ func can_train(kind: String) -> bool:
 ## firme, sem unidade/cidade em cima, e sem outro predio (desta cidade ou
 ## de qualquer outra, ver HexGrid.is_tile_building_site) ja la.
 func is_valid_building_tile(target: Vector2i, hex_grid: HexGrid) -> bool:
-	if not target in hex_grid.get_neighbors(coord):
+	if target == coord or (not target in hex_grid.get_neighbors(coord) and not target in owned_tiles):
+		return false
+	var tile_owner := hex_grid.city_owning_tile(target)
+	if tile_owner != null and tile_owner != self:
 		return false
 	var data: HexTileData = hex_grid.get_tile(target)
 	if data == null or data.blocks_land_units():
@@ -445,25 +490,29 @@ func change_owner(new_owner: PlayerData) -> void:
 	_build_visual()
 
 ## Rendimento REAL de um tile pra esta cidade: dado cru do terreno + bonus
-## de tecnologia do dono (TechDatabase.yield_bonus_for) + bonus de recurso
-## estrategico/luxo do proprio tile (ResourceDatabase.yield_for). Usado
-## por collect_yields(), _best_unassigned_neighbor() (senao o auto-assign
-## sugeria uma planicie comum em vez de uma colina com ferro, so porque o
-## bonus nao entrava na conta) e pela HUD (pra mostrar o numero que
-## realmente vai contar, nao so o "cru" do terreno).
+## de tecnologia do dono (TechDatabase.yield_bonus_for + MagicDatabase.
+## yield_bonus_for, somados — as duas arvores de pesquisa podem conceder
+## bonus de bioma) + bonus de recurso estrategico/luxo do proprio tile
+## (ResourceDatabase.yield_for). Usado por collect_yields(),
+## _best_unassigned_neighbor() (senao o auto-assign sugeria uma planicie
+## comum em vez de uma colina com ferro, so porque o bonus nao entrava na
+## conta) e pela HUD (pra mostrar o numero que realmente vai contar, nao so
+## o "cru" do terreno).
 func effective_tile_yield(data: HexTileData) -> Dictionary:
-	var researched = owner_player.researched_techs if owner_player else {}
-	var tech_bonus = TechDatabase.yield_bonus_for(data.terrain_type, researched)
+	var researched_techs = owner_player.researched_techs if owner_player else {}
+	var researched_magic = owner_player.researched_magic if owner_player else {}
+	var tech_bonus = TechDatabase.yield_bonus_for(data.terrain_type, researched_techs)
+	var magic_bonus = MagicDatabase.yield_bonus_for(data.terrain_type, researched_magic)
 	var resource_bonus = ResourceDatabase.yield_for(data.resource)
 	return {
-		"food": data.food_yield + tech_bonus.food + resource_bonus.food,
-		"production": data.production_yield + tech_bonus.production + resource_bonus.production,
-		"gold": data.gold_yield + tech_bonus.gold + resource_bonus.gold,
+		"food": data.food_yield + tech_bonus.food + magic_bonus.food + resource_bonus.food,
+		"production": data.production_yield + tech_bonus.production + magic_bonus.production + resource_bonus.production,
+		"gold": data.gold_yield + tech_bonus.gold + magic_bonus.gold + resource_bonus.gold,
 		# Mana nao tem componente "cru" de terreno (HexTileData nao tem
 		# mana_yield, so food/production/gold) — vem inteiro de recurso
 		# estrategico (Nodulo Arcano, ver ResourceDatabase) ou tech, nunca
 		# do bioma sozinho.
-		"mana": tech_bonus.mana + resource_bonus.mana,
+		"mana": tech_bonus.mana + magic_bonus.mana + resource_bonus.mana,
 	}
 
 ## Soma o rendimento efetivo do tile da cidade (sempre de graca) + so os
@@ -522,6 +571,10 @@ func collect_yields(hex_grid: HexGrid) -> Dictionary:
 	# inteira. Multiplicacao comuta, a ordem entre este bonus e o racial nao
 	# muda o resultado.
 	CityIdentity.apply_yield_bonus(totals, self)
+	if owner_player:
+		for school in MagicContent.SCHOOLS:
+			if owner_player.researched_magic.has(school + "_1"):
+				totals.mana += 1.0
 	return totals
 
 ## Unidade hostil (monstro neutro OU unidade de outro jogador em guerra
@@ -561,8 +614,8 @@ func process_turn(hex_grid: HexGrid) -> Dictionary:
 	if stored_food >= cap:
 		stored_food -= cap
 		population += 1
-		auto_assign_worked_tiles(hex_grid)
 		_claim_frontier_tile(hex_grid) # territorio (owned_tiles) cresce junto com a populacao
+		auto_assign_worked_tiles(hex_grid)
 		_refresh_label()
 		_build_visual_procedural()
 
@@ -578,7 +631,10 @@ func process_turn(hex_grid: HexGrid) -> Dictionary:
 	# nao chamar UnitDatabase.create_unit("") a toa todo turno.
 	if production_item != "":
 		var cost = production_cost(hex_grid)
-		if stored_production >= cost:
+		var blocked_spawn := BuildingDatabase.get_building(production_item) == null and WorldSetup.find_spawn_tile(hex_grid, coord) == WorldSetup.NO_SPAWN_COORD
+		if blocked_spawn:
+			stored_production = minf(stored_production, cost)
+		if stored_production >= cost and not blocked_spawn:
 			stored_production -= cost
 			var building: BuildingData = BuildingDatabase.get_building(production_item)
 			if building:
@@ -710,8 +766,15 @@ func _tile_claim_score(data: HexTileData, hex_grid: HexGrid, coord: Vector2i) ->
 func _best_unassigned_neighbor(hex_grid: HexGrid):
 	var best_coord = null
 	var best_score = -INF
-	for n in hex_grid.get_neighbors(coord):
+	var candidates := hex_grid.get_neighbors(coord)
+	for owned in owned_tiles:
+		if owned != coord and not owned in candidates:
+			candidates.append(owned)
+	for n in candidates:
 		if n in worked_tiles or hex_grid.is_tile_worked(n, self):
+			continue
+		var owner := hex_grid.city_owning_tile(n)
+		if owner != null and owner != self:
 			continue
 		var data: HexTileData = hex_grid.get_tile(n)
 		if data == null or not data.can_be_worked():
@@ -772,7 +835,10 @@ func toggle_worked_tile(target: Vector2i, hex_grid: HexGrid) -> bool:
 	if target in worked_tiles:
 		worked_tiles.erase(target)
 		return true
-	if not target in hex_grid.get_neighbors(coord):
+	if target == coord or (not target in hex_grid.get_neighbors(coord) and not target in owned_tiles):
+		return false
+	var owner := hex_grid.city_owning_tile(target)
+	if owner != null and owner != self:
 		return false
 	if worked_tiles.size() >= population:
 		return false

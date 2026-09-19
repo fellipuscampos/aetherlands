@@ -1,6 +1,6 @@
 extends GutTest
 
-## Cobre recursos estrategicos/luxo (ResourceDatabase + HexGrid._maybe_assign_resource):
+## Cobre recursos estrategicos/luxo (ResourceDatabase + HexGrid._assign_resources):
 ## elegibilidade por bioma, bonus de yield aplicado em City.collect_yields,
 ## e determinismo pela map_seed — assim como bioma, Salvar/Carregar depende
 ## de recursos nunca mudarem de lugar ao regenerar o mesmo mapa.
@@ -66,6 +66,50 @@ func test_resource_placement_is_deterministic_for_same_seed():
 
 	grid_a.queue_free()
 	grid_b.queue_free()
+
+## ANTI-CLUSTER (pedido do usuario, tarefa "9. ANTI-CLUSTER DE RECURSOS":
+## "penalidade de probabilidade por vizinhanca" -- ver comentario de
+## RESOURCE_CLUSTER_RADIUS em HexGrid.gd). Testa _resource_cluster_reject
+## isoladamente (sem gerar um mapa inteiro, mais rapido e deterministico) --
+## confirma que a chance de rejeicao SOBE com o numero de vizinhos do MESMO
+## recurso ja proximos, que fica em 0% sem nenhum vizinho (proximidade
+## isolada nunca e' penalizada) e que 1 vizinho continua raramente rejeitado
+## (o caso "proximidade interessante" que o usuario quer preservar).
+func test_resource_cluster_reject_scales_with_nearby_same_type_count():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var probe := Vector2i(10, 10)
+	hex_grid.tiles[probe] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1
+	for i in range(50):
+		assert_false(hex_grid._resource_cluster_reject(probe, "iron", rng), "sem nenhum vizinho do mesmo recurso, nunca deveria rejeitar")
+
+	hex_grid.tiles[probe + HexGrid.NEIGHBOR_DIRS[0]] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	hex_grid.tiles[probe + HexGrid.NEIGHBOR_DIRS[0]].resource = "iron"
+	var trials := 1000
+	var rejects_one := 0
+	for i in range(trials):
+		if hex_grid._resource_cluster_reject(probe, "iron", rng):
+			rejects_one += 1
+	var rate_one := float(rejects_one) / trials
+	assert_lt(rate_one, 0.6, "1 vizinho proximo nao deveria virar rejeicao frequente -- proximidade ocasional deve continuar comum")
+
+	hex_grid.tiles[probe + HexGrid.NEIGHBOR_DIRS[1]] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	hex_grid.tiles[probe + HexGrid.NEIGHBOR_DIRS[1]].resource = "iron"
+	hex_grid.tiles[probe + HexGrid.NEIGHBOR_DIRS[2]] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+	hex_grid.tiles[probe + HexGrid.NEIGHBOR_DIRS[2]].resource = "iron"
+	var rejects_three := 0
+	for i in range(trials):
+		if hex_grid._resource_cluster_reject(probe, "iron", rng):
+			rejects_three += 1
+	var rate_three := float(rejects_three) / trials
+
+	assert_gt(rate_three, rate_one, "mais vizinhos do mesmo recurso proximos deveria aumentar a chance de rejeicao")
+	assert_gt(rate_three, 0.75, "com varios vizinhos proximos, rejeicao deveria virar o comportamento tipico -- sequencias exageradas ficam raras")
+
+	hex_grid.queue_free()
 
 func test_at_least_one_resource_appears_on_a_large_enough_map():
 	var grid := HexGrid.new()

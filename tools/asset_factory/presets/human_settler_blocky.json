@@ -1,0 +1,47 @@
+{
+  "species": "human",
+  "class": "settler",
+  "style": "human",
+  "engine": "blocky",
+  "seed": 43,
+
+  "body": {
+    "height": 1.8,
+    "limb_thickness": 1.15,
+    "shoulder_width_ratio": 0.24,
+    "head_height_ratio": 0.195,
+    "head_width_ratio": 0.175,
+    "head_depth_ratio": 0.175,
+    "neck_height_ratio": 0.03,
+    "torso_height_ratio": 0.30,
+    "upper_leg_ratio": 0.205,
+    "lower_leg_ratio": 0.195,
+    "upper_arm_radius_ratio": 0.060,
+    "lower_arm_radius_ratio": 0.052,
+    "upper_leg_radius_ratio": 0.095,
+    "lower_leg_radius_ratio": 0.078,
+    "angularity": 1.0,
+    "slim_build": true
+  },
+
+  "equipment": {
+    "weapon": "staff",
+    "shield": false,
+    "helmet": false,
+    "gloves": false,
+    "armor": false,
+    "belt": false,
+    "skirt": true,
+    "pack": true,
+    "beard": true
+  },
+
+  "palette": {
+    "civilization": "human_blue"
+  },
+
+  "output": {
+    "name": "human_settler_blocky",
+    "directory": "assets/generated/humans/settler_blocky"
+  }
+}

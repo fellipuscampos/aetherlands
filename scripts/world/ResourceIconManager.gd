@@ -50,6 +50,22 @@ func rebuild(tiles: Dictionary) -> void:
 			continue
 		_spawn_icon(coord, data.resource)
 
+func refresh_tile(coord: Vector2i) -> void:
+	var tile := _hex_grid.get_tile(coord)
+	if _sprites.has(coord):
+		_sprites[coord].free()
+		_sprites.erase(coord)
+	if tile and _textures.has(tile.resource):
+		_spawn_icon(coord, tile.resource)
+
+## Ver ResourcePropsManager.clear_prop_at -- mesma remocao, so pro icone
+## billboard (nunca respawna, ao contrario de refresh_tile acima: aqui a
+## estrutura nova ocupou o tile de vez, nao e' uma atualizacao de terreno).
+func clear_icon_at(coord: Vector2i) -> void:
+	if _sprites.has(coord):
+		_sprites[coord].free()
+		_sprites.erase(coord)
+
 func _spawn_icon(coord: Vector2i, kind: String) -> void:
 	var sprite := Sprite3D.new()
 	sprite.texture = _textures[kind]
@@ -62,7 +78,7 @@ func _spawn_icon(coord: Vector2i, kind: String) -> void:
 	# (1.0) — badge legivel sem dominar o tile.
 	sprite.pixel_size = 0.016
 	var pos = _hex_grid.world_for_coord(coord)
-	pos.y += ICON_HEIGHT_OFFSET
+	pos.y = _hex_grid._tile_surface_height(coord) + ICON_HEIGHT_OFFSET
 	sprite.position = pos
 	_hex_grid.add_child(sprite)
 	_sprites[coord] = sprite

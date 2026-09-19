@@ -11,9 +11,22 @@ extends RefCounted
 ## Quem vence um monstro em combate recebe unit_data.gold_reward em ouro
 ## (CombatResolver.resolve()).
 
-const BEHAVIOR_GUARDIAN := "guardian" # fica no territorio do covil, so briga com quem invade (ver MonsterAI._take_guardian_turn)
-const BEHAVIOR_INVADER := "invader" # marcha sobre a cidade inimiga mais proxima, brigando com quem encontrar no caminho (ver MonsterAI._take_invader_turn)
-const BEHAVIOR_HUNTER := "hunter" # patrulha uma area larga cacando presa isolada/fraca (ver MonsterAI._take_hunter_turn)
+const BEHAVIOR_GUARDIAN := "guardian" # fica no territorio do covil (raio configuravel, ver guard_radius/MonsterAI.GUARD_RADIUS), so briga com quem invade -- OU com cidade inimiga que se aproximar o bastante (ver MonsterAI._take_guardian_turn)
+const BEHAVIOR_INVADER := "invader" # marcha sobre a cidade inimiga mais proxima do mapa INTEIRO, brigando com quem encontrar no caminho (ver MonsterAI._take_invader_turn)
+const BEHAVIOR_HUNTER := "hunter" # patrulha uma area larga cacando presa isolada/fraca, so ataca se favoravel (ver MonsterAI._take_hunter_turn)
+## COMPORTAMENTO DOS MONSTROS (pedido do usuario: "muitos monstros parecem
+## extremamente passivos... quero uma revisao... cada tipo pode possuir
+## comportamento proprio... goblins podem ser agressivos e oportunistas:
+## saquear; atacar unidades fracas; ameacar melhorias; aproximar-se de
+## cidades proximas"). Guardiao (radio pequeno, so reage a quem entra) era
+## PASSIVO DEMAIS pro Goblin default -- Saqueador busca ATIVAMENTE presa
+## fraca/isolada dentro de um raio MAIOR que o Guardiao mas ainda preso ao
+## territorio do proprio covil (nunca atravessa o mapa como o Invasor);
+## sem presa a vista, se aproxima da cidade mais proxima DENTRO do raio
+## (pra ameacar os arredores/saquear, nunca pra capturar) e ainda saqueia
+## tile trabalhado normalmente (mesma _maybe_pillage_tile do Invasor). Ver
+## MonsterAI._take_raider_turn/RAIDER_RADIUS.
+const BEHAVIOR_RAIDER := "raider"
 
 ## Tabela central de dados por tipo — mesmo espirito de HexGrid._BIOME_TABLE
 ## (geracao de terreno): tudo que diferencia um tipo de monstro do outro
@@ -52,25 +65,53 @@ const BEHAVIOR_HUNTER := "hunter" # patrulha uma area larga cacando presa isolad
 ##   Invasor pela MonsterAI (ver INVADER_GROUP_THRESHOLD) — so faz sentido
 ##   pra tipos BEHAVIOR_GUARDIAN que devem "virar" agressivos em grupo
 ##   (Goblin); Esqueleto ja nasce Invasor, nao precisa de promocao.
-## - clear_reward: ouro concedido por DESTRUIR o covil abandonado (entrar
-##   no tile sem defensor, ver HexGrid.destroy_lair/_grant_lair_clear_
-##   reward) — recompensa maior e de uma vez so, diferente de gold_reward
-##   (que paga por matar CADA monstro individual em combate).
+## - clear_reward: ouro concedido por DESTRUIR o covil abandonado (atacar
+##   a LairStructure ate zerar o HP dela, ver CombatResolver.
+##   resolve_lair_attack/HexGrid._grant_lair_clear_reward) — recompensa
+##   maior e de uma vez so, diferente de gold_reward (que paga por matar
+##   CADA monstro individual em combate).
+## - clear_reward_mana: MESMO evento (destruir a estrutura), mas em Mana
+##   em vez de ouro — pedido do usuario (RECOMPENSAS DE COVIS: "ouro;
+##   recurso; mana; experiencia; combinacao; recompensa especifica por
+##   tipo... escolha recompensas coerentes com os sistemas atuais").
+##   0.0 (goblin/troll: bandido comum/brutamontes, sem ligacao arcana
+##   nenhuma) pros tipos "mundanos"; so' os tipos com identidade
+##   tematica arcana ja estabelecida ganham Mana — Esqueleto (morto-vivo,
+##   residuo de necromancia) modesto, Vivern/Dragao (guardioes dos
+##   continentes Vulcanico/de Cristal, ver comentario de biomes do Vivern
+##   abaixo) o suficiente pra valer um feitico (SpellDatabase: feiticos
+##   custam 25-60 de Mana). Sistema de Mana ja existe (PlayerData.mana,
+##   gasto em feiticos) — reusado direto, sem inventar um "banco de
+##   recurso" novo so' pra covil (Ferro/Gemas/Seda/Cavalos so existem como
+##   YIELD de tile trabalhado, nao tem estoque nenhum pra depositar).
 const KIND_DATA := {
 	"goblin": {
 		"biomes": [HexTileData.TerrainType.FOREST, HexTileData.TerrainType.PLAINS, HexTileData.TerrainType.GRASSLAND],
 		"weight": 60, "min_threat": 0.0, "lair_cap": 4, "global_cap": 5, "batch_spawn": 1,
-		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": true,
+		# COMPORTAMENTO DOS MONSTROS: Saqueador (nao mais Guardiao) e' o
+		# default -- Goblin sozinho/em duplas incomoda ativamente os
+		# arredores do proprio covil; ao atingir INVADER_GROUP_THRESHOLD
+		# ociosos, o bando inteiro ainda e promovido a Invasor de verdade
+		# (invader_promotable, inalterado), virando uma invasao real.
+		"behavior": BEHAVIOR_RAIDER, "invader_promotable": true,
 		"unit_name": "Goblin", "attack": 3.0, "defense": 2.0, "max_hp": 8.0,
-		"movement_points": 1.0, "vision_range": 1, "gold_reward": 15.0, "clear_reward": 75.0,
+		"movement_points": 1.0, "vision_range": 1, "gold_reward": 15.0, "clear_reward": 75.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "goblin",
 	},
 	"troll": {
 		"biomes": [HexTileData.TerrainType.MOUNTAINS, HexTileData.TerrainType.TAIGA, HexTileData.TerrainType.TUNDRA],
 		"weight": 30, "min_threat": 0.3, "lair_cap": 2, "global_cap": 5, "batch_spawn": 1,
-		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
+		# COMPORTAMENTO DOS MONSTROS (pedido do usuario: "trolls podem
+		# defender uma regiao maior... nao precisam atravessar meio
+		# continente... mas se uma cidade, unidade ou territorio estiver
+		# suficientemente proximo, podem reagir"): continua Guardiao (nunca
+		# sai do proprio territorio, ataque incondicional), so' com raio
+		# MAIOR que o padrao (MonsterAI.GUARD_RADIUS=2) -- "guard_radius"
+		# e' lido por MonsterAI._guard_radius_for, ausente pra qualquer
+		# outro kind cai no padrao.
+		"behavior": BEHAVIOR_GUARDIAN, "guard_radius": 5, "invader_promotable": false,
 		"unit_name": "Troll", "attack": 6.0, "defense": 4.0, "max_hp": 20.0,
-		"movement_points": 1.0, "vision_range": 1, "gold_reward": 35.0, "clear_reward": 100.0,
+		"movement_points": 1.0, "vision_range": 1, "gold_reward": 35.0, "clear_reward": 100.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "troll",
 	},
 	"wyvern": {
@@ -91,7 +132,7 @@ const KIND_DATA := {
 		"weight": 10, "min_threat": 0.65, "lair_cap": 2, "global_cap": 2, "batch_spawn": 1,
 		"behavior": BEHAVIOR_HUNTER, "invader_promotable": false,
 		"unit_name": "Vivern", "attack": 8.0, "defense": 3.0, "max_hp": 16.0,
-		"movement_points": 3.0, "vision_range": 1, "gold_reward": 70.0, "clear_reward": 130.0,
+		"movement_points": 3.0, "vision_range": 1, "gold_reward": 70.0, "clear_reward": 130.0, "clear_reward_mana": 20.0,
 		"flies": true, "visual_kind": "wyvern",
 	},
 	"skeleton": {
@@ -99,7 +140,7 @@ const KIND_DATA := {
 		"weight": 25, "min_threat": 0.15, "lair_cap": 4, "global_cap": 5, "batch_spawn": 3,
 		"behavior": BEHAVIOR_INVADER, "invader_promotable": false,
 		"unit_name": "Esqueleto", "attack": 4.0, "defense": 1.0, "max_hp": 6.0,
-		"movement_points": 2.0, "vision_range": 1, "gold_reward": 10.0, "clear_reward": 85.0,
+		"movement_points": 2.0, "vision_range": 1, "gold_reward": 10.0, "clear_reward": 85.0, "clear_reward_mana": 10.0,
 		"flies": false, "visual_kind": "skeleton",
 	},
 	"dragon": {
@@ -107,7 +148,7 @@ const KIND_DATA := {
 		"weight": 5, "min_threat": 0.85, "lair_cap": 1, "global_cap": 1, "batch_spawn": 1,
 		"behavior": BEHAVIOR_HUNTER, "invader_promotable": false,
 		"unit_name": "Dragao", "attack": 16.0, "defense": 8.0, "max_hp": 50.0,
-		"movement_points": 2.0, "vision_range": 2, "gold_reward": 200.0, "clear_reward": 150.0,
+		"movement_points": 2.0, "vision_range": 2, "gold_reward": 200.0, "clear_reward": 150.0, "clear_reward_mana": 35.0,
 		"flies": true, "visual_kind": "dragon",
 	},
 }
@@ -141,12 +182,109 @@ static func create_monster(kind: String, is_camp_boss: bool = false) -> UnitData
 	data.gold_reward = info.gold_reward
 	data.flies = info.flies
 	data.movement_points = 0.0 if is_camp_boss else info.movement_points
-	# Identidade visual (KayKit Skeletons, CC0) — so o monstro Esqueleto tem
-	# combinacao literal disponivel nos pacotes gratuitos; Goblin/Troll/
-	# Wyvern/Dragao continuam procedurais (sem modelo equivalente).
+	# Identidade visual: segundo teste da 3D Asset Factory numa especie
+	# NAO-humana (depois do Goblin) -- mesmo esqueleto/rig de 18 ossos,
+	# HumanStyle magro/oco (slim_build+thin_arms, orbitas ocas via
+	# body_blocky.build_head_parts eye_style="hollow", ver style/textures.
+	# build_head_face_image), pele tom osso (MaterialLibrary.skin_color_
+	# override). Substitui o modelo KayKit (Skeleton_Warrior.glb, CC0) que
+	# era usado antes — Troll/Wyvern/Dragao continuam sem modelo
+	# procedural equivalente por ora. Preset: presets/skeleton_blocky.json.
 	if kind == "skeleton":
-		data.model_scene_path = "res://assets/models/kaykit/skeletons/Skeleton_Warrior.glb"
-		data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
+		data.model_scene_path = "res://assets/generated/skeletons/skeleton_blocky/skeleton_blocky.glb"
+		data.animation_scene_path = "res://assets/generated/skeletons/skeleton_blocky/skeleton_blocky.glb"
+		data.merge_shared_walk_animation = false
+		data.idle_animation_override = "Idle"
+		data.walk_animation_override = "Walk"
+		data.attack_animation_override = "Attack"
+		# Escala 1:1 direta agora (ver Unit.gd _build_model_body's
+		# ASSET_FACTORY_PATH_PREFIX check): modelos da 3D Asset Factory
+		# nao passam mais pela normalizacao MODEL_TARGET_HEIGHT/aabb.
+		# size.y, entao model_scale_multiplier volta a ser 1.0 -- a
+		# altura final agora e literalmente a altura "1.75" do preset
+		# JSON, na mesma unidade do resto do jogo, sem nenhuma conta.
+		#
+		# Isso resolve, na raiz, uma saga inteira de tentativas de
+		# calibrar esse numero: a normalizacao por aabb.size.y (formula
+		# antiga) e algebricamente garantida a dar sempre MODEL_TARGET_
+		# HEIGHT*mult, independente do aabb -- confirmado medindo de
+		# varias formas (aabb local, global_transform.basis.get_scale(),
+		# aabb em espaco de mundo) -- mas o Esqueleto renderizava ~1.28x
+		# mais alto que essa formula previa no jogo de verdade, sem causa
+		# raiz encontrada (nao era timing de animacao nem swing de braco
+		# no Idle). O usuario perguntou "o caminho correto nao seria
+		# deixar eles apenas com o tamanho do modelo 3d deles?" -- sim, e
+		# eliminar a normalizacao (nao so recalibrar o multiplicador em
+		# cima dela) e a correcao de verdade.
+		data.model_scale_multiplier = 1.0
+		data.model_yaw_offset_degrees = 180.0
+	elif kind == "goblin":
+		# Identidade visual: primeiro teste da 3D Asset Factory (tools/
+		# asset_factory) numa especie NAO-humana — mesmo esqueleto/rig de
+		# 18 ossos do Guarda/Colonizador, mas HumanStyle com proporcoes bem
+		# diferentes (baixinho, cabeca enorme, magro) + pele/cabelo verdes
+		# (MaterialLibrary.skin_color_override/hair_color_override, ver
+		# tools/asset_factory/style/palette.py) + orelhas pontudas (style.
+		# pointy_ears, ver body_blocky.build_head_parts) em vez de reusar a
+		# cor de pele humana fixa. Preset: presets/goblin_blocky.json.
+		data.model_scene_path = "res://assets/generated/goblins/goblin_blocky/goblin_blocky.glb"
+		data.animation_scene_path = "res://assets/generated/goblins/goblin_blocky/goblin_blocky.glb"
+		data.merge_shared_walk_animation = false
+		data.idle_animation_override = "Idle"
+		data.walk_animation_override = "Walk"
+		data.attack_animation_override = "Attack"
+		# NAO é a mesma escala do Guarda/Colonizador -- um goblin TEM que
+		# parecer mais baixo que um humano. Ver comentario do Colonizador
+		# acima sobre por que o multiplicador nao pode ser copiado entre
+		# personagens. "Deixe o goblin mais ou menos na altura da barriga
+		# quase chegando no peito" (do Guarda) -- medido em compute_
+		# measurements do proprio Guarda: z_spine_top (topo da barriga)
+		# fica a 68.1% da altura total dele, z_chest_top a 85.5% -- "quase
+		# chegando no peito" mira por volta de 80%.
+		# Escala 1:1 direta agora (ver comentario longo do Esqueleto
+		# acima e Unit.gd _build_model_body's ASSET_FACTORY_PATH_PREFIX
+		# check) -- sem normalizacao por aabb, model_scale_multiplier
+		# volta a 1.0. A altura final passa a ser literalmente o "height"
+		# do preset (1.3m vs 1.8m do Guarda, ~72% -- perto do "quase
+		# chegando no peito" pedido, sem precisar calcular multiplicador
+		# nenhum). Se a proporcao ainda nao ficar certa, o ajuste agora e
+		# no proprio preset (tools/asset_factory/presets/goblin_blocky.
+		# json "height"), nao aqui.
+		data.model_scale_multiplier = 1.0
+		data.model_yaw_offset_degrees = 180.0
+	elif kind == "troll":
+		# Identidade visual: terceiro teste da 3D Asset Factory numa
+		# especie NAO-humana (depois do Goblin e do Esqueleto) -- mesmo
+		# esqueleto/rig de 18 ossos, mas HumanStyle grande (sem slim_build/
+		# thin_arms -- o "built" default, mais limb_slenderness 1.15 pra
+		# ficar um pouco mais volumoso, SEM exagero -- ver nota abaixo) +
+		# pele azul-acinzentada escura, olhos amarelos "slit", definicao de
+		# musculo real (equipment.muscles, ver body_blocky.py) + tanga de
+		# couro (pelvis_material="leather") + um porrete de log com
+		# espinhos CURTOS (weapon="troll_club", ver equipment_blocky.
+		# build_troll_club_parts) -- pedido do usuario com imagem de
+		# referencia (um troll estilo Minecraft). Preset: presets/
+		# troll_blocky.json.
+		data.model_scene_path = "res://assets/generated/trolls/troll_blocky/troll_blocky.glb"
+		data.animation_scene_path = "res://assets/generated/trolls/troll_blocky/troll_blocky.glb"
+		data.merge_shared_walk_animation = false
+		data.idle_animation_override = "Idle"
+		data.walk_animation_override = "Walk"
+		data.attack_animation_override = "Attack"
+		# "pode ter 2x o tamanho de uma pessoa" (usuario) -- o que fazia
+		# ele parecer MUITO maior que qualquer altura pedida nao era a
+		# altura em si: ombros largos (shoulder_width_ratio 0.34 -> 0.27),
+		# limb_slenderness exagerado (1.35 -> 1.15) e principalmente os
+		# espinhos do porrete esticando bem pra LADOS (spike_len ~1.3x a
+		# largura da cabeca do porrete -> 0.55x).
+		# Escala 1:1 direta agora (ver comentario longo do Esqueleto acima
+		# e Unit.gd _build_model_body ASSET_FACTORY_PATH_PREFIX check) --
+		# model_scale_multiplier volta a 1.0, altura final = "height" do
+		# preset. Redimensionado no editor Blender pra 2.5m (~1.4x o
+		# Guarda de 1.8m) -- ajustar altura agora e so no proprio preset
+		# (troll_blocky.json "height" + resalvar/reexportar), nao aqui.
+		data.model_scale_multiplier = 1.0
+		data.model_yaw_offset_degrees = 180.0
 	return data
 
 ## Ouro pago por destruir o covil ABANDONADO (ver HexGrid.destroy_lair/
@@ -154,6 +292,12 @@ static func create_monster(kind: String, is_camp_boss: bool = false) -> UnitData
 ## mesmo fallback de create_monster acima.
 static func lair_clear_reward(kind: String) -> float:
 	return KIND_DATA.get(kind, KIND_DATA["goblin"]).get("clear_reward", 75.0)
+
+## RECOMPENSAS DE COVIS: Mana paga pelo MESMO evento acima (ver comentario
+## de clear_reward_mana no topo do arquivo) -- 0.0 pra kind desconhecido ou
+## sem identidade arcana (goblin/troll), nunca negativo.
+static func lair_clear_mana_reward(kind: String) -> float:
+	return KIND_DATA.get(kind, {}).get("clear_reward_mana", 0.0)
 
 ## Sorteio ponderado deterministico — `rng` ja vem semeado pelo chamador
 ## (HexGrid._spawn_monster_lairs usa map_seed), entao o resultado e 100%

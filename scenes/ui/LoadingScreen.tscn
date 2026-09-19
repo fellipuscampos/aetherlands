@@ -1,7 +1,46 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/LoadingScreen.gd" id="LoadingScreen_gd"]
 [ext_resource type="Script" path="res://scripts/ui/LoadingSpinner.gd" id="LoadingSpinner_gd"]
+
+[sub_resource type="Gradient" id="Gradient_backdrop"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.145, 0.115, 0.08, 1, 0.045, 0.035, 0.028, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_backdrop"]
+gradient = SubResource("Gradient_backdrop")
+width = 8
+height = 256
+fill_from = Vector2(0.5, 0)
+fill_to = Vector2(0.5, 1)
+
+[sub_resource type="Gradient" id="Gradient_glow"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.42, 0.66, 0.86, 0.4, 0.42, 0.66, 0.86, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_glow"]
+gradient = SubResource("Gradient_glow")
+width = 256
+height = 256
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1.0, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_mote"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_mote"]
+gradient = SubResource("Gradient_mote")
+width = 32
+height = 32
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1.0, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_mote_ramp"]
+offsets = PackedFloat32Array(0, 0.3, 1)
+colors = PackedColorArray(0.86, 0.7, 0.35, 0, 0.86, 0.7, 0.35, 0.55, 0.86, 0.7, 0.35, 0)
 
 [node name="LoadingScreen" type="Control"]
 layout_mode = 1
@@ -12,13 +51,47 @@ grow_vertical = 2
 mouse_filter = 0
 script = ExtResource("LoadingScreen_gd")
 
-[node name="Backdrop" type="ColorRect" parent="."]
+[node name="Backdrop" type="TextureRect" parent="."]
 layout_mode = 1
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.07, 0.06, 0.045, 1.0)
+texture = SubResource("GradientTexture2D_backdrop")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Glow" type="TextureRect" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -420.0
+offset_top = -420.0
+offset_right = 420.0
+offset_bottom = 420.0
+texture = SubResource("GradientTexture2D_glow")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Motes" type="CPUParticles2D" parent="."]
+position = Vector2(800, 450)
+amount = 14
+lifetime = 6.0
+preprocess = 3.0
+randomness = 0.6
+texture = SubResource("GradientTexture2D_mote")
+emission_shape = 3
+emission_rect_extents = Vector2(700, 380)
+direction = Vector2(0, -1)
+spread = 20.0
+gravity = Vector2(0, -4)
+initial_velocity_min = 4.0
+initial_velocity_max = 12.0
+scale_amount_min = 0.5
+scale_amount_max = 1.4
+color_ramp = SubResource("Gradient_mote_ramp")
 
 [node name="CenterBox" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -29,8 +102,22 @@ grow_vertical = 2
 
 [node name="Box" type="VBoxContainer" parent="CenterBox"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 16
 alignment = 1
+
+[node name="KickerLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+horizontal_alignment = 1
+text = "A E T H E R L A N D S"
+
+[node name="EmblemBox" type="CenterContainer" parent="CenterBox/Box"]
+layout_mode = 2
+
+[node name="Emblem" type="Control" parent="CenterBox/Box/EmblemBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 140)
+script = ExtResource("LoadingSpinner_gd")
 
 [node name="TitleLabel" type="Label" parent="CenterBox/Box"]
 layout_mode = 2
@@ -38,13 +125,23 @@ horizontal_alignment = 1
 theme_override_font_sizes/font_size = 28
 text = "Gerando o Mapa..."
 
-[node name="SpinnerBox" type="CenterContainer" parent="CenterBox/Box"]
+[node name="ProgressRow" type="HBoxContainer" parent="CenterBox/Box"]
 layout_mode = 2
+custom_minimum_size = Vector2(360, 0)
+theme_override_constants/separation = 10
 
-[node name="Spinner" type="Control" parent="CenterBox/Box/SpinnerBox"]
+[node name="ProgressBar" type="ProgressBar" parent="CenterBox/Box/ProgressRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(56, 56)
-script = ExtResource("LoadingSpinner_gd")
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 14)
+show_percentage = false
+
+[node name="PercentLabel" type="Label" parent="CenterBox/Box/ProgressRow"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(38, 0)
+horizontal_alignment = 2
+text = "0%"
 
 [node name="SubtitleLabel" type="Label" parent="CenterBox/Box"]
 layout_mode = 2

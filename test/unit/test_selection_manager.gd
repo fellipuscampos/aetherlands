@@ -1,5 +1,12 @@
 extends GutTest
 
+var _owned_players: Array[PlayerData] = []
+
+func _track_player(civ: CivilizationData) -> PlayerData:
+	var player := PlayerData.new(civ)
+	_owned_players.append(player)
+	return player
+
 ## Regressao do bug relatado pelo usuario: atacar uma unidade inimiga e
 ## continuar podendo clicar nela pra atacar de novo, sem fim, no mesmo
 ## turno. Causa: _select_unit() recalculava "attackable" so olhando o
@@ -14,11 +21,13 @@ var _created_units: Array[Unit] = []
 var _original_hex_grid: HexGrid
 var _original_human_player: PlayerData
 var _original_turn_number: int
+var _original_game_state: int
 
 func before_each():
 	_original_hex_grid = GameManager.hex_grid
 	_original_human_player = GameManager.human_player
 	_original_turn_number = TurnManager.turn_number
+	_original_game_state = GameManager.state
 	_created_units = []
 
 	hex_grid = HexGrid.new()
@@ -28,17 +37,31 @@ func before_each():
 	for dir in HexGrid.NEIGHBOR_DIRS:
 		hex_grid.tiles[center + dir] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 
-	human = PlayerData.new(CivilizationData.new())
-	rival = PlayerData.new(CivilizationData.new())
+	human = _track_player(CivilizationData.new())
+	rival = _track_player(CivilizationData.new())
 	Diplomacy.declare_war(human, rival) # attackable agora exige guerra (Diplomacy.gd)
 	GameManager.hex_grid = hex_grid
 	GameManager.human_player = human
 
 func after_each():
+	for player in _owned_players:
+		player.release_relations()
+	_owned_players.clear()
 	SelectionManager.reset()
 	GameManager.hex_grid = _original_hex_grid
 	GameManager.human_player = _original_human_player
 	TurnManager.turn_number = _original_turn_number
+	# _attack_from_selected chama GameManager.check_victories() sempre (ver
+	# SelectionManager.gd) -- e este arquivo nunca preenche GameManager.
+	# rival_players, entao VictoryConditions.is_dominance_achieved(human,
+	# [human]) da TRUE por vacuidade (nenhum "outro" jogador pra falhar a
+	# checagem) e trava state em GAME_OVER pro RESTO do arquivo inteiro,
+	# fazendo handle_world_click (que sai na hora se GAME_OVER) parecer
+	# quebrado em todo teste seguinte que ataca alguma coisa. Achado
+	# depurando uma falha aparentemente sem relacao nenhuma (clique de
+	# movimento simplesmente nao fazia nada) -- restaurar aqui, igual
+	# hex_grid/human_player/turn_number acima, resolve na raiz.
+	GameManager.state = _original_game_state
 	for unit in _created_units:
 		if is_instance_valid(unit):
 			unit.queue_free()
@@ -65,6 +88,30 @@ func test_attacking_removes_target_from_attackable_afterwards():
 	assert_eq(attacker.movement_left, 0.0, "atacar deveria zerar o movimento")
 	assert_false(defender_coord in SelectionManager.attackable, "alvo nao deveria continuar atacavel depois que a unidade ja agiu")
 
+## Roadmap "Dragon Event v1 fechado" -- pedido explicito do usuario:
+## "ranking de dano... dano real causado ao Dragao". Este e' o UNICO
+## caminho de ataque do jogador HUMANO (RivalAI.react_to_dragon cobre a
+## IA) -- precisa registrar o dano no DragonEvent ativo tambem.
+func test_attacking_the_active_dragon_records_damage_for_the_human_civ():
+	var _original_players: Array[PlayerData] = GameManager.players
+	GameManager.players = [human, rival]
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	attacker.unit_data.attack = 60.0
+	var dragon_coord = Vector2i(1, 0)
+	var dragon = hex_grid.spawn_monster_at(dragon_coord, "dragon")
+	dragon.hp = 200.0
+	var event := DragonEvent.new()
+	event.dragon_unit = dragon
+	WorldEventManager.active_events.append(event)
+	SelectionManager._select_unit(attacker)
+
+	SelectionManager._attack_from_selected(dragon_coord)
+
+	var human_index: int = GameManager.players.find(human)
+	assert_gt(event.damage_by_civ.get(human_index, 0.0), 0.0, "o dano causado pelo jogador humano deveria ter sido registrado no ranking do evento")
+	WorldEventManager.active_events.clear()
+	GameManager.players = _original_players
+
 func test_unit_with_zero_movement_has_no_attackable_tiles_on_reselect():
 	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
 	_make_unit("warrior", rival, Vector2i(1, 0))
@@ -80,7 +127,7 @@ func test_peaceful_units_and_cities_are_never_attackable():
 	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
 	var enemy_unit_coord = Vector2i(1, 0)
 	_make_unit("warrior", rival, enemy_unit_coord)
-	var third = PlayerData.new(CivilizationData.new())
+	var third = _track_player(CivilizationData.new())
 	Diplomacy.declare_war(human, third)
 	var enemy_city_coord = Vector2i(-1, 0)
 	var city = hex_grid.found_city(enemy_city_coord, third, "Cidade C")
@@ -253,6 +300,91 @@ func test_attacking_cancels_a_pending_move_order():
 
 	assert_eq(attacker.move_order_target, Unit.NO_MOVE_ORDER, "atacar deveria cancelar qualquer ordem de movimento pendente")
 
+## COVIS DE MONSTROS -- DESTRUICAO (pedido do usuario: "quero transformar
+## covis em alvos reais... HP; defesa; ataque ao covil; destruicao;
+## recompensa"). A estrutura so' vira alvo depois que o covil esta
+## genuinamente indefeso (nenhum monstro vivo na area, ver HexGrid.
+## _count_live_monsters_near_lair) -- confirma o gate antes de testar o
+## ataque de verdade abaixo.
+func test_lair_structure_is_not_attackable_while_still_defended():
+	var lair_coord := HexGrid.NEIGHBOR_DIRS[0]
+	hex_grid.lair_coords.append(lair_coord)
+	hex_grid.lair_kind_by_coord[lair_coord] = "goblin"
+	var structure := LairStructure.new()
+	structure.build("goblin", hex_grid)
+	hex_grid.add_child(structure)
+	hex_grid.lairs_by_coord[lair_coord] = structure
+	hex_grid.spawn_monster_at(HexGrid.NEIGHBOR_DIRS[1], "goblin", true) # guardiao vivo em outro vizinho, ainda dentro da area do covil
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+
+	SelectionManager._select_unit(attacker)
+
+	assert_false(lair_coord in SelectionManager.attackable, "estrutura nao deveria ser atacavel enquanto o covil ainda tem guardiao vivo")
+
+## Mesma arquitetura de resolve_city_attack: dano reduz o HP da estrutura,
+## so' destroi e paga a recompensa quando o HP zera -- nao mais uma
+## "visita" gratis (ver antigo HexGrid._grant_lair_clear_reward acionado
+## por move_unit, removido nesta rodada).
+func test_attacking_an_undefended_lair_structure_destroys_it_and_grants_reward():
+	var lair_coord := HexGrid.NEIGHBOR_DIRS[0]
+	hex_grid.lair_coords.append(lair_coord)
+	hex_grid.lair_kind_by_coord[lair_coord] = "goblin"
+	var structure := LairStructure.new()
+	structure.build("goblin", hex_grid)
+	hex_grid.add_child(structure)
+	hex_grid.lairs_by_coord[lair_coord] = structure
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var gold_before := human.gold
+
+	SelectionManager._select_unit(attacker)
+	assert_true(lair_coord in SelectionManager.attackable, "estrutura sem guardiao nenhum deveria estar atacavel")
+
+	var hits := 0
+	while hex_grid.lairs_by_coord.has(lair_coord) and hits < 10:
+		attacker.movement_left = attacker.unit_data.movement_points # cada golpe simula um novo turno
+		SelectionManager._attack_from_selected(lair_coord)
+		hits += 1
+
+	assert_false(hex_grid.lairs_by_coord.has(lair_coord), "estrutura deveria acabar destruida depois de golpes suficientes")
+	assert_false(lair_coord in hex_grid.lair_coords, "covil deveria sair de lair_coords pra sempre (reforco cancelado)")
+	assert_eq(human.gold, gold_before + MonsterDatabase.lair_clear_reward("goblin"), "deveria conceder exatamente a recompensa de limpeza do tipo do covil")
+	assert_gt(hits, 0)
+	assert_lt(hits, 10, "um covil de Goblin (o mais fraco/comum) nao deveria exigir tantos golpes assim -- experiencia precisa continuar rapida")
+
+## RECOMPENSAS DE COVIS (pedido do usuario: "ao destruir um covil...
+## combinacao... recompensa especifica por tipo"): kind com identidade
+## arcana ja estabelecida (Vivern, guardiao dos continentes Vulcanico/de
+## Cristal) tambem paga Mana e credita o abate no atacante (mesmo sistema
+## de veterania que o combate normal ja usa) -- kind mundano (Goblin, ja
+## coberto no teste acima) fica so no ouro.
+func test_destroying_a_wyvern_lair_also_grants_mana_and_kill_credit():
+	var lair_coord := HexGrid.NEIGHBOR_DIRS[0]
+	hex_grid.lair_coords.append(lair_coord)
+	hex_grid.lair_kind_by_coord[lair_coord] = "wyvern"
+	var structure := LairStructure.new()
+	structure.build("wyvern", hex_grid)
+	hex_grid.add_child(structure)
+	hex_grid.lairs_by_coord[lair_coord] = structure
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var gold_before := human.gold
+	var mana_before := human.mana
+	var kills_before: int = attacker.kills
+
+	SelectionManager._select_unit(attacker)
+	var hits := 0
+	while hex_grid.lairs_by_coord.has(lair_coord) and hits < 10:
+		attacker.movement_left = attacker.unit_data.movement_points
+		SelectionManager._attack_from_selected(lair_coord)
+		hits += 1
+
+	assert_eq(human.gold, gold_before + MonsterDatabase.lair_clear_reward("wyvern"))
+	assert_gt(MonsterDatabase.lair_clear_mana_reward("wyvern"), 0.0, "precondicao: Vivern deveria ter recompensa de Mana > 0")
+	assert_eq(human.mana, mana_before + MonsterDatabase.lair_clear_mana_reward("wyvern"), "covil de Vivern (identidade arcana) deveria pagar Mana tambem")
+	assert_eq(attacker.kills, kills_before + 1, "destruir a estrutura deveria contar como um abate de verdade pro atacante")
+
+func test_destroying_a_goblin_lair_grants_no_mana():
+	assert_eq(MonsterDatabase.lair_clear_mana_reward("goblin"), 0.0, "covil de Goblin (mundano, sem ligacao arcana) nao deveria pagar Mana")
+
 ## Fortificar/Explorar (pedido do usuario: "as opções... mover,
 ## fortificar e explorar"), ver SelectionManager.fortify_selected/
 ## toggle_explore_selected/wake_selected_for_move.
@@ -404,7 +536,7 @@ func test_clicking_an_invalid_tile_cancels_building_placement():
 ## aceita unidade do proprio jogador.
 
 func test_valid_spell_target_accepts_a_visible_enemy_for_enemy_unit_in_vision():
-	human.researched_techs["invocacao_espiritos"] = true
+	human.researched_magic["invocacao_espiritos"] = true
 	var enemy_coord = Vector2i(1, 0)
 	var enemy = _make_unit("warrior", rival, enemy_coord)
 	_make_unit("warrior", human, Vector2i(0, 0)) # vision vem das PROPRIAS unidades/cidades (HexGrid.compute_visible_tiles) — sem uma aqui perto, nada fica visivel
@@ -415,7 +547,7 @@ func test_valid_spell_target_accepts_a_visible_enemy_for_enemy_unit_in_vision():
 	assert_eq(target, enemy)
 
 func test_valid_spell_target_rejects_own_unit_for_enemy_unit_in_vision():
-	human.researched_techs["invocacao_espiritos"] = true
+	human.researched_magic["invocacao_espiritos"] = true
 	var own_coord = Vector2i(0, 0)
 	_make_unit("warrior", human, own_coord)
 	hex_grid.recompute_fog(human)
@@ -452,7 +584,7 @@ func test_valid_spell_target_returns_null_for_spell_without_spelldata():
 	assert_null(SelectionManager._valid_spell_target(hex_grid, "Ruína Ígnea", enemy_coord))
 
 func test_clicking_a_valid_target_casts_the_spell_and_clears_targeting_mode():
-	human.researched_techs["invocacao_espiritos"] = true
+	human.researched_magic["invocacao_espiritos"] = true
 	human.mana = 100.0 # Lança de Arcana custa 25 (ver SpellDatabase)
 	var enemy_coord = Vector2i(1, 0)
 	var enemy = _make_unit("warrior", rival, enemy_coord)
@@ -467,7 +599,7 @@ func test_clicking_a_valid_target_casts_the_spell_and_clears_targeting_mode():
 	assert_eq(SelectionManager.casting_spell_name, "", "modo de mira deveria encerrar apos o clique, alvo valido ou nao")
 
 func test_clicking_an_invalid_target_cancels_spell_targeting_without_casting():
-	human.researched_techs["invocacao_espiritos"] = true
+	human.researched_magic["invocacao_espiritos"] = true
 	SelectionManager.start_spell_targeting("Lança de Arcana")
 
 	# (0,0) esta vazio nesse fixture — nenhuma unidade la, alvo invalido.

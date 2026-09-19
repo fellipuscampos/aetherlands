@@ -46,6 +46,107 @@ func _color_close(a: Color, b: Color, tolerance: float = 0.01) -> bool:
 	return abs(a.r - b.r) <= tolerance and abs(a.g - b.g) <= tolerance \
 		and abs(a.b - b.b) <= tolerance and abs(a.a - b.a) <= tolerance
 
+## ALTURA DOS TILES E POSICAO DAS UNIDADES (pedido do usuario: "alguns
+## personagens... acabam com os pes dentro do terreno... crie uma solucao
+## robusta"). Colina/Montanha ganham um domo/pico VISUAL no shader por cima
+## do base_height cru (ver HexGrid._tile_surface_height/HILL_HEIGHT/
+## MOUNTAIN_PEAK_HEIGHT) -- spawn_unit precisa posicionar a unidade nessa
+## altura de SUPERFICIE, nao na base plana, senao ela nasce com os pes
+## afundados no domo/pico.
+func test_spawn_unit_on_hills_uses_surface_height():
+	var coord := Vector2i(2, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
+
+	var unit := hex_grid.spawn_unit(coord, UnitDatabase.create_unit("warrior"), human)
+	_created_units.append(unit)
+
+	var expected_y: float = hex_grid.tiles[coord].base_height + HexGrid.HILL_HEIGHT
+	assert_almost_eq(unit.position.y, expected_y, 0.001, "unidade deveria ficar na altura do DOMO da Colina, nao na base crua")
+
+func test_spawn_unit_on_mountains_uses_surface_height():
+	var coord := Vector2i(2, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS)
+
+	var unit := hex_grid.spawn_unit(coord, UnitDatabase.create_unit("warrior"), human)
+	_created_units.append(unit)
+
+	var expected_y: float = hex_grid.tiles[coord].base_height + HexGrid.MOUNTAIN_PEAK_HEIGHT
+	assert_almost_eq(unit.position.y, expected_y, 0.001, "unidade deveria ficar na altura do PICO da Montanha, nao na base crua")
+
+func test_spawn_unit_on_flat_terrain_keeps_plain_base_height():
+	var coord := Vector2i(2, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	var unit := hex_grid.spawn_unit(coord, UnitDatabase.create_unit("warrior"), human)
+	_created_units.append(unit)
+
+	assert_almost_eq(unit.position.y, hex_grid.tiles[coord].base_height, 0.001, "terreno plano nao deveria ganhar bonus de altura nenhum")
+
+## "Mudancas temporarias de terreno" (pedido explicito do usuario) -- uma
+## unidade PARADA num tile cujo terreno e transformado depois (ex: magia)
+## precisa ter a altura visual atualizada na hora, sem esperar o proximo
+## movimento.
+func test_transform_tile_terrain_repositions_standing_unit_to_new_height():
+	var coord := Vector2i(2, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var unit := hex_grid.spawn_unit(coord, UnitDatabase.create_unit("warrior"), human)
+	_created_units.append(unit)
+
+	hex_grid.transform_tile_terrain(coord, HexTileData.TerrainType.MOUNTAINS)
+
+	var expected_y: float = hex_grid.tiles[coord].base_height + HexGrid.MOUNTAIN_PEAK_HEIGHT
+	assert_almost_eq(unit.position.y, expected_y, 0.001, "unidade parada deveria acompanhar a nova altura apos o terreno embaixo dela mudar")
+
+## COVIS DE MONSTROS -- SOBREPOSICAO: efeito colateral CRITICO de o
+## guardiao nao ocupar mais fisicamente a propria celula do covil (ver
+## HexGrid._find_free_tile_for_lair_spawn) -- sem uma exclusao EXPLICITA
+## (HexGrid._is_lair_coord_still_defended), o tile do covil ficaria sempre
+## "livre" pra compute_reachable/compute_path, deixando qualquer unidade
+## andar ate um covil AINDA DEFENDIDO (guardiao vivo num vizinho) sem nunca
+## lutar contra ele — quebraria o mecanismo real de "limpar covil"
+## (_grant_lair_clear_reward), nao so' a parte visual.
+func test_active_lair_coord_is_unreachable_even_without_a_unit_on_it():
+	var lair_coord := Vector2i(0, 0)
+	hex_grid.lair_coords.append(lair_coord)
+	hex_grid.lair_kind_by_coord[lair_coord] = "goblin"
+	var structure := LairStructure.new()
+	structure.build("goblin", hex_grid)
+	hex_grid.add_child(structure)
+	hex_grid.lairs_by_coord[lair_coord] = structure
+	# Guardiao vivo num VIZINHO (nao mais na propria celula) -- lair_coord
+	# em si fica sem nenhuma unidade.
+	hex_grid.spawn_monster_at(HexGrid.NEIGHBOR_DIRS[0], "goblin", true)
+	var warrior = _make_unit("warrior", human, Vector2i(-1, 0))
+
+	var reachable = hex_grid.compute_reachable(warrior.coord, 10.0, human)
+
+	assert_false(reachable.has(lair_coord), "covil ainda defendido nao deveria ser alcancavel so porque a propria celula esta vazia")
+
+## COVIS DE MONSTROS -- DESTRUICAO (rodada seguinte): diferente da versao
+## anterior deste teste, "sem guardiao vivo" sozinho NAO basta mais pra
+## liberar o tile -- a ESTRUTURA (LairStructure, com HP proprio) continua
+## bloqueando ate ser atacada e destruida de vez (ver CombatResolver.
+## resolve_lair_attack/HexGrid.destroy_lair). So' depois de destroy_lair()
+## o coord volta a ser andavel normalmente.
+func test_lair_coord_stays_unreachable_until_the_structure_itself_is_destroyed():
+	var lair_coord := Vector2i(0, 0)
+	hex_grid.lair_coords.append(lair_coord)
+	hex_grid.lair_kind_by_coord[lair_coord] = "goblin"
+	var structure := LairStructure.new()
+	structure.build("goblin", hex_grid)
+	hex_grid.add_child(structure)
+	hex_grid.lairs_by_coord[lair_coord] = structure
+	# Nenhum guardiao/reforco vivo na area inteira -- covil genuinamente
+	# indefeso, mas a estrutura em si continua de pe.
+	var warrior = _make_unit("warrior", human, Vector2i(-1, 0))
+
+	var reachable_while_standing = hex_grid.compute_reachable(warrior.coord, 10.0, human)
+	assert_false(reachable_while_standing.has(lair_coord), "estrutura sem guardiao nenhum ainda deveria bloquear o tile ate ser atacada")
+
+	hex_grid.destroy_lair(lair_coord)
+	var reachable_after_destruction = hex_grid.compute_reachable(warrior.coord, 10.0, human)
+	assert_true(reachable_after_destruction.has(lair_coord), "so depois da estrutura destruida de vez o tile deveria voltar a ser alcancavel")
+
 ## Regressao do bug relatado pelo usuario: atacar uma cidade inimiga sem
 ## defensor estava so movendo a unidade pra cima dela em vez de capturar,
 ## porque compute_reachable() nao excluia tiles de cidade inimiga — o tile
@@ -366,16 +467,24 @@ func test_non_flying_unit_cannot_cross_ocean():
 
 ## Regressao: voar "por cima" do terreno significa ignorar o CUSTO dele
 ## tambem, nao so a restricao de oceano — senao colina/floresta ainda
-## atrasariam o grifo como qualquer outra unidade.
+## atrasariam o grifo como qualquer outra unidade. movement_cost forcado
+## manualmente pra um valor alto (nao o padrao de TerrainDatabase, que hoje
+## e 1 pra todo terreno -- ver o comentario no topo de TerrainDatabase.gd)
+## pra continuar provando que o CODIGO de pathfinding ignora esse campo pra
+## unidade voadora, independente do dado de balanceamento atual.
 func test_flying_unit_ignores_terrain_movement_cost():
-	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS) # custo alto
-	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS)
+	var costly_a = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS)
+	costly_a.movement_cost = 5
+	var costly_b = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS)
+	costly_b.movement_cost = 5
+	hex_grid.tiles[Vector2i(1, 0)] = costly_a
+	hex_grid.tiles[Vector2i(2, 0)] = costly_b
 	var griffin = _make_unit("griffin", human, Vector2i(0, 0))
 	griffin.movement_left = 2.0
 
 	var reachable = hex_grid.compute_reachable(griffin.coord, griffin.movement_left, griffin.owner_player, griffin.unit_data.flies)
 
-	assert_true(reachable.has(Vector2i(2, 0)), "com custo 1/tile (voando), 2 pontos de movimento deveriam alcancar 2 montanhas")
+	assert_true(reachable.has(Vector2i(2, 0)), "com custo 1/tile (voando), 2 pontos de movimento deveriam alcancar 2 tiles mesmo com movement_cost alto no dado do terreno")
 
 ## Lava (HexTileData.blocks_land_units(), bioma vulcanico novo) e
 ## intransitavel pra unidade terrestre, mesma regra do oceano — so
@@ -395,6 +504,51 @@ func test_flying_unit_can_cross_lava():
 	var reachable = hex_grid.compute_reachable(griffin.coord, griffin.movement_left, griffin.owner_player, griffin.unit_data.flies)
 
 	assert_true(reachable.has(Vector2i(1, 0)), "unidade voadora deveria conseguir atravessar lava")
+
+## Montanha (continente principal) e intransponivel de verdade pra unidade
+## terrestre desde HexTileData.is_mountain()/blocks_land_units() -- pedido
+## do usuario: "os personagens estao atravessando as montanhas, o correto
+## é contornar... nao da pra passar por cima". Mesma regra de Lava/Oceano
+## acima. VOLCANIC_PEAKS/CRYSTAL_PEAKS (a "montanha" dos continentes
+## especiais) ficam de FORA de proposito -- ver o comentario de is_
+## mountain() -- continuam caminhaveis, decisao anterior mantida.
+func test_non_flying_unit_cannot_cross_mountains():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, warrior.unit_data.flies)
+
+	assert_false(reachable.has(Vector2i(1, 0)), "unidade terrestre nao deveria atravessar Montanha")
+
+func test_flying_unit_can_cross_mountains():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS)
+	var griffin = _make_unit("griffin", human, Vector2i(0, 0))
+
+	var reachable = hex_grid.compute_reachable(griffin.coord, griffin.movement_left, griffin.owner_player, griffin.unit_data.flies)
+
+	assert_true(reachable.has(Vector2i(1, 0)), "unidade voadora deveria conseguir atravessar Montanha")
+
+func test_embarked_unit_cannot_use_mountain_as_destination():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, false, true)
+
+	assert_false(reachable.has(Vector2i(1, 0)), "embarque nao deveria abrir excecao pra Montanha, so pra agua")
+
+## VOLCANIC_PEAKS/CRYSTAL_PEAKS continuam caminhaveis (decisao anterior,
+## ver comentario de HexTileData.is_mountain()) -- regressao explicita pra
+## nao alargar acidentalmente o escopo do bloqueio de Montanha pra eles no
+## futuro.
+func test_non_flying_unit_can_still_cross_volcanic_and_crystal_peaks():
+	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.VOLCANIC_PEAKS)
+	hex_grid.tiles[Vector2i(-1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.CRYSTAL_PEAKS)
+	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
+
+	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, warrior.unit_data.flies)
+
+	assert_true(reachable.has(Vector2i(1, 0)), "Montanhas Vulcanicas continuam caminhaveis")
+	assert_true(reachable.has(Vector2i(-1, 0)), "Picos de Cristal continuam caminhaveis")
 
 ## Mar Gelado (variante polar do Oceano, "os mares") tambem e agua de
 ## verdade — mesma regra de intransitavel pra unidade terrestre.
@@ -429,17 +583,26 @@ func test_non_embarked_unit_cannot_cross_ocean():
 
 ## Regressao (achado na revisao do plano): embarque NAO deveria virar um
 ## segundo `flies` — precisa continuar pagando o custo de terreno de
-## verdade, so a restricao de agua e que muda.
+## verdade, so a restricao de agua e que muda. movement_cost da floresta
+## forcado manualmente pra um valor alto (nao o padrao de TerrainDatabase,
+## que hoje e 1 pra todo terreno -- ver o comentario no topo de
+## TerrainDatabase.gd) pra continuar provando que embarque LE o campo em
+## vez de hardcodar 1.0 como flies faz. Floresta (nao Montanha) de
+## proposito -- Montanha agora e blocks_land_units() (ver HexTileData.
+## is_mountain()), destino final em terra precisa continuar sendo terreno
+## de verdade ANDAVEL pra este teste medir custo, nao bloqueio.
 func test_embarked_unit_still_pays_terrain_movement_cost():
 	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN) # custo 1
-	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS) # custo 3, destino final em terra
+	var costly_forest = TerrainDatabase.create_tile(HexTileData.TerrainType.FOREST)
+	costly_forest.movement_cost = 3 # destino final em terra
+	hex_grid.tiles[Vector2i(2, 0)] = costly_forest
 	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
-	warrior.movement_left = 3.0 # 1 (oceano) + 3 (montanha) = 4, NAO deveria caber
+	warrior.movement_left = 3.0 # 1 (oceano) + 3 (floresta) = 4, NAO deveria caber
 
 	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, false, true)
 
 	assert_true(reachable.has(Vector2i(1, 0)), "precondicao: oceano (custo 1) deveria estar dentro do alcance")
-	assert_false(reachable.has(Vector2i(2, 0)), "se o custo de terreno fosse ignorado (como flies), a montanha custaria so 2 no total e caberia — mas embarque nao ignora custo")
+	assert_false(reachable.has(Vector2i(2, 0)), "se o custo de terreno fosse ignorado (como flies), a floresta custaria so 2 no total e caberia — mas embarque nao ignora custo")
 
 func test_embarked_unit_cannot_cross_lava():
 	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.LAVA)

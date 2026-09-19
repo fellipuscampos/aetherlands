@@ -35,7 +35,6 @@ extends RefCounted
 ## guerra primeiro.
 
 const PERCEPTION_RANGE := 5
-const SETTLE_MIN_DISTANCE := 3
 const RETREAT_HP_FRACTION := 0.35 # abaixo disso, foge pra curar em vez de brigar
 const ESCORT_RANGE := 2 # distancia maxima pra um aliado corpo-a-corpo contar como escolta
 const MILITARY_KINDS := ["warrior", "warrior", "archer", "cavalry", "catapult", "mage", "griffin", "treant"] # pesos simples
@@ -76,6 +75,13 @@ const SCORE_WEIGHT_MILITARY_DEFICIT := 2.0
 ## 1.0+0.5 = 1.5 — 2.0 > 1.5, entao deficit real sempre vence.
 const SCORE_WEIGHT_ROLE_GAP := 0.5
 const PRODUCTION_THREAT_RADIUS := 6 # raio (em tiles) pra um inimigo visivel contar como "perto" de uma cidade
+## Task 21 -- producao EMERGENCIAL contra monstros (ver CityDefense.assess/
+## is_emergency): cidade ocupada com um predio (nao tropa) so' o abandona
+## pra treinar tropa se ainda nao passou dessa fracao do custo; compra
+## rapida da tropa de emergencia so' com ouro sobrando.
+const EMERGENCY_ABANDON_PROGRESS_FRACTION := 0.5
+const EMERGENCY_RUSH_MIN_GOLD := 40.0
+const EMERGENCY_RUSH_GOLD_FRACTION := 0.6
 ## Empate entre a tropa unica da propria raca e uma tropa comum (mesma
 ## pontuacao de deficit militar, ver _score_production_candidate): a
 ## exclusiva ganha por uma margem minima — regra explicavel numa frase
@@ -92,6 +98,9 @@ const SCORE_RACIAL_UNIT_TIE_BREAK := 0.01
 ## nenhuma tropa exclusiva aparecer no sorteio.
 static func _military_kinds_for(player: PlayerData) -> Array:
 	var kinds := MILITARY_KINDS.duplicate()
+	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
+		if kind not in kinds and kind != "settler" and UnitDatabase.race_for_unique_kind(kind) == "":
+			kinds.append(kind)
 	var race: String = player.civ.race if player.civ else ""
 	if UnitDatabase.RACE_UNIQUE_KIND.has(race):
 		var unique: String = UnitDatabase.RACE_UNIQUE_KIND[race]
@@ -110,6 +119,7 @@ static func _military_kinds_for(player: PlayerData) -> Array:
 ## tropa avancada exige, entao a tropa saia "de graca". Agora so entram na
 ## pontuacao os candidatos que ja passam nesses dois gates, exatamente
 ## como o jogador ve na propria UI (HUD._on_produce_pressed).
+##
 static func decide_production(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
 	var visible := hex_grid.compute_visible_tiles(player)
 	var military_deficit := _military_deficit(player, opponent, visible)
@@ -117,23 +127,67 @@ static func decide_production(player: PlayerData, hex_grid: HexGrid, opponent: P
 	var race: String = player.civ.race if player.civ else ""
 	var racial_unique_kind: String = UnitDatabase.RACE_UNIQUE_KIND.get(race, "")
 	for city in player.cities:
-		if player.cities.size() < 2:
+		# Task 21 -- monstros ameacando a cidade (ver CityDefense.assess): nunca
+		# entravam na decisao, que so' olhava unidades de outro jogador.
+		var monster_threat := CityDefense.assess(city, hex_grid, visible)
+		var emergency := CityDefense.is_emergency(monster_threat)
+		if city.production_item != "":
+			var abandon_for_troops := emergency and not _is_troop_item(city.production_item) and city.stored_production < city.production_cost(hex_grid) * EMERGENCY_ABANDON_PROGRESS_FRACTION
+			if not abandon_for_troops:
+				if emergency and _is_troop_item(city.production_item):
+					if city.can_rush_buy() and player.gold > EMERGENCY_RUSH_MIN_GOLD and city.rush_buy_cost(hex_grid) <= player.gold * EMERGENCY_RUSH_GOLD_FRACTION:
+						city.rush_buy(hex_grid)
+				elif city.can_rush_buy() and player.gold > 200 and city.rush_buy_cost(hex_grid) <= player.gold * 0.35:
+					city.rush_buy(hex_grid)
+				continue
+		if emergency:
+			var emergency_troop := _best_emergency_troop(player, city, hex_grid, monster_threat, role_counts)
+			if emergency_troop != "":
+				city.set_production(emergency_troop)
+				continue
+		var settlers := player.units.filter(func(u): return u.unit_data.can_found_city).size()
+		settlers += player.cities.filter(func(c): return c.production_item == "settler").size()
+		var desired_cities := mini(8, 2 + TurnManager.turn_number / 35)
+		if player.cities.size() + settlers < desired_cities and (player.cities.size() < 2 or city.population >= 3) and _has_settle_site(player, hex_grid):
 			city.set_production("settler")
 			continue
 		var defense_need := 0.0 if city.buildings.has("walls") else 1.0
 		var threat := 1.0 if _city_under_threat(city, opponent, visible) else 0.0
+		var city_deficit := military_deficit
+		if monster_threat.level >= CityDefense.LEVEL_AWARE:
+			# Proporcional: ameaca de monstro fraca/distante so' empurra de leve
+			# (level < 1.0); a MAIOR das duas fontes vale, nunca soma.
+			threat = maxf(threat, monster_threat.level)
+			city_deficit = maxf(military_deficit, monster_threat.deficit)
 
 		var best_id := ""
 		var best_score := -INF
 		for candidate_id in _production_candidates(player, city, hex_grid):
-			var score := _score_production_candidate(candidate_id, defense_need, threat, military_deficit, role_counts)
+			var score := _score_production_candidate(candidate_id, defense_need, threat, city_deficit, role_counts)
+			score += StrategicAI.production_score(player, city, candidate_id, hex_grid)
 			if candidate_id == racial_unique_kind:
 				score += SCORE_RACIAL_UNIT_TIE_BREAK
 			if score > best_score:
 				best_score = score
 				best_id = candidate_id
-		if best_id != "":
+		if best_id != "" and best_score > 0:
 			city.set_production(best_id)
+			_assign_building_site(city, best_id, hex_grid)
+
+static func _building_site(city: City, hex_grid: HexGrid) -> Vector2i:
+	var candidates := hex_grid.get_neighbors(city.coord)
+	for owned in city.owned_tiles:
+		if not owned in candidates:
+			candidates.append(owned)
+	for coord in candidates:
+		if city.is_valid_building_tile(coord, hex_grid):
+			return coord
+	return City.NO_PENDING_COORD
+
+static func _assign_building_site(city: City, id: String, hex_grid: HexGrid) -> void:
+	var building := BuildingDatabase.get_building(id)
+	if building and not building.self_placed and building.upgrades_building == "":
+		city.pending_building_coord = _building_site(city, hex_grid)
 
 ## Todo predio que a cidade ja pode CONSTRUIR (City.can_build — tech +
 ## pre-requisito de predio + slot livre, mesmo gate do jogador) mais toda
@@ -150,14 +204,64 @@ static func decide_production(player: PlayerData, hex_grid: HexGrid, opponent: P
 static func _production_candidates(player: PlayerData, city: City, hex_grid: HexGrid) -> Array:
 	var candidates: Array = []
 	for building in BuildingDatabase.all_buildings():
-		if building.id == VictoryConditions.SANCTUARY_BUILDING_ID and not VictoryConditions.meets_arcane_ritual_prerequisites(player, hex_grid):
+		if building.id == VictoryConditions.SANCTUARY_BUILDING_ID and GameManager.victory_rules_version < 2 and not VictoryConditions.meets_arcane_ritual_prerequisites(player, hex_grid):
 			continue
 		if city.can_build(building.id):
+			if not building.self_placed and building.upgrades_building == "" and _building_site(city, hex_grid) == City.NO_PENDING_COORD:
+				continue
 			candidates.append(building.id)
 	for kind in _military_kinds_for(player):
 		if not (kind in candidates) and player.has_unlocked(kind) and city.can_train(kind):
 			candidates.append(kind)
 	return candidates
+
+## Roadmap 5B.3-G v2 -- pedido explicito do usuario: "durante a preparação
+## e evento, as cidades produzam especificamente tropas apenas" (nao mais
+## so' uma pontuacao inclinada pra militar entre outros candidatos, ver
+## decide_emergency_troop_production abaixo). Mesmo elenco de
+## _production_candidates, so' que remove Muralhas e qualquer predio de
+## ECONOMIA PURA (trains_unit == "") -- sobra so' unidade militar em si e o
+## predio de TREINO que falta pra desbloquear uma (ex.: Quartel), nunca
+## nenhum candidato fora do que a cidade ja pode legitimamente construir/
+## treinar (mesmos gates can_build/can_train de sempre).
+static func _troop_only_candidates(player: PlayerData, city: City, hex_grid: HexGrid) -> Array:
+	var candidates: Array = []
+	for candidate_id in _production_candidates(player, city, hex_grid):
+		if candidate_id == "walls":
+			continue
+		var building: BuildingData = BuildingDatabase.get_building(candidate_id)
+		if building and building.trains_unit == "":
+			continue
+		candidates.append(candidate_id)
+	return candidates
+
+## Task 21 -- item de producao que e' TROPA (unidade militar), nem predio
+## nem Colonizador.
+static func _is_troop_item(item: String) -> bool:
+	return item != "" and item != "settler" and BuildingDatabase.get_building(item) == null
+
+## Melhor UNIDADE (nunca predio: uma emergencia nao espera um Quartel ficar
+## pronto) entre _troop_only_candidates, pela mesma pontuacao militar da
+## producao normal + poder por custo. "" se a cidade nao treina nenhuma
+## tropa agora -- decide_production cai na pontuacao normal, que ainda pode
+## escolher o predio de treino faltante (deficit alto).
+static func _best_emergency_troop(player: PlayerData, city: City, hex_grid: HexGrid, monster_threat: Dictionary, role_counts: Dictionary) -> String:
+	var best_id := ""
+	var best_score := -INF
+	for candidate_id in _troop_only_candidates(player, city, hex_grid):
+		if BuildingDatabase.get_building(candidate_id) != null:
+			continue
+		var data := UnitDatabase.create_unit(candidate_id)
+		if data.attack <= 0.0:
+			continue
+		var score := _score_production_candidate(candidate_id, 0.0, monster_threat.level, monster_threat.deficit, role_counts)
+		score += (data.attack + data.defense + data.max_hp * 0.15) / maxf(data.production_cost, 1.0)
+		if candidate_id == UnitDatabase.RACE_UNIQUE_KIND.get(player.civ.race if player.civ else "", ""):
+			score += SCORE_RACIAL_UNIT_TIE_BREAK
+		if score > best_score:
+			best_score = score
+			best_id = candidate_id
+	return best_id
 
 ## Uma frase por peso (ver comentario dos SCORE_WEIGHT_* acima). Muralhas
 ## sempre usa DEFENSE+THREAT (protege a cidade em si); predio de
@@ -580,13 +684,19 @@ static func _notify_human(opponent: PlayerData, text: String) -> void:
 	EventBus.notify.emit(text, "")
 
 static func decide_war(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
-	if player.is_at_war_with(opponent):
+	if player.is_at_war_with(opponent) or not Diplomacy.can_declare_war(player, opponent):
+		return
+	var threat := MagicAI.public_threat_target(opponent, player, hex_grid)
+	if threat != MagicRuntime.INVALID and player.units.filter(func(u): return u.unit_data.attack > 0).size() >= 2:
+		player.known_enemy_cities[threat] = true
+		Diplomacy.declare_war(player, opponent, "Interromper ritual estratégico")
+		_notify_human(opponent, "%s declarou guerra para interromper seu ritual!" % player.civ.civ_name)
 		return
 	var best = _best_war_objective(player, hex_grid, opponent)
 	if best == null:
 		return
-	if best.score >= WAR_SCORE_THRESHOLD and randf() < WAR_DECLARE_CHANCE_WHEN_READY:
-		Diplomacy.declare_war(player, opponent)
+	if best.score >= WAR_SCORE_THRESHOLD and player.ai_rng.randf() < WAR_DECLARE_CHANCE_WHEN_READY:
+		Diplomacy.declare_war(player, opponent, "Expansão territorial e recursos")
 		_notify_human(opponent, "%s declarou guerra!" % player.civ.civ_name)
 
 const CAMPAIGN_STATUS_ACTIVE := "active"
@@ -895,7 +1005,7 @@ const TRADE_PROPOSE_CHANCE_PER_TURN := 0.1
 static func decide_trade(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
 	if player.is_at_war_with(opponent):
 		return
-	if randf() >= TRADE_PROPOSE_CHANCE_PER_TURN:
+	if player.ai_rng.randf() >= TRADE_PROPOSE_CHANCE_PER_TURN:
 		return
 	var target_coord = _nearest_known_enemy_city(player, opponent, hex_grid)
 	if target_coord == null:
@@ -943,6 +1053,133 @@ static func decide_world_event_participation(player: PlayerData, civ_index: int,
 	if event.participants.has(civ_index):
 		return
 	event.participants[civ_index] = {"decision": true}
+
+## Roadmap "Fase Macro" 5B.3-G v2 -- pedido explicito do usuario apos
+## playtest: "durante a preparação e evento, as cidades produzam
+## especificamente tropas apenas" -- mais forte que so' inclinar a
+## pontuacao pra militar (v1, revisada): agora restringe os PROPRIOS
+## candidatos a treino/tropa (_troop_only_candidates), nunca deixando
+## Muralhas/economia competir e vencer por acidente. Reusa a MESMA
+## pontuacao de sempre (_score_production_candidate, threat=1.0 forcado --
+## o Dragao nao e' `opponent`, entao _city_under_threat nunca o veria
+## sozinho) sobre esse conjunto menor -- nunca uma unidade nova nem
+## producao gratis. Sem o atalho "cidade unica -> sempre colonizador" de
+## decide_production: colonizador nao e' uma tropa, e' economia disfarcada;
+## se nao houver candidato nenhum (sem Quartel/tropa desbloqueada ainda),
+## simplesmente nao muda a producao atual (no-op seguro). Generica por
+## proposito -- quem chama decide SE esta civ esta ameacada (ver
+## DragonEvent.is_civ_threatened), nao esta funcao.
+static func prepare_for_world_event(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
+	var troops := player.units.filter(func(u): return u.unit_data.attack > 0).size()
+	var enough := troops >= maxi(10, player.cities.size() * 6)
+	var visible := hex_grid.compute_visible_tiles(player)
+	var military_deficit := _military_deficit(player, opponent, visible)
+	var role_counts := _role_counts(player)
+	var race: String = player.civ.race if player.civ else ""
+	var racial_unique_kind: String = UnitDatabase.RACE_UNIQUE_KIND.get(race, "")
+	for city in player.cities:
+		var candidates := _troop_only_candidates(player, city, hex_grid)
+		if city.production_item in candidates:
+			continue # Preserva a obra/tropa já encomendada e o progresso pago.
+		if enough:
+			city.set_production("")
+			continue
+		var best_id := ""
+		var best_score := -INF
+		for candidate_id in candidates:
+			var score := _score_production_candidate(candidate_id, 0.0, 1.0, military_deficit, role_counts)
+			if candidate_id == racial_unique_kind:
+				score += SCORE_RACIAL_UNIT_TIE_BREAK
+			if score > best_score:
+				best_score = score
+				best_id = candidate_id
+		if best_id != "":
+			city.set_production(best_id)
+			_assign_building_site(city, best_id, hex_grid)
+
+## Roadmap "Fase Macro" 5B.3-G, "interceptacao real" -- Unit -> CombatResolver
+## -> Dragon Unit, reusando move_unit_toward/is_favorable_attack EXATAMENTE
+## como _handle_attacker/_engage ja fazem contra `opponent` (o Dragao nao e'
+## "outro opponent" pro sistema de guerra -- Diplomacy/is_at_war_with nunca
+## soube de monstro nenhum, entao isto fica deliberadamente FORA de
+## act_for_unit/_handle_attacker, nunca misturado com a logica de guerra
+## contra o jogador humano). Mesma regra de retirada (RETREAT_HP_FRACTION)
+## de sempre -- o Dragao continua podendo matar o defensor. 5B.3-G v2: o
+## corte por PERCEPTION_RANGE foi removido -- quem chama (defend_against_
+## dragon) ja decidiu que a CIDADE deste defensor esta sob ataque antes de
+## chamar esta funcao, entao redundar essa checagem aqui so' fazia o
+## defensor desistir de perseguir o Dragao quando ele estava perto da
+## cidade mas longe da unidade especifica (exatamente o "toma 0 de dano"
+## relatado).
+##
+## is_favorable_attack REMOVIDO tambem (pedido explicito do usuario apos
+## novo playtest: "as tropas nao conseguem causar dano... ficam ao redor
+## do dragao mas nao atacam"). Causa real: um Guarda basico (attack 4,
+## defense 3) contra o Dragao (attack 16, defense 8) SEMPRE reprova em
+## is_favorable_attack (perde ~25% do proprio HP de contra-ataque contra
+## so' ~2% de dano causado) -- a mesma regra que evita um rival desperdicar
+## tropas numa guerra normal contra o jogador aqui simplesmente BLOQUEAVA
+## todo ataque, sempre, pra sempre (o defensor chegava ao alcance e so'
+## ficava parado). Uma guarnicao defendendo a propria cidade do Dragao
+## precisa lutar mesmo em desvantagem -- e' o proprio ponto de "forcar
+## reacao militar" (docs/DRAGON_EVENT_DESIGN.md) -- RETREAT_HP_FRACTION
+## continua sendo o unico limite (foge quando malferido, nunca luta ate' a
+## morte certa repetidamente).
+static func react_to_dragon(unit: Unit, hex_grid: HexGrid, dragon_unit: Unit) -> void:
+	if unit.unit_data.attack <= 0.0 or unit.hp < unit.unit_data.max_hp * RETREAT_HP_FRACTION:
+		return
+	if dragon_unit.coord in hex_grid.tiles_in_range(unit.coord, unit.unit_data.attack_range):
+		CombatResolver.resolve(unit, dragon_unit, hex_grid)
+		return
+	move_unit_toward(unit, hex_grid, dragon_unit.coord)
+
+## PROVISORIO/NAO CALIBRADO -- distancia (cidade -> Dragao) abaixo da qual
+## uma cidade e' considerada "sob ataque" pro proposito de mobilizar a
+## propria guarnicao (pedido explicito do usuario apos playtest: "quando a
+## cidade esta sob ataque do dragao, ela direciona suas tropas pro
+## dragao"). Acima disso, tropas voltam a guarnecer a cidade (garrison).
+const DRAGON_CITY_AGGRO_RADIUS := 5
+## PROVISORIO/NAO CALIBRADO -- distancia (unidade -> cidade) considerada
+## "ja de volta guarnecendo" -- nao precisa terminar EXATAMENTE em cima da
+## cidade, so' perto o suficiente pra reagir rapido na proxima aproximacao.
+const GARRISON_RETURN_RADIUS := 2
+
+## Roadmap 5B.3-G v2 -- pedido explicito do usuario apos o playtest dele
+## proprio: "as tropas ficam apenas paradas, no maximo uma que tiver do
+## lado do dragao ataca, mas as outras ficam paradas tomando de longe...
+## quando a cidade esta sob ataque, direcione TODAS as tropas pro
+## dragao... quando o dragao sai do agro as tropas retornam pra guarnecer
+## a cidade". Substitui a v1 (so' 1 unidade GLOBAL mais proxima por turno)
+## por uma decisao POR CIDADE: toda unidade militar reage ou guarnece
+## baseada na cidade mais proxima DELA (nao ha um campo "unidade pertence a
+## cidade X" no jogo -- "mais proxima agora" e' a mesma aproximacao
+## deterministica-por-distancia ja usada no resto do arquivo). Cidade
+## dentro de DRAGON_CITY_AGGRO_RADIUS do Dragao -> toda unidade daquela
+## vizinhanca ataca; caso contrario, volta a guarnecer (GARRISON_RETURN_
+## RADIUS) se ainda nao estiver perto o suficiente.
+static func defend_against_dragon(player: PlayerData, hex_grid: HexGrid, dragon_unit: Unit) -> void:
+	if dragon_unit == null or not is_instance_valid(dragon_unit):
+		return
+	for unit in player.units:
+		if unit.unit_data.attack <= 0.0 or unit.hp < unit.unit_data.max_hp * RETREAT_HP_FRACTION:
+			continue
+		var nearest_city := _nearest_own_city(player, unit.coord)
+		if nearest_city == null:
+			continue
+		if HexMetrics.axial_distance(nearest_city.coord, dragon_unit.coord) <= DRAGON_CITY_AGGRO_RADIUS:
+			react_to_dragon(unit, hex_grid, dragon_unit)
+		elif HexMetrics.axial_distance(unit.coord, nearest_city.coord) > GARRISON_RETURN_RADIUS:
+			move_unit_toward(unit, hex_grid, nearest_city.coord)
+
+static func _nearest_own_city(player: PlayerData, from: Vector2i) -> City:
+	var best: City = null
+	var best_dist := INF
+	for city in player.cities:
+		var distance: float = HexMetrics.axial_distance(from, city.coord)
+		if distance < best_dist:
+			best_dist = distance
+			best = city
+	return best
 
 ## Roadmap "Parte B" B3 — pesos da pontuacao de PESQUISA (mesmo estilo
 ## nomeado/comentado de SCORE_WEIGHT_*/WAR_WEIGHT_* acima, ver decide_
@@ -1029,16 +1266,22 @@ static func _tech_identity_axis(tech: TechData) -> String:
 	return ""
 
 static func _axis_for_building(building_id: String) -> String:
+	if MagicContent.school_for_building(building_id) != "":
+		return CityIdentity.AXIS_ARCANA
 	for axis in CityIdentity.AXES:
 		if building_id in CityIdentity.AXIS_BUILDINGS[axis]:
 			return axis
 	return ""
 
 ## Pontuacao de UM candidato de pesquisa (ver RESEARCH_WEIGHT_* acima).
+## `tech` pode vir de TechDatabase OU MagicDatabase (ver decide_research) —
+## pre-requisitos nunca cruzam as duas arvores, entao basta checar em qual
+## das duas `tech` esta pra saber qual dicionario `researched` consultar.
 static func _score_research_candidate(tech: TechData, player: PlayerData) -> float:
+	var researched: Dictionary = player.researched_techs if TechDatabase.get_tech(tech.id) != null else player.researched_magic
 	var continues_chain := false
 	for prereq_id in tech.prerequisites:
-		if player.researched_techs.has(prereq_id):
+		if researched.has(prereq_id):
 			continues_chain = true
 			break
 	var axis := _tech_identity_axis(tech)
@@ -1054,7 +1297,7 @@ static func _score_research_candidate(tech: TechData, player: PlayerData) -> flo
 ## MAIOR pontuacao (ver _score_research_candidate) — nao mais um sorteio
 ## cego. Empate resolvido pela ordem de iteracao de `available` (que segue
 ## TechDatabase.all_techs(), ordem de insercao estavel — deterministico,
-## nao randi(), mesmo padrao de _score_settle_candidate/_score_production_
+## nao randi(), mesmo padrao de CitySite.evaluate/_score_production_
 ## candidate). Roadmap de gameplay Fase 4A — achado do harness de simulacao
 ## (Fase 0): sorteio uniforme entre TODAS as disponiveis fazia Mercado
 ## (Celeiro -> Oficina -> Mercado, 3 pesquisas especificas em sequencia)
@@ -1064,20 +1307,25 @@ static func _score_research_candidate(tech: TechData, player: PlayerData) -> flo
 ## acrescenta o termo RESEARCH_WEIGHT_IDENTITY por cima, na MESMA formula —
 ## nunca um pool separado, nunca um bloqueio (preferencia, nunca
 ## exclusividade).
+## Pool de candidatos junta as duas arvores (Tecnologia + Magia) num so
+## `available`, exatamente como a arvore unica de antes da separacao
+## estrutural — sem lógica nova de priorizar uma arvore sobre a outra, so
+## a fonte que passou a ser duas listas concatenadas em vez de uma.
 static func decide_research(player: PlayerData) -> void:
 	if player.current_research != "":
 		return
-	var available = TechDatabase.available_techs(player.researched_techs)
+	var available = TechDatabase.available_techs(player.researched_techs) + MagicDatabase.available_techs(player.researched_magic)
 	if available.is_empty():
 		return
 	var best_tech: TechData = null
 	var best_score := -INF
 	for tech in available:
 		var score := _score_research_candidate(tech, player)
+		score += StrategicAI.research_score(player, tech)
 		if score > best_score:
 			best_score = score
 			best_tech = tech
-	player.current_research = best_tech.id
+	player.select_research(best_tech.id)
 
 ## So a parte de "preparar" o turno da IA (visibilidade atual + atualizar
 ## cidades inimigas escoutadas), SEM mover nenhuma unidade ainda — extraido
@@ -1088,6 +1336,10 @@ static func decide_research(player: PlayerData) -> void:
 ## tempo... em pequenos grupos... diminui o lag na passada de turnos").
 static func begin_turn(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> Dictionary:
 	var visible := hex_grid.compute_visible_tiles(player)
+	player.explored_tiles.merge(visible, true)
+	for other in GameManager.players:
+		if other != player:
+			_scout_enemy_cities(player, other, visible)
 	_scout_enemy_cities(player, opponent, visible)
 	return visible
 
@@ -1095,9 +1347,26 @@ static func begin_turn(player: PlayerData, hex_grid: HexGrid, opponent: PlayerDa
 ## begin_turn() acima, pra poder ser chamada unidade-por-unidade em frames
 ## diferentes.
 static func act_for_unit(unit: Unit, hex_grid: HexGrid, player: PlayerData, opponent: PlayerData, visible: Dictionary) -> void:
+	if unit.ritual_id != "" or unit.unit_data.visual_kind in ["elder_lich", "archdemon"]:
+		return
+	if MagicAI.prepare_ritualists(unit, player, hex_grid):
+		return
+	if unit.movement_left <= 0.0 or unit.hp <= 0.0:
+		return
+	if MagicAI.protect_caster(unit, player, hex_grid, visible):
+		return
 	if unit.unit_data.can_found_city:
 		_handle_settler(unit, hex_grid, player)
+	elif unit.unit_data.attack <= 0.0:
+		StrategicAI.move_support(unit, player, hex_grid)
 	elif unit.unit_data.attack > 0.0:
+		if StrategicAI.engage_nearby_monster(unit, player, hex_grid, visible):
+			return
+		# Task 21 -- monstro ameacando uma cidade propria: guarnicao sai ao
+		# encontro / reforco proporcional (ver CityDefense.defend_turn).
+		if CityDefense.defend_turn(unit, player, hex_grid, visible):
+			return
+		opponent = StrategicAI.choose_opponent(player, hex_grid, opponent)
 		_handle_attacker(unit, hex_grid, player, opponent, visible)
 
 ## Turno da IA rival inteiro DE UMA VEZ, no MESMO frame — continua sendo o
@@ -1134,18 +1403,19 @@ static func _handle_attacker(unit: Unit, hex_grid: HexGrid, player: PlayerData, 
 		_retreat(unit, hex_grid, player)
 		return
 
-	var target_coord = _campaign_attack_target(player, hex_grid, opponent)
+	var target_coord = MagicAI.counter_ritual_target(player, opponent, hex_grid)
+	if target_coord == null:
+		target_coord = _campaign_attack_target(player, hex_grid, opponent)
 	if target_coord == null:
 		target_coord = _choose_target(unit, hex_grid, player, opponent, visible)
 	if target_coord == null:
+		StrategicAI.explore(unit, player, hex_grid)
 		return
 
 	if target_coord in hex_grid.tiles_in_range(unit.coord, unit.unit_data.attack_range):
 		_engage(unit, hex_grid, target_coord)
 		return
 
-	if HexMetrics.axial_distance(unit.coord, target_coord) > PERCEPTION_RANGE:
-		return
 
 	if unit.unit_data.attack_range > 1 and not _has_melee_escort_nearby(unit, player):
 		return
@@ -1217,7 +1487,7 @@ static func _nearest_known_target(from: Vector2i, hex_grid: HexGrid, player: Pla
 	var best = null
 	var best_dist = 999999
 	for unit in opponent.units:
-		if not visible.has(unit.coord):
+		if not visible.has(unit.coord) or MagicRuntime.concealed(unit, player, hex_grid):
 			continue
 		var d = HexMetrics.axial_distance(from, unit.coord)
 		if d < best_dist:
@@ -1242,6 +1512,22 @@ static func _nearest_known_target(from: Vector2i, hex_grid: HexGrid, player: Pla
 ## nunca conta como do "dono null", entao um monstro nunca consegue sequer
 ## pisar em tile de cidade, ver HexGrid.compute_reachable).
 static func move_unit_toward(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i) -> void:
+	if unit.movement_left <= 0 or unit.coord == target_coord or unit.ritual_id != "":
+		return
+	var destinations: Array[Vector2i] = [target_coord]
+	if hex_grid.get_unit_at(target_coord) != null or (hex_grid.get_city_at(target_coord) != null and hex_grid.get_city_at(target_coord).owner_player != unit.owner_player):
+		destinations = hex_grid.get_neighbors(target_coord)
+	destinations.sort_custom(func(a, b): return HexMetrics.axial_distance(unit.coord, a) < HexMetrics.axial_distance(unit.coord, b))
+	for destination in destinations:
+		var path := hex_grid.compute_path(unit.coord, destination, unit.owner_player, unit.unit_data.flies, unit.embarked)
+		if path.is_empty():
+			continue
+		for step in path:
+			var cost := 1.0 if unit.unit_data.flies else float(hex_grid.get_tile(step).movement_cost)
+			if cost > unit.movement_left:
+				break
+			hex_grid.move_unit(unit, step, cost)
+		return
 	var reachable = hex_grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies)
 	var best_coord = null
 	var best_dist = HexMetrics.axial_distance(unit.coord, target_coord)
@@ -1269,58 +1555,33 @@ static func _retreat(unit: Unit, hex_grid: HexGrid, player: PlayerData) -> void:
 		return
 	move_unit_toward(unit, hex_grid, nearest_city_coord)
 
+## Task 22 -- so' vale gastar producao num colonizador se existe algum local
+## aceitavel (CitySite.has_acceptable_site); depois de uma busca sem
+## resultado, nao repete por CitySite.NO_SITE_RETRY_TURNS turnos (a busca custa
+## alguns ms). "Conhecido" = explorado + o que a IA ve agora (no primeiro
+## turno, `explored_tiles` ainda esta vazio: begin_turn roda depois).
+static func _has_settle_site(player: PlayerData, hex_grid: HexGrid) -> bool:
+	if TurnManager.turn_number < player.settle_search_blocked_until:
+		return false
+	if CitySite.has_acceptable_site(hex_grid, player):
+		return true
+	player.settle_search_blocked_until = TurnManager.turn_number + CitySite.NO_SITE_RETRY_TURNS
+	return false
+
+## Task 22 -- o local vem de CitySite.choose_site (valor local + espaco +
+## coesao + seguranca + estrategia, ver CitySite.gd), nao mais do primeiro
+## tile a 3 de distancia. O alvo fica guardado no colonizador (histerese).
+## Sem nenhum local aceitavel, explora (revela mais mapa) por
+## CitySite.SETTLE_PATIENCE_TURNS turnos e so' entao aceita o melhor valido.
 static func _handle_settler(unit: Unit, hex_grid: HexGrid, player: PlayerData) -> void:
-	if hex_grid.get_city_at(unit.coord) == null and _far_enough_from_cities(unit.coord, hex_grid):
-		WorldSetup.found_city_from_settler(hex_grid, unit)
+	var site := CitySite.choose_site(hex_grid, player, unit, unit.settle_wait_turns >= CitySite.SETTLE_PATIENCE_TURNS)
+	if site.is_empty():
+		unit.settle_wait_turns += 1
+		unit.settle_target = Unit.NO_SETTLE_TARGET
+		StrategicAI.explore(unit, player, hex_grid)
 		return
-
-	var reachable = hex_grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player)
-	if reachable.size() > 0:
-		var best_coord = null
-		var best_score := -INF
-		for candidate in reachable.keys():
-			var score := _score_settle_candidate(candidate, hex_grid, player)
-			if score > best_score:
-				best_score = score
-				best_coord = candidate
-		hex_grid.move_unit(unit, best_coord, reachable[best_coord])
-
-## Roadmap 2.0 Parte 1 (B3) — antes escolhia um destino ALEATORIO entre os
-## tiles alcancaveis (options[randi() % options.size()]) quando ainda nao
-## estava pronto pra fundar. Agora prefere um destino com vizinhos de
-## recurso (+1 por vizinho com recurso), e evita levemente um tile sob
-## pressao de cidade rival (A2, is_under_rival_pressure) — nunca bloqueio,
-## so preferencia, mesmo espirito do resto do sistema. Empate resolvido
-## pela ordem de iteracao de Dictionary.keys() (determinístico, nao
-## randi()), pra manter os testes previsiveis.
-const SETTLE_RIVAL_PRESSURE_PENALTY := 2.0
-## Roadmap 2.0 (fecha Parte A) — constante PROPRIA, nao reusa SETTLE_RIVAL_
-## PRESSURE_PENALTY: sao fenomenos diferentes (unidade neutra hostil vs.
-## civ rival), mesmo que a FORMA da penalidade seja identica (aditiva,
-## nunca bloqueio, ver HexGrid.get_lair_danger_at).
-const SETTLE_LAIR_DANGER_WEIGHT := 3.0
-
-static func _score_settle_candidate(coord: Vector2i, hex_grid: HexGrid, player: PlayerData) -> float:
-	var score := 0.0
-	for n in hex_grid.get_neighbors(coord):
-		var data: HexTileData = hex_grid.get_tile(n)
-		if data and data.resource != "":
-			score += 1.0
-	if hex_grid.is_under_rival_pressure(coord, player):
-		score -= SETTLE_RIVAL_PRESSURE_PENALTY
-	score -= hex_grid.get_lair_danger_at(coord) * SETTLE_LAIR_DANGER_WEIGHT
-	return score
-
-## Roadmap 2.0 Parte 1 (A3) — corrigido pra olhar TODAS as cidades do mapa
-## (agora via hex_grid.cities_by_coord, nao mais player.cities): antes um
-## assentador de IA podia fundar colado numa cidade RIVAL, inclusive do
-## jogador humano, porque o check so enxergava as cidades do proprio
-## `player`. A fundacao do jogador HUMANO continua sem nenhuma restricao de
-## distancia (nao existe check equivalente do lado dele) — essa correcao e
-## so pro lado da IA, por pedido explicito do usuario de nao transformar
-## uma correcao de IA numa mudanca de regra global.
-static func _far_enough_from_cities(coord: Vector2i, hex_grid: HexGrid) -> bool:
-	for city in hex_grid.cities_by_coord.values():
-		if HexMetrics.axial_distance(coord, city.coord) < SETTLE_MIN_DISTANCE:
-			return false
-	return true
+	unit.settle_target = site.coord
+	if site.coord != unit.coord:
+		move_unit_toward(unit, hex_grid, site.coord)
+	if unit.coord == site.coord:
+		WorldSetup.found_city_from_settler(hex_grid, unit)

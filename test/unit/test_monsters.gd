@@ -3,6 +3,17 @@ extends GutTest
 ## Cobre MonsterDatabase (dados dos guardioes de Covil de Monstro) e a
 ## geracao deterministica de covis no mapa (HexGrid._spawn_monster_lairs).
 
+## COVIS DE MONSTROS -- SOBREPOSICAO: o chefao original agora nasce ao
+## REDOR do covil (num vizinho), nao mais sempre exatamente em lair_coord
+## (ver HexGrid._find_free_tile_for_lair_spawn) -- helper pra achar o
+## chefao pela FLAG (is_camp_boss), nao mais assumindo a coordenada exata.
+func _find_camp_boss(hex_grid: HexGrid, lair_coord: Vector2i) -> Unit:
+	for coord in hex_grid._lair_area(lair_coord):
+		var unit: Unit = hex_grid.get_unit_at(coord)
+		if unit != null and unit.is_camp_boss:
+			return unit
+	return null
+
 func test_create_monster_returns_positive_gold_reward():
 	for kind in MonsterDatabase.KINDS:
 		var data = MonsterDatabase.create_monster(kind)
@@ -30,6 +41,33 @@ func test_spawn_monster_at_builds_visual_for_every_kind_without_error():
 			assert_not_null(unit, "%s (boss=%s) deveria ter spawnado sem erro" % [kind, is_boss])
 			assert_eq(unit.unit_data.visual_kind, MonsterDatabase.KIND_DATA[kind].visual_kind)
 			col += 1
+
+	hex_grid.queue_free()
+
+## MAGIAS, SPAWNS E ARVORES (pedido do usuario: "o mesmo problema ocorre
+## com invocacoes/monstros... defina uma politica coerente pra spawn") --
+## um monstro nascendo num tile com arvore ja plantada nao pode ficar
+## visualmente enterrado nela, mesma politica ja usada por found_city/
+## place_building (ver HexGrid._clear_tile_decor_at).
+func test_spawn_monster_at_clears_tree_prop_on_its_tile():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var coord := Vector2i(0, 0)
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.FOREST)
+
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.instance_count = 1
+	mm.set_instance_transform(0, Transform3D(Basis(), Vector3.ONE))
+	var mm_instance := MultiMeshInstance3D.new()
+	mm_instance.multimesh = mm
+	hex_grid.add_child(mm_instance)
+	hex_grid._props_tree_instance = mm_instance
+	hex_grid._tree_coord_to_index[coord] = [0]
+
+	hex_grid.spawn_monster_at(coord, "goblin")
+
+	assert_false(hex_grid._tree_coord_to_index.has(coord), "arvore nao deveria continuar registrada no tile do monstro novo")
 
 	hex_grid.queue_free()
 
@@ -82,9 +120,38 @@ func test_generate_map_spawns_monster_lairs_with_neutral_owner():
 
 	assert_gt(hex_grid.lair_coords.size(), 0, "um mapa medio deveria ter pelo menos um covil")
 	for coord in hex_grid.lair_coords:
-		var guardian = hex_grid.get_unit_at(coord)
-		assert_not_null(guardian, "todo lair_coords deveria ter um guardiao vivo logo apos gerar o mapa")
+		var guardian = _find_camp_boss(hex_grid, coord)
+		assert_not_null(guardian, "todo covil deveria ter um guardiao vivo (na area) logo apos gerar o mapa")
 		assert_null(guardian.owner_player, "guardiao de covil deveria ser neutro (owner_player nulo)")
+
+	hex_grid.queue_free()
+
+## COVIS DE MONSTROS -- SOBREPOSICAO (pedido do usuario: "o tile do covil
+## deve ser reservado para o covil... monstros nunca em cima da
+## estrutura"): confirma que o guardiao ORIGINAL nasce ao REDOR do covil
+## (num vizinho), nunca na propria celula -- LairStructure mora la sozinha,
+## sem duas malhas disputando o mesmo tile.
+func test_lair_coord_itself_never_holds_the_original_guardian():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	hex_grid.generate_map(33, 33, 2024)
+	assert_gt(hex_grid.lair_coords.size(), 0, "precondicao: deveria ter pelo menos um covil")
+	for coord in hex_grid.lair_coords:
+		assert_null(hex_grid.get_unit_at(coord), "tile do covil deveria ficar reservado pra LairStructure, sem monstro em cima")
+	hex_grid.queue_free()
+
+func test_find_free_tile_for_lair_spawn_never_returns_the_lair_coord_itself():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var lair_coord := Vector2i(0, 0)
+	hex_grid.tiles[lair_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	for dir in HexGrid.NEIGHBOR_DIRS:
+		hex_grid.tiles[lair_coord + dir] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+	for i in range(50):
+		var target = hex_grid._find_free_tile_for_lair_spawn(lair_coord)
+		assert_not_null(target, "area ao redor tem espaco de sobra, nunca deveria devolver null aqui")
+		assert_ne(target, lair_coord, "candidato nunca deveria ser a propria celula do covil")
 
 	hex_grid.queue_free()
 
@@ -138,7 +205,7 @@ func test_generate_map_records_lair_kind_matching_the_guardian():
 
 	assert_gt(hex_grid.lair_coords.size(), 0, "precondicao: deveria ter pelo menos um covil")
 	for coord in hex_grid.lair_coords:
-		var guardian = hex_grid.get_unit_at(coord)
+		var guardian = _find_camp_boss(hex_grid, coord)
 		assert_eq(hex_grid.lair_kind_by_coord.get(coord, ""), guardian.unit_data.visual_kind)
 
 	hex_grid.queue_free()
@@ -477,6 +544,58 @@ func test_maybe_roam_lair_repositions_within_the_same_lair_area_when_full():
 
 	hex_grid.queue_free()
 
+## Roadmap "Fase Macro" 5B.3-E -- BUG real encontrado apos o usuario
+## reportar "desaparece sem explicacao" de novo: _maybe_roam_lair sorteava
+## QUALQUER unidade neutra (owner_player == null) dentro da area de um
+## covil pra "patrulhar" (teleportar direto, sem passar por move_unit()),
+## SEM checar Unit.world_event_managed -- se o Dragao de DragonEvent
+## passasse voando/andando perto de QUALQUER covil no mapa durante sua
+## jornada, podia ser reposicionado silenciosamente, invisivel ao proprio
+## DragonEvent (que so' sabe onde a Unit esta lendo dragon_unit.coord
+## DEPOIS do fato). Loop de muitas tentativas (ROAM_CHANCE e'
+## probabilistico) -- mesma disciplina do teste acima, nunca confiar numa
+## unica chamada.
+func test_maybe_roam_lair_never_moves_a_world_event_managed_unit():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	hex_grid.generate_map(41, 41, 111)
+
+	var lair_coord: Vector2i = Vector2i.ZERO
+	var area: Array[Vector2i] = []
+	var found_lair := false
+	for candidate in hex_grid.lair_coords:
+		var candidate_area = hex_grid._lair_area(candidate)
+		if candidate_area.size() <= 1:
+			continue
+		var all_land := true
+		for coord in candidate_area:
+			var data = hex_grid.get_tile(coord)
+			if data == null or data.blocks_land_units():
+				all_land = false
+				break
+		if all_land:
+			lair_coord = candidate
+			area = candidate_area
+			found_lair = true
+			break
+	assert_true(found_lair, "precondicao: deveria haver pelo menos um covil com area de terra firme")
+
+	# Limpa a area inteira e coloca so' uma Unit "de World Event" nela --
+	# cenario real: o Dragao passando perto/por cima de um covil qualquer.
+	for coord in area:
+		var existing = hex_grid.get_unit_at(coord)
+		if existing != null:
+			hex_grid.remove_unit(existing)
+	var dragon_coord: Vector2i = area[0]
+	var dragon_unit := hex_grid.spawn_monster_at(dragon_coord, "dragon")
+	dragon_unit.world_event_managed = true
+
+	for i in range(200):
+		hex_grid._maybe_roam_lair(lair_coord)
+		assert_eq(dragon_unit.coord, dragon_coord, "unidade world_event_managed nunca deveria ser reposicionada pela patrulha generica de covil")
+
+	hex_grid.queue_free()
+
 ## HexGrid.neutral_units()/clear_neutral_units() sao a fonte de verdade
 ## usada por SaveManager pra salvar/restaurar o mapa de monstros inteiro
 ## (ver test_save_manager.gd) — cobertura minima isolada do par aqui.
@@ -588,10 +707,25 @@ func test_skeleton_reinforcement_can_spawn_more_than_one_at_once():
 	# pro grupo inteiro nascer de uma vez.
 	var lair_coord: Vector2i = hex_grid.lair_coords[0]
 	hex_grid.lair_kind_by_coord[lair_coord] = "skeleton"
+	# Forca a area inteira do covil pra GRASSLAND (walkable) -- desde
+	# HexTileData.is_mountain()/blocks_land_units(), Montanha (comum no
+	# mapa gerado de verdade que este teste usa) some do espaco livre pro
+	# batch, e este teste testa o MECANISMO de batch, nao terreno -- nao
+	# deveria depender de sorte de geracao pra ter espaco de sobra.
 	for coord in hex_grid._lair_area(lair_coord):
 		var existing = hex_grid.get_unit_at(coord)
 		if existing != null:
 			hex_grid.remove_unit(existing)
+		hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	# Nenhum OUTRO covil do mapa pode ser "skeleton" tambem -- _global_cap_
+	# for("skeleton") e compartilhado entre TODOS os covis do mapa inteiro
+	# (_count_alive_of_kind conta o mapa todo), entao um segundo covil de
+	# esqueleto natural desta seed comeria o teto global e capava room_left
+	# em 1 pra este aqui, exatamente o tipo de dependencia de sorte de
+	# geracao que a mudanca de Montanha acima ja tirou -- tira aqui tambem.
+	for other_coord in hex_grid.lair_coords:
+		if other_coord != lair_coord and hex_grid.lair_kind_by_coord.get(other_coord, "") == "skeleton":
+			hex_grid.lair_kind_by_coord[other_coord] = "goblin"
 
 	var saw_batch := false
 	for i in range(500):
@@ -659,7 +793,7 @@ func test_lair_structure_and_reinforcement_survive_camp_boss_death():
 	assert_gt(hex_grid.lair_coords.size(), 0, "precondicao: deveria ter pelo menos um covil")
 
 	var lair_coord: Vector2i = hex_grid.lair_coords[0]
-	var boss = hex_grid.get_unit_at(lair_coord)
+	var boss = _find_camp_boss(hex_grid, lair_coord)
 	hex_grid.remove_unit(boss)
 
 	assert_true(lair_coord in hex_grid.lair_coords, "covil deveria continuar ATIVO (reforco liberado) mesmo com o chefao morto")
@@ -667,67 +801,16 @@ func test_lair_structure_and_reinforcement_survive_camp_boss_death():
 
 	hex_grid.queue_free()
 
-## Pilhagem de Covil (pedido do usuario: "entrar no tile de um covil ativo
-## sem defensores destroi o covil e concede um premio de ouro"). move_unit
-## so e chamado com um dest que ja passou por compute_reachable — que
-## exclui tile ocupado — entao "sem defensor" e garantido por construcao,
-## nao precisa recriar aqui (ver HexGrid.move_unit).
-func test_entering_empty_lair_destroys_it_and_grants_gold():
-	var hex_grid := HexGrid.new()
-	hex_grid._ready()
-	hex_grid.generate_map(29, 29, 555)
-	var lair_coord: Vector2i = hex_grid.lair_coords[0]
-	var kind: String = hex_grid.lair_kind_by_coord[lair_coord]
-	var boss = hex_grid.get_unit_at(lair_coord)
-	hex_grid.remove_unit(boss)
-
-	var human := PlayerData.new(CivilizationData.new())
-	var soldier = hex_grid.spawn_unit(lair_coord, UnitDatabase.create_unit("warrior"), human)
-
-	hex_grid.move_unit(soldier, lair_coord, 1.0)
-
-	assert_eq(human.gold, MonsterDatabase.lair_clear_reward(kind), "deveria conceder exatamente a recompensa de limpeza do tipo do covil")
-	assert_false(lair_coord in hex_grid.lair_coords, "covil deveria sair de lair_coords pra sempre (reforco cancelado)")
-	assert_false(hex_grid.lairs_by_coord.has(lair_coord), "estrutura visual deveria ser removida do mapa")
-
-	hex_grid.queue_free()
-
-## Regressao: um monstro (owner_player nulo, ex: Invasor marchando) nunca
-## deveria destruir um covil so por passar pelo tile — a recompensa e "unidade
-## MILITAR DE JOGADOR", nao qualquer movimento (ver HexGrid.move_unit).
-func test_monster_movement_does_not_destroy_a_lair():
-	var hex_grid := HexGrid.new()
-	hex_grid._ready()
-	hex_grid.generate_map(29, 29, 555)
-	var lair_coord: Vector2i = hex_grid.lair_coords[0]
-	var boss = hex_grid.get_unit_at(lair_coord)
-	hex_grid.remove_unit(boss)
-
-	var wanderer = hex_grid.spawn_monster_at(lair_coord, "goblin") # reforco comum, owner_player nulo
-	hex_grid.move_unit(wanderer, lair_coord, 0.0)
-
-	assert_true(lair_coord in hex_grid.lair_coords, "movimento de monstro (owner_player nulo) nunca deveria destruir um covil")
-
-	hex_grid.queue_free()
-
-## Regressao: Colonizador (attack 0.0, nao e "unidade militar") entrando no
-## tile vazio nao deveria limpar o covil nem conceder ouro.
-func test_settler_entering_empty_lair_does_not_destroy_it():
-	var hex_grid := HexGrid.new()
-	hex_grid._ready()
-	hex_grid.generate_map(29, 29, 555)
-	var lair_coord: Vector2i = hex_grid.lair_coords[0]
-	var boss = hex_grid.get_unit_at(lair_coord)
-	hex_grid.remove_unit(boss)
-
-	var human := PlayerData.new(CivilizationData.new())
-	var settler = hex_grid.spawn_unit(lair_coord, UnitDatabase.create_unit("settler"), human)
-	hex_grid.move_unit(settler, lair_coord, 1.0)
-
-	assert_true(lair_coord in hex_grid.lair_coords, "Colonizador (unidade nao militar, attack=0) nao deveria limpar covil")
-	assert_eq(human.gold, 0.0)
-
-	hex_grid.queue_free()
+## COVIS DE MONSTROS -- DESTRUICAO (rodada seguinte): a antiga versao
+## deste teste ("entrar no tile de um covil vazio destroi e concede ouro")
+## testava HexGrid.move_unit/_grant_lair_clear_reward, removido -- destruir
+## um covil agora exige atacar a ESTRUTURA de verdade ate zerar o HP dela
+## (ver CombatResolver.resolve_lair_attack), coberto em
+## test_selection_manager.gd (test_attacking_an_undefended_lair_structure_
+## destroys_it_and_grants_reward/test_lair_structure_is_not_attackable_
+## while_still_defended) -- o fluxo real passa por SelectionManager
+## (selecionar -> attackable -> atacar), nao faz sentido testar so' a
+## metade em HexGrid isolado.
 
 ## Saque de Invasor sobre tile trabalhado: coberto em test_monster_ai.gd
 ## (test_invader_ending_turn_on_worked_tile_pillages_it/test_invader_does_
@@ -735,5 +818,3 @@ func test_settler_entering_empty_lair_does_not_destroy_it():
 ## certo (GameManager.players/human_player) que MonsterAI._nearest_city_
 ## coord/_hostile_in_attack_range precisam pra funcionar sem tocar estado
 ## global de outros testes.
-
-	hex_grid.queue_free()

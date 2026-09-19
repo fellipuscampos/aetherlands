@@ -58,18 +58,18 @@ func test_can_cast_false_without_the_tech_researched():
 	assert_false(SpellManager.can_cast(caster, "Lança de Arcana", 1))
 
 func test_can_cast_true_once_the_tech_is_researched():
-	caster.researched_techs["invocacao_espiritos"] = true
+	caster.researched_magic["invocacao_espiritos"] = true
 	assert_true(SpellManager.can_cast(caster, "Lança de Arcana", 1))
 
 func test_can_cast_false_while_on_cooldown():
-	caster.researched_techs["invocacao_espiritos"] = true
+	caster.researched_magic["invocacao_espiritos"] = true
 	caster.spell_cooldowns["Lança de Arcana"] = 5
 
 	assert_false(SpellManager.can_cast(caster, "Lança de Arcana", 3))
 	assert_true(SpellManager.can_cast(caster, "Lança de Arcana", 5), "turno exatamente igual ao fim da recarga ja deveria liberar de novo")
 
 func test_cast_applies_damage_and_sets_cooldown():
-	caster.researched_techs["invocacao_espiritos"] = true
+	caster.researched_magic["invocacao_espiritos"] = true
 	var enemy = _make_unit("warrior", target_owner, Vector2i(1, 0))
 	var hp_before = enemy.hp
 	var mana_before = caster.mana
@@ -82,7 +82,7 @@ func test_cast_applies_damage_and_sets_cooldown():
 	assert_true("dano" in message)
 
 func test_cast_kills_and_removes_unit_when_hp_drops_to_zero():
-	caster.researched_techs["invocacao_espiritos"] = true
+	caster.researched_magic["invocacao_espiritos"] = true
 	var enemy = _make_unit("warrior", target_owner, Vector2i(1, 0))
 	enemy.hp = 5.0 # abaixo do dano do feitico (6) — deveria morrer
 
@@ -92,7 +92,7 @@ func test_cast_kills_and_removes_unit_when_hp_drops_to_zero():
 	assert_false(enemy in target_owner.units, "unidade destruida deveria sair da lista do dono")
 
 func test_cast_heals_a_friendly_unit():
-	caster.researched_techs["necromancia_pratica"] = true
+	caster.researched_magic["necromancia_pratica"] = true
 	var ally = _make_unit("warrior", caster, Vector2i(1, 0)) # max_hp 12
 	ally.hp = 4.0
 	var mana_before = caster.mana
@@ -104,7 +104,7 @@ func test_cast_heals_a_friendly_unit():
 	assert_true("HP" in message)
 
 func test_cast_heal_never_overheals_past_max_hp():
-	caster.researched_techs["necromancia_pratica"] = true
+	caster.researched_magic["necromancia_pratica"] = true
 	var ally = _make_unit("warrior", caster, Vector2i(1, 0))
 	ally.hp = 11.0 # perto do teto (12)
 
@@ -122,7 +122,7 @@ func test_cast_a_spell_without_spelldata_is_a_safe_no_op():
 	assert_true("não tem efeito" in message)
 
 func test_cast_while_on_cooldown_does_not_reapply_the_effect():
-	caster.researched_techs["invocacao_espiritos"] = true
+	caster.researched_magic["invocacao_espiritos"] = true
 	caster.spell_cooldowns["Lança de Arcana"] = 10
 	var enemy = _make_unit("warrior", target_owner, Vector2i(1, 0))
 	var hp_before = enemy.hp
@@ -168,7 +168,7 @@ func test_has_enough_mana_false_for_a_spell_without_spelldata():
 
 func test_is_castable_requires_both_tech_cooldown_and_mana():
 	# So a tecnologia, sem mana: nao castable.
-	caster.researched_techs["invocacao_espiritos"] = true
+	caster.researched_magic["invocacao_espiritos"] = true
 	caster.mana = 0.0
 	assert_false(SpellManager.is_castable(caster, "Lança de Arcana", 1))
 
@@ -185,7 +185,7 @@ func test_is_castable_requires_both_tech_cooldown_and_mana():
 ## (nao so o botao da HUD) — sem isso um jogador com 0 mana ainda
 ## conseguiria conjurar chamando a mesma logica que a HUD usa.
 func test_cast_fails_with_insufficient_mana_and_applies_no_effect():
-	caster.researched_techs["invocacao_espiritos"] = true
+	caster.researched_magic["invocacao_espiritos"] = true
 	caster.mana = 10.0 # menos que os 25 exigidos
 	var enemy = _make_unit("warrior", target_owner, Vector2i(1, 0))
 	var hp_before = enemy.hp
@@ -200,7 +200,7 @@ func test_cast_fails_with_insufficient_mana_and_applies_no_effect():
 ## Roadmap de gameplay Fase 5 — "Ruína Ígnea": dano no alvo principal MAIS
 ## em qualquer unidade num tile vizinho dele (SpellData.damage_area_radius).
 func test_cast_flame_cataclysm_damages_primary_target_and_adjacent_enemy():
-	caster.researched_techs["cataclismo_elemental"] = true
+	caster.researched_magic["cataclismo_elemental"] = true
 	var primary = _make_unit("warrior", target_owner, Vector2i(0, 0))
 	var nearby_enemy = _make_unit("warrior", target_owner, Vector2i(1, 0))
 	var primary_hp_before = primary.hp
@@ -214,7 +214,7 @@ func test_cast_flame_cataclysm_damages_primary_target_and_adjacent_enemy():
 ## Cataclismo indiscriminado (ver flavor text/comentario de SpellData.
 ## damage_area_radius) — aliado perto do alvo tambem toma dano.
 func test_cast_flame_cataclysm_also_damages_a_nearby_ally():
-	caster.researched_techs["cataclismo_elemental"] = true
+	caster.researched_magic["cataclismo_elemental"] = true
 	var primary = _make_unit("warrior", target_owner, Vector2i(0, 0))
 	var nearby_ally = _make_unit("warrior", caster, Vector2i(1, -1))
 	var ally_hp_before = nearby_ally.hp
@@ -224,7 +224,7 @@ func test_cast_flame_cataclysm_also_damages_a_nearby_ally():
 	assert_almost_eq(nearby_ally.hp, ally_hp_before - 10.0, 0.01, "cataclismo e indiscriminado: aliado perto do alvo tambem deveria tomar dano")
 
 func test_cast_flame_cataclysm_does_not_damage_units_outside_the_radius():
-	caster.researched_techs["cataclismo_elemental"] = true
+	caster.researched_magic["cataclismo_elemental"] = true
 	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	var primary = _make_unit("warrior", target_owner, Vector2i(0, 0))
 	var far_enemy = _make_unit("warrior", target_owner, Vector2i(2, 0)) # 2 tiles de distancia, fora do raio 1
@@ -235,7 +235,7 @@ func test_cast_flame_cataclysm_does_not_damage_units_outside_the_radius():
 	assert_almost_eq(far_enemy.hp, far_hp_before, 0.01, "unidade fora do raio da area nao deveria ser afetada")
 
 func test_cast_flame_cataclysm_sets_cooldown_and_costs_mana():
-	caster.researched_techs["cataclismo_elemental"] = true
+	caster.researched_magic["cataclismo_elemental"] = true
 	var primary = _make_unit("warrior", target_owner, Vector2i(0, 0))
 	var mana_before = caster.mana
 
@@ -248,7 +248,7 @@ func test_cast_flame_cataclysm_sets_cooldown_and_costs_mana():
 ## terreno do tile onde o ALVO (unidade propria) esta em pe, usando
 ## TechData.terrain_transform ("from": Tundra/Deserto, "to": Planicie).
 func test_cast_gaia_metamorphosis_transforms_eligible_terrain():
-	caster.researched_techs["transcendencia_florestal"] = true
+	caster.researched_magic["transcendencia_florestal"] = true
 	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.TUNDRA)
 	var ally = _make_unit("warrior", caster, Vector2i(1, 0))
 
@@ -258,7 +258,7 @@ func test_cast_gaia_metamorphosis_transforms_eligible_terrain():
 	assert_true("transformou" in message)
 
 func test_cast_gaia_metamorphosis_has_no_effect_on_ineligible_terrain():
-	caster.researched_techs["transcendencia_florestal"] = true
+	caster.researched_magic["transcendencia_florestal"] = true
 	# before_each ja deixa (1,0) como Planicie, que nao esta na lista `from`
 	var ally = _make_unit("warrior", caster, Vector2i(1, 0))
 
@@ -269,7 +269,7 @@ func test_cast_gaia_metamorphosis_has_no_effect_on_ineligible_terrain():
 
 ## A unidade so marca QUAL tile transformar — ela mesma nao e afetada.
 func test_cast_gaia_metamorphosis_does_not_affect_the_target_units_hp():
-	caster.researched_techs["transcendencia_florestal"] = true
+	caster.researched_magic["transcendencia_florestal"] = true
 	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.DESERT)
 	var ally = _make_unit("warrior", caster, Vector2i(1, 0))
 	ally.hp = 5.0
@@ -279,7 +279,7 @@ func test_cast_gaia_metamorphosis_does_not_affect_the_target_units_hp():
 	assert_almost_eq(ally.hp, 5.0, 0.01, "a unidade so marca qual tile transformar, nao e afetada ela mesma")
 
 func test_cast_gaia_metamorphosis_sets_cooldown_and_costs_mana():
-	caster.researched_techs["transcendencia_florestal"] = true
+	caster.researched_magic["transcendencia_florestal"] = true
 	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.DESERT)
 	var ally = _make_unit("warrior", caster, Vector2i(1, 0))
 	var mana_before = caster.mana

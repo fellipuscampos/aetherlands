@@ -1,25 +1,26 @@
 class_name Diplomacy
 extends RefCounted
 
-## Diplomacia bem simples de proposito: cada PlayerData guarda quem
-## considera inimigo (PlayerData.enemies). Civs rivais nunca declaram
-## guerra ENTRE SI nem propoem paz sozinhas (fora do escopo desta rodada:
-## uma guerra de todos contra todos seria bem mais dificil de acompanhar e
-## balancear) — so o jogador humano propoe paz ativamente pela HUD. Por
-## padrao, GameManager.setup_players() comeca todo mundo em PAZ (mudanca
-## posterior — antes o humano nascia automaticamente em guerra com todo
-## rival); desde o roadmap de gameplay Fase 1, RivalAI.decide_war() pode
-## fazer um rival declarar guerra sozinho contra o humano quando a
-## avaliacao de oportunidade (forca relativa, proximidade, vulnerabilidade
-## do alvo) justificar — o humano continua sendo o unico que PROPOE paz.
-##
-## Sem negociacao de termos (sem tributo, cessao de territorio, alianca):
-## so guerra/paz, e a IA aceita ou recusa uma proposta de paz com uma
-## heuristica bem direta (ver _accepts_peace).
+## Relações simétricas entre quaisquer civilizações. A IA pode declarar
+## guerra, propor paz e negociar comércio com o humano e com outros rivais.
+## Paz aceita inicia trégua; motivos e cansaço aparecem na interface.
+## Não há negociação de tributos, cessão de território ou alianças.
 
-static func declare_war(a: PlayerData, b: PlayerData) -> void:
+const TRUCE_TURNS := 10
+
+static func truce_remaining(a: PlayerData, b: PlayerData) -> int:
+	return maxi(0, int(a.truces.get(b, 0)) - TurnManager.turn_number)
+
+static func can_declare_war(a: PlayerData, b: PlayerData) -> bool:
+	return a != b and truce_remaining(a, b) == 0 and truce_remaining(b, a) == 0
+
+static func declare_war(a: PlayerData, b: PlayerData, reason: String = "Disputa territorial") -> void:
+	if not can_declare_war(a, b):
+		return
 	a.enemies[b] = true
 	b.enemies[a] = true
+	a.war_reasons[b] = reason
+	b.war_reasons[a] = reason
 
 ## `proposer` costuma ser o jogador humano; `other` o rival sendo
 ## abordado. Retorna true (e ja aplica a paz nos dois lados) se aceita.
@@ -37,8 +38,17 @@ static func propose_peace(proposer: PlayerData, other: PlayerData) -> bool:
 		return false
 	proposer.enemies.erase(other)
 	other.enemies.erase(proposer)
+	proposer.truces[other] = TurnManager.turn_number + TRUCE_TURNS
+	other.truces[proposer] = TurnManager.turn_number + TRUCE_TURNS
 	RivalAI.end_campaigns_on_peace(proposer, other)
 	return true
+
+static func relation_description(a: PlayerData, b: PlayerData) -> String:
+	if a.is_at_war_with(b):
+		return "%s. Cansaço: %d/100; aceita paz com desvantagem numérica ou cansaço ≥ 40." % [a.war_reasons.get(b, "Disputa territorial"), int(b.war_weariness)]
+	var truce := truce_remaining(a, b)
+	var routes := a.trade_routes.filter(func(route): return route.city_a.owner_player == b or route.city_b.owner_player == b).size()
+	return "%s%d rotas comerciais. Guerra encerra as rotas." % [("Trégua: %d turnos. " % truce) if truce > 0 else "", routes]
 
 ## Aceita se estiver em desvantagem numerica (menos unidades que quem
 ## propos) ou sem exercito nenhum — uma IA "perdendo" a guerra faz as

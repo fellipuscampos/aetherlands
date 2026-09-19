@@ -79,15 +79,33 @@ func is_water() -> bool:
 func is_lava() -> bool:
 	return terrain_type == TerrainType.LAVA or terrain_type == TerrainType.LAVA_SEA
 
-## Terreno que nenhuma unidade terrestre consegue pisar: agua (is_water())
-## e Lava (is_lava()) tambem — usado por HexGrid.compute_reachable
-## (unidade que voa ignora isso), City.is_valid_building_tile/
-## _best_unassigned_neighbor/toggle_worked_tile, WorldSetup (spawn/
-## capital) e HUD (lista de "tiles trabalhados"). Centralizado aqui pra
-## nao repetir a mesma lista de tipos em 6+ lugares diferentes do
-## codebase.
+## Montanha "de verdade" (continente principal) — pico intransponivel de
+## verdade, pedido do usuario: "os personagens estao atravessando as
+## montanhas, o correto é contornar... a montanha tem que ser um tile nao
+## consideravel, nao da pra passar por cima e nada nasce la". Escopo
+## deliberadamente restrito a MOUNTAINS (nao VOLCANIC_PEAKS/CRYSTAL_PEAKS,
+## a "cordilheira central" dos continentes especiais) -- ver o comentario
+## do enum HexTileData.TerrainType logo acima de VOLCANIC_ROCK: aqueles
+## microbiomas sao CAMINHAVEIS por decisao explicita anterior ("ao
+## contrario de LAVA/LAVA_SEA... que continuam sendo o unico obstaculo/
+## perigo de verdade em cada continente especial") -- mudar isso agora
+## contradiria aquela decisao ja tomada pro Vulcanico/Cristal, que tem sua
+## propria identidade de risco (lava), diferente do continente principal.
+func is_mountain() -> bool:
+	return terrain_type == TerrainType.MOUNTAINS
+
+## Terreno que nenhuma unidade terrestre consegue pisar: agua (is_water()),
+## Lava (is_lava()) e Montanha (is_mountain()) tambem — usado por HexGrid.
+## compute_reachable (unidade que voa ignora isso), City.is_valid_
+## building_tile/_best_unassigned_neighbor/toggle_worked_tile, WorldSetup
+## (spawn/capital), HexGrid._spawn_monster_lairs (nada nasce aqui, mesma
+## exclusao que ja vale pra agua) e HUD (lista de "tiles trabalhados").
+## Centralizado aqui pra nao repetir a mesma lista de tipos em varios
+## lugares diferentes do codebase -- Montanha virar intransponivel/
+## inabitavel/sem spawn foi tudo resolvido de uma vez so entrando aqui,
+## sem precisar mexer em cada consumidor individualmente.
 func blocks_land_units() -> bool:
-	return is_water() or is_lava()
+	return is_water() or is_lava() or is_mountain()
 
 ## Roadmap 2.0 Parte 1 (C4) — terrenos onde uma unidade EMBARCADA (Unit.
 ## embarked, so com "Navegação" pesquisada) pode se mover: Oceano, Mar
@@ -101,12 +119,14 @@ func can_be_embarked_on() -> bool:
 
 ## Uma cidade consegue TRABALHAR este tile (ver City._best_unassigned_
 ## neighbor/toggle_worked_tile) pra receber o rendimento dele? Terreno
-## solido comum sempre pode; agua/lava normalmente nao (blocks_land_units),
-## EXCETO Costa — pesca rasa perto da cidade, pedido do usuario ("rendimento
-## de cidade costeira, igual Civilization"). Oceano aberto/Mar Gelado/Mar
-## de Lava continuam intrabalhaveis (sem porto/tecnologia pra isso neste
-## jogo ainda). Deliberadamente SEPARADO de blocks_land_units() — esse
-## continua so sobre MOVIMENTO de unidade terrestre (Costa AINDA bloqueia
+## solido comum sempre pode; agua/lava/montanha normalmente nao (blocks_
+## land_units), EXCETO Costa — pesca rasa perto da cidade, pedido do
+## usuario ("rendimento de cidade costeira, igual Civilization"). Oceano
+## aberto/Mar Gelado/Mar de Lava/Montanha continuam intrabalhaveis (sem
+## porto/tecnologia pra isso neste jogo ainda -- e ninguem planta em cima
+## de um pico, pra Montanha). Deliberadamente SEPARADO de blocks_land_
+## units() — esse continua so sobre MOVIMENTO de unidade terrestre (Costa
+## AINDA bloqueia
 ## isso, so nao bloqueia ser trabalhada).
 func can_be_worked() -> bool:
 	return not blocks_land_units() or terrain_type == TerrainType.COAST

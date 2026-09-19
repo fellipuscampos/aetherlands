@@ -1,0 +1,44 @@
+{
+  "preset": "tools/asset_factory/presets/arcane_caster.json",
+  "engine": "blocky",
+  "seed": 43,
+  "style": "human",
+  "output_glb": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\magic\\arcane_caster\\arcane_caster.glb",
+  "file_size_bytes": 69844,
+  "mesh_stats": {
+    "vertices": 244,
+    "faces": 192,
+    "triangles_estimate": 372,
+    "materials": 7
+  },
+  "material_count": 7,
+  "bone_count": 18,
+  "bone_names": [
+    "Root",
+    "Pelvis",
+    "Spine",
+    "Chest",
+    "Neck",
+    "Head",
+    "UpperArm.L",
+    "LowerArm.L",
+    "Hand.L",
+    "UpperArm.R",
+    "LowerArm.R",
+    "Hand.R",
+    "UpperLeg.L",
+    "LowerLeg.L",
+    "Foot.L",
+    "UpperLeg.R",
+    "LowerLeg.R",
+    "Foot.R"
+  ],
+  "animations": [
+    "Idle",
+    "Walk",
+    "Attack",
+    "Death"
+  ],
+  "previews": {},
+  "height_target": 1.8
+}

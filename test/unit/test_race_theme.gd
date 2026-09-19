@@ -9,7 +9,7 @@ extends GutTest
 ## questao" (escopo confirmado como so esse ramo, nao a arvore de magia
 ## inteira).
 
-const THEMED_TECH_IDS := ["quartel", "estabulo", "arquearia", "batedor_montado"]
+const THEMED_TECH_IDS := ["quartel", "estabulo", "arqueiro", "batedor_montado"]
 const THEMED_UNIT_KINDS := ["warrior", "men_at_arms", "cavalry", "archer", "scout"]
 const THEMED_BUILDING_IDS := ["barracks", "stable", "archery_range"]
 const NON_HUMAN_RACES := ["dwarf", "orc", "elf"]
@@ -73,12 +73,12 @@ func test_each_themed_race_has_a_distinct_description_for_every_scoped_tech():
 ## slots onde o dado ORIGINAL humano ja fazia isso (tech "Quartel" ==
 ## predio "Quartel", tech "Estábulo" == predio "Estabulo") — mantido de
 ## proposito nas tabelas novas do RaceTheme pras 3 racas tematizadas.
-## "arquearia"/"archery_range" fica de fora aqui porque ja NAO combinavam
-## no dado humano original (tech "Arquearia" vs predio "Campo de Tiro" —
-## nomes sem nenhuma relacao entre si), entao os nomes tematicos tambem
-## foram escritos como duas coisas distintas pra cada raca (ver
-## _TECH_NAMES/_BUILDING_NAMES em RaceTheme.gd), no mesmo espirito do
-## original.
+## "arqueiro"/"archery_range" fica de fora aqui porque ja NAO combinam
+## (tech "Arqueiro" vs predio "Campo de Tiro" — nomes sem nenhuma relacao
+## entre si, desde a separacao predio/unidade da arvore de 10 niveis),
+## entao os nomes tematicos tambem foram escritos como duas coisas
+## distintas pra cada raca (ver _TECH_NAMES/_BUILDING_NAMES em
+## RaceTheme.gd), no mesmo espirito do original.
 func test_tech_and_building_names_match_for_the_same_slot():
 	var tech_to_building := {
 		"quartel": "barracks",
@@ -95,7 +95,7 @@ func test_tech_and_building_names_match_for_the_same_slot():
 ## 11 ids escopados).
 func test_ids_outside_the_military_branch_are_never_themed():
 	for race in NON_HUMAN_RACES:
-		assert_eq(RaceTheme.tech_name("canalizacao_base", race), TechDatabase.get_tech("canalizacao_base").display_name)
+		assert_eq(RaceTheme.tech_name("canalizacao_base", race), MagicDatabase.get_tech("canalizacao_base").display_name)
 		assert_eq(RaceTheme.unit_name("mage", race), UnitDatabase.create_unit("mage").unit_name)
 		assert_eq(RaceTheme.building_name("granary", race), BuildingDatabase.get_building("granary").display_name)
 

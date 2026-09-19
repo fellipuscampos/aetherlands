@@ -1,5 +1,12 @@
 extends GutTest
 
+var _owned_players: Array[PlayerData] = []
+
+func _track_player(civ: CivilizationData) -> PlayerData:
+	var player := PlayerData.new(civ)
+	_owned_players.append(player)
+	return player
+
 ## Roadmap 2.0 Parte 1 — acesso naval: tech "Navegação" (TechDatabase.
 ## is_navigation_researched), terrenos elegiveis pra embarque (HexTileData.
 ## can_be_embarked_on), pre-condicao espacial (HexGrid.is_coastal_tile),
@@ -27,13 +34,16 @@ func before_each():
 	for dir in HexGrid.NEIGHBOR_DIRS:
 		hex_grid.tiles[center + dir] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 
-	human = PlayerData.new(CivilizationData.new())
-	rival = PlayerData.new(CivilizationData.new())
+	human = _track_player(CivilizationData.new())
+	rival = _track_player(CivilizationData.new())
 	Diplomacy.declare_war(human, rival)
 	GameManager.hex_grid = hex_grid
 	GameManager.human_player = human
 
 func after_each():
+	for player in _owned_players:
+		player.release_relations()
+	_owned_players.clear()
 	SelectionManager.reset()
 	GameManager.hex_grid = _original_hex_grid
 	GameManager.human_player = _original_human_player
@@ -203,8 +213,8 @@ func test_non_embarked_ai_settler_cannot_reach_land_across_an_ocean_gap():
 	var far_land := Vector2i(3, 0)
 	hex_grid.tiles[far_land] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	# Vizinho de far_land com recurso — deliberadamente atraente (ver
-	# RivalAI._score_settle_candidate, que pontua os VIZINHOS do candidato,
-	# nao o proprio tile) — nao deveria importar, e inalcancavel de qualquer jeito.
+	# CitySite.evaluate, que pontua o territorio ao redor do candidato,
+	# nao so o proprio tile) — nao deveria importar, e inalcancavel de qualquer jeito.
 	var resource_neighbor: Vector2i = far_land + HexGrid.NEIGHBOR_DIRS[0]
 	var resource_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
 	resource_tile.resource = "iron"
@@ -218,4 +228,4 @@ func test_non_embarked_ai_settler_cannot_reach_land_across_an_ocean_gap():
 
 	assert_false(reachable.has(far_land), "assentador de IA (nao-embarcado) nao deveria conseguir alcancar terra do outro lado do oceano")
 	assert_eq(path.size(), 0, "compute_path tambem nao deveria achar rota nenhuma")
-	assert_gt(RivalAI._score_settle_candidate(far_land, hex_grid, rival), 0.0, "confirma que o destino SERIA atraente (vizinho de recurso) se fosse alcancavel — a garantia vem do pathfinding, nao da pontuacao")
+	assert_gt(CitySite.evaluate(hex_grid, far_land, CitySite.build_context(hex_grid, rival)).total, 0.0, "confirma que o destino SERIA atraente (vizinho de recurso) se fosse alcancavel — a garantia vem do pathfinding, nao da pontuacao")

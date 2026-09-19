@@ -1,5 +1,24 @@
 extends GutTest
 
+var _owned_players: Array[PlayerData] = []
+
+func _track_player(civ: CivilizationData) -> PlayerData:
+	var player := PlayerData.new(civ)
+	_owned_players.append(player)
+	return player
+
+## COVIS DE MONSTROS -- SOBREPOSICAO: o chefao original agora nasce ao
+## REDOR do covil (num vizinho), nao mais sempre exatamente em lair_coord
+## (ver HexGrid._find_free_tile_for_lair_spawn) -- helper pra achar o
+## chefao pela FLAG (is_camp_boss) dentro da area do covil inteira, nao
+## mais assumindo a coordenada exata.
+func _find_camp_boss(grid: HexGrid, lair_coord: Vector2i) -> Unit:
+	for coord in grid._lair_area(lair_coord):
+		var unit: Unit = grid.get_unit_at(coord)
+		if unit != null and unit.is_camp_boss:
+			return unit
+	return null
+
 ## Cobre o ciclo salvar/carregar: o estado logico (ouro, unidades com
 ## hp/movimento, cidades com producao/populacao, semente do mapa, turno)
 ## precisa sobreviver a uma volta completa por JSON em disco. Usa um
@@ -7,6 +26,10 @@ extends GutTest
 ## do jogador.
 
 const TEST_SAVE_PATH := "user://test_savegame.json"
+## Roadmap "sistema de menu de jogo moderno" -- diretorio ISOLADO pros testes
+## da camada de slots (list_slots/save_to_slot/load_from_slot/delete_slot,
+## ver final deste arquivo), nunca o SaveManager.SAVE_DIR de verdade.
+const TEST_SAVE_DIR := "user://test_saves/"
 
 var hex_grid: HexGrid
 var human: PlayerData
@@ -25,8 +48,13 @@ var _original_map_height: int
 var _original_difficulty: String
 var _original_world_events: Array[WorldEvent]
 var _original_world_event_next_id: int
+var _original_players: Array[PlayerData]
+var _original_rules: int
 
 func before_each():
+	_original_players = GameManager.players
+	_original_rules = GameManager.victory_rules_version
+	GameManager.players = []
 	_original_hex_grid = GameManager.hex_grid
 	_original_human_player = GameManager.human_player
 	_original_rival_players = GameManager.rival_players
@@ -49,15 +77,23 @@ func before_each():
 	hex_grid.generate_map(7, 7, 12345) # mapa pequeno com semente fixa (determinismo)
 	_created_hex_grids.append(hex_grid)
 
-	human = PlayerData.new(CivilizationData.new())
+	human = _track_player(CivilizationData.new())
 	human.civ.civ_name = "Reino de Teste"
-	rival = PlayerData.new(CivilizationData.new())
+	rival = _track_player(CivilizationData.new())
 	Diplomacy.declare_war(human, rival)
 	GameManager.human_player = human
 	GameManager.rival_players = [rival]
 
 func after_each():
+	for player in GameManager.players:
+		player.release_relations()
+	GameManager.players = _original_players
+	GameManager.victory_rules_version = _original_rules
+	for player in _owned_players:
+		player.release_relations()
+	_owned_players.clear()
 	SaveManager.delete_save(TEST_SAVE_PATH)
+	_clear_test_save_dir()
 	for unit in _created_units:
 		if is_instance_valid(unit):
 			unit.queue_free()
@@ -77,6 +113,18 @@ func after_each():
 	WorldEventManager.active_events = _original_world_events
 	WorldEventManager._next_event_id = _original_world_event_next_id
 
+func _clear_test_save_dir() -> void:
+	var da := DirAccess.open(TEST_SAVE_DIR)
+	if da == null:
+		return
+	da.list_dir_begin()
+	var fname := da.get_next()
+	while fname != "":
+		if not da.current_is_dir():
+			da.remove(fname)
+		fname = da.get_next()
+	da.list_dir_end()
+
 func _make_unit(kind: String, player: PlayerData, coord: Vector2i) -> Unit:
 	var unit := Unit.new()
 	unit.setup(UnitDatabase.create_unit(kind), player, coord)
@@ -84,6 +132,51 @@ func _make_unit(kind: String, player: PlayerData, coord: Vector2i) -> Unit:
 	hex_grid.units_by_coord[coord] = unit
 	_created_units.append(unit)
 	return unit
+
+func test_current_save_keeps_mounted_scout_research_and_war():
+	human.researched_techs["batedor_montado"] = true
+	human.current_research = "batedor_montado"
+	human.war_weariness = 23.0
+	var coords := hex_grid.tiles.keys()
+	var unit := _make_unit("warrior", human, coords[0])
+	unit.fortified = true
+	unit.move_order_target = coords[2]
+	_make_unit("warrior", rival, coords[1])
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+	assert_true(SaveManager.load_game(hex_grid, TEST_SAVE_PATH))
+	var loaded := GameManager.human_player
+	assert_true(loaded.researched_techs.has("batedor_montado"))
+	assert_eq(loaded.current_research, "batedor_montado")
+	assert_true(loaded.is_at_war_with(GameManager.rival_players[0]))
+	assert_true(GameManager.rival_players[0].is_at_war_with(loaded))
+	assert_eq(loaded.war_weariness, 23.0)
+	assert_true(loaded.units[0].fortified)
+	assert_eq(loaded.units[0].move_order_target, coords[2])
+
+func test_save_restores_transformed_land_pillage_and_trade_income():
+	var coords := hex_grid.tiles.keys()
+	var a := hex_grid.found_city(coords[0], human, "A")
+	var b := hex_grid.found_city(coords[1], rival, "B")
+	Diplomacy.propose_peace(human, rival)
+	a.buildings["market"] = true
+	b.buildings["market"] = true
+	var route := TradeRoute.new(a, b)
+	human.trade_routes.append(route)
+	rival.trade_routes.append(route)
+	a._consecutive_siege_turns = 3
+	hex_grid.transform_tile_terrain(coords[2], HexTileData.TerrainType.GRASSLAND)
+	hex_grid._pillaged_tiles[coords[3]] = TurnManager.turn_number + 5
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+	assert_true(SaveManager.load_game(hex_grid, TEST_SAVE_PATH))
+	assert_eq(hex_grid.get_tile(coords[2]).terrain_type, HexTileData.TerrainType.GRASSLAND)
+	assert_true(hex_grid.is_tile_pillaged(coords[3], TurnManager.turn_number))
+	var loaded := GameManager.human_player
+	assert_eq(loaded.cities[0]._consecutive_siege_turns, 3)
+	assert_eq(loaded.trade_routes.size(), 1)
+	assert_same(loaded.trade_routes[0], GameManager.rival_players[0].trade_routes[0])
+	var gold := loaded.gold
+	TradeManager.process_all_routes(GameManager.players)
+	assert_eq(loaded.gold, gold + TradeManager.ROUTE_INCOME_GOLD)
 
 func test_save_and_load_restores_player_and_map_state():
 	var coords = hex_grid.tiles.keys()
@@ -112,7 +205,8 @@ func test_save_and_load_restores_player_and_map_state():
 	city.shield = 6.0
 	var expected_worked_tiles = city.worked_tiles.duplicate()
 
-	human.researched_techs["canalizacao_base"] = true
+	human.researched_techs["quartel"] = true
+	human.researched_magic["canalizacao_base"] = true
 	human.current_research = "transmutacao_rocha"
 	human.research_progress = 12.0
 
@@ -160,7 +254,8 @@ func test_save_and_load_restores_player_and_map_state():
 	assert_almost_eq(loaded_city.hp, 17.5, 0.01, "vida da cidade deveria sobreviver ao save/load")
 	assert_almost_eq(loaded_city.shield, 6.0, 0.01, "escudo da cidade deveria sobreviver ao save/load")
 
-	assert_true(GameManager.human_player.researched_techs.has("canalizacao_base"), "tecnologia pesquisada deveria sobreviver ao save/load")
+	assert_true(GameManager.human_player.researched_techs.has("quartel"), "tecnologia mundana pesquisada deveria sobreviver ao save/load")
+	assert_true(GameManager.human_player.researched_magic.has("canalizacao_base"), "tecnologia magica pesquisada deveria sobreviver ao save/load, separada de researched_techs")
 	assert_eq(GameManager.human_player.current_research, "transmutacao_rocha")
 	assert_almost_eq(GameManager.human_player.research_progress, 12.0, 0.01)
 
@@ -212,7 +307,7 @@ func test_save_and_load_restores_difficulty():
 ## comentario de topo). O que isto prova e RECONSTRUCAO DETERMINISTICA apos
 ## load: save -> load restaura map_seed -> setup_players() deriva de novo
 ## -> resultado bate com o estado anterior ao save. Usa GameManager.
-## setup_players() de verdade (nao o atalho de PlayerData.new() direto que
+## setup_players() de verdade (nao o atalho de _track_player() direto que
 ## before_each usa pros outros testes deste arquivo) porque personalidade
 ## so existe depois desse fluxo real.
 func test_save_and_load_reconstructs_the_identical_personality():
@@ -320,7 +415,7 @@ func test_save_and_load_does_not_respawn_a_cleared_monster_lair():
 		pending("mapa de teste (radius 3) nao gerou nenhum covil nesta semente")
 		return
 	var lair_coord: Vector2i = hex_grid.lair_coords[0]
-	var guardian = hex_grid.get_unit_at(lair_coord)
+	var guardian = _find_camp_boss(hex_grid, lair_coord)
 	assert_not_null(guardian, "pre-condicao: covil deveria comecar guardado")
 	hex_grid.remove_unit(guardian)
 
@@ -331,7 +426,7 @@ func test_save_and_load_does_not_respawn_a_cleared_monster_lair():
 	_created_hex_grids.append(loaded_grid)
 	SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
 
-	assert_null(loaded_grid.get_unit_at(lair_coord), "covil ja limpo antes de salvar nao deveria respawnar guardiao ao carregar")
+	assert_null(_find_camp_boss(loaded_grid, lair_coord), "covil ja limpo antes de salvar nao deveria respawnar guardiao ao carregar")
 
 ## Regressao (feature nova): um covil DESTRUIDO de verdade (HexGrid.
 ## destroy_lair — jogador entrou no tile vazio e recebeu a recompensa de
@@ -341,18 +436,52 @@ func test_save_and_load_does_not_respawn_a_cleared_monster_lair():
 ## por cima (ver cleared_lair_coords/_serialize_cleared_lairs), mesmo
 ## padrao ja usado pros monstros neutros no teste acima. Tambem confere que
 ## a recompensa de ouro nao e concedida DE NOVO so por carregar.
+## AGGRO / TERRITORIO DE AMEACA: covil ALERTADO (ver HexGrid.alert_lair_near)
+## e' um efeito temporario com expiracao por turno absoluto -- precisa
+## sobreviver a salvar/carregar (mesmo padrao de pillaged_tiles/
+## lair_structure_hp). Usa um mapa maior (29x29, seed 555, ja usado em
+## test_monsters.gd) porque o mapa 7x7 padrao deste arquivo pode nao gerar
+## covil nenhum -- e o `pending` dos testes vizinhos escondia isso.
+func test_save_and_load_preserves_an_active_lair_alert():
+	var big_grid := HexGrid.new()
+	big_grid._ready()
+	big_grid.generate_map(29, 29, 555)
+	_created_hex_grids.append(big_grid)
+	assert_gt(big_grid.lair_coords.size(), 0, "precondicao: mapa 29x29 seed 555 deveria ter pelo menos um covil")
+	var lair_coord: Vector2i = big_grid.lair_coords[0]
+	big_grid.alert_lair_near(lair_coord, 5)
+
+	assert_true(SaveManager.save_game(big_grid, TEST_SAVE_PATH))
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(lair_coord in loaded_grid.lair_coords, "precondicao: mesma semente deveria recriar o mesmo covil")
+	assert_true(loaded_grid.is_lair_alerted(lair_coord, 6), "alerta ativo antes de salvar deveria continuar ativo apos carregar")
+	assert_false(loaded_grid.is_lair_alerted(lair_coord, 5 + HexGrid.LAIR_ALERT_DURATION_TURNS), "alerta deveria expirar no mesmo turno absoluto de antes")
+
 func test_save_and_load_preserves_a_destroyed_lair():
 	if hex_grid.lair_coords.is_empty():
 		pending("mapa de teste (radius 3) nao gerou nenhum covil nesta semente")
 		return
 	var lair_coord: Vector2i = hex_grid.lair_coords[0]
-	var guardian = hex_grid.get_unit_at(lair_coord)
+	var guardian = _find_camp_boss(hex_grid, lair_coord)
 	hex_grid.remove_unit(guardian)
+	# COVIS DE MONSTROS -- DESTRUICAO: destruir agora exige atacar a
+	# ESTRUTURA de verdade ate zerar o HP dela (ver CombatResolver.
+	# resolve_lair_attack), nao mais so' "visitar" o tile vazio (antigo
+	# HexGrid._grant_lair_clear_reward acionado por move_unit, removido).
 	var soldier = _make_unit("warrior", human, lair_coord)
-	hex_grid.move_unit(soldier, lair_coord, 1.0) # tile vazio: concede recompensa e chama destroy_lair()
+	var hits := 0
+	while lair_coord in hex_grid.lair_coords and hits < 10:
+		soldier.movement_left = soldier.unit_data.movement_points
+		CombatResolver.resolve_lair_attack(soldier, lair_coord, hex_grid)
+		hits += 1
 	assert_false(lair_coord in hex_grid.lair_coords, "pre-condicao: covil deveria estar destruido antes de salvar")
 	var gold_after_clear = human.gold
-	hex_grid.remove_unit(soldier) # vaga o tile — so serviu pra disparar a limpeza, o teste e sobre o COVIL, nao sobre onde o soldado ficou
+	hex_grid.remove_unit(soldier) # so' serviu pra disparar a destruicao, o teste e sobre o COVIL, nao sobre onde o soldado ficou
 
 	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
 
@@ -363,7 +492,7 @@ func test_save_and_load_preserves_a_destroyed_lair():
 
 	assert_false(lair_coord in loaded_grid.lair_coords, "covil destruido antes de salvar nao deveria voltar a existir apos carregar")
 	assert_false(loaded_grid.lairs_by_coord.has(lair_coord), "estrutura visual nao deveria reaparecer apos carregar")
-	assert_null(loaded_grid.get_unit_at(lair_coord), "nenhum guardiao deveria respawnar num covil ja destruido")
+	assert_null(_find_camp_boss(loaded_grid, lair_coord), "nenhum guardiao deveria respawnar num covil ja destruido")
 	assert_almost_eq(GameManager.human_player.gold, gold_after_clear, 0.01, "ouro da recompensa de limpeza nao deveria ser concedido de novo ao carregar")
 
 ## Regressao critica (pedido do usuario: reforcos de covil NAO deveriam
@@ -410,7 +539,7 @@ func test_save_and_load_preserves_a_reinforcement_monster_with_its_exact_state()
 
 	# O guardiao ORIGINAL do covil (nao o reforco criado acima) e sempre um
 	# camp boss — confere que isso tambem sobrevive ao save/load.
-	var restored_guardian = loaded_grid.get_unit_at(lair_coord)
+	var restored_guardian = _find_camp_boss(loaded_grid, lair_coord)
 	assert_not_null(restored_guardian)
 	assert_true(restored_guardian.is_camp_boss, "guardiao original do covil deveria continuar marcado como camp boss apos carregar")
 
@@ -824,3 +953,232 @@ func test_save_and_load_relinks_the_dragon_unit_to_the_reconstructed_event():
 	assert_not_null(loaded_event.dragon_unit, "relink_unit deveria ter encontrado a Unit restaurada pelo save generico de monstros neutros")
 	assert_eq(loaded_event.dragon_unit, loaded_grid.get_unit_at(spawn_coord))
 	assert_eq(loaded_event.dragon_unit.unit_data.visual_kind, "dragon")
+
+## Migracao de save v17 -> v18 (separacao estrutural das arvores de
+## pesquisa, ver SaveManager.MIGRATABLE_SAVE_VERSION): antes da separacao,
+## "researched_techs" guardava ids de TECNOLOGIA e de MAGIA misturados, e
+## nao existia a chave "researched_magic" no save. Simula esse formato
+## antigo direto no JSON em disco (mesmo padrao de test_save_and_load_
+## defaults_safely_when_world_events_key_is_absent acima) e confirma que o
+## load reclassifica cada id pra dentro da arvore certa, sem perder
+## nenhuma pesquisa e sem invalidar o save so por causa da versao antiga.
+func test_save_and_load_migrates_a_pre_split_v17_save_without_losing_research():
+	human.researched_techs["quartel"] = true
+	human.researched_techs["celeiro"] = true
+	human.researched_techs["invocacao_espiritos"] = true # id magico, mas simulado como se ainda estivesse no formato antigo
+	human.researched_techs["transmutacao_rocha"] = true # id magico
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	# Reescreve o arquivo pra parecer um save v17 de verdade: version 17,
+	# ids das duas arvores misturados numa unica "researched_techs", SEM a
+	# chave "researched_magic" (o sinal que _deserialize_player usa pra
+	# saber que precisa migrar).
+	var file := FileAccess.open(TEST_SAVE_PATH, FileAccess.READ)
+	var data = JSON.parse_string(file.get_as_text())
+	file.close()
+	data["version"] = 17
+	data["human"]["researched_techs"] = ["quartel", "celeiro", "invocacao_espiritos", "transmutacao_rocha"]
+	data["human"].erase("researched_magic")
+	file = FileAccess.open(TEST_SAVE_PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify(data))
+	file.close()
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(ok, "save v17 (versao anterior a separacao) deveria continuar carregando, nao ser invalidado")
+	var loaded_human := GameManager.human_player
+	assert_true(loaded_human.researched_techs.has("quartel"), "tech mundana deveria continuar em researched_techs")
+	assert_true(loaded_human.researched_techs.has("celeiro"), "tech mundana deveria continuar em researched_techs")
+	assert_true(loaded_human.researched_magic.has("invocacao_espiritos"), "id magico misturado no researched_techs antigo deveria migrar pra researched_magic")
+	assert_true(loaded_human.researched_magic.has("transmutacao_rocha"), "id magico misturado no researched_techs antigo deveria migrar pra researched_magic")
+	assert_false(loaded_human.researched_techs.has("invocacao_espiritos"), "id magico nao deveria sobrar em researched_techs depois da migracao")
+	assert_false(loaded_human.researched_techs.has("transmutacao_rocha"), "id magico nao deveria sobrar em researched_techs depois da migracao")
+	assert_eq(loaded_human.researched_techs.size() + loaded_human.researched_magic.size(), 7, "Preserva quatro pesquisas antigas e concede os três níveis equivalentes de Arcanismo.")
+	assert_true(loaded_human.researched_magic.has("arcanismo_3"))
+
+## Migracao de save v18 -> v19 (redesenho da arvore de Tecnologia em 10
+## niveis, ver SaveManager.TECH_TIER_REDESIGN_REMAP): "arquearia" (id
+## antigo que desbloqueava PREDIO e UNIDADE juntos) precisa virar os DOIS
+## ids novos ("campo_de_tiro" + "arqueiro"), e "batedor_montado" antigo
+## (que desbloqueava o kind "scout") precisa virar "batedor" — NAO o novo
+## id "batedor_montado" (que agora e uma unidade diferente). Ids que so
+## preservam o proprio nome (quartel/celeiro/estabulo/muralhas/mercado/
+## oficina/navegacao) tambem entram, pra confirmar que a migracao nao
+## mexe neles por engano.
+func test_save_and_load_migrates_a_pre_tier_redesign_v18_save_without_losing_research():
+	human.researched_techs["quartel"] = true
+	human.researched_techs["celeiro"] = true
+	human.researched_techs["arquearia"] = true # id antigo: predio + unidade juntos
+	human.researched_techs["batedor_montado"] = true # id antigo: desbloqueava "scout"
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	# Reescreve o arquivo pra parecer um save v18 de verdade: version 18,
+	# ids antigos da arvore de Tecnologia (a chave "researched_magic" ja
+	# existe nesse formato, so os ids de researched_techs sao antigos).
+	var file := FileAccess.open(TEST_SAVE_PATH, FileAccess.READ)
+	var data = JSON.parse_string(file.get_as_text())
+	file.close()
+	data["version"] = 18
+	data["human"]["researched_techs"] = ["quartel", "celeiro", "arquearia", "batedor_montado"]
+	file = FileAccess.open(TEST_SAVE_PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify(data))
+	file.close()
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
+
+	assert_true(ok, "save v18 (versao anterior ao redesenho de 10 niveis) deveria continuar carregando, nao ser invalidado")
+	var loaded_human := GameManager.human_player
+	assert_true(loaded_human.researched_techs.has("quartel"), "id que preserva o proprio nome nao deveria mudar")
+	assert_true(loaded_human.researched_techs.has("celeiro"), "id que preserva o proprio nome nao deveria mudar")
+	assert_true(loaded_human.researched_techs.has("campo_de_tiro"), "arquearia antiga deveria migrar pro predio novo")
+	assert_true(loaded_human.researched_techs.has("arqueiro"), "arquearia antiga deveria migrar TAMBEM pra unidade nova")
+	assert_false(loaded_human.researched_techs.has("arquearia"), "id antigo nao deveria sobrar depois da migracao")
+	assert_true(loaded_human.researched_techs.has("batedor"), "batedor_montado antigo (desbloqueava scout) deveria migrar pra 'batedor'")
+	assert_false(loaded_human.researched_techs.has("batedor_montado"), "id novo 'batedor_montado' e uma unidade DIFERENTE, nao deveria receber credito automatico")
+	assert_eq(loaded_human.researched_techs.size(), 5, "arquearia virou 2 ids, entao 4 ids antigos viram 5 novos, nada perdido")
+
+func test_save_and_load_redirects_an_in_progress_research_on_a_removed_tech_id():
+	human.current_research = "arquearia"
+	human.research_progress = 12.0
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+
+	var file := FileAccess.open(TEST_SAVE_PATH, FileAccess.READ)
+	var data = JSON.parse_string(file.get_as_text())
+	file.close()
+	data["version"] = 18
+	data["human"]["current_research"] = "arquearia"
+	file = FileAccess.open(TEST_SAVE_PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify(data))
+	file.close()
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	assert_true(SaveManager.load_game(loaded_grid, TEST_SAVE_PATH))
+
+	assert_eq(GameManager.human_player.current_research, "campo_de_tiro", "pesquisa em andamento num id que sumiu deveria redirecionar pro primeiro id novo do mapeamento")
+	assert_almost_eq(GameManager.human_player.research_progress, 12.0, 0.01, "progresso acumulado nao deveria ser perdido na redirecao")
+
+## Roadmap "sistema de menu de jogo moderno" -- pedido do usuario: "o
+## salvar salva de fato o jogo, criando um slot daquela partida e salvando
+## por cima ela sempre que e clicando salvar, ai voce pode ver seus jogos
+## ao clicar em carregar jogo". Camada de slots por cima de save_game/
+## load_game (testados a exaustao acima, intocados) -- estes testes cobrem
+## so a camada NOVA: geracao de id, round-trip por slot, listagem de
+## metadados sem reconstruir o jogo, e exclusao.
+
+func test_new_slot_id_is_unique_even_when_called_twice_in_the_same_second():
+	var id1 := SaveManager.new_slot_id(TEST_SAVE_DIR)
+	# Simula a colisao real que new_slot_id() se defende de: o id sorteado
+	# ja existe em disco (mesmo segundo) -- forca a segunda chamada a cair
+	# no sufixo de desempate.
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(TEST_SAVE_DIR))
+	var f := FileAccess.open(TEST_SAVE_DIR.path_join(id1 + ".json"), FileAccess.WRITE)
+	f.store_string("{}")
+	f.close()
+
+	var id2 := SaveManager.new_slot_id(TEST_SAVE_DIR)
+
+	assert_ne(id1, id2, "dois ids gerados apos uma colisao real nao deveriam ser iguais")
+
+func test_save_to_slot_then_load_from_slot_round_trips():
+	human.gold = 77.0
+	human.civ.civ_name = "Reino do Slot"
+	var slot_id := "test_slot_round_trip"
+
+	assert_true(SaveManager.save_to_slot(hex_grid, slot_id, TEST_SAVE_DIR), "save_to_slot deveria ter sucesso")
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+
+	assert_true(SaveManager.load_from_slot(loaded_grid, slot_id, TEST_SAVE_DIR), "load_from_slot deveria ter sucesso")
+	assert_eq(GameManager.human_player.gold, 77.0)
+	assert_eq(loaded_grid.map_seed, hex_grid.map_seed)
+
+## Salvar de novo no MESMO slot sobrescreve -- e o comportamento pedido
+## explicitamente ("salvando por cima ela sempre que e clicando salvar"),
+## nao cria um segundo arquivo.
+func test_save_to_slot_twice_overwrites_the_same_file_instead_of_creating_a_new_one():
+	var slot_id := "test_slot_overwrite"
+	human.gold = 10.0
+	assert_true(SaveManager.save_to_slot(hex_grid, slot_id, TEST_SAVE_DIR))
+	human.gold = 999.0
+	assert_true(SaveManager.save_to_slot(hex_grid, slot_id, TEST_SAVE_DIR))
+
+	assert_eq(SaveManager.list_slots(TEST_SAVE_DIR).size(), 1, "salvar duas vezes no mesmo slot nao deveria duplicar o arquivo")
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	SaveManager.load_from_slot(loaded_grid, slot_id, TEST_SAVE_DIR)
+	assert_eq(GameManager.human_player.gold, 999.0, "o valor mais recente deveria ter sobrescrito o anterior")
+
+func test_list_slots_reads_kingdom_race_turn_saved_at_without_full_load():
+	human.civ.civ_name = "Reino Listado"
+	human.civ.race = "elf" # save_game() le a raca de human_player.civ.race, nao de GameManager.human_race (so sincronizado ali por setup_players(), nao usado nesta rodada)
+	GameManager.difficulty = "hard"
+	TurnManager.turn_number = 5
+	assert_true(SaveManager.save_to_slot(hex_grid, "test_slot_meta", TEST_SAVE_DIR))
+
+	var slots := SaveManager.list_slots(TEST_SAVE_DIR)
+
+	assert_eq(slots.size(), 1)
+	assert_eq(slots[0].slot_id, "test_slot_meta")
+	assert_eq(slots[0].kingdom_name, "Reino Listado")
+	assert_eq(slots[0].race, "elf")
+	assert_eq(slots[0].turn_number, 5)
+	assert_eq(slots[0].difficulty, "hard")
+	assert_gt(slots[0].saved_at, 0, "saved_at deveria ter sido gravado por save_to_slot")
+
+func test_list_slots_sorts_newest_first():
+	SaveManager.save_to_slot(hex_grid, "test_slot_old", TEST_SAVE_DIR)
+	# forca um saved_at anterior no arquivo ja gravado, sem depender de
+	# esperar 1 segundo real de diferenca entre as duas chamadas.
+	var old_path := TEST_SAVE_DIR.path_join("test_slot_old.json")
+	var old_file := FileAccess.open(old_path, FileAccess.READ)
+	var old_data = JSON.parse_string(old_file.get_as_text())
+	old_file.close()
+	old_data["saved_at"] = 1
+	var rewrite := FileAccess.open(old_path, FileAccess.WRITE)
+	rewrite.store_string(JSON.stringify(old_data))
+	rewrite.close()
+	SaveManager.save_to_slot(hex_grid, "test_slot_new", TEST_SAVE_DIR)
+
+	var slots := SaveManager.list_slots(TEST_SAVE_DIR)
+
+	assert_eq(slots[0].slot_id, "test_slot_new", "o slot salvo mais recentemente deveria vir primeiro")
+
+func test_list_slots_skips_corrupted_files_instead_of_crashing():
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(TEST_SAVE_DIR))
+	var bad_file := FileAccess.open(TEST_SAVE_DIR.path_join("corrupted.json"), FileAccess.WRITE)
+	bad_file.store_string("isto nao e JSON valido{{{")
+	bad_file.close()
+	SaveManager.save_to_slot(hex_grid, "test_slot_good", TEST_SAVE_DIR)
+
+	var slots := SaveManager.list_slots(TEST_SAVE_DIR)
+
+	assert_eq(slots.size(), 1, "o arquivo corrompido deveria ser pulado, nao derrubar a lista inteira")
+	assert_eq(slots[0].slot_id, "test_slot_good")
+
+func test_has_any_slots_reflects_whether_any_slot_exists():
+	assert_false(SaveManager.has_any_slots(TEST_SAVE_DIR))
+	SaveManager.save_to_slot(hex_grid, "test_slot_any", TEST_SAVE_DIR)
+	assert_true(SaveManager.has_any_slots(TEST_SAVE_DIR))
+
+func test_delete_slot_removes_it_from_list_slots():
+	SaveManager.save_to_slot(hex_grid, "test_slot_to_delete", TEST_SAVE_DIR)
+	assert_eq(SaveManager.list_slots(TEST_SAVE_DIR).size(), 1)
+
+	SaveManager.delete_slot("test_slot_to_delete", TEST_SAVE_DIR)
+
+	assert_true(SaveManager.list_slots(TEST_SAVE_DIR).is_empty())

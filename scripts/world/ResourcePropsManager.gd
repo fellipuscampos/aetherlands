@@ -24,13 +24,42 @@ var _meshes: Dictionary = {} # resource_kind (String) -> ArrayMesh
 var _instances: Dictionary = {} # resource_kind -> MultiMeshInstance3D
 var _coord_to_index: Dictionary = {} # resource_kind -> Dictionary[Vector2i, Array[int]]
 
+## "Cavalos": pedido do usuario ("faça um modelo de cavalo pra usar nos
+## tiles com o recurso cavalo", explicitamente pela pipeline de verdade
+## em vez do box cru direto em GDScript que os outros recursos usam) —
+## unico recurso cujo modelo vem de um .glb exportado pela Asset Factory
+## (tools/asset_factory/generate_horse.py), nao de SurfaceTool aqui. Nao
+## da pra reusar o MultiMeshInstance3D dos outros recursos (_instances
+## acima): aquele caminho troca o material do mesh INTEIRO por um so
+## flat (`vertex_color_use_as_albedo`), que apagaria as cores/materiais
+## de verdade exportados no .glb. Uma instancia de cena de verdade por
+## tile (mesmo padrao de Unit/City/Building) preserva os materiais
+## originais -- ver _spawn_horse_instance/apply_fog abaixo pro
+## equivalente de fog-of-war feito na mao (sepia via material override
+## por superficie, ja que um Node3D comum nao tem "modulate" como um
+## MultiMesh tem cor por instancia).
+const HORSE_SCENE_PATH := "res://assets/generated/resources/horses/horses.glb"
+## Modelo exportado em escala REAL de cavalo (~1.7m) pra ficar facil de
+## modelar certo no Blender -- decoracao de tile precisa ser bem menor
+## que isso (do tamanho das outras, gemas/minerio/seda ocupam so uma
+## fracao pequena do tile), daí o downscale aqui em vez de remodelar
+## tudo em escala de brinquedo desde o inicio.
+const HORSE_SCALE := 0.35
+var _horse_scene: PackedScene
+var _horse_instances: Dictionary = {} # Vector2i -> Node3D
+## Vector2i -> Array[{mesh: MeshInstance3D, surface: int, sepia: Material}]
+## -- precomputado UMA vez no spawn (nao a cada apply_fog) pra so trocar
+## o material override na hora de tingir, nunca duplicar material em
+## tempo real durante o jogo.
+var _horse_sepia_overrides: Dictionary = {}
+
 func _init(hex_grid: HexGrid) -> void:
 	_hex_grid = hex_grid
 	_meshes["iron"] = _build_iron_mesh()
-	_meshes["horses"] = _build_horses_mesh()
 	_meshes["gems"] = _build_gems_mesh()
 	_meshes["silk"] = _build_silk_mesh()
 	_meshes["mana_node"] = _build_mana_node_mesh()
+	_horse_scene = load(HORSE_SCENE_PATH)
 
 ## Reconstroi todos os MultiMeshInstance3D de recurso do zero a partir do
 ## mapa atual — chamado de HexGrid._rebuild_props(), mesma cadencia de
@@ -43,9 +72,18 @@ func rebuild(tiles: Dictionary) -> void:
 	_instances.clear()
 	_coord_to_index.clear()
 
+	for node in _horse_instances.values():
+		if node:
+			node.queue_free()
+	_horse_instances.clear()
+	_horse_sepia_overrides.clear()
+
 	var coords_by_kind: Dictionary = {}
 	for coord in tiles.keys():
 		var data: HexTileData = tiles[coord]
+		if data.resource == "horses":
+			_spawn_horse_instance(coord)
+			continue
 		if data.resource == "" or not _meshes.has(data.resource):
 			continue
 		if not coords_by_kind.has(data.resource):
@@ -54,6 +92,53 @@ func rebuild(tiles: Dictionary) -> void:
 
 	for kind in coords_by_kind.keys():
 		_build_instance_for_kind(kind, coords_by_kind[kind])
+
+## Instancia de verdade (nao MultiMesh, ver comentario de _horse_scene
+## acima) do cavalo exportado em horses.glb, uma por tile com o
+## recurso "horses". Mesmo tratamento de altura/jitter que
+## _build_instance_for_kind da aos MultiMesh (_tile_surface_height pra
+## nao afundar em Colina/Montanha, pequeno jitter de posicao/rotacao pra
+## nao ficar identico tile a tile).
+func _spawn_horse_instance(coord: Vector2i) -> void:
+	if _horse_scene == null:
+		return
+	var instance: Node3D = _horse_scene.instantiate()
+	var pos = _hex_grid.world_for_coord(coord)
+	pos.y = _hex_grid._tile_surface_height(coord)
+	pos.x += randf_range(-0.08, 0.08)
+	pos.z += randf_range(-0.08, 0.08)
+	instance.position = pos
+	instance.rotation.y = randf() * TAU
+	instance.scale = Vector3.ONE * HORSE_SCALE
+	_hex_grid.add_child(instance)
+	_horse_instances[coord] = instance
+	_horse_sepia_overrides[coord] = _precompute_horse_sepia_overrides(instance)
+
+## Duplica CADA material de superficie encontrado em `instance` uma vez
+## (sepia via HexGrid._sepia_prop_color, mesma formula/aparencia dos
+## outros props) e guarda a lista pra apply_fog so trocar o override na
+## hora, sem duplicar material nenhum durante o jogo de verdade.
+func _precompute_horse_sepia_overrides(instance: Node3D) -> Array:
+	var overrides: Array = []
+	var mesh_instances: Array[MeshInstance3D] = []
+	_collect_mesh_instances(instance, mesh_instances)
+	for mesh_instance in mesh_instances:
+		if mesh_instance.mesh == null:
+			continue
+		for surface in range(mesh_instance.mesh.get_surface_count()):
+			var original: Material = mesh_instance.get_active_material(surface)
+			if original == null or not (original is StandardMaterial3D):
+				continue
+			var sepia: StandardMaterial3D = original.duplicate()
+			sepia.albedo_color = _hex_grid._sepia_prop_color(original.albedo_color)
+			overrides.append({"mesh": mesh_instance, "surface": surface, "sepia": sepia})
+	return overrides
+
+func _collect_mesh_instances(node: Node, out: Array[MeshInstance3D]) -> void:
+	if node is MeshInstance3D:
+		out.append(node)
+	for child in node.get_children():
+		_collect_mesh_instances(child, out)
 
 func _build_instance_for_kind(kind: String, coords: Array) -> void:
 	var mm := MultiMesh.new()
@@ -114,6 +199,36 @@ func _build_instance_for_kind(kind: String, coords: Array) -> void:
 ## formula) porque, ao contrario dos shaders (arquivos isolados sem
 ## compartilhamento de codigo entre si), aqui e so uma chamada de metodo
 ## normal do GDScript pela referencia _hex_grid ja guardada.
+## Ver ARVORES E RECURSOS (pedido do usuario: "evite sobreposicao ruim
+## entre recursos... estruturas; cidades"): remove o prop decorativo de UM
+## tile quando uma cidade/predio passa a ocupar aquele tile — confirmado
+## visualmente antes do fix (cristal/minerio flutuando dentro do patio da
+## cidade). NAO mexe no `.resource` do tile (o bonus de yield continua
+## valendo, ver City.effective_tile_yield) — so o objeto 3D que ficaria
+## visualmente atras/dentro da estrutura nova.
+func clear_prop_at(coord: Vector2i) -> void:
+	for kind in _coord_to_index.keys():
+		var coord_to_index: Dictionary = _coord_to_index[kind]
+		if coord_to_index.has(coord):
+			var instance: MultiMeshInstance3D = _instances[kind]
+			for index in coord_to_index[coord]:
+				instance.multimesh.set_instance_transform(index, Transform3D(Basis().scaled(Vector3.ZERO), Vector3.ZERO))
+			coord_to_index.erase(coord)
+	if _horse_instances.has(coord):
+		_horse_instances[coord].queue_free()
+		_horse_instances.erase(coord)
+		_horse_sepia_overrides.erase(coord)
+
+func refresh_height(coord: Vector2i) -> void:
+	for kind in _coord_to_index:
+		for index in _coord_to_index[kind].get(coord, []):
+			var mm: MultiMesh = _instances[kind].multimesh
+			var transform := mm.get_instance_transform(index)
+			transform.origin.y = _hex_grid._tile_surface_height(coord)
+			mm.set_instance_transform(index, transform)
+	if _horse_instances.has(coord):
+		_horse_instances[coord].position.y = _hex_grid._tile_surface_height(coord)
+
 func apply_fog(visibility: Dictionary) -> void:
 	for kind in _instances.keys():
 		var instance: MultiMeshInstance3D = _instances[kind]
@@ -121,6 +236,8 @@ func apply_fog(visibility: Dictionary) -> void:
 		for coord in coord_to_index.keys():
 			var indices: Array = coord_to_index[coord]
 			var vis = visibility.get(coord, HexGrid.Visibility.UNSEEN)
+			if _hex_grid.get_tile(coord).resource != kind:
+				vis = HexGrid.Visibility.UNSEEN
 			var color := Color.WHITE
 			match vis:
 				HexGrid.Visibility.UNSEEN:
@@ -131,6 +248,23 @@ func apply_fog(visibility: Dictionary) -> void:
 					pass
 			for idx in indices:
 				instance.multimesh.set_instance_color(idx, color)
+
+	# "Cavalos": instancia de cena de verdade, nao MultiMesh (ver
+	# _horse_scene acima) -- sem cor por instancia disponivel, entao
+	# UNSEEN esconde o node inteiro (mesma convencao de Unit/City/
+	# Building, ver HexGrid._apply_fog_to_entities) e EXPLORED troca pra
+	# um material override sepia pre-computado no spawn (ver
+	# _precompute_horse_sepia_overrides) em vez de tingir por vertice.
+	for coord in _horse_instances.keys():
+		var instance: Node3D = _horse_instances[coord]
+		var vis = visibility.get(coord, HexGrid.Visibility.UNSEEN)
+		if _hex_grid.get_tile(coord).resource != "horses":
+			vis = HexGrid.Visibility.UNSEEN
+		instance.visible = vis != HexGrid.Visibility.UNSEEN
+		var use_sepia = vis == HexGrid.Visibility.EXPLORED
+		for entry in _horse_sepia_overrides.get(coord, []):
+			var mesh_instance: MeshInstance3D = entry["mesh"]
+			mesh_instance.set_surface_override_material(entry["surface"], entry["sepia"] if use_sepia else null)
 
 ## Cone simples (base circular jitterizada por `sides`, apice no eixo Y) —
 ## mesma tecnica generica de HexGrid._add_cone, duplicada aqui de proposito
@@ -173,19 +307,6 @@ func _build_iron_mesh() -> ArrayMesh:
 	_add_cone(st, Vector3(-0.1, 0.16, 0.05), 0.065, 0.11, Color(0.82, 0.4, 0.14), 5)
 	_add_cone(st, Vector3(0.12, 0.15, -0.06), 0.05, 0.1, Color(0.9, 0.55, 0.2), 5)
 	_add_cone(st, Vector3(0.02, 0.11, 0.14), 0.045, 0.08, Color(0.78, 0.36, 0.12), 4)
-	return st.commit()
-
-## Cavalos: pedido do usuario ("cavalos nas celulas de cavalo") — os fardos
-## de feno antigos eram so pastagem generica, nao liam como o recurso em
-## si. Agora sao 2 cavalos de verdade em silhueta low-poly (corpo+pescoco/
-## cabeca+4 pernas+rabo, ver _add_horse), cores diferentes (castanho e
-## quase-preto) e rotacoes/escalas diferentes — le como uma pequena
-## manada, nao 2 copias identicas do mesmo objeto.
-func _build_horses_mesh() -> ArrayMesh:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_add_horse(st, Vector3(-0.13, 0.0, 0.05), 0.4, 1.0, Color(0.55, 0.36, 0.18), Color(0.32, 0.2, 0.1))
-	_add_horse(st, Vector3(0.14, 0.0, -0.08), -0.9, 0.85, Color(0.16, 0.12, 0.09), Color(0.08, 0.06, 0.05))
 	return st.commit()
 
 ## Gemas: pedido do usuario ("cristais pode por grandes veias de cristal")
@@ -237,71 +358,3 @@ func _build_mana_node_mesh() -> ArrayMesh:
 	_add_cone(st, Vector3(-0.12, 0.28, -0.09), 0.04, 0.16, Color(0.32, 0.75, 0.86), 5)
 	_add_cone(st, Vector3(0.05, 0.4, -0.03), 0.03, 0.12, Color(0.6, 0.95, 0.98), 5)
 	return st.commit()
-
-## Gira um vetor no plano XZ (eixo Y fica intacto) — usado tanto pra
-## orientar CADA parte de um cavalo (_add_box y_rotation) quanto pro
-## OFFSET de cada parte relativo ao centro do cavalo (senao as pernas/
-## cabeca ficariam sempre nos MESMOS eixos mundiais, nao acompanhando a
-## rotacao do corpo — 2 cavalos girados ficariam com as pernas apontando
-## pro mesmo lugar em vez de cada um pra frente do proprio corpo).
-func _rotate_xz(v: Vector3, angle: float) -> Vector3:
-	var c = cos(angle)
-	var s = sin(angle)
-	return Vector3(v.x * c - v.z * s, v.y, v.x * s + v.z * c)
-
-## Caixa retangular simples (6 faces, normal fixa e explicita por face —
-## nao depende da ordem de winding pra iluminar certo, ver comentario de
-## _add_cone sobre cull_disabled). Rotaciona em torno de Y antes de
-## transladar pro `center`, mesma convencao de _add_cone (that recebe o
-## centro ja em espaco de mundo local ao prop).
-func _add_box(st: SurfaceTool, center: Vector3, half_extents: Vector3, color: Color, y_rotation: float = 0.0) -> void:
-	var local_corners = [
-		Vector3(-half_extents.x, -half_extents.y, -half_extents.z),
-		Vector3(half_extents.x, -half_extents.y, -half_extents.z),
-		Vector3(half_extents.x, half_extents.y, -half_extents.z),
-		Vector3(-half_extents.x, half_extents.y, -half_extents.z),
-		Vector3(-half_extents.x, -half_extents.y, half_extents.z),
-		Vector3(half_extents.x, -half_extents.y, half_extents.z),
-		Vector3(half_extents.x, half_extents.y, half_extents.z),
-		Vector3(-half_extents.x, half_extents.y, half_extents.z),
-	]
-	var world_corners: Array[Vector3] = []
-	for c in local_corners:
-		world_corners.append(center + _rotate_xz(c, y_rotation))
-
-	var local_normals = [Vector3(0, 0, -1), Vector3(0, 0, 1), Vector3(-1, 0, 0), Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0, -1, 0)]
-	var faces = [
-		[0, 1, 2, 3], [5, 4, 7, 6], [4, 0, 3, 7], [1, 5, 6, 2], [3, 2, 6, 7], [4, 5, 1, 0],
-	]
-	for f in range(faces.size()):
-		var normal = _rotate_xz(local_normals[f], y_rotation)
-		var idx = faces[f]
-		var quad = [world_corners[idx[0]], world_corners[idx[1]], world_corners[idx[2]], world_corners[idx[3]]]
-		for p in [quad[0], quad[1], quad[2]]:
-			st.set_normal(normal)
-			st.set_color(color)
-			st.add_vertex(p)
-		for p in [quad[0], quad[2], quad[3]]:
-			st.set_normal(normal)
-			st.set_color(color)
-			st.add_vertex(p)
-
-## Cavalo em silhueta low-poly (corpo + bloco de pescoco/cabeca + 4 pernas
-## finas + rabo, todos _add_box) — mesma familia visual "procedural, sem
-## assets externos" que o resto do prop system (e das unidades do jogo,
-## ver README: "voltei pra forma procedural (box+prisma)"). `body_color`
-## pras partes grandes, `dark_color` (mais escuro) pras pernas/rabo, pra
-## dar uma sombra de contato barata sem geometria extra.
-func _add_horse(st: SurfaceTool, base_center: Vector3, y_rotation: float, scale: float, body_color: Color, dark_color: Color) -> void:
-	var parts = [
-		{"offset": Vector3(0.0, 0.11, 0.0), "half": Vector3(0.15, 0.065, 0.055), "color": body_color},
-		{"offset": Vector3(0.19, 0.17, 0.0), "half": Vector3(0.06, 0.1, 0.045), "color": body_color},
-		{"offset": Vector3(0.1, 0.045, 0.045), "half": Vector3(0.025, 0.09, 0.025), "color": dark_color},
-		{"offset": Vector3(0.1, 0.045, -0.045), "half": Vector3(0.025, 0.09, 0.025), "color": dark_color},
-		{"offset": Vector3(-0.1, 0.045, 0.045), "half": Vector3(0.025, 0.09, 0.025), "color": dark_color},
-		{"offset": Vector3(-0.1, 0.045, -0.045), "half": Vector3(0.025, 0.09, 0.025), "color": dark_color},
-		{"offset": Vector3(-0.17, 0.13, 0.0), "half": Vector3(0.02, 0.05, 0.02), "color": dark_color},
-	]
-	for part in parts:
-		var rotated_offset = _rotate_xz(part["offset"] * scale, y_rotation)
-		_add_box(st, base_center + rotated_offset, part["half"] * scale, part["color"], y_rotation)

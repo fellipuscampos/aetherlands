@@ -92,13 +92,27 @@ func test_total_habitable_tiles_excludes_water_and_lava():
 	})
 	assert_eq(VictoryConditions.total_habitable_tiles(grid), 2)
 
+## Montanha (continente principal) NAO entra aqui de proposito -- desde
+## HexTileData.is_mountain(), ela e' blocks_land_units() (pedido do
+## usuario: "nao da pra passar por cima e nada nasce la"), logo inabitavel
+## tambem (ver total_habitable_tiles). VOLCANIC_PEAKS (a "montanha" do
+## continente Vulcanico) continua DE FORA desse bloqueio por decisao
+## anterior -- ver o comentario de is_mountain() -- entao ainda conta como
+## habitavel aqui, o que este teste continua confirmando.
 func test_total_habitable_tiles_counts_special_continent_terrain_as_habitable():
 	var grid := _make_grid_with_tiles({
 		Vector2i(0, 0): HexTileData.TerrainType.VOLCANIC_ASH,
 		Vector2i(1, 0): HexTileData.TerrainType.MYSTIC_SOIL,
-		Vector2i(2, 0): HexTileData.TerrainType.MOUNTAINS,
+		Vector2i(2, 0): HexTileData.TerrainType.VOLCANIC_PEAKS,
 	})
-	assert_eq(VictoryConditions.total_habitable_tiles(grid), 3, "vulcanico/cristalino/montanha contam como habitavel, mesma definicao de blocks_land_units()")
+	assert_eq(VictoryConditions.total_habitable_tiles(grid), 3, "vulcanico/cristalino contam como habitavel, mesma definicao de blocks_land_units() -- Montanha do continente principal NAO, ver is_mountain()")
+
+func test_total_habitable_tiles_excludes_mountains():
+	var grid := _make_grid_with_tiles({
+		Vector2i(0, 0): HexTileData.TerrainType.GRASSLAND,
+		Vector2i(1, 0): HexTileData.TerrainType.MOUNTAINS,
+	})
+	assert_eq(VictoryConditions.total_habitable_tiles(grid), 1, "Montanha nao conta como territorio habitavel/conquistavel -- e' intransponivel, ver HexTileData.is_mountain()")
 
 func test_player_habitable_tiles_dedupes_city_coord_and_owned_tiles():
 	var grid := _make_grid_with_tiles({
@@ -174,9 +188,9 @@ func test_territorial_dominance_not_achieved_below_sustain_turns():
 
 func test_arcane_schools_researched_counts_distinct_schools_once():
 	var player = PlayerData.new(CivilizationData.new())
-	player.researched_techs["canalizacao_base"] = true # Arcanismo
-	player.researched_techs["invocacao_espiritos"] = true # Arcanismo TAMBEM -- nao deveria contar 2x
-	player.researched_techs["alquimia_botanica"] = true # Alquimia
+	player.researched_magic["canalizacao_base"] = true # Arcanismo
+	player.researched_magic["invocacao_espiritos"] = true # Arcanismo TAMBEM -- nao deveria contar 2x
+	player.researched_magic["alquimia_botanica"] = true # Alquimia
 	assert_eq(VictoryConditions.arcane_schools_researched(player), 2)
 
 func test_arcane_schools_researched_excludes_doutrina():
@@ -188,7 +202,7 @@ func test_meets_arcane_ritual_prerequisites_false_with_schools_but_no_nodes():
 	var grid := _make_grid_with_tiles({Vector2i(0, 0): HexTileData.TerrainType.GRASSLAND})
 	var player = PlayerData.new(CivilizationData.new())
 	for tech_id in ["canalizacao_base", "alquimia_botanica", "transmutacao_rocha", "geomancia"]:
-		player.researched_techs[tech_id] = true
+		player.researched_magic[tech_id] = true
 	assert_false(VictoryConditions.meets_arcane_ritual_prerequisites(player, grid), "4 escolas mas 0 nodulos -- nao deveria bastar")
 
 func test_meets_arcane_ritual_prerequisites_true_with_both():
@@ -201,7 +215,7 @@ func test_meets_arcane_ritual_prerequisites_true_with_both():
 		grid.tiles[coord].resource = "mana_node"
 	var player = PlayerData.new(CivilizationData.new())
 	for tech_id in ["canalizacao_base", "alquimia_botanica", "transmutacao_rocha", "geomancia"]:
-		player.researched_techs[tech_id] = true
+		player.researched_magic[tech_id] = true
 	var owned: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
 	player.cities.append(_make_city(Vector2i(0, 0), owned))
 	assert_true(VictoryConditions.meets_arcane_ritual_prerequisites(player, grid))
@@ -231,7 +245,7 @@ func test_arcane_progress_averages_four_fractions():
 	var grid := _make_grid_with_tiles({Vector2i(0, 0): HexTileData.TerrainType.GRASSLAND})
 	var player = PlayerData.new(CivilizationData.new())
 	for tech_id in ["canalizacao_base", "alquimia_botanica", "transmutacao_rocha", "geomancia"]: # 4/4 escolas = 1.0
-		player.researched_techs[tech_id] = true
+		player.researched_magic[tech_id] = true
 	# 0 nodulos = 0.0, sem santuario = 0.0, sem sustentacao = 0.0 -> media 0.25
 	assert_almost_eq(VictoryConditions.arcane_progress(player, grid), 0.25, 0.001)
 
@@ -245,7 +259,7 @@ func test_arcane_progress_can_be_high_without_sanctuary_built():
 		grid.tiles[coord].resource = "mana_node"
 	var player = PlayerData.new(CivilizationData.new())
 	for tech_id in ["canalizacao_base", "alquimia_botanica", "transmutacao_rocha", "geomancia"]:
-		player.researched_techs[tech_id] = true
+		player.researched_magic[tech_id] = true
 	var owned: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
 	player.cities.append(_make_city(Vector2i(0, 0), owned))
 	# escolas=1.0, nodulos=1.0, santuario=0.0, sustentacao=0.0 -> media 0.5

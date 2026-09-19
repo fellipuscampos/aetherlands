@@ -1,0 +1,87 @@
+{
+  "species": "demon",
+  "class": "lesser_demon",
+  "style": "human",
+  "engine": "blocky",
+  "seed": 21,
+  "body": {
+    "height": 1.6,
+    "limb_thickness": 1.0,
+    "shoulder_width_ratio": 0.27000001072883606,
+    "head_height_ratio": 0.1599999964237213,
+    "head_width_ratio": 0.1899999976158142,
+    "head_depth_ratio": 0.1899999976158142,
+    "neck_height_ratio": 0.019999999552965164,
+    "torso_height_ratio": 0.25999999046325684,
+    "belly_fraction": 0.4000000059604645,
+    "upper_leg_ratio": 0.20499999821186066,
+    "lower_leg_ratio": 0.1850000023841858,
+    "limb_slenderness": 1.15,
+    "angularity": 1.0,
+    "slim_build": false,
+    "thin_arms": false,
+    "pointy_ears": false,
+    "upper_arm_ratio": 0.17000000178813934,
+    "lower_arm_ratio": 0.1550000011920929,
+    "upper_arm_radius_ratio": 0.05400000140070915,
+    "upper_arm_width_mult": 1.0,
+    "lower_arm_radius_ratio": 0.04500000178813934,
+    "lower_arm_width_mult": 1.0,
+    "hand_size_ratio": 1.1799999475479126,
+    "hand_width_mult": 0.75,
+    "hand_depth_mult": 0.75,
+    "hand_length_mult": 0.75,
+    "upper_leg_radius_ratio": 0.08799999952316284,
+    "upper_leg_width_mult": 1.0,
+    "lower_leg_radius_ratio": 0.06800000369548798,
+    "lower_leg_width_mult": 1.0,
+    "foot_width_mult": 1.0
+  },
+  "equipment": {
+    "weapon": "sword",
+    "shield": false,
+    "helmet": false,
+    "hair": false,
+    "gloves": false,
+    "armor": false,
+    "bare_skin": true,
+    "textured_skin": false,
+    "muscles": false,
+    "bone_marks": false,
+    "torn_cloth": false,
+    "leaves": false,
+    "pelvis_material": "leather",
+    "foot_material": "skin",
+    "belt": false,
+    "skirt": false,
+    "headband": false,
+    "sash": false,
+    "pack": false,
+    "beard": false,
+    "fangs": true,
+    "eye_style": "slit",
+    "nose": true
+  },
+  "palette": {
+    "civilization": "human_default",
+    "skin_color": [
+      0.5,
+      0.09,
+      0.07
+    ],
+    "hair_color": [
+      0.2,
+      0.2,
+      0.22
+    ],
+    "eye_color": [
+      1,
+      0.65,
+      0.06
+    ]
+  },
+  "output": {
+    "name": "lesser_demon",
+    "directory": "assets/generated/magic/lesser_demon"
+  }
+}

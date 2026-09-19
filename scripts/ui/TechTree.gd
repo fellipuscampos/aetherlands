@@ -57,29 +57,29 @@ var _node_rects: Dictionary = {} # id -> Rect2, posicao final de cada card (usad
 ## Transmutação/Naturalismo/Elementalismo/Geomancia/Alquimia) e "Tecnologia"
 ## (so a escola "Doutrina") — cada uma em sua PROPRIA instancia de TechTree
 ## (ver HUD.tscn TechTabs/MagicTab+DoutrinaTab), mantendo exatamente o mesmo
-## algoritmo de tier/componente/linha de hoje, so filtrando qual
-## subconjunto de techs entra em cada instancia. "" = sem filtro, mostra a
-## arvore INTEIRA — default de proposito, pra nao quebrar quem cria
-## TechTree.new() direto sem setar isto (ver test_tech_tree.gd, que chama
-## _compute_tiers/_compute_rows/_compute_components direto num TechTree
-## "cru"). "magic" = toda tech com school != "Doutrina". "doutrina" = so
-## school == "Doutrina".
+## algoritmo de tier/componente/linha de hoje, so escolhendo qual banco de
+## dados entra em cada instancia. "" = sem filtro, mostra as DUAS arvores
+## juntas — default de proposito, pra nao quebrar quem cria TechTree.new()
+## direto sem setar isto (ver test_tech_tree.gd, que chama _compute_tiers/
+## _compute_rows/_compute_components direto num TechTree "cru"). "magic" =
+## MagicDatabase (as 7 escolas magicas). "doutrina" = TechDatabase (arvore
+## mundana). Desde a separacao estrutural em TechDatabase/MagicDatabase,
+## isto nao e mais um FILTRO sobre uma unica base — sao dois bancos de
+## dados de verdade (ver comentario deles).
 var category: String = ""
 
-## Unico ponto de leitura de TechDatabase.all_techs() nesta classe — toda
-## outra funcao (rebuild/_compute_tiers/_compute_components/_draw) le daqui
-## em vez de chamar TechDatabase direto, pra o filtro de `category` valer
-## em TUDO de forma consistente (senao uma tech Doutrina poderia aparecer
-## na arvore de Magia so por um metodo esquecido de filtrar).
+## Unico ponto de leitura de TechDatabase.all_techs()/MagicDatabase.
+## all_techs() nesta classe — toda outra funcao (rebuild/_compute_tiers/
+## _compute_components/_draw) le daqui em vez de chamar as bases direto,
+## pra `category` decidir consistentemente qual arvore entra em TUDO
+## (senao uma tech mundana poderia aparecer na arvore de Magia so por um
+## metodo esquecido de filtrar).
 func _techs() -> Array:
-	if category == "":
+	if category == "doutrina":
 		return TechDatabase.all_techs()
-	var result := []
-	for tech in TechDatabase.all_techs():
-		var is_doutrina: bool = tech.school == "Doutrina"
-		if is_doutrina == (category == "doutrina"):
-			result.append(tech)
-	return result
+	if category == "magic":
+		return MagicDatabase.all_techs()
+	return TechDatabase.all_techs() + MagicDatabase.all_techs()
 
 ## race: CivilizationData.race do jogador humano (default "human" pra nao
 ## quebrar chamadas existentes/testes antigos) — usado so pra tematizar o
@@ -95,6 +95,19 @@ func rebuild(researched: Dictionary, current_research: String, research_progress
 	var tiers := _compute_tiers()
 	var rows := _compute_rows(tiers)
 
+	# Disponibilidade REAL pra pesquisar — vem das bases, nao mais de
+	# `tech.prerequisites` (que virou so ancora cosmetica pras techs de
+	# TechDatabase, ver comentario do campo em TechData.gd). category ""
+	# (arvore sem filtro, so usada por chamadas "cruas" de teste) computa as
+	# duas junto, mesmo padrao de _techs() acima.
+	var available_ids := {}
+	if category != "magic":
+		for t in TechDatabase.available_techs(researched):
+			available_ids[t.id] = true
+	if category != "doutrina":
+		for t in MagicDatabase.available_techs(researched):
+			available_ids[t.id] = true
+
 	var max_tier := 0
 	var max_row := 0
 	for tech in _techs():
@@ -104,7 +117,7 @@ func rebuild(researched: Dictionary, current_research: String, research_progress
 	for tech in _techs():
 		var pos = MARGIN + Vector2(tiers[tech.id] * (NODE_SIZE.x + COL_GAP), rows[tech.id] * (NODE_SIZE.y + ROW_GAP))
 		_node_rects[tech.id] = Rect2(pos, NODE_SIZE)
-		_add_tech_card(tech, pos, researched, current_research, research_progress, race)
+		_add_tech_card(tech, pos, researched, current_research, research_progress, race, available_ids.has(tech.id))
 
 	custom_minimum_size = Vector2(
 		(max_tier + 1) * (NODE_SIZE.x + COL_GAP) - COL_GAP + MARGIN.x * 2,
@@ -112,21 +125,27 @@ func rebuild(researched: Dictionary, current_research: String, research_progress
 	)
 	queue_redraw()
 
-## Tier = quantos passos de pre-requisito ate a raiz (0 = sem pre-
-## requisito nenhum). Relaxamento iterativo em vez de recursao: o grafo e
-## uma DAG bem pequena (16 nos hoje), entao performance nunca importa, mas
-## isso evita ter que lidar com ciclo/ordem de visita na mao.
+## Tier = coluna de exibicao (0-indexado). Desde o redesenho "10 niveis" da
+## Tecnologia mundana, DUAS fontes coexistem: techs de TechDatabase tem
+## `TechData.tier` como campo EXPLICITO (1..10, ver TechDatabase.gd) — aqui
+## so le `tech.tier - 1` direto, sem derivar nada; techs de MagicDatabase
+## continuam no modelo ANTIGO (tier = profundidade de pre-requisito ate a
+## raiz), preservado exatamente como sempre foi, via o mesmo relaxamento
+## iterativo de antes. O `continue` dentro do loop de relaxamento evita que
+## o modelo antigo sobrescreva o tier fixo das techs de TechDatabase.
 func _compute_tiers() -> Dictionary:
 	var tiers := {}
 	var techs = _techs()
 	for t in techs:
-		tiers[t.id] = 0
+		tiers[t.id] = (t.tier - 1) if TechDatabase.get_tech(t.id) != null else 0
 	var changed := true
 	var safety := 0
 	while changed and safety < 20:
 		changed = false
 		safety += 1
 		for t in techs:
+			if TechDatabase.get_tech(t.id) != null:
+				continue
 			var desired := 0
 			for p in t.prerequisites:
 				desired = max(desired, int(tiers.get(p, 0)) + 1)
@@ -292,12 +311,8 @@ func _align_rows_within_group(techs: Array, tiers: Dictionary) -> Dictionary:
 
 	return rows
 
-func _add_tech_card(tech: TechData, pos: Vector2, researched: Dictionary, current_research: String, research_progress: float, race: String) -> void:
-	var prereqs_met := true
-	for p in tech.prerequisites:
-		if not researched.has(p):
-			prereqs_met = false
-			break
+func _add_tech_card(tech: TechData, pos: Vector2, researched: Dictionary, current_research: String, research_progress: float, race: String, is_available: bool) -> void:
+	var prereqs_met := is_available
 	var is_researched: bool = researched.has(tech.id)
 	var is_researching: bool = tech.id == current_research
 	var is_selectable: bool = prereqs_met and not is_researched and not is_researching
@@ -401,16 +416,26 @@ func _add_tech_card(tech: TechData, pos: Vector2, researched: Dictionary, curren
 		cost_label.text = "%d ciencia" % int(tech.cost)
 		box.add_child(cost_label)
 		if not prereqs_met:
-			var prereq_names: Array[String] = []
-			for p in tech.prerequisites:
-				var pt: TechData = TechDatabase.get_tech(p)
-				if pt:
-					prereq_names.append(RaceTheme.tech_name(pt.id, race))
 			var locked_label := Label.new()
 			locked_label.theme_type_variation = &"MutedLabel"
 			locked_label.add_theme_color_override("font_color", UITheme.COLOR_DANGER)
 			locked_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			locked_label.text = "Requer: %s" % ", ".join(prereq_names)
+			if TechDatabase.get_tech(tech.id) != null:
+				# Tecnologia mundana (arvore de 10 niveis): o bloqueio real e
+				# o portao de tier, nao pre-requisito especifico — ver
+				# TechDatabase.available_techs/is_tier_unlocked.
+				locked_label.text = "Requer %d pesquisas do Nível %d" % [TechDatabase.TIER_UNLOCK_THRESHOLD, tech.tier - 1]
+			else:
+				# Magia: continua a cadeia de pre-requisito especifico de
+				# sempre, listando os nomes de quem falta pesquisar.
+				var prereq_names: Array[String] = []
+				for p in tech.prerequisites:
+					var pt: TechData = TechDatabase.get_tech(p)
+					if pt == null:
+						pt = MagicDatabase.get_tech(p)
+					if pt:
+						prereq_names.append(RaceTheme.tech_name(pt.id, race))
+				locked_label.text = "Requer: %s" % ", ".join(prereq_names)
 			box.add_child(locked_label)
 
 	if is_selectable:

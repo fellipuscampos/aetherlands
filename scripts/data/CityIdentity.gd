@@ -46,11 +46,27 @@ const AXIS_ARCANA := "arcana"
 ## iteracao de um Dictionary.
 const AXES := [AXIS_AGRICOLA, AXIS_INDUSTRIAL, AXIS_COMERCIAL, AXIS_MILITAR, AXIS_ARCANA]
 
+## Roadmap "arvore de 10 niveis" (Tecnologia mundana): os 12 predios novos
+## (upgrade das cadeias militar/economia/defesa, ver BuildingDatabase.gd)
+## entram na MESMA familia de eixo dos predios originais que evoluem —
+## barracks_2/3/elite e archery_range_2/stable_2/grand_arsenal continuam
+## militar (mesma familia de barracks/archery_range/stable/siege_workshop);
+## watchtower/fortress/imperial_fortress tambem caem em militar (mesma
+## familia de "walls", defesa); workshop_2 continua industrial; grand_
+## market/grand_emporium continuam comercial. Sem isso os bonus de eixo
+## dominante (axis_strength, desconto de custo militar) parariam de contar
+## esses predios, mesmo sendo a evolucao direta dos originais.
+##
+## Roadmap "polimento definitivo V1" (rebalanceamento de familia): mais 5
+## predios novos, mesma logica — granary_2 cai em AGRICOLA (evolucao do
+## Celeiro), market_2/trading_post em COMERCIAL (evolucao do Mercado),
+## garrison/walls_2 em MILITAR (mesma familia de "walls" — defesa da
+## cidade, mesmo sem treinar unidade nenhuma).
 const AXIS_BUILDINGS := {
-	AXIS_AGRICOLA: ["granary"],
-	AXIS_INDUSTRIAL: ["workshop"],
-	AXIS_COMERCIAL: ["market"],
-	AXIS_MILITAR: ["walls", "barracks", "archery_range", "stable", "siege_workshop"],
+	AXIS_AGRICOLA: ["granary", "granary_2"],
+	AXIS_INDUSTRIAL: ["workshop", "workshop_2"],
+	AXIS_COMERCIAL: ["market", "grand_market", "grand_emporium", "market_2", "trading_post"],
+	AXIS_MILITAR: ["walls", "barracks", "archery_range", "stable", "siege_workshop", "barracks_2", "barracks_3", "barracks_elite", "archery_range_2", "stable_2", "grand_arsenal", "watchtower", "fortress", "imperial_fortress", "garrison", "walls_2"],
 	AXIS_ARCANA: ["sages_tower", "arcane_tower", "griffin_roost", "druid_grove", "runic_anvil", "shadow_crypt", "arcane_sanctuary"],
 }
 
@@ -75,7 +91,11 @@ static func axis_strength(city: City, axis: String) -> float:
 	for id in bucket:
 		if city.buildings.has(id):
 			built += 1
-	return float(built) / float(bucket.size())
+	if axis == AXIS_ARCANA:
+		for id in city.buildings:
+			if not id in bucket and MagicContent.school_for_building(id) != "":
+				built += 1
+	return minf(1.0, float(built) / float(bucket.size()))
 
 ## Sinal de identidade CIVILIZACIONAL (Roadmap Parte B, B3) — media simples
 ## de axis_strength() sobre TODAS as cidades da civ, 0.0 sem cidade

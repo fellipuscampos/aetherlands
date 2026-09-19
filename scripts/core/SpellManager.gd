@@ -19,10 +19,11 @@ extends RefCounted
 ## insuficiente), sem o chamador ter que redescobrir qual dos dois falhou.
 
 ## true se `caster` ja pesquisou a tecnologia que concede este feitico
-## (TechDatabase.unlocked_spells_for) E o cooldown dele ja passou. NAO leva
+## (MagicDatabase.unlocked_spells_for — nenhuma tech de Doutrina concede
+## feitico, ver TechDatabase.gd) E o cooldown dele ja passou. NAO leva
 ## mana em conta (ver has_enough_mana/is_castable pra isso).
 static func can_cast(caster: PlayerData, spell_name: String, current_turn: int) -> bool:
-	if not (spell_name in TechDatabase.unlocked_spells_for(caster.researched_techs)):
+	if not (spell_name in MagicDatabase.unlocked_spells_for(caster.researched_magic)):
 		return false
 	var available_at: int = caster.spell_cooldowns.get(spell_name, 0)
 	return current_turn >= available_at
@@ -32,6 +33,8 @@ static func can_cast(caster: PlayerData, spell_name: String, current_turn: int) 
 ## quando `hex_grid` e fornecido (mesma convencao opcional de City.
 ## production_cost). 0.0 pra feitico sem SpellData cadastrado.
 static func effective_mana_cost(spell: SpellData, caster: PlayerData, hex_grid: HexGrid = null) -> float:
+	if spell.category == "ritual":
+		return spell.mana_cost
 	var mult := 1.0
 	if hex_grid:
 		mult = ResourceDatabase.spell_mana_cost_multiplier(caster, hex_grid)
@@ -48,6 +51,9 @@ static func has_enough_mana(caster: PlayerData, spell_name: String, hex_grid: He
 ## can_cast() (tech+recarga) E has_enough_mana() (saldo) — usado pela HUD
 ## (Grimorio) pra decidir se "Conjurar" fica clicavel.
 static func is_castable(caster: PlayerData, spell_name: String, current_turn: int, hex_grid: HexGrid = null) -> bool:
+	var spell := SpellDatabase.get_spell(spell_name)
+	if spell and spell.effect != "" and hex_grid:
+		return MagicRuntime.reason(caster, spell, hex_grid) == ""
 	return can_cast(caster, spell_name, current_turn) and has_enough_mana(caster, spell_name, hex_grid)
 
 ## Turno em que o feitico volta a ficar disponivel — so informativo pra UI
@@ -65,6 +71,8 @@ static func cooldown_ends_at(caster: PlayerData, spell_name: String) -> int:
 ## que realmente aconteceu cobra o custo.
 static func cast(caster: PlayerData, spell_name: String, target: Unit, hex_grid: HexGrid, current_turn: int) -> String:
 	var spell: SpellData = SpellDatabase.get_spell(spell_name)
+	if spell and spell.effect != "" and is_instance_valid(target):
+		return MagicRuntime.cast(caster, spell, target.coord, hex_grid)
 	if spell == null:
 		return "%s ainda não tem efeito implementado." % spell_name
 	if not can_cast(caster, spell_name, current_turn):
@@ -72,6 +80,13 @@ static func cast(caster: PlayerData, spell_name: String, target: Unit, hex_grid:
 	var mana_cost := effective_mana_cost(spell, caster, hex_grid)
 	if caster.mana < mana_cost:
 		return "Mana insuficiente para conjurar %s (precisa de %d, tem %d)." % [spell_name, int(mana_cost), int(caster.mana)]
+	if not is_instance_valid(target) or target.hp <= 0.0:
+		return "Alvo inválido."
+	if spell.transforms_terrain:
+		var tech := MagicDatabase.tech_that_unlocks_spell(spell_name)
+		var tile := hex_grid.get_tile(target.coord)
+		if tech == null or tile == null or not tile.terrain_type in tech.terrain_transform.get("from", []):
+			return "%s não tem efeito nesse terreno." % spell_name
 
 	caster.spell_cooldowns[spell_name] = current_turn + spell.cooldown_turns
 	caster.mana -= mana_cost
@@ -80,8 +95,8 @@ static func cast(caster: PlayerData, spell_name: String, target: Unit, hex_grid:
 		return _apply_terrain_transform(spell, target, hex_grid)
 	if spell.damage > 0.0:
 		if spell.damage_area_radius > 0:
-			return _apply_damage_area(spell, target, hex_grid)
-		return _apply_damage(spell, target, hex_grid)
+			return _apply_damage_area(spell, target, hex_grid, caster)
+		return _apply_damage(spell, target, hex_grid, caster)
 	if spell.heal_fraction > 0.0:
 		return _apply_heal(spell, target)
 	return "%s conjurado." % spell_name
@@ -93,13 +108,15 @@ static func cast(caster: PlayerData, spell_name: String, target: Unit, hex_grid:
 ## vez de uma formula nova. Guarda o coord do alvo principal ANTES de
 ## danifica-lo (pode morrer e sumir do grid ali mesmo, ver _apply_damage)
 ## pra continuar sabendo onde procurar vizinhos.
-static func _apply_damage_area(spell: SpellData, primary_target: Unit, hex_grid: HexGrid) -> String:
+static func _apply_damage_area(spell: SpellData, primary_target: Unit, hex_grid: HexGrid, caster: PlayerData = null) -> String:
 	var origin_coord := primary_target.coord
-	var messages: Array = [_apply_damage(spell, primary_target, hex_grid)]
+	var messages: Array = [_apply_damage(spell, primary_target, hex_grid, caster)]
 	for neighbor_coord in hex_grid.get_neighbors(origin_coord):
 		var unit: Unit = hex_grid.get_unit_at(neighbor_coord)
 		if unit:
-			messages.append(_apply_damage(spell, unit, hex_grid))
+			if caster and unit.owner_player and unit.owner_player != caster and unit.owner_player != primary_target.owner_player and not caster.is_at_war_with(unit.owner_player):
+				continue
+			messages.append(_apply_damage(spell, unit, hex_grid, caster))
 	return " ".join(messages)
 
 ## Roadmap de gameplay Fase 5 — "Metamorfose de Gaia": transforma o
@@ -110,7 +127,7 @@ static func _apply_damage_area(spell: SpellData, primary_target: Unit, hex_grid:
 ## forma, mesmo padrao de "conjuracao valida mas alvo ruim" que o resto
 ## do jogo usa) se o terreno atual do tile nao estiver na lista `from`.
 static func _apply_terrain_transform(spell: SpellData, target: Unit, hex_grid: HexGrid) -> String:
-	var tech: TechData = TechDatabase.tech_that_unlocks_spell(spell.name)
+	var tech: TechData = MagicDatabase.tech_that_unlocks_spell(spell.name)
 	if tech == null or tech.terrain_transform.is_empty():
 		return "%s não tem transformação de terreno configurada." % spell.name
 	var coord := target.coord
@@ -121,9 +138,11 @@ static func _apply_terrain_transform(spell: SpellData, target: Unit, hex_grid: H
 	hex_grid.transform_tile_terrain(coord, new_type)
 	return "%s transformou o terreno em %s." % [spell.name, TerrainDatabase.create_tile(new_type).display_name]
 
-static func _apply_damage(spell: SpellData, target: Unit, hex_grid: HexGrid) -> String:
+static func _apply_damage(spell: SpellData, target: Unit, hex_grid: HexGrid, caster: PlayerData = null) -> String:
 	var target_name = target.unit_data.unit_name
 	var target_coord = target.coord
+	if caster:
+		DragonEvent.record_damage_if_target_is_the_active_dragon(target, GameManager.players.find(caster), minf(target.hp, spell.damage))
 	target.hp -= spell.damage
 	hex_grid.spawn_damage_popup(target_coord, spell.damage)
 	if target.hp <= 0.0:
@@ -132,6 +151,6 @@ static func _apply_damage(spell: SpellData, target: Unit, hex_grid: HexGrid) -> 
 	return "%s causou %d de dano em %s." % [spell.name, int(spell.damage), target_name]
 
 static func _apply_heal(spell: SpellData, target: Unit) -> String:
-	var healed = target.unit_data.max_hp * spell.heal_fraction
+	var healed = minf(target.unit_data.max_hp - target.hp, target.unit_data.max_hp * spell.heal_fraction)
 	target.hp = min(target.unit_data.max_hp, target.hp + healed)
 	return "%s restaurou %d de HP em %s." % [spell.name, int(healed), target.unit_data.unit_name]

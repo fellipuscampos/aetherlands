@@ -33,6 +33,10 @@ func _build_visual() -> void:
 	if data and data.model_scene_path != "":
 		_build_model(data.model_scene_path, accent_color)
 		return
+	var school := MagicContent.school_for_building(building_id)
+	if school != "":
+		_build_magic_structure(school, building_id == MagicContent.SCHOOLS[school].ritual_building)
+		return
 	match building_id:
 		"granary":
 			_build_granary(accent_color)
@@ -56,6 +60,43 @@ func _build_visual() -> void:
 			_build_druid_grove(accent_color)
 		"arcane_sanctuary":
 			_build_arcane_sanctuary(accent_color)
+
+func _build_magic_structure(school: String, ritual: bool) -> void:
+	var color: Color = MagicOverlay.COLORS[school]
+	match school:
+		"druidismo": _build_druid_grove(color)
+		"arcanismo": _build_arcane_tower(color)
+		"sagrada": _build_barracks(color)
+		"elementalismo": _build_arcane_sanctuary(color)
+		"necromancia", "infernal": _build_workshop(color.darkened(0.2))
+	var ring_mesh := TorusMesh.new()
+	ring_mesh.inner_radius = 0.5 if ritual else 0.34
+	ring_mesh.outer_radius = ring_mesh.inner_radius + 0.07
+	var ring := MeshInstance3D.new()
+	ring.mesh = ring_mesh
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.emission_enabled = true
+	material.emission = color
+	material.emission_energy_multiplier = 0.5
+	ring.material_override = material
+	ring.position.y = 0.06
+	if school == "infernal":
+		ring.rotation.x = PI / 2
+		ring.position.y = 0.85
+	add_child(ring)
+	if ritual:
+		for i in range(4):
+			var pillar := MeshInstance3D.new()
+			var mesh := CylinderMesh.new()
+			mesh.top_radius = 0.04
+			mesh.bottom_radius = 0.1
+			mesh.height = 0.95
+			pillar.mesh = mesh
+			pillar.material_override = material
+			var angle := i * PI / 2
+			pillar.position = Vector3(cos(angle) * 0.67, 0.48, sin(angle) * 0.67)
+			add_child(pillar)
 
 ## Fator de escala UNICO pra todo modelo do KayKit Medieval Hexagon Pack —
 ## pedido do usuario apos ver o resultado da primeira tentativa (altura-alvo

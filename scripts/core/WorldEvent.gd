@@ -81,7 +81,10 @@ func from_save_dict(data: Dictionary) -> void:
 	phase = data.get("phase", PHASE_DORMANT)
 	turn_started = data.get("turn_started", -1)
 	turn_deadline = data.get("turn_deadline", -1)
-	participants = data.get("participants", {})
+	participants = {}
+	# JSON converte as chaves numéricas em texto; o jogo usa civ_index int.
+	for key in data.get("participants", {}):
+		participants[int(key)] = data.participants[key]
 	result = data.get("result", {})
 
 ## RNG deterministico do evento (ver contrato, secao 4) -- SEM ESTADO

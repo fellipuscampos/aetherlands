@@ -108,12 +108,15 @@ func test_building_that_trains_routes_human_knight_to_the_stable():
 	assert_not_null(building)
 	assert_eq(building.id, "stable")
 
-## Batedor (scout) tambem cai no Estabulo, pelo mesmo motivo tematico do
-## Cavaleiro Real (nao e tropa racial, mas ainda assim nao tem BuildingData
-## proprio) — pedido do usuario: "o batedor montado... libera a construcao
-## do batedor".
-func test_building_that_trains_routes_scout_to_the_stable():
-	var building = BuildingDatabase.building_that_trains("scout")
+## Roadmap "arvore de 10 niveis": Batedor (scout) deixou de cair no
+## Estabulo — virou a opcao de exploracao barata do Nivel 1, sem predio
+## nenhum, igual Guarda/Colonizador. Quem agora usa o Estabulo (fallback)
+## e "batedor_montado", a unidade NOVA e mais forte do Nivel 3.
+func test_building_that_trains_returns_null_for_scout():
+	assert_null(BuildingDatabase.building_that_trains("scout"), "Batedor nao deveria exigir predio nenhum")
+
+func test_building_that_trains_routes_batedor_montado_to_the_stable():
+	var building = BuildingDatabase.building_that_trains("batedor_montado")
 	assert_not_null(building)
 	assert_eq(building.id, "stable")
 
@@ -144,10 +147,16 @@ func test_only_walls_is_self_placed():
 ## Regressao: predios de RENDIMENTO/DEFESA (Celeiro, Muralhas...) nao tem
 ## trains_unit preenchido — nao deveriam aparecer como "predio de treino"
 ## de kind nenhum.
+## "market" SAIU desta lista (Roadmap "arvore de 10 niveis": o Mercado
+## passou a treinar "mercador" tambem, ver BuildingDatabase.gd) — os outros
+## continuam predios de RENDIMENTO puro.
 func test_yield_buildings_do_not_train_any_unit():
 	for b in BuildingDatabase.all_buildings():
-		if b.id in ["granary", "workshop", "market", "walls", "sages_tower", "arcane_sanctuary"]:
+		if b.id in ["granary", "workshop", "workshop_2", "walls", "sages_tower", "arcane_sanctuary", "watchtower", "fortress", "grand_market", "imperial_fortress", "grand_emporium"]:
 			assert_eq(b.trains_unit, "", "%s nao deveria travar producao de unidade nenhuma" % b.display_name)
+
+func test_market_trains_mercador():
+	assert_eq(BuildingDatabase.get_building("market").trains_unit, "mercador")
 
 ## Cada tropa de combate (todo kind de UnitDatabase.PLAYER_TRAINABLE_KINDS
 ## exceto Colonizador/Guarda) precisa ter exatamente um predio de treino
@@ -165,12 +174,52 @@ func test_yield_buildings_do_not_train_any_unit():
 ## test_building_that_trains_returns_null_for_warrior). Batedor (scout)
 ## fica de fora pelo MESMO motivo das raciais (fallback pro Estabulo, sem
 ## trains_unit proprio), mesmo nao sendo tropa racial de verdade.
+## Roadmap "arvore de 10 niveis": um predio so tem UM trains_unit (String),
+## entao boa parte do elenco novo cai em BuildingDatabase.
+## UNIT_TRAINER_FALLBACK em vez de ganhar predio dedicado (ver comentario
+## la) — a checagem "exatamente um trains_unit literal" so vale pra quem
+## NAO esta no fallback.
 func test_every_combat_unit_kind_has_exactly_one_training_building():
 	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
 		if kind == "settler" or kind == "warrior" or kind == "scout" or UnitDatabase.race_for_unique_kind(kind) != "":
+			continue
+		if BuildingDatabase.UNIT_TRAINER_FALLBACK.has(kind):
 			continue
 		var matches := 0
 		for b in BuildingDatabase.all_buildings():
 			if b.trains_unit == kind:
 				matches += 1
 		assert_eq(matches, 1, "%s deveria ter exatamente um predio de treino" % kind)
+
+## Todo kind treinavel (exceto Colonizador/Guarda/Batedor, sempre sem
+## predio) precisa resolver pra ALGUM predio via building_that_trains —
+## direto (trains_unit literal) ou por fallback (UNIT_TRAINER_FALLBACK/
+## racial) — senao ficaria impossivel de produzir de verdade.
+func test_every_combat_unit_kind_resolves_to_a_training_building():
+	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
+		if kind == "settler" or kind == "warrior" or kind == "scout":
+			continue
+		assert_not_null(BuildingDatabase.building_that_trains(kind), "%s deveria resolver pra algum predio de treino" % kind)
+
+## --- Roadmap "polimento definitivo V1" (5 predios novos) -------------------
+
+func test_new_buildings_exist_with_expected_prerequisites():
+	var expected_requires := {
+		"garrison": "",
+		"granary_2": "granary",
+		"market_2": "market",
+		"walls_2": "walls",
+		"trading_post": "grand_market",
+	}
+	for id in expected_requires.keys():
+		var b := BuildingDatabase.get_building(id)
+		assert_not_null(b, "%s deveria existir em BuildingDatabase" % id)
+		assert_eq(b.requires_building, expected_requires[id], "%s tem requires_building inesperado" % id)
+
+## Nenhum dos 5 predios novos treina unidade nenhuma — sao todos de
+## rendimento/defesa puro (mesma familia de Celeiro/Muralhas/Torre de
+## Vigia), nenhuma tech nova desta rodada desbloqueia unidade junto com
+## predio.
+func test_new_buildings_do_not_train_any_unit():
+	for id in ["garrison", "granary_2", "market_2", "walls_2", "trading_post"]:
+		assert_eq(BuildingDatabase.get_building(id).trains_unit, "", "%s nao deveria treinar unidade nenhuma" % id)

@@ -67,6 +67,7 @@ static func _build_all() -> Dictionary:
 	gaia_metamorphosis.transforms_terrain = true
 	spells[gaia_metamorphosis.name] = gaia_metamorphosis
 
+	MagicContent.add_spells(spells)
 	return spells
 
 static func _all() -> Dictionary:

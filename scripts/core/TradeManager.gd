@@ -51,6 +51,9 @@ static func propose_route(from_city: City, to_city: City, hex_grid: HexGrid = nu
 		return null
 	if proposer.is_at_war_with(other):
 		return null
+	for existing in proposer.trade_routes:
+		if (existing.city_a == from_city and existing.city_b == to_city) or (existing.city_b == from_city and existing.city_a == to_city):
+			return null
 	if active_route_count(from_city) >= from_city.max_trade_routes(hex_grid):
 		return null
 	if active_route_count(to_city) >= to_city.max_trade_routes(hex_grid):
@@ -89,6 +92,8 @@ static func _apply_income_to_city(city: City) -> void:
 ## dono (capturada — nao faz sentido um acordo comercial sobreviver a
 ## troca de dono) cancela a rota.
 static func _is_route_still_valid(route: TradeRoute) -> bool:
+	if not is_instance_valid(route.city_a) or not is_instance_valid(route.city_b):
+		return false
 	if route.city_a.owner_player != route.player_a or route.city_b.owner_player != route.player_b:
 		return false
 	if route.player_a == null or route.player_b == null:

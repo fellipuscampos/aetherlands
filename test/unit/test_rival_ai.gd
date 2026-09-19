@@ -1,5 +1,12 @@
 extends GutTest
 
+var _owned_players: Array[PlayerData] = []
+
+func _track_player(civ: CivilizationData) -> PlayerData:
+	var player := PlayerData.new(civ)
+	_owned_players.append(player)
+	return player
+
 ## Cobre a melhoria da IA rival: avaliar risco antes de atacar
 ## (CombatResolver.predict() + RivalAI.is_favorable_attack), a cura por
 ## guarnicao que da sentido a recuar (GameManager._heal_if_garrisoned), a
@@ -32,13 +39,16 @@ func before_each():
 	for i in range(2, 7):
 		hex_grid.tiles[Vector2i(i, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 
-	human = PlayerData.new(CivilizationData.new())
-	rival = PlayerData.new(CivilizationData.new())
+	human = _track_player(CivilizationData.new())
+	rival = _track_player(CivilizationData.new())
 	Diplomacy.declare_war(human, rival) # _choose_target agora exige guerra pra mirar em alguem
 	GameManager.hex_grid = hex_grid
 	GameManager.human_player = human
 
 func after_each():
+	for player in _owned_players:
+		player.release_relations()
+	_owned_players.clear()
 	GameManager.hex_grid = _original_hex_grid
 	GameManager.human_player = _original_human_player
 	for unit in _created_units:
@@ -269,14 +279,14 @@ func test_ranged_unit_advances_with_melee_escort_nearby():
 func test_military_kinds_for_includes_the_racial_unique_unit():
 	var dwarf_civ := CivilizationData.new()
 	dwarf_civ.race = "dwarf"
-	var dwarf_player := PlayerData.new(dwarf_civ)
+	var dwarf_player := _track_player(dwarf_civ)
 
 	assert_true("dwarf_axeguard" in RivalAI._military_kinds_for(dwarf_player))
 
 func test_military_kinds_for_does_not_leak_other_races_unique_unit():
 	var dwarf_civ := CivilizationData.new()
 	dwarf_civ.race = "dwarf"
-	var dwarf_player := PlayerData.new(dwarf_civ)
+	var dwarf_player := _track_player(dwarf_civ)
 
 	var kinds = RivalAI._military_kinds_for(dwarf_player)
 	assert_false("orc_berserker" in kinds)
@@ -284,7 +294,7 @@ func test_military_kinds_for_does_not_leak_other_races_unique_unit():
 
 func test_military_kinds_for_has_no_racial_unit_without_a_race():
 	var human_civ := CivilizationData.new() # race = "" (padrao)
-	var human_without_race := PlayerData.new(human_civ)
+	var human_without_race := _track_player(human_civ)
 
 	var kinds = RivalAI._military_kinds_for(human_without_race)
 	assert_false("dwarf_axeguard" in kinds)
@@ -306,7 +316,7 @@ func test_military_kinds_for_has_no_racial_unit_without_a_race():
 func test_decide_production_can_pick_the_racial_unit_for_that_race():
 	var orc_civ := CivilizationData.new()
 	orc_civ.race = "orc"
-	var orc_player := PlayerData.new(orc_civ)
+	var orc_player := _track_player(orc_civ)
 	var city_a = hex_grid.found_city(Vector2i(0, 0), orc_player, "Cidade A")
 	hex_grid.found_city(Vector2i(5, 0), orc_player, "Cidade B") # 2 cidades: sai do ramo "sempre colonizador"
 	city_a.buildings["barracks"] = true
@@ -383,7 +393,7 @@ func test_decide_production_prefers_missing_role_when_otherwise_tied():
 	hex_grid.found_city(Vector2i(5, 0), rival, "Cidade B") # 2 cidades: sai do ramo "sempre colonizador"
 	city_a.buildings["sages_tower"] = true
 	city_a.buildings["archery_range"] = true
-	rival.researched_techs["arquearia"] = true # libera has_unlocked("archer")
+	rival.researched_techs["arqueiro"] = true # libera has_unlocked("archer")
 	_make_unit("warrior", rival, Vector2i(1, 0))
 	_make_unit("warrior", rival, Vector2i(2, 0))
 
@@ -428,13 +438,16 @@ func test_decide_trade_never_proposes_while_at_war():
 ## Roadmap 2.0 Parte 1 (A3) — regressao: antes _far_enough_from_cities so
 ## olhava as cidades do PROPRIO player, entao uma cidade RIVAL (inclusive
 ## do jogador humano) nunca impedia um assentador de fundar colado nela.
-func test_far_enough_from_cities_is_false_near_a_human_city():
+## Task 22 -- a regra virou estrutural (CitySite.rejection_reason, vale pra
+## jogador e IA); esta regressao continua valendo: cidade de OUTRO dono
+## tambem conta.
+func test_city_site_is_rejected_near_a_human_city():
 	hex_grid.found_city(Vector2i(0, 0), human, "Capital Humana")
-	assert_false(RivalAI._far_enough_from_cities(Vector2i(1, 0), hex_grid), "distancia 1 < SETTLE_MIN_DISTANCE (3), deveria ser recusado mesmo sendo cidade do humano")
+	assert_eq(CitySite.rejection_reason(hex_grid, Vector2i(1, 0), rival), CitySite.REASON_TOO_CLOSE, "distancia 1 < min_city_distance, deveria ser recusado mesmo sendo cidade do humano")
 
-func test_far_enough_from_cities_is_true_far_from_every_city():
+func test_city_site_is_accepted_far_from_every_city():
 	hex_grid.found_city(Vector2i(0, 0), human, "Capital Humana")
-	assert_true(RivalAI._far_enough_from_cities(Vector2i(6, 0), hex_grid), "distancia 6 >= SETTLE_MIN_DISTANCE (3), deveria ser aceito")
+	assert_eq(CitySite.rejection_reason(hex_grid, Vector2i(6, 0), rival), "", "distancia 6 >= min_city_distance, deveria ser aceito")
 
 ## Integracao: um assentador de IA parado ao lado de uma cidade HUMANA nao
 ## deveria fundar ali — so anda (compute_reachable/move_unit), nunca chama
@@ -452,7 +465,7 @@ func test_handle_settler_does_not_found_next_to_a_human_city():
 ## etapas (ver plano), depois de validar esta base isoladamente.
 
 func test_known_enemy_cities_of_returns_all_known_cities_belonging_to_opponent():
-	var third_party := PlayerData.new(CivilizationData.new())
+	var third_party := _track_player(CivilizationData.new())
 	var city_a := hex_grid.found_city(Vector2i(0, 0), human, "Alvo A")
 	var city_b := hex_grid.found_city(Vector2i(5, 0), human, "Alvo B")
 	var other_city := hex_grid.found_city(Vector2i(10, 0), third_party, "Terceiro")
@@ -688,7 +701,7 @@ func test_advance_campaign_retargets_when_invalidated_by_third_party_capture():
 		"target_coord": target_a.coord,
 		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
 	}
-	var third := PlayerData.new(CivilizationData.new())
+	var third := _track_player(CivilizationData.new())
 	hex_grid.capture_city(target_a, third) # nem player nem opponent -> invalidado, nao concluido
 
 	RivalAI.decide_campaign(rival, hex_grid, human)
@@ -705,7 +718,7 @@ func test_advance_campaign_abandons_when_invalidated_with_no_replacement():
 		"target_coord": target.coord,
 		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
 	}
-	var third := PlayerData.new(CivilizationData.new())
+	var third := _track_player(CivilizationData.new())
 	hex_grid.capture_city(target, third)
 
 	RivalAI.decide_campaign(rival, hex_grid, human)
@@ -1025,7 +1038,7 @@ func test_decide_war_notifies_human_when_rival_declares_war():
 	assert_signal_emit_count(EventBus, "notify", 1)
 
 func test_decide_war_does_not_notify_when_opponent_is_not_the_human():
-	var third := PlayerData.new(CivilizationData.new())
+	var third := _track_player(CivilizationData.new())
 	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
 	var target := hex_grid.found_city(Vector2i(5, 0), third, "Alvo")
 	rival.known_enemy_cities[target.coord] = true
@@ -1070,7 +1083,7 @@ func test_decide_campaign_notifies_human_on_abandon_invalid_target():
 		"target_coord": target.coord,
 		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
 	}
-	var third := PlayerData.new(CivilizationData.new())
+	var third := _track_player(CivilizationData.new())
 	hex_grid.capture_city(target, third) # invalidado, sem substituto conhecido
 
 	watch_signals(EventBus)
@@ -1111,7 +1124,7 @@ func test_decide_campaign_does_not_notify_when_still_active():
 
 func test_decide_campaign_does_not_notify_for_non_human_opponent():
 	watch_signals(EventBus)
-	var third := PlayerData.new(CivilizationData.new())
+	var third := _track_player(CivilizationData.new())
 	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
 	var target := hex_grid.found_city(Vector2i(5, 0), third, "Alvo")
 	rival.known_enemy_cities[target.coord] = true
@@ -1187,8 +1200,8 @@ func test_decide_peace_does_not_notify_when_already_at_peace():
 ## ja cruzaria o limiar so por vulnerabilidade+proximidade, mascarando o
 ## que estamos testando).
 func test_decide_war_eventually_declares_only_once_target_city_is_resource_rich():
-	var attacker := PlayerData.new(CivilizationData.new())
-	var opponent := PlayerData.new(CivilizationData.new())
+	var attacker := _track_player(CivilizationData.new())
+	var opponent := _track_player(CivilizationData.new())
 	hex_grid.found_city(Vector2i(0, 0), attacker, "Capital Atacante")
 	var target_coord := Vector2i(5, 0)
 	var target_city := hex_grid.found_city(target_coord, opponent, "Capital Alvo")
@@ -1218,53 +1231,59 @@ func test_decide_war_eventually_declares_only_once_target_city_is_resource_rich(
 			break
 	assert_true(declared_with_resources, "com 4 recursos controlados pelo alvo, o termo de riqueza deveria empurrar o score acima do limiar")
 
-## Roadmap 2.0 Parte 1 (B3) — _score_settle_candidate soma 1 por vizinho
-## com recurso.
-func test_score_settle_candidate_rewards_neighboring_resources():
+## Task 22 -- avaliacao de local (CitySite.evaluate) no lugar do antigo
+## _score_settle_candidate: mesmas propriedades (recurso vizinho recompensa;
+## pressao rival e covil ativo penalizam, nunca bloqueiam), agora em "partes".
+func _site_score(coord: Vector2i) -> Dictionary:
+	return CitySite.evaluate(hex_grid, coord, CitySite.build_context(hex_grid, rival))
+
+func test_site_score_rewards_neighboring_resources():
 	var coord := Vector2i(3, 0)
+	var without: Dictionary = _site_score(coord)
 	var resource_neighbor: Vector2i = coord + HexGrid.NEIGHBOR_DIRS[0]
 	var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
 	tile.resource = "iron"
 	hex_grid.tiles[resource_neighbor] = tile
 
-	var score = RivalAI._score_settle_candidate(coord, hex_grid, rival)
+	var with_resource: Dictionary = _site_score(coord)
 
-	assert_gt(score, 0.0, "candidato com vizinho de recurso deveria pontuar acima de zero")
+	assert_gt(with_resource.parts.resources, 0.0, "candidato com vizinho de recurso deveria pontuar em recursos")
+	assert_gt(with_resource.total, without.total)
 
 ## Roadmap 2.0 Parte 1 (B3) — _score_settle_candidate penaliza (nunca
 ## bloqueia) tile sob pressao de cidade rival (A2).
-func test_score_settle_candidate_penalizes_tile_under_rival_pressure():
+func test_site_score_penalizes_tile_under_rival_pressure():
 	hex_grid.found_city(Vector2i(0, 0), human, "Capital Humana")
 	var pressured_coord := Vector2i(HexGrid.RIVAL_PRESSURE_RADIUS, 0)
 
-	var score = RivalAI._score_settle_candidate(pressured_coord, hex_grid, rival)
+	var result: Dictionary = _site_score(pressured_coord)
 
-	assert_lt(score, 0.0, "tile sob pressao de cidade rival (do jogador humano) deveria pontuar abaixo de zero")
+	assert_lt(result.parts.security, 0.0, "tile sob pressao de cidade rival (do jogador humano) deveria ser penalizado em seguranca")
 
 ## Roadmap 2.0 (fecha Parte A) — mesma penalizacao, agora por covil de
 ## monstro perigoso ativo em vez de cidade rival.
-func test_score_settle_candidate_penalizes_tile_near_active_lair():
+func test_site_score_penalizes_tile_near_active_lair():
 	var lair_coord := Vector2i(0, 0)
 	hex_grid.lair_coords.append(lair_coord)
 	hex_grid.lair_kind_by_coord[lair_coord] = "dragon"
 	hex_grid.spawn_monster_at(lair_coord, "dragon", true)
 	var candidate := Vector2i(HexGrid.LAIR_DANGER_RADIUS, 0)
 
-	var score = RivalAI._score_settle_candidate(candidate, hex_grid, rival)
+	var result: Dictionary = _site_score(candidate)
 
-	assert_lt(score, 0.0, "tile perto de covil de Dragao ativo deveria pontuar abaixo de zero")
+	assert_lt(result.parts.security, 0.0, "tile perto de covil de Dragao ativo deveria ser penalizado em seguranca")
 
 ## Leva a exclusao do guardiao morto (HexGrid.get_lair_danger_at) ate a
 ## formula de assentamento da IA, nao so a consulta crua do HexGrid.
-func test_score_settle_candidate_ignores_lair_with_dead_defender():
+func test_site_score_ignores_lair_with_dead_defender():
 	var lair_coord := Vector2i(0, 0)
 	hex_grid.lair_coords.append(lair_coord)
 	hex_grid.lair_kind_by_coord[lair_coord] = "dragon" # sem spawn_monster_at -- guardiao "morto"
 	var candidate := Vector2i(HexGrid.LAIR_DANGER_RADIUS, 0)
 
-	var score = RivalAI._score_settle_candidate(candidate, hex_grid, rival)
+	var result: Dictionary = _site_score(candidate)
 
-	assert_eq(score, 0.0, "covil sem defensor vivo nao deveria penalizar o candidato")
+	assert_eq(result.parts.security, 0.0, "covil sem defensor vivo nao deveria penalizar o candidato")
 
 ## Roadmap "Parte B" (B3) — RivalAI._tech_identity_axis: eixo DERIVADO de
 ## unlocks_building/unlocks_unit (via BuildingDatabase.building_that_trains),
@@ -1278,21 +1297,22 @@ func test_tech_identity_axis_derives_from_unlocks_building():
 
 func test_tech_identity_axis_derives_from_unlocks_unit_via_trainer_building():
 	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("quartel")), CityIdentity.AXIS_MILITAR)
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("arquearia")), CityIdentity.AXIS_MILITAR)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("arqueiro")), CityIdentity.AXIS_MILITAR)
 	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("estabulo")), CityIdentity.AXIS_MILITAR)
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("constructos_de_guerra")), CityIdentity.AXIS_MILITAR)
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("invocacao_espiritos")), CityIdentity.AXIS_ARCANA)
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("pacto_florestal")), CityIdentity.AXIS_ARCANA)
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("forja_runica")), CityIdentity.AXIS_ARCANA)
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("lordes_dos_ventos")), CityIdentity.AXIS_ARCANA)
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("necromancia_pratica")), CityIdentity.AXIS_ARCANA)
+	assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech("constructos_de_guerra")), CityIdentity.AXIS_MILITAR)
+	assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech("invocacao_espiritos")), CityIdentity.AXIS_ARCANA)
+	assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech("pacto_florestal")), CityIdentity.AXIS_ARCANA)
+	assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech("forja_runica")), CityIdentity.AXIS_ARCANA)
+	assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech("lordes_dos_ventos")), CityIdentity.AXIS_ARCANA)
+	assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech("necromancia_pratica")), CityIdentity.AXIS_ARCANA)
 
 func test_tech_identity_axis_resolves_batedor_montado_via_stable_fallback():
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("batedor_montado")), CityIdentity.AXIS_MILITAR, "scout treina no Estabulo (fallback de BuildingDatabase.building_that_trains, mesmo de B2), deveria herdar o eixo militar")
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("batedor_montado")), CityIdentity.AXIS_MILITAR, "batedor_montado treina no Estabulo (fallback de BuildingDatabase.UNIT_TRAINER_FALLBACK), deveria herdar o eixo militar")
 
 func test_tech_identity_axis_is_empty_for_techs_without_building_or_unit_unlock():
-	for id in ["canalizacao_base", "navegacao", "cataclismo_elemental", "transcendencia_florestal", "alquimia_botanica", "transmutacao_rocha", "geomancia"]:
-		assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech(id)), "", "%s nao desbloqueia predio nem unidade, nao deveria ter eixo de identidade" % id)
+	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("navegacao")), "", "navegacao nao desbloqueia predio nem unidade, nao deveria ter eixo de identidade")
+	for id in ["canalizacao_base", "cataclismo_elemental", "transcendencia_florestal", "alquimia_botanica", "transmutacao_rocha", "geomancia"]:
+		assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech(id)), "", "%s nao desbloqueia predio nem unidade, nao deveria ter eixo de identidade" % id)
 
 ## Protege a propriedade "sem predio/unidade, identidade nao inventa
 ## preferencia" — pontuacao de uma tech sem eixo e EXATAMENTE igual com a
@@ -1300,9 +1320,9 @@ func test_tech_identity_axis_is_empty_for_techs_without_building_or_unit_unlock(
 ## Especialmente relevante com 7 das 21 techs caindo nesse caso.
 func test_score_research_candidate_identity_has_no_effect_for_unmapped_tech():
 	var navegacao: TechData = TechDatabase.get_tech("navegacao")
-	var player_no_identity := PlayerData.new(CivilizationData.new())
+	var player_no_identity := _track_player(CivilizationData.new())
 
-	var player_max_identity := PlayerData.new(CivilizationData.new())
+	var player_max_identity := _track_player(CivilizationData.new())
 	var city := City.new()
 	for id in ["walls", "barracks", "archery_range", "stable", "siege_workshop"]:
 		city.buildings[id] = true
@@ -1320,9 +1340,9 @@ func test_score_research_candidate_identity_has_no_effect_for_unmapped_tech():
 ## no maximo em qualquer eixo.
 func test_score_research_candidate_personality_has_no_effect_for_unmapped_tech():
 	var navegacao: TechData = TechDatabase.get_tech("navegacao")
-	var player_no_personality := PlayerData.new(CivilizationData.new())
+	var player_no_personality := _track_player(CivilizationData.new())
 
-	var player_max_personality := PlayerData.new(CivilizationData.new())
+	var player_max_personality := _track_player(CivilizationData.new())
 	player_max_personality.personality[CityIdentity.AXIS_MILITAR] = 1.0
 
 	assert_eq(
@@ -1335,8 +1355,8 @@ func test_score_research_candidate_personality_has_no_effect_for_unmapped_tech()
 ## quando identidade e continuacao estao zeradas (civ sem cidade, sem
 ## pesquisa em andamento).
 func test_score_research_candidate_adds_personality_term_for_mapped_tech():
-	var quartel: TechData = TechDatabase.get_tech("quartel") # unlocks_unit "men_at_arms" -> barracks -> militar
-	var player := PlayerData.new(CivilizationData.new())
+	var quartel: TechData = TechDatabase.get_tech("quartel") # unlocks_building "barracks" -> militar
+	var player := _track_player(CivilizationData.new())
 	player.personality[CityIdentity.AXIS_MILITAR] = 1.0
 
 	var score := RivalAI._score_research_candidate(quartel, player)
@@ -1347,8 +1367,8 @@ func test_score_research_candidate_adds_personality_term_for_mapped_tech():
 ## independentes e ADITIVAS — nenhuma anula a outra, os dois termos aparecem
 ## juntos no score (mandato do usuario: "as duas convivem").
 func test_score_research_candidate_personality_and_identity_are_independent_and_additive():
-	var invocacao: TechData = TechDatabase.get_tech("invocacao_espiritos") # unlocks_unit "mage" -> arcane_tower -> arcana
-	var player := PlayerData.new(CivilizationData.new())
+	var invocacao: TechData = MagicDatabase.get_tech("invocacao_espiritos") # unlocks_unit "mage" -> arcane_tower -> arcana
+	var player := _track_player(CivilizationData.new())
 	var city := City.new()
 	city.buildings["sages_tower"] = true # arcana 1/7, identidade > 0
 	player.cities.append(city)
@@ -1364,9 +1384,16 @@ func test_score_research_candidate_personality_and_identity_are_independent_and_
 ## Espelha o "nunca sobrepoe" de B3: mesmo com identidade E personalidade
 ## no maximo simultaneo (0.2+0.15=0.35), uma continuacao de cadeia real
 ## (score 1.0) ainda vence.
+## Roadmap "arvore de 10 niveis": o Nivel 2 so abre com 2 techs do Nivel 1
+## pesquisadas — celeiro + batedor (nenhuma delas militar) abre o Nivel 2
+## sem tocar em "quartel", entao SO "oficina" (ancora cosmetica em
+## "celeiro") continua uma cadeia; homem_de_armas/campo_de_tiro/arqueiro
+## (todas ancoradas em "quartel", nao pesquisada) ficam sem continuidade,
+## mesmo com identidade+personalidade militar no maximo.
 func test_decide_research_personality_never_overrides_stronger_continuation():
-	var player := PlayerData.new(CivilizationData.new())
-	player.researched_techs["celeiro"] = true # abre "oficina" (industrial), unica continuacao disponivel
+	var player := _track_player(CivilizationData.new())
+	player.researched_techs["celeiro"] = true
+	player.researched_techs["batedor"] = true # 2 techs do Nivel 1 -> abre o Nivel 2, so "oficina" continua cadeia
 
 	var city := City.new()
 	for id in ["walls", "barracks", "archery_range", "stable", "siege_workshop"]:
@@ -1376,7 +1403,7 @@ func test_decide_research_personality_never_overrides_stronger_continuation():
 
 	RivalAI.decide_research(player)
 
-	assert_eq(player.current_research, "oficina", "continuacao de cadeia deve vencer mesmo com identidade E personalidade militar no maximo simultaneo, ambas noutra tech de raiz")
+	assert_eq(player.current_research, "oficina", "continuacao de cadeia deve vencer mesmo com identidade E personalidade militar no maximo simultaneo, ambas noutra tech sem continuidade")
 	city.queue_free()
 
 ## --- Roadmap "Fase F"/G: decisao minima de IA pra Ascensao Arcana --------
@@ -1387,7 +1414,7 @@ func _grant_arcane_ritual_prerequisites(city: City) -> void:
 		hex_grid.tiles[coord].resource = "mana_node"
 	city.owned_tiles = node_coords
 	for tech_id in ["canalizacao_base", "alquimia_botanica", "transmutacao_rocha", "geomancia"]:
-		rival.researched_techs[tech_id] = true
+		rival.researched_magic[tech_id] = true
 
 ## Decisao explicita do usuario: nao e um novo peso de balanceamento, e um
 ## filtro de candidato obviamente prematuro — a IA nao deveria gastar
@@ -1493,3 +1520,165 @@ func test_decide_world_event_participation_only_decides_once():
 	RivalAI.decide_world_event_participation(rival, 1, event)
 
 	assert_eq(event.participants[1], {"decision": false}, "nao deveria sobrescrever uma decisao ja tomada")
+
+## --- Roadmap "Fase Macro" 5B.3-G: IA reage ao Dragao ----------------------
+## "Preparation = tempo de preparacao militar" + "IA precisa reagir ao
+## Dragao" -- reusa move_unit_toward/CombatResolver.resolve existentes,
+## NADA de arvore de decisao nova. v2 (pedido explicito apos playtest):
+## prepare_for_world_event() restringe os candidatos a SO' tropa/predio de
+## treino (_troop_only_candidates) -- Muralhas/economia nunca competem.
+
+func test_prepare_for_world_event_restricts_production_to_troops_only():
+	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade")
+	hex_grid.found_city(Vector2i(5, 0), rival, "Cidade B") # 2 cidades: sai do ramo "sempre colonizador"
+
+	RivalAI.prepare_for_world_event(rival, hex_grid, human)
+
+	var building := BuildingDatabase.get_building(city.production_item)
+	assert_true(building == null or building.trains_unit != "", "durante o evento, a cidade so' deveria produzir tropa ou o predio de treino que falta -- nunca economia pura")
+	assert_ne(city.production_item, "walls", "muralhas nao e' uma tropa -- pedido explicito do usuario e' 'tropas apenas'")
+
+func test_prepare_for_world_event_never_falls_back_to_settler_even_with_a_single_city():
+	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Unica")
+	city.production_item = "granary" # o que estava produzindo antes do evento
+
+	RivalAI.prepare_for_world_event(rival, hex_grid, human)
+
+	assert_ne(city.production_item, "settler", "colonizador e' economia disfarcada, nao uma tropa -- o atalho de 'cidade unica' de decide_production nao deveria se aplicar aqui")
+
+
+func test_react_to_dragon_moves_a_military_unit_toward_a_distant_dragon():
+	var soldier := _make_unit("warrior", rival, Vector2i(0, 0))
+	var dragon := hex_grid.spawn_monster_at(Vector2i(5, 0), "dragon")
+
+	RivalAI.react_to_dragon(soldier, hex_grid, dragon)
+
+	assert_ne(soldier.coord, Vector2i(0, 0), "a unidade deveria ter avancado em direcao ao Dragao")
+	assert_lt(HexMetrics.axial_distance(soldier.coord, dragon.coord), HexMetrics.axial_distance(Vector2i(0, 0), dragon.coord), "deveria ter reduzido a distancia ate o Dragao")
+
+func test_react_to_dragon_attacks_via_combat_resolver_when_in_range():
+	var soldier := _make_unit("warrior", rival, Vector2i(0, 0))
+	soldier.unit_data.attack = 60.0
+	var dragon := hex_grid.spawn_monster_at(Vector2i(1, 0), "dragon")
+	dragon.hp = 200.0 # bem acima do dano de um golpe -- sobrevive, distinto do teste de "pode matar"
+	var dragon_hp_before := dragon.hp
+
+	RivalAI.react_to_dragon(soldier, hex_grid, dragon)
+
+	assert_lt(dragon.hp, dragon_hp_before, "o ataque precisa ter passado por CombatResolver de verdade, causando dano real ao Dragao")
+
+## Roadmap "Dragon Event v1 fechado" -- pedido explicito do usuario:
+## "ranking de dano... dano real causado ao Dragao". react_to_dragon
+## precisa registrar o dano no DragonEvent ativo (nao so' aplicar via
+## CombatResolver) pra' civ do atacante aparecer no ranking.
+func test_react_to_dragon_records_damage_on_the_active_dragon_event():
+	var _original_players: Array[PlayerData] = GameManager.players
+	GameManager.players = [human, rival]
+	var soldier := _make_unit("warrior", rival, Vector2i(0, 0))
+	soldier.unit_data.attack = 60.0
+	var dragon := hex_grid.spawn_monster_at(Vector2i(1, 0), "dragon")
+	dragon.hp = 200.0
+	var event := DragonEvent.new()
+	event.dragon_unit = dragon
+	WorldEventManager.active_events.append(event)
+
+	RivalAI.react_to_dragon(soldier, hex_grid, dragon)
+
+	var rival_index: int = GameManager.players.find(rival)
+	assert_gt(event.damage_by_civ.get(rival_index, 0.0), 0.0, "o dano causado pelo rival deveria ter sido registrado no ranking do evento")
+	WorldEventManager.active_events.clear()
+	GameManager.players = _original_players
+
+## Roadmap 5B.3-G v3 -- pedido explicito do usuario apos playtest: "as
+## tropas nao conseguem causar dano... ficam ao redor do dragao mas nao
+## atacam". Causa real: is_favorable_attack SEMPRE reprovava um Guarda
+## padrao (attack 4/defense 3) contra o Dragao (attack 16/defense 8) --
+## perde ~25% do proprio HP de contra-ataque contra so' ~2% de dano
+## causado -- entao react_to_dragon chegava ao alcance e nunca atacava de
+## verdade. Removido: uma guarnicao defendendo a propria cidade precisa
+## lutar mesmo em desvantagem (o ponto de "forcar reacao militar").
+func test_react_to_dragon_attacks_even_when_the_trade_is_unfavorable():
+	var soldier := _make_unit("warrior", rival, Vector2i(0, 0)) # stats padrao, SEM buff nenhum
+	var dragon := hex_grid.spawn_monster_at(Vector2i(1, 0), "dragon")
+	var dragon_hp_before := dragon.hp
+
+	RivalAI.react_to_dragon(soldier, hex_grid, dragon)
+
+	assert_lt(dragon.hp, dragon_hp_before, "mesmo um Guarda basico (desvantagem clara) precisa causar dano real ao Dragao, nunca so' ficar parado no alcance")
+
+func test_react_to_dragon_can_kill_the_dragon():
+	var soldier := _make_unit("warrior", rival, Vector2i(0, 0))
+	soldier.unit_data.attack = 999.0
+	var dragon := hex_grid.spawn_monster_at(Vector2i(1, 0), "dragon")
+
+	RivalAI.react_to_dragon(soldier, hex_grid, dragon)
+
+	assert_lte(dragon.hp, 0.0, "a IA precisa conseguir matar o Dragao de verdade (Unit -> CombatResolver -> Dragon Unit, sem combate especial)")
+
+func test_react_to_dragon_does_nothing_for_a_retreating_unit():
+	var soldier := _make_unit("warrior", rival, Vector2i(0, 0))
+	soldier.hp = soldier.unit_data.max_hp * 0.1 # bem abaixo de RETREAT_HP_FRACTION
+	var dragon := hex_grid.spawn_monster_at(Vector2i(1, 0), "dragon")
+	var dragon_hp_before := dragon.hp
+
+	RivalAI.react_to_dragon(soldier, hex_grid, dragon)
+
+	assert_eq(soldier.coord, Vector2i(0, 0), "unidade em retirada nao deveria avancar pro combate")
+	assert_eq(dragon.hp, dragon_hp_before, "unidade em retirada nao deveria atacar")
+
+## 5B.3-G v2 -- pedido explicito do usuario apos playtest: "as tropas ficam
+## apenas paradas, no maximo uma que tiver do lado do dragao ataca, mas as
+## outras ficam paradas tomando de longe... direcione TODAS as tropas pro
+## dragao". Substitui a v1 (so' a unidade GLOBAL mais proxima reagia).
+func test_defend_against_dragon_sends_every_troop_near_a_threatened_city_toward_the_dragon():
+	var city := hex_grid.found_city(Vector2i(0, 0), rival, "Capital")
+	var soldier_a := _make_unit("warrior", rival, Vector2i(1, 0))
+	var soldier_b := _make_unit("warrior", rival, Vector2i(-1, 0))
+	# Dragao dentro de DRAGON_CITY_AGGRO_RADIUS (5) da cidade -- "sob ataque".
+	var dragon := hex_grid.spawn_monster_at(Vector2i(4, 0), "dragon")
+
+	RivalAI.defend_against_dragon(rival, hex_grid, dragon)
+
+	assert_ne(soldier_a.coord, Vector2i(1, 0), "TODA tropa perto da cidade ameacada deveria avancar, nao so' a mais proxima")
+	assert_ne(soldier_b.coord, Vector2i(-1, 0), "TODA tropa perto da cidade ameacada deveria avancar, nao so' a mais proxima")
+	city.queue_free()
+
+## Pedido explicito do usuario: "quando o dragao sai do agro da cidade as
+## tropas retornam para ficar ao redor da cidade pra proteger ela no
+## proximo ataque".
+func test_defend_against_dragon_recalls_a_wandering_troop_back_to_garrison_when_the_dragon_is_far():
+	var city := hex_grid.found_city(Vector2i(0, 0), rival, "Capital")
+	var wandering_soldier := _make_unit("warrior", rival, Vector2i(6, 0)) # longe da propria cidade
+	# Dragao MUITO longe da cidade -- fora de DRAGON_CITY_AGGRO_RADIUS (5).
+	var dragon := hex_grid.spawn_monster_at(Vector2i(0, -9), "dragon")
+
+	RivalAI.defend_against_dragon(rival, hex_grid, dragon)
+
+	var distance_to_city_after: float = HexMetrics.axial_distance(wandering_soldier.coord, city.coord)
+	assert_lt(distance_to_city_after, 6.0, "sem o Dragao por perto, a tropa deveria voltar em direcao a propria cidade (garrison)")
+	city.queue_free()
+
+func test_defend_against_dragon_leaves_an_already_garrisoned_troop_in_place_when_the_dragon_is_far():
+	var city := hex_grid.found_city(Vector2i(0, 0), rival, "Capital")
+	var garrisoned_soldier := _make_unit("warrior", rival, Vector2i(1, 0)) # ja perto (GARRISON_RETURN_RADIUS)
+	var dragon := hex_grid.spawn_monster_at(Vector2i(0, -9), "dragon") # bem longe
+
+	RivalAI.defend_against_dragon(rival, hex_grid, dragon)
+
+	assert_eq(garrisoned_soldier.coord, Vector2i(1, 0), "tropa ja guarnecendo a cidade nao deveria vagar a toa sem motivo")
+	city.queue_free()
+
+func test_defend_against_dragon_does_nothing_without_any_military_unit():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital") # sem unidade nenhuma
+	var dragon := hex_grid.spawn_monster_at(Vector2i(5, 0), "dragon")
+
+	RivalAI.defend_against_dragon(rival, hex_grid, dragon) # nao deveria crashar
+
+	assert_eq(dragon.coord, Vector2i(5, 0))
+
+func test_defend_against_dragon_does_nothing_when_the_dragon_is_null():
+	var soldier := _make_unit("warrior", rival, Vector2i(0, 0))
+
+	RivalAI.defend_against_dragon(rival, hex_grid, null) # nao deveria crashar
+
+	assert_eq(soldier.coord, Vector2i(0, 0), "sem Dragao nenhum, nenhuma unidade deveria se mover")

@@ -1,0 +1,49 @@
+{
+  "preset": "tools/asset_factory/presets/human_guard.json",
+  "engine": "v1",
+  "seed": 42,
+  "style": "human",
+  "output_glb": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\humans\\guard\\human_guard.glb",
+  "file_size_bytes": 93836,
+  "mesh_stats": {
+    "vertices": 440,
+    "faces": 348,
+    "triangles_estimate": 756,
+    "materials": 6
+  },
+  "material_count": 6,
+  "bone_count": 18,
+  "bone_names": [
+    "Root",
+    "Pelvis",
+    "Spine",
+    "Chest",
+    "Neck",
+    "Head",
+    "UpperArm.L",
+    "LowerArm.L",
+    "Hand.L",
+    "UpperArm.R",
+    "LowerArm.R",
+    "Hand.R",
+    "UpperLeg.L",
+    "LowerLeg.L",
+    "Foot.L",
+    "UpperLeg.R",
+    "LowerLeg.R",
+    "Foot.R"
+  ],
+  "animations": [
+    "Idle",
+    "Walk",
+    "Attack",
+    "Death"
+  ],
+  "previews": {
+    "front": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\humans\\guard\\preview_human_guard_front.png",
+    "side": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\humans\\guard\\preview_human_guard_side.png",
+    "back": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\humans\\guard\\preview_human_guard_back.png",
+    "top": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\humans\\guard\\preview_human_guard_top.png"
+  },
+  "height_target": 1.8
+}

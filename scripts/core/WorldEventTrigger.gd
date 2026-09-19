@@ -54,7 +54,23 @@ static func should_spawn_dragon(map_seed: int, turn: int) -> bool:
 ## aqui, é responsabilidade do Blocker #3/5B.3). Sorteada com o MESMO
 ## `trigger_rng` do momento do spawn (ainda sem `event_id`), nunca o RNG
 ## de evento.
+##
+## Roadmap "Fase Macro" 5B.3-E -- pedido explicito do usuario apos o
+## playtest ("ele tem que spawnar perto do continente principal... demorou
+## um século pra aparecer"): antes sorteava entre TODOS os tiles do
+## canvas, incluindo os continentes especiais (Vulcanico/Cristal, ver
+## HexGrid._zone_for/_Zone) e a margem de oceano GARANTIDO entre eles —
+## nenhuma civilização nasce fora da zona Principal, entao um Dragao
+## sorteado la' precisava atravessar um oceano inteiro so' pra chegar perto
+## de alguem. Filtra pra zona Principal quando ela existir (mapas menores
+## que Grande sao 100% zona Principal por definicao -- ver HexGrid.
+## _zone_for -- entao o filtro e' um no-op nesses casos, comportamento
+## identico a antes). Fallback pro canvas inteiro so' no caso degenerado
+## de um mapa sem NENHUM tile de zona Principal (nao deveria acontecer na
+## pratica).
 static func choose_dragon_origin_region(map_seed: int, turn: int, hex_grid: HexGrid) -> Vector2i:
 	var coords: Array = hex_grid.tiles.keys()
-	var index: int = trigger_rng(map_seed, DragonEvent.EVENT_TYPE, turn).randi() % coords.size()
-	return coords[index]
+	var main_zone_coords: Array = coords.filter(func(c): return hex_grid._zone_for(c) == HexGrid._Zone.MAIN)
+	var candidates: Array = main_zone_coords if not main_zone_coords.is_empty() else coords
+	var index: int = trigger_rng(map_seed, DragonEvent.EVENT_TYPE, turn).randi() % candidates.size()
+	return candidates[index]

@@ -14,6 +14,33 @@ extends Node3D
 var kind: String = "goblin"
 var _hex_grid: HexGrid
 
+## COVIS DE MONSTROS -- DESTRUICAO (pedido do usuario: "quero transformar
+## covis em alvos reais... avalie uma estrutura como HP; defesa; ataque ao
+## covil; destruicao; recompensa"). Antes, a estrutura nao tinha stat
+## nenhum — bastava uma unidade "visitar" o tile vazio pra destruir de
+## graca (ver antigo HexGrid._grant_lair_clear_reward, chamado por
+## move_unit). Agora a estrutura em si precisa ser ATACADA (ver
+## CombatResolver.resolve_lair_attack) ate zerar o proprio HP.
+## Fracao do max_hp que o kind ja teria como criatura (MonsterDatabase.
+## KIND_DATA) -- reusa o numero ja balanceado por tipo (Goblin 8, Troll 20,
+## Vivern 16, Esqueleto 6, Dragao 50) em vez de inventar uma tabela nova
+## ("tipo do monstro" / "forca do covil" ja estao embutidos ali, incluindo
+## indiretamente a distancia/ameaca que decidiu qual kind podia nascer
+## aqui). 0.3 (nao o valor cheio) e' o que mantem a promessa de "nao
+## precisa virar dez turnos" -- calculado contra CombatResolver.
+## resolve_lair_attack de verdade (dano = ataque - defesa*0.5, defesa
+## tambem vem do kind): um Guerreiro comum (ataque 4) derruba a tenda de
+## Goblin OU o ossario de Esqueleto num UNICO golpe extra depois de limpar
+## o guardiao (structure_hp 2.4/1.8, dano 3/3.5); a caverna de Troll e o
+## ninho de Vivern pedem 2-3 golpes de verdade (structure_hp 6/4.8, dano
+## 2/2.5); o covil de Dragao (structure_hp 15, defesa 8) e' deliberadamente
+## quase imune a um Guerreiro basico (dano cai pro minimo de 1) — precisa
+## de cerco/unidade forte de verdade, coerente com ser o encontro mais raro
+## e ameacador do jogo.
+const STRUCTURE_HP_FRACTION_OF_KIND_MAX_HP := 0.3
+var hp: float = 0.0
+var max_hp: float = 0.0
+
 ## (MeshInstance3D, Color) por primitiva — guardado pra apply_fog_state
 ## poder re-tingir cada peca sem precisar remontar a malha inteira a cada
 ## troca de estado de nevoa (mesmo motivo de HexGrid._tint_props guardar
@@ -23,6 +50,9 @@ var _tinted_meshes: Array = []
 func build(for_kind: String, hex_grid: HexGrid) -> void:
 	kind = for_kind
 	_hex_grid = hex_grid
+	var kind_max_hp: float = MonsterDatabase.KIND_DATA.get(kind, {}).get("max_hp", 8.0)
+	max_hp = kind_max_hp * STRUCTURE_HP_FRACTION_OF_KIND_MAX_HP
+	hp = max_hp
 	match kind:
 		"troll":
 			_build_cave()

@@ -41,6 +41,7 @@ var placeable_coords: Array[Vector2i] = []
 ## porque "unidade inimiga visivel agora" muda a cada movimento, diferente
 ## dos vizinhos fixos de uma cidade.
 var casting_spell_name: String = ""
+var casting_unit: Unit = null
 
 func reset() -> void:
 	_clear_selection()
@@ -103,7 +104,7 @@ func handle_world_hover(world_pos: Vector3) -> void:
 		hex_grid.hide_hover_label()
 
 func handle_world_click(world_pos: Vector3) -> void:
-	if GameManager.state == GameManager.GameState.GAME_OVER:
+	if GameManager.state == GameManager.GameState.GAME_OVER or GameManager.is_turn_processing:
 		return
 	var hex_grid = GameManager.hex_grid
 	if hex_grid == null:
@@ -120,7 +121,9 @@ func handle_world_click(world_pos: Vector3) -> void:
 		_handle_building_placement_click(coord)
 		return
 
-	if selected_unit != null and move_mode and reachable.has(coord):
+	if GameManager.debug_mode and selected_unit != null and move_mode and hex_grid.get_unit_at(coord) == null:
+		_debug_teleport_selected_to(coord)
+	elif selected_unit != null and move_mode and reachable.has(coord):
 		_move_selected_to(coord)
 	elif selected_unit != null and coord in attackable:
 		_attack_from_selected(coord)
@@ -137,16 +140,22 @@ func handle_world_click(world_pos: Vector3) -> void:
 	EventBus.tile_selected.emit(coord, hex_grid.get_tile(coord))
 
 func found_city_with_selected() -> void:
+	if GameManager.is_turn_processing:
+		return
 	if selected_unit == null or not selected_unit.unit_data.can_found_city:
 		return
 	if selected_unit.embarked: # Roadmap 2.0 Parte 1 (C2) — unidade em transito nao funda cidade
 		return
 	var hex_grid = GameManager.hex_grid
 	var coord = selected_unit.coord
-	if hex_grid.get_city_at(coord) != null:
+	var reason := CitySite.rejection_reason(hex_grid, coord, selected_unit.owner_player)
+	if reason != "":
+		if reason != CitySite.REASON_CITY:
+			EventBus.notify.emit(CitySite.reason_text(reason), "")
 		return
 
-	WorldSetup.found_city_from_settler(hex_grid, selected_unit)
+	if WorldSetup.found_city_from_settler(hex_grid, selected_unit) == null:
+		return
 	hex_grid.recompute_fog(GameManager.human_player)
 	_clear_selection()
 	hex_grid.show_selection_marker(coord)
@@ -164,9 +173,17 @@ func start_building_placement(city: City, building_id: String) -> void:
 	placing_city = city
 	placing_building_id = building_id
 	placeable_coords.clear()
-	for n in hex_grid.get_neighbors(city.coord):
+	var candidates := hex_grid.get_neighbors(city.coord)
+	for owned in city.owned_tiles:
+		if owned not in candidates:
+			candidates.append(owned)
+	for n in candidates:
 		if city.is_valid_building_tile(n, hex_grid):
 			placeable_coords.append(n)
+	if placeable_coords.is_empty():
+		cancel_building_placement()
+		EventBus.notify.emit("Nenhum terreno livre para construir. Expanda a cidade ou libere um terreno ocupado.", "")
+		return
 	hex_grid.set_highlight([], [], [], placeable_coords)
 
 func cancel_building_placement() -> void:
@@ -210,13 +227,17 @@ func _handle_building_placement_click(coord: Vector2i) -> void:
 ## Chamado pela HUD ao clicar "Conjurar" num feitico do Grimorio — entra em
 ## modo de mira em vez de aplicar o efeito na hora, esperando o proximo
 ## clique no mundo escolher o alvo (mesma UX de start_building_placement).
-func start_spell_targeting(spell_name: String) -> void:
+func start_spell_targeting(spell_name: String, caster: Unit = null) -> void:
+	if GameManager.is_turn_processing:
+		return
 	_clear_selection() # nao faz sentido mover/atacar enquanto mira um feitico
 	cancel_building_placement()
 	casting_spell_name = spell_name
+	casting_unit = caster
 
 func cancel_spell_targeting() -> void:
 	casting_spell_name = ""
+	casting_unit = null
 	if GameManager.hex_grid:
 		GameManager.hex_grid.hide_hover_label()
 
@@ -225,6 +246,13 @@ func _handle_spell_targeting_hover(world_pos: Vector3) -> void:
 	if hex_grid == null:
 		return
 	var coord = HexMetrics.world_to_axial(world_pos.x, world_pos.z, hex_grid.hex_size)
+	var spell := SpellDatabase.get_spell(casting_spell_name)
+	if spell and spell.effect != "":
+		if MagicRuntime.valid_target(GameManager.human_player, spell, coord, hex_grid, casting_unit):
+			hex_grid.show_hover_label(coord, "CONJURAR %s" % spell.name, Color(0.7, 0.4, 0.9))
+		else:
+			hex_grid.hide_hover_label()
+		return
 	var target = _valid_spell_target(hex_grid, casting_spell_name, coord)
 	if target:
 		hex_grid.show_hover_label(coord, "CONJURAR %s" % casting_spell_name, Color(0.7, 0.4, 0.9))
@@ -237,6 +265,15 @@ func _handle_spell_targeting_hover(world_pos: Vector3) -> void:
 func _handle_spell_targeting_click(coord: Vector2i) -> void:
 	var hex_grid = GameManager.hex_grid
 	var spell_name = casting_spell_name
+	var spell := SpellDatabase.get_spell(spell_name)
+	if spell and spell.effect != "":
+		var message := MagicRuntime.cast(GameManager.human_player, spell, coord, hex_grid, casting_unit)
+		cancel_spell_targeting()
+		EventBus.notify.emit(message, "magic")
+		hex_grid.recompute_fog(GameManager.human_player)
+		EventBus.tile_selected.emit(coord, hex_grid.get_tile(coord))
+		GameManager.check_victories()
+		return
 	var target = _valid_spell_target(hex_grid, spell_name, coord)
 	cancel_spell_targeting()
 	if target != null:
@@ -292,7 +329,7 @@ func _select_unit(unit: Unit) -> void:
 	# ja que aqui captura so acontece via CombatResolver.resolve_city_
 	# attack (efeito colateral de reduzir a vida da cidade a zero atacando,
 	# nao uma acao propria) — sem alvo atacavel, nao ha como capturar.
-	if unit.unit_data.attack > 0.0 and unit.movement_left > 0.0 and not unit.embarked:
+	if _accepts_manual_orders(unit) and unit.unit_data.attack > 0.0 and unit.movement_left > 0.0 and not unit.embarked:
 		for n in hex_grid.tiles_in_range(unit.coord, unit.unit_data.attack_range):
 			var occ_unit = hex_grid.get_unit_at(n)
 			var occ_city = hex_grid.get_city_at(n)
@@ -300,9 +337,17 @@ func _select_unit(unit: Unit) -> void:
 			# atacaveis — ver PlayerData.is_at_war_with. Monstro neutro guardando
 			# um Covil (Unit com owner_player == null, ver MonsterDatabase) e
 			# hostil a TODO MUNDO, sempre — nao existe diplomacia com ele.
-			if occ_unit and occ_unit.owner_player != unit.owner_player and (occ_unit.owner_player == null or unit.owner_player.is_at_war_with(occ_unit.owner_player)):
+			if occ_unit and not MagicRuntime.concealed(occ_unit, unit.owner_player, hex_grid) and occ_unit.owner_player != unit.owner_player and (occ_unit.owner_player == null or unit.owner_player.is_at_war_with(occ_unit.owner_player)):
 				attackable.append(n)
 			elif occ_city and occ_city.owner_player != unit.owner_player and unit.owner_player.is_at_war_with(occ_city.owner_player):
+				attackable.append(n)
+			# COVIS DE MONSTROS -- DESTRUICAO: a estrutura (sem dono, hostil a
+			# todo mundo igual o guardiao que ela abrigava) so vira alvo de
+			# ataque depois de genuinamente indefesa (nenhum monstro vivo na
+			# area, ver HexGrid._count_live_monsters_near_lair) -- enquanto
+			# defendida, occ_unit acima ja cobre o guardiao/reforco de verdade,
+			# nunca a propria estrutura.
+			elif occ_unit == null and occ_city == null and hex_grid.lairs_by_coord.has(n) and hex_grid._count_live_monsters_near_lair(n) == 0:
 				attackable.append(n)
 	hex_grid.set_highlight(reachable.keys(), attackable)
 	EventBus.unit_selected.emit(unit)
@@ -317,7 +362,29 @@ func _clear_selection() -> void:
 		GameManager.hex_grid.clear_highlight()
 	EventBus.unit_selected.emit(null)
 
+## SO MODO DEBUG (GameManager.debug_mode) -- pedido do usuario: "eu nao
+## tenho limite de andar e ao clicar num lugar com a movimentacao meu
+## boneco teletransporte pra aquele lugar pra facilitar eu comparar os
+## tamanhos in game". Ignora `reachable`/`attackable`/custo de movimento
+## de proposito -- checado ANTES desses em handle_world_click, entao so
+## roda quando o modo debug esta ligado e o tile clicado esta vazio
+## (clicar um tile OCUPADO ainda cai no fluxo normal de ataque/selecao
+## logo abaixo, mesmo em debug).
+func _debug_teleport_selected_to(coord: Vector2i) -> void:
+	if selected_unit == null or not _accepts_manual_orders(selected_unit):
+		return
+	var hex_grid = GameManager.hex_grid
+	var unit = selected_unit
+	unit.move_order_target = Unit.NO_MOVE_ORDER
+	unit.fortified = false
+	unit.exploring = false
+	hex_grid.teleport_unit(unit, coord)
+	hex_grid.recompute_fog(GameManager.human_player)
+	_select_unit(unit)
+
 func _move_selected_to(coord: Vector2i) -> void:
+	if selected_unit == null or not _accepts_manual_orders(selected_unit):
+		return
 	var hex_grid = GameManager.hex_grid
 	var cost = reachable[coord]
 	var unit = selected_unit
@@ -349,6 +416,8 @@ func _move_selected_to(coord: Vector2i) -> void:
 ## deveria tentar SELECIONAR aquela unidade em vez de virar ordem de
 ## movimento.
 func _try_queue_move_order(unit: Unit, coord: Vector2i) -> bool:
+	if not _accepts_manual_orders(unit):
+		return false
 	var hex_grid = GameManager.hex_grid
 	if hex_grid.get_unit_at(coord) != null:
 		return false
@@ -378,7 +447,7 @@ func _try_queue_move_order(unit: Unit, coord: Vector2i) -> bool:
 ## Explorar/qualquer ordem pendente, pra unidade ficar livre pra receber
 ## um comando novo.
 func wake_selected_for_move() -> void:
-	if selected_unit == null:
+	if selected_unit == null or not _accepts_manual_orders(selected_unit):
 		return
 	var unit = selected_unit
 	unit.fortified = false
@@ -399,7 +468,7 @@ func wake_selected_for_move() -> void:
 ## do Fortificar — agora as DUAS saidas de "a unidade anda sozinha"
 ## (Explorar E move_order_target) sao limpas juntas, sem excecao.
 func fortify_selected() -> void:
-	if selected_unit == null:
+	if selected_unit == null or not _accepts_manual_orders(selected_unit):
 		return
 	var unit = selected_unit
 	if unit.embarked: # Roadmap 2.0 Parte 1 (C2) — unidade em transito nao fortifica
@@ -419,7 +488,7 @@ func fortify_selected() -> void:
 ## de turno seguintes) — mesma UX de _try_queue_move_order, nao espera o
 ## proximo turno pra comecar.
 func toggle_explore_selected() -> void:
-	if selected_unit == null:
+	if selected_unit == null or not _accepts_manual_orders(selected_unit):
 		return
 	var unit = selected_unit
 	if unit.embarked: # Roadmap 2.0 Parte 1 (C2) — unidade em transito nao explora
@@ -456,7 +525,7 @@ func toggle_explore_selected() -> void:
 ## pendente, mesmo padrao de fortify_selected/toggle_explore_selected
 ## acima (comando manual novo sempre limpa os outros modos automaticos).
 func toggle_embark_selected() -> void:
-	if selected_unit == null:
+	if selected_unit == null or not _accepts_manual_orders(selected_unit):
 		return
 	var unit = selected_unit
 	if unit.embarked:
@@ -488,6 +557,8 @@ func _attack_target_name(hex_grid: HexGrid, coord: Vector2i) -> String:
 	return ""
 
 func _attack_from_selected(coord: Vector2i) -> void:
+	if selected_unit == null or not _accepts_manual_orders(selected_unit):
+		return
 	var hex_grid = GameManager.hex_grid
 	var attacker = selected_unit
 	# Atacar cancela qualquer ordem/modo automatico pendente (ver
@@ -508,6 +579,11 @@ func _attack_from_selected(coord: Vector2i) -> void:
 			# CombatResolver.resolve_city_attack (desconta do escudo/vida
 			# da cidade, so captura quando a vida zera).
 			CombatResolver.resolve_city_attack(attacker, defender_city, hex_grid)
+		elif hex_grid.lairs_by_coord.has(coord):
+			# COVIS DE MONSTROS -- DESTRUICAO: mesmo espirito de cidade acima —
+			# reduz o HP da estrutura, so destroi/paga recompensa quando zera
+			# (ver CombatResolver.resolve_lair_attack).
+			CombatResolver.resolve_lair_attack(attacker, coord, hex_grid)
 
 	hex_grid.recompute_fog(GameManager.human_player)
 	GameManager.check_victories()
@@ -516,3 +592,6 @@ func _attack_from_selected(coord: Vector2i) -> void:
 		_select_unit(attacker)
 	else:
 		_clear_selection()
+
+func _accepts_manual_orders(unit: Unit) -> bool:
+	return not GameManager.is_turn_processing and unit.ritual_id == "" and not unit.unit_data.visual_kind in ["elder_lich", "archdemon"]

@@ -75,6 +75,43 @@ func test_choose_dragon_origin_region_is_deterministic_for_the_same_inputs():
 	var second := WorldEventTrigger.choose_dragon_origin_region(12345, 40, hex_grid)
 	assert_eq(first, second)
 
+## Roadmap "Fase Macro" 5B.3-E -- achado do usuario jogando manualmente:
+## "ele tem que spawnar perto do continente principal, ele spawnou bem
+## longe e demorou um século pra aparecer". Antes sorteava entre TODOS os
+## tiles do canvas (incluindo os continentes especiais Vulcanico/Cristal e
+## a margem de oceano garantido entre eles, ver HexGrid._zone_for) --
+## nenhuma civilizacao nasce fora da zona Principal, entao precisava
+## atravessar um oceano inteiro so' pra chegar perto de alguem. Mapas
+## menores que Grande sao 100% zona Principal por definicao (ver
+## HexGrid._zone_for/_is_large_map_or_bigger) -- os testes acima ja cobrem
+## esse caso (grid 5x5 da fixture), sem mudanca de comportamento. Estes
+## dois cobrem especificamente um mapa Grande-ou-maior, onde a zona
+## Principal e' so' UMA FATIA do canvas.
+func test_choose_dragon_origin_region_prefers_the_main_zone_on_a_large_map():
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.map_width = 320
+	grid.map_height = 84
+	grid.tiles[Vector2i(0, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND) # zona Principal
+	grid.tiles[HexGrid.VOLCANIC_ZONE_CENTER] = TerrainDatabase.create_tile(HexTileData.TerrainType.LAVA) # continente especial, longe
+
+	for turn in range(40, 60): # varios turnos/sorteios -- nunca deveria escolher o tile de fora
+		var region := WorldEventTrigger.choose_dragon_origin_region(12345, turn, grid)
+		assert_eq(region, Vector2i(0, 0), "com um tile valido na zona Principal disponivel, nunca deveria escolher um continente especial distante")
+	grid.queue_free()
+
+func test_choose_dragon_origin_region_falls_back_to_the_whole_map_without_any_main_zone_tile():
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.map_width = 320
+	grid.map_height = 84
+	grid.tiles[HexGrid.VOLCANIC_ZONE_CENTER] = TerrainDatabase.create_tile(HexTileData.TerrainType.LAVA) # so' zona Vulcanica, sem zona Principal nenhuma
+
+	var region := WorldEventTrigger.choose_dragon_origin_region(12345, 40, grid)
+
+	assert_eq(region, HexGrid.VOLCANIC_ZONE_CENTER, "sem nenhum tile de zona Principal, deveria cair no fallback (mapa inteiro) em vez de travar")
+	grid.queue_free()
+
 ## --- Independencia da familia de RNG (contrato, "consequencia de
 ## determinismo") -- o trigger ocorre ANTES de existir event_id, entao seu
 ## RNG tem que ser uma familia SEPARADA da de WorldEvent.event_rng.

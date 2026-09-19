@@ -1,5 +1,12 @@
 extends GutTest
 
+var _owned_players: Array[PlayerData] = []
+
+func _track_player(civ: CivilizationData) -> PlayerData:
+	var player := PlayerData.new(civ)
+	_owned_players.append(player)
+	return player
+
 ## Cobre a generalizacao do GameManager pra multiplos rivais: setup_players()
 ## cria o numero certo de civs (cada uma em guerra com o humano por
 ## padrao, nunca entre si), e check_game_over() so declara vitoria quando
@@ -29,6 +36,7 @@ class _EliminatesPlayerEvent extends WorldEvent:
 		target.cities.clear()
 
 var _original_state
+var _original_victory_rules: int
 var _original_players: Array[PlayerData]
 var _original_human_player: PlayerData
 var _original_rival_players: Array[PlayerData]
@@ -44,8 +52,11 @@ var _original_debug_mode: bool
 var _original_stagger_ai_turns: bool
 var _original_world_events: Array[WorldEvent]
 var _original_world_event_next_id: int
+var _original_current_save_slot: String
 
 func before_each():
+	_original_victory_rules = GameManager.victory_rules_version
+	GameManager.victory_rules_version = 1 # Exercita também as regras dos saves anteriores.
 	_original_state = GameManager.state
 	_original_players = GameManager.players
 	_original_human_player = GameManager.human_player
@@ -64,8 +75,16 @@ func before_each():
 	_original_world_event_next_id = WorldEventManager._next_event_id
 	WorldEventManager.active_events = []
 	WorldEventManager._next_event_id = 0
+	_original_current_save_slot = GameManager.current_save_slot
 
 func after_each():
+	for player in GameManager.players:
+		if not player in _original_players:
+			player.release_relations()
+	for player in _owned_players:
+		player.release_relations()
+	_owned_players.clear()
+	GameManager.victory_rules_version = _original_victory_rules
 	GameManager.state = _original_state
 	GameManager.players = _original_players
 	GameManager.human_player = _original_human_player
@@ -85,6 +104,7 @@ func after_each():
 	WorldEventManager.active_events = _original_world_events
 	WorldEventManager._next_event_id = _original_world_event_next_id
 	GameManager._ai_batch_timer = 0.0
+	GameManager.current_save_slot = _original_current_save_slot
 
 func test_setup_players_creates_requested_number_of_rivals():
 	var hex_grid := HexGrid.new()
@@ -321,12 +341,12 @@ func test_setup_players_defaults_to_normal_multiplier():
 ## atualizado, comportamento identico pro caso de Dominacao.
 func test_check_victories_requires_all_rivals_eliminated_for_dominance():
 	GameManager.state = GameManager.GameState.PLAYING
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.human_player.units.append(null) # humano ainda vivo
 
-	var alive_rival = PlayerData.new(CivilizationData.new())
+	var alive_rival = _track_player(CivilizationData.new())
 	alive_rival.units.append(null)
-	var dead_rival = PlayerData.new(CivilizationData.new())
+	var dead_rival = _track_player(CivilizationData.new())
 	GameManager.rival_players = [alive_rival, dead_rival]
 
 	GameManager.check_victories()
@@ -335,11 +355,11 @@ func test_check_victories_requires_all_rivals_eliminated_for_dominance():
 
 func test_check_victories_declares_dominance_when_every_rival_is_eliminated():
 	GameManager.state = GameManager.GameState.PLAYING
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.human_player.units.append(null)
 
-	var dead_rival_a = PlayerData.new(CivilizationData.new())
-	var dead_rival_b = PlayerData.new(CivilizationData.new())
+	var dead_rival_a = _track_player(CivilizationData.new())
+	var dead_rival_b = _track_player(CivilizationData.new())
 	GameManager.rival_players = [dead_rival_a, dead_rival_b]
 
 	GameManager.check_victories()
@@ -371,7 +391,7 @@ func test_update_territorial_streak_increments_when_threshold_met():
 	hex_grid._ready()
 	hex_grid.tiles[Vector2i(0, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	GameManager.hex_grid = hex_grid
-	var player = PlayerData.new(CivilizationData.new())
+	var player = _track_player(CivilizationData.new())
 	var city := City.new()
 	city.coord = Vector2i(0, 0)
 	city.owned_tiles = [Vector2i(0, 0)] # 100% do mapa (1 de 1 tile habitavel)
@@ -391,7 +411,7 @@ func test_update_territorial_streak_resets_below_threshold():
 	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	GameManager.hex_grid = hex_grid
-	var player = PlayerData.new(CivilizationData.new())
+	var player = _track_player(CivilizationData.new())
 	player.territorial_streak = 3 # ja vinha sustentando -- deveria zerar, nao so parar de crescer
 	var city := City.new()
 	city.coord = Vector2i(0, 0)
@@ -417,7 +437,7 @@ func test_update_arcane_ritual_does_nothing_when_inactive():
 	var hex_grid := HexGrid.new()
 	hex_grid._ready()
 	GameManager.hex_grid = hex_grid
-	var player = PlayerData.new(CivilizationData.new())
+	var player = _track_player(CivilizationData.new())
 
 	GameManager._update_arcane_ritual(player)
 
@@ -428,7 +448,7 @@ func test_update_arcane_ritual_does_nothing_when_inactive():
 func test_update_arcane_ritual_increments_streak_and_pays_upkeep_when_sustained():
 	var hex_grid := _make_ritual_grid_with_three_nodes()
 	GameManager.hex_grid = hex_grid
-	var player = PlayerData.new(CivilizationData.new())
+	var player = _track_player(CivilizationData.new())
 	var city := City.new()
 	city.coord = Vector2i(0, 0)
 	city.owner_player = player
@@ -451,7 +471,7 @@ func test_update_arcane_ritual_increments_streak_and_pays_upkeep_when_sustained(
 func test_update_arcane_ritual_interrupts_when_sanctuary_city_is_lost():
 	var hex_grid := _make_ritual_grid_with_three_nodes()
 	GameManager.hex_grid = hex_grid
-	var player = PlayerData.new(CivilizationData.new())
+	var player = _track_player(CivilizationData.new())
 	player.arcane_ritual_active = true
 	player.arcane_ritual_city_coord = Vector2i(0, 0) # nenhuma cidade registrada nesse coord -- capturada/destruida
 	player.arcane_ritual_streak = 4
@@ -467,7 +487,7 @@ func test_update_arcane_ritual_interrupts_when_nodes_drop_below_three():
 	var hex_grid := _make_ritual_grid_with_three_nodes()
 	hex_grid.tiles[Vector2i(2, 0)].resource = "" # perdeu 1 Nodulo -- so 2 restam
 	GameManager.hex_grid = hex_grid
-	var player = PlayerData.new(CivilizationData.new())
+	var player = _track_player(CivilizationData.new())
 	var city := City.new()
 	city.coord = Vector2i(0, 0)
 	city.owner_player = player
@@ -489,7 +509,7 @@ func test_update_arcane_ritual_interrupts_when_nodes_drop_below_three():
 func test_update_arcane_ritual_interrupts_when_mana_insufficient_for_upkeep():
 	var hex_grid := _make_ritual_grid_with_three_nodes()
 	GameManager.hex_grid = hex_grid
-	var player = PlayerData.new(CivilizationData.new())
+	var player = _track_player(CivilizationData.new())
 	var city := City.new()
 	city.coord = Vector2i(0, 0)
 	city.owner_player = player
@@ -510,9 +530,9 @@ func test_update_arcane_ritual_interrupts_when_mana_insufficient_for_upkeep():
 	hex_grid.queue_free()
 
 func _make_activation_ready_player(hex_grid: HexGrid) -> PlayerData:
-	var player = PlayerData.new(CivilizationData.new())
+	var player = _track_player(CivilizationData.new())
 	for tech_id in ["canalizacao_base", "alquimia_botanica", "transmutacao_rocha", "geomancia"]:
-		player.researched_techs[tech_id] = true
+		player.researched_magic[tech_id] = true
 	var city := City.new()
 	city.coord = Vector2i(0, 0)
 	city.owned_tiles = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
@@ -523,7 +543,7 @@ func test_activate_arcane_ritual_fails_without_prerequisites():
 	var hex_grid := HexGrid.new()
 	hex_grid._ready()
 	GameManager.hex_grid = hex_grid
-	var player = PlayerData.new(CivilizationData.new())
+	var player = _track_player(CivilizationData.new())
 	player.mana = 1000.0
 
 	assert_false(GameManager.activate_arcane_ritual(player))
@@ -585,9 +605,9 @@ func test_activate_arcane_ritual_fails_if_already_active():
 
 func test_check_victories_declares_territorial_dominance_and_emits_both_signals():
 	GameManager.state = GameManager.GameState.PLAYING
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.human_player.units.append(null) # vivo -- Dominacao nao deveria disparar primeiro
-	var rival = PlayerData.new(CivilizationData.new())
+	var rival = _track_player(CivilizationData.new())
 	rival.units.append(null)
 	GameManager.rival_players = [rival]
 	GameManager.human_player.territorial_streak = VictoryConditions.TERRITORIAL_SUSTAIN_TURNS
@@ -601,9 +621,9 @@ func test_check_victories_declares_territorial_dominance_and_emits_both_signals(
 
 func test_check_victories_declares_arcane_ascension():
 	GameManager.state = GameManager.GameState.PLAYING
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.human_player.units.append(null)
-	var rival = PlayerData.new(CivilizationData.new())
+	var rival = _track_player(CivilizationData.new())
 	rival.units.append(null)
 	GameManager.rival_players = [rival]
 	GameManager.human_player.arcane_ritual_active = true
@@ -620,9 +640,9 @@ func test_check_victories_declares_arcane_ascension():
 
 func test_check_victories_resolves_same_player_multiple_conditions_by_fixed_type_order():
 	GameManager.state = GameManager.GameState.PLAYING
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.human_player.units.append(null)
-	var rival = PlayerData.new(CivilizationData.new())
+	var rival = _track_player(CivilizationData.new())
 	rival.units.append(null)
 	GameManager.rival_players = [rival]
 	GameManager.human_player.territorial_streak = VictoryConditions.TERRITORIAL_SUSTAIN_TURNS
@@ -636,9 +656,9 @@ func test_check_victories_resolves_same_player_multiple_conditions_by_fixed_type
 
 func test_check_victories_resolves_different_players_by_fixed_player_order():
 	GameManager.state = GameManager.GameState.PLAYING
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.human_player.units.append(null)
-	var rival = PlayerData.new(CivilizationData.new())
+	var rival = _track_player(CivilizationData.new())
 	rival.units.append(null)
 	GameManager.rival_players = [rival]
 	GameManager.human_player.territorial_streak = VictoryConditions.TERRITORIAL_SUSTAIN_TURNS
@@ -651,9 +671,9 @@ func test_check_victories_resolves_different_players_by_fixed_player_order():
 
 func test_check_victories_never_mutates_streak_state():
 	GameManager.state = GameManager.GameState.PLAYING
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.human_player.units.append(null)
-	var rival = PlayerData.new(CivilizationData.new())
+	var rival = _track_player(CivilizationData.new())
 	rival.units.append(null)
 	GameManager.rival_players = [rival]
 	GameManager.human_player.territorial_streak = 2 # abaixo do limiar -- nao deveria disparar nem mudar
@@ -668,21 +688,44 @@ func test_check_victories_never_mutates_streak_state():
 ## _process_research() de verdade (mesmo efeito colateral de marcar
 ## researched_techs e limpar current_research).
 func test_debug_complete_current_research_finishes_the_selected_tech():
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.human_player.current_research = "canalizacao_base"
 
 	GameManager.debug_complete_current_research()
 
-	assert_true(GameManager.human_player.researched_techs.has("canalizacao_base"))
+	assert_true(GameManager.human_player.researched_magic.has("canalizacao_base"))
 	assert_eq(GameManager.human_player.current_research, "")
 
 func test_debug_complete_current_research_does_nothing_without_a_selected_tech():
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.human_player.current_research = ""
 
 	GameManager.debug_complete_current_research() # nao deveria travar nem levantar erro nenhum
 
 	assert_eq(GameManager.human_player.current_research, "")
+
+## Roadmap "polimento definitivo V1" — science_per_turn_for foi extraido de
+## dentro de _process_research (mesma formula, so nomeada) pra HUD.gd poder
+## mostrar "Ciencia por turno" no cabecalho da aba Tecnologia sem duplicar
+## a conta. Confirma que o valor batido bate exatamente com o incremento
+## real que _process_research aplica num turno de pesquisa.
+func test_science_per_turn_for_matches_actual_research_progress_increment():
+	var player = _track_player(CivilizationData.new())
+	var city := City.new()
+	city.population = 3
+	player.cities.append(city)
+	player.current_research = "quartel"
+
+	var expected: float = GameManager.science_per_turn_for(player)
+	GameManager._process_research(player)
+
+	assert_almost_eq(player.research_progress, expected, 0.001)
+	assert_almost_eq(expected, 3.0 * GameManager.SCIENCE_PER_POPULATION, 0.001)
+	city.queue_free()
+
+func test_science_per_turn_for_is_zero_with_no_cities():
+	var player = _track_player(CivilizationData.new())
+	assert_eq(GameManager.science_per_turn_for(player), 0.0)
 
 ## Debug: pedido do usuario "libere no modo debug, quando eu ativar, tudo
 ## liberado, tudo fica disponivel todas as pesquisas ficam feitas" — ligar
@@ -690,7 +733,7 @@ func test_debug_complete_current_research_does_nothing_without_a_selected_tech()
 ## selecionada, diferente de debug_complete_current_research) e limpa
 ## qualquer selecao/progresso de pesquisa em andamento.
 func test_set_debug_mode_true_marks_every_tech_as_researched():
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.human_player.current_research = "canalizacao_base"
 	GameManager.human_player.research_progress = 5.0
 
@@ -698,18 +741,20 @@ func test_set_debug_mode_true_marks_every_tech_as_researched():
 
 	for tech in TechDatabase.all_techs():
 		assert_true(GameManager.human_player.researched_techs.has(tech.id), "%s deveria estar marcada como pesquisada" % tech.id)
+	for tech in MagicDatabase.all_techs():
+		assert_true(GameManager.human_player.researched_magic.has(tech.id), "%s deveria estar marcada como pesquisada" % tech.id)
 	assert_eq(GameManager.human_player.current_research, "")
 	assert_eq(GameManager.human_player.research_progress, 0.0)
 	assert_true(GameManager.debug_mode)
 
 func test_set_debug_mode_false_turns_off_the_flag_without_unresearching_anything():
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.set_debug_mode(true)
 
 	GameManager.set_debug_mode(false)
 
 	assert_false(GameManager.debug_mode)
-	assert_true(GameManager.human_player.researched_techs.has("canalizacao_base"), "desligar nao deveria desfazer pesquisas ja concedidas")
+	assert_true(GameManager.human_player.researched_magic.has("arcanismo_1"), "desligar nao deveria desfazer pesquisas ja concedidas")
 
 func test_set_debug_mode_does_not_crash_without_a_human_player():
 	GameManager.human_player = null
@@ -731,8 +776,8 @@ func test_debug_mode_completes_city_production_in_one_turn():
 	var rival_coord := Vector2i(10, 0)
 	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN) # so o piso minimo de producao (City.CITY_CENTER_MIN_PRODUCTION), sem debug 1 turno nao seria nem perto do suficiente
 	hex_grid.tiles[rival_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
-	var rival := PlayerData.new(CivilizationData.new())
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	var rival := _track_player(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.hex_grid = hex_grid
 	GameManager.rival_players = [rival]
 	GameManager.players = [GameManager.human_player, rival]
@@ -758,8 +803,8 @@ func test_debug_mode_off_does_not_speed_up_production():
 	var rival_coord := Vector2i(10, 0)
 	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
 	hex_grid.tiles[rival_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
-	var rival := PlayerData.new(CivilizationData.new())
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	var rival := _track_player(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.hex_grid = hex_grid
 	GameManager.rival_players = [rival]
 	GameManager.players = [GameManager.human_player, rival]
@@ -784,8 +829,8 @@ func _setup_hex_grid_with_rival_units(unit_count: int) -> Dictionary:
 	var rival_coord := Vector2i(20, 0)
 	hex_grid.tiles[human_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
 	hex_grid.tiles[rival_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
-	var rival := PlayerData.new(CivilizationData.new())
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	var rival := _track_player(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.hex_grid = hex_grid
 	GameManager.rival_players = [rival]
 	GameManager.players = [GameManager.human_player, rival]
@@ -837,6 +882,7 @@ func test_process_does_not_drain_before_the_batch_interval_elapses():
 	GameManager._process(GameManager.AI_BATCH_INTERVAL * 0.5)
 
 	assert_eq(GameManager._ai_turn_queue.size(), initial_size, "delta menor que AI_BATCH_INTERVAL nao deveria drenar nenhum item ainda")
+	setup.hex_grid.queue_free()
 
 func test_process_drains_the_ai_queue_in_small_batches():
 	var setup = _setup_hex_grid_with_rival_units(8)
@@ -993,8 +1039,8 @@ func _setup_minimal_hex_grid_with_one_rival() -> Dictionary:
 	var rival_coord := Vector2i(10, 0)
 	hex_grid.tiles[human_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
 	hex_grid.tiles[rival_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
-	var rival := PlayerData.new(CivilizationData.new())
-	GameManager.human_player = PlayerData.new(CivilizationData.new())
+	var rival := _track_player(CivilizationData.new())
+	GameManager.human_player = _track_player(CivilizationData.new())
 	GameManager.hex_grid = hex_grid
 	GameManager.rival_players = [rival]
 	GameManager.players = [GameManager.human_player, rival]
@@ -1104,8 +1150,9 @@ func test_respond_to_world_event_records_the_humans_decision():
 	setup.hex_grid.queue_free()
 
 func test_respond_to_world_event_returns_false_without_an_eligible_event():
-	_setup_minimal_hex_grid_with_one_rival()
+	var setup := _setup_minimal_hex_grid_with_one_rival()
 	assert_false(GameManager.respond_to_world_event(true), "sem evento nenhum em Preparation, nao deveria haver nada pra responder")
+	setup.hex_grid.queue_free()
 
 func test_respond_to_world_event_does_not_overwrite_an_existing_decision():
 	var setup = _setup_minimal_hex_grid_with_one_rival()
@@ -1133,6 +1180,28 @@ func test_finish_turn_collects_rival_participation_during_preparation():
 	assert_eq(event.participants.get(rival_index), {"decision": true})
 	setup.hex_grid.queue_free()
 
+## Roadmap "Fase Macro" 5B.3-G, "Preparation = tempo de preparacao militar"
+## -- integrado de verdade: _on_turn_changed() precisa consultar DragonEvent.
+## is_civ_threatened e chamar RivalAI.prepare_for_world_event pra civ
+## anunciada, nao so decide_world_event_participation (ja coberto acima).
+func test_finish_turn_gives_the_announced_civ_a_production_emergency_during_preparation():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	setup.hex_grid.found_city(Vector2i(11, 0), setup.rival, "Capital Rival B") # 2a cidade: sai do ramo "sempre colonizador"
+	setup.hex_grid.tiles[Vector2i(11, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	var rival_index: int = GameManager.players.find(setup.rival)
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_PREPARATION
+	event.target_civ_index = rival_index
+	WorldEventManager.register_event(event)
+
+	GameManager._on_turn_changed(0, 0)
+
+	var city: City = setup.rival.cities[0]
+	var building := BuildingDatabase.get_building(city.production_item)
+	var produced_something_military: bool = (building == null) or building.trains_unit != "" or city.production_item == "walls"
+	assert_true(produced_something_military, "civ anunciada em Preparation deveria priorizar producao militar de emergencia")
+	setup.hex_grid.queue_free()
+
 ## Blocker #1 do contrato comportamental do Dragao (docs/DRAGON_EVENT_
 ## DESIGN.md) integrado de verdade: _finish_turn() precisa consultar o
 ## trigger (WorldEventManager.maybe_spawn_dragon), nao so avancar eventos
@@ -1153,3 +1222,88 @@ func test_finish_turn_spawns_a_dragon_event_once_the_trigger_condition_is_met():
 	assert_true(WorldEventManager.active_events[0] is DragonEvent)
 
 	setup.hex_grid.queue_free()
+
+## Roadmap "sistema de menu de jogo moderno" -- pedido do usuario: "voltar
+## pro menu principal de fato volta pro menu principal, atualmente ele
+## continua na partida mas mostrando as opcoes de menu". end_match() e o
+## fix: encerra a partida de verdade (nao so a apresentacao, que continua
+## responsabilidade de Main.gd) -- estado, fila de IA em andamento,
+## eventos de mundo, entidades do mapa e referencias de jogador.
+
+func test_end_match_resets_state_to_menu():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.setup_players(hex_grid)
+	assert_eq(GameManager.state, GameManager.GameState.PLAYING, "pre-condicao")
+
+	GameManager.end_match()
+
+	assert_eq(GameManager.state, GameManager.GameState.MENU)
+	hex_grid.queue_free()
+
+## A causa raiz do bug relatado: GameManager._process() so e gateado por
+## is_turn_processing, nunca por `state` -- uma IA no meio de um turno
+## espalhado continuava sendo drenada em segundo plano mesmo depois de
+## "voltar ao menu", antes deste fix.
+func test_end_match_stops_turn_processing_and_clears_ai_queue():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.setup_players(hex_grid)
+	GameManager.is_turn_processing = true
+	GameManager._ai_turn_queue = [{"kind": "rival"}, {"kind": "monster"}]
+	GameManager._ai_batch_timer = 0.05
+
+	GameManager.end_match()
+
+	assert_false(GameManager.is_turn_processing)
+	assert_true(GameManager._ai_turn_queue.is_empty())
+	assert_eq(GameManager._ai_batch_timer, 0.0)
+	hex_grid.queue_free()
+
+func test_end_match_clears_players_and_current_save_slot():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.rival_count = 2
+	GameManager.setup_players(hex_grid)
+	GameManager.current_save_slot = "slot_em_andamento"
+	assert_false(GameManager.players.is_empty(), "pre-condicao")
+
+	GameManager.end_match()
+
+	assert_true(GameManager.players.is_empty())
+	assert_true(GameManager.rival_players.is_empty())
+	assert_null(GameManager.human_player)
+	assert_eq(GameManager.current_save_slot, "")
+	hex_grid.queue_free()
+
+func test_end_match_clears_world_events():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.setup_players(hex_grid)
+	WorldEventManager.active_events = [_StubWorldEvent.new()]
+	WorldEventManager._next_event_id = 3
+
+	GameManager.end_match()
+
+	assert_true(WorldEventManager.active_events.is_empty())
+	assert_eq(WorldEventManager._next_event_id, 0)
+	hex_grid.queue_free()
+
+## HexGrid.reset_to_empty() (novo wrapper publico em torno do mesmo
+## _clear_entities() que generate_map() ja chama no inicio de toda
+## partida nova) e quem de fato libera unidades/cidades do mapa.
+func test_end_match_calls_hex_grid_reset_to_empty():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.setup_players(hex_grid)
+	var unit := Unit.new()
+	unit.setup(UnitDatabase.create_unit("warrior"), GameManager.human_player, Vector2i(0, 0))
+	hex_grid.units_by_coord[Vector2i(0, 0)] = unit
+	assert_false(hex_grid.units_by_coord.is_empty(), "pre-condicao")
+
+	GameManager.end_match()
+
+	assert_true(hex_grid.units_by_coord.is_empty(), "end_match() deveria ter liberado as entidades do mapa abandonado")
+	hex_grid.queue_free()
+	if is_instance_valid(unit):
+		unit.queue_free()

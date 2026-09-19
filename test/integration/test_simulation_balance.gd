@@ -451,6 +451,70 @@ func test_simulate_baseline_multi_seed_metrics():
 		(100.0 * float(total_matching_personality) / float(total_research_choices)) if total_research_choices > 0 else 0.0,
 	])
 
+	# Roadmap "polimento e coesao" -- baseline de PACING da arvore de
+	# Tecnologia redesenhada (10 niveis, custo por formula, ver
+	# TechDatabase.gd). Mesma disciplina do resto do harness: so
+	# observacao, NENHUM assert de balanceamento aqui. Turno MEDIO de
+	# chegada a cada nivel, agregando primary+rivais de TODAS as seeds
+	# (amostra "jogador-seed", 1+RIVAL_COUNT por seed) -- quem nao chega a
+	# um nivel dentro de TURN_COUNT fica de fora da media (nao conta como
+	# "infinito"), mas "alcancados" mostra quantos ficaram de fora.
+	var total_player_seed_samples := all_results.size() * (1 + RIVAL_COUNT)
+	for tier in range(2, 11):
+		var turns_for_tier: Array = []
+		for r in all_results:
+			for player_turns in r.tier_reached_turn.values():
+				if player_turns.has(tier):
+					turns_for_tier.append(player_turns[tier])
+		print("[sim pacing tecnologico] nivel=%d turno_medio=%.1f alcancados=%d/%d" % [
+			tier, _avg(turns_for_tier), turns_for_tier.size(), total_player_seed_samples,
+		])
+
+	var all_science_totals: Array = []
+	var all_science_per_turn: Array = [] # Roadmap "polimento definitivo V1": total/turno-final desta seed, uma amostra por jogador
+	var all_final_tech_counts: Array = []
+	for r in all_results:
+		var seed_final_turn: int = r.ended_turn if r.ended_turn != -1 else TURN_COUNT
+		for v in r.total_science_generated.values():
+			all_science_totals.append(v)
+			if seed_final_turn > 0:
+				all_science_per_turn.append(v / float(seed_final_turn))
+		for v in r.final_researched_tech_count.values():
+			all_final_tech_counts.append(v)
+	print("[sim pacing tecnologico agregado] ciencia_total_media=%.1f ciencia_media_por_turno=%.2f pesquisas_concluidas_media=%.1f(de 55)" % [
+		_avg(all_science_totals), _avg(all_science_per_turn), _avg(all_final_tech_counts),
+	])
+
+	# Roadmap "polimento definitivo V1" -- distribuicao de familia das techs
+	# MUNDANAS de fato concluidas, agregada sobre TODOS os jogadores/seeds
+	# (soma, nao media -- mais legivel como "quantas pesquisas de cada
+	# familia aconteceram no total"). So observacao, sem assert.
+	var family_totals := {}
+	for r in all_results:
+		for label in r.family_researched_counts.keys():
+			var counts: Dictionary = r.family_researched_counts[label]
+			for fam in counts.keys():
+				family_totals[fam] = family_totals.get(fam, 0) + counts[fam]
+	print("[sim pacing tecnologico familia] %s" % [family_totals])
+
+	# Roadmap "polimento definitivo V1" -- quais techs a IA (e o humano,
+	# quando primary escolhe algo no baseline determinístico) mais optam
+	# por pesquisar, somado entre todas as seeds. So as 10 mais escolhidas,
+	# pra nao poluir o log -- lista completa fica em tech_pick_counts se
+	# alguem quiser inspecionar depois.
+	var tech_pick_totals := {}
+	for r in all_results:
+		for id in r.tech_pick_counts.keys():
+			tech_pick_totals[id] = tech_pick_totals.get(id, 0) + r.tech_pick_counts[id]
+	var pick_pairs: Array = []
+	for id in tech_pick_totals.keys():
+		pick_pairs.append([id, tech_pick_totals[id]])
+	pick_pairs.sort_custom(func(a, b): return a[1] > b[1])
+	var top_picks: Array = []
+	for i in range(min(10, pick_pairs.size())):
+		top_picks.append("%s=%d" % [pick_pairs[i][0], pick_pairs[i][1]])
+	print("[sim pacing tecnologico top_escolhas] %s" % [", ".join(top_picks)])
+
 	# Unico assert desta fase: correcao (numero invalido), nunca balanceamento
 	# ou comportamento esperado — ver comentario de topo do arquivo.
 	for r in all_results:
@@ -1057,7 +1121,11 @@ func _run_seed(seed_value: int, ai_rng_seed: int) -> Dictionary:
 		TurnManager.turn_number += 1
 
 	_finalize_metrics(m, primary, rivals)
-	grid.queue_free()
+	for player in ([primary] as Array[PlayerData]) + rivals:
+		player.release_relations()
+	# O harness não avança frames entre seeds: queue_free acumularia mapas inteiros.
+	grid.free()
+	GameManager.hex_grid = null
 	return m
 
 func _make_player(civ_name: String, race: String) -> PlayerData:
@@ -1152,6 +1220,11 @@ func _new_metrics() -> Dictionary:
 		"war_durations": [],
 		"last_change_turn": 0, # ultimo turno com guerra nova/terminada OU numero de cidades mudando
 		"gold_sum": {}, # PlayerData -> soma acumulada, vira media em _finalize_metrics
+		"total_science_generated": {}, # Roadmap "polimento e coesao" -- PlayerData -> float acumulado, soma de populacao das cidades por turno (mesma formula de GameManager._process_research, so leitura)
+		"tier_reached_turn": {}, # PlayerData -> Dictionary(tier:int 2..10 -> turno:int), primeiro turno em que TechDatabase.is_tier_unlocked(tier, ...) vira true. Tier 1 fica de fora (sempre aberto desde o turno 0, nao e informativo)
+		"final_researched_tech_count": {}, # PlayerData -> int, preenchido em _finalize_metrics
+		"family_researched_counts": {}, # Roadmap "polimento definitivo V1" -- String(label) -> Dictionary(display_family -> int), preenchido em _finalize_metrics
+		"tech_pick_counts": {}, # Roadmap "polimento definitivo V1" -- String(tech/spell id) -> int, quantas vezes QUALQUER jogador comecou a pesquisar esse id (preenchido em _record_research_choices)
 		"nan_or_negative_yield": false,
 		"ended_turn": -1,
 		"known_route_ids": {}, # TradeRoute -> true, so pra contar CRIACAO uma vez (Fase 4A)
@@ -1444,6 +1517,11 @@ func _record_research_choices(m: Dictionary, research_before: Dictionary, primar
 		var before: String = research_before.get(player, "")
 		if before == "" and player.current_research != "":
 			m.research_choices_total += 1
+			# Roadmap "polimento definitivo V1" -- generico (Tecnologia E
+			# Magia, qualquer id), diferente do bloco de identidade abaixo
+			# (que so processa TechDatabase). Responde "quais techs a IA mais
+			# escolhe", nao so as que tem eixo de identidade.
+			m.tech_pick_counts[player.current_research] = m.tech_pick_counts.get(player.current_research, 0) + 1
 			var tech := TechDatabase.get_tech(player.current_research)
 			if tech:
 				var axis := RivalAI._tech_identity_axis(tech)
@@ -1671,6 +1749,22 @@ func _record_turn(m: Dictionary, grid: HexGrid, turn_index: int, primary: Player
 			if is_nan(city.stored_food) or city.stored_food < 0.0:
 				m.nan_or_negative_yield = true
 
+		# Roadmap "polimento e coesao" -- baseline de PACING da arvore de
+		# Tecnologia redesenhada (10 niveis, portao "2 de N", ver
+		# TechDatabase.gd). Mesma disciplina do resto do harness: so
+		# observacao, nenhum assert de balanceamento. "ciencia" acumulada
+		# aqui usa a MESMA formula de GameManager._process_research (soma de
+		# populacao das cidades por turno) -- so leitura, nao aplica nada.
+		if not m.total_science_generated.has(player):
+			m.total_science_generated[player] = 0.0
+		for city in player.cities:
+			m.total_science_generated[player] += city.population
+		if not m.tier_reached_turn.has(player):
+			m.tier_reached_turn[player] = {}
+		for tier in range(2, 11):
+			if not m.tier_reached_turn[player].has(tier) and TechDatabase.is_tier_unlocked(tier, player.researched_techs):
+				m.tier_reached_turn[player][tier] = turn_number
+
 	if any_change:
 		m.last_change_turn = turn_number
 
@@ -1714,6 +1808,19 @@ func _finalize_metrics(m: Dictionary, primary: PlayerData, rivals: Array[PlayerD
 			m.dominant_axis_counts[key] = m.dominant_axis_counts.get(key, 0) + 1
 		m.buildings_built[label] = total_buildings
 		m.final_cities[label] = player.cities.size()
+		m.final_researched_tech_count[label] = player.researched_techs.size()
+		# Roadmap "polimento definitivo V1" -- distribuicao de familia
+		# (display_family) das techs MUNDANAS de fato concluidas por este
+		# jogador nesta seed, pra medir se a IA (que pontua so por
+		# tier+continuidade+identidade, nunca por familia visual) acaba
+		# convergindo pra militar tanto quanto o peso "50%" do conteudo
+		# sugere, ou se dispersa mais.
+		var family_counts := {}
+		for tech_id in player.researched_techs.keys():
+			var tech := TechDatabase.get_tech(tech_id)
+			if tech:
+				family_counts[tech.display_family] = family_counts.get(tech.display_family, 0) + 1
+		m.family_researched_counts[label] = family_counts
 		m.avg_gold[label] = m.gold_sum.get(player, 0.0) / float(final_turn)
 		if player.units.is_empty() and player.cities.is_empty():
 			m.eliminated.append(label)

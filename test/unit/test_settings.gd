@@ -8,14 +8,17 @@ const TEST_SETTINGS_PATH := "user://test_settings.cfg"
 
 var _original_music_volume: float
 var _original_sfx_volume: float
+var _original_vsync_enabled: bool
 
 func before_each():
 	_original_music_volume = Settings.music_volume
 	_original_sfx_volume = Settings.sfx_volume
+	_original_vsync_enabled = Settings.vsync_enabled
 
 func after_each():
 	Settings.music_volume = _original_music_volume
 	Settings.sfx_volume = _original_sfx_volume
+	Settings.vsync_enabled = _original_vsync_enabled
 	if FileAccess.file_exists(TEST_SETTINGS_PATH):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_SETTINGS_PATH))
 
@@ -54,3 +57,31 @@ func test_load_settings_without_a_file_keeps_current_values():
 	Settings.music_volume = 0.42
 	Settings.load_settings(TEST_SETTINGS_PATH)
 	assert_almost_eq(Settings.music_volume, 0.42, 0.01, "sem arquivo, deveria manter o valor atual em vez de resetar")
+
+## V-Sync (pedido do usuario apos medir FPS: "adicione nas configuracoes
+## poder ativar ou desativar o vsync"). set_vsync_enabled chama _apply_vsync
+## -> DisplayServer.window_set_vsync_mode, mas SO se DisplayServer.get_name()
+## nao for "headless" -- em GUT (sempre headless) isso vira um no-op seguro,
+## entao os testes abaixo so' cobrem o valor guardado/persistido em si, nao
+## o efeito colateral no DisplayServer (impossivel de observar headless).
+func test_set_vsync_enabled_updates_value():
+	Settings.set_vsync_enabled(false)
+	assert_false(Settings.vsync_enabled)
+	Settings.set_vsync_enabled(true)
+	assert_true(Settings.vsync_enabled)
+
+func test_save_and_load_vsync_enabled_round_trip():
+	Settings.vsync_enabled = false
+	Settings.save_settings(TEST_SETTINGS_PATH)
+
+	Settings.vsync_enabled = true
+	Settings.load_settings(TEST_SETTINGS_PATH)
+
+	assert_false(Settings.vsync_enabled)
+
+func test_load_settings_without_a_file_keeps_current_vsync_value():
+	if FileAccess.file_exists(TEST_SETTINGS_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_SETTINGS_PATH))
+	Settings.vsync_enabled = false
+	Settings.load_settings(TEST_SETTINGS_PATH)
+	assert_false(Settings.vsync_enabled, "sem arquivo, deveria manter o valor atual em vez de resetar")

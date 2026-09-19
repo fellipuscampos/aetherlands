@@ -16,6 +16,33 @@ extends Resource
 @export var id: String = ""
 @export var display_name: String = ""
 @export var cost: float = 30.0
+
+## Nivel da arvore de Tecnologia mundana (1..10, ver TechDatabase.gd) — pedido
+## do usuario: "pesquisar 2 tecnologias do nivel atual" libera o nivel
+## seguinte INTEIRO, ao inves da cadeia de pre-requisito especifico de
+## antes. Campo NOVO, usado so por TechDatabase (MagicDatabase nunca seta
+## isto, fica no default 1 sem efeito — a arvore de Magia continua no
+## modelo antigo de pre-requisito em cadeia, ver TechDatabase.
+## available_techs/MagicDatabase.available_techs). Ver TechTree.
+## _compute_tiers() pra como isto vira coluna na visualizacao.
+@export var tier: int = 1
+
+## Desde o portao "2 de N" (ver campo tier acima), prerequisites DEIXOU de
+## decidir se a tech esta disponivel — isso agora e so tier + contagem
+## (TechDatabase.available_techs). Mas o campo continua tendo DOIS usos
+## reais, nao e decorativo morto:
+## 1) Ancora de layout — TechTree._compute_components/_compute_rows/
+##    _align_rows_within_group/_draw continuam agrupando/alinhando/ligando
+##    cards por conectividade deste campo (mesmo algoritmo de sempre, ver
+##    TechTree.gd). Pra Doutrina, cada tech aponta (quando fizer sentido)
+##    pra sua antecessora de mesma familia (ex: "quartel_2" aponta pra
+##    "quartel") so pra o desenho continuar coeso.
+## 2) Preferencia suave da IA — RivalAI._score_research_candidate's
+##    continues_chain ainda le isto pra dar bonus de pontuacao a quem
+##    continua uma familia ja comecada (nao e mais um bloqueio, so uma
+##    preferencia).
+## Pra Magia, este campo continua sendo o mecanismo de LIBERACAO de
+## verdade (nada mudou la).
 @export var prerequisites: Array[String] = []
 
 ## "" = nao desbloqueia unidade nenhuma. Guarda e Colonizador nao dependem
@@ -86,3 +113,31 @@ extends Resource
 ## efeito — puramente narrativo, nunca lido por nenhuma logica de
 ## gameplay.
 @export var description: String = ""
+
+## Roadmap "polimento definitivo V1": familia de apresentacao da Arvore de
+## Tecnologia MUNDANA — um dos 4 consts FAMILY_* abaixo, ou "" (default,
+## usado por TODA tech de MagicDatabase, que nunca seta isto — a Magia
+## continua sem familia visual nenhuma). Substitui o dict FAMILY_OF que
+## TechTierBoard.gd hardcodeava antes (inferencia por id, sem dado real) —
+## agora e um campo de verdade em TechData, unica fonte. Puramente
+## apresentacao: TechTierBoard.gd agrupa cards nesta familia dentro de cada
+## nivel, TechTierBoard's filtro de familia le isto direto — NAO afeta
+## disponibilidade/bloqueio (isso continua so tier + contagem, ver
+## TechDatabase.available_techs), nem prerequisites (que continua sendo a
+## ancora cosmetica/preferencia de IA separada, ver comentario acima).
+@export var display_family: String = ""
+
+const FAMILY_MILITAR := "militar"
+const FAMILY_ECONOMIA := "economia"
+const FAMILY_DEFESA := "defesa"
+const FAMILY_EXPLORACAO_UTILIDADE := "exploracao_utilidade"
+
+## Frase curta e HONESTA de "o que eu ganho pesquisando isso" — mostrada no
+## card no lugar do antigo "Desbloqueia: <nome interno>". Pedido explicito
+## do usuario: NUNCA prometer um efeito que ainda nao existe no jogo (ex:
+## aura do General, reparo do Engenheiro de Cerco) — pra mecanica ainda nao
+## implementada, o texto descreve a unidade/estrutura de forma honesta e diz
+## que o efeito especifico ainda esta por vir, em vez de inventar um verbo
+## de gameplay que nao roda. "" so pra tech de MagicDatabase (que nunca seta
+## isto ainda — fora de escopo desta rodada, so Tecnologia usa por enquanto).
+@export var effect_text: String = ""

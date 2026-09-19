@@ -14,9 +14,17 @@ extends Control
 ## por outros scripts/testes (ex: test_game_manager.gd) e por
 ## GameSetupScreen.gd (dono de verdade da tela que hoje LE esse tamanho)
 ## sem duplicar os numeros.
+##
+## Roadmap "sistema de menu de jogo moderno" — pedido do usuario: "carregar
+## jogo deve abrir uma tela com os jogos possiveis de carregar... o
+## configuracoes deve abrir outra tela... o menu ter sistema de paginas".
+## MainPage/LoadGameScreen/SettingsScreen agora sao 3 paginas irmas
+## gerenciadas por um MenuPager (ver scripts/ui/MenuPager.gd) — o antigo
+## SettingsPanel.tscn (painel flutuante por cima do menu) foi removido, o
+## conteudo dele virou SettingsScreen.tscn (tela cheia de verdade).
 
 signal new_game_setup_requested
-signal load_game_requested
+signal load_game_requested(slot_id: String)
 
 ## Mapa retangular de verdade (ver HexGrid.generate_map). Pequeno/Medio
 ## removidos do seletor (pedido do usuario: "elimine a criacao do mapa
@@ -44,23 +52,32 @@ const MAP_SIZES := {
 ## mudando o continente principal sem nenhum pedido nesse sentido.
 const MAIN_ZONE_SIZE := {"width": 96, "height": 60}
 
-@onready var new_game_button: Button = $CenterBox/Box/NewGameButton
-@onready var load_game_button: Button = $CenterBox/Box/LoadGameButton
-@onready var settings_button: Button = $CenterBox/Box/SettingsButton
-@onready var settings_panel: PanelContainer = $SettingsPanel
-@onready var quit_button: Button = $CenterBox/Box/QuitButton
-@onready var status_label: Label = $CenterBox/Box/StatusLabel
+@onready var main_page: Control = $MainPage
+@onready var new_game_button: Button = $MainPage/CenterBox/Box/NewGameButton
+@onready var load_game_button: Button = $MainPage/CenterBox/Box/LoadGameButton
+@onready var settings_button: Button = $MainPage/CenterBox/Box/SettingsButton
+@onready var quit_button: Button = $MainPage/CenterBox/Box/QuitButton
+@onready var status_label: Label = $MainPage/CenterBox/Box/StatusLabel
+@onready var load_game_screen: Control = $LoadGameScreen
+@onready var settings_screen: Control = $SettingsScreen
+
+var _pager: MenuPager
 
 func _ready() -> void:
 	theme = UITheme.build()
+	_pager = MenuPager.new([main_page, load_game_screen, settings_screen])
+	_pager.reset_to(main_page)
 	new_game_button.pressed.connect(_on_new_game_pressed)
 	load_game_button.pressed.connect(_on_load_game_pressed)
-	settings_button.pressed.connect(settings_panel.toggle)
+	settings_button.pressed.connect(_on_settings_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
+	load_game_screen.back_requested.connect(_pager.back)
+	load_game_screen.slot_load_requested.connect(_on_slot_load_requested)
+	settings_screen.back_requested.connect(_pager.back)
 	refresh_load_button()
 
 func refresh_load_button() -> void:
-	load_game_button.disabled = not SaveManager.has_save()
+	load_game_button.disabled = not SaveManager.has_any_slots()
 
 ## Usado pelo Main.gd quando carregar falha (save corrompido/versao velha)
 ## — nesse ponto a HUD ainda esta escondida, entao o toast normal de
@@ -72,7 +89,18 @@ func _on_new_game_pressed() -> void:
 	new_game_setup_requested.emit()
 
 func _on_load_game_pressed() -> void:
-	load_game_requested.emit()
+	load_game_screen.refresh()
+	_pager.go_to(load_game_screen)
+
+func _on_settings_pressed() -> void:
+	settings_screen.refresh()
+	_pager.go_to(settings_screen)
+
+## Carregar da tela de titulo nunca tem partida em andamento pra perder —
+## repassa direto, sem confirmacao nenhuma (diferente de PauseMenu, ver
+## PauseMenu._on_slot_load_requested).
+func _on_slot_load_requested(slot_id: String) -> void:
+	load_game_requested.emit(slot_id)
 
 func _on_quit_pressed() -> void:
-	get_tree().quit()
+	AudioManager.request_quit()

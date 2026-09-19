@@ -52,21 +52,21 @@ Não "Dragon spawned. +50% monster damage." — e sim "O Dragão despertou. Ele 
 
 `CivilizationPersonality.gd` adiciona uma intenção prospectiva por civ (derivada do seed do mapa, nunca salva), com viés: Orc→Militar, Elf→Arcana, Dwarf→Comercial+Industrial, Human→sem viés. Isso é distinto de `CityIdentity`, que é uma leitura retrospectiva ("o que essa cidade já construiu"), não uma intenção.
 
-### Unidades — 16 tipos jogáveis (`UnitDatabase.gd`)
+### Unidades — 47 entradas treináveis (`UnitDatabase.gd`)
 
-12 unidades comuns (Colonizador, Guarda, Homem de Armas, Arqueiro, Cavaleiro, Batedor, Catapulta, Mago, Grifo, Ent, Golem de Pedra, Convocador de Sombras) + 4 exclusivas raciais (Cavaleiro Real/human, Guarda-Machado Anão/dwarf, Berserker da Horda/orc, Arqueiro Solar/elf). Cada uma exige uma combinação de tech + prédio específica (ver Tecnologia/Edifícios abaixo) — warrior e settler são as únicas sem gate nenhum.
+O catálogo reúne o elenco original, 21 unidades da progressão mundana e dez unidades mágicas V1. As quatro exclusivas raciais continuam condicionadas à raça; entradas legadas são preservadas para compatibilidade. Existem também seis tipos invocados, incluindo Lich Ancião e Arquidemônio. General concede apoio próximo, Engenheiro repara cerco e Mercador estabelece comércio; armas contra cavalaria, blindagem e cidades possuem efeitos próprios no combate.
 
-### Edifícios — 15 tipos (`BuildingDatabase.gd`)
+### Edifícios — 43 entradas (`BuildingDatabase.gd`)
 
-3 de rendimento puro sem treino (Celeiro, Oficina, Mercado), Muralhas (self-placed, defesa), 2 sem gate de tecnologia (Torre dos Sábios, Santuário do Nódulo — ambos "rendimento puro", nunca duplicam a formula de tech-gate), e 9 prédios de treino (um por unidade militar avançada, cada um atrás de uma tech própria — ver árvore abaixo).
+Infraestrutura econômica, militar, comercial e mágica, com treinamento, requisitos e especializações. Melhorias reutilizam o espaço e a coordenada do prédio anterior. Cada escola possui estrutura inicial e estrutura ritual; o Santuário da Transcendência exige pesquisa própria. Construções são escolhidas na cidade e posicionadas em terreno elegível.
 
-### Árvore tecnológica — 21 techs, 4 tiers, 8 "escolas" (`TechDatabase.gd`)
+### Tecnologia e magia — 110 pesquisas (`TechDatabase.gd`, `MagicDatabase.gd`)
 
-7 escolas mágicas — **Arcanismo, Alquimia, Transmutação, Naturalismo, Geomancia, Elementalismo, Necromancia** — mais uma escola não-mágica, **Doutrina**, para o ramo militar/econômico mundano (Quartel, Estábulo, Arquearia, Batedor Montado, Celeiro, Oficina, Mercado, Muralhas, Navegação). Duas cadeias desconexas de propósito (militar e econômica) mais 2 techs isoladas (Muralhas, Navegação). Pesquisa é paga com "ciência" = soma de população/turno.
+55 pesquisas mundanas em dez níveis e 55 mágicas: seis escolas de nove níveis mais Transcendência universal. As árvores têm telas próprias, mas compartilham uma pesquisa ativa e a renda de ciência. Trocar de pesquisa conserva o progresso individual. Escolas V1: Sagrada, Infernal, Necromancia, Druidismo, Arcanismo e Elementalismo. As doze pesquisas mágicas antigas continuam reconhecidas para migração e partidas legadas.
 
-### Magia — 4 feitiços com efeito real (`SpellDatabase.gd`, `SpellManager.gd`)
+### Grimório e rituais (`MagicRuntime.gd`, `SpellManager.gd`)
 
-Lança de Arcana (dano direto), Reanimar (cura 50% HP), Ruína Ígnea (dano + splash), Metamorfose de Gaia (transforma terreno tundra/deserto→campina). Cada um tem cooldown próprio e custo de mana descontável por controle de Nódulo Arcano. UI: painel "Grimório" na HUD.
+26 poderes V1, incluindo seis Grandes Rituais, além dos quatro feitiços legados. Conjuradores têm ação, recarga, alcance, manutenção e vulnerabilidade a silêncio. Regiões podem curar, ocultar, causar dano, alterar terreno ou transportar tropas. Rituais comprometem unidades durante vários turnos e anunciam sua sede ao mundo; podem ser interrompidos. Regras, custos e resultados estão em [MAGIC_IMPLEMENTATION.md](MAGIC_IMPLEMENTATION.md).
 
 ### Monstros e covis — 5 tipos (`MonsterDatabase.gd`, `MonsterAI.gd`, `HexGrid.gd`)
 
@@ -78,15 +78,15 @@ Território (`City.owned_tiles`) cresce organicamente, um tile por ponto de popu
 
 ### Diplomacia e guerra (`Diplomacy.gd`, `TradeManager.gd`)
 
-Guerra/paz com cansaço de guerra acumulável (ganha em guerra, decai mais rápido em paz) que empurra a IA a propor paz e aceitar a paz proposta. Unidades militares custam manutenção em ouro durante guerra. Rotas de comércio são um sistema à parte (`TradeManager`/`TradeRoute`), independente de estar em guerra ou paz com o parceiro da rota.
+Guerra, paz e comércio funcionam entre todos os participantes, incluindo pares de IAs. Cansaço de guerra incentiva acordos; a paz aceita estabelece trégua de dez turnos. A interface informa motivo da guerra, cansaço, trégua e rotas. Declarar guerra invalida comércio entre os envolvidos. Unidades militares custam ouro em guerra. Transcendência e rituais ofensivos públicos podem provocar reação militar.
 
-### IA Rival (`RivalAI.gd`) — 7 decisões autônomas por turno
+### IA Rival (`RivalAI.gd`, `StrategicAI.gd`, `MagicAI.gd`)
 
-`decide_production` (o que construir/treinar, por pontuação), `decide_war` (quando declarar guerra), `decide_campaign` (mantém objetivo+alvo de guerra persistentes), `decide_peace` (quando propor/aceitar paz), `decide_trade` (propõe rotas de comércio), `decide_arcane_ritual` (constrói Santuário quando elegível, ativa o Ritual quando há condições — deliberadamente sem avaliação de risco/guerra), `decide_research` (próxima tecnologia, por continuidade de cadeia + identidade + personalidade).
+Decide pesquisa, produção, expansão, guerra, campanhas, paz e comércio usando informação explorada e custos normais. Procura recursos/Nódulos, enfrenta monstros, usa suportes e magia, reúne ritualistas e reage a ameaças públicas. Especialização depende de raça e personalidade. O tamanho desejado do exército depende das cidades e da guerra; a preparação contra o Dragão admite reserva maior. Ouro pode acelerar produção. O RNG individual é salvo para preservar decisões após carregar.
 
-### Condições de vitória — exatamente 3 (`VictoryConditions.gd`)
+### Condições de vitória (`VictoryConditions.gd`, `VictoryCampaign.gd`)
 
-**Dominação** (eliminar todos os rivais), **Domínio Territorial** (50% do mapa habitável, sustentado 5 turnos), **Ascensão Arcana** (4 de 7 escolas mágicas + 3 Nódulos Arcanos controlados + Santuário do Nódulo construído + Ritual ativado e sustentado 5 turnos, com interrupção total — nunca parcial — se cidade cair, nódulos caírem abaixo de 3, ou mana faltar). Ordem de detecção fixa e documentada como regra técnica de desempate, nunca prioridade estratégica.
+Partidas novas: **Dominação**, **Supremacia Militar** (pesquisa final e conquistas desenvolvidas de rivais) e **Transcendência** (duas escolas, dois rituais distintos concluídos, Nódulos, Santuário e canalização de sete turnos). Há progresso na interface, avisos de ameaça e interrupção. Saves anteriores preservam Domínio Territorial/Ascensão Arcana antigos. A ordem de detecção resolve empates, sem impor prioridade estratégica. Eliminação completa do humano encerra sua participação.
 
 ### UI (`scenes/ui/`)
 
@@ -94,11 +94,11 @@ Guerra/paz com cansaço de guerra acumulável (ganha em guerra, decai mais rápi
 
 ### Save/Load (`SaveManager.gd`)
 
-`SAVE_VERSION = 16`. Formato JSON. Persiste apenas estado lógico (nunca visuais 3D) — terreno/recursos/covis/personalidade são regenerados deterministicamente do seed do mapa salvo, em vez de serializados diretamente.
+`SAVE_VERSION = 21`, com migração explícita de v17–20. JSON com gravação temporária antes da substituição. O mapa base é regenerado por seed e recebe alterações persistidas de terreno/recursos. Estado de unidades, cidades, ordens, pesquisa, diplomacia, comércio, magia, eventos e RNG é restaurado. Participantes e recompensas do Dragão sobrevivem ao JSON sem duplicar pagamentos. Slots aparecem na tela Carregar Jogo.
 
 ### Testes e infraestrutura de diagnóstico
 
-35 arquivos de teste unitário (911 funções `test_`) + 1 harness de integração (`test_simulation_balance.gd`, 5 funções, roda 200 turnos × 15 seeds fixas reutilizando o loop real de `GameManager`, não uma reimplementação paralela). O harness intencionalmente só tem asserts de correção (nunca de balanceamento) — imprime métricas observadas como baseline para comparação entre fases do roadmap, disciplina "medir antes de calibrar" mantida em todas as fases até aqui.
+48 scripts unitários e harnesses de campanhas com seeds fixas, incluindo mapa 320×84 e partidas naturais até o encerramento. Métricas atuais e limitações estão em [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md). Os asserts verificam correção; tempo de CPU e vitórias de bots não comprovam diversão nem duração humana.
 
 ---
 
@@ -110,11 +110,11 @@ Até aqui, o ciclo de trabalho foi: **sistema → testes → diagnóstico → tu
 
 **sistema macro → integração → experiência jogável → próximo sistema macro**, e só depois, quando houver massa crítica de sistemas macro integrados: **grande fase de balanceamento → tuning → pacing → IA → números.**
 
-### Dívida documentada: alcance territorial da IA
+### Alcance territorial da IA — revisão de setembro/2026
 
 A investigação do gargalo de Nódulos Arcanos (ver histórico de commits, Roadmap Fase F/G) identificou uma causa estrutural: a IA rival cresce território organicamente (um tile por ponto de população, sempre a partir da fronteira já possuída), então um recurso a 15+ tiles de qualquer capital nunca se torna uma opção de posse, não importa o quão bem pontuado. Uma correção pontual na fórmula de pontuação de posse (peso de mana) foi testada e **não teve efeito mensurável** — o mesmo conjunto de 5 seeds de 15 continuou travado em exatamente 2/3 Nódulos. A hipótese corrente é alcance/assentamento, não preferência de pontuação.
 
-**Status: congelado deliberadamente.** Isto é dívida de balanceamento/IA documentada, não um bug esquecido. **Critério de retomada**: após a Fase Macro, realizar um primeiro playtest completo e estabilizar minimamente o pacing e os sistemas de expansão. Nesse momento, reavaliar reachability, assentamento e controle de Nódulos em conjunto. O tuning só será retomado se os dados demonstrarem que o problema continua relevante depois das mudanças estruturais — implementar a Fase Macro, por si só, não é o critério; o critério é o pacing estabilizado o suficiente para o esforço de tuning não ser refeito por causa de uma mudança estrutural posterior.
+**Status atual:** a investigação foi retomada na revisão de conclusão. A IA agora expande além de duas cidades, considera recursos conhecidos e valida caminhos para assentamentos. Campanhas V1 observaram controle de mais de três Nódulos e vitória natural por Transcendência. Isso resolve o bloqueio estrutural observado; distribuição por seed e equilíbrio entre estratégias continuam sujeitos a playtest.
 
 ### Checklist de fechamento da fase atual
 
@@ -124,7 +124,7 @@ A investigação do gargalo de Nódulos Arcanos (ver histórico de commits, Road
 - ✅ PvE (monstros/covis) — implementado
 - ✅ Magia — implementada
 - ✅ Diplomacia/guerra — implementadas
-- 🟡 Alcance territorial de Nódulos Arcanos (IA) — dívida de tuning, congelada (ver acima)
+- ✅ Alcance territorial de Nódulos Arcanos — expansão implementada e observada; tuning permanece aberto
 
 ### Regras de implementação das próximas mecânicas macro
 

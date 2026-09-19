@@ -23,8 +23,11 @@ const SFX_POOL_SIZE := 4
 var _music_player: AudioStreamPlayer
 var _sfx_players: Array[AudioStreamPlayer] = []
 var _sfx_cache: Dictionary = {}
+var _quitting := false
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	get_tree().auto_accept_quit = false
 	_music_player = AudioStreamPlayer.new()
 	add_child(_music_player)
 
@@ -63,7 +66,7 @@ func _linear_to_db(value: float) -> float:
 	return linear_to_db(value)
 
 func play_sfx(kind: String) -> void:
-	if not SFX_PATHS.has(kind):
+	if _quitting or not SFX_PATHS.has(kind):
 		return
 	var path: String = SFX_PATHS[kind]
 	if not _sfx_cache.has(path):
@@ -83,7 +86,7 @@ func _next_free_sfx_player() -> AudioStreamPlayer:
 	return _sfx_players[0]
 
 func _start_music() -> void:
-	if _music_player.stream and not _music_player.playing:
+	if not _quitting and _music_player.stream and not _music_player.playing:
 		_music_player.play()
 
 func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
@@ -100,6 +103,42 @@ func _on_notify(_text: String, sfx_kind: String) -> void:
 func _on_game_over(victory: bool) -> void:
 	_music_player.stop()
 	play_sfx("victory" if victory else "defeat")
+
+func stop_match_audio() -> void:
+	_music_player.stop()
+	for player in _sfx_players:
+		player.stop()
+		player.stream = null
+
+func drain_audio() -> void:
+	stop_match_audio()
+	# stop() agenda a remoção no mixer. Deixar o servidor processar esse
+	# trabalho evita o vazamento de playback no encerramento (Godot #76745).
+	var deadline := Time.get_ticks_msec() + int(maxf(0.1, AudioServer.get_output_latency() * 2.0) * 1000)
+	while Time.get_ticks_msec() < deadline:
+		# O delta do primeiro frame pode incluir todo o carregamento. Um
+		# timer único expiraria imediatamente sem dar tempo real ao mixer.
+		await get_tree().create_timer(0.025, true, false, true).timeout
+
+func request_quit() -> void:
+	if _quitting:
+		return
+	_quitting = true
+	GameManager.end_match()
+	get_tree().paused = false
+	await drain_audio()
+	get_tree().quit()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		request_quit()
+
+func _exit_tree() -> void:
+	# Libera os playbacks antes de o servidor de áudio encerrar, inclusive
+	# quando o jogador fecha o jogo durante o som de vitória.
+	stop_match_audio()
+	_music_player.stream = null
+	_sfx_cache.clear()
 
 func _load_or_null(path: String) -> Variant:
 	if not ResourceLoader.exists(path):

@@ -30,6 +30,9 @@ static func roles_for_kind(kind: String) -> Array[String]:
 	if data.movement_points > BASELINE_MOVEMENT_POINTS or data.flies:
 		roles.append(ROLE_CAVALRY)
 	var trainer: BuildingData = BuildingDatabase.building_that_trains(kind)
-	if trainer != null and trainer.id == "siege_workshop":
+	# "grand_arsenal" (Roadmap "arvore de 10 niveis", Nivel 9) treina Bombarda/
+	# Colosso de Cerco — as unidades de cerco mais tardias da arvore — entao
+	# precisa contar como cerco pra IA aqui, igual siege_workshop ja conta.
+	if trainer != null and (trainer.id == "siege_workshop" or trainer.id == "grand_arsenal"):
 		roles.append(ROLE_SIEGE)
 	return roles
