@@ -1,46 +1,30 @@
 extends GutTest
 
-## Cobre UnitDatabase.PLAYER_TRAINABLE_KINDS (roster que a HUD usa pra
-## montar os botoes de producao dinamicamente, ver HUD._build_production_
-## buttons) e os dados das duas tropas magicas mais novas (Golem de Pedra/
-## Convocador de Sombras, desbloqueadas por forja_runica/necromancia_
-## pratica em TechDatabase).
+## Cobre UnitDatabase.PLAYER_TRAINABLE_KINDS (roster que a HUD usa pra montar os botoes de producao)
+## e a criacao de unidades legadas que ainda podem vir de saves antigos.
+##
+## Fase 25: nao existe mais linha de producao V1 (tropa racial exclusiva, Golem/Convocador por tech
+## V1) -- o roster produzivel e' o Colonizador + o elenco V2 (Doutrinas, Escolas, Construtor).
 
-func test_player_trainable_kinds_includes_every_magic_troop():
-	assert_true("stone_golem" in UnitDatabase.PLAYER_TRAINABLE_KINDS)
-	assert_true("shadow_summoner" in UnitDatabase.PLAYER_TRAINABLE_KINDS)
+func test_player_trainable_kinds_is_the_settler_plus_v2_only():
+	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
+		assert_true(kind in UnitDatabase.CORE_TRAINABLE_KINDS or V2ResearchDatabase.is_v2_id(kind), kind)
+	assert_eq(UnitDatabase.CORE_TRAINABLE_KINDS, ["settler"] as Array[String])
 
-## Tropa racial exclusiva de civilizacao de fantasia (ver RACE_UNIQUE_KIND)
-## — desde que o jogador ganhou raca propria escolhivel na tela de titulo
-## (CivilizationData.race), as 4 aparecem no roster que a HUD usa pra
-## montar botoes; City.can_train()/HUD._on_tile_selected e que decidem se
-## cada uma fica visivel/treinavel pra UM jogador especifico (so a raca
-## dona).
-func test_player_trainable_kinds_includes_every_racial_exclusive_troop():
-	assert_true("human_knight" in UnitDatabase.PLAYER_TRAINABLE_KINDS)
-	assert_true("dwarf_axeguard" in UnitDatabase.PLAYER_TRAINABLE_KINDS)
-	assert_true("orc_berserker" in UnitDatabase.PLAYER_TRAINABLE_KINDS)
-	assert_true("elf_ranger" in UnitDatabase.PLAYER_TRAINABLE_KINDS)
+func test_v1_troops_are_no_longer_producible():
+	for kind in ["warrior", "archer", "men_at_arms", "cavalry", "catapult", "mage", "stone_golem", "shadow_summoner", "human_knight", "dwarf_axeguard", "orc_berserker", "elf_ranger", "mercador"]:
+		assert_false(kind in UnitDatabase.PLAYER_TRAINABLE_KINDS, kind)
 
-func test_race_for_unique_kind_matches_race_unique_kind_mapping():
-	assert_eq(UnitDatabase.race_for_unique_kind("human_knight"), "human")
-	assert_eq(UnitDatabase.race_for_unique_kind("dwarf_axeguard"), "dwarf")
-	assert_eq(UnitDatabase.race_for_unique_kind("orc_berserker"), "orc")
-	assert_eq(UnitDatabase.race_for_unique_kind("elf_ranger"), "elf")
-	assert_eq(UnitDatabase.race_for_unique_kind("warrior"), "", "warrior nao e tropa racial de ninguem")
+func test_legacy_kinds_from_old_saves_are_still_known():
+	for kind in ["warrior", "human_knight", "shadow_summoner", "catapult"]:
+		assert_true(UnitDatabase.is_known_kind(kind), kind)
+	assert_false(UnitDatabase.is_known_kind("nao_existe"))
 
 func test_player_trainable_kinds_has_no_duplicates():
 	var seen := []
 	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
 		assert_false(kind in seen, "%s apareceu duplicado no roster" % kind)
 		seen.append(kind)
-
-func test_golem_variants_have_the_highest_defense_in_the_roster():
-	var golem = UnitDatabase.create_unit("stone_golem")
-	assert_eq(golem.unit_name, "Golem de Pedra")
-	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
-		var other = UnitDatabase.create_unit(kind)
-		assert_true(maxf(golem.defense, UnitDatabase.create_unit("arcane_golem").defense) >= other.defense, "Golem deveria ter a maior (ou igual) defesa do elenco, %s tem %s" % [kind, other.defense])
 
 func test_create_unit_shadow_summoner_is_a_ranged_caster():
 	var summoner = UnitDatabase.create_unit("shadow_summoner")

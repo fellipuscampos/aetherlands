@@ -16,19 +16,7 @@ func before_each():
 func after_each():
 	for p in [player, enemy]:
 		p.enemies.clear()
-		p.trade_routes.clear()
 		p.war_campaigns.clear()
-
-func test_research_switching_keeps_progress_attached_to_its_project():
-	assert_true(player.select_research("quartel"))
-	player.research_progress = 10.0
-	assert_true(player.select_research("arcanismo_1"))
-	assert_eq(player.research_progress, 0.0)
-	player.research_progress = 4.0
-	assert_true(player.select_research("quartel"))
-	assert_eq(player.research_progress, 10.0)
-	assert_false(player.select_research("colosso_de_cerco"))
-	assert_eq(player.current_research, "quartel")
 
 func test_general_aura_requires_proximity_and_does_not_stack():
 	var soldier := grid.spawn_unit(Vector2i.ZERO, UnitDatabase.create_unit("warrior"), player)
@@ -54,61 +42,29 @@ func test_advanced_building_has_a_usable_city_button():
 	var hud = load("res://scenes/ui/HUD.tscn").instantiate()
 	add_child_autofree(hud)
 	for building in BuildingDatabase.all_buildings():
-		assert_not_null(hud._build_button_for(building.id), building.id)
-
-func test_building_upgrade_reuses_a_full_city_footprint():
-	var city := grid.found_city(Vector2i.ZERO, player, "Capital")
-	city.buildings["barracks"] = true
-	city.building_coords["barracks"] = Vector2i(1, 0)
-	player.researched_techs["quartel_2"] = true
-	assert_true(city.can_build("barracks_2"))
-	city.set_production("barracks_2")
-	assert_eq(city.pending_building_coord, Vector2i(1, 0))
-	city.buildings["barracks_2"] = true
-	assert_eq(city.used_building_slots(), 1)
-
-func test_merchant_creates_real_trade_and_cannot_duplicate_a_route():
-	var a := grid.found_city(Vector2i(-3, 0), player, "Origem")
-	var b := grid.found_city(Vector2i(3, 0), enemy, "Destino")
-	a.buildings["market"] = true
-	b.buildings["market"] = true
-	var merchant := grid.spawn_unit(Vector2i(2, 0), UnitDatabase.create_unit("mercador"), player)
-	UnitAbilities.process_turn(player, grid)
-	assert_eq(player.trade_routes.size(), 1)
-	assert_eq(player.gold, 25.0)
-	assert_false(merchant in player.units)
-	assert_null(TradeManager.propose_route(a, b, grid))
+		assert_true(hud._building_buttons.has(building.id), building.id)
 
 func test_blocked_recruitment_waits_without_overwriting_a_unit():
 	var city := grid.found_city(Vector2i.ZERO, player, "Capital")
 	for coord in [Vector2i.ZERO] + grid.get_neighbors(Vector2i.ZERO):
 		grid.spawn_unit(coord, UnitDatabase.create_unit("warrior"), player)
-	city.set_production("warrior")
-	city.stored_production = city.production_cost(grid)
+	city.set_production("settler")
+	city.stored_production = city.production_cost()
 	var result := city.process_turn(grid)
 	assert_eq(result.spawn_unit_kind, "")
-	assert_eq(city.production_item, "warrior")
+	assert_eq(city.production_item, "settler")
 	assert_eq(player.units.size(), 7)
 	var released := grid.get_neighbors(Vector2i.ZERO)[0]
 	grid.remove_unit(grid.get_unit_at(released))
 	result = city.process_turn(grid)
-	assert_eq(result.spawn_unit_kind, "warrior")
+	assert_eq(result.spawn_unit_kind, "settler")
 	assert_eq(WorldSetup.find_spawn_tile(grid, city.coord), released)
-
-func test_growing_city_can_work_owned_land_beyond_first_ring():
-	var city := grid.found_city(Vector2i.ZERO, player, "Capital")
-	city.population = 7
-	city.claim_tile(Vector2i(2, 0))
-	city.auto_assign_worked_tiles(grid)
-	assert_eq(city.worked_tiles.size(), 7)
-	assert_has(city.worked_tiles, Vector2i(2, 0))
 
 func test_ai_assigns_a_real_building_site():
 	var city := grid.found_city(Vector2i.ZERO, player, "Capital")
-	city.set_production("granary")
-	RivalAI._assign_building_site(city, "granary", grid)
-	assert_ne(city.pending_building_coord, City.NO_PENDING_COORD)
-	assert_true(city.is_valid_building_tile(city.pending_building_coord, grid))
+	var site := V2StrategicAI._building_site(city, grid)
+	assert_ne(site, City.NO_PENDING_COORD)
+	assert_true(city.is_valid_building_tile(site, grid))
 
 func test_dragon_rewards_are_proportional_and_not_repeated_after_loading():
 	var event := DragonEvent.new()

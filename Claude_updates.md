@@ -6,6 +6,24 @@ não aqui.
 
 ---
 
+## Lag: redesenho total por movimento/frame/turno (2026-09-19)
+
+- **Estado herdado**: o Codex parou no meio (créditos) com `HexGrid.gd` sem
+  compilar — corpo de um `if` sem indentação em `_land_route_possible`, então o
+  jogo nem abria. Corrigido; o resto do trabalho dele foi mantido e medido.
+- **Causas e correções** (números em `docs/PERFORMANCE_GUIDE.md`): minimapa
+  redesenhava ~27 mil tiles por frame de câmera (63 → 4,75 ms) e por passo de
+  unidade (agora `Image` persistente + delta `HexGrid.last_fog_changed`); fog
+  recriava texturas inteiras sem mudança (agora por delta, com teste byte a
+  byte); `compute_path` varria o continente para destinos inalcançáveis —
+  outra ilha (componentes conexos) e cidade emparedada pelas próprias unidades
+  (`_destination_walled_in`, 49 buscas > 30 ms → 0); painel de Magia/Tecnologia
+  reconstruía as duas árvores a cada abertura.
+- **Validado**: GUT 1492/1492 (52 scripts; +17 testes: delta de fog, textura
+  incremental == reconstrução completa, bolso/emparedado/corredor estreito,
+  invalidação de componentes, minimapa incremental, painel de tecnologia);
+  benchmark de janela real e campanha headless antes/depois.
+
 ## Inspeção de Tiles, Unidades, Monstros e Estruturas (2026-09-18)
 
 - **Causa raiz**: `HUD._on_tile_selected` montava só o TERRENO (+ cidade): unidade

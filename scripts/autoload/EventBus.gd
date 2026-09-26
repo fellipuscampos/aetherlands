@@ -19,6 +19,14 @@ signal restart_requested
 ## mensagem, que e fragil se a redacao mudar.
 signal notify(text: String, sfx_kind: String)
 signal fog_updated
+## Aetherlands V2 (Fase 3): um unlock V2 conectado passou a valer pro jogador
+## HUMANO (ver V2UnlockSystem/PlayerData._on_v2_unlock_applied). A HUD só usa pra
+## atualizar o painel de cidade — a disponibilidade em si é derivada da pesquisa.
+signal v2_unlock_applied(player: PlayerData, unlock_type: String, unlock_id: String)
+## Fase 23: informação pública do Ritual Final; nenhum destes sinais revela fog.
+signal v2_transcendence_started(player: PlayerData, site_coord: Vector2i, remaining_rounds: int)
+signal v2_transcendence_progressed(player: PlayerData, site_coord: Vector2i, remaining_rounds: int)
+signal v2_transcendence_interrupted(player: PlayerData, site_coord: Vector2i, reason: String)
 signal minimap_clicked(world_pos: Vector3)
 ## World Event System (docs/WORLD_EVENT_CONTRACT.md) -- emitidos so por
 ## WorldEventManager (ver comentario de topo la), nunca por um WorldEvent

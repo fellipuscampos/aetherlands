@@ -19,12 +19,15 @@ var _original_state
 var _original_human_player: PlayerData
 var _original_hex_grid: HexGrid
 var _original_current_save_slot: String
+var _original_rival_players: Array[PlayerData]
 
 func before_each():
 	_original_state = GameManager.state
 	_original_human_player = GameManager.human_player
 	_original_hex_grid = GameManager.hex_grid
 	_original_current_save_slot = GameManager.current_save_slot
+	_original_rival_players = GameManager.rival_players
+	GameManager.rival_players = [] # isola o save de rivais deixados por outros arquivos de teste
 	GameManager.state = GameManager.GameState.PLAYING
 	parent = Node.new()
 	add_child_autofree(parent)
@@ -38,6 +41,7 @@ func before_each():
 
 func after_each():
 	GameManager.state = _original_state
+	GameManager.rival_players = _original_rival_players
 	GameManager.human_player = _original_human_player
 	GameManager.hex_grid = _original_hex_grid
 	GameManager.current_save_slot = _original_current_save_slot

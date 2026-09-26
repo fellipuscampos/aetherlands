@@ -15,13 +15,13 @@ extends RefCounted
 ## inspect() devolve {coord, state, entries, terrain_title, terrain_lines}:
 ##  - `entries` = entidades relevantes visiveis AGORA, na ordem de prioridade
 ##    cidade > unidade/personagem > monstro/boss > covil > predio/obra >
-##    estrutura magica/ritual > recurso. Cada entry: {key, kind, tag, title,
+##    efeito mágico do mapa (zona ambiental, Portal) > recurso. Cada entry: {key, kind, tag, title,
 ##    lines}. A primeira e' a "entidade principal"; o resto vira abas na HUD.
 ##  - o TERRENO nunca some: e' sempre uma secao separada (terrain_*), nunca
 ##    substitui a entidade principal.
 ## Regras de segredo (mesma nevoa do mapa, ver HexGrid._apply_fog_to_entities):
 ## tile UNSEEN nao revela nada; entidade de OUTRO dono so' com o tile VISIVEL
-## agora e nao ocultada por veu (MagicRuntime.concealed); cidade/predio rival
+## agora; cidade/predio rival
 ## nao mostram producao/estoque/lista de predios; unidade rival nao mostra
 ## recarga de magia, movimento restante nem ordens; a HP/escudo de cidade e
 ## de unidade sao as mesmas das barras que o mapa ja desenha.
@@ -41,24 +41,12 @@ const STATE_EXPLORED := "explored"
 const STATE_VISIBLE := "visible"
 
 const ROLE_LABELS := {"melee": "Corpo a corpo", "ranged": "À distância", "cavalry": "Cavalaria", "siege": "Cerco"}
-const STATUS_LABELS := {
-	"silence": "Silenciado", "slow": "Lentidão", "curse": "Maldição", "blessing": "Bênção",
-	"blood_pact": "Pacto de sangue", "storm": "Tempestade", "revealed": "Revelado",
-}
 const BEHAVIOR_LABELS := {
 	"guardian": "Guardião (defende o território do covil)",
 	"raider": "Saqueador (caça presas fracas e saqueia)",
 	"invader": "Invasor (marcha sobre a cidade mais próxima)",
 	"hunter": "Caçador (patrulha atrás de presas isoladas)",
 }
-const RESOURCE_EFFECTS := {
-	"iron": "Reduz o custo de unidades pesadas (até -%d%%)",
-	"horses": "Reduz o custo de Cavalaria (até -%d%%)",
-	"gems": "Reduz o custo de compra rápida (até -%d%%)",
-	"mana_node": "Reduz o custo de feitiços (até -%d%%)",
-	"silk": "Aumenta a capacidade de rotas comerciais (até +%d)",
-}
-
 # ---------------------------------------------------------------------------
 # Entrada principal
 # ---------------------------------------------------------------------------
@@ -134,7 +122,7 @@ static func entry_for_key(inspection: Dictionary, key: String) -> Dictionary:
 static func _unit_is_perceived(unit: Unit, viewer: PlayerData, state: String, hex_grid: HexGrid) -> bool:
 	if unit.owner_player == viewer or unit.always_visible:
 		return true
-	return state == STATE_VISIBLE and not MagicRuntime.concealed(unit, viewer, hex_grid)
+	return state == STATE_VISIBLE
 
 static func _faction_line(owner: PlayerData, viewer: PlayerData) -> String:
 	if owner == null:
@@ -150,28 +138,57 @@ static func _faction_line(owner: PlayerData, viewer: PlayerData) -> String:
 # Cidade
 # ---------------------------------------------------------------------------
 
+## "3" ou "1.5" — o poder do Ataque da Cidade só tem casa decimal em Déficit (metade).
+static func _format_power(value: float) -> String:
+	return str(int(value)) if is_equal_approx(value, roundf(value)) else "%.1f" % value
+
 static func _city_entry(city: City, hex_grid: HexGrid, viewer: PlayerData) -> Dictionary:
 	var lines: Array[String] = []
 	var own := city.owner_player == viewer
-	lines.append("Cidade %s | População: %d" % ["sua" if own else "rival", city.population])
+	# O City Level é a informação estrutural primária da cidade (Fase 13; Fase 25 — não existe mais população).
+	lines.append("%s (%s)" % [V2CityLevelData.level_name(city.city_level), "sua" if own else "rival"])
 	lines.append(_faction_line(city.owner_player, viewer))
-	lines.append("Vida: %d/%d | Escudo: %d/%d" % [int(city.hp), int(city.max_hp()), int(city.shield), int(city.max_shield())])
+	# Aetherlands V2, Fase 16 — Fortificação é fato público (qualquer observador vê a muralha); o
+	# escudo só existe com ela e aparece uma vez, no bloco abaixo.
+	lines.append("Vida: %d/%d" % [int(city.hp), int(city.max_hp())])
+	if city.has_fortification():
+		var level := city.fortification_level
+		lines.append(V2FortificationData.display_name(level))
+		lines.append("Escudo: %d / %d" % [int(city.shield), int(city.max_shield())])
+		lines.append("Defesa urbana: +%d%%" % int(round(V2FortificationData.city_defense_bonus(level) * 100.0)))
+		lines.append("Ataque da Cidade: %s | Alcance %d" % [_format_power(CityDefense.city_attack_power(city)), CityDefense.city_attack_range(city)])
 	if own:
-		var race: String = city.owner_player.civ.race
-		var net_food: float = city.collect_yields(hex_grid).food - city.population * City.FOOD_CONSUMPTION_PER_POP
-		lines.append("Comida: %d/%d (%s%d/turno)" % [
-			int(city.stored_food), int(city.food_storage_cap()), "+" if net_food >= 0.0 else "", int(net_food)
-		])
 		var built_names: Array[String] = []
 		for id in city.buildings.keys():
 			if BuildingDatabase.get_building(id):
-				built_names.append(RaceTheme.building_name(id, race))
-		var buildings_line := "Predios: %d/%d" % [city.used_building_slots(), city.max_building_slots()]
+				var building_name := RaceTheme.building_name(id)
+				# Aetherlands V2, Fase 14 (§58 do pedido): prédio CopyLimitMode.CITY_LEVEL mostra
+				# quantas cópias — city.buildings só sabe "existe pelo menos uma" (ver
+				# City.building_count()), a UI é quem precisa deixar a contagem real visível.
+				var copies := city.building_count(id)
+				built_names.append("%s ×%d" % [building_name, copies] if copies > 1 else building_name)
+		var buildings_line := "Prédios: %d/%d" % [city.used_building_slots(), city.max_building_slots()]
 		if built_names.size() > 0:
 			buildings_line += " (%s)" % ", ".join(built_names)
 		lines.append(buildings_line)
-	elif city.buildings.has("walls"):
-		lines.append("Possui muralhas.")
+		lines.append("Território: %d tiles | Anexação: %d ponto(s)" % [city.owned_tiles.size(), city.annexation_points])
+		if not city.resource_improvements.is_empty():
+			var improvement_names: Array[String] = []
+			for coord in city.resource_improvements:
+				var resource_id := V2ResourceImprovementData.resource_for_improvement(String(city.resource_improvements[coord]))
+				improvement_names.append(V2ResourceImprovementData.display_name_for_resource(resource_id))
+			improvement_names.sort()
+			lines.append("Melhorias: %s" % ", ".join(improvement_names))
+		# Aetherlands V2, Fase 14 (§72 do pedido): Produção local da cidade + os yields globais que
+		# ELA contribui (Ouro/Suprimentos/Conhecimento/Mana são agregados no PlayerData — ver
+		# V2EconomyRuntime.player_*_income — mas o jogador quer saber quanto CADA cidade dá).
+		lines.append("Produção: +%d PP/turno" % int(V2EconomyRuntime.city_production_income(city)))
+		lines.append("Ouro: +%d | Suprimentos: +%d | Conhecimento: +%d | Mana: +%d" % [
+			int(V2EconomyRuntime.city_gold_income(city)),
+			int(V2EconomyRuntime.city_supply_capacity(city)),
+			int(V2EconomyRuntime.city_knowledge_income(city)),
+			int(V2EconomyRuntime.city_mana_income(city)),
+		])
 	return {"key": "city", "kind": KIND_CITY, "tag": city.city_name, "title": city.city_name, "lines": lines}
 
 # ---------------------------------------------------------------------------
@@ -180,14 +197,21 @@ static func _city_entry(city: City, hex_grid: HexGrid, viewer: PlayerData) -> Di
 
 static func unit_class_label(unit: Unit) -> String:
 	var data := unit.unit_data
-	if data.magic_school != "":
-		return "Conjurador — %s" % school_name(data.magic_school)
+	if data.is_v2_caster():
+		return "Conjurador — %s" % school_name(data.v2_magic_school)
+	if data.is_retinue(): # Fase 19: Hoste (retinue) — a Escola vem do dado, nunca do kind
+		return "Hoste — %s" % school_name(data.retinue_school)
 	if data.can_found_city:
 		return "Colonizador"
-	if unit.summoner_id != 0:
-		return "Invocação"
 	if data.attack <= 0.0:
 		return "Apoio"
+	# Fase 12: unidade de Doutrina usa a identidade semântica da PRÓPRIA Doutrina (branch_role).
+	# Fora das Doutrinas (Guarda inicial, unidade legada de save antigo), os papéis genéricos de
+	# ArmyComposition (por traço/alcance).
+	var v2_branch := V2UnitLine.doctrine_branch_of(data.visual_kind)
+	if v2_branch != "":
+		var info := V2ResearchDatabase.branch_info(V2ResearchNode.TreeType.MILITARY_DOCTRINE, v2_branch)
+		return info.get("summary", V2UnitLine.role_of(data.visual_kind))
 	var labels: Array[String] = []
 	for role in ArmyComposition.roles_for_kind(data.visual_kind):
 		labels.append(ROLE_LABELS.get(role, role))
@@ -195,14 +219,20 @@ static func unit_class_label(unit: Unit) -> String:
 		labels.append("Combatente")
 	return ", ".join(labels)
 
-static func school_name(school: String) -> String:
-	return MagicContent.SCHOOLS.get(school, {}).get("name", school.capitalize())
+## Título da Escola de Magia ("Escola Sagrada"...). O segundo parâmetro é só compatibilidade de
+## assinatura (Fase 25: existe um único namespace de Escolas).
+static func school_name(school: String, _unused: bool = true) -> String:
+	return V2MagicContent.school_title(school)
 
 static func unit_traits(unit: Unit) -> Array[String]:
 	var data := unit.unit_data
 	var traits: Array[String] = []
-	if data.flies:
+	if data.is_flying():
 		traits.append("Voa")
+	if data.movement_profile == UnitData.MovementProfile.INFILTRATOR:
+		traits.append("Passo Sombrio (atravessa unidades)")
+	if data.ranged_damage_taken_bonus > 0.0:
+		traits.append("Vulnerável à distância (+%d%% de dano recebido)" % int(round(data.ranged_damage_taken_bonus * 100.0)))
 	if data.attack_range > 1:
 		traits.append("Ataque à distância (alcance %d)" % data.attack_range)
 	if data.ignores_terrain_defense:
@@ -211,47 +241,69 @@ static func unit_traits(unit: Unit) -> Array[String]:
 		traits.append("Regenera %d%% da vida por turno" % int(round(data.regen_fraction * 100.0)))
 	if data.can_found_city:
 		traits.append("Funda cidades")
+	if UnitAbilities.is_mounted(data):
+		traits.append("Montada")
+	if data.has_trait(UnitData.TRAIT_SIEGE):
+		traits.append("Unidade de Cerco (bônus contra cidades e fortificações)")
+	if data.ignores_technique_stationary_requirement:
+		traits.append("Artilharia Andante (pode usar Bombardeio Preparado mesmo tendo se movido)")
+	# Fase 6: fatos PÚBLICOS de combate da unidade (um observador vê a aura em ação): Lendária + aura.
+	if data.has_trait(UnitData.TRAIT_LEGENDARY):
+		traits.append("Lendária")
+	# Fase 17: fatos PÚBLICOS da Magia V2 — nunca o repertório (a pesquisa do rival não vaza pela inspeção).
+	if data.has_trait(UnitData.TRAIT_GRAND_MANIFESTATION):
+		traits.append("Grande Manifestação")
+	# Fase 19: fatos PÚBLICOS de retinue — morto-vivo, Hoste e o estado SEM COMANDO (visível no mapa pelo anel cinza).
+	if data.has_trait(UnitData.TRAIT_UNDEAD):
+		traits.append("Morto-vivo")
+	if data.is_retinue():
+		traits.append("Hoste (Comando %d)" % data.retinue_command_cost)
+		if not unit.can_receive_orders():
+			traits.append("Sem comando — não recebe ordens")
+	if data.spell_damage_multiplier > 1.0:
+		var spell_passive := data.spell_damage_multiplier_name if data.spell_damage_multiplier_name != "" else "Potência Mágica"
+		traits.append("%s (+%d%% de dano de feitiços)" % [spell_passive, int(round((data.spell_damage_multiplier - 1.0) * 100.0))])
+	if data.spell_cooldown_reduction > 0:
+		var cooldown_passive := data.spell_cooldown_reduction_name if data.spell_cooldown_reduction_name != "" else "Fluxo Mágico"
+		traits.append("%s (-%d turno(s) de recarga de feitiços)" % [cooldown_passive, data.spell_cooldown_reduction])
+	if data.environmental_zone_duration_bonus > 0:
+		var environmental_passive := data.environmental_zone_duration_bonus_name if data.environmental_zone_duration_bonus_name != "" else "Domínio Ambiental"
+		traits.append("%s (+%d rodada(s) nas zonas ambientais criadas)" % [environmental_passive, data.environmental_zone_duration_bonus])
+	if not data.can_basic_attack:
+		traits.append("Sem ataque básico")
+	if data.has_aura():
+		traits.append("%s (raio %d, +%d%% Defesa aliada)" % [data.aura_name, data.aura_radius, int(round(data.aura_defense_bonus * 100.0))])
+	if data.has_trait_attack_bonus():
+		traits.append("%s (%s)" % [data.trait_attack_name, UnitAbilities.trait_attack_effect_text(data).trim_suffix(".")])
+	if data.has_low_hp_attack_bonus():
+		traits.append("%s (+%d%% Ataque contra alvos com %d%% de HP ou menos)" % [data.low_hp_attack_name, int(round(data.low_hp_attack_bonus * 100.0)), int(round(data.low_hp_attack_threshold * 100.0))])
 	return traits
 
 static func status_effect_lines(unit: Unit) -> Array[String]:
 	var lines: Array[String] = []
-	for effect in STATUS_LABELS:
-		var until: int = int(unit.magic_status.get(effect, 0))
-		if until > TurnManager.turn_number:
-			lines.append("%s (%d turno(s))" % [STATUS_LABELS[effect], until - TurnManager.turn_number])
+	lines.append_array(V2TechniqueRuntime.status_lines(unit)) # Técnicas Militares V2 ativas (Fase 4)
+	lines.append_array(V2MagicRuntime.status_lines(unit)) # estados de feitiço V2 ativos (Fase 17, Égide): fato público
 	return lines
 
-## Acao e recarga do conjurador + prazo de invocacao: so' o DONO ve (recarga
-## de magia inimiga e' segredo). Sem a linha de ritual/manutencao/ordens, que
-## o UnitPanel ja mostra por conta propria.
+## Acao e recarga do conjurador: so' o DONO ve (recarga de magia inimiga e' segredo).
 static func caster_lines(unit: Unit) -> Array[String]:
 	var lines: Array[String] = []
-	if unit.unit_data.magic_school != "" and unit.ritual_id == "":
-		if MagicRuntime.status_active(unit, "silence"):
-			lines.append("Ação: silenciado — não pode conjurar.")
+	if unit.unit_data.is_caster():
+		if V2MagicRuntime.is_spellcasting_silenced(unit):
+			lines.append("Ação: Silêncio — não pode conjurar feitiços.")
 		elif unit.movement_left <= 0.0:
 			lines.append("Ação: sem movimento neste turno — não pode conjurar.")
 		else:
 			lines.append("Ação: pronto para conjurar.")
-	var cooldowns: Array[String] = []
-	for spell_name in unit.magic_cooldowns:
-		var ready_turn: int = int(unit.magic_cooldowns[spell_name])
-		if ready_turn > TurnManager.turn_number:
-			cooldowns.append("%s (%d)" % [spell_name, ready_turn - TurnManager.turn_number])
-	if not cooldowns.is_empty():
-		lines.append("Recarga: %s" % ", ".join(cooldowns))
-	if unit.expires_turn > TurnManager.turn_number:
-		lines.append("Invocação: some em %d turno(s)." % (unit.expires_turn - TurnManager.turn_number))
+	lines.append_array(V2TechniqueRuntime.cooldown_lines(unit)) # recarga das Técnicas Militares V2 (Fase 4)
+	lines.append_array(V2MagicRuntime.cooldown_lines(unit)) # recarga dos feitiços V2 (Fase 17)
 	return lines
 
-## Linhas que so' o DONO deve ver (estado de comando, recarga, manutencao).
+## Linhas que so' o DONO deve ver (estado de comando, recarga, ordens).
 static func own_unit_lines(unit: Unit) -> Array[String]:
 	var lines: Array[String] = []
-	if unit.ritual_id != "":
-		lines.append("Canalizando ritual: movimento e feitiços indisponíveis.")
 	lines.append_array(caster_lines(unit))
-	if unit.unit_data.mana_upkeep > 0.0:
-		lines.append("Manutenção: %.0f mana/turno" % unit.unit_data.mana_upkeep)
+	lines.append_array(V2TechniqueRuntime.passive_lines(unit)) # Técnicas passivas V2 (Fase 5): só o dono vê
 	if unit.fortified:
 		lines.append("Fortificada (+%d%% defesa, cura passiva)" % int(CombatResolver.FORTIFY_DEFENSE_BONUS * 100))
 	if unit.exploring:
@@ -271,8 +323,6 @@ static func _unit_entry(unit: Unit, hex_grid: HexGrid, viewer: PlayerData) -> Di
 	var movement := "Movimento %.1f/%.1f" % [unit.movement_left, data.movement_points] if own else "Movimento %.1f" % data.movement_points
 	lines.append("HP %d/%d | Ataque %.1f | Defesa %.1f | %s" % [int(unit.hp), int(data.max_hp), data.attack, data.defense, movement])
 	var traits := unit_traits(unit)
-	if unit.ritual_id != "" and not own:
-		traits.append("Canalizando um ritual")
 	if not traits.is_empty():
 		lines.append(" · ".join(traits))
 	var statuses := status_effect_lines(unit)
@@ -344,48 +394,37 @@ static func _lair_entry(lair: LairStructure, coord: Vector2i, hex_grid: HexGrid,
 # Construcoes
 # ---------------------------------------------------------------------------
 
-static func building_function_lines(data: BuildingData) -> Array[String]:
+## Função pública do prédio: rendimento por cópia (prédio econômico, pela pesquisa do DONO), tropa
+## que treina e manutenção. `owner` null = rendimento no tier 1.
+static func building_function_lines(data: BuildingData, owner: PlayerData = null) -> Array[String]:
 	var lines: Array[String] = []
-	var effects: Array[String] = []
-	if data.bonus_food > 0:
-		effects.append("+%d comida" % data.bonus_food)
-	if data.bonus_production > 0:
-		effects.append("+%d produção" % data.bonus_production)
-	if data.bonus_gold > 0:
-		effects.append("+%d ouro" % data.bonus_gold)
-	if data.bonus_mana > 0:
-		effects.append("+%d mana" % data.bonus_mana)
-	if data.storage_bonus > 0.0:
-		effects.append("+%d armazenamento de comida" % int(data.storage_bonus))
-	if data.defense_bonus > 0.0:
-		effects.append("+%d%% defesa da cidade" % int(round(data.defense_bonus * 100.0)))
-	if not effects.is_empty():
-		lines.append("Efeitos: %s" % ", ".join(effects))
+	if V2InfrastructureEconomyData.is_economy_building(data.id):
+		var resource := V2InfrastructureEconomyData.resource_for_building(data.id)
+		lines.append("Rendimento: +%d %s por turno" % [int(V2EconomyRuntime.building_output(owner, data.id)), V2InfrastructureEconomyData.resource_label(resource)])
 	if data.trains_unit != "":
 		lines.append("Treina: %s" % RaceTheme.unit_name(data.trains_unit, "human"))
-	var school := MagicContent.school_for_building(data.id)
-	if school != "":
-		var ritual: bool = data.id == MagicContent.SCHOOLS[school].ritual_building
-		lines.append("Estrutura %s — %s" % ["ritual" if ritual else "mágica", school_name(school)])
+	if data.gold_upkeep > 0.0:
+		lines.append("Manutenção: %d Ouro/turno" % int(data.gold_upkeep))
 	return lines
 
 static func _owner_city_of_building(building: Building, hex_grid: HexGrid) -> City:
 	for entry in hex_grid.cities_by_coord.values():
 		var city: City = entry
-		if city.owner_player == building.owner_player and city.building_coords.get(building.building_id, null) == building.coord:
+		if city.owner_player != building.owner_player:
+			continue
+		if city.building_coords.get(building.building_id, null) == building.coord or building.coord in city.repeatable_building_coords.get(building.building_id, []):
 			return city
 	return null
 
 static func _building_entry(building: Building, hex_grid: HexGrid, viewer: PlayerData) -> Dictionary:
 	var data: BuildingData = BuildingDatabase.get_building(building.building_id)
-	var race: String = building.owner_player.civ.race if building.owner_player and building.owner_player.civ else "human"
-	var name: String = RaceTheme.building_name(building.building_id, race) if data != null else building.building_id
+	var name: String = RaceTheme.building_name(building.building_id)
 	var lines: Array[String] = [_faction_line(building.owner_player, viewer)]
 	var city := _owner_city_of_building(building, hex_grid)
 	if city != null:
 		lines.append("Cidade: %s" % city.city_name)
 	if data != null:
-		lines.append_array(building_function_lines(data))
+		lines.append_array(building_function_lines(data, building.owner_player))
 	lines.append("Estado: operacional")
 	return {"key": "building", "kind": KIND_BUILDING, "tag": name, "title": name, "lines": lines}
 
@@ -403,8 +442,7 @@ static func _construction_entry(coord: Vector2i, hex_grid: HexGrid, viewer: Play
 		if city.owner_player == viewer:
 			var cost := city.production_cost()
 			var percent := int(round(100.0 * city.stored_production / maxf(cost, 1.0)))
-			var race: String = viewer.civ.race
-			var name := "Obra: %s" % RaceTheme.building_name(data.id, race)
+			var name := "Obra: %s" % RaceTheme.building_name(data.id)
 			return {"key": "site", "kind": KIND_SITE, "tag": "Obra", "title": name, "lines": [
 				"Cidade: %s" % city.city_name, "Progresso: %d%%" % percent,
 			]}
@@ -415,7 +453,7 @@ static func _construction_entry(coord: Vector2i, hex_grid: HexGrid, viewer: Play
 	return {}
 
 # ---------------------------------------------------------------------------
-# Estruturas magicas (areas e rituais) -- mesma regra publica do MagicOverlay
+# Efeitos mágicos do mapa (zonas ambientais e Portais) — públicos só com visão atual
 # ---------------------------------------------------------------------------
 
 static func _magic_entries(coord: Vector2i, hex_grid: HexGrid, viewer: PlayerData, state: String) -> Array:
@@ -423,88 +461,92 @@ static func _magic_entries(coord: Vector2i, hex_grid: HexGrid, viewer: PlayerDat
 	if hex_grid.get_tile(coord) == null:
 		return entries
 	var index := 0
-	for player in GameManager.players:
-		if player.civ == null:
-			continue
-		for region in player.magic_effects:
-			if int(region.expires) <= TurnManager.turn_number:
-				continue
-			if HexMetrics.axial_distance(MagicRuntime.coord_of(region.center), coord) > int(region.radius):
-				continue
-			if player != viewer and state != STATE_VISIBLE:
-				continue
-			var title := MagicOverlay.region_title(region)
-			var school := MagicOverlay.school_for_effect(region.effect)
-			entries.append({"key": "magic:%d" % index, "kind": KIND_MAGIC, "tag": title, "title": title, "lines": [
-				"Escola: %s" % school_name(school),
-				_faction_line(player, viewer),
-				"Duração restante: %d turno(s) | Raio: %d" % [int(region.expires) - TurnManager.turn_number, int(region.radius)],
-			]})
-			index += 1
-		for ritual in player.rituals:
-			if ritual.status != "channeling" or MagicRuntime.coord_of(ritual.seat) != coord:
-				continue
-			if player != viewer and state != STATE_VISIBLE:
-				continue
-			var ritual_title := "Ritual: %s" % ritual.spell
-			entries.append({"key": "magic:%d" % index, "kind": KIND_MAGIC, "tag": "Ritual", "title": ritual_title, "lines": [
-				"Escola: %s" % school_name(ritual.school),
-				_faction_line(player, viewer),
-				"Progresso: %d/%d" % [int(ritual.progress), int(ritual.turns)],
-			]})
-			index += 1
+	# Fase 22 — zona ambiental é pública somente com o tile atualmente visível.
+	var environmental_entry := V2EnvironmentalZoneSystem.zone_entry_at(coord, hex_grid)
+	var environmental := V2EnvironmentalZoneSystem.zone_at(coord, hex_grid)
+	if environmental != null and state == STATE_VISIBLE:
+		var owner_index := int(environmental_entry.owner_index)
+		var owner: PlayerData = GameManager.players[owner_index] if owner_index >= 0 and owner_index < GameManager.players.size() else null
+		var creator_name := owner.civ.civ_name if owner != null and owner.civ != null else "desconhecida"
+		var environmental_lines: Array[String] = [
+			"Escola: %s" % school_name(String(environmental_entry.school)),
+			"Criada por: %s" % creator_name,
+			"Duração restante: %d rodada(s)" % int(environmental_entry.remaining_rounds),
+		]
+		environmental_lines.append_array(V2EnvironmentalZoneDatabase.effect_lines(environmental))
+		entries.append({"key": "magic:environment", "kind": KIND_MAGIC, "tag": environmental.display_name, "title": environmental.display_name, "lines": environmental_lines})
+		index += 1
+	# Fase 21 — Portal é efeito mágico persistente do MAPA, não prédio nem terreno.
+	# Só aparece com visão atual; o endpoint oculto do par nunca é revelado a um observador.
+	var portal_pair := V2PortalSystem.endpoint_at(coord, hex_grid)
+	if not portal_pair.is_empty() and state == STATE_VISIBLE:
+		var owner_index := int(portal_pair.owner_index)
+		var owner: PlayerData = GameManager.players[owner_index] if owner_index >= 0 and owner_index < GameManager.players.size() else null
+		var portal_lines: Array[String] = ["Escola: %s" % school_name(String(portal_pair.school)), _faction_line(owner, viewer)]
+		var paired := V2PortalSystem.paired_endpoint(coord, hex_grid)
+		if owner == viewer and hex_grid.visibility.get(paired, HexGrid.Visibility.UNSEEN) == HexGrid.Visibility.VISIBLE:
+			portal_lines.append("Conectado a: (%d, %d)" % [paired.x, paired.y])
+		elif owner == viewer:
+			portal_lines.append("Saída atualmente fora de visão.")
+		entries.append({"key": "magic:portal", "kind": KIND_MAGIC, "tag": "Portal do Véu", "title": "Portal do Véu", "lines": portal_lines})
+		index += 1
 	return entries
 
 # ---------------------------------------------------------------------------
 # Recurso e terreno
 # ---------------------------------------------------------------------------
 
+## Recurso do mapa (Fase 25: só a semântica V2) — o recurso bruto não rende nada; um Construtor o
+## melhora (V2ResourceImprovementData) e aí a melhoria rende pela pesquisa do DONO da cidade. Recurso
+## melhorado mostra o rendimento atual; recurso bruto mostra a melhoria possível e o que ela renderia
+## para o observador.
 static func _resource_entry(tile: HexTileData, coord: Vector2i, hex_grid: HexGrid, viewer: PlayerData) -> Dictionary:
 	var name := ResourceDatabase.display_name(tile.resource)
-	var bonus := ResourceDatabase.yield_for(tile.resource)
-	var parts: Array[String] = []
-	for pair in [["food", "comida"], ["production", "produção"], ["gold", "ouro"], ["mana", "mana"]]:
-		if int(bonus.get(pair[0], 0)) > 0:
-			parts.append("+%d %s" % [int(bonus[pair[0]]), pair[1]])
-	var lines: Array[String] = []
-	if not parts.is_empty():
-		lines.append("Rendimento extra ao ser trabalhado: %s" % ", ".join(parts))
-	lines.append(_resource_effect(tile.resource))
+	var improvement_name := V2ResourceImprovementData.display_name_for_resource(tile.resource)
 	var territory_owner: City = hex_grid.city_owning_tile(coord)
+	var improvement_id: String = territory_owner.resource_improvements.get(coord, "") if territory_owner != null else ""
+	var lines: Array[String] = []
+	var title := "Recurso: %s" % name
+	if improvement_id != "":
+		title = "Recurso: %s — %s" % [name, improvement_name]
+		lines.append("Efeito: %s" % ", ".join(_improvement_yield_lines(tile.resource, territory_owner.owner_player)))
+		if hex_grid.is_tile_pillaged(coord, TurnManager.turn_number):
+			lines.append("Saqueada: sem rendimento por enquanto")
+	else:
+		if territory_owner != null:
+			title = "Recurso: %s — não explorado" % name
+		if improvement_name != "":
+			lines.append("Melhoria: %s (Construtor, em território próprio)" % improvement_name)
+			lines.append("Efeito: %s" % ", ".join(_improvement_yield_lines(tile.resource, viewer)))
 	lines.append("Território de %s" % territory_owner.city_name if territory_owner != null else "Sem dono")
-	return {"key": "resource", "kind": KIND_RESOURCE, "tag": name, "title": "Recurso: %s" % name, "lines": lines}
+	return {"key": "resource", "kind": KIND_RESOURCE, "tag": name, "title": title, "lines": lines}
 
-static func _resource_effect(resource: String) -> String:
-	var template: String = RESOURCE_EFFECTS.get(resource, "")
-	if template == "":
-		return ""
-	match resource:
-		"iron":
-			return template % int(ResourceDatabase.IRON_COST_DISCOUNT_MAX * 100.0)
-		"horses":
-			return template % int(ResourceDatabase.CAVALRY_COST_DISCOUNT_MAX * 100.0)
-		"gems":
-			return template % int(ResourceDatabase.GEMS_RUSH_BUY_DISCOUNT_MAX * 100.0)
-		"mana_node":
-			return template % int(ResourceDatabase.MANA_COST_DISCOUNT_MAX * 100.0)
-		"silk":
-			return template % ResourceDatabase.SILK_ROUTE_CAPACITY_BONUS_MAX
-	return ""
+## Aetherlands V2, Fase 15 — "+2 Produção local" por efeito da melhoria (a Seda mostra os dois: Ouro
+## e Conhecimento). Yield pela pesquisa de `player` (o DONO ATUAL; ou o observador, para recurso bruto).
+static func _improvement_yield_lines(resource_id: String, player: PlayerData) -> Array[String]:
+	var lines: Array[String] = []
+	for effect in V2ResourceImprovementData.effects_for_resource(resource_id):
+		var tier := V2EconomyRuntime.infrastructure_tier(player, effect.branch)
+		var amount := int(V2ResourceImprovementData.yield_for_effect(effect, tier))
+		var label := V2InfrastructureEconomyData.resource_label(effect.resource)
+		var scope := " local" if effect.resource == "production" else ""
+		lines.append("+%d %s%s" % [amount, label, scope])
+	return lines
 
 static func _terrain_section(hex_grid: HexGrid, coord: Vector2i, viewer: PlayerData, state: String, tile: HexTileData) -> Dictionary:
 	if tile == null or state == STATE_UNSEEN:
 		return {"title": "Terreno", "lines": ["Região inexplorada."]}
 	var lines: Array[String] = []
-	lines.append("Comida %d | Produção %d | Ouro %d | Mov. %d | Def. +%d%%" % [
-		tile.food_yield, tile.production_yield, tile.gold_yield, tile.movement_cost, int(round(tile.defense_bonus * 100.0))
-	])
+	lines.append("Mov. %d | Def. +%d%%" % [tile.movement_cost, int(round(tile.defense_bonus * 100.0))])
 	var territory_owner: City = hex_grid.city_owning_tile(coord)
 	if territory_owner != null and (territory_owner.owner_player == viewer or state == STATE_VISIBLE):
 		lines.append("Território: %s" % territory_owner.city_name)
+	# Fase 20: modificação física de terreno V2 (camada sobre o terreno-base; sem dono) — só com o tile VISÍVEL (a
+	# neblina não revela o estado atual do terreno fora da visão).
+	if state == STATE_VISIBLE:
+		lines.append_array(V2TerrainRuntime.inspector_lines(hex_grid, coord))
 	if state == STATE_EXPLORED:
 		lines.append("(fora da visão — informação lembrada)")
-	elif hex_grid.is_tile_pillaged(coord, TurnManager.turn_number):
-		lines.append("Saqueado: sem rendimento por enquanto")
 	return {"title": "Terreno: %s (%d, %d)" % [tile.display_name, coord.x, coord.y], "lines": lines}
 
 ## Resumo de UMA linha do tile, pra o painel de unidade propria (onde o painel

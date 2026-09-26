@@ -5,13 +5,9 @@ extends Resource
 @export var leader_name: String = ""
 @export var color: Color = Color.WHITE
 
-## "human"/"dwarf"/"orc"/"elf" dao acesso a uma tropa exclusiva de combate
-## (ver UnitDatabase.RACE_UNIQUE_KIND, City.can_train) — pedido do usuario:
-## "insira outras civilizacoes de fantasia... voce cria tropas especificas
-## pra essas civilizacoes", em vez de todo rival ser uma copia de nome/cor
-## do reino do jogador. Rival sempre vem de GameManager.RIVAL_CIVS (so
-## dwarf/orc/elf no pool atual); o jogador ESCOLHE a propria na tela de
-## titulo (TitleScreen -> GameManager.human_race), entre as 4. "" (vazio)
-## continua valido como "nenhuma raca reconhecida" pra qualquer civ criada
-## fora desses dois caminhos (ex: um PlayerData de teste construido a mao).
+## "human"/"dwarf"/"orc"/"elf" — identidade da civilização (nome padrão do reino, estilo visual via
+## RaceTheme). Fase 25 removeu tropas exclusivas e bônus econômicos V1; a Fase 26 usa apenas este
+## id para derivar duas especialidades sistêmicas V2, sem estado paralelo. Rival vem de
+## GameManager.RIVAL_CIVS; o jogador escolhe a
+## própria na tela de nova partida. "" = nenhuma raça reconhecida (ex.: PlayerData de teste).
 @export var race: String = ""

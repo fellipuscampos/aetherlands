@@ -1563,10 +1563,8 @@ func test_active_covers_both_civs_up_to_the_visit_target_before_devastation_ends
 	var civ_a := PlayerData.new(CivilizationData.new())
 	var civ_b := PlayerData.new(CivilizationData.new())
 	var city_a := grid.found_city(Vector2i(1, 0), civ_a, "Capital A")
-	city_a.population = 1
 	city_a.hp = city_a.max_hp()
 	var city_b := grid.found_city(Vector2i(4, 0), civ_b, "Capital B")
-	city_b.population = 1
 	city_b.hp = city_b.max_hp()
 	var event := DragonEvent.new()
 	event.origin_region = Vector2i(0, 0)

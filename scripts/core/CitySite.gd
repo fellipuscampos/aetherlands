@@ -57,20 +57,18 @@ const REASON_FOREIGN_TERRITORY := "foreign_territory"
 const CATCHMENT_RADIUS := 2
 const GROWTH_RING := 3
 const MAX_RING := 3
-## Peso do rendimento por anel (anel 1 = vizinhos imediatos, sempre
-## trabalhaveis; anel 2 so' entra com populacao maior).
+## Peso do valor por anel (anel 1 = território inicial da cidade; anel 2 = alcance da anexação).
 const RING_WEIGHTS := [1.0, 0.5]
 ## Tile que ja' cai no raio de uma cidade PROPRIA conta so' esta fracao (a
 ## cidade mais antiga tende a ficar com ele: e' territorio desperdicado).
 const OVERLAP_OWN_FACTOR := 0.3
-## Rendimento bruto -> pontos (mesma mistura de City._tile_claim_score: comida
-## 1.5, producao 1.3, ouro 1.0), dividido pra um tile bom valer ~1 ponto.
+## Metadado bruto do terreno -> pontos de "terra boa" (comida 1.5, producao 1.3, ouro 1.0), dividido
+## pra um tile bom valer ~1 ponto. Heurística de local só — nenhum desses números gera recurso (Fase 25).
 const TILE_POINTS_DIVISOR := 4.0
 ## Recursos: pontos-base por tile de recurso x raridade; cada fonte do MESMO
 ## recurso que o jogador ja controla reduz o valor de mais uma (retorno
-## decrescente -- o desconto de custo de cada recurso tem teto, ver
-## ResourceDatabase.*_MAX). Nodulo Arcano e' o mais raro e o unico que a IA
-## de estrategia Arcana quer de verdade.
+## decrescente). Nodulo Arcano e' o mais raro e o unico que a IA de orientação
+## Arcana (V2AIStrategyState) quer de verdade.
 const RESOURCE_BASE_POINTS := 1.0
 const RESOURCE_RARITY := {"iron": 1.0, "horses": 1.0, "gems": 1.6, "silk": 1.6, "mana_node": 4.5}
 const RESOURCE_REPEAT_DECAY := 0.25
@@ -124,7 +122,7 @@ const SETTLE_PATIENCE_TURNS := 10
 ## melhor (evita oscilacao entre locais empatados).
 const SWITCH_MARGIN := 1.5
 ## Turnos sem procurar de novo depois de uma busca que nao achou local
-## aceitavel (ver RivalAI.decide_production).
+## aceitavel (ver V2StrategicAI, pontuacao do Colonizador).
 const NO_SITE_RETRY_TURNS := 8
 
 static var _ring_offsets: Array = []
@@ -226,7 +224,7 @@ static func build_context(hex_grid: HexGrid, player: PlayerData, known: Variant 
 		"owner_of": owner_of,
 		"monsters": monsters,
 		"controlled": controlled,
-		"arcane": StrategicAI.strategy(player) == CityIdentity.AXIS_ARCANA,
+		"arcane": player != null and player.v2_ai_strategy.orientation == V2AIStrategyState.Orientation.ARCANE,
 		"player": player,
 	}
 
@@ -245,10 +243,12 @@ static func _is_known(context: Dictionary, coord: Vector2i) -> bool:
 static func _resource_points(resource_id: String, context: Dictionary) -> float:
 	var rarity: float = RESOURCE_RARITY.get(resource_id, 1.0)
 	var owned_before: int = context.controlled.get(resource_id, 0)
-	# Rendimento proprio do recurso (ResourceDatabase.YIELDS, mesma mistura de
-	# tile_points) + valor ESTRATEGICO por raridade, ambos com retorno decrescente.
-	var bonus: Dictionary = ResourceDatabase.yield_for(resource_id)
-	var yield_points: float = (float(bonus.food) * 1.5 + float(bonus.production) * 1.3 + float(bonus.gold) + float(bonus.mana) * 1.5) / TILE_POINTS_DIVISOR
+	# Rendimento da melhoria V2 do recurso no tier 1 (V2ResourceImprovementData — o que um Construtor
+	# renderia ali) + valor ESTRATEGICO por raridade, ambos com retorno decrescente.
+	var improvement_yield := 0.0
+	for effect in V2ResourceImprovementData.effects_for_resource(resource_id):
+		improvement_yield += V2ResourceImprovementData.yield_for_effect(effect, 1)
+	var yield_points: float = improvement_yield / TILE_POINTS_DIVISOR
 	var points: float = (yield_points + RESOURCE_BASE_POINTS * rarity) / (1.0 + RESOURCE_REPEAT_DECAY * float(owned_before))
 	if resource_id == "mana_node" and context.arcane:
 		points += ARCANE_NODE_EXTRA_POINTS
@@ -276,7 +276,7 @@ static func _quick_score(hex_grid: HexGrid, coord: Vector2i, context: Dictionary
 	for offset in _offsets_for(1):
 		var tile_coord: Vector2i = coord + offset
 		var data: HexTileData = hex_grid.get_tile(tile_coord)
-		if data == null or not data.can_be_worked() or not _is_known(context, tile_coord):
+		if data == null or not data.is_usable_land() or not _is_known(context, tile_coord):
 			continue
 		var territory_owner: Variant = context.owner_of.get(tile_coord)
 		if territory_owner != null and territory_owner != context.player:
@@ -318,9 +318,9 @@ static func evaluate(hex_grid: HexGrid, coord: Vector2i, context: Dictionary) ->
 			var data: HexTileData = hex_grid.get_tile(tile_coord)
 			if data == null:
 				continue
-			if ring == 1 and not data.can_be_worked() and data.blocks_land_units():
+			if ring == 1 and not data.is_usable_land() and data.blocks_land_units():
 				blocked_neighbors += 1
-			if not _is_known(context, tile_coord) or not data.can_be_worked():
+			if not _is_known(context, tile_coord) or not data.is_usable_land():
 				continue
 			catchment_total += 1
 			var territory_owner: Variant = owner_of.get(tile_coord)
@@ -342,7 +342,7 @@ static func evaluate(hex_grid: HexGrid, coord: Vector2i, context: Dictionary) ->
 	# tambem barra o acesso por terra.
 	for offset in _offsets_for(1):
 		var neighbor: HexTileData = hex_grid.get_tile(coord + offset)
-		if neighbor != null and neighbor.can_be_worked() and neighbor.blocks_land_units():
+		if neighbor != null and neighbor.is_usable_land() and neighbor.blocks_land_units():
 			blocked_neighbors += 1
 	parts.defense += BARRIER_POINTS_PER_NEIGHBOR * float(mini(blocked_neighbors, BARRIER_MAX_NEIGHBORS))
 	parts.terrain += DIVERSITY_POINTS_PER_TERRAIN * float(clampi(terrain_kinds.size() - 2, 0, DIVERSITY_MAX_EXTRA_TERRAINS))
@@ -353,7 +353,7 @@ static func evaluate(hex_grid: HexGrid, coord: Vector2i, context: Dictionary) ->
 	for offset in ring_tiles:
 		var tile_coord: Vector2i = coord + offset
 		var data: HexTileData = hex_grid.get_tile(tile_coord)
-		if data == null or not data.can_be_worked() or data.blocks_land_units() or not _is_known(context, tile_coord):
+		if data == null or not data.is_usable_land() or data.blocks_land_units() or not _is_known(context, tile_coord):
 			continue
 		if owner_of.has(tile_coord):
 			continue

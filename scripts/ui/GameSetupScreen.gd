@@ -20,11 +20,12 @@ extends Control
 ##
 ## Selecao de raca reestruturada pra ficar "tao elaborada quanto o
 ## civilization" (pedido do usuario): lista de racas a esquerda + painel
-## de detalhe a direita (nome, epiteto, lore, tropa exclusiva com blurb) —
+## de detalhe a direita (nome, epiteto, lore) —
 ## mesmo padrao "lista + detalhe atualiza ao trocar selecao" da tela de
 ## civilizacao do Civ, so com portrait nenhum (o jogo inteiro e modelos
 ## procedurais, sem arte de personagem) — o "elaborado" aqui vem do TEXTO
-## (lore + explicacao mecanica), nao de uma imagem.
+## (lore), nao de uma imagem. Fase 25: a seção "Tropa Exclusiva" saiu. Fase 26: este mesmo painel
+## explica as duas especialidades sistêmicas vindas de V2RaceBonusDatabase, sem conteúdo exclusivo.
 
 signal new_game_requested(width: int, height: int, kingdom_name: String, rival_count: int, difficulty: String, race: String)
 signal back_requested
@@ -33,37 +34,27 @@ signal back_requested
 ## (_update_race_detail) E pros botoes da lista (montados a mao no .tscn,
 ## mas o TEXTO de cada um vem daqui via _label_race_buttons, pra "Humano"/
 ## "Elfo"/"Anao"/"Orc" nunca dessincronizar do display_name usado no
-## painel). Lore/epiteto conectados a mecanica REAL de cada tropa
-## exclusiva (ver UnitDatabase.create_unit) — nao e so flavor solto, cada
-## frase aponta pra um numero que existe de verdade no jogo.
+## painel).
 const RACE_INFO := {
 	"human": {
 		"display_name": "Reino de Aldenmark",
 		"tagline": "Honra no Aço, Ordem na Fé",
 		"lore": "Advindos de outro mundo após um cataclismo devastador, os humanos organizavam-se inicialmente em feudos isolados. Contudo, as constantes ameaças de feras e monstros os obrigaram a se unificar em um vasto império fortemente militarizado, governado por um Rei e estruturado em grandes casas nobres. Convictos da supremacia de sua espécie e fiéis à fé trazida de seu mundo original, compensam a falta de magia inata refinando táticas de guerra ancestrais e ostentando uma doutrina militar implacável centralizada na sua lendária cavalaria.",
-		"unique_unit_name": "Cavaleiro Real",
-		"unique_unit_blurb": "Cavalaria pesada de elite protegida por armaduras de placas completas. Uma força de impacto devastadora que personifica a honra e o aço de Aldenmark no campo de batalha.",
 	},
 	"elf": {
 		"display_name": "Império de Elenor",
 		"tagline": "Os Primeiros Nascidos, Filhos do Sol",
 		"lore": "Muito antes do surgimento das raças jovens, os Elfos cruzaram os véus do cosmos e se tornaram uma das primeiras raças conscientes a desbravar Aetherlands. Considerados seres semi-divinos, vivem sob uma rígida teocracia governada por um Rei-Deus e possuem uma maestria inigualável na Magia de Luz, venerando o próprio Sol como a manifestação suprema do divino. No passado, a semelhança entre suas doutrinas fez os humanos cogitarem a submissão ao domínio élfico, mas divergências culturais impediram que uma aliança duradoura se concretizasse.",
-		"unique_unit_name": "Arqueiro Solar",
-		"unique_unit_blurb": "Atiradores de elite imbuídos com a bênção do Rei-Deus. Seus disparos de pura luz arcana alcançam longas distâncias, ignorando defesas físicas e queimando a resistência dos alvos.",
 	},
 	"dwarf": {
 		"display_name": "Liga dos Clãs de Ferro",
 		"tagline": "Mestres do Aço, Guardiões da Riqueza",
 		"lore": "Assim como as outras grandes raças, os Anões cruzaram os mundos e fincaram suas raízes nas profundezas de Aetherlands. Desprovidos de um governo centralizado, organizam-se em uma próspera rede de clãs e guildas autônomas, cujos acordos e pactos comerciais se unem firmemente diante das ameaças de guerra. Famosos por sua tenacidade física, aversão à luz da superfície e um apetite insaciável por ouro, dominaram a mineração e a forja a um nível inigualável, tornando suas armas e minérios indispensáveis para o comércio de todas as civilizações.",
-		"unique_unit_name": "Guarda-Machado Anão",
-		"unique_unit_blurb": "Infantaria pesada inamovível de choque. Possui a maior defesa física do jogo ao permanecer imóvel, servindo como uma verdadeira muralha de ferro e machado na linha de frente.",
 	},
 	"orc": {
 		"display_name": "Horda dos Clãs Primordiais",
 		"tagline": "A Ameaça Implacável, Senhores da Guerra",
 		"lore": "A origem exata dos Orcs permanece um mistério: enquanto alguns acreditam que vieram de mundos distantes, outros sustentam que são nativos de Aetherlands ou até criados por forças obscuras. Organizados em tribos movidas por pilhagens, invasões e guerra, sua liderança é ditada unicamente pelo direito do mais forte, expandindo seus domínios enquanto o líder mantiver o respeito e o pavor de seus seguidores. Com uma taxa de multiplicação assustadora, são enxergados pelas outras civilizações como uma ameaça implacável, maligna e brutal.",
-		"unique_unit_name": "Berserker da Horda",
-		"unique_unit_blurb": "Infantaria leve de investida devastadora. Ganha bônus de dano à medida que perde vida no combate, tornando-se extremamente perigosa e incontrolável quando ferida.",
 	},
 }
 
@@ -75,8 +66,7 @@ const RACE_INFO := {
 @onready var race_name_label: Label = $CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox/RaceNameLabel
 @onready var race_tagline_label: Label = $CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox/RaceTaglineLabel
 @onready var race_lore_label: RichTextLabel = $CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox/RaceLoreLabel
-@onready var race_unique_name_label: Label = $CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox/RaceUniqueNameLabel
-@onready var race_unique_blurb_label: RichTextLabel = $CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox/RaceUniqueBlurbLabel
+@onready var race_specialties_label: RichTextLabel = $CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox/RaceSpecialtiesLabel
 @onready var one_rival_button: Button = $CenterBox/Box/RivalCountRow/OneRivalButton
 @onready var two_rivals_button: Button = $CenterBox/Box/RivalCountRow/TwoRivalsButton
 @onready var three_rivals_button: Button = $CenterBox/Box/RivalCountRow/ThreeRivalsButton
@@ -129,19 +119,17 @@ func _on_race_pressed(race: String) -> void:
 	_update_race_detail(race)
 
 ## Espelha a raca selecionada no painel de detalhe grande (nome/epiteto/
-## lore/tropa exclusiva) — mesmo padrao "lista a esquerda, detalhe a
+## lore) — mesmo padrao "lista a esquerda, detalhe a
 ## direita atualiza ao trocar selecao" do seletor de civilizacao do
 ## Civilization, pedido do usuario: "quero um menu de racas tao elaborada
-## quanto o civilization". RichTextLabel com BBCode (nao Label puro) pra
-## poder destacar em negrito o numero/mecanica real da tropa dentro do
-## texto de lore (ver RACE_INFO acima), sem precisar de nenhum asset novo.
+## quanto o civilization". RichTextLabel com BBCode (nao Label puro) pra a lore poder usar destaque.
 func _update_race_detail(race: String) -> void:
 	var info: Dictionary = RACE_INFO.get(race, RACE_INFO.human)
 	race_name_label.text = info.display_name
 	race_tagline_label.text = info.tagline
 	race_lore_label.text = info.lore
-	race_unique_name_label.text = "Tropa Exclusiva: %s" % info.unique_unit_name
-	race_unique_blurb_label.text = info.unique_unit_blurb
+	var effects := V2RaceBonusDatabase.effect_lines(race)
+	race_specialties_label.text = "[b]Especialidades:[/b]\n• %s" % "\n• ".join(effects)
 	# Placeholder do campo de nome segue a raca selecionada — antes ficava
 	# fixo em "Reino de Aldenmark" (nome humano) nao importa a raca
 	# escolhida, o que junto do fallback tambem fixo em GameManager.

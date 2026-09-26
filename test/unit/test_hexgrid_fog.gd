@@ -123,7 +123,7 @@ func test_enemy_city_only_visible_when_tile_is_currently_visible():
 ## entidade que ainda nao tinha cobertura.
 func test_enemy_building_only_visible_when_tile_is_currently_visible():
 	var scout = _make_unit("warrior", human, Vector2i(1, 0))
-	var building = hex_grid.place_building(Vector2i(0, 0), "granary", rival)
+	var building = hex_grid.place_building(Vector2i(0, 0), "v2_building_market", rival)
 
 	hex_grid.recompute_fog(human)
 	assert_true(building.visible, "predio inimigo em tile visivel deveria aparecer")
@@ -191,3 +191,70 @@ func test_set_debug_fog_disabled_toggles_flag_and_applies_immediately():
 	assert_false(hex_grid.debug_fog_disabled)
 
 	GameManager.human_player = original_human_player
+
+## PERFORMANCE: recompute_fog expoe o delta (Minimap e as texturas de fog
+## pintam so' o que mudou em vez de refazer o mapa inteiro a cada passo).
+func test_recompute_fog_reports_only_the_tiles_that_changed():
+	var unit := _make_unit("warrior", human, Vector2i(0, 0)) # vision_range 3
+
+	hex_grid.recompute_fog(human)
+	assert_true(hex_grid.last_fog_was_full, "o primeiro recompute de um mapa novo recomeca do zero")
+	assert_true(hex_grid.last_fog_changed.has(Vector2i(3, 0)))
+
+	hex_grid.recompute_fog(human)
+	assert_false(hex_grid.last_fog_was_full)
+	assert_true(hex_grid.last_fog_changed.is_empty(), "nada mudou de visibilidade")
+
+	hex_grid.units_by_coord.erase(unit.coord)
+	unit.coord = Vector2i(3, 0)
+	hex_grid.units_by_coord[unit.coord] = unit
+	hex_grid.recompute_fog(human)
+	assert_true(hex_grid.last_fog_changed.has(Vector2i(5, 0)), "tile novo entrou na visao")
+	assert_true(hex_grid.last_fog_changed.has(Vector2i(-1, 0)), "tile antigo saiu da visao (VISIBLE -> EXPLORED)")
+	assert_false(hex_grid.last_fog_changed.has(Vector2i(2, 0)), "tile que continua visivel nao entra no delta")
+
+## As texturas de fog agora sao atualizadas por delta (`changed`) em cima do
+## buffer anterior. O resultado tem que ser byte a byte o de uma
+## reconstrucao completa a partir de `visibility`, passando por UNSEEN ->
+## VISIBLE, VISIBLE -> EXPLORED e pela revelacao total do modo Debug.
+func test_incremental_fog_textures_match_a_full_rebuild():
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.generate_map(21, 21, 555)
+	var player := PlayerData.new(CivilizationData.new())
+	var land: Array = grid.tiles.keys().filter(func(c): return not grid.tiles[c].blocks_land_units() and grid.get_unit_at(c) == null and not grid.lairs_by_coord.has(c))
+	land.sort()
+	var scout_a := grid.spawn_unit(land[0], UnitDatabase.create_unit("warrior"), player)
+	var scout_b := grid.spawn_unit(land[land.size() - 1], UnitDatabase.create_unit("warrior"), player)
+	assert_not_null(scout_a, "pre-condicao: batedor A nasceu")
+	assert_not_null(scout_b, "pre-condicao: batedor B nasceu")
+	assert_gt(HexMetrics.axial_distance(scout_a.coord, scout_b.coord), 9, "pre-condicao: batedores distantes")
+	player.units.erase(scout_b) # so' A enxerga no primeiro recompute
+	grid.recompute_fog(player)
+	player.units.append(scout_b)
+	grid.recompute_fog(player) # B aparece: delta UNSEEN -> VISIBLE
+	player.units.erase(scout_a)
+	grid.recompute_fog(player) # A some: delta VISIBLE -> EXPLORED
+
+	_assert_fog_textures_match_full_rebuild(grid, "depois de VISIBLE -> EXPLORED")
+
+	assert_gt(grid.visibility.values().count(HexGrid.Visibility.EXPLORED), 0, "pre-condicao: houve transicao VISIBLE -> EXPLORED")
+	assert_gt(grid.visibility.values().count(HexGrid.Visibility.VISIBLE), 0, "pre-condicao: B continua enxergando")
+
+	grid.debug_fog_disabled = true
+	grid.recompute_fog(player)
+	_assert_fog_textures_match_full_rebuild(grid, "com o mapa todo revelado (Debug)")
+
+	grid.debug_fog_disabled = false
+	grid.recompute_fog(player)
+	_assert_fog_textures_match_full_rebuild(grid, "ao religar a neblina")
+	grid.queue_free()
+
+func _assert_fog_textures_match_full_rebuild(grid: HexGrid, context: String) -> void:
+	var liquid_incremental := grid._liquid_fog_bytes.duplicate()
+	var biome_incremental := grid._biome_fog_bytes.duplicate()
+	assert_gt(liquid_incremental.size(), 0, "pre-condicao (%s): buffer de fog da agua existe" % context)
+	grid._rebuild_liquid_type_texture()
+	grid._rebuild_biome_overlay()
+	assert_true(liquid_incremental == grid._liquid_fog_bytes, "fog da agua por delta difere da reconstrucao completa (%s)" % context)
+	assert_true(biome_incremental == grid._biome_fog_bytes, "fog do bioma por delta difere da reconstrucao completa (%s)" % context)

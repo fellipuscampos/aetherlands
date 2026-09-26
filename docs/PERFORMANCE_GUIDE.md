@@ -1,5 +1,42 @@
 # Guia de Performance
 
+## Rodada de lag pós-monstros/defesa/cidades — 19/09/2026
+
+Sintoma reportado: lag em jogo depois das features de monstros, defesa de
+cidade, escolha de sítio e inspeção de tile. Padrão em todos os achados:
+**algo refeito por inteiro a cada movimento, frame ou turno**. Medido com o
+benchmark da seção 1 (mapa Grande 320×84, seed 4242, 3 rivais; janela real,
+V-Sync off, GPU ≈ 4 ms/frame → o teto de FPS é GPU, ~215 fps) e com uma
+campanha headless de 100 turnos (encerra por vitória/derrota por volta do
+turno 80). O profiler foi um wrapper temporário (script que renomeia
+`func x` → `_perf_original_x` e acumula `Time.get_ticks_usec()` num dicionário
+estático; **restaurar do backup logo depois de cada rodada** e conferir com
+`grep _perf_original_ scripts`) — apagado no fim.
+
+| Gargalo | Antes | Depois | Técnica |
+|---|---|---|---|
+| Minimapa: `_draw` redesenhava os ~27 mil tiles a cada frame com a câmera em movimento | ~63 ms/frame (mapa revelado; 5,1 ms sem o minimapa) | 4,75 ms/frame (`revealed_pan`, mesmo cenário) | Tiles numa `Image` persistente; indicador/unidades desenhados ao vivo (`Minimap.gd`) |
+| Minimapa: cada `fog_updated` (= cada passo de unidade) re-rasterizava todos os tiles (versão intermediária com SubViewport tinha o mesmo custo, ~60 ms com o mapa revelado — inferido do loop, não medido isolado) | proporcional aos tiles explorados | só os tiles do delta (`HexGrid.last_fog_changed`); imagem inteira só quando `last_fog_was_full` (mapa novo/carregado), redimensionar ou reiniciar | Delta explícito exposto pelo `HexGrid` |
+| Fog: `_rebuild_liquid_type_texture`/`_rebuild_biome_overlay` recriavam a textura inteira mesmo sem mudança de visão | ~46 ms/chamada (medição do Codex) | sem mudança: retorna cedo; com mudança: reescreve só os pixels dos tiles alterados e faz `ImageTexture.update` | `_last_fog_visibility` + `changed`; teste byte a byte contra a reconstrução completa (`test_incremental_fog_textures_match_a_full_rebuild`) |
+| `compute_path` para destino em outra ilha varria o continente inteiro | ~77 ms | ~0 | Componentes conexos por `blocks_land_units()` (`_ensure_land_components`), calculados no `generate_map` (tela de loading) e invalidados só quando uma transformação muda se o tile bloqueia terra |
+| `compute_path` para destino **emparedado** (cidade cercada pelas próprias unidades, que o A* trata como parede; `defend_against_dragon` → `move_unit_toward`, por unidade, por turno) | 49 buscas falhas > 30 ms, até 83 ms cada; turnos 41–60: 2,0 s em `compute_path` | 0 buscas > 30 ms; 0,63 s | BFS reverso limitado a partir do destino (`_destination_walled_in`: limite 16 antes do A*, 256 depois de 150 nós expandidos). Bolsos medidos: 1–59 tiles. É superestimativa do alcance — nunca dá falso "inalcançável" |
+| Pior turno da campanha (`_on_turn_changed`) | 807 ms | 303 ms | (efeito dos dois itens acima) |
+| Primeiro turno: componentes terrestres montados no primeiro `compute_path` | frame de 52 ms | 27 ms | Movido pro `generate_map` |
+| Abrir Magia/Tecnologia reconstruía as DUAS árvores (~60 cards cada) | pico de ~80 ms | ~49 ms na 1ª abertura; reabrir sem mudança não reconstrói | `HUD._refresh_tech_panel` só reconstrói a árvore do painel aberto e só se a assinatura (`hash` de pesquisados/pesquisa atual/progresso/raça/debug) mudou |
+
+**Ainda não tocado (candidatos, na ordem do que mais custa):**
+- `recompute_fog` ≈ 17 ms por chamada, um frame por turno (e por passo do
+  humano): as texturas já são por delta, mas `_apply_terrain_fog`,
+  `_apply_prop_fog` (~4,5 ms) e `_update_city_tint` (mesh de todas as cidades)
+  ainda rodam inteiros. Cuidado: pular quando `changed` está vazio vaza props
+  recém-criados sem névoa e ignora crescimento de território.
+- `RivalAI.defend_against_dragon` manda toda unidade longe da cidade "voltar"
+  a cada turno; unidades que não conseguem entrar repetem a tentativa (agora
+  barata, mas ainda ~0,7 ms/chamada nos turnos 41–60).
+- `SaveManager.load_game` ≈ 2,9 s (é o `generate_map`; fora de escopo, seção 5).
+
+---
+
 ## Revisão de integração — 17/09/2026
 
 - `HexGrid.compute_path` rejeita destinos ocupados, inexistentes, cidades
@@ -317,6 +354,99 @@ alguns datam de "usuário reportou 140→15/20fps na troca de turno").
   `GameManager._process` já são gateados por early-return quando não há
   trabalho (ver seção 3), mas não foi feita uma varredura exaustiva de
   TODA UI por esse padrão especificamente.
+
+### 2.6 `V2EconomyRuntime` — Déficit recalculado por cidade → uma vez por consulta (Aetherlands V2, Fase 15)
+
+- **Causa**: com o Déficit de Ouro (Fase 15), a renda de cada cidade passou
+  a checar `is_gold_deficit(dono)` pra saber se desconta os prédios com
+  upkeep — e `is_gold_deficit` soma TODAS as cidades do dono. Toda
+  agregação por jogador (`player_supply_capacity`, `player_gold_income`...)
+  virou O(cidades²) quando o caixa está zerado (sem o atalho `gold > 0`).
+  Como a Tensão Logística consulta a capacidade, isso chegava em cada
+  `CombatResolver.predict` com unidade que tem Suprimentos.
+- **Fix**: `_player_branch_income` decide o Déficit UMA vez e passa o
+  booleano pra `_city_branch_income(city, branch, base, deficit)`; as
+  consultas de uma cidade só (`city_*_income`) calculam o do próprio dono.
+  Sem cache, sem estado — o resultado é idêntico (coberto pela suíte).
+- **Escala** (6 cidades, caixa zerado, mapa Grande): `player_supply_capacity`
+  0,77 → 0,17 ms; `CombatResolver.predict` com atacante com Suprimentos
+  0,93 → 0,33 ms (caminho rápido, sem custo: 0,048 ms). Tabela completa
+  (20/40/60 unidades) em `docs/AETHERLANDS_V2_IMPLEMENTATION.md`, Fase 15.
+- **Se for otimizar mais**: o que sobra é `player_supply_used` (percorre as
+  unidades do jogador, ~0,1 ms com 60) + o próprio `is_gold_deficit`
+  (~0,2 ms com caixa zerado). Um cache transitório só se justifica se a IA
+  passar a fazer centenas de previsões por turno — e, se criado, nunca
+  salvo, invalidado em evento discreto e comparado contra o cálculo bruto
+  em teste (regra do §120 da Fase 15).
+
+### 2.7 `CityDefense.city_attack_targets` — neblina recalculada → neblina já calculada (Aetherlands V2, Fase 16)
+
+- **Causa**: a primeira versão do Ataque da Cidade filtrava os alvos do
+  humano com `HexGrid.compute_visible_tiles` (união do raio de visão de
+  TODAS as unidades/cidades) — 3,3 ms no mapa Grande, pago a cada refresh
+  do botão da cidade, início de mira e disparo.
+- **Fix**: `CityDefense._visible_to_owner` usa a MESMA regra de
+  `V2TechniqueRuntime._visible_to_owner`: lê `HexGrid.visibility` (o dict
+  que `recompute_fog` já mantém), O(1) por tile, só pros tiles do alcance
+  (`HexMetrics.coords_within`). IA/partida sem neblina: sem filtro.
+- **Escala**: `city_attack_targets` da Fortaleza humana (alcance 3) 0,047 ms;
+  IA 0,016 ms. Regra geral: **nunca** chame `compute_visible_tiles` em
+  caminho de UI/clique — use `HexGrid.visibility`.
+- Custo novo por turno da Fase 16: só a regeneração de escudo (caminho
+  pré-existente) em mais cidades, ~0,12 ms por cidade fortificada. Tabela
+  completa em `docs/AETHERLANDS_V2_IMPLEMENTATION.md`, Fase 16.
+
+### 2.8 Custo de terreno variável (modificações de terreno V2, Fase 20) — o que muda no pathfinding
+
+- **O que mudou**: todo custo de passo terrestre passa por
+  `HexGrid.terrain_step_cost(coord)` = custo-base + modificação V2
+  (`HexGrid.v2_terrain_modifications`, dicionário por coordenada). Caminho
+  rápido: mapa sem modificação = custo-base puro (0,7 µs); com modificações,
+  lookup O(1) (2,7 µs). Nada é recalculado ao criar/remover uma modificação
+  (não há cache de caminho) e nenhum `_process`.
+- **O efeito real não é o lookup, é o A***: `compute_path` usa heurística de
+  1 por passo (admissível porque todo passo custa ≥ 1). Enquanto todo terreno
+  custava 1, a heurística era exata e o A* expandia quase só a rota. Uma rota
+  longa **inteiramente** coberta por Bosque (custo 2) passou de 0,51 ms para
+  3,8 ms no mapa Grande (320×84, seed 4242): com custos > 1 a heurística fica
+  folgada e o A* explora os desvios de mesmo custo. `unit_reachable`
+  (Movimento 4) subiu só 17% (1,27 → 1,49 ms). Não subir a heurística: ela
+  deixaria de ser admissível (caminhos subótimos).
+- **Se um dia virar gargalo** (muitas modificações + IA pedindo muitas rotas
+  longas): o próximo passo seria limitar a busca da IA, não mexer no custo.
+  Turno completo sync com 3 IAs e 76 tiles modificados: 38,6 ms (patamar das
+  fases anteriores). Tabela em `docs/AETHERLANDS_V2_IMPLEMENTATION.md`, Fase 20.
+
+### 2.9 IA V2 orientada a eventos (Fase 24)
+
+- `V2StrategicAI` roda uma vez por rival/turno; `V2AITacticalAI` só é consultada
+  quando a unidade age. Nenhum `_process`, `Timer` ou varredura global por frame.
+- `V2AIWorldView` calcula visibilidade uma vez no início do turno tático e é
+  reutilizada pelas unidades desse rival. A camada expõe só unidades visíveis,
+  cidades conhecidas e eventos públicos, nunca economia/pesquisa inimiga.
+- Benchmark headless controlado: WorldView/12 inimigos **0,231 ms**; score dos
+  128 nós **1,419 ms**; alvo estratégico **0,047 ms**; tentativa tática vazia
+  **0,010 ms**; plano estratégico de 1 rival **1,227 ms** e de 3 rivais
+  **3,910 ms**.
+- Long-run real de 150 turnos (3 rivais, save/load no 60): **13,2 s** totais,
+  máximo de 7 fichas militares relevantes por rival, cidades até nível IV e
+  nenhum crescimento explosivo. O limite normal é 20 e o hard stop é 24;
+  unidades já em fila contam antes de uma nova decisão de produção.
+- Benchmark reproduzível: `test/integration/benchmark_v2_ai.gd`; estabilidade:
+  `test/integration/test_v2_ai_long_run.gd`.
+
+### 2.10 Migração final V1→V2 (Fase 25) — só remoção, nada otimizado
+
+- A fase removeu caminhos (Ciência, população/comida/tiles trabalhados, decisores V1
+  da IA, magia/comércio V1); nenhum `_process`, polling ou cache novo.
+- Mesmo benchmark de IA da 2.9, igual ou melhor: WorldView **0,213 ms**; score
+  dos 128 nós **1,169 ms**; plano de 1 rival **1,082 ms**, de 3 rivais **3,464 ms**.
+  Long-run de 151 turnos: **10,6 s** (antes 13,2 s).
+- Novo `test/integration/benchmark_v2_phase25.gd` (mapa real 61×61): turno real
+  mediano **22–24 ms** com 0/1/3 rivais; refresh da HUD **0,06 ms**; clique no
+  painel de cidade **11,6 ms** (custo pontual, sem baseline anterior); quadro de
+  pesquisa abrir+fechar **1,8 ms**; save **4,1 ms**; load **665 ms** (regenera o
+  mapa pela semente).
 
 ---
 

@@ -79,9 +79,10 @@ func _simulate(seed_value: int, map_size: int, turns: int, legacy: bool = false,
 	var rivals: Array[PlayerData] = []
 	for i in range(RIVAL_COUNT):
 		rivals.append(_make_player("Rival %d" % (i + 1), RIVAL_RACES[i % RIVAL_RACES.size()]))
-	primary.personality = CivilizationPersonality.generate(primary.civ.race, grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET)
+	# Fase 25: a IA V2 (mesma inicialização de GameManager.setup_players) substitui a personalidade V1.
+	V2StrategicAI.initialize_player(primary, rivals.size(), grid.map_seed, rivals.size() + 1)
 	for i in range(rivals.size()):
-		rivals[i].personality = CivilizationPersonality.generate(rivals[i].civ.race, grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET + i + 1)
+		V2StrategicAI.initialize_player(rivals[i], i, grid.map_seed, rivals.size() + 1)
 
 	var players: Array[PlayerData] = [primary]
 	players.append_array(rivals)
@@ -112,8 +113,7 @@ func _simulate(seed_value: int, map_size: int, turns: int, legacy: bool = false,
 	var settle_ticks := 0
 
 	for turn_index in range(turns):
-		RivalAI.decide_production(primary, grid, rivals[0])
-		RivalAI.decide_research(primary)
+		V2StrategicAI.plan_turn(primary, grid)
 		GameManager._on_turn_changed(TurnManager.turn_number, 0)
 		# Drena a fila de IA do GameManager (rivais + monstros), trocando so' o
 		# tratamento dos colonizadores no modo legacy.
@@ -227,7 +227,7 @@ func _legacy_settle_toward_resources(unit: Unit, player: PlayerData, grid: HexGr
 			var land := grid.get_tile(near)
 			score += land.food_yield * 0.4 + land.production_yield * 0.3
 			if land.resource == "mana_node" and grid.city_owning_tile(near) == null:
-				score += 12.0 if StrategicAI.strategy(player) == CityIdentity.AXIS_ARCANA else 5.0
+				score += 12.0 if player.v2_ai_strategy.orientation == V2AIStrategyState.Orientation.ARCANE else 5.0
 		candidates.append({"coord": coord, "score": score})
 	candidates.sort_custom(func(a, b): return a.score > b.score)
 	for candidate in candidates.slice(0, 8):
@@ -252,7 +252,7 @@ func _objective_quality(grid: HexGrid, coord: Vector2i) -> Dictionary:
 	var nodes := 0
 	for tile_coord in grid.tiles_in_range(coord, 2):
 		var data: HexTileData = grid.get_tile(tile_coord)
-		if data == null or not data.can_be_worked():
+		if data == null or not data.is_usable_land():
 			continue
 		workable += 1
 		points += CitySite.tile_points(data)

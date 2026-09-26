@@ -182,7 +182,7 @@ func test_arcane_strategy_values_mana_nodes_more():
 	var grid := _flat_grid(20)
 	var military := _player()
 	var arcane := _player()
-	arcane.personality = {CityIdentity.AXIS_ARCANA: 1.0}
+	arcane.v2_ai_strategy.orientation = V2AIStrategyState.Orientation.ARCANE # Fase 25: a orientação V2 substitui a personalidade V1
 	var coord := Vector2i(6, 0)
 	grid.tiles[coord + HexGrid.NEIGHBOR_DIRS[0]].resource = "mana_node"
 	assert_gt(float(_score(grid, arcane, coord).parts.resources), float(_score(grid, military, coord).parts.resources))
@@ -265,8 +265,8 @@ func test_ai_does_not_produce_a_settler_when_no_site_is_acceptable():
 	for coord in grid.tiles.keys():
 		mine.explored_tiles[coord] = true
 	assert_false(CitySite.has_acceptable_site(grid, mine))
-	RivalAI.decide_production(mine, grid, other)
-	assert_ne(city.production_item, "settler")
+	var view := V2AIWorldView.capture(mine, grid)
+	assert_lt(V2StrategicAI._production_score(mine, city, "settler", view, {}), 0.0, "sem local aceitável a IA V2 nunca pontua o Colonizador")
 	grid.free()
 
 

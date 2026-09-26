@@ -103,28 +103,29 @@ func test_enemy_unit_in_peace_is_marked_as_peace():
 	assert_string_contains(_text(_inspect(Vector2i(2, 0))), "(em paz)")
 
 func test_own_caster_shows_school_action_and_cooldowns():
-	var mage := _unit("elementalist", human, Vector2i(1, 1))
-	mage.magic_cooldowns["Bola de Fogo"] = TurnManager.turn_number + 3
+	var mage := _unit("v2_unit_elementalist", human, Vector2i(1, 1))
+	mage.magic_cooldowns["v2_spell_dense_mist"] = TurnManager.turn_number + 3
 	var text := _text(_inspect(Vector2i(1, 1)))
-	assert_string_contains(text, "Conjurador — Elementalismo")
+	assert_string_contains(text, "Conjurador — ")
+	assert_string_contains(text, "Elementalismo")
 	assert_string_contains(text, "Ação: pronto para conjurar")
-	assert_string_contains(text, "Recarga: Bola de Fogo (3)")
+	assert_string_contains(text, "%s — recarga: 3 turno(s)" % V2SpellDatabase.get_spell("v2_spell_dense_mist").display_name)
 
 func test_enemy_caster_shows_school_but_not_cooldowns_or_actions():
-	var mage := _unit("elementalist", rival, Vector2i(1, 1))
-	mage.magic_cooldowns["Bola de Fogo"] = TurnManager.turn_number + 3
+	var mage := _unit("v2_unit_elementalist", rival, Vector2i(1, 1))
+	mage.magic_cooldowns["v2_spell_dense_mist"] = TurnManager.turn_number + 3
 	var text := _text(_inspect(Vector2i(1, 1)))
-	assert_string_contains(text, "Conjurador — Elementalismo")
-	assert_false("Recarga" in text, "recarga de magia inimiga e' segredo")
+	assert_string_contains(text, "Elementalismo")
+	assert_false("recarga" in text, "recarga de magia inimiga e' segredo")
 	assert_false("Ação:" in text)
 
 func test_silence_and_other_visible_status_effects_are_listed():
-	var mage := _unit("elementalist", rival, Vector2i(1, 1))
-	mage.magic_status["silence"] = TurnManager.turn_number + 2
-	assert_string_contains(_text(_inspect(Vector2i(1, 1))), "Silenciado (2 turno(s))")
-	var own := _unit("elementalist", human, Vector2i(2, 1))
-	own.magic_status["silence"] = TurnManager.turn_number + 2
-	assert_string_contains(_text(_inspect(Vector2i(2, 1))), "Ação: silenciado")
+	var mage := _unit("v2_unit_elementalist", rival, Vector2i(1, 1))
+	mage.magic_status["v2_spell_silence"] = V2OwnerTurnEffect.expiry_for_now()
+	assert_string_contains(_text(_inspect(Vector2i(1, 1))), "não pode conjurar feitiços", "estado público do alvo")
+	var own := _unit("v2_unit_elementalist", human, Vector2i(2, 1))
+	own.magic_status["v2_spell_silence"] = V2OwnerTurnEffect.expiry_for_now()
+	assert_string_contains(_text(_inspect(Vector2i(2, 1))), "Ação: Silêncio")
 
 # --- Monstros ----------------------------------------------------------------
 
@@ -153,23 +154,25 @@ func test_own_city_shows_management_facts_and_life():
 	var city := hex_grid.found_city(Vector2i(0, 0), human, "Alvorada")
 	var text := _text(_inspect(Vector2i(0, 0)))
 	assert_string_contains(text, "Alvorada")
-	assert_string_contains(text, "População: 1")
-	assert_string_contains(text, "Comida: ")
-	assert_string_contains(text, "Predios: ")
+	assert_string_contains(text, "Cidade I (sua)")
+	assert_string_contains(text, "Prédios: 0/4")
+	assert_string_contains(text, "Território: ")
+	assert_string_contains(text, "Produção: +")
 	assert_string_contains(text, "Vida: %d/%d" % [int(city.hp), int(city.max_hp())])
+	for legacy in ["População", "Comida", "trabalhad"]:
+		assert_false(legacy in text, legacy)
 
 func test_rival_city_shows_public_facts_only():
 	var city := hex_grid.found_city(Vector2i(3, 0), rival, "Silvana")
-	city.set_production("warrior")
-	city.stored_food = 7.0
-	city.buildings["granary"] = true
+	city.set_production("v2_unit_shieldbearer")
+	city.buildings["v2_building_guardian_hall"] = true
 	var text := _text(_inspect(Vector2i(3, 0)))
 	assert_string_contains(text, "Silvana")
 	assert_string_contains(text, "Elfos (em guerra)")
 	assert_string_contains(text, "Vida: ")
 	assert_false("Comida:" in text, "estoque de comida rival e' segredo")
 	assert_false("Predios:" in text, "lista de predios rival e' segredo")
-	assert_false("Guarda" in text, "producao rival e' segredo")
+	assert_false("Escudeiro" in text, "producao rival e' segredo")
 
 func test_rival_city_is_hidden_outside_the_vision_but_own_city_is_not():
 	hex_grid.found_city(Vector2i(3, 0), rival, "Silvana")
@@ -222,51 +225,43 @@ func test_lair_out_of_vision_shows_only_remembered_facts():
 
 func test_building_shows_owner_city_and_function():
 	var city := hex_grid.found_city(Vector2i(0, 0), human, "Alvorada")
-	city.buildings["granary"] = true
-	city.building_coords["granary"] = Vector2i(1, 0)
-	hex_grid.place_building(Vector2i(1, 0), "granary", human)
+	city.buildings["v2_building_market"] = true
+	city.repeatable_building_counts["v2_building_market"] = 1
+	city.repeatable_building_coords["v2_building_market"] = [Vector2i(1, 0)]
+	hex_grid.place_building(Vector2i(1, 0), "v2_building_market", human)
 	var inspection := _inspect(Vector2i(1, 0))
 	assert_eq(inspection.entries[0].kind, TileInspector.KIND_BUILDING)
 	var text := _text(inspection)
 	assert_string_contains(text, "Cidade: Alvorada")
-	assert_string_contains(text, "Efeitos:")
+	assert_string_contains(text, "Rendimento: +")
 	assert_string_contains(text, "operacional")
 
 func test_rival_building_is_visible_only_with_the_tile_in_view():
-	hex_grid.place_building(Vector2i(2, 1), "granary", rival)
+	hex_grid.place_building(Vector2i(2, 1), "v2_building_market", rival)
 	assert_eq(_kinds(_inspect(Vector2i(2, 1))), [TileInspector.KIND_BUILDING])
 	hex_grid.visibility[Vector2i(2, 1)] = HexGrid.Visibility.EXPLORED
 	assert_eq(_kinds(_inspect(Vector2i(2, 1))), [])
 
-func test_magic_structure_is_labeled_with_its_school():
-	hex_grid.place_building(Vector2i(1, 0), "arcane_tower", human)
+## Fase 25: a estrutura de Escola V2 se identifica pelo que treina (a "Estrutura mágica" V1 saiu).
+func test_school_building_shows_the_caster_it_trains():
+	hex_grid.place_building(Vector2i(1, 0), "v2_building_arcane_conclave", human)
 	var text := _text(_inspect(Vector2i(1, 0)))
-	assert_string_contains(text, "Estrutura mágica — Arcanismo")
+	assert_string_contains(text, "Treina: %s" % UnitDatabase.create_unit("v2_unit_arcanist").unit_name)
 
 func test_own_construction_site_shows_progress_and_rival_site_hides_what_is_built():
 	var city := hex_grid.found_city(Vector2i(0, 0), human, "Alvorada")
-	city.set_production("granary")
+	city.set_production("v2_building_guardian_hall")
 	city.pending_building_coord = Vector2i(1, 0)
 	city.stored_production = city.production_cost() / 2.0
 	var own_text := _text(_inspect(Vector2i(1, 0)))
 	assert_string_contains(own_text, "Obra: ")
 	assert_string_contains(own_text, "Progresso: 50%")
 	var rival_city := hex_grid.found_city(Vector2i(4, 0), rival, "Silvana")
-	rival_city.set_production("walls")
+	rival_city.set_production("v2_building_warrior_hall")
 	rival_city.pending_building_coord = Vector2i(5, 0)
 	var rival_text := _text(_inspect(Vector2i(5, 0)))
 	assert_string_contains(rival_text, "Obra em andamento")
-	assert_false("Muralha" in rival_text, "o que o rival constroi e' segredo")
-
-func test_magic_region_and_ritual_are_listed_for_visible_tiles():
-	rival.magic_effects.append({"effect": "aurora", "center": [1, 1], "origin": [1, 1], "radius": 2, "expires": TurnManager.turn_number + 4, "changes": []})
-	var inspection := _inspect(Vector2i(1, 1))
-	assert_true(TileInspector.KIND_MAGIC in _kinds(inspection))
-	assert_string_contains(_text(inspection), "Duração restante: 4 turno(s)")
-	hex_grid.visibility[Vector2i(1, 1)] = HexGrid.Visibility.EXPLORED
-	assert_false(TileInspector.KIND_MAGIC in _kinds(_inspect(Vector2i(1, 1))), "area mágica inimiga fora da visão continua oculta")
-	human.magic_effects.append({"effect": "aurora", "center": [1, 1], "origin": [1, 1], "radius": 2, "expires": TurnManager.turn_number + 4, "changes": []})
-	assert_true(TileInspector.KIND_MAGIC in _kinds(_inspect(Vector2i(1, 1))), "area propria sempre visivel")
+	assert_false("Salão" in rival_text, "o que o rival constroi e' segredo")
 
 func test_resource_is_the_main_entry_when_nothing_else_is_there():
 	hex_grid.tiles[Vector2i(2, 0)].resource = "iron"
@@ -274,8 +269,9 @@ func test_resource_is_the_main_entry_when_nothing_else_is_there():
 	assert_eq(inspection.entries[0].kind, TileInspector.KIND_RESOURCE)
 	var text := _text(inspection)
 	assert_string_contains(text, "Recurso: Ferro")
-	assert_string_contains(text, "+2 produção")
+	assert_string_contains(text, "Melhoria: ")
 	assert_string_contains(text, "Terreno: Selva")
+	assert_false("trabalhado" in text, "Fase 25: sem semântica de tile trabalhado")
 
 # --- Tile vazio, multiplas entidades, segredo ---------------------------------
 
@@ -284,15 +280,16 @@ func test_empty_tile_shows_only_terrain():
 	assert_eq(inspection.entries.size(), 0)
 	var text := _text(inspection)
 	assert_string_contains(text, "Terreno: Selva (2, 0)")
-	assert_string_contains(text, "Comida 2 | Produção 1 | Ouro 0")
+	assert_string_contains(text, "Mov. ")
+	assert_false("Comida" in text, "Fase 25: rendimento V1 do terreno não aparece")
 
 func test_multiple_entities_keep_priority_order_and_are_all_reachable():
 	hex_grid.tiles[Vector2i(1, 0)].resource = "horses"
-	hex_grid.place_building(Vector2i(1, 0), "granary", human)
+	hex_grid.place_building(Vector2i(1, 0), "v2_building_market", human)
 	_unit("warrior", human, Vector2i(1, 0))
 	var inspection := _inspect(Vector2i(1, 0))
 	assert_eq(_kinds(inspection), [TileInspector.KIND_UNIT, TileInspector.KIND_BUILDING, TileInspector.KIND_RESOURCE])
-	assert_string_contains(_text(inspection, "building"), "Efeitos")
+	assert_string_contains(_text(inspection, "building"), "Rendimento")
 	assert_string_contains(_text(inspection, "resource"), "Recurso: Cavalos")
 	assert_string_contains(_text(inspection, "no-such-key"), "Guarda", "chave desconhecida cai na entidade principal")
 	assert_string_contains(TileInspector.summary_line(inspection), "também aqui: ")
@@ -319,12 +316,6 @@ func test_unit_outside_the_vision_is_hidden_but_own_units_never_are():
 	assert_eq(_kinds(_inspect(Vector2i(2, 0))), [])
 	assert_eq(_kinds(_inspect(Vector2i(-2, 0))), [TileInspector.KIND_UNIT])
 	assert_string_contains(_text(_inspect(Vector2i(2, 0))), "fora da visão")
-
-func test_veiled_enemy_unit_is_not_inspectable():
-	_unit("warrior", rival, Vector2i(2, 0))
-	rival.magic_effects.append({"effect": "veil", "center": [2, 0], "origin": [2, 0], "radius": 1, "expires": TurnManager.turn_number + 5, "changes": []})
-	assert_true(MagicRuntime.concealed(hex_grid.get_unit_at(Vector2i(2, 0)), human, hex_grid), "pre-condicao: unidade velada")
-	assert_false(TileInspector.KIND_UNIT in _kinds(_inspect(Vector2i(2, 0))))
 
 func test_destroyed_entities_leave_no_stale_entry():
 	var unit := _unit("warrior", rival, Vector2i(2, 0))

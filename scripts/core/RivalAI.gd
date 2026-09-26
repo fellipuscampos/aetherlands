@@ -24,300 +24,18 @@ extends RefCounted
 ## fica esperando escolta em vez de virar alvo facil isolado na linha de
 ## frente. Ainda assim revida normalmente se algo entrar no alcance dela.
 ##
-## Roadmap de gameplay Fase 1: decide_production() escolhe o que cada
-## cidade produz por PONTUACAO (ver SCORE_WEIGHT_* e decide_production),
-## respeitando os mesmos City.can_build()/can_train() do jogador humano —
-## antes disso a IA nunca conseguia CONSTRUIR predio nenhum (bypass
-## documentado em BuildingDatabase.gd) mas ainda assim treinava tropa
-## avancada de graca. decide_war() pode iniciar guerra sozinha contra o
-## oponente quando uma avaliacao de oportunidade justificar (ver
-## WAR_WEIGHT_*) — antes disso so o jogador humano jamais declarava
-## guerra primeiro.
+## Fase 24/25: pesquisa, economia, filas, Técnicas/Magia e objetivos de vitória são de V2StrategicAI/
+## V2AITacticalAI; este arquivo guarda a camada COMPARTILHADA de execução no mapa (movimento, combate
+## comum, colonos, defesa contra o Dragão) e a diplomacia (decide_war/decide_campaign/decide_peace).
+## decide_war() pode iniciar guerra sozinha contra o oponente quando uma avaliacao de oportunidade
+## justificar (ver WAR_WEIGHT_*).
 
 const PERCEPTION_RANGE := 5
 const RETREAT_HP_FRACTION := 0.35 # abaixo disso, foge pra curar em vez de brigar
 const ESCORT_RANGE := 2 # distancia maxima pra um aliado corpo-a-corpo contar como escolta
-const MILITARY_KINDS := ["warrior", "warrior", "archer", "cavalry", "catapult", "mage", "griffin", "treant"] # pesos simples
-
-## Pesos da pontuacao de producao (ver decide_production) — nomeados e
-## comentados de proposito (pedido do usuario, roadmap Fase 1: "o score
-## precisa ser simples e deterministico o bastante pra eu conseguir
-## explicar em uma frase por que uma cidade escolheu Muralha em vez de
-## Quartel"). Cada peso corresponde a UMA frase de explicacao:
-## - DEFENSE: "esta cidade nao tem Muralha" (maior peso — perder uma
-##   cidade e a pior consequencia possivel).
-## - THREAT: "ha inimigo conhecido perto desta cidade agora".
-## - ECONOMY_GAP: "falta um predio basico de economia que ja da pra
-##   construir" (pontuacao fixa: a propria existencia do candidato ja E
-##   o sinal de deficit, nao precisa de mais calculo).
-## - MILITARY_DEFICIT: "meu exercito e pequeno perto da ameaca que eu
-##   conheco" — vale tanto pra treinar mais uma tropa quanto pra construir
-##   o predio de treino que ainda falta, de propósito (fazem parte do
-##   mesmo objetivo "ter mais exercito").
-const SCORE_WEIGHT_DEFENSE := 3.0
-const SCORE_WEIGHT_THREAT := 2.0
-const SCORE_WEIGHT_ECONOMY_GAP := 1.5
-## >= ECONOMY_GAP de proposito: um rival com deficit militar MAXIMO (zero
-## unidade propria) precisa poder vencer "so mais um predio de economia"
-## pelo menos uma vez — senao, encadeando predio de economia atras de
-## predio de economia, uma cidade sem ameaca visivel nunca treinaria
-## exercito nenhum ate esgotar toda a lista de predios de rendimento.
-const SCORE_WEIGHT_MILITARY_DEFICIT := 2.0
-## Roadmap "Parte C" (composicao de exercito), C1 — preferencia SECUNDARIA
-## de composicao (nao um desempate: pode decidir entre dois candidatos
-## empatados nos outros termos, so nunca supera deficit militar real
-## sozinho). Papeis vem de ArmyComposition.roles_for_kind (derivados de
-## UnitData, sem taxonomia nova). Hierarquia verificada numericamente: no
-## ramo militar de _score_production_candidate (com o *0.5 ja existente em
-## THREAT), deficit militar maximo sozinho = SCORE_WEIGHT_MILITARY_DEFICIT
-## * 1.0 = 2.0, contra ameaca maxima + role gap maximo combinados sem
-## deficit = SCORE_WEIGHT_THREAT*1*0.5 + SCORE_WEIGHT_ROLE_GAP*1.0 =
-## 1.0+0.5 = 1.5 — 2.0 > 1.5, entao deficit real sempre vence.
-const SCORE_WEIGHT_ROLE_GAP := 0.5
-const PRODUCTION_THREAT_RADIUS := 6 # raio (em tiles) pra um inimigo visivel contar como "perto" de uma cidade
-## Task 21 -- producao EMERGENCIAL contra monstros (ver CityDefense.assess/
-## is_emergency): cidade ocupada com um predio (nao tropa) so' o abandona
-## pra treinar tropa se ainda nao passou dessa fracao do custo; compra
-## rapida da tropa de emergencia so' com ouro sobrando.
-const EMERGENCY_ABANDON_PROGRESS_FRACTION := 0.5
-const EMERGENCY_RUSH_MIN_GOLD := 40.0
-const EMERGENCY_RUSH_GOLD_FRACTION := 0.6
-## Empate entre a tropa unica da propria raca e uma tropa comum (mesma
-## pontuacao de deficit militar, ver _score_production_candidate): a
-## exclusiva ganha por uma margem minima — regra explicavel numa frase
-## ("tudo mais igual, treina sua tropa de elite, nao mais um recruta
-## generico"), nao um numero escolhido pra fazer teste passar.
-const SCORE_RACIAL_UNIT_TIE_BREAK := 0.01
-
-## MILITARY_KINDS + a tropa racial (pesada igual "warrior", duas entradas)
-## quando o jogador tem uma raca com tropa propria (UnitDatabase.
-## RACE_UNIQUE_KIND — pedido do usuario: "insira outras civilizacoes de
-## fantasia... voce cria tropas especificas pra essas civilizacoes",
-## depois estendido pro jogador humano tambem poder escolher raca na tela
-## de titulo) — civ sem raca reconhecida so usa o elenco comum, sem
-## nenhuma tropa exclusiva aparecer no sorteio.
-static func _military_kinds_for(player: PlayerData) -> Array:
-	var kinds := MILITARY_KINDS.duplicate()
-	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
-		if kind not in kinds and kind != "settler" and UnitDatabase.race_for_unique_kind(kind) == "":
-			kinds.append(kind)
-	var race: String = player.civ.race if player.civ else ""
-	if UnitDatabase.RACE_UNIQUE_KIND.has(race):
-		var unique: String = UnitDatabase.RACE_UNIQUE_KIND[race]
-		kinds.append(unique)
-		kinds.append(unique)
-	return kinds
-
-## Decide o que cada cidade produz por PONTUACAO (ver pesos SCORE_WEIGHT_*
-## acima), nao mais um sorteio cego nem uma fila fixa de construcao —
-## pedido do usuario (roadmap Fase 1): "eu nao usaria uma ordem fixa de
-## construcao... rapidamente vira uma IA previsivel". Corrige tambem a
-## assimetria documentada em City.can_train()/BuildingDatabase.gd: antes
-## este metodo chamava set_production() direto, pulando can_build()/
-## can_train() (o mesmo gate que o jogador humano e obrigado a respeitar)
-## — uma cidade rival nunca tinha como CONSTRUIR o predio de treino que a
-## tropa avancada exige, entao a tropa saia "de graca". Agora so entram na
-## pontuacao os candidatos que ja passam nesses dois gates, exatamente
-## como o jogador ve na propria UI (HUD._on_produce_pressed).
-##
-static func decide_production(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
-	var visible := hex_grid.compute_visible_tiles(player)
-	var military_deficit := _military_deficit(player, opponent, visible)
-	var role_counts := _role_counts(player)
-	var race: String = player.civ.race if player.civ else ""
-	var racial_unique_kind: String = UnitDatabase.RACE_UNIQUE_KIND.get(race, "")
-	for city in player.cities:
-		# Task 21 -- monstros ameacando a cidade (ver CityDefense.assess): nunca
-		# entravam na decisao, que so' olhava unidades de outro jogador.
-		var monster_threat := CityDefense.assess(city, hex_grid, visible)
-		var emergency := CityDefense.is_emergency(monster_threat)
-		if city.production_item != "":
-			var abandon_for_troops := emergency and not _is_troop_item(city.production_item) and city.stored_production < city.production_cost(hex_grid) * EMERGENCY_ABANDON_PROGRESS_FRACTION
-			if not abandon_for_troops:
-				if emergency and _is_troop_item(city.production_item):
-					if city.can_rush_buy() and player.gold > EMERGENCY_RUSH_MIN_GOLD and city.rush_buy_cost(hex_grid) <= player.gold * EMERGENCY_RUSH_GOLD_FRACTION:
-						city.rush_buy(hex_grid)
-				elif city.can_rush_buy() and player.gold > 200 and city.rush_buy_cost(hex_grid) <= player.gold * 0.35:
-					city.rush_buy(hex_grid)
-				continue
-		if emergency:
-			var emergency_troop := _best_emergency_troop(player, city, hex_grid, monster_threat, role_counts)
-			if emergency_troop != "":
-				city.set_production(emergency_troop)
-				continue
-		var settlers := player.units.filter(func(u): return u.unit_data.can_found_city).size()
-		settlers += player.cities.filter(func(c): return c.production_item == "settler").size()
-		var desired_cities := mini(8, 2 + TurnManager.turn_number / 35)
-		if player.cities.size() + settlers < desired_cities and (player.cities.size() < 2 or city.population >= 3) and _has_settle_site(player, hex_grid):
-			city.set_production("settler")
-			continue
-		var defense_need := 0.0 if city.buildings.has("walls") else 1.0
-		var threat := 1.0 if _city_under_threat(city, opponent, visible) else 0.0
-		var city_deficit := military_deficit
-		if monster_threat.level >= CityDefense.LEVEL_AWARE:
-			# Proporcional: ameaca de monstro fraca/distante so' empurra de leve
-			# (level < 1.0); a MAIOR das duas fontes vale, nunca soma.
-			threat = maxf(threat, monster_threat.level)
-			city_deficit = maxf(military_deficit, monster_threat.deficit)
-
-		var best_id := ""
-		var best_score := -INF
-		for candidate_id in _production_candidates(player, city, hex_grid):
-			var score := _score_production_candidate(candidate_id, defense_need, threat, city_deficit, role_counts)
-			score += StrategicAI.production_score(player, city, candidate_id, hex_grid)
-			if candidate_id == racial_unique_kind:
-				score += SCORE_RACIAL_UNIT_TIE_BREAK
-			if score > best_score:
-				best_score = score
-				best_id = candidate_id
-		if best_id != "" and best_score > 0:
-			city.set_production(best_id)
-			_assign_building_site(city, best_id, hex_grid)
-
-static func _building_site(city: City, hex_grid: HexGrid) -> Vector2i:
-	var candidates := hex_grid.get_neighbors(city.coord)
-	for owned in city.owned_tiles:
-		if not owned in candidates:
-			candidates.append(owned)
-	for coord in candidates:
-		if city.is_valid_building_tile(coord, hex_grid):
-			return coord
-	return City.NO_PENDING_COORD
-
-static func _assign_building_site(city: City, id: String, hex_grid: HexGrid) -> void:
-	var building := BuildingDatabase.get_building(id)
-	if building and not building.self_placed and building.upgrades_building == "":
-		city.pending_building_coord = _building_site(city, hex_grid)
-
-## Todo predio que a cidade ja pode CONSTRUIR (City.can_build — tech +
-## pre-requisito de predio + slot livre, mesmo gate do jogador) mais toda
-## unidade militar que ela ja pode TREINAR (City.can_train — predio de
-## treino presente — E com tech propria pesquisada, player.has_unlocked).
-## Excecao: arcane_sanctuary (Roadmap Fase F/G) so entra nos candidatos
-## quando a CIVILIZACAO ja cumpre VictoryConditions.
-## meets_arcane_ritual_prerequisites — decisao explicita do usuario: nao e
-## um novo balanceamento, e filtrar um candidato obviamente prematuro (a IA
-## nao deveria gastar producao numa infraestrutura cujo beneficio de
-## vitoria esta muito distante, so pelo +2 mana modesto). O gate e
-## civilizacional, nao por cidade — qual cidade especifica constroi
-## continua responsabilidade normal da pontuacao abaixo.
-static func _production_candidates(player: PlayerData, city: City, hex_grid: HexGrid) -> Array:
-	var candidates: Array = []
-	for building in BuildingDatabase.all_buildings():
-		if building.id == VictoryConditions.SANCTUARY_BUILDING_ID and GameManager.victory_rules_version < 2 and not VictoryConditions.meets_arcane_ritual_prerequisites(player, hex_grid):
-			continue
-		if city.can_build(building.id):
-			if not building.self_placed and building.upgrades_building == "" and _building_site(city, hex_grid) == City.NO_PENDING_COORD:
-				continue
-			candidates.append(building.id)
-	for kind in _military_kinds_for(player):
-		if not (kind in candidates) and player.has_unlocked(kind) and city.can_train(kind):
-			candidates.append(kind)
-	return candidates
-
-## Roadmap 5B.3-G v2 -- pedido explicito do usuario: "durante a preparação
-## e evento, as cidades produzam especificamente tropas apenas" (nao mais
-## so' uma pontuacao inclinada pra militar entre outros candidatos, ver
-## decide_emergency_troop_production abaixo). Mesmo elenco de
-## _production_candidates, so' que remove Muralhas e qualquer predio de
-## ECONOMIA PURA (trains_unit == "") -- sobra so' unidade militar em si e o
-## predio de TREINO que falta pra desbloquear uma (ex.: Quartel), nunca
-## nenhum candidato fora do que a cidade ja pode legitimamente construir/
-## treinar (mesmos gates can_build/can_train de sempre).
-static func _troop_only_candidates(player: PlayerData, city: City, hex_grid: HexGrid) -> Array:
-	var candidates: Array = []
-	for candidate_id in _production_candidates(player, city, hex_grid):
-		if candidate_id == "walls":
-			continue
-		var building: BuildingData = BuildingDatabase.get_building(candidate_id)
-		if building and building.trains_unit == "":
-			continue
-		candidates.append(candidate_id)
-	return candidates
-
-## Task 21 -- item de producao que e' TROPA (unidade militar), nem predio
-## nem Colonizador.
-static func _is_troop_item(item: String) -> bool:
-	return item != "" and item != "settler" and BuildingDatabase.get_building(item) == null
-
-## Melhor UNIDADE (nunca predio: uma emergencia nao espera um Quartel ficar
-## pronto) entre _troop_only_candidates, pela mesma pontuacao militar da
-## producao normal + poder por custo. "" se a cidade nao treina nenhuma
-## tropa agora -- decide_production cai na pontuacao normal, que ainda pode
-## escolher o predio de treino faltante (deficit alto).
-static func _best_emergency_troop(player: PlayerData, city: City, hex_grid: HexGrid, monster_threat: Dictionary, role_counts: Dictionary) -> String:
-	var best_id := ""
-	var best_score := -INF
-	for candidate_id in _troop_only_candidates(player, city, hex_grid):
-		if BuildingDatabase.get_building(candidate_id) != null:
-			continue
-		var data := UnitDatabase.create_unit(candidate_id)
-		if data.attack <= 0.0:
-			continue
-		var score := _score_production_candidate(candidate_id, 0.0, monster_threat.level, monster_threat.deficit, role_counts)
-		score += (data.attack + data.defense + data.max_hp * 0.15) / maxf(data.production_cost, 1.0)
-		if candidate_id == UnitDatabase.RACE_UNIQUE_KIND.get(player.civ.race if player.civ else "", ""):
-			score += SCORE_RACIAL_UNIT_TIE_BREAK
-		if score > best_score:
-			best_score = score
-			best_id = candidate_id
-	return best_id
-
-## Uma frase por peso (ver comentario dos SCORE_WEIGHT_* acima). Muralhas
-## sempre usa DEFENSE+THREAT (protege a cidade em si); predio de
-## economia pura (sem trains_unit, ex Celeiro/Oficina/Mercado/Torre dos
-## Sabios) usa so ECONOMY_GAP (a propria falta do predio ja e o sinal);
-## predio de TREINO (com trains_unit, ex Quartel/Estabulo) e qualquer
-## unidade militar competem pela MESMA pontuacao de deficit militar —
-## de proposito, pra construir o predio de treino faltante concorrer de
-## igual pra igual com so treinar mais uma tropa da que ja existe. Role
-## gap (C1) so se aplica nesse ultimo ramo — candidato sem papel (predio
-## de treino em si, ou "walls") recebe bonus 0 de _role_gap_bonus.
-static func _score_production_candidate(candidate_id: String, defense_need: float, threat: float, military_deficit: float, role_counts: Dictionary) -> float:
-	if candidate_id == "walls":
-		return SCORE_WEIGHT_DEFENSE * defense_need + SCORE_WEIGHT_THREAT * threat
-	var building: BuildingData = BuildingDatabase.get_building(candidate_id)
-	if building and building.trains_unit == "":
-		return SCORE_WEIGHT_ECONOMY_GAP
-	return SCORE_WEIGHT_MILITARY_DEFICIT * military_deficit + SCORE_WEIGHT_THREAT * threat * 0.5 + SCORE_WEIGHT_ROLE_GAP * _role_gap_bonus(candidate_id, role_counts)
-
-## Cidade "sob ameaca" = HP abaixo de 75% (ja levou dano) OU unidade do
-## oponente visivel dentro de PRODUCTION_THREAT_RADIUS tiles dela.
-static func _city_under_threat(city: City, opponent: PlayerData, visible: Dictionary) -> bool:
-	if city.hp < city.max_hp() * 0.75:
-		return true
-	for unit in opponent.units:
-		if visible.has(unit.coord) and HexMetrics.axial_distance(unit.coord, city.coord) <= PRODUCTION_THREAT_RADIUS:
-			return true
-	return false
-
-## Proporcao entre unidades militares proprias e ameaca CONHECIDA (unidade
-## do oponente atualmente visivel — mesma nocao de "conhecido" que
-## _choose_target usa pra combate) — 0.0 = exercito proprio ja cobre (ou
-## sobra pra) a ameaca vista, 1.0 = nenhuma unidade militar propria pra
-## nenhuma ameaca vista. Calculado uma vez por PLAYER (nao por cidade) de
-## proposito — simplificacao deliberada pra manter o score explicavel;
-## "perto de qual cidade" ficaria mais fiel mas exigiria contar unidades
-## proprias por raio de cada cidade, complexidade nao justificada agora.
-static func _military_deficit(player: PlayerData, opponent: PlayerData, visible: Dictionary) -> float:
-	var own_military := 0
-	for unit in player.units:
-		if unit.unit_data.attack > 0.0:
-			own_military += 1
-	var known_threat := 0
-	for unit in opponent.units:
-		if visible.has(unit.coord):
-			known_threat += 1
-	# known_threat minimo de 1 (mesmo em paz/sem nada visivel): um rival
-	# ainda deveria querer ALGUM exercito, nao zerar a necessidade so
-	# porque nao ha ameaca vista no momento.
-	var ratio := float(own_military) / float(max(known_threat, 1))
-	return clamp(1.0 - ratio, 0.0, 1.0)
 
 ## Roadmap "Parte C", C1 — conta unidades vivas por papel (ArmyComposition.
-## roles_for_kind). Estado DERIVADO, recomputado a cada decide_production —
-## mesmo padrao de CityIdentity.civilization_axis_strength sobre City.
-## buildings, nunca persistido em PlayerData. Unidade multi-papel (ex.
+## roles_for_kind), usado pela escolha de alvo de guerra. Estado DERIVADO, nunca persistido. Unidade multi-papel (ex.
 ## cavalry=[melee,cavalry]) conta pros DOIS balaios — nao ha "papel
 ## principal".
 static func _role_counts(player: PlayerData) -> Dictionary:
@@ -328,20 +46,6 @@ static func _role_counts(player: PlayerData) -> Dictionary:
 		for role in ArmyComposition.roles_for_kind(unit.unit_data.visual_kind):
 			counts[role] += 1
 	return counts
-
-## Roadmap "Parte C", C1 — 1/(1+contagem) por papel do candidato, MAX entre
-## os papeis (nao soma: uma unidade com 2 papeis nao vale o dobro so por
-## ser multi-papel, ela cobre a MAIOR lacuna que consegue preencher).
-## Candidato sem papel nenhum (predio, settler) = 0.0.
-static func _role_gap_bonus(candidate_id: String, role_counts: Dictionary) -> float:
-	var roles := ArmyComposition.roles_for_kind(candidate_id)
-	if roles.is_empty():
-		return 0.0
-	var best := 0.0
-	for role in roles:
-		var gap: float = 1.0 / (1.0 + float(role_counts.get(role, 0)))
-		best = max(best, gap)
-	return best
 
 ## Pesos da avaliacao de guerra oportunista (ver decide_war) — pedido do
 ## usuario (roadmap Fase 1): "guerra e decidida por uma avaliacao de
@@ -406,7 +110,7 @@ static func _known_enemy_cities_of(player: PlayerData, opponent: PlayerData, hex
 ## como hipotese de balanceamento sujeita a revisao pelo harness, nao como
 ## invariante.
 static func _role_fit_bonus(target_city: City, role_counts: Dictionary) -> float:
-	var needed_role: String = ArmyComposition.ROLE_SIEGE if target_city.buildings.has("walls") else ArmyComposition.ROLE_CAVALRY
+	var needed_role: String = ArmyComposition.ROLE_SIEGE if target_city.has_fortification() else ArmyComposition.ROLE_CAVALRY
 	var have: float = role_counts.get(needed_role, 0)
 	return clamp(have / WAR_ROLE_FIT_NORM, 0.0, 1.0)
 
@@ -497,7 +201,7 @@ static var WAR_OBJECTIVE_TERM_WEIGHTS := {
 static func _war_target_raw_factors(player: PlayerData, hex_grid: HexGrid, city: City, role_counts: Dictionary) -> Dictionary:
 	return {
 		"proximity": 1.0 if _distance_to_nearest_own_city(player, city.coord) <= WAR_PROXIMITY_RANGE else 0.0,
-		"vulnerability": 1.0 if not city.buildings.has("walls") else 0.0,
+		"vulnerability": 1.0 if not city.has_fortification() else 0.0,
 		"resource_richness": _city_resource_richness(city, hex_grid),
 		"role_fit": _role_fit_bonus(city, role_counts),
 	}
@@ -686,13 +390,18 @@ static func _notify_human(opponent: PlayerData, text: String) -> void:
 static func decide_war(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
 	if player.is_at_war_with(opponent) or not Diplomacy.can_declare_war(player, opponent):
 		return
-	var threat := MagicAI.public_threat_target(opponent, player, hex_grid)
-	if threat != MagicRuntime.INVALID and player.units.filter(func(u): return u.unit_data.attack > 0).size() >= 2:
-		player.known_enemy_cities[threat] = true
+	var best = _best_war_objective(player, hex_grid, opponent)
+	# O Ritual Final é público, mas só acrescenta pressão à decisão existente: tratados/cooldowns já
+	# foram validados acima, prontidão e RNG continuam obrigatórios. Não existe `if ritual: declare_war`.
+	var ritual := V2StrategicAI.public_ritual_info_for(opponent)
+	var ritual_pressure := V2StrategicAI.public_ritual_war_pressure(opponent)
+	var base_score := float(best.score) if best != null else 0.0
+	if not ritual.is_empty() and player.units.filter(func(u): return u.unit_data.attack > 0).size() >= 2 and base_score + ritual_pressure >= WAR_SCORE_THRESHOLD and player.ai_rng.randf() < WAR_DECLARE_CHANCE_WHEN_READY:
+		var ritual_site: Vector2i = ritual.site_coord
+		player.known_enemy_cities[ritual_site] = true
 		Diplomacy.declare_war(player, opponent, "Interromper ritual estratégico")
 		_notify_human(opponent, "%s declarou guerra para interromper seu ritual!" % player.civ.civ_name)
 		return
-	var best = _best_war_objective(player, hex_grid, opponent)
 	if best == null:
 		return
 	if best.score >= WAR_SCORE_THRESHOLD and player.ai_rng.randf() < WAR_DECLARE_CHANCE_WHEN_READY:
@@ -901,11 +610,7 @@ const WAR_WEARINESS_OFFER_PEACE_THRESHOLD := 60.0
 ## dimensao de "incapaz estrategicamente" ainda.
 ##
 ## Diplomacy._accepts_peace() NUNCA e tocado — continua significando so
-## "aceito uma proposta que recebi", nunca "eu decido propor". Isso importa
-## porque _accepts_peace ja tem um segundo consumidor semantico
-## (TradeManager.propose_route, decide se um rival aceita uma ROTA DE
-## COMERCIO, reaproveitando a mesma heuristica) — mudar sua assinatura ou
-## semantica quebraria comercio junto.
+## "aceito uma proposta que recebi", nunca "eu decido propor".
 ##
 ## Recusa da proposta (Diplomacy.propose_peace -> _accepts_peace) e um
 ## resultado NORMAL, nao um erro: guerra continua, nenhum estado novo
@@ -991,53 +696,6 @@ static func _distance_to_nearest_own_city(player: PlayerData, coord: Vector2i) -
 			best = d
 	return best
 
-## Roadmap de gameplay Fase 4A — pequeno acrescimo ao escopo original do
-## plano (TradeManager.propose_route por si so nunca teria como comecar
-## sozinho: hoje so existe UI humana pra guerra/paz, nenhuma pra
-## comercio ainda). Sem isto, o mecanismo de rota nunca seria exercitado
-## de verdade no harness de simulacao (Fase 0) nem numa partida real
-## contra a IA — ficaria testado so no nivel de unidade. Chance baixa por
-## turno, so entre cidade JA conhecida (reusa _nearest_known_enemy_city —
-## "conhecida", nao necessariamente hostil, mesma nocao de decide_war) e
-## em paz.
-const TRADE_PROPOSE_CHANCE_PER_TURN := 0.1
-
-static func decide_trade(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
-	if player.is_at_war_with(opponent):
-		return
-	if player.ai_rng.randf() >= TRADE_PROPOSE_CHANCE_PER_TURN:
-		return
-	var target_coord = _nearest_known_enemy_city(player, opponent, hex_grid)
-	if target_coord == null:
-		return
-	var target_city := hex_grid.get_city_at(target_coord)
-	if target_city == null:
-		return
-	for city in player.cities:
-		if TradeManager.active_route_count(city) < city.max_trade_routes(hex_grid):
-			TradeManager.propose_route(city, target_city, hex_grid)
-			return
-
-## Roadmap "Fase F"/G — decisao MINIMA de IA pra Ascensao Arcana: responde
-## so "tenho condicoes de tentar?", nunca "e seguro tentar?" (decisao
-## explicita do usuario). Sem peso de guerra, forca militar ou previsao de
-## sustentacao: o proprio ritual ja tem mecanismo de risco embutido
-## (GameManager._update_arcane_ritual interrompe sozinho se a cidade cair
-## ou os nodulos caírem abaixo de 3) — se a IA estiver em guerra, ela deve
-## poder assumir esse risco como o jogador humano assumiria. Exige mana pra
-## ativacao MAIS uma manutencao inteira (nao as 5 sustentadas — isso e
-## condicao por turno, decidida dinamicamente turno a turno) pra nao
-## comecar conscientemente um ritual que seria interrompido no primeiro
-## processamento de turno por falta de mana.
-static func decide_arcane_ritual(player: PlayerData, hex_grid: HexGrid) -> void:
-	if player.arcane_ritual_active:
-		return
-	if not VictoryConditions.meets_arcane_ritual_prerequisites(player, hex_grid):
-		return
-	if player.mana < VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST + VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN:
-		return
-	GameManager.activate_arcane_ritual(player)
-
 ## Roadmap "Fase Macro" 5B.2 -- decisao MINIMA/provisoria de participacao
 ## em eventos mundiais (docs/DRAGON_EVENT_DESIGN.md): SEMPRE participa,
 ## uma unica vez por evento, assim que ele entra em Preparation. Regra de
@@ -1053,49 +711,6 @@ static func decide_world_event_participation(player: PlayerData, civ_index: int,
 	if event.participants.has(civ_index):
 		return
 	event.participants[civ_index] = {"decision": true}
-
-## Roadmap "Fase Macro" 5B.3-G v2 -- pedido explicito do usuario apos
-## playtest: "durante a preparação e evento, as cidades produzam
-## especificamente tropas apenas" -- mais forte que so' inclinar a
-## pontuacao pra militar (v1, revisada): agora restringe os PROPRIOS
-## candidatos a treino/tropa (_troop_only_candidates), nunca deixando
-## Muralhas/economia competir e vencer por acidente. Reusa a MESMA
-## pontuacao de sempre (_score_production_candidate, threat=1.0 forcado --
-## o Dragao nao e' `opponent`, entao _city_under_threat nunca o veria
-## sozinho) sobre esse conjunto menor -- nunca uma unidade nova nem
-## producao gratis. Sem o atalho "cidade unica -> sempre colonizador" de
-## decide_production: colonizador nao e' uma tropa, e' economia disfarcada;
-## se nao houver candidato nenhum (sem Quartel/tropa desbloqueada ainda),
-## simplesmente nao muda a producao atual (no-op seguro). Generica por
-## proposito -- quem chama decide SE esta civ esta ameacada (ver
-## DragonEvent.is_civ_threatened), nao esta funcao.
-static func prepare_for_world_event(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
-	var troops := player.units.filter(func(u): return u.unit_data.attack > 0).size()
-	var enough := troops >= maxi(10, player.cities.size() * 6)
-	var visible := hex_grid.compute_visible_tiles(player)
-	var military_deficit := _military_deficit(player, opponent, visible)
-	var role_counts := _role_counts(player)
-	var race: String = player.civ.race if player.civ else ""
-	var racial_unique_kind: String = UnitDatabase.RACE_UNIQUE_KIND.get(race, "")
-	for city in player.cities:
-		var candidates := _troop_only_candidates(player, city, hex_grid)
-		if city.production_item in candidates:
-			continue # Preserva a obra/tropa já encomendada e o progresso pago.
-		if enough:
-			city.set_production("")
-			continue
-		var best_id := ""
-		var best_score := -INF
-		for candidate_id in candidates:
-			var score := _score_production_candidate(candidate_id, 0.0, 1.0, military_deficit, role_counts)
-			if candidate_id == racial_unique_kind:
-				score += SCORE_RACIAL_UNIT_TIE_BREAK
-			if score > best_score:
-				best_score = score
-				best_id = candidate_id
-		if best_id != "":
-			city.set_production(best_id)
-			_assign_building_site(city, best_id, hex_grid)
 
 ## Roadmap "Fase Macro" 5B.3-G, "interceptacao real" -- Unit -> CombatResolver
 ## -> Dragon Unit, reusando move_unit_toward/is_favorable_attack EXATAMENTE
@@ -1181,152 +796,6 @@ static func _nearest_own_city(player: PlayerData, from: Vector2i) -> City:
 			best = city
 	return best
 
-## Roadmap "Parte B" B3 — pesos da pontuacao de PESQUISA (mesmo estilo
-## nomeado/comentado de SCORE_WEIGHT_*/WAR_WEIGHT_* acima, ver decide_
-## production/decide_war). CONTINUATION preserva o comportamento ja
-## validado de Fase 4A ("tech cujo pre-requisito ja foi cumprido ganha
-## prioridade sobre tech de raiz") — antes era um pool de DOIS grupos
-## (continuations if not empty else available) com sorteio aleatorio
-## DENTRO do grupo escolhido; agora e um TERMO pontuado, o que permite o
-## termo de identidade (abaixo) somar por cima sem reintroduzir randi().
-const RESEARCH_WEIGHT_CONTINUATION := 1.0
-## Pequeno de proposito — nunca deveria, sozinho, superar uma continuacao
-## de cadeia real (ver teste "nunca sobrepoe"). Harness-validate-later,
-## mesma disciplina de todo o resto do sistema ("variavel sistemica
-## pequena -> decisao existente -> formula aditiva -> teste comportamental
-## -> harness antes de calibrar", ver AGRICOLA_FOOD_BONUS_MAX etc em
-## CityIdentity.gd). civilization_axis_strength() e 0.0-1.0, entao o termo
-## de identidade sozinho nunca ultrapassa RESEARCH_WEIGHT_IDENTITY — bem
-## abaixo de RESEARCH_WEIGHT_CONTINUATION=1.0, pra uma continuacao de
-## cadeia SEMPRE vencer um match de identidade PERFEITO sozinho. Risco de
-## loop de reforco (Celeiro cedo -> agricola dominante no achado de B1/B2
-## -> se isto favorecer tech agricola -> economia melhor -> mais
-## capacidade de construcao -> MAIS agricola dominante) e exatamente por
-## isso que NAO tentamos "corrigir" o vies de agricola aqui, so evitar
-## agrava-lo sem medir primeiro (ver metrica research_choices_matching_
-## identity em test_simulation_balance.gd).
-const RESEARCH_WEIGHT_IDENTITY := 0.2
-## Roadmap "Parte B" B4.2 — personalidade (CivilizationPersonality,
-## PROSPECTIVA) soma como um TERCEIRO termo aditivo, ao lado de
-## RESEARCH_WEIGHT_IDENTITY (CityIdentity.civilization_axis_strength,
-## RETROSPECTIVA) — os dois convivem, nenhum substitui o outro (mandato do
-## usuario: "personalidade e uma intencao persistente; identidade e
-## evidencia historica"). Peso MENOR que RESEARCH_WEIGHT_IDENTITY de
-## proposito: personalidade e uma intencao sorteada sem nenhuma evidencia
-## de jogo por tras (identidade pelo menos reflete predios de verdade
-## construidos) — harness-validate-later, mesma disciplina de todo o
-## resto. IDENTITY + PERSONALITY somados (0.2 + 0.15 = 0.35) continuam bem
-## abaixo de CONTINUATION (1.0), entao uma continuacao de cadeia real
-## SEMPRE vence os dois combinados no maximo (ver teste "nunca sobrepoe").
-## INVARIANTE PROTEGIDA: personalidade NUNCA deve ser alterada pela
-## identidade (nunca "personality += civilization_axis_strength" nem
-## aprendizado/deriva nenhum) — as duas sao entradas INDEPENDENTES aqui,
-## nunca uma alimentando a outra.
-const RESEARCH_WEIGHT_PERSONALITY := 0.15
-
-## Eixo de identidade de UMA tecnologia, DERIVADO (nunca uma tabela nova
-## hand-authored — mesmo espirito de CityIdentity inteira e do lair-danger
-## de Parte A: "predios nunca encolhem, nao armazene, derive"). Regra:
-## - se a tech desbloqueia um PREDIO (unlocks_building != ""), o eixo e o
-##   balde de CityIdentity.AXIS_BUILDINGS que contem esse predio;
-## - senao, se desbloqueia uma UNIDADE (unlocks_unit != ""), resolve o
-##   predio que treina essa unidade (BuildingDatabase.building_that_trains
-##   — MESMO mecanismo que CityIdentity.militar_unit_cost_multiplier ja usa
-##   pra ir de unidade -> predio treinador -> eixo, inclusive o fallback
-##   scout/human_knight -> Estabulo) e usa o balde DESSE predio;
-## - senao (feitico puro, bonus de bioma puro, terrain_transform puro, ou
-##   standalone sem desbloqueio nenhum) -> "" (sem sinal de identidade).
-## bonus_terrain_types e IGNORADO de proposito mesmo quando presente —
-## misturar "sabor de rendimento" com "arvore de predios" como dois tipos
-## diferentes de sinal tornaria a regra ambigua; so building/unit unlocks
-## contam, uma regra so, mecanicamente fundamentada.
-##
-## Invariante verificada (nao assumida): checa unlocks_building ANTES de
-## unlocks_unit, o que so e seguro se nenhuma tech tiver os dois setados
-## ao mesmo tempo — conferido direto em TechDatabase.gd (14 atribuicoes de
-## unlocks_building/unlocks_unit, 14 variaveis de tech DISTINTAS, nenhuma
-## repetida). Se isso mudar no futuro, a funcao continua funcionando (so
-## ignora unlocks_unit nesse caso), mas os testes de derivacao servem de
-## sentinela caso essa prioridade precise ser revisitada.
-##
-## Mora aqui (RivalAI.gd), NAO em CityIdentity.gd (que fica cega pra
-## tecnologia de proposito, nunca aprende sobre TechData) nem em
-## TechDatabase.gd/TechData.gd (que ficam cegos pra identidade de
-## proposito, nenhum campo novo) — esta e a UNICA peca do sistema com
-## permissao de conhecer os dois lados, porque e a UNICA que decide
-## pesquisa (jogador humano escolhe livre pela HUD/TechTree, sem
-## pontuacao nenhuma envolvida, sem gating de identidade).
-static func _tech_identity_axis(tech: TechData) -> String:
-	if tech.unlocks_building != "":
-		return _axis_for_building(tech.unlocks_building)
-	if tech.unlocks_unit != "":
-		var trainer: BuildingData = BuildingDatabase.building_that_trains(tech.unlocks_unit)
-		if trainer != null:
-			return _axis_for_building(trainer.id)
-	return ""
-
-static func _axis_for_building(building_id: String) -> String:
-	if MagicContent.school_for_building(building_id) != "":
-		return CityIdentity.AXIS_ARCANA
-	for axis in CityIdentity.AXES:
-		if building_id in CityIdentity.AXIS_BUILDINGS[axis]:
-			return axis
-	return ""
-
-## Pontuacao de UM candidato de pesquisa (ver RESEARCH_WEIGHT_* acima).
-## `tech` pode vir de TechDatabase OU MagicDatabase (ver decide_research) —
-## pre-requisitos nunca cruzam as duas arvores, entao basta checar em qual
-## das duas `tech` esta pra saber qual dicionario `researched` consultar.
-static func _score_research_candidate(tech: TechData, player: PlayerData) -> float:
-	var researched: Dictionary = player.researched_techs if TechDatabase.get_tech(tech.id) != null else player.researched_magic
-	var continues_chain := false
-	for prereq_id in tech.prerequisites:
-		if researched.has(prereq_id):
-			continues_chain = true
-			break
-	var axis := _tech_identity_axis(tech)
-	var identity_strength := 0.0 if axis == "" else CityIdentity.civilization_axis_strength(player, axis)
-	var personality_strength: float = 0.0 if axis == "" else player.personality.get(axis, 0.0)
-	return (
-		RESEARCH_WEIGHT_CONTINUATION * (1.0 if continues_chain else 0.0)
-		+ RESEARCH_WEIGHT_IDENTITY * identity_strength
-		+ RESEARCH_WEIGHT_PERSONALITY * personality_strength
-	)
-
-## Sem nenhuma pesquisa em andamento, escolhe a tecnologia disponivel de
-## MAIOR pontuacao (ver _score_research_candidate) — nao mais um sorteio
-## cego. Empate resolvido pela ordem de iteracao de `available` (que segue
-## TechDatabase.all_techs(), ordem de insercao estavel — deterministico,
-## nao randi(), mesmo padrao de CitySite.evaluate/_score_production_
-## candidate). Roadmap de gameplay Fase 4A — achado do harness de simulacao
-## (Fase 0): sorteio uniforme entre TODAS as disponiveis fazia Mercado
-## (Celeiro -> Oficina -> Mercado, 3 pesquisas especificas em sequencia)
-## nunca ser alcancado nem em 200 turnos — o termo RESEARCH_WEIGHT_
-## CONTINUATION preserva exatamente esse fix (continuar uma cadeia em
-## andamento ganha prioridade sobre tech de raiz). Roadmap "Parte B" B3
-## acrescenta o termo RESEARCH_WEIGHT_IDENTITY por cima, na MESMA formula —
-## nunca um pool separado, nunca um bloqueio (preferencia, nunca
-## exclusividade).
-## Pool de candidatos junta as duas arvores (Tecnologia + Magia) num so
-## `available`, exatamente como a arvore unica de antes da separacao
-## estrutural — sem lógica nova de priorizar uma arvore sobre a outra, so
-## a fonte que passou a ser duas listas concatenadas em vez de uma.
-static func decide_research(player: PlayerData) -> void:
-	if player.current_research != "":
-		return
-	var available = TechDatabase.available_techs(player.researched_techs) + MagicDatabase.available_techs(player.researched_magic)
-	if available.is_empty():
-		return
-	var best_tech: TechData = null
-	var best_score := -INF
-	for tech in available:
-		var score := _score_research_candidate(tech, player)
-		score += StrategicAI.research_score(player, tech)
-		if score > best_score:
-			best_score = score
-			best_tech = tech
-	player.select_research(best_tech.id)
-
 ## So a parte de "preparar" o turno da IA (visibilidade atual + atualizar
 ## cidades inimigas escoutadas), SEM mover nenhuma unidade ainda — extraido
 ## de take_turn() pra GameManager poder chamar isto UMA VEZ por rival e
@@ -1341,19 +810,17 @@ static func begin_turn(player: PlayerData, hex_grid: HexGrid, opponent: PlayerDa
 		if other != player:
 			_scout_enemy_cities(player, other, visible)
 	_scout_enemy_cities(player, opponent, visible)
+	V2AITacticalAI.prepare_turn(player, hex_grid)
 	return visible
 
 ## Acao de UMA unidade rival — extraida de take_turn() pelo mesmo motivo de
 ## begin_turn() acima, pra poder ser chamada unidade-por-unidade em frames
 ## diferentes.
 static func act_for_unit(unit: Unit, hex_grid: HexGrid, player: PlayerData, opponent: PlayerData, visible: Dictionary) -> void:
-	if unit.ritual_id != "" or unit.unit_data.visual_kind in ["elder_lich", "archdemon"]:
-		return
-	if MagicAI.prepare_ritualists(unit, player, hex_grid):
-		return
 	if unit.movement_left <= 0.0 or unit.hp <= 0.0:
 		return
-	if MagicAI.protect_caster(unit, player, hex_grid, visible):
+	# Técnicas, feitiços, Portais, Construtor e movimento especial (V2AITacticalAI) antes da ação comum.
+	if V2AITacticalAI.take_special_action(unit, player, hex_grid):
 		return
 	if unit.unit_data.can_found_city:
 		_handle_settler(unit, hex_grid, player)
@@ -1403,7 +870,9 @@ static func _handle_attacker(unit: Unit, hex_grid: HexGrid, player: PlayerData, 
 		_retreat(unit, hex_grid, player)
 		return
 
-	var target_coord = MagicAI.counter_ritual_target(player, opponent, hex_grid)
+	# Um Ritual Final público de rival tem prioridade sobre a campanha (substitui o antigo
+	# contra-ritual da magia V1); depois a campanha validada e, por fim, o alvo tático.
+	var target_coord = V2StrategicAI.public_ritual_target_coord(V2AITacticalAI.view_for(player, hex_grid))
 	if target_coord == null:
 		target_coord = _campaign_attack_target(player, hex_grid, opponent)
 	if target_coord == null:
@@ -1415,7 +884,6 @@ static func _handle_attacker(unit: Unit, hex_grid: HexGrid, player: PlayerData, 
 	if target_coord in hex_grid.tiles_in_range(unit.coord, unit.unit_data.attack_range):
 		_engage(unit, hex_grid, target_coord)
 		return
-
 
 	if unit.unit_data.attack_range > 1 and not _has_melee_escort_nearby(unit, player):
 		return
@@ -1487,7 +955,7 @@ static func _nearest_known_target(from: Vector2i, hex_grid: HexGrid, player: Pla
 	var best = null
 	var best_dist = 999999
 	for unit in opponent.units:
-		if not visible.has(unit.coord) or MagicRuntime.concealed(unit, player, hex_grid):
+		if not visible.has(unit.coord):
 			continue
 		var d = HexMetrics.axial_distance(from, unit.coord)
 		if d < best_dist:
@@ -1512,7 +980,7 @@ static func _nearest_known_target(from: Vector2i, hex_grid: HexGrid, player: Pla
 ## nunca conta como do "dono null", entao um monstro nunca consegue sequer
 ## pisar em tile de cidade, ver HexGrid.compute_reachable).
 static func move_unit_toward(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i) -> void:
-	if unit.movement_left <= 0 or unit.coord == target_coord or unit.ritual_id != "":
+	if unit.movement_left <= 0 or unit.coord == target_coord:
 		return
 	var destinations: Array[Vector2i] = [target_coord]
 	if hex_grid.get_unit_at(target_coord) != null or (hex_grid.get_city_at(target_coord) != null and hex_grid.get_city_at(target_coord).owner_player != unit.owner_player):
@@ -1522,10 +990,13 @@ static func move_unit_toward(unit: Unit, hex_grid: HexGrid, target_coord: Vector
 		var path := hex_grid.compute_path(unit.coord, destination, unit.owner_player, unit.unit_data.flies, unit.embarked)
 		if path.is_empty():
 			continue
+		var first_step := true
 		for step in path:
-			var cost := 1.0 if unit.unit_data.flies else float(hex_grid.get_tile(step).movement_cost)
-			if cost > unit.movement_left:
+			# Fase 20: custo central do terreno (base + modificação V2) e a mesma regra do primeiro passo do HexGrid.
+			var cost := HexGrid.affordable_step_cost(1.0 if unit.unit_data.flies else hex_grid.terrain_step_cost(step), unit.movement_left, first_step)
+			if cost < 0.0:
 				break
+			first_step = false
 			hex_grid.move_unit(unit, step, cost)
 		return
 	var reachable = hex_grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies)

@@ -1,447 +1,387 @@
 class_name BuildingDatabase
 extends RefCounted
 
-## Predios de cidade: entram na MESMA fila de producao das unidades —
-## City.production_item aceita tanto um kind de UnitDatabase quanto um id
-## daqui (ver City.production_cost()/process_turn(), que checam este
-## database primeiro). Diferente de unidade, completar um predio nao
-## "gasta" nada: fica valendo pra sempre (bonus permanente em
-## City.collect_yields(), ou bonus de defesa em CombatResolver.predict()
-## pra Muralhas), e cada cidade so constroi cada predio UMA vez
-## (City.buildings, Dictionary id->true).
+## Prédios de cidade da Aetherlands (todos V2 desde a Fase 25): entram na MESMA fila de produção das
+## unidades — City.production_item aceita tanto um kind de UnitDatabase quanto um id daqui (ver
+## City.production_cost()/process_turn(), que checam este banco primeiro).
 ##
-## Duas familias: predios de RENDIMENTO/DEFESA (Celeiro/Oficina/Mercado/
-## Torre dos Sabios/Muralhas, `trains_unit` vazio) e predios de TREINO
-## (Quartel em diante, `trains_unit` preenchido) — cada tropa de combate so
-## pode ser produzida
-## se a cidade ja tiver o predio de treino correspondente (City.can_train(),
-## pedido do usuario: "cada tropa e feita numa construcao... so pode
-## treinar as tropas na sua respectiva construcao"). Colonizador E Guarda
-## ficam de fora dessa regra (Guarda voltou a nao exigir predio nenhum,
-## pedido do usuario numa rodada seguinte: "o guarda comum nao precisa de
-## quartel pra ser feito").
+## Famílias: prédios de treino das Doutrinas (Salão/Maestria), prédios de Escola de Magia
+## (Escola/Estrutura Ritual) e os cinco prédios econômicos repetíveis (Mercado, Fazenda, Oficina,
+## Academia, Santuário Arcano — yield derivado por V2EconomyRuntime, nunca somado aqui). Todo prédio é
+## liberado pela pesquisa V2 da civilização (City._research_unlocked_for_building -> V2UnlockSystem).
 ##
-## Cadeia de 3 passos pro resto do elenco (pedido do usuario, rodada
-## seguinte: "so posso construir esses predios especiais quando pesquisar
-## a tecnologia, ai aparece disponivel pra construir, e consequentemente
-## as tropas poderao ser treinadas nela"): pesquisar a tech que desbloqueia
-## o PREDIO (TechData.unlocks_building — ex: "quartel" -> barracks) e o que
-## libera CONSTRUIR o predio de treino, so entao o predio (uma vez
-## construido) libera TREINAR a tropa (City.can_train()). Desde o redesenho
-## da arvore de Tecnologia em 10 niveis (Roadmap), predio e unidade tem
-## techs SEPARADAS (ex: "quartel" libera o predio, "homem_de_armas" libera
-## a unidade) — City._tech_unlocked_for_building() checa a tech de
-## unlocks_building do predio PRIMEIRO (TechDatabase.tech_that_unlocks_
-## building), so caindo pra tech_that_unlocks(trains_unit) se o predio nao
-## tiver uma tech propria (caso dos predios magicos, ver MagicDatabase.gd).
-## Isso importa: se a ordem fosse invertida, construir o Quartel exigiria a
-## tech "Homem de Armas" (que gateia so o TREINO), nao "Quartel" (que
-## gateia o PREDIO em si).
-##
-## `requires_building` (BuildingData) e um gate INDEPENDENTE de cadeia
-## fisica — cada predio de upgrade (Estabulo depois de Quartel, Quartel
-## II depois de Quartel, Quartel III depois de Quartel II, etc, ver
-## City._prerequisite_building_present) exige o predio anterior da cadeia
-## FISICAMENTE construido nesta cidade, alem da propria tech pesquisada —
-## os dois gates se combinam, nenhum sozinho basta (ver City.can_build()).
-##
-## Muralhas, Celeiro, Oficina e Mercado sao as EXCECOES na familia de
-## RENDIMENTO/DEFESA: mesmo sem `trains_unit`, os quatro tem tech propria
-## travando a construcao (tech "muralhas"/"celeiro"/"oficina"/"mercado",
-## ver TechData.unlocks_building/TechDatabase.tech_that_unlocks_building) —
-## pedido do usuario: "a muralha nao faz tanto sentido [como predio sempre
-## liberado, sem tech nenhuma]... vamos remover ela, e adicionar como
-## pesquisa", estendido depois pro resto dos predios: "precisamos fazer
-## pesquisa de cada uma dessas coisas, tudo deve ter pesquisa". So Torre
-## dos Sabios continua sem tech nenhuma. Muralhas tambem e o UNICO predio
-## com `self_placed = true`
-## (ver BuildingData.self_placed) — nao ganha um Building.gd separado num
-## tile vizinho escolhido, vira o anel de muralha da PROPRIA cidade
-## (City._add_walls, acionado por City.buildings.has("walls")).
-##
-## Desde o roadmap de gameplay Fase 1, a cidade RIVAL tambem constroi
-## predios de verdade: RivalAI.decide_production pontua predio E unidade
-## juntos (ver SCORE_WEIGHT_* em RivalAI.gd) e so escolhe entre o que
-## City.can_build()/can_train() ja libera — mesmo gate do jogador, sem
-## bypass. Antes disso a IA pulava esse gate inteiramente (nunca construia
-## nada, mas ainda treinava tropa avancada de graca).
+## Fase 25: os ~40 prédios V1 (Celeiro, Oficina/Mercado V1, Muralhas, Quartel, Estábulo, Torres...)
+## saíram do banco. Um save antigo que ainda os contenha é sanitizado em
+## SaveManager._sanitize_legacy_city (as muralhas antes migram para City.fortification_level).
 
 static var _cache: Dictionary = {} # id -> BuildingData, montada uma vez por sessao
 
 static func _build_all() -> Dictionary:
 	var buildings: Dictionary = {}
+	# AETHERLANDS V2, Fase 3 — Salão dos Guardiões (nó v2_doctrine_guardian_2).
+	# Prédio de treino da linha do Guardião: só é construível por quem pesquisou
+	# o nó (City._tech_unlocked_for_building -> V2UnlockSystem) e é ELE, via
+	# trains_unit, que faz City.can_train("v2_unit_shieldbearer") exigir o Salão
+	# na cidade. NÃO depende do Quartel V1 (requires_building fica vazio).
+	# BALANCE PLACEHOLDER: custo provisório (entre o Quartel, 20, e o Campo de
+	# Tiro, 22). Ocupa um slot de prédio como qualquer outro (sem exceção).
+	# Modelo PROVISÓRIO: o mesmo prédio do Quartel (KayKit) — ainda sem arte
+	# própria da V2.
+	var guardian_hall := BuildingData.new()
+	guardian_hall.id = "v2_building_guardian_hall"
+	guardian_hall.display_name = "Salão dos Guardiões"
+	guardian_hall.production_cost = 22.0
+	guardian_hall.trains_unit = "v2_unit_shieldbearer"
+	guardian_hall.model_scene_path = "res://assets/models/kaykit/buildings/building_barracks_blue.gltf"
+	guardian_hall.gold_upkeep = 1.0
+	buildings[guardian_hall.id] = guardian_hall
 
-	# Redesenho do sistema de comida (pedido do usuario): antes o Celeiro so
-	# somava um bonus fixo de comida/turno pra sempre. Agora toda cidade tem
-	# um teto de armazenamento (City.FOOD_STORAGE_BASE) que a populacao
-	# consome todo turno (City.FOOD_CONSUMPTION_PER_POP) — o Celeiro AUMENTA
-	# esse teto (storage_bonus, ver BuildingData.gd/City.food_storage_cap()),
-	# alem de manter um bonus pequeno de comida bruta (bonus_food, era 2,
-	# reduzido pra 1 — o efeito principal migrou pro storage_bonus). Ganhou
-	# tech propria tambem (ver TechDatabase "celeiro") — deixou de ser o
-	# unico predio de rendimento sem pesquisa nenhuma associada (essa vaga
-	# agora e so da Oficina/Mercado/Torre dos Sabios).
-	var granary := BuildingData.new()
-	granary.id = "granary"
-	granary.display_name = "Celeiro"
-	granary.production_cost = 20.0
-	granary.bonus_food = 1
-	granary.storage_bonus = 10.0
-	# Identidade visual (pedido do usuario: "substitua tudo... use todos os
-	# gratuitos" da KayKit) — sem "silo/celeiro" literal no pack, o Moinho
-	# (windmill) e o modelo mais associado a graos/comida disponivel.
-	granary.model_scene_path = "res://assets/models/kaykit/buildings/building_windmill_blue.gltf"
-	buildings[granary.id] = granary
+	# AETHERLANDS V2, Fase 6 — Bastião de Maestria (nó v2_doctrine_guardian_8, `mastery_building`).
+	# Única função: HABILITAR o treino do candidato Lendário da linha (trains_unit = Campeão
+	# Guardião, pelo mecanismo normal trains_unit -> building_that_trains -> City.can_train). Sem
+	# rendimento, defesa, aura, upkeep nem redução de recarga. Exige o Salão dos Guardiões na cidade
+	# (requires_building, gate normal de City.can_build) — o Bastião NÃO o substitui — e o nó N8.
+	# BALANCE PLACEHOLDER: 55 PP (bem acima do Salão, 22). Modelo PROVISÓRIO: a torre B do KayKit (o
+	# pack não tem fortaleza), a mesma da Torre Arcana.
+	var guardian_mastery := BuildingData.new()
+	guardian_mastery.id = "v2_building_guardian_mastery"
+	guardian_mastery.display_name = "Bastião de Maestria"
+	guardian_mastery.production_cost = 55.0
+	guardian_mastery.trains_unit = "v2_legendary_guardian_champion"
+	guardian_mastery.requires_building = "v2_building_guardian_hall"
+	guardian_mastery.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_B_blue.gltf"
+	guardian_mastery.gold_upkeep = 2.0
+	buildings[guardian_mastery.id] = guardian_mastery
 
-	# Ganhou tech propria (ver TechDatabase "oficina") — pedido do usuario:
-	# "a oficina precisa de uma pesquisa, depois de ser pesquisado[,] p[oder]
-	# ser construida". Mecanica em si sem mudanca nesta rodada de proposito
-	# ("vamos fazer assim, depois deixamos mais complexo") — bonus_production
-	# continua um bonus FIXO somado a producao bruta todo turno (ver
-	# City.collect_yields()), que ja acumula em stored_production sozinho.
-	var workshop := BuildingData.new()
-	workshop.id = "workshop"
-	workshop.display_name = "Oficina"
-	workshop.production_cost = 25.0
-	workshop.bonus_production = 2
-	# Identidade visual (KayKit) — Ferreiro (blacksmith) e o oficio mais
-	# proximo de "Oficina" no pack.
-	workshop.model_scene_path = "res://assets/models/kaykit/buildings/building_blacksmith_blue.gltf"
-	buildings[workshop.id] = workshop
+	# AETHERLANDS V2, Fase 7 — Salão de Armas (nó v2_doctrine_warrior_2): prédio de treino da linha do Guerreiro,
+	# IRMÃO do Salão dos Guardiões (mesmo mecanismo: gate de pesquisa V2 + trains_unit). Treina o Guerreiro e,
+	# depois do N5/N7, a forma mais avançada (V2UnitLine.resolve_trainable_form). Não exige Quartel V1, Salão dos
+	# Guardiões nem outra Doutrina. BALANCE PLACEHOLDER: 22 PP, igual ao Salão dos Guardiões (comparação em playtest).
+	# Modelo PROVISÓRIO: a ferraria do KayKit (tema de armas), sem arte V2. Sem upkeep.
+	var warrior_hall := BuildingData.new()
+	warrior_hall.id = "v2_building_warrior_hall"
+	warrior_hall.display_name = "Salão de Armas"
+	warrior_hall.production_cost = 22.0
+	warrior_hall.trains_unit = "v2_unit_warrior"
+	warrior_hall.model_scene_path = "res://assets/models/kaykit/buildings/building_blacksmith_blue.gltf"
+	warrior_hall.gold_upkeep = 1.0
+	buildings[warrior_hall.id] = warrior_hall
 
-	# Ganhou tech propria (ver TechDatabase "mercado") e um efeito NOVO alem
-	# do bonus_gold fixo de sempre: uma vez construido, libera COMPRAR o
-	# resto da producao do item atual com ouro (rush-buy) — pedido do
-	# usuario: "o mercado pode servir pra [dar um uso real pro ouro]"/"é uma
-	# boa, faça isso". Esse efeito de rush-buy vive em City.can_rush_buy()/
-	# rush_buy_cost()/rush_buy() (checa buildings.has("market") direto, nao
-	# tem campo dedicado aqui em BuildingData — nao ha outro predio que
-	# precise de um campo booleano generico "libera rush-buy" ainda).
-	# trains_unit = "mercador" (Roadmap arvore de 10 niveis, Nivel 3) — o
-	# Mercado deixa de ser so um predio de rendimento puro e tambem treina o
-	# Mercador (unidade utilitaria, ver UnitDatabase). bonus_gold continua
-	# igual, os dois efeitos coexistem sem conflito (trains_unit e bonus_*
-	# sao campos independentes).
-	var market := BuildingData.new()
-	market.id = "market"
-	market.display_name = "Mercado"
-	market.production_cost = 25.0
-	market.bonus_gold = 2
-	market.trains_unit = "mercador"
-	# Identidade visual (KayKit) — combinacao literal.
-	market.model_scene_path = "res://assets/models/kaykit/buildings/building_market_blue.gltf"
-	buildings[market.id] = market
+	# Fase 7 — Arena dos Campeões (nó v2_doctrine_warrior_8, `mastery_building`): irmã do Bastião de Maestria —
+	# única função é HABILITAR o treino do candidato Lendário da linha (trains_unit = Herói da Lâmina). Exige o
+	# Salão de Armas na cidade (requires_building) e o N8. BALANCE PLACEHOLDER: 55 PP (mesma escala do Bastião).
+	# Modelo PROVISÓRIO: o campo de tiro do KayKit (pátio aberto), sem arte V2.
+	var warrior_mastery := BuildingData.new()
+	warrior_mastery.id = "v2_building_warrior_mastery"
+	warrior_mastery.display_name = "Arena dos Campeões"
+	warrior_mastery.production_cost = 55.0
+	warrior_mastery.trains_unit = "v2_legendary_blade_hero"
+	warrior_mastery.requires_building = "v2_building_warrior_hall"
+	warrior_mastery.model_scene_path = "res://assets/models/kaykit/buildings/building_archeryrange_blue.gltf"
+	warrior_mastery.gold_upkeep = 2.0
+	buildings[warrior_mastery.id] = warrior_mastery
 
-	# self_placed = true — sem tile pra escolher no mapa (ver BuildingData.
-	# self_placed), a producao vira o anel de muralha da PROPRIA cidade
-	# (City._add_walls) assim que completa. Gated pela tech "muralhas" (ver
-	# TechData.unlocks_building/TechDatabase.tech_that_unlocks_building) —
-	# pedido do usuario: "a muralha nao faz tanto sentido [como predio
-	# generico]... adiciona como pesquisa... libera a construção da
-	# muralha, mas essa muralha simplesmente adiciona esteticamente uma
-	# muralha ao redor do tile da cidade... dando um shield a ela".
-	var walls := BuildingData.new()
-	walls.id = "walls"
-	walls.display_name = "Muralhas"
-	walls.production_cost = 30.0
-	walls.defense_bonus = 0.5
-	walls.self_placed = true
-	buildings[walls.id] = walls
+	# AETHERLANDS V2, Fase 8 — Campo dos Patrulheiros (nó v2_doctrine_ranger_2): prédio de treino da linha do Patrulheiro, IRMÃO do Salão dos
+	# Guardiões e do Salão de Armas (mesmo mecanismo: gate de pesquisa V2 + trains_unit). Treina o Arqueiro e, depois do N5/N7, a forma mais avançada
+	# (V2UnitLine.resolve_trainable_form). Não exige Campo de Tiro/Quartel V1 nem outra Doutrina. BALANCE PLACEHOLDER: 22 PP, igual aos outros Salões.
+	# Modelo PROVISÓRIO: o campo de tiro do KayKit (o mesmo do prédio V1 e da Arena dos Campeões). Sem upkeep.
+	var ranger_camp := BuildingData.new()
+	ranger_camp.id = "v2_building_ranger_camp"
+	ranger_camp.display_name = "Campo dos Patrulheiros"
+	ranger_camp.production_cost = 22.0
+	ranger_camp.trains_unit = "v2_unit_archer"
+	ranger_camp.model_scene_path = "res://assets/models/kaykit/buildings/building_archeryrange_blue.gltf"
+	ranger_camp.gold_upkeep = 1.0
+	buildings[ranger_camp.id] = ranger_camp
 
-	# Predio de RENDIMENTO (mesma familia de Celeiro/Oficina/Mercado —
-	# trains_unit vazio, nunca exige tecnologia pra construir, ver
-	# City._tech_unlocked_for_building) que da vida numerica ao "Ergue a
-	# Torre dos Sabios" que a descricao de canalizacao_base ja promete
-	# (ver TechDatabase.gd) — sem isso a tech ficava so com lore, nenhum
-	# efeito de bioma NEM de predio.
-	var sages_tower := BuildingData.new()
-	sages_tower.id = "sages_tower"
-	sages_tower.display_name = "Torre dos Sábios"
-	sages_tower.production_cost = 28.0
-	sages_tower.bonus_mana = 3
-	# Identidade visual (KayKit) — torre A (a torre B fica pra Torre Arcana,
-	# ver mais abaixo, pra nao repetir o mesmo modelo nas duas).
-	sages_tower.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_A_blue.gltf"
-	buildings[sages_tower.id] = sages_tower
+	# Fase 8 — Torre dos Patrulheiros (nó v2_doctrine_ranger_8, `mastery_building`): irmã do Bastião e da Arena — única função é HABILITAR o treino do
+	# candidato Lendário da linha (trains_unit = Caçador de Lendas). Exige o Campo dos Patrulheiros na cidade (requires_building) e o N8.
+	# BALANCE PLACEHOLDER: 55 PP (mesma escala). Modelo PROVISÓRIO: a torre A do KayKit.
+	var ranger_mastery := BuildingData.new()
+	ranger_mastery.id = "v2_building_ranger_mastery"
+	ranger_mastery.display_name = "Torre dos Patrulheiros"
+	ranger_mastery.production_cost = 55.0
+	ranger_mastery.trains_unit = "v2_legendary_legend_hunter"
+	ranger_mastery.requires_building = "v2_building_ranger_camp"
+	ranger_mastery.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_A_blue.gltf"
+	ranger_mastery.gold_upkeep = 2.0
+	buildings[ranger_mastery.id] = ranger_mastery
 
-	# trains_unit = "men_at_arms" (NAO "warrior") — pedido do usuario:
-	# "o guarda comum nao precisa de quartel pra ser feito", revertendo a
-	# decisao anterior desta mesma sessao. Guarda volta a ser o unico kind
-	# de COMBATE sem predio nenhum (ver building_that_trains abaixo, cai no
-	# `return null` no fim por nao bater em nada); Homem de Armas fica
-	# sozinho dependendo do Quartel.
-	var barracks := BuildingData.new()
-	barracks.id = "barracks"
-	barracks.display_name = "Quartel"
-	barracks.production_cost = 20.0
-	barracks.trains_unit = "men_at_arms"
-	# Identidade visual (pedido do usuario, ver BuildingData.model_scene_
-	# path) — modelo real (KayKit Medieval Hexagon Pack, CC0) em vez do
-	# prisma procedural de sempre. Combinacao literal.
-	barracks.model_scene_path = "res://assets/models/kaykit/buildings/building_barracks_blue.gltf"
-	buildings[barracks.id] = barracks
+	# AETHERLANDS V2, Fase 9 — Estábulo de Guerra (nó v2_doctrine_cavalry_2): prédio de treino da linha da Cavalaria, IRMÃO dos outros Salões (mesmo mecanismo:
+	# gate de pesquisa V2 + trains_unit). Treina o Cavaleiro e, depois do N5/N7, a forma mais avançada (V2UnitLine.resolve_trainable_form). NÃO depende do Estábulo
+	# V1, do Quartel, do Salão de Armas nem de outra Doutrina. BALANCE PLACEHOLDER: 22 PP. Modelo PROVISÓRIO: o mercado do KayKit (galpão aberto). Sem upkeep.
+	var war_stable := BuildingData.new()
+	war_stable.id = "v2_building_war_stable"
+	war_stable.display_name = "Estábulo de Guerra"
+	war_stable.production_cost = 22.0
+	war_stable.trains_unit = "v2_unit_cavalier"
+	war_stable.model_scene_path = "res://assets/models/kaykit/buildings/building_market_blue.gltf"
+	war_stable.gold_upkeep = 1.0
+	buildings[war_stable.id] = war_stable
 
-	var archery_range := BuildingData.new()
-	archery_range.id = "archery_range"
-	archery_range.display_name = "Campo de Tiro"
-	archery_range.production_cost = 22.0
-	archery_range.trains_unit = "archer"
-	# Identidade visual (KayKit) — combinacao literal.
-	archery_range.model_scene_path = "res://assets/models/kaykit/buildings/building_archeryrange_blue.gltf"
-	buildings[archery_range.id] = archery_range
+	# Fase 9 — Ordem da Cavalaria (nó v2_doctrine_cavalry_8, `mastery_building`): irmã do Bastião, da Arena e da Torre — única função é HABILITAR o treino do candidato
+	# Lendário da linha (trains_unit = Cavaleiro de Grifo). Exige o Estábulo de Guerra na cidade (requires_building) e o N8. BALANCE PLACEHOLDER: 55 PP.
+	# Modelo PROVISÓRIO: a torre de catapulta do KayKit.
+	var cavalry_mastery := BuildingData.new()
+	cavalry_mastery.id = "v2_building_cavalry_mastery"
+	cavalry_mastery.display_name = "Ordem da Cavalaria"
+	cavalry_mastery.production_cost = 55.0
+	cavalry_mastery.trains_unit = "v2_legendary_griffon_rider"
+	cavalry_mastery.requires_building = "v2_building_war_stable"
+	cavalry_mastery.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_catapult_blue.gltf"
+	cavalry_mastery.gold_upkeep = 2.0
+	buildings[cavalry_mastery.id] = cavalry_mastery
 
-	# requires_building = "barracks" — pedido do usuario: "faca o estabulo
-	# ser uma coisa que so pode ser feita depois do quartel". Isso ja
-	# implica transitivamente que a tech "Quartel" tambem precisa estar
-	# pesquisada antes (Quartel construido => tech Quartel pesquisada),
-	# sem precisar duplicar esse gate na propria tech "Estabulo".
-	var stable := BuildingData.new()
-	stable.id = "stable"
-	stable.display_name = "Estabulo"
-	stable.production_cost = 26.0
-	stable.trains_unit = "cavalry"
-	stable.requires_building = "barracks"
-	buildings[stable.id] = stable
+	# AETHERLANDS V2, Fase 10 — Guilda dos Ladinos (nó v2_doctrine_rogue_2): prédio de treino da linha do Ladino, IRMÃ dos outros Salões (mesmo
+	# mecanismo: gate de pesquisa V2 + trains_unit). Treina o Ladino e, depois do N5/N7, a forma mais avançada (V2UnitLine.resolve_trainable_form).
+	# NÃO depende de outra Doutrina. BALANCE PLACEHOLDER: 22 PP (mesma escala dos outros Salões). Modelo PROVISÓRIO: o moinho do KayKit (sem prédio
+	# temático de "guilda" no pacote gratuito — mesma limitação já documentada em outros Salões). Sem upkeep.
+	var rogue_guild := BuildingData.new()
+	rogue_guild.id = "v2_building_rogue_guild"
+	rogue_guild.display_name = "Guilda dos Ladinos"
+	rogue_guild.production_cost = 22.0
+	rogue_guild.trains_unit = "v2_unit_rogue"
+	rogue_guild.model_scene_path = "res://assets/models/kaykit/buildings/building_windmill_blue.gltf"
+	rogue_guild.gold_upkeep = 1.0
+	buildings[rogue_guild.id] = rogue_guild
 
-	var siege_workshop := BuildingData.new()
-	siege_workshop.id = "siege_workshop"
-	siege_workshop.display_name = "Arsenal de Cerco"
-	siege_workshop.production_cost = 32.0
-	siege_workshop.trains_unit = "catapult"
-	# Identidade visual (KayKit) — torre com catapulta, o modelo mais
-	# proximo de "arsenal de cerco" no pack.
-	siege_workshop.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_catapult_blue.gltf"
-	buildings[siege_workshop.id] = siege_workshop
+	# Fase 10 — Refúgio das Sombras (nó v2_doctrine_rogue_8, `mastery_building`): irmã do Bastião, da Arena, da Torre e da Ordem — única função é
+	# HABILITAR o treino do candidato Lendário da linha (trains_unit = Mestre das Sombras). Exige a Guilda dos Ladinos na cidade (requires_building)
+	# e o N8. BALANCE PLACEHOLDER: 55 PP (mesma escala). Modelo PROVISÓRIO: a torre A do KayKit (a mesma da Torre dos Patrulheiros).
+	var rogue_mastery := BuildingData.new()
+	rogue_mastery.id = "v2_building_rogue_mastery"
+	rogue_mastery.display_name = "Refúgio das Sombras"
+	rogue_mastery.production_cost = 55.0
+	rogue_mastery.trains_unit = "v2_legendary_shadow_master"
+	rogue_mastery.requires_building = "v2_building_rogue_guild"
+	rogue_mastery.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_A_blue.gltf"
+	rogue_mastery.gold_upkeep = 2.0
+	buildings[rogue_mastery.id] = rogue_mastery
 
-	var arcane_tower := BuildingData.new()
-	arcane_tower.id = "arcane_tower"
-	arcane_tower.display_name = "Torre Arcana"
-	arcane_tower.production_cost = 30.0
-	arcane_tower.trains_unit = "mage"
-	# Identidade visual (KayKit) — torre B (a torre A ja foi pra Torre dos
-	# Sabios acima, pra as duas torres nao ficarem identicas no mapa).
-	arcane_tower.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_B_blue.gltf"
-	buildings[arcane_tower.id] = arcane_tower
+	# AETHERLANDS V2, Fase 11 — Arsenal de Cerco (nó v2_doctrine_siege_2): prédio de treino da linha de Cerco, IRMÃO dos
+	# outros Salões (mesmo mecanismo: gate de pesquisa V2 + trains_unit). Treina a Catapulta e, depois do N5/N7, a
+	# forma mais avançada (V2UnitLine.resolve_trainable_form). NÃO depende de outra Doutrina nem do Arsenal de Cerco
+	# V1 (`siege_workshop`, id DIFERENTE — mesmo NOME de exibição; a mesma limitação de nomes repetidos V1/V2 já
+	# documentada nas Fases 7-8 pro Espadachim/Arqueiro). BALANCE PLACEHOLDER: 22 PP (mesma escala dos outros Salões).
+	# Modelo PROVISÓRIO: a torre de catapulta do KayKit (já reaproveitada pela Ordem da Cavalaria — a mais próxima de
+	# "arsenal de Cerco" no pacote gratuito). Sem upkeep.
+	var siege_arsenal := BuildingData.new()
+	siege_arsenal.id = "v2_building_siege_arsenal"
+	siege_arsenal.display_name = "Arsenal de Cerco"
+	siege_arsenal.production_cost = 22.0
+	siege_arsenal.trains_unit = "v2_unit_catapult"
+	siege_arsenal.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_catapult_blue.gltf"
+	siege_arsenal.gold_upkeep = 1.0
+	buildings[siege_arsenal.id] = siege_arsenal
 
-	# Sem modelo KayKit equivalente nos pacotes gratuitos baixados (nenhum
-	# "poleiro"/estrutura de treino de criatura voadora) — continua
-	# procedural (Building._build_griffin_roost) ate aparecer um asset
-	# gratuito que faca sentido.
-	var griffin_roost := BuildingData.new()
-	griffin_roost.id = "griffin_roost"
-	griffin_roost.display_name = "Poleiro de Grifos"
-	griffin_roost.production_cost = 38.0
-	griffin_roost.trains_unit = "griffin"
-	buildings[griffin_roost.id] = griffin_roost
+	# Fase 11 — Grande Arsenal (nó v2_doctrine_siege_8, `mastery_building`): irmão do Bastião, da Arena, da Torre, da
+	# Ordem e do Refúgio — única função é HABILITAR o treino do candidato Lendário da linha (trains_unit = Colosso de
+	# Cerco). Exige o Arsenal de Cerco na cidade (requires_building) e o N8. NÃO é o mesmo prédio do "Grande Arsenal"
+	# V1 (`grand_arsenal`, id DIFERENTE — mesma limitação de nome repetido acima). BALANCE PLACEHOLDER: 55 PP (mesma
+	# escala). Modelo PROVISÓRIO: a torre B do KayKit (já reaproveitada pelo Bastião de Maestria).
+	var grand_arsenal_v2 := BuildingData.new()
+	grand_arsenal_v2.id = "v2_building_grand_arsenal"
+	grand_arsenal_v2.display_name = "Grande Arsenal"
+	grand_arsenal_v2.production_cost = 55.0
+	grand_arsenal_v2.trains_unit = "v2_legendary_siege_colossus"
+	grand_arsenal_v2.requires_building = "v2_building_siege_arsenal"
+	grand_arsenal_v2.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_B_blue.gltf"
+	grand_arsenal_v2.gold_upkeep = 2.0
+	buildings[grand_arsenal_v2.id] = grand_arsenal_v2
 
-	# Idem — sem "bosque/arvore ritual" na Hexagon Pack (a Forest Nature
-	# Pack tem arvores soltas, mas nao um PREDIO de bosque druida); continua
-	# procedural.
-	var druid_grove := BuildingData.new()
-	druid_grove.id = "druid_grove"
-	druid_grove.display_name = "Bosque Druida"
-	druid_grove.production_cost = 32.0
-	druid_grove.trains_unit = "treant"
-	buildings[druid_grove.id] = druid_grove
+	# AETHERLANDS V2, Fase 14 — os cinco prédios econômicos (Economia/Logística/Indústria/Academia/
+	# Arcano). Todos CopyLimitMode.CITY_LEVEL (§8 do pedido: Cidade I comporta 1 cópia, II comporta
+	# 2, III comporta 3, IV comporta 4 — ver V2CityLevelData.repeatable_building_limit), sem
+	# requires_building (cada um é infraestrutura básica independente, §59) e sem trains_unit (não
+	# treinam tropa nenhuma). O yield real de cada cópia vem inteiro de V2InfrastructureEconomyData,
+	# consultado por V2EconomyRuntime a cada turno/UI, nunca somado aqui (Fase 25: os campos bonus_* e
+	# a pipeline de rendimento V1 foram removidos). BALANCE PLACEHOLDER: custos e yields em V2InfrastructureEconomyData.
+	var econ_market := BuildingData.new()
+	econ_market.id = "v2_building_market"
+	econ_market.display_name = "Mercado"
+	econ_market.production_cost = V2InfrastructureEconomyData.production_cost_for_branch("economy")
+	econ_market.copy_limit_mode = BuildingData.CopyLimitMode.CITY_LEVEL
+	# Fase 15 (§26 do pedido): Mercado fica SEM upkeep de propósito — é a rota de recuperação de
+	# um Déficit de Ouro, mesmo num império quebrado o jogador precisa conseguir construir um e
+	# se recuperar.
+	econ_market.gold_upkeep = 0.0
+	econ_market.model_scene_path = "res://assets/models/kaykit/buildings/building_market_blue.gltf"
+	buildings[econ_market.id] = econ_market
 
-	# Predios de treino da arvore de tecnologia magica (ver TechDatabase:
-	# forja_runica/necromancia_pratica) — fecham a mesma cadeia de 3 passos
-	# do resto do elenco (pesquisar -> construir -> treinar).
-	#
-	# Sem modelo KayKit equivalente pra "bigorna runica" alem do ferreiro ja
-	# usado pela Oficina (repetir o mesmo modelo confundiria os dois
-	# predios) — continua procedural.
-	var runic_anvil := BuildingData.new()
-	runic_anvil.id = "runic_anvil"
-	runic_anvil.display_name = "Bigorna Rúnica"
-	runic_anvil.production_cost = 34.0
-	runic_anvil.trains_unit = "stone_golem"
-	buildings[runic_anvil.id] = runic_anvil
+	var econ_farm := BuildingData.new()
+	econ_farm.id = "v2_building_farm"
+	econ_farm.display_name = "Fazenda"
+	econ_farm.production_cost = V2InfrastructureEconomyData.production_cost_for_branch("logistics")
+	econ_farm.copy_limit_mode = BuildingData.CopyLimitMode.CITY_LEVEL
+	econ_farm.gold_upkeep = 1.0
+	econ_farm.model_scene_path = "res://assets/models/kaykit/buildings/building_windmill_blue.gltf"
+	buildings[econ_farm.id] = econ_farm
 
-	# Sem "cripta/tumulo" na Hexagon Pack; continua procedural.
-	var shadow_crypt := BuildingData.new()
-	shadow_crypt.id = "shadow_crypt"
-	shadow_crypt.display_name = "Cripta Sombria"
-	shadow_crypt.production_cost = 34.0
-	shadow_crypt.trains_unit = "shadow_summoner"
-	buildings[shadow_crypt.id] = shadow_crypt
+	var econ_workshop := BuildingData.new()
+	econ_workshop.id = "v2_building_workshop"
+	econ_workshop.display_name = "Oficina"
+	econ_workshop.production_cost = V2InfrastructureEconomyData.production_cost_for_branch("industry")
+	econ_workshop.copy_limit_mode = BuildingData.CopyLimitMode.CITY_LEVEL
+	econ_workshop.gold_upkeep = 1.0
+	# Fase 15 (§52 do pedido): a Oficina passa a treinar o Construtor -- nenhum prédio novo,
+	# nenhuma segunda fila (o gate de pesquisa do Construtor é UnitData.required_v2_unlock_id,
+	# não um trains_unit especial aqui).
+	econ_workshop.trains_unit = "v2_unit_builder"
+	econ_workshop.model_scene_path = "res://assets/models/kaykit/buildings/building_blacksmith_blue.gltf"
+	buildings[econ_workshop.id] = econ_workshop
 
-	# Predio de RENDIMENTO (mesma familia da Torre dos Sabios acima — sem
-	# trains_unit, sem tech nenhuma associada, ver City.can_build) que
-	# habilita o Ritual do Nodulo (ver VictoryConditions.SANCTUARY_BUILDING_ID
-	# / has_arcane_sanctuary). Custo e bonus de mana sao valores iniciais de
-	# gameplay (ainda NAO calibrados, ver Roadmap Fase F) — so o suficiente
-	# pra existir e o F7 poder medir o efeito real. Sem "santuario/nodulo"
-	# na Hexagon Pack; continua procedural (Building._build_arcane_sanctuary).
-	var arcane_sanctuary := BuildingData.new()
-	arcane_sanctuary.id = "arcane_sanctuary"
-	arcane_sanctuary.display_name = "Santuário do Nódulo"
-	arcane_sanctuary.production_cost = 45.0
-	arcane_sanctuary.bonus_mana = 2
-	buildings[arcane_sanctuary.id] = arcane_sanctuary
+	# AETHERLANDS V2, Fase 17 — Templo Sagrado (nó v2_magic_sacred_2, `school_building`): estrutura de treinamento da
+	# Escola Sagrada. Treina o Clérigo depois do N3 (gate normal trains_unit -> City.can_train). NÃO produz Mana (a Mana
+	# é da infraestrutura Arcana). UNIQUE, sem prédio exigido. BALANCE PLACEHOLDER: 24 PP, 1 Ouro/turno. Modelo PROVISÓRIO:
+	# a torre A do KayKit (a mesma da Academia/Torre dos Patrulheiros).
+	var sacred_temple := BuildingData.new()
+	sacred_temple.id = "v2_building_sacred_temple"
+	sacred_temple.display_name = "Templo Sagrado"
+	sacred_temple.production_cost = 24.0
+	sacred_temple.gold_upkeep = 1.0
+	sacred_temple.trains_unit = "v2_unit_sacred_cleric"
+	sacred_temple.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_A_blue.gltf"
+	buildings[sacred_temple.id] = sacred_temple
 
-	# --- Roadmap "arvore de 10 niveis" (Tecnologia mundana) -----------------
-	# 12 predios novos, um por cadeia de "upgrade" do desenho do usuario.
-	# Decisao explicita do plano: um upgrade (Quartel II/III, Fortaleza...) e
-	# um predio NOVO e independente, nao uma substituicao no mesmo slot —
-	# ocupa seu proprio slot/tile, so travado por requires_building apontando
-	# pro predio anterior da cadeia (mesmo mecanismo que Estabulo->Quartel ja
-	# usa). Custos crescem suavemente por nivel, sem formula embutida no
-	# codigo (mesmo estilo de todo o resto deste arquivo) — numeros de
-	# proposito ainda nao calibrados, faceis de ajustar depois.
+	# AETHERLANDS V2, Fase 17 — Catedral Sagrada (nó v2_magic_sacred_8, `ritual_building`): estrutura ritual da Escola.
+	# Única função: habilitar a produção do Serafim depois do N9 (trains_unit). Exige o Templo na MESMA cidade (não o
+	# substitui). Prédio normal: ocupa slot, fila normal, Déficit bloqueia iniciar (upkeep > 0). BALANCE PLACEHOLDER: 60 PP,
+	# 2 Ouro/turno. Modelo PROVISÓRIO: a torre B do KayKit.
+	var sacred_ritual := BuildingData.new()
+	sacred_ritual.id = "v2_building_sacred_ritual"
+	sacred_ritual.display_name = "Catedral Sagrada"
+	sacred_ritual.production_cost = 60.0
+	sacred_ritual.gold_upkeep = 2.0
+	sacred_ritual.requires_building = "v2_building_sacred_temple"
+	sacred_ritual.trains_unit = "v2_manifestation_seraph"
+	sacred_ritual.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_B_blue.gltf"
+	buildings[sacred_ritual.id] = sacred_ritual
 
-	var barracks_2 := BuildingData.new()
-	barracks_2.id = "barracks_2"
-	barracks_2.display_name = "Quartel II"
-	barracks_2.production_cost = 40.0
-	barracks_2.trains_unit = "espadachim"
-	barracks_2.requires_building = "barracks"
-	buildings[barracks_2.id] = barracks_2
+	# AETHERLANDS V2, Fase 18 — estruturas da Escola Infernal. Seguem exatamente o molde mágico
+	# genérico: prédio de Escola treina o caster; estrutura ritual exige o primeiro e habilita a
+	# Grande Manifestação. Nenhuma produz Mana (a fonte especializada continua sendo o Santuário Arcano).
+	var infernal_sanctum := BuildingData.new()
+	infernal_sanctum.id = "v2_building_infernal_sanctum"
+	infernal_sanctum.display_name = "Santuário Infernal"
+	infernal_sanctum.production_cost = 24.0
+	infernal_sanctum.gold_upkeep = 1.0
+	infernal_sanctum.trains_unit = "v2_unit_infernal_warlock"
+	infernal_sanctum.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_A_blue.gltf"
+	buildings[infernal_sanctum.id] = infernal_sanctum
 
-	var barracks_3 := BuildingData.new()
-	barracks_3.id = "barracks_3"
-	barracks_3.display_name = "Quartel III"
-	barracks_3.production_cost = 60.0
-	barracks_3.trains_unit = "halberdier"
-	barracks_3.requires_building = "barracks_2"
-	buildings[barracks_3.id] = barracks_3
+	var infernal_ritual := BuildingData.new()
+	infernal_ritual.id = "v2_building_infernal_ritual"
+	infernal_ritual.display_name = "Círculo Profano"
+	infernal_ritual.production_cost = 60.0
+	infernal_ritual.gold_upkeep = 2.0
+	infernal_ritual.requires_building = "v2_building_infernal_sanctum"
+	infernal_ritual.trains_unit = "v2_manifestation_archdemon"
+	infernal_ritual.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_B_blue.gltf"
+	buildings[infernal_ritual.id] = infernal_ritual
 
-	var barracks_elite := BuildingData.new()
-	barracks_elite.id = "barracks_elite"
-	barracks_elite.display_name = "Quartel de Elite"
-	barracks_elite.production_cost = 85.0
-	barracks_elite.trains_unit = "general"
-	barracks_elite.requires_building = "barracks_3"
-	buildings[barracks_elite.id] = barracks_elite
+	# AETHERLANDS V2, Fase 19 — Ossuário (N2) e Mausoléu Negro (N8) da Necromancia: o MESMO molde dos prédios das
+	# outras Escolas (UNIQUE por padrão, slot, fila, Déficit bloqueia iniciar, nenhuma Mana). O Ossuário treina o
+	# Necromante — nunca Hostes (essas só nascem por feitiço). BALANCE PLACEHOLDER. Modelos PROVISÓRIOS (torres KayKit).
+	var necromancy_ossuary := BuildingData.new()
+	necromancy_ossuary.id = "v2_building_necromancy_ossuary"
+	necromancy_ossuary.display_name = "Ossuário"
+	necromancy_ossuary.production_cost = 24.0
+	necromancy_ossuary.gold_upkeep = 1.0
+	necromancy_ossuary.trains_unit = "v2_unit_necromancer"
+	necromancy_ossuary.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_A_blue.gltf"
+	buildings[necromancy_ossuary.id] = necromancy_ossuary
 
-	var watchtower := BuildingData.new()
-	watchtower.id = "watchtower"
-	watchtower.display_name = "Torre de Vigia"
-	watchtower.production_cost = 26.0
-	watchtower.defense_bonus = 0.2
-	buildings[watchtower.id] = watchtower
+	var necromancy_ritual := BuildingData.new()
+	necromancy_ritual.id = "v2_building_necromancy_ritual"
+	necromancy_ritual.display_name = "Mausoléu Negro"
+	necromancy_ritual.production_cost = 60.0
+	necromancy_ritual.gold_upkeep = 2.0
+	necromancy_ritual.requires_building = "v2_building_necromancy_ossuary"
+	necromancy_ritual.trains_unit = "v2_manifestation_lich_sovereign"
+	necromancy_ritual.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_B_blue.gltf"
+	buildings[necromancy_ritual.id] = necromancy_ritual
 
-	var archery_range_2 := BuildingData.new()
-	archery_range_2.id = "archery_range_2"
-	archery_range_2.display_name = "Campo de Tiro II"
-	archery_range_2.production_cost = 42.0
-	archery_range_2.trains_unit = "besteiro"
-	archery_range_2.requires_building = "archery_range"
-	buildings[archery_range_2.id] = archery_range_2
+	# AETHERLANDS V2, Fase 20 — Círculo Druídico (N2) e Bosque Ancestral (N8): o mesmo molde das outras Escolas (UNIQUE por
+	# padrão, slot, fila, Déficit bloqueia iniciar, nenhuma Mana). BALANCE PLACEHOLDER. Modelos PROVISÓRIOS (moinho e torre
+	# A do KayKit — os mais "rurais" dos pacotes; não há estrutura natural).
+	var druidic_circle := BuildingData.new()
+	druidic_circle.id = "v2_building_druidic_circle"
+	druidic_circle.display_name = "Círculo Druídico"
+	druidic_circle.production_cost = 24.0
+	druidic_circle.gold_upkeep = 1.0
+	druidic_circle.trains_unit = "v2_unit_druid"
+	druidic_circle.model_scene_path = "res://assets/models/kaykit/buildings/building_windmill_blue.gltf"
+	buildings[druidic_circle.id] = druidic_circle
 
-	var stable_2 := BuildingData.new()
-	stable_2.id = "stable_2"
-	stable_2.display_name = "Estábulo II"
-	stable_2.production_cost = 44.0
-	stable_2.trains_unit = "cavaleiro_pesado"
-	stable_2.requires_building = "stable"
-	buildings[stable_2.id] = stable_2
+	var druidic_ritual := BuildingData.new()
+	druidic_ritual.id = "v2_building_druidic_ritual"
+	druidic_ritual.display_name = "Bosque Ancestral"
+	druidic_ritual.production_cost = 60.0
+	druidic_ritual.gold_upkeep = 2.0
+	druidic_ritual.requires_building = "v2_building_druidic_circle"
+	druidic_ritual.trains_unit = "v2_manifestation_nature_avatar"
+	druidic_ritual.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_A_blue.gltf"
+	buildings[druidic_ritual.id] = druidic_ritual
 
-	var workshop_2 := BuildingData.new()
-	workshop_2.id = "workshop_2"
-	workshop_2.display_name = "Oficina II"
-	workshop_2.production_cost = 40.0
-	workshop_2.bonus_production = 3
-	workshop_2.requires_building = "workshop"
-	buildings[workshop_2.id] = workshop_2
+	# AETHERLANDS V2, Fase 21 — Conclave Arcano (N2) e Torre do Véu (N8): prédios normais do
+	# mesmo molde mágico. Nenhum produz Mana; o Santuário Arcano da Infraestrutura mantém essa função.
+	var arcane_conclave := BuildingData.new()
+	arcane_conclave.id = "v2_building_arcane_conclave"
+	arcane_conclave.display_name = "Conclave Arcano"
+	arcane_conclave.production_cost = 24.0
+	arcane_conclave.gold_upkeep = 1.0
+	arcane_conclave.trains_unit = "v2_unit_arcanist"
+	arcane_conclave.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_A_blue.gltf"
+	buildings[arcane_conclave.id] = arcane_conclave
 
-	var fortress := BuildingData.new()
-	fortress.id = "fortress"
-	fortress.display_name = "Fortaleza"
-	fortress.production_cost = 70.0
-	fortress.defense_bonus = 0.75
-	fortress.requires_building = "walls"
-	buildings[fortress.id] = fortress
+	var arcane_ritual := BuildingData.new()
+	arcane_ritual.id = "v2_building_arcane_ritual"
+	arcane_ritual.display_name = "Torre do Véu"
+	arcane_ritual.production_cost = 60.0
+	arcane_ritual.gold_upkeep = 2.0
+	arcane_ritual.requires_building = "v2_building_arcane_conclave"
+	arcane_ritual.trains_unit = "v2_manifestation_veil_archon"
+	arcane_ritual.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_B_blue.gltf"
+	buildings[arcane_ritual.id] = arcane_ritual
 
-	var grand_market := BuildingData.new()
-	grand_market.id = "grand_market"
-	grand_market.display_name = "Grande Mercado"
-	grand_market.production_cost = 65.0
-	grand_market.bonus_gold = 4
-	grand_market.requires_building = "market"
-	buildings[grand_market.id] = grand_market
+	# AETHERLANDS V2, Fase 22 — Observatório/Nexo do Elementalismo: o mesmo
+	# molde mágico UNIQUE, sem renda de Mana e sem sistema de produção paralelo.
+	var elemental_observatory := BuildingData.new()
+	elemental_observatory.id = "v2_building_elemental_observatory"
+	elemental_observatory.display_name = "Observatório Elemental"
+	elemental_observatory.production_cost = 24.0
+	elemental_observatory.gold_upkeep = 1.0
+	elemental_observatory.trains_unit = "v2_unit_elementalist"
+	elemental_observatory.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_A_blue.gltf"
+	buildings[elemental_observatory.id] = elemental_observatory
 
-	var grand_arsenal := BuildingData.new()
-	grand_arsenal.id = "grand_arsenal"
-	grand_arsenal.display_name = "Grande Arsenal"
-	grand_arsenal.production_cost = 80.0
-	grand_arsenal.trains_unit = "bombarda"
-	grand_arsenal.requires_building = "siege_workshop"
-	buildings[grand_arsenal.id] = grand_arsenal
+	var elemental_ritual := BuildingData.new()
+	elemental_ritual.id = "v2_building_elemental_ritual"
+	elemental_ritual.display_name = "Nexo dos Elementos"
+	elemental_ritual.production_cost = 60.0
+	elemental_ritual.gold_upkeep = 2.0
+	elemental_ritual.requires_building = "v2_building_elemental_observatory"
+	elemental_ritual.trains_unit = "v2_manifestation_elemental_primordial"
+	elemental_ritual.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_B_blue.gltf"
+	buildings[elemental_ritual.id] = elemental_ritual
 
-	var imperial_fortress := BuildingData.new()
-	imperial_fortress.id = "imperial_fortress"
-	imperial_fortress.display_name = "Fortaleza Imperial"
-	imperial_fortress.production_cost = 100.0
-	imperial_fortress.defense_bonus = 1.0
-	imperial_fortress.requires_building = "fortress"
-	buildings[imperial_fortress.id] = imperial_fortress
+	var econ_academy := BuildingData.new()
+	econ_academy.id = "v2_building_academy"
+	econ_academy.display_name = "Academia"
+	econ_academy.production_cost = V2InfrastructureEconomyData.production_cost_for_branch("academy")
+	econ_academy.copy_limit_mode = BuildingData.CopyLimitMode.CITY_LEVEL
+	econ_academy.gold_upkeep = 1.0
+	econ_academy.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_A_blue.gltf"
+	buildings[econ_academy.id] = econ_academy
 
-	var grand_emporium := BuildingData.new()
-	grand_emporium.id = "grand_emporium"
-	grand_emporium.display_name = "Grande Empório"
-	grand_emporium.production_cost = 95.0
-	grand_emporium.bonus_gold = 6
-	grand_emporium.requires_building = "grand_market"
-	buildings[grand_emporium.id] = grand_emporium
-
-	# --- Roadmap "polimento definitivo V1" (rebalanceamento de familia da
-	# arvore de Tecnologia) — 5 predios novos, um por tech nova que
-	# desbloqueia predio (ver TechDatabase.gd). Mesmo estilo do bloco
-	# anterior: so campos que BuildingData ja tem, sem mecanismo novo.
-
-	# Sem requires_building (pedido do plano: "opcao defensiva barata e
-	# cedo") — disponivel assim que a tech "guarnicao" (Nivel 2) e
-	# pesquisada, nao depende de nenhum outro predio fisico construido.
-	var garrison := BuildingData.new()
-	garrison.id = "garrison"
-	garrison.display_name = "Guarnição"
-	garrison.production_cost = 18.0
-	garrison.defense_bonus = 0.2
-	buildings[garrison.id] = garrison
-
-	var granary_2 := BuildingData.new()
-	granary_2.id = "granary_2"
-	granary_2.display_name = "Celeiro II"
-	granary_2.production_cost = 45.0
-	granary_2.bonus_food = 1
-	granary_2.storage_bonus = 12.0
-	granary_2.requires_building = "granary"
-	buildings[granary_2.id] = granary_2
-
-	var market_2 := BuildingData.new()
-	market_2.id = "market_2"
-	market_2.display_name = "Mercado II"
-	market_2.production_cost = 45.0
-	market_2.bonus_gold = 3
-	market_2.requires_building = "market"
-	buildings[market_2.id] = market_2
-
-	# NAO self_placed — so "walls" usa esse fluxo (City._add_walls e
-	# hardcoded pro id "walls", nao generalizaria pra "walls_2" sem mexer
-	# em City.gd, fora de escopo desta rodada; ver test_buildings.gd
-	# test_only_walls_is_self_placed, invariante ja existente). Muralhas II
-	# e um predio de DEFESA normal (mesmo padrao de watchtower/fortress:
-	# escolhe um tile vizinho, so soma defense_bonus).
-	var walls_2 := BuildingData.new()
-	walls_2.id = "walls_2"
-	walls_2.display_name = "Muralhas II"
-	walls_2.production_cost = 65.0
-	walls_2.defense_bonus = 0.35
-	walls_2.requires_building = "walls"
-	buildings[walls_2.id] = walls_2
-
-	var trading_post := BuildingData.new()
-	trading_post.id = "trading_post"
-	trading_post.display_name = "Posto Comercial"
-	trading_post.production_cost = 85.0
-	trading_post.bonus_gold = 5
-	trading_post.requires_building = "grand_market"
-	buildings[trading_post.id] = trading_post
-
-	for id in ["barracks_2", "barracks_3", "barracks_elite", "archery_range_2", "stable_2", "workshop_2", "granary_2", "market_2", "walls_2", "fortress", "imperial_fortress", "grand_market", "grand_emporium", "grand_arsenal"]:
-		buildings[id].upgrades_building = buildings[id].requires_building
-	MagicContent.add_buildings(buildings)
+	var econ_arcane_shrine := BuildingData.new()
+	econ_arcane_shrine.id = "v2_building_arcane_shrine"
+	econ_arcane_shrine.display_name = "Santuário Arcano"
+	econ_arcane_shrine.production_cost = V2InfrastructureEconomyData.production_cost_for_branch("arcane")
+	econ_arcane_shrine.copy_limit_mode = BuildingData.CopyLimitMode.CITY_LEVEL
+	econ_arcane_shrine.gold_upkeep = 1.0
+	econ_arcane_shrine.model_scene_path = "res://assets/models/kaykit/buildings/building_tower_B_blue.gltf"
+	buildings[econ_arcane_shrine.id] = econ_arcane_shrine
 	return buildings
 
 static func _all() -> Dictionary:
@@ -455,85 +395,35 @@ static func get_building(id: String) -> BuildingData:
 static func all_buildings() -> Array:
 	return _all().values()
 
-## Fallback de treino pra kind sem `trains_unit` proprio em NENHUM
-## BuildingData — cada predio so tem UM `trains_unit` (String, nao lista),
-## entao uma unidade nova da MESMA familia/tier de um predio ja existente
-## (em vez de ganhar um predio dedicado so pra ela) cai aqui. Generalizado
-## do if/elif hardcoded antigo (so "human_knight"/"scout" -> Estabulo) pra
-## um dict extensivel — pedido implicito da arvore de 10 niveis (Roadmap):
-## "um predio so treina uma unidade nova por vez via trains_unit...
-## unidades adicionais da mesma familia caem no mesmo padrao que ja existe
-## pra Cavaleiro Real hoje". "scout" SAIU do fallback (antes caia no
-## Estabulo) — Batedor virou a opcao de exploracao barata do Nivel 1, sem
-## prédio nenhum, igual Guarda/Colonizador; quem ainda usa Estabulo agora e
-## "batedor_montado", a unidade NOVA e mais forte do Nivel 3.
+## Fallback de treino pra kind sem `trains_unit` proprio em NENHUM BuildingData — cada prédio só tem
+## UM `trains_unit`, então as evoluções de uma linha de Doutrina treinam no MESMO prédio da forma-base.
 const UNIT_TRAINER_FALLBACK: Dictionary = {
-	"mage": "arcane_tower",
-	"hierophant": "light_church", "infernal_warlock": "abyssal_altar",
-	"arcane_golem": "arcane_tower", "storm_elemental": "elemental_conclave",
-	"human_knight": "stable",
-	"homem_de_escudo": "barracks",
-	"lanceiro": "barracks_2",
-	"batedor_montado": "stable",
-	"cavaleiro_de_choque": "stable_2",
-	"cavalaria_blindada": "stable_2",
-	"cavaleiro_imperial": "stable_2",
-	"campeao": "barracks_3",
-	"campeao_do_reino": "barracks_elite",
-	"balista": "siege_workshop",
-	"ariete": "siege_workshop",
-	"torre_de_cerco": "siege_workshop",
-	"trebuchet": "siege_workshop",
-	"engenheiro_de_cerco": "siege_workshop",
-	"colosso_de_cerco": "grand_arsenal",
+	# V2 (Fase 4): a evolução da linha do Guardião treina no MESMO Salão da unidade-base
+	"v2_unit_guardian": "v2_building_guardian_hall",
+	"v2_unit_sentinel": "v2_building_guardian_hall",
+	# Fase 7: a linha do Guerreiro treina no MESMO Salão de Armas (trains_unit dele é só o Guerreiro).
+	"v2_unit_swordsman": "v2_building_warrior_hall",
+	"v2_unit_weapon_master": "v2_building_warrior_hall",
+	# Fase 8: a linha do Patrulheiro treina no MESMO Campo (trains_unit dele é só o Arqueiro).
+	"v2_unit_hunter": "v2_building_ranger_camp",
+	"v2_unit_elite_marksman": "v2_building_ranger_camp",
+	# Fase 9: a linha da Cavalaria treina no MESMO Estábulo de Guerra (trains_unit dele é só o Cavaleiro).
+	"v2_unit_shock_cavalier": "v2_building_war_stable",
+	"v2_unit_armored_cavalier": "v2_building_war_stable",
+	# Fase 10: a linha do Ladino treina na MESMA Guilda dos Ladinos (trains_unit dela é só o Ladino).
+	"v2_unit_saboteur": "v2_building_rogue_guild",
+	"v2_unit_assassin": "v2_building_rogue_guild",
+	# Fase 11: a linha de Cerco treina no MESMO Arsenal de Cerco (trains_unit dele é só a Catapulta).
+	"v2_unit_trebuchet": "v2_building_siege_arsenal",
+	"v2_unit_bombard": "v2_building_siege_arsenal",
 }
 
-## Predio de treino cujo trains_unit bate com `kind` (ex: "men_at_arms" ->
-## Quartel), ou null se `kind` nao exige nenhum predio especifico (ex:
-## "settler", "warrior", "scout" — cada um sem predio nenhum de proposito,
-## ver comentario do dict acima) — ver City.can_train(). Tropa racial
-## exclusiva (UnitDatabase.RACE_UNIQUE_KIND — dwarf_axeguard/orc_berserker/
-## elf_ranger) nao tem `trains_unit` proprio em NENHUM BuildingData (nao
-## ganhou predio dedicado), mas ainda precisa de UM predio pra treinar: cai
-## no Quartel por padrao — tematicamente sua tropa de elite continua
-## treinando no mesmo lugar que o resto do exercito, sem exigir um predio
-## novo so pra isso. Checado DEPOIS do UNIT_TRAINER_FALLBACK acima (que
-## cobre os casos especificos, ex: Cavaleiro Real no Estabulo).
+## Prédio de treino cujo trains_unit bate com `kind`, ou o fallback acima; null se `kind` não exige
+## prédio nenhum (ex.: "settler").
 static func building_that_trains(kind: String) -> BuildingData:
-	if kind == "mage":
-		return get_building("arcane_tower")
-	var magic_trainer := MagicContent.trainer_for(kind)
-	if magic_trainer != "":
-		return get_building(magic_trainer)
 	for b in all_buildings():
 		if b.trains_unit == kind:
 			return b
 	if UNIT_TRAINER_FALLBACK.has(kind):
 		return get_building(UNIT_TRAINER_FALLBACK[kind])
-	if UnitDatabase.race_for_unique_kind(kind) != "":
-		return get_building("barracks")
 	return null
-
-## Soma o bonus de TODOS os predios ja construidos (built = City.buildings).
-## "storage" (ver BuildingData.storage_bonus/City.food_storage_cap()) so o
-## Celeiro usa hoje, incluido aqui pra manter uma unica funcao de soma em
-## vez de duplicar este loop so pra esse campo.
-static func total_bonus(built: Dictionary) -> Dictionary:
-	var bonus = {"food": 0, "production": 0, "gold": 0, "mana": 0, "storage": 0.0}
-	for id in built.keys():
-		var b: BuildingData = get_building(id)
-		if b:
-			bonus.food += b.bonus_food
-			bonus.production += b.bonus_production
-			bonus.gold += b.bonus_gold
-			bonus.mana += b.bonus_mana
-			bonus.storage += b.storage_bonus
-	return bonus
-
-static func defense_bonus_for(built: Dictionary) -> float:
-	var total := 0.0
-	for id in built.keys():
-		var b: BuildingData = get_building(id)
-		if b:
-			total += b.defense_bonus
-	return total

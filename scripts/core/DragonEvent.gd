@@ -76,9 +76,9 @@ extends WorldEvent
 ## explicito: "a ordem NAO deve ser fixa") -- _choose_target_city agora
 ## prioriza civs com MENOS visitas (pressao de cobertura), desempatando por
 ## distancia, nunca so' "cidade mais proxima" cru. Alem disso, a IA rival
-## ganha uma reacao militar minima ao evento (RivalAI.prepare_for_world_
-## event/defend_against_dragon, reusando decide_production/move_unit_
-## toward/CombatResolver.resolve existentes -- NADA de arvore de IA nova) e
+## ganha uma reacao militar minima ao evento (RivalAI.defend_against_dragon,
+## reusando move_unit_toward/CombatResolver.resolve existentes -- NADA de
+## arvore de IA nova; a producao fica com o planejamento V2) e
 ## o desfecho do evento (defeated/devastated/no_target) passa a ser
 ## comunicado por MODAL bloqueante (HUD._on_world_event_phase_changed),
 ## nunca mais o toast pequeno de _resolve_with_outcome (removido -- UX era
@@ -459,9 +459,9 @@ func _take_dragon_turn_logic(hex_grid: HexGrid, players: Array[PlayerData]) -> v
 	if dragon_unit == null or dragon_unit.hp <= 0.0:
 		# Morreu ANTES deste tick -- em combate normal (outra unidade
 		# interceptou durante o turno de outro jogador) OU por qualquer
-		# outro dano direto a hp (ex.: SpellManager, que tambem chama
+		# outro dano direto a hp (ex.: feitico V2, que tambem chama
 		# hex_grid.remove_unit fora do CombatResolver) -- de qualquer jeito,
-		# CombatResolver/SpellManager ja removeram a Unit do mapa sozinhos
+		# quem causou o dano ja removeu a Unit do mapa sozinho
 		# quando isso aconteceu; aqui so' falta reconhecer o desfecho.
 		_resolve_with_outcome("defeated")
 		return

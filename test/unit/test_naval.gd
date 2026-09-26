@@ -60,14 +60,6 @@ func _make_unit(kind: String, player: PlayerData, coord: Vector2i) -> Unit:
 	_created_units.append(unit)
 	return unit
 
-## --- TechDatabase.is_navigation_researched -------------------------------
-
-func test_is_navigation_researched_false_by_default():
-	assert_false(TechDatabase.is_navigation_researched({}))
-
-func test_is_navigation_researched_true_once_researched():
-	assert_true(TechDatabase.is_navigation_researched({"navegacao": true}))
-
 ## --- HexTileData.can_be_embarked_on ---------------------------------------
 
 func test_can_be_embarked_on_true_for_ocean_frozen_ocean_and_coast():
@@ -91,73 +83,6 @@ func test_is_coastal_tile_true_with_a_water_neighbor():
 
 func test_is_coastal_tile_false_without_a_water_neighbor():
 	assert_false(hex_grid.is_coastal_tile(Vector2i(0, 0)), "before_each cerca o centro so de Planicie, sem agua")
-
-## --- SelectionManager.toggle_embark_selected -------------------------------
-
-func test_toggle_embark_selected_noop_without_the_tech():
-	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
-	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
-	SelectionManager._select_unit(warrior)
-
-	SelectionManager.toggle_embark_selected()
-
-	assert_false(warrior.embarked, "sem Navegação pesquisada, embarcar nao deveria fazer nada")
-
-func test_toggle_embark_selected_noop_for_a_flying_unit():
-	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
-	human.researched_techs["navegacao"] = true
-	var griffin = _make_unit("griffin", human, Vector2i(0, 0))
-	SelectionManager._select_unit(griffin)
-
-	SelectionManager.toggle_embark_selected()
-
-	assert_false(griffin.embarked, "Grifo ja atravessa oceano voando, embarcar nao deveria se aplicar")
-
-func test_toggle_embark_selected_noop_outside_a_coastal_tile():
-	human.researched_techs["navegacao"] = true
-	var warrior = _make_unit("warrior", human, Vector2i(0, 0)) # before_each: so Planicie ao redor, sem agua
-	SelectionManager._select_unit(warrior)
-
-	SelectionManager.toggle_embark_selected()
-
-	assert_false(warrior.embarked, "fora de um tile adjacente a agua, embarcar nao deveria fazer nada")
-
-func test_toggle_embark_selected_succeeds_when_eligible():
-	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
-	human.researched_techs["navegacao"] = true
-	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
-	SelectionManager._select_unit(warrior)
-
-	SelectionManager.toggle_embark_selected()
-
-	assert_true(warrior.embarked)
-
-func test_toggle_embark_selected_is_one_way_and_never_manually_disembarks():
-	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
-	human.researched_techs["navegacao"] = true
-	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
-	SelectionManager._select_unit(warrior)
-	SelectionManager.toggle_embark_selected()
-	assert_true(warrior.embarked, "pre-condicao: deveria ter embarcado")
-
-	SelectionManager.toggle_embark_selected()
-
-	assert_true(warrior.embarked, "toggle e mao unica — clicar de novo enquanto ja embarcada nao deveria desembarcar manualmente")
-
-func test_toggle_embark_selected_cancels_fortified_exploring_and_move_order():
-	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
-	human.researched_techs["navegacao"] = true
-	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
-	warrior.fortified = true
-	warrior.exploring = true
-	warrior.move_order_target = Vector2i(5, 5)
-	SelectionManager._select_unit(warrior)
-
-	SelectionManager.toggle_embark_selected()
-
-	assert_false(warrior.fortified)
-	assert_false(warrior.exploring)
-	assert_eq(warrior.move_order_target, Unit.NO_MOVE_ORDER)
 
 ## --- Acoes bloqueadas enquanto embarcado (C2) ------------------------------
 

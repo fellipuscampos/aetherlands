@@ -51,6 +51,8 @@ enum TerrainType {
 @export var display_name: String = "Planicie"
 @export var movement_cost: int = 1
 @export var defense_bonus: float = 0.0
+## Metadado bruto do terreno (Fase 25): NÃO gera recurso nenhum — a economia é inteira de
+## V2EconomyRuntime. Continua só como sinal de "terra boa" da heurística de local de cidade (CitySite).
 @export var food_yield: int = 0
 @export var production_yield: int = 0
 @export var gold_yield: int = 0
@@ -58,8 +60,8 @@ enum TerrainType {
 @export var color: Color = Color.WHITE
 
 ## "" = sem recurso. Ver ResourceDatabase — recurso estrategico/luxo
-## espalhado deterministicamente por HexGrid durante a geracao do mapa, da
-## bonus de rendimento quando o tile e trabalhado (City.collect_yields).
+## espalhado deterministicamente por HexGrid durante a geracao do mapa; rende
+## só quando um Construtor o melhora (V2ResourceImprovementData, Fase 15).
 @export var resource: String = ""
 
 ## Agua de verdade (Oceano comum, Mar Gelado OU Costa) — unidade que nao
@@ -67,8 +69,8 @@ enum TerrainType {
 ## abaixo pro conjunto completo de terrenos intransitaveis). Mar de Lava
 ## NAO conta como agua aqui de proposito (e lava, nao agua) — ver is_lava()
 ## pra esse par. Costa AINDA bloqueia unidades terrestres igual Oceano —
-## a diferenca dela e so poder ser TRABALHADA por uma cidade (ver
-## can_be_worked() abaixo), nao andavel.
+## a diferenca dela e contar como terra aproveitavel pela cidade (ver
+## is_usable_land() abaixo), nao andavel.
 func is_water() -> bool:
 	return terrain_type == TerrainType.OCEAN or terrain_type == TerrainType.FROZEN_OCEAN or terrain_type == TerrainType.COAST
 
@@ -97,9 +99,8 @@ func is_mountain() -> bool:
 ## Terreno que nenhuma unidade terrestre consegue pisar: agua (is_water()),
 ## Lava (is_lava()) e Montanha (is_mountain()) tambem — usado por HexGrid.
 ## compute_reachable (unidade que voa ignora isso), City.is_valid_
-## building_tile/_best_unassigned_neighbor/toggle_worked_tile, WorldSetup
-## (spawn/capital), HexGrid._spawn_monster_lairs (nada nasce aqui, mesma
-## exclusao que ja vale pra agua) e HUD (lista de "tiles trabalhados").
+## building_tile, WorldSetup (spawn/capital) e HexGrid._spawn_monster_lairs
+## (nada nasce aqui, mesma exclusao que ja vale pra agua).
 ## Centralizado aqui pra nao repetir a mesma lista de tipos em varios
 ## lugares diferentes do codebase -- Montanha virar intransponivel/
 ## inabitavel/sem spawn foi tudo resolvido de uma vez so entrando aqui,
@@ -108,7 +109,7 @@ func blocks_land_units() -> bool:
 	return is_water() or is_lava() or is_mountain()
 
 ## Roadmap 2.0 Parte 1 (C4) — terrenos onde uma unidade EMBARCADA (Unit.
-## embarked, so com "Navegação" pesquisada) pode se mover: Oceano, Mar
+## embarked) pode se mover: Oceano, Mar
 ## Gelado e Costa — nunca Lava/Mar de Lava. Hoje coincide com is_water(),
 ## mas e um helper NOMEADO/proprio de proposito (nao so um alias) pra o
 ## sistema naval nao depender implicitamente de um detalhe de is_water()
@@ -117,16 +118,9 @@ func blocks_land_units() -> bool:
 func can_be_embarked_on() -> bool:
 	return terrain_type == TerrainType.OCEAN or terrain_type == TerrainType.FROZEN_OCEAN or terrain_type == TerrainType.COAST
 
-## Uma cidade consegue TRABALHAR este tile (ver City._best_unassigned_
-## neighbor/toggle_worked_tile) pra receber o rendimento dele? Terreno
-## solido comum sempre pode; agua/lava/montanha normalmente nao (blocks_
-## land_units), EXCETO Costa — pesca rasa perto da cidade, pedido do
-## usuario ("rendimento de cidade costeira, igual Civilization"). Oceano
-## aberto/Mar Gelado/Mar de Lava/Montanha continuam intrabalhaveis (sem
-## porto/tecnologia pra isso neste jogo ainda -- e ninguem planta em cima
-## de um pico, pra Montanha). Deliberadamente SEPARADO de blocks_land_
-## units() — esse continua so sobre MOVIMENTO de unidade terrestre (Costa
-## AINDA bloqueia
-## isso, so nao bloqueia ser trabalhada).
-func can_be_worked() -> bool:
+## Terreno APROVEITÁVEL por uma cidade (terra firme comum ou Costa): o critério de "terra útil" da
+## heurística de local de cidade (CitySite). Agua aberta/Mar Gelado/Mar de Lava/Montanha não contam.
+## Deliberadamente SEPARADO de blocks_land_units() — esse é só sobre MOVIMENTO (Costa ainda bloqueia
+## unidade terrestre). Fase 25: era `can_be_worked`, dos tiles trabalhados V1 (removidos).
+func is_usable_land() -> bool:
 	return not blocks_land_units() or terrain_type == TerrainType.COAST

@@ -3,8 +3,9 @@ extends GutTest
 ## Task 21 -- CIDADES: REACAO E DEFESA CONTRA MONSTROS (CityDefense.gd).
 ## Cobre: (1) nivel de ameaca PROPORCIONAL (assess), (2) producao emergencial
 ## da IA (RivalAI.decide_production), (3) mobilizacao de unidades (defend_turn
-## via RivalAI.act_for_unit), (4) milicia da cidade (militia_strike, vale pra
-## jogador e IA), (5) aviso ao jogador e (6) cenarios de ponta a ponta com
+## via RivalAI.act_for_unit), (4) defesa propria da cidade -- Aetherlands V2,
+## Fase 16: a milicia AUTOMATICA saiu; agora e' o Ataque da Cidade (acao
+## explicita, cidade fortificada, IA com paridade tatica minima), (5) aviso ao jogador e (6) cenarios de ponta a ponta com
 ## esqueletos/goblins/troll/vivern. Harness espelha test_monster_ai.gd (grade
 ## plana + GameManager.players trocados).
 
@@ -16,8 +17,10 @@ var _original_hex_grid: HexGrid
 var _original_human_player: PlayerData
 var _original_players: Array[PlayerData]
 var _original_world_events: Array[WorldEvent]
+var _original_turn: int
 
 func before_each():
+	_original_turn = TurnManager.turn_number
 	_original_hex_grid = GameManager.hex_grid
 	_original_human_player = GameManager.human_player
 	_original_players = GameManager.players
@@ -32,11 +35,9 @@ func before_each():
 	GameManager.hex_grid = hex_grid
 	GameManager.human_player = human
 	GameManager.players = [human, rival]
-	# Guarda so' e' treinavel apos a tech "guarda" (ver TechDatabase).
-	human.researched_techs["guarda"] = true
-	rival.researched_techs["guarda"] = true
 
 func after_each():
+	TurnManager.turn_number = _original_turn
 	hex_grid.queue_free()
 	GameManager.hex_grid = _original_hex_grid
 	GameManager.human_player = _original_human_player
@@ -182,56 +183,14 @@ func test_stationary_camp_bosses_and_event_managed_monsters_are_not_mobile_threa
 # (2) Producao emergencial da IA
 # ---------------------------------------------------------------------------
 
-func _second_city_far_away() -> void:
-	hex_grid.found_city(Vector2i(-9, 0), rival, "Cidade Distante") # sai do ramo "sempre colonizador"
-
-func test_emergency_makes_an_idle_city_train_a_troop():
+## Fase 25: a producao emergencial V1 (RivalAI.decide_production + compra rapida) saiu com o
+## decisor V1; a IA V2 pesa a ameaca local na propria pontuacao (monstro visivel = hostil).
+func test_v2_ai_sees_nearby_monsters_as_a_local_threat():
 	var city := hex_grid.found_city(Vector2i.ZERO, rival, "Cidade")
-	for coord in [Vector2i(3, 0), Vector2i(3, -1), Vector2i(4, -1)]:
+	var calm := V2StrategicAI._city_threat_score(city, V2AIWorldView.capture(rival, hex_grid))
+	for coord in [Vector2i(2, 0), Vector2i(2, -1), Vector2i(1, 1)]:
 		_make_monster("skeleton", coord)
-	RivalAI.decide_production(rival, hex_grid, human)
-	assert_ne(city.production_item, "", "cidade ameacada nao deveria ficar ociosa")
-	assert_null(BuildingDatabase.get_building(city.production_item), "emergencia produz TROPA, nao predio")
-	assert_ne(city.production_item, "settler")
-
-func test_emergency_replaces_a_just_started_building_with_a_troop():
-	var city := hex_grid.found_city(Vector2i.ZERO, rival, "Cidade")
-	_second_city_far_away()
-	city.set_production("market")
-	city.stored_production = 1.0
-	for coord in [Vector2i(3, 0), Vector2i(3, -1), Vector2i(4, -1)]:
-		_make_monster("skeleton", coord)
-	RivalAI.decide_production(rival, hex_grid, human)
-	assert_null(BuildingDatabase.get_building(city.production_item), "obra recem-iniciada cede lugar a tropa sob emergencia")
-
-func test_emergency_never_abandons_a_nearly_finished_building():
-	var city := hex_grid.found_city(Vector2i.ZERO, rival, "Cidade")
-	_second_city_far_away()
-	city.set_production("market")
-	city.stored_production = city.production_cost(hex_grid) * 0.9
-	for coord in [Vector2i(3, 0), Vector2i(3, -1), Vector2i(4, -1)]:
-		_make_monster("skeleton", coord)
-	RivalAI.decide_production(rival, hex_grid, human)
-	assert_eq(city.production_item, "market")
-
-func test_a_lone_distant_goblin_does_not_disturb_production():
-	var city := hex_grid.found_city(Vector2i.ZERO, rival, "Cidade")
-	_second_city_far_away()
-	city.set_production("market")
-	city.stored_production = 1.0
-	_make_monster("goblin", Vector2i(5, 0))
-	RivalAI.decide_production(rival, hex_grid, human)
-	assert_eq(city.production_item, "market", "um goblin distante nao justifica abandonar a obra")
-
-func test_emergency_rush_buys_the_troop_when_gold_is_plentiful():
-	var city := hex_grid.found_city(Vector2i.ZERO, rival, "Cidade")
-	city.buildings["market"] = true # compra rapida so' existe com Mercado (ver City.can_rush_buy)
-	city.set_production("warrior")
-	rival.gold = 300.0
-	for coord in [Vector2i(3, 0), Vector2i(3, -1), Vector2i(4, -1)]:
-		_make_monster("skeleton", coord)
-	RivalAI.decide_production(rival, hex_grid, human)
-	assert_lt(rival.gold, 300.0, "compra rapida da tropa de emergencia deveria gastar ouro")
+	assert_gt(V2StrategicAI._city_threat_score(city, V2AIWorldView.capture(rival, hex_grid)), calm)
 
 func test_a_well_garrisoned_city_does_not_enter_emergency_production():
 	var city := hex_grid.found_city(Vector2i.ZERO, rival, "Cidade")
@@ -323,73 +282,50 @@ func test_units_only_chase_monsters_within_the_engage_radius_of_the_city():
 	assert_lte(HexMetrics.axial_distance(warrior.coord, Vector2i.ZERO), CityDefense.GARRISON_RADIUS, "nunca persegue longe da cidade")
 
 # ---------------------------------------------------------------------------
-# (4) Milicia da cidade
+# (4) Defesa propria da cidade (Fase 16: a milicia automatica saiu)
 # ---------------------------------------------------------------------------
 
-func test_militia_damages_an_adjacent_monster():
+## Cidade fortificada (Muralhas I: poder 3, alcance 2) sem passar pela producao.
+func _fortified(city: City, level: int = 1) -> City:
+	city.city_level = 2
+	city.fortification_level = level
+	return city
+
+func test_the_automatic_militia_no_longer_exists():
+	var defense := CityDefense.new()
+	assert_false(defense.has_method("militia_strike"), "o dano automatico V1 foi substituido pelo Ataque da Cidade")
+	assert_false(defense.has_method("militia_damage"))
+
+func test_an_unfortified_city_never_damages_an_adjacent_monster_on_its_own():
 	var city := hex_grid.found_city(Vector2i.ZERO, human, "Cidade")
 	var skeleton := _make_monster("skeleton", Vector2i(1, 0))
-	var hp_before := skeleton.hp
-	var hit := CityDefense.militia_strike(city, hex_grid)
-	assert_eq(hit, skeleton)
-	assert_almost_eq(hp_before - skeleton.hp, CityDefense.militia_damage(city), 0.001)
-
-func test_militia_ignores_monsters_that_are_not_adjacent():
-	var city := hex_grid.found_city(Vector2i.ZERO, human, "Cidade")
-	var skeleton := _make_monster("skeleton", Vector2i(2, 0))
-	assert_null(CityDefense.militia_strike(city, hex_grid))
+	assert_eq(CityDefense.city_attack_targets(city, hex_grid), [] as Array[Unit], "sem fortificação, sem ação defensiva")
+	assert_eq(CityDefense.ai_city_defense_turn(city, hex_grid), null)
 	assert_eq(skeleton.hp, skeleton.unit_data.max_hp)
 
-func test_militia_never_touches_other_players_units():
-	var city := hex_grid.found_city(Vector2i.ZERO, human, "Cidade")
-	var enemy := _make_unit("warrior", rival, Vector2i(1, 0))
-	assert_null(CityDefense.militia_strike(city, hex_grid))
-	assert_eq(enemy.hp, enemy.unit_data.max_hp, "a milicia e' so' contra monstros; guerra entre jogadores segue o combate normal")
+func test_the_ai_fortified_city_shoots_an_adjacent_monster_once_per_turn():
+	var city := _fortified(hex_grid.found_city(Vector2i.ZERO, rival, "Cidade IA"))
+	var skeleton := _make_monster("skeleton", Vector2i(1, 0))
+	TurnManager.turn_number = 40
+	assert_eq(CityDefense.ai_city_defense_turn(city, hex_grid), skeleton)
+	assert_almost_eq(skeleton.unit_data.max_hp - skeleton.hp, 3.0, 0.001, "poder 3, dano fixo como a milícia antiga")
+	assert_null(CityDefense.ai_city_defense_turn(city, hex_grid), "uma vez por turno")
 
-func test_militia_never_touches_event_managed_monsters():
-	var city := hex_grid.found_city(Vector2i.ZERO, human, "Cidade")
+func test_the_city_attack_never_touches_event_managed_monsters():
+	var city := _fortified(hex_grid.found_city(Vector2i.ZERO, rival, "Cidade IA"))
 	var dragonlike := _make_monster("skeleton", Vector2i(1, 0))
 	dragonlike.world_event_managed = true
-	assert_null(CityDefense.militia_strike(city, hex_grid))
+	assert_null(CityDefense.ai_city_defense_turn(city, hex_grid))
 
-func test_militia_kills_a_weak_monster_over_a_few_turns_and_grants_no_reward():
-	var city := hex_grid.found_city(Vector2i.ZERO, human, "Cidade")
-	human.gold = 50.0
+func test_the_city_attack_grants_no_reward():
+	var city := _fortified(hex_grid.found_city(Vector2i.ZERO, rival, "Cidade IA"))
+	rival.gold = 50.0
 	var skeleton := _make_monster("skeleton", Vector2i(1, 0))
-	var turns := 0
-	while turns < 10 and hex_grid.get_unit_at(Vector2i(1, 0)) == skeleton:
-		CityDefense.militia_strike(city, hex_grid)
-		turns += 1
-	assert_null(hex_grid.get_unit_at(Vector2i(1, 0)), "o cerco de um esqueleto solitario nao deveria durar pra sempre")
-	assert_lte(turns, 4, "esqueleto (6 HP) cai em poucos turnos")
-	assert_eq(human.gold, 50.0, "sem recompensa: a milicia nao e' fonte de farm")
-
-func test_militia_alone_cannot_realistically_kill_a_troll():
-	var city := hex_grid.found_city(Vector2i.ZERO, human, "Cidade")
-	var troll := _make_monster("troll", Vector2i(1, 0))
-	for i in range(3):
-		CityDefense.militia_strike(city, hex_grid)
-	assert_gt(troll.hp, 0.0)
-	assert_gt(troll.hp, troll.unit_data.max_hp * 0.5, "nao transforma a cidade numa fortaleza")
-
-func test_walls_make_the_militia_hit_harder():
-	var city := hex_grid.found_city(Vector2i.ZERO, human, "Cidade")
-	var without_walls := CityDefense.militia_damage(city)
-	city.buildings["walls"] = true
-	assert_gt(CityDefense.militia_damage(city), without_walls)
-
-func test_militia_hits_the_most_wounded_adjacent_monster():
-	var city := hex_grid.found_city(Vector2i.ZERO, human, "Cidade")
-	var healthy := _make_monster("skeleton", Vector2i(1, 0))
-	var hurt := _make_monster("skeleton", Vector2i(0, 1))
-	hurt.hp = 3.0
-	assert_eq(CityDefense.militia_strike(city, hex_grid), hurt)
-	assert_eq(healthy.hp, healthy.unit_data.max_hp)
-
-func test_militia_works_for_ai_cities_too():
-	var city := hex_grid.found_city(Vector2i.ZERO, rival, "Cidade IA")
-	var skeleton := _make_monster("skeleton", Vector2i(1, 0))
-	assert_eq(CityDefense.militia_strike(city, hex_grid), skeleton)
+	skeleton.hp = 2.0
+	TurnManager.turn_number = 41
+	CityDefense.ai_city_defense_turn(city, hex_grid)
+	assert_null(hex_grid.get_unit_at(Vector2i(1, 0)))
+	assert_eq(rival.gold, 50.0, "sem recompensa: não é fonte de farm")
 
 # ---------------------------------------------------------------------------
 # (5) Aviso ao jogador
@@ -435,10 +371,12 @@ func _run_turn(turn: int) -> void:
 			unit.reset_movement()
 	for unit in hex_grid.neutral_units():
 		unit.reset_movement()
+	TurnManager.turn_number = 1000 + turn
 	RivalAI.take_turn(rival, hex_grid, human)
-	for player in [human, rival]:
-		for city in player.cities.duplicate():
-			CityDefense.militia_strike(city, hex_grid)
+	# Fase 16: só a IA tem a paridade tática automática; o humano dispara explicitamente
+	# (ver o cenário da cidade humana abaixo).
+	for city in rival.cities.duplicate():
+		CityDefense.ai_city_defense_turn(city, hex_grid)
 	MonsterAI.take_turn(hex_grid, turn)
 
 func _live_monsters() -> int:
@@ -469,15 +407,15 @@ func test_scenario_skeleton_pack_against_a_defended_ai_city_is_repelled():
 	assert_eq(_live_monsters(), 0, "esqueletos avancando numa cidade guarnecida deveriam ser eliminados")
 	assert_eq(city.owner_player, rival)
 
-func test_scenario_skeleton_pack_against_an_undefended_ai_city_is_worn_down_by_the_militia():
-	var city := hex_grid.found_city(Vector2i.ZERO, rival, "Cidade")
+func test_scenario_skeleton_pack_against_an_ai_city_without_troops_is_worn_down_by_its_walls():
+	var city := _fortified(hex_grid.found_city(Vector2i.ZERO, rival, "Cidade"))
 	for coord in [Vector2i(5, 0), Vector2i(5, -1), Vector2i(4, 1)]:
 		_make_monster("skeleton", coord)
 	var turns := 0
 	while turns < 20 and _live_monsters() > 0:
 		turns += 1
 		_run_turn(turns)
-	_scenario_report("3 esqueletos vs cidade sem tropa (so' milicia)", turns)
+	_scenario_report("3 esqueletos vs cidade sem tropa (so' Muralhas I)", turns)
 	assert_lt(_live_monsters(), 3, "mesmo sem tropa a cidade deveria reduzir o cerco")
 	assert_eq(city.owner_player, rival)
 
@@ -534,14 +472,18 @@ func test_scenario_two_ai_cities_each_defend_against_their_own_threat():
 	assert_eq(city_a.owner_player, rival)
 	assert_eq(city_b.owner_player, rival)
 
-func test_scenario_human_city_militia_and_units_do_not_break_without_ai_help():
-	var city := hex_grid.found_city(Vector2i.ZERO, human, "Cidade Humana")
+func test_scenario_a_human_fortified_city_firing_each_turn_ends_a_lone_skeleton_siege():
+	var city := _fortified(hex_grid.found_city(Vector2i.ZERO, human, "Cidade Humana"))
 	var skeleton := _make_monster("skeleton", Vector2i(3, 0))
 	var turns := 0
 	while turns < 15 and _live_monsters() > 0:
 		turns += 1
 		_run_turn(turns)
+		# O jogador usa o Ataque da Cidade explicitamente (sem dano automático).
+		var targets := CityDefense.city_attack_targets(city, hex_grid)
+		if not targets.is_empty():
+			CityDefense.resolve_city_defense_attack(city, targets[0], hex_grid)
 	_scenario_report("cidade do jogador, 1 esqueleto, sem tropas", turns)
-	assert_eq(_live_monsters(), 0, "a milicia sozinha deveria acabar com um esqueleto solitario cercando a cidade")
+	assert_eq(_live_monsters(), 0, "o Ataque da Cidade usado a cada turno deveria acabar com um esqueleto solitario")
 	assert_eq(city.owner_player, human)
 	assert_false(is_instance_valid(skeleton) and not skeleton.is_queued_for_deletion())

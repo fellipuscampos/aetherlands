@@ -47,8 +47,7 @@ static func relation_description(a: PlayerData, b: PlayerData) -> String:
 	if a.is_at_war_with(b):
 		return "%s. Cansaço: %d/100; aceita paz com desvantagem numérica ou cansaço ≥ 40." % [a.war_reasons.get(b, "Disputa territorial"), int(b.war_weariness)]
 	var truce := truce_remaining(a, b)
-	var routes := a.trade_routes.filter(func(route): return route.city_a.owner_player == b or route.city_b.owner_player == b).size()
-	return "%s%d rotas comerciais. Guerra encerra as rotas." % [("Trégua: %d turnos. " % truce) if truce > 0 else "", routes]
+	return "Em paz. Trégua: %d turnos." % truce if truce > 0 else "Em paz."
 
 ## Aceita se estiver em desvantagem numerica (menos unidades que quem
 ## propos) ou sem exercito nenhum — uma IA "perdendo" a guerra faz as

@@ -205,15 +205,15 @@ func test_capturing_a_city_resets_its_hp_and_shield_to_full():
 ## Predio POSICIONADO no mapa (Building.gd, ver City.building_coords) —
 ## registrado igual unidade/cidade (units_by_coord/cities_by_coord).
 func test_place_building_registers_it_at_the_right_coord():
-	var building = hex_grid.place_building(Vector2i(1, 0), "granary", human)
+	var building = hex_grid.place_building(Vector2i(1, 0), "v2_building_market", human)
 
 	assert_eq(hex_grid.get_building_at(Vector2i(1, 0)), building)
-	assert_eq(building.building_id, "granary")
+	assert_eq(building.building_id, "v2_building_market")
 	assert_eq(building.owner_player, human)
 
 func test_is_tile_building_site_reflects_placed_building():
 	assert_false(hex_grid.is_tile_building_site(Vector2i(1, 0)))
-	hex_grid.place_building(Vector2i(1, 0), "granary", human)
+	hex_grid.place_building(Vector2i(1, 0), "v2_building_market", human)
 	assert_true(hex_grid.is_tile_building_site(Vector2i(1, 0)))
 
 func test_city_territory_tiles_includes_city_and_all_neighbors():
@@ -315,7 +315,7 @@ func test_refresh_construction_markers_removes_marker_once_no_longer_pending():
 func test_refresh_construction_markers_shows_progress_matching_stored_production():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
 	city.pending_building_coord = Vector2i(1, 0)
-	city.set_production("barracks")
+	city.set_production("v2_building_guardian_hall")
 	city.stored_production = city.production_cost() * 0.4
 
 	hex_grid.refresh_construction_markers()
@@ -339,7 +339,7 @@ func test_refresh_construction_markers_shows_progress_matching_stored_production
 func test_refresh_construction_markers_updates_progress_on_an_already_existing_marker():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
 	city.pending_building_coord = Vector2i(1, 0)
-	city.set_production("barracks")
+	city.set_production("v2_building_guardian_hall")
 	city.stored_production = 0.0
 	hex_grid.refresh_construction_markers()
 	var marker: Node3D = hex_grid._construction_markers[Vector2i(1, 0)]
@@ -365,7 +365,7 @@ func test_refresh_construction_markers_updates_progress_on_an_already_existing_m
 func test_refresh_construction_markers_holds_completed_marker_at_full_for_one_extra_refresh():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
 	city.pending_building_coord = Vector2i(1, 0)
-	city.set_production("barracks")
+	city.set_production("v2_building_guardian_hall")
 	city.stored_production = city.production_cost() * 0.9
 	hex_grid.refresh_construction_markers()
 	var marker: Node3D = hex_grid._construction_markers[Vector2i(1, 0)]
@@ -824,3 +824,138 @@ func test_tiles_in_range_does_not_include_tiles_beyond_range():
 	var result = hex_grid.tiles_in_range(center, 1)
 
 	assert_false(Vector2i(2, 0) in result, "tile a 2 passos nao deveria entrar no alcance 1")
+
+## PERFORMANCE (compute_path): destino que nenhuma unidade consegue ocupar
+## nao pode custar uma varredura do continente inteiro. Medido numa campanha
+## de 80 turnos: buscas falhas de ~65ms, todas de cidades cercadas pelas
+## proprias unidades (o A* trata unidade como parede) -- ver
+## PERFORMANCE_GUIDE.md.
+func _open_field(radius: int) -> void:
+	for q in range(-radius, radius + 1):
+		for r in range(-radius, radius + 1):
+			var coord := Vector2i(q, r)
+			if HexMetrics.axial_distance(Vector2i.ZERO, coord) <= radius and not hex_grid.tiles.has(coord):
+				hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+func _wall_in(end: Vector2i) -> Array[Vector2i]:
+	var walls: Array[Vector2i] = hex_grid.get_neighbors(end)
+	for n in walls:
+		_make_unit("warrior", rival, n)
+	return walls
+
+func test_destination_walled_in_when_every_neighbor_is_occupied():
+	_open_field(6)
+	var end := Vector2i(5, 0)
+	_wall_in(end)
+
+	assert_true(hex_grid._destination_walled_in(Vector2i(-5, 0), end, human, false, false, HexGrid.PATH_POCKET_LIMIT))
+
+func test_destination_not_walled_in_when_a_neighbor_is_free():
+	_open_field(6)
+	var end := Vector2i(5, 0)
+	_wall_in(end)
+	hex_grid.units_by_coord.erase(end + Vector2i(-1, 0)) # brecha voltada pro resto do campo
+
+	assert_false(hex_grid._destination_walled_in(Vector2i(-5, 0), end, human, false, false, HexGrid.PATH_POCKET_LIMIT))
+
+func test_destination_with_only_a_dead_end_neighbor_free_is_still_walled_in():
+	_open_field(6)
+	var end := Vector2i(5, 0)
+	_wall_in(end)
+	hex_grid.units_by_coord.erase(end + Vector2i(1, 0)) # (6,0): beco sem saida na borda do campo
+
+	assert_true(hex_grid._destination_walled_in(Vector2i(-5, 0), end, human, false, false, HexGrid.PATH_POCKET_LIMIT))
+
+func test_destination_not_walled_in_when_start_is_adjacent_to_it():
+	_open_field(6)
+	var end := Vector2i(5, 0)
+	var walls := _wall_in(end)
+
+	# A unidade que quer entrar ja esta num dos tiles vizinhos: o caminho
+	# de 1 passo existe, mesmo com o resto do anel ocupado.
+	assert_false(hex_grid._destination_walled_in(walls[0], end, human, false, false, HexGrid.PATH_POCKET_LIMIT))
+
+func test_destination_walled_in_by_units_a_foreign_city_and_a_lair():
+	_open_field(6)
+	var end := Vector2i(5, 0)
+	var neighbors := hex_grid.get_neighbors(end)
+	# 4 vizinhos por unidade, 1 por cidade estrangeira, 1 por covil.
+	for i in range(4):
+		_make_unit("warrior", rival, neighbors[i])
+	var foreign_city := City.new()
+	foreign_city.owner_player = rival
+	hex_grid.cities_by_coord[neighbors[4]] = foreign_city
+	hex_grid.lairs_by_coord[neighbors[5]] = null
+
+	assert_true(hex_grid._destination_walled_in(Vector2i(-5, 0), end, human, false, false, HexGrid.PATH_POCKET_LIMIT))
+
+	hex_grid.cities_by_coord.erase(neighbors[4])
+	hex_grid.lairs_by_coord.erase(neighbors[5])
+	foreign_city.free()
+
+func test_compute_path_returns_empty_for_a_walled_in_destination_and_a_path_once_a_gap_opens():
+	_open_field(12) # > PATH_POCKET_CHECK_AFTER tiles: o A* chega a checar o bolso
+	var start := Vector2i(-10, 0)
+	var end := Vector2i(10, 0)
+	_wall_in(end)
+
+	assert_true(hex_grid.compute_path(start, end, human).is_empty())
+
+	hex_grid.units_by_coord.erase(end + Vector2i(-1, 0))
+	var path := hex_grid.compute_path(start, end, human)
+	assert_false(path.is_empty(), "com uma brecha aberta o destino volta a ser alcancavel")
+	assert_eq(path.back(), end)
+
+func test_compute_path_finds_a_long_path_through_a_narrow_corridor():
+	# O bolso NAO pode dar falso "inalcancavel": destino grande e conectado
+	# (regiao > PATH_POCKET_LIMIT) so por um corredor estreito.
+	_open_field(12)
+	for coord in hex_grid.tiles.keys():
+		if coord.x == 0 and abs(coord.y) >= 3:
+			hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+
+	var path := hex_grid.compute_path(Vector2i(-10, 0), Vector2i(10, 0), human)
+
+	assert_false(path.is_empty())
+	assert_eq(path.back(), Vector2i(10, 0))
+
+func test_land_route_impossible_across_water_until_terrain_transform_bridges_it():
+	_open_field(6)
+	for coord in hex_grid.tiles.keys():
+		if HexMetrics.axial_distance(Vector2i.ZERO, coord) == 3:
+			hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	var inside := Vector2i(1, 0)
+	var outside := Vector2i(5, 0)
+
+	assert_false(hex_grid._land_route_possible(inside, outside))
+	assert_true(hex_grid.compute_path(inside, outside, human).is_empty())
+
+	hex_grid.transform_tile_terrain(Vector2i(3, 0), HexTileData.TerrainType.GRASSLAND)
+
+	assert_true(hex_grid._land_route_possible(inside, outside), "a transformacao invalida o cache de componentes")
+	assert_false(hex_grid.compute_path(inside, outside, human).is_empty())
+
+func test_quick_pocket_limit_only_flags_small_regions():
+	_open_field(6)
+	var end := Vector2i(5, 0)
+	_wall_in(end)
+	hex_grid.units_by_coord.erase(end + Vector2i(1, 0)) # bolso de 2 tiles: end + (6,0)
+
+	assert_true(hex_grid._destination_walled_in(Vector2i(-5, 0), end, human, false, false, HexGrid.PATH_POCKET_QUICK_LIMIT))
+
+	hex_grid.units_by_coord.erase(end + Vector2i(-1, 0)) # agora conecta com o campo (~120 tiles)
+	assert_false(hex_grid._destination_walled_in(Vector2i(-5, 0), end, human, false, false, HexGrid.PATH_POCKET_QUICK_LIMIT))
+
+func test_transform_that_does_not_change_land_blocking_keeps_the_component_cache():
+	_open_field(3)
+	hex_grid._ensure_land_components()
+	var built_for: int = hex_grid._land_component_tile_count
+	assert_eq(built_for, hex_grid.tiles.size(), "pre-condicao: componentes construidos")
+
+	hex_grid.transform_tile_terrain(Vector2i(1, 0), HexTileData.TerrainType.FOREST) # terra -> terra
+
+	assert_eq(hex_grid._land_component_tile_count, built_for, "terra -> terra nao invalida o cache")
+
+	hex_grid.transform_tile_terrain(Vector2i(1, 0), HexTileData.TerrainType.OCEAN) # terra -> agua
+
+	assert_eq(hex_grid._land_component_tile_count, -1, "terra -> agua invalida o cache")

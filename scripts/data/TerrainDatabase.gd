@@ -331,7 +331,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			# coastal_ocean (converte OCEAN pra COAST no pos-processamento).
 			# Pesca mais farta perto da costa (comida 2, contra o 1 do Oceano
 			# aberto) e continua podendo ser TRABALHADA por uma cidade (ver
-			# HexTileData.can_be_worked — Oceano aberto/Mar Gelado nao podem,
+			# HexTileData.is_usable_land — Oceano aberto/Mar Gelado nao podem,
 			# sem porto/tecnologia pra isso neste jogo ainda). base_height/
 			# color sao vestigiais pra renderizacao (o plano de agua usa UM
 			# shader so, water_shader.gdshader, que decide raso/fundo pela

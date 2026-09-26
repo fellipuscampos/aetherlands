@@ -8,40 +8,15 @@ extends Node
 ## depois reaplica hp/movimento/producao por cima.
 
 const SAVE_PATH := "user://savegame.json"
-## Versoes anteriores aceitas por load_game ALEM de SAVE_VERSION — so pra
-## rodar as migracoes de _deserialize_player (ver comentario la). Nao e
-## suporte generico a qualquer versao antiga, so a ponte de migracoes
-## concretas e explicitas (pedido do usuario: "NAO simplesmente invalide
-## saves antigos... se precisar aumentar a versao, implemente a migracao
-## explicitamente"). v17 precisa da migracao Tech/Magic (researched_techs
-## misturava as duas arvores); v17 E v18 precisam da migracao de ids da
-## arvore de 10 niveis (TECH_TIER_REDESIGN_REMAP abaixo) — os 9 ids
-## antigos de TechDatabase nao existem mais.
+## Versoes anteriores aceitas por load_game ALEM de SAVE_VERSION (pedido do usuario: "NAO simplesmente
+## invalide saves antigos"). As migrações específicas delas (pesquisa Tecnologia/Magia V1) perderam o
+## objeto na Fase 25: o conteúdo V1 é ignorado/sanitizado, o resto do save carrega normalmente.
 const MIGRATABLE_SAVE_VERSIONS: Array[int] = [17, 18, 19, 20]
-const SAVE_VERSION := 21 # Escolas V1, conjuradores, regiões temporárias e rituais.
-
-## Migracao de ids da arvore de Tecnologia (redesenho de 10 niveis, v19) —
-## tabela EXPLICITA (pedido do usuario: "nao quero uma migracao inferida
-## automaticamente com base em nome... isso pode destruir save sem ninguem
-## perceber"), id antigo -> Array de id(s) novo(s). Os 6 primeiros
-## preservam o id (mesmo predio/conceito). "arquearia" desbloqueava PREDIO
-## E UNIDADE juntos na tech antiga; a arvore nova separou isso em dois nos
-## (campo_de_tiro + arqueiro), entao quem ja tinha pago por essa
-## capacidade recebe as duas. "batedor_montado" antigo desbloqueava o kind
-## "scout" (Batedor simples) — isso agora e a tech "batedor" do Nivel 1; o
-## id novo "batedor_montado" virou uma unidade DIFERENTE (mais forte,
-## Nivel 3), entao NAO recebe credito automatico por essa migracao.
-const TECH_TIER_REDESIGN_REMAP: Dictionary = {
-	"quartel": ["quartel"],
-	"celeiro": ["celeiro"],
-	"oficina": ["oficina"],
-	"mercado": ["mercado"],
-	"estabulo": ["estabulo"],
-	"muralhas": ["muralhas"],
-	"navegacao": ["navegacao"],
-	"arquearia": ["campo_de_tiro", "arqueiro"],
-	"batedor_montado": ["batedor"],
-}
+## Fase 25: continua 21 de propósito — o loader é tolerante (campos antigos são ignorados, campos
+## novos têm default, conteúdo removido passa por _sanitize_legacy_city/_deserialize_player). As
+## versões 17-20 ainda carregam: tudo o que as migrações antigas convertiam (pesquisa Tecnologia/
+## Magia V1) deixou de existir e simplesmente é ignorado.
+const SAVE_VERSION := 21
 
 ## path e parametrizavel so pros testes GUT usarem um arquivo isolado, sem
 ## tocar no save de verdade do jogador — o jogo em si sempre usa SAVE_PATH.
@@ -148,7 +123,6 @@ func save_game(hex_grid: HexGrid, path: String = SAVE_PATH, extra_fields: Dictio
 
 	var data := {
 		"version": SAVE_VERSION,
-		"victory_rules_version": GameManager.victory_rules_version,
 		"map_width": hex_grid.map_width,
 		"map_height": hex_grid.map_height,
 		"map_seed": hex_grid.map_seed,
@@ -173,10 +147,20 @@ func save_game(hex_grid: HexGrid, path: String = SAVE_PATH, extra_fields: Dictio
 		"rivals": rivals,
 		"world_events": WorldEventManager.to_save_dict(),
 		"relations": _serialize_relations(),
-		"trade_routes": _serialize_routes(),
 		"terrain_changes": _serialize_coord_values(hex_grid.terrain_changes),
 		"terrain_resources": _serialize_terrain_resources(hex_grid),
 		"pillaged_tiles": _serialize_coord_values(hex_grid._pillaged_tiles),
+		# Fase 20: modificações físicas de terreno V2 — estado GLOBAL do mapa (fora de cidades), lista esparsa
+		# [x, y, id]. Campo opcional (sem bump de versão); custo/Defesa nunca são salvos (derivados do id).
+		"v2_terrain_modifications": _serialize_terrain_modifications(hex_grid),
+		# Fase 21: efeito global opcional do mapa. Só dados puros; índices/markers são reconstruídos no load.
+		"v2_portal_pairs": V2PortalSystem.to_save_array(hex_grid),
+		# Fase 22: camada ambiental global, esparsa e opcional. Efeitos são
+		# derivados do zone_id; só identidade/dono/duração materializada viajam.
+		"v2_environmental_zones": V2EnvironmentalZoneSystem.to_save_array(hex_grid),
+		# Fase 23: estado global opcional e mínimo do Ritual Final; owner por
+		# índice estável, site por coordenada e relógio idempotente.
+		"v2_transcendence_rituals": V2TranscendenceSystem.to_save_array(),
 	}
 	data.merge(extra_fields, true)
 	var temporary_path := path + ".tmp"
@@ -231,7 +215,6 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 	GameManager.human_race = data.get("human_race", "human")
 	GameManager.rival_count = data.rivals.size()
 	GameManager.difficulty = data.get("difficulty", "normal")
-	GameManager.victory_rules_version = int(data.get("victory_rules_version", 1))
 
 	hex_grid.generate_map(int(data.map_width), int(data.map_height), int(data.map_seed))
 	for entry in data.get("terrain_changes", []):
@@ -242,6 +225,7 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 			tile.resource = str(entry[2])
 	for entry in data.get("pillaged_tiles", []):
 		hex_grid._pillaged_tiles[Vector2i(int(entry[0]), int(entry[1]))] = int(entry[2])
+	_deserialize_terrain_modifications(hex_grid, data.get("v2_terrain_modifications", []))
 	# generate_map() acima ja respawnou TODO guardiao original + LairStructure
 	# (mesma semente) — descarta esse povoamento deterministico de partida
 	# NOVA e restaura o mapa de monstros EXATO que existia no momento do save
@@ -293,7 +277,14 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 		# IA, e a gente quer restaurar o estado EXATO salvo, nao renegociar).
 		if rival_data.get("at_war_with_human", true) and not data.has("relations"):
 			Diplomacy.declare_war(rival, GameManager.human_player)
-	_restore_relations_and_routes(data, hex_grid)
+	_restore_relations(data)
+	# Depois de jogadores, cidades, prédios e melhorias: identidade por índice já existe e qualquer
+	# endpoint que uma estrutura restaurada tornou impossível é descartado fail-safe.
+	V2PortalSystem.load_save_array(data.get("v2_portal_pairs", []), hex_grid)
+	V2EnvironmentalZoneSystem.load_save_array(data.get("v2_environmental_zones", []), hex_grid)
+	# Só agora todas as pesquisas, cidades, prédios e unidades existem. Load
+	# inválido é descartado silenciosamente e markers são reconstruídos.
+	V2TranscendenceSystem.load_save_array(data.get("v2_transcendence_rituals", []), hex_grid)
 
 	for c in data.get("explored_coords", []):
 		var coord = Vector2i(int(c[0]), int(c[1]))
@@ -361,18 +352,9 @@ func _serialize_relations() -> Array:
 		out.append({"wars": wars, "campaigns": campaigns, "truces": truces, "reasons": reasons})
 	return out
 
-func _serialize_routes() -> Array:
-	var out: Array = []
-	var seen: Dictionary = {}
-	for player in _match_players():
-		for route in player.trade_routes:
-			if seen.has(route) or not TradeManager._is_route_still_valid(route):
-				continue
-			seen[route] = true
-			out.append([route.city_a.coord.x, route.city_a.coord.y, route.city_b.coord.x, route.city_b.coord.y])
-	return out
-
-func _restore_relations_and_routes(data: Dictionary, hex_grid: HexGrid) -> void:
+## Guerras, tréguas, motivos e campanhas. Fase 25: o bloco antigo "trade_routes" (comércio V1,
+## removido) é simplesmente ignorado.
+func _restore_relations(data: Dictionary) -> void:
 	var players := _match_players()
 	var relations: Array = data.get("relations", [])
 	for i in range(mini(relations.size(), players.size())):
@@ -392,15 +374,6 @@ func _restore_relations_and_routes(data: Dictionary, hex_grid: HexGrid) -> void:
 			var index := int(truce[0])
 			if index >= 0 and index < players.size() and index != i:
 				players[i].truces[players[index]] = int(truce[1])
-	for coords in data.get("trade_routes", []):
-		var a := hex_grid.get_city_at(Vector2i(int(coords[0]), int(coords[1])))
-		var b := hex_grid.get_city_at(Vector2i(int(coords[2]), int(coords[3])))
-		if a == null or b == null or a.owner_player == b.owner_player or a.owner_player.is_at_war_with(b.owner_player):
-			continue
-		# Restaurar um acordo não é uma nova negociação.
-		var route := TradeRoute.new(a, b)
-		a.owner_player.trade_routes.append(route)
-		b.owner_player.trade_routes.append(route)
 
 func _valid_save_header(data: Dictionary) -> bool:
 	for key in ["map_width", "map_height", "map_seed", "turn_number", "current_player_index", "human", "rivals"]:
@@ -418,8 +391,6 @@ func _valid_save_header(data: Dictionary) -> bool:
 	for key in ["human_kingdom_name", "human_race", "difficulty", "monster_rng_state"]:
 		if data.has(key) and typeof(data[key]) != TYPE_STRING:
 			return false
-	if data.has("victory_rules_version") and not _is_number(data.victory_rules_version):
-		return false
 	var occupied := {}
 	var cities := {}
 	for player in [data.human] + data.rivals:
@@ -429,7 +400,7 @@ func _valid_save_header(data: Dictionary) -> bool:
 			return false
 		if not _is_number(player.gold):
 			return false
-		if not _valid_magic_state(player):
+		if not _valid_player_state(player):
 			return false
 		for unit in player.units:
 			if not _valid_entity(unit, ["kind"], ["hp", "movement_left"]) or occupied.has(str(unit.coord)):
@@ -438,17 +409,14 @@ func _valid_save_header(data: Dictionary) -> bool:
 			if unit.has("move_order_target") and not _valid_coord(unit.move_order_target):
 				return false
 		for city in player.cities:
-			if not _valid_entity(city, ["name", "production_item"], ["population", "stored_food", "stored_production"]) or cities.has(str(city.coord)):
+			if not _valid_entity(city, ["name", "production_item"], ["stored_production"]) or cities.has(str(city.coord)):
 				return false
 			for key in ["hp", "shield", "siege_turns", "original_owner_index"]:
 				if city.has(key) and not _is_number(city[key]):
 					return false
-			if city.has("captured_developed") and typeof(city.captured_developed) != TYPE_BOOL:
-				return false
 			cities[str(city.coord)] = true
-			for key in ["worked_tiles", "owned_tiles"]:
-				if not _valid_coord_list(city.get(key, [])):
-					return false
+			if not _valid_coord_list(city.get("owned_tiles", [])):
+				return false
 			if typeof(city.get("buildings", [])) != TYPE_ARRAY or typeof(city.get("building_coords", {})) != TYPE_DICTIONARY:
 				return false
 			if not _string_list(city.get("buildings", [])):
@@ -461,18 +429,10 @@ func _valid_save_header(data: Dictionary) -> bool:
 		for key in ["known_enemy_cities", "explored_tiles"]:
 			if not _valid_coord_list(player.get(key, [])):
 				return false
-		for key in ["researched_techs", "researched_magic"]:
-			if not _string_list(player.get(key, [])):
-				return false
-		for key in ["research_saved_progress", "spell_cooldowns"]:
-			if typeof(player.get(key, {})) != TYPE_DICTIONARY:
-				return false
-		if player.has("arcane_ritual_city_coord") and not _valid_coord(player.arcane_ritual_city_coord):
-			return false
 	for key in ["explored_coords", "cleared_lair_coords", "lair_structure_hp", "lair_alerts", "terrain_changes", "pillaged_tiles"]:
 		if not _valid_coord_list(data.get(key, [])):
 			return false
-	for key in ["neutral_units", "relations", "trade_routes"]:
+	for key in ["neutral_units", "relations"]:
 		if typeof(data.get(key, [])) != TYPE_ARRAY:
 			return false
 	for unit in data.get("neutral_units", []):
@@ -505,22 +465,17 @@ func _string_list(value: Variant) -> bool:
 			return false
 	return true
 
-func _valid_magic_state(player: Dictionary) -> bool:
-	for key in ["mana", "mana_income_per_turn", "war_weariness", "research_progress", "territorial_streak", "arcane_ritual_streak", "arcane_last_tick"]:
+## Campos de jogador que o jogo ainda LÊ (Fase 25). Os campos da pesquisa/magia/vitórias V1 que um
+## save antigo possa ter (researched_*, current_research, rituals, magic_effects, arcane_ritual_*...)
+## não são mais validados nem lidos — nunca derrubam o load e nunca concedem nada.
+func _valid_player_state(player: Dictionary) -> bool:
+	for key in ["mana", "mana_income_per_turn", "war_weariness"]:
 		if player.has(key) and not _is_number(player[key]):
 			return false
-	if typeof(player.get("current_research", "")) != TYPE_STRING:
+	if player.has("at_war_with_human") and typeof(player.at_war_with_human) != TYPE_BOOL:
 		return false
-	for key in ["arcane_ritual_active", "at_war_with_human", "supremacy_announced"]:
-		if player.has(key) and typeof(player[key]) != TYPE_BOOL:
-			return false
 	var campaign = player.get("war_campaign")
 	if campaign != null and (typeof(campaign) != TYPE_DICTIONARY or not _valid_coord(campaign.get("target_coord")) or typeof(campaign.get("objective")) != TYPE_STRING or typeof(campaign.get("status")) != TYPE_STRING):
-		return false
-	for key in ["research_saved_progress", "spell_cooldowns"]:
-		if not _numeric_dict(player.get(key, {})):
-			return false
-	if not _number_list(player.get("arcane_ritual_units", [])) or typeof(player.get("completed_rituals", {})) != TYPE_DICTIONARY:
 		return false
 	if player.has("ai_rng_state") and (typeof(player.ai_rng_state) != TYPE_STRING or not player.ai_rng_state.is_valid_int()):
 		return false
@@ -534,43 +489,13 @@ func _valid_magic_state(player: Dictionary) -> bool:
 		for key in ["magic_cooldowns", "magic_status"]:
 			if not _numeric_dict(unit.get(key, {})):
 				return false
-		for key in ["serial_id", "summoner_id", "expires_turn", "kills", "veterancy_level"]:
+		for key in ["serial_id", "kills", "veterancy_level"]:
 			if unit.has(key) and not _is_number(unit[key]):
 				return false
-		if typeof(unit.get("ritual_id", "")) != TYPE_STRING or not _valid_coord(unit.get("boss_target", [0, 0])):
-			return false
 		var serial := int(unit.get("serial_id", 0))
 		if serial > 0 and serials.has(serial):
 			return false
 		serials[serial] = true
-	for key in ["magic_effects", "rituals"]:
-		if typeof(player.get(key, [])) != TYPE_ARRAY:
-			return false
-	for region in player.get("magic_effects", []):
-		if typeof(region) != TYPE_DICTIONARY or typeof(region.get("effect")) != TYPE_STRING:
-			return false
-		if not _valid_coord(region.get("center")) or not _valid_coord(region.get("origin", [0, 0])):
-			return false
-		if not _is_number(region.get("radius")) or not _is_number(region.get("expires")) or float(region.radius) < 0 or float(region.radius) > 12:
-			return false
-		if not _valid_coord_list(region.get("changes", [])):
-			return false
-		for change in region.get("changes", []):
-			if change.size() != 4 or not _is_number(change[2]) or typeof(change[3]) != TYPE_STRING:
-				return false
-	for ritual in player.get("rituals", []):
-		if typeof(ritual) != TYPE_DICTIONARY:
-			return false
-		for key in ["id", "spell", "effect", "school", "status"]:
-			if typeof(ritual.get(key)) != TYPE_STRING:
-				return false
-		if not MagicContent.SCHOOLS.has(ritual.school) or not ritual.status in ["channeling", "completed", "interrupted"]:
-			return false
-		if not _valid_coord(ritual.get("seat")) or not _valid_coord(ritual.get("target")) or not _number_list(ritual.get("units")):
-			return false
-		for key in ["progress", "turns", "started", "last_tick"]:
-			if not _is_number(ritual.get(key)):
-				return false
 	return true
 
 func _valid_world_state(data: Dictionary) -> bool:
@@ -585,9 +510,6 @@ func _valid_world_state(data: Dictionary) -> bool:
 					return false
 			elif not _is_number(entry[2]):
 				return false
-	for route in data.get("trade_routes", []):
-		if not _number_list(route) or route.size() != 4:
-			return false
 	for relation in data.get("relations", []):
 		if typeof(relation) != TYPE_DICTIONARY or not _number_list(relation.get("wars", [])) or typeof(relation.get("campaigns", [])) != TYPE_ARRAY:
 			return false
@@ -661,6 +583,22 @@ func _serialize_explored(hex_grid: HexGrid) -> Array:
 			out.append([coord.x, coord.y])
 	return out
 
+func _serialize_terrain_modifications(grid: HexGrid) -> Array:
+	var result := []
+	for coord in grid.v2_terrain_modifications:
+		result.append([coord.x, coord.y, String(grid.v2_terrain_modifications[coord])])
+	return result
+
+## Fase 20 — restaura ANTES de cidades/prédios (que limpam o próprio tile ao serem recolocados). Fail-safe: entrada
+## malformada, tile inexistente ou id desconhecido é ignorada sem derrubar o save; save antigo sem o campo = nenhuma.
+func _deserialize_terrain_modifications(grid: HexGrid, entries) -> void:
+	if typeof(entries) != TYPE_ARRAY:
+		return
+	for entry in entries:
+		if typeof(entry) != TYPE_ARRAY or entry.size() != 3 or not _is_number(entry[0]) or not _is_number(entry[1]) or typeof(entry[2]) != TYPE_STRING:
+			continue
+		V2TerrainRuntime.restore(grid, Vector2i(int(entry[0]), int(entry[1])), entry[2])
+
 func _serialize_terrain_resources(grid: HexGrid) -> Array:
 	var result := []
 	for coord in grid.terrain_changes:
@@ -681,10 +619,6 @@ func _serialize_neutral_units(hex_grid: HexGrid) -> Array:
 			"serial_id": unit.serial_id,
 			"magic_cooldowns": unit.magic_cooldowns,
 			"magic_status": unit.magic_status,
-			"summoner_id": unit.summoner_id,
-			"expires_turn": unit.expires_turn,
-			"ritual_id": unit.ritual_id,
-			"boss_target": MagicRuntime.packed(unit.boss_target),
 			"coord": [unit.coord.x, unit.coord.y],
 			"hp": unit.hp,
 			"kills": unit.kills,
@@ -756,15 +690,15 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 			"serial_id": unit.serial_id,
 			"magic_cooldowns": unit.magic_cooldowns,
 			"magic_status": unit.magic_status,
-			"summoner_id": unit.summoner_id,
-			"expires_turn": unit.expires_turn,
-			"ritual_id": unit.ritual_id,
-			"boss_target": MagicRuntime.packed(unit.boss_target),
 			"coord": [unit.coord.x, unit.coord.y],
 			"hp": unit.hp,
 			"movement_left": unit.movement_left,
 			"kills": unit.kills,
 			"veterancy_level": unit.veterancy_level,
+			# Aetherlands V2, Fase 15 — cargas restantes do Construtor (0 pra qualquer outra
+			# unidade, nunca lido fora de V2ConstructorRuntime). Campo opcional, mesmo padrão dos
+			# outros blocos V2 (sem bump de SAVE_VERSION).
+			"work_charges_remaining": unit.work_charges_remaining,
 			# Roadmap 2.0 Parte 1 (C6) — EXCECAO deliberada: diferente de
 			# fortified/exploring/move_order_target (conveniencia de sessao,
 			# de proposito descartados ao salvar), perder isto deixaria uma
@@ -778,9 +712,6 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 		})
 	var cities := []
 	for city in player.cities:
-		var worked := []
-		for w in city.worked_tiles:
-			worked.append([w.x, w.y])
 		var owned := []
 		for o in city.owned_tiles:
 			owned.append([o.x, o.y])
@@ -788,22 +719,47 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 		for id in city.building_coords.keys():
 			var bc: Vector2i = city.building_coords[id]
 			building_coords_out[id] = [bc.x, bc.y]
+		# Aetherlands V2, Fase 14 — posições físicas de CADA cópia de um prédio repetível
+		# (CopyLimitMode.CITY_LEVEL, ver City.repeatable_building_coords) — campo OPCIONAL
+		# separado de building_coords, mesmo padrão de repeatable_building_counts na Fase 13.
+		var repeatable_building_coords_out := {}
+		for id in city.repeatable_building_coords.keys():
+			var coord_list := []
+			for rc in city.repeatable_building_coords[id]:
+				coord_list.append([rc.x, rc.y])
+			repeatable_building_coords_out[id] = coord_list
+		# Aetherlands V2, Fase 15 -- melhorias de recurso construídas pelo Construtor (§77 do
+		# pedido: só improvement_id + coord; o yield é sempre derivado, nunca salvo).
+		var resource_improvements_out := {}
+		for coord in city.resource_improvements.keys():
+			resource_improvements_out["%d,%d" % [coord.x, coord.y]] = city.resource_improvements[coord]
 		var city_dict := {
 			"original_owner_index": city.original_owner_index,
-			"captured_developed": city.captured_developed,
 			"coord": [city.coord.x, city.coord.y],
 			"name": city.city_name,
-			"population": city.population,
-			"stored_food": city.stored_food,
 			"stored_production": city.stored_production,
 			"hp": city.hp,
 			"shield": city.shield,
 			"siege_turns": city._consecutive_siege_turns,
 			"production_item": city.production_item,
-			"worked_tiles": worked,
 			"owned_tiles": owned,
 			"buildings": city.buildings.keys(),
 			"building_coords": building_coords_out,
+			# Aetherlands V2 Fase 13: campos OPCIONAIS por cidade (sem bump de SAVE_VERSION,
+			# mesmo padrão de "v2_research" na Fase 1) — save antigo sem eles carrega com
+			# city_level=1/annexation_points=0/repeatable_building_counts={} (ver
+			# _deserialize_player abaixo), nunca rejeitado por causa disso.
+			"city_level": city.city_level,
+			"annexation_points": city.annexation_points,
+			"repeatable_building_counts": city.repeatable_building_counts.duplicate(),
+			"repeatable_building_coords": repeatable_building_coords_out,
+			"resource_improvements": resource_improvements_out,
+			# Aetherlands V2, Fase 16 -- campos opcionais (sem bump de SAVE_VERSION): Fortificação, o
+			# turno do último Ataque da Cidade (recarregar nunca devolve o disparo) e o crédito de
+			# Supremacia (id estável do dono anterior). O progresso da Supremacia nunca é salvo.
+			"fortification_level": city.fortification_level,
+			"last_city_attack_turn": city.last_city_attack_turn,
+			"v2_supremacy_captured_from": city.v2_supremacy_captured_from,
 		}
 		if city.pending_building_coord != City.NO_PENDING_COORD:
 			city_dict["pending_building_coord"] = [city.pending_building_coord.x, city.pending_building_coord.y]
@@ -814,33 +770,18 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 
 	var result := {
 		"gold": player.gold, "units": units, "cities": cities, "known_enemy_cities": known_cities,
-		"researched_techs": player.researched_techs.keys(),
-		"researched_magic": player.researched_magic.keys(),
-		"current_research": player.current_research,
-		"research_progress": player.research_progress,
-		"research_saved_progress": player.research_saved_progress,
-		"magic_effects": player.magic_effects,
-		"rituals": player.rituals,
-		"completed_rituals": player.completed_rituals,
-		"spell_cooldowns": player.spell_cooldowns,
+		# A única progressão do jogo (Fase 25: os campos de pesquisa Tecnologia/Magia V1 deixaram de
+		# ser gravados). Save antigo sem o bloco carrega com pesquisa vazia (V2ResearchState.load_dict).
+		"v2_research": player.v2_research.to_dict(),
 		"mana": player.mana,
 		"mana_income_per_turn": player.mana_income_per_turn,
 		"war_weariness": player.war_weariness,
 		"explored_tiles": _serialize_coord_values(player.explored_tiles),
-		# Roadmap "Fase F" F1/F2/F4 — estado das duas vitorias de sustentacao,
-		# QUALQUER jogador (humano ou rival, diferente de war_campaign abaixo
-		# que e so-contra-humano): territorial_streak e arcane_ritual_* sao
-		# historico acumulado de verdade, perder isso ao salvar/carregar
-		# "roubaria" turnos de sustentacao ja conquistados.
-		"territorial_streak": player.territorial_streak,
-		"supremacy_announced": player.supremacy_announced,
-		"arcane_ritual_active": player.arcane_ritual_active,
-		"arcane_ritual_city_coord": [player.arcane_ritual_city_coord.x, player.arcane_ritual_city_coord.y],
-		"arcane_ritual_streak": player.arcane_ritual_streak,
-		"arcane_ritual_units": player.arcane_ritual_units,
-		"arcane_last_tick": player.arcane_last_tick,
 	}
 	if is_rival:
+		# Fase 24: estado estratégico mínimo e opcional. Scores, views e alvos
+		# são transitórios; save antigo sem o bloco é rederivado pela seed.
+		result["v2_ai_strategy"] = player.v2_ai_strategy.to_dict()
 		result["at_war_with_human"] = player.is_at_war_with(GameManager.human_player)
 		# Roadmap "Parte C" C3 — so contra o humano de proposito: RivalAI.
 		# decide_war/decide_campaign nunca sao chamados com outro oponente
@@ -862,63 +803,68 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 	if saved.has("ai_rng_state"):
 		player.ai_rng.state = int(saved.ai_rng_state)
 	for u in saved.units:
+		# Fase 25: tipo que não existe mais (conjuradores/invocações da magia V1 removida) é descartado
+		# em vez de voltar como um Guarda genérico. Unidades V1 mundanas continuam no banco e voltam.
+		if not UnitDatabase.is_known_kind(String(u.kind)):
+			continue
 		var coord = Vector2i(int(u.coord[0]), int(u.coord[1]))
 		var unit = hex_grid.spawn_unit(coord, UnitDatabase.create_unit(u.kind), player)
 		unit.serial_id = int(u.get("serial_id", unit.serial_id))
 		hex_grid.next_unit_id = maxi(hex_grid.next_unit_id, unit.serial_id + 1)
-		unit.magic_cooldowns = u.get("magic_cooldowns", {}).duplicate()
-		unit.magic_status = u.get("magic_status", {}).duplicate()
-		unit.summoner_id = int(u.get("summoner_id", 0))
-		unit.expires_turn = int(u.get("expires_turn", 0))
-		unit.ritual_id = u.get("ritual_id", "")
-		unit.boss_target = MagicRuntime.coord_of(u.get("boss_target", [999999, 999999]))
+		unit.magic_cooldowns = _sanitize_magic_dict(u.get("magic_cooldowns", {}))
+		unit.magic_status = _sanitize_magic_dict(u.get("magic_status", {}))
+		unit.refresh_technique_marker() # V2 (Fase 4): o anel de uma Técnica ativa volta junto com o estado
 		unit.set_hp_silent(float(u.hp)) # restauracao, nao um golpe -- nao deveria piscar/pular (ver Unit.hp)
 		unit.movement_left = float(u.movement_left)
 		unit.kills = int(u.get("kills", 0))
 		unit.veterancy_level = int(u.get("veterancy_level", 0))
+		unit.work_charges_remaining = int(u.get("work_charges_remaining", 0))
 		unit.embarked = u.get("embarked", false) # Roadmap 2.0 Parte 1 (C6)
 		unit.fortified = u.get("fortified", false)
 		unit.exploring = u.get("exploring", false)
 		var order = u.get("move_order_target", [Unit.NO_MOVE_ORDER.x, Unit.NO_MOVE_ORDER.y])
 		unit.move_order_target = Vector2i(int(order[0]), int(order[1]))
-	for c in saved.cities:
+	# Fase 19: o comando de retinues é DERIVADO (nada salvo); os serial_id acima acabaram de ser restaurados,
+	# então o anel "sem comando" é re-derivado agora, pela mesma ordem determinística de antes do save.
+	V2RetinueSystem.refresh_all_markers(player)
+	for saved_city in saved.cities:
+		# Fase 25: uma cópia sanitizada — muralhas V1 viram Fortificação, prédios/produção V1 somem.
+		var c := _sanitize_legacy_city(saved_city)
 		var coord = Vector2i(int(c.coord[0]), int(c.coord[1]))
 		var city = hex_grid.found_city(coord, player, c.name, true)
 		city.original_owner_index = int(c.get("original_owner_index", city.original_owner_index))
-		city.captured_developed = c.get("captured_developed", false)
 		# set_production() zera stored_production quando o tipo muda (existe
 		# pra impedir o JOGADOR de "salvar" progresso trocando de item) — por
 		# isso precisa vir ANTES de restaurar stored_production, senao o
 		# valor salvo seria zerado de volta aqui mesmo.
 		city.set_production(c.production_item)
-		city.population = int(c.population)
-		city.stored_food = float(c.stored_food)
+		# Aetherlands V2 Fase 13: nunca inferir City Level pelo save antigo — sem o campo, a
+		# cidade carrega em Cidade I / 0 Pontos de Anexação (legacy default, §42 do pedido).
+		city.city_level = V2CityLevelData.clamp_level(int(c.get("city_level", 1)))
+		city.annexation_points = maxi(0, int(c.get("annexation_points", 0)))
+		var repeatable_in: Dictionary = c.get("repeatable_building_counts", {})
+		for id in repeatable_in.keys():
+			city.repeatable_building_counts[id] = int(repeatable_in[id])
 		city.stored_production = float(c.stored_production)
-		# found_city() ja chamou auto_assign_worked_tiles() acima (com a
-		# populacao default 1) — sobrescreve com a lista exata salva em vez
-		# de deixar o auto-assign "adivinhar" de novo.
-		var worked: Array[Vector2i] = []
-		for w in c.get("worked_tiles", []):
-			worked.append(Vector2i(int(w[0]), int(w[1])))
-		city.worked_tiles = worked
 		# found_city() ja inicializou owned_tiles com celula+6 vizinhos (ver
 		# HexGrid.found_city) — sobrescreve com o territorio EXATO salvo,
-		# que pode ser maior (cidade que ja cresceu, ver City.
-		# _claim_frontier_tile), mesmo padrao de worked_tiles acima.
+		# que pode ser maior (anexação, ou território legado).
 		var owned: Array[Vector2i] = []
 		for o in c.get("owned_tiles", []):
 			owned.append(Vector2i(int(o[0]), int(o[1])))
 		city.owned_tiles = owned
 		for id in c.get("buildings", []):
 			city.buildings[id] = true
-		# get(..., max_*()) com fallback: save ANTIGO (de antes de hp/shield
-		# existirem) carrega a cidade com vida/escudo cheios em vez de
-		# quebrar. Le DEPOIS de population E buildings (Muralhas) ja
-		# restauradas acima — senao o fallback calcularia max_hp()/
-		# max_shield() errado (population ainda no default 1, "walls"
-		# ainda ausente de buildings).
-		city.hp = float(c.get("hp", city.max_hp()))
-		city.shield = float(c.get("shield", city.max_shield()))
+		# Fase 16/25: Fortificação. A migração da cadeia V1 de muralhas (save antigo sem o campo) já foi
+		# feita por _sanitize_legacy_city, que também removeu os prédios de muralha V1.
+		city.fortification_level = V2FortificationData.clamp_level(int(c.get("fortification_level", 0)))
+		city.last_city_attack_turn = int(c.get("last_city_attack_turn", -1))
+		city.v2_supremacy_captured_from = int(c.get("v2_supremacy_captured_from", -1))
+		# get(..., max_*()) com fallback: save ANTIGO (de antes de hp/shield existirem) carrega a cidade
+		# com vida/escudo cheios. Lido DEPOIS de city_level/fortification_level: o HP máximo vem do City
+		# Level e o escudo da Fortificação — um save antigo acima do novo máximo é LIMITADO a ele.
+		city.hp = clampf(float(c.get("hp", city.max_hp())), 0.0, city.max_hp())
+		city.shield = clampf(float(c.get("shield", city.max_shield())), 0.0, city.max_shield())
 		city._consecutive_siege_turns = int(c.get("siege_turns", 0))
 		# Recria o modelo 3D de cada predio no tile exato onde foi
 		# posicionado — sem isso o predio continuaria valendo o bonus (ja
@@ -929,93 +875,53 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 			var bc = Vector2i(int(bc_arr[0]), int(bc_arr[1]))
 			city.building_coords[id] = bc
 			hex_grid.place_building(bc, id, player)
+		# Aetherlands V2, Fase 14 — recria CADA cópia física de um prédio repetível (ver comentário
+		# de save acima); save antigo sem o campo carrega com repeatable_building_coords vazio,
+		# nunca inferido (mesmo padrão de city_level/annexation_points acima).
+		var repeatable_coords_in: Dictionary = c.get("repeatable_building_coords", {})
+		for id in repeatable_coords_in.keys():
+			var coord_list: Array = []
+			for rc_arr in repeatable_coords_in[id]:
+				var rc = Vector2i(int(rc_arr[0]), int(rc_arr[1]))
+				coord_list.append(rc)
+				hex_grid.place_building(rc, id, player)
+			city.repeatable_building_coords[id] = coord_list
+		# Aetherlands V2, Fase 15 -- melhorias de recurso: o yield é sempre derivado (nunca salvo),
+		# só o improvement_id + coord voltam; o marcador visual é reconstruído aqui, mesmo espírito
+		# de hex_grid.place_building acima pros prédios.
+		var resource_improvements_in: Dictionary = c.get("resource_improvements", {})
+		for key in resource_improvements_in.keys():
+			var parts: PackedStringArray = String(key).split(",")
+			if parts.size() != 2:
+				continue
+			var rc := Vector2i(int(parts[0]), int(parts[1]))
+			city.resource_improvements[rc] = resource_improvements_in[key]
+			hex_grid.refresh_resource_improvement_marker(rc)
 		if c.has("pending_building_coord"):
 			var pc = c.pending_building_coord
 			city.pending_building_coord = Vector2i(int(pc[0]), int(pc[1]))
-		# found_city() acima ja desenhou o cluster de casas/torre/muralha uma
-		# vez, mas com populacao 1 e buildings vazio (os dois so foram
-		# restaurados DEPOIS, nas linhas acima) — sem refazer agora, uma
-		# cidade carregada com populacao 5+ nao mostraria a torre grande, e
-		# uma com Muralhas construida nao mostraria o anel (ver City.
-		# _build_visual_procedural/_add_walls), os dois so apareceriam no
-		# PROXIMO ponto de crescimento de populacao.
+		# found_city() acima ja desenhou o cluster de casas/torre/muralha uma vez, mas com o City Level e
+		# a Fortificação ainda no default — refaz agora com os valores restaurados.
 		city._build_visual_procedural()
 		city._refresh_label()
-		city._update_life_bars() # hp/shield restaurados acima, com population/buildings ja no valor final
+		city._update_life_bars()
 	for coord_arr in saved.get("known_enemy_cities", []):
 		player.known_enemy_cities[Vector2i(int(coord_arr[0]), int(coord_arr[1]))] = true
-	for id in saved.get("researched_techs", []):
-		player.researched_techs[id] = true
-	for id in saved.get("researched_magic", []):
-		player.researched_magic[id] = true
-	# Migracao de save v17 (MIGRATABLE_SAVE_VERSION): antes da separacao
-	# estrutural das arvores, researched_techs guardava ids das DUAS arvores
-	# misturados, e nao existia a chave "researched_magic" no save. Sinal de
-	# formato antigo == ausencia dessa chave (mais robusto que checar
-	# `saved.version`, que so existe no dict raiz do save, nao no dict de
-	# CADA jogador que _deserialize_player recebe). Reclassifica pelo
-	# proprio id: quem existe em MagicDatabase (e nao em TechDatabase) muda
-	# de dicionario — nenhum progresso perdido, current_research/
-	# research_progress nao precisam de migracao (o id continua o mesmo,
-	# so passa a ser resolvido pela base certa em runtime).
-	if not saved.has("researched_magic"):
-		for id in player.researched_techs.keys().duplicate():
-			if TechDatabase.get_tech(id) == null and MagicDatabase.get_tech(id) != null:
-				player.researched_techs.erase(id)
-				player.researched_magic[id] = true
-	# Migracao de ids da arvore de Tecnologia (redesenho de 10 niveis, v19,
-	# ver TECH_TIER_REDESIGN_REMAP) — roda incondicionalmente (checa so a
-	# PRESENCA de cada id antigo, nao a versao do save): nenhum dos 9 ids
-	# antigos volta a existir na arvore nova, entao um save ja migrado
-	# nunca teria essas chaves pra bater aqui mesmo.
-	var saved_current_research: String = saved.get("current_research", "")
-	if version < 19:
-		for old_id in TECH_TIER_REDESIGN_REMAP.keys():
-			if player.researched_techs.has(old_id):
-				player.researched_techs.erase(old_id)
-				for new_id in TECH_TIER_REDESIGN_REMAP[old_id]:
-					player.researched_techs[new_id] = true
-			# Pesquisa EM ANDAMENTO num id que sumiu: redireciona pro primeiro id
-			# novo do mapeamento, preservando o progresso acumulado (perder tudo
-			# seria pior que uma redirecao best-effort).
-			if saved_current_research == old_id:
-				saved_current_research = TECH_TIER_REDESIGN_REMAP[old_id][0]
-	player.current_research = saved_current_research
-	player.research_progress = float(saved.get("research_progress", 0.0))
-	player.research_saved_progress = saved.get("research_saved_progress", {}).duplicate()
-	player.magic_effects = saved.get("magic_effects", []).duplicate(true)
-	player.rituals = saved.get("rituals", []).duplicate(true)
-	player.completed_rituals = saved.get("completed_rituals", {}).duplicate()
-	for region in player.magic_effects:
-		for changed in region.get("changes", []):
-			var changed_tile := hex_grid.get_tile(MagicRuntime.coord_of(changed))
-			if changed_tile:
-				changed_tile.resource = changed[3]
-	if version < 21:
-		MagicDatabase.migrate_legacy_research(player)
-	var cooldowns: Dictionary = saved.get("spell_cooldowns", {})
-	for spell_name in cooldowns.keys():
-		player.spell_cooldowns[spell_name] = int(cooldowns[spell_name])
+	# Fase 25: os campos da pesquisa Tecnologia/Magia V1 de um save antigo (researched_techs,
+	# researched_magic, current_research, research_progress...) são IGNORADOS — nunca convertidos em
+	# pesquisa V2 (não existe mapeamento canônico; seria progresso de graça).
+	# Aetherlands V2 Fase 1: atualiza NO LUGAR (quem escuta os sinais do estado
+	# continua conectado) e sanitiza tudo — bloco ausente/corrompido vira vazio.
+	player.v2_research.load_dict(saved.get("v2_research"))
+	var rival_index := GameManager.rival_players.find(player)
+	if rival_index >= 0:
+		var world_seed := GameManager.hex_grid.map_seed if GameManager.hex_grid != null else 0
+		player.v2_ai_strategy.load_dict(saved.get("v2_ai_strategy"), rival_index, world_seed, GameManager.rival_players.size())
 	player.mana = float(saved.get("mana", 0.0))
 	player.mana_income_per_turn = float(saved.get("mana_income_per_turn", 0.0))
 	player.war_weariness = float(saved.get("war_weariness", 0.0))
 	for entry in saved.get("explored_tiles", []):
 		player.explored_tiles[Vector2i(int(entry[0]), int(entry[1]))] = true
-	# Roadmap "Fase F" F1/F2/F4 — get(..., default) com o MESMO default do
-	# campo em PlayerData.gd: save ANTIGO (de antes destes 4 campos
-	# existirem) carrega um jogador sem sustentacao nenhuma em andamento em
-	# vez de quebrar, mesmo padrao de fallback ja usado pra hp/shield acima.
-	player.territorial_streak = int(saved.get("territorial_streak", 0))
-	player.supremacy_announced = saved.get("supremacy_announced", false)
-	player.arcane_ritual_active = saved.get("arcane_ritual_active", false)
-	player.arcane_ritual_streak = int(saved.get("arcane_ritual_streak", 0))
-	player.arcane_ritual_units.clear()
-	for id in saved.get("arcane_ritual_units", []):
-		player.arcane_ritual_units.append(int(id))
-	player.arcane_last_tick = int(saved.get("arcane_last_tick", -1))
-	var ritual_coord = saved.get("arcane_ritual_city_coord", null)
-	if ritual_coord != null:
-		player.arcane_ritual_city_coord = Vector2i(int(ritual_coord[0]), int(ritual_coord[1]))
 	# Roadmap "Parte C" C3 — cabe na funcao UNICA compartilhada (chamada pra
 	# humano E cada rival) sem branch de is_rival: pro humano, a chave nunca
 	# foi escrita em _serialize_player, entao "war_campaign" sempre resolve
@@ -1029,3 +935,64 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 			"target_coord": Vector2i(int(tc[0]), int(tc[1])),
 			"status": campaign_data.status,
 		}
+
+## Fase 25 — SANITIZAÇÃO CENTRAL de uma cidade salva (uma única rotina; nenhum `if old_market` espalhado
+## pelo runtime). Devolve uma CÓPIA do dicionário com:
+##  1. Fortificação: um save sem `fortification_level` migra a cadeia V1 de muralhas (Fase 16:
+##     Fortaleza/Fortaleza Imperial -> 3, Muralhas II -> 2, Muralhas -> 1; sem nenhuma, 0).
+##  2. Prédios: só ids que existem no BuildingDatabase (todos V2) sobrevivem — prédios V1 (econômicos,
+##     de treino, muralhas...) somem, junto com a coordenada/modelo e a contagem de cópias; nenhum é
+##     convertido num prédio V2 e nada é reembolsado.
+##  3. Produção: item V1 removido (prédio V1, tropa V1 que não é mais treinável) é CANCELADO — a cidade
+##     fica ociosa, sem PP guardado e sem obra reservada (nunca completa um item fantasma).
+## Campos que não existem mais (population, stored_food, worked_tiles...) são só ignorados por quem lê.
+const LEGACY_WALL_FORTIFICATION := {"fortress": 3, "imperial_fortress": 3, "walls_2": 2, "walls": 1}
+
+static func _sanitize_legacy_city(saved_city: Dictionary) -> Dictionary:
+	var c: Dictionary = saved_city.duplicate(true)
+	var raw_buildings: Array = c.get("buildings", [])
+	if not c.has("fortification_level"):
+		var migrated := 0
+		for id in raw_buildings:
+			migrated = maxi(migrated, int(LEGACY_WALL_FORTIFICATION.get(String(id), 0)))
+		c["fortification_level"] = migrated
+	var kept: Array = []
+	for id in raw_buildings:
+		if BuildingDatabase.get_building(String(id)) != null:
+			kept.append(id)
+	c["buildings"] = kept
+	for key in ["building_coords", "repeatable_building_counts", "repeatable_building_coords"]:
+		var filtered := {}
+		var source: Dictionary = c.get(key, {})
+		for id in source:
+			if BuildingDatabase.get_building(String(id)) != null:
+				filtered[id] = source[id]
+		c[key] = filtered
+	if not _is_valid_production_item(String(c.get("production_item", ""))):
+		c["production_item"] = ""
+		c["stored_production"] = 0.0
+		c.erase("pending_building_coord")
+	return c
+
+## Item de produção que o jogo atual sabe concluir: prédio do banco, projeto local (City Level /
+## Fortificação), unidade V2 ou o núcleo civil treinável. "" (ociosa) também é válido.
+static func _is_valid_production_item(item: String) -> bool:
+	if item == "" or BuildingDatabase.get_building(item) != null:
+		return true
+	if V2CityLevelData.is_city_project(item) or V2FortificationData.is_fortification_project(item):
+		return true
+	if item in UnitDatabase.CORE_TRAINABLE_KINDS:
+		return true
+	return V2ResearchDatabase.is_v2_id(item) and UnitDatabase.is_known_kind(item)
+
+## Recargas/estados de unidade: só as chaves de Técnicas Militares e feitiços V2 continuam tendo
+## sentido — chaves da magia V1 (silence/curse/revealed..., recargas de feitiço V1) são descartadas.
+static func _sanitize_magic_dict(value) -> Dictionary:
+	var result := {}
+	if typeof(value) != TYPE_DICTIONARY:
+		return result
+	for key in value:
+		var id := String(key)
+		if V2DoctrineTechniqueDatabase.get_technique(id) != null or V2SpellDatabase.is_spell(id):
+			result[id] = value[key]
+	return result

@@ -8,7 +8,6 @@ const GARRISON_HEAL_FRACTION := 0.25 # % do HP maximo curado por turno guarnecid
 ## cidade de proposito (GARRISON_HEAL_FRACTION), fortificar no campo aberto
 ## nunca deveria curar tao rapido quanto estar dentro dos proprios muros.
 const FORTIFY_HEAL_FRACTION := 0.1
-const SCIENCE_PER_POPULATION := 1.0 # "ciencia" por turno = populacao total das cidades
 
 ## Pedido do usuario: "o Civilization nao faz tudo acontecer no mapa ao
 ## mesmo tempo, as pecas e acoes... se movem em fila... em pequenos
@@ -59,7 +58,6 @@ var _ai_batch_timer: float = 0.0 # acumula delta ate AI_BATCH_INTERVAL, ver _pro
 var _completed_building_coords_this_turn: Array[Vector2i] = []
 
 var state: GameState = GameState.MENU
-var victory_rules_version: int = 1 # Saves antigos; start_new_game ativa as regras V1 de magia.
 var map_width: int = 25
 var map_height: int = 25
 var hex_grid: HexGrid
@@ -99,23 +97,18 @@ var rival_count: int = 1
 ## Cada rival agora e uma civilizacao de fantasia de verdade, nao mais uma
 ## copia do reino do jogador so trocando nome/cor — pedido do usuario:
 ## "insira outras civilizacoes de fantasia, tipo os anoes, os orcs, os
-## elfos... voce cria tropas especificas pra essas civilizacoes". `race`
-## da acesso a uma tropa exclusiva no pool de producao da IA (ver
-## RivalAI._military_kinds_for/RACE_UNIQUE_KIND); "Reino de Ferroeste"
-## (ja soava a fortaleza de ferro) e "Horda das Brumas" (ja tinha um Xama
-## como lider) so precisaram do campo novo, o antigo "Cla Corvo Negro"
-## virou o reino elfico pra fechar o trio classico anao/orc/elfo.
+## elfos...". `race` é a identidade canônica (nome/estilo visual) e, desde a Fase 26, também a
+## chave única do perfil sistêmico derivado por V2RaceBonusRuntime.
 const RIVAL_CIVS := [
 	{"name": "Reino Elfico de Verdemata", "leader": "Rainha Aelaria", "color": Color(0.25, 0.55, 0.35), "race": "elf"},
 	{"name": "Reino de Ferroeste", "leader": "Rei Bramwell", "color": Color(0.55, 0.42, 0.18), "race": "dwarf"},
 	{"name": "Horda das Brumas", "leader": "Xama Skarn", "color": Color(0.4, 0.5, 0.25), "race": "orc"},
 ]
 
-## Escolhido na tela de titulo; so afeta a economia dos RIVAIS (PlayerData.
-## yield_multiplier, aplicado em City.collect_yields) — o jogador humano
-## fica sempre em 1.0. "normal" preserva o comportamento de sempre.
+## Só "normal" hoje (o seletor saiu da tela de nova partida): o multiplicador antigo agia sobre a
+## economia V1 dos rivais, removida. Continua salvo para compatibilidade; a dificuldade V2 é uma fase
+## futura (Fase 25).
 var difficulty: String = "normal"
-const DIFFICULTY_MULTIPLIERS := {"easy": 0.75, "normal": 1.0, "hard": 1.5}
 
 ## Id do slot desta partida (ver SaveManager.new_slot_id/save_to_slot) --
 ## atribuido por Main.gd toda vez que uma partida NOVA comeca ou um save e
@@ -127,7 +120,6 @@ func _ready() -> void:
 	TurnManager.turn_changed.connect(_on_turn_changed)
 
 func start_new_game(grid: HexGrid) -> void:
-	victory_rules_version = 2
 	setup_players(grid)
 	_spawn_starting_forces()
 	hex_grid.recompute_fog(human_player)
@@ -206,16 +198,9 @@ func setup_players(grid: HexGrid) -> void:
 	human_civ.color = Color(0.2, 0.45, 0.85)
 	human_civ.race = human_race if human_race in ["human", "elf", "dwarf", "orc"] else "human"
 	human_player = PlayerData.new(human_civ)
-	# Roadmap "Parte B" B4 — personalidade DERIVADA de grid.map_seed, nunca
-	# de randi() proprio (ver CivilizationPersonality.gd, comentario de
-	# topo, pra por que isso dispensa SaveManager por completo). Slot 0
-	# reservado pro humano; cada rival abaixo usa slot i+1 — nunca colidem
-	# entre si nem com o humano.
-	human_player.personality = CivilizationPersonality.generate(human_civ.race, hex_grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET)
 	players.append(human_player)
 
 	var count = clamp(rival_count, 1, RIVAL_CIVS.size())
-	var mult: float = DIFFICULTY_MULTIPLIERS.get(difficulty, 1.0)
 	for i in range(count):
 		var info: Dictionary = RIVAL_CIVS[i]
 		var rival_civ := CivilizationData.new()
@@ -224,12 +209,12 @@ func setup_players(grid: HexGrid) -> void:
 		rival_civ.color = info.color
 		rival_civ.race = info.get("race", "")
 		var rival := PlayerData.new(rival_civ)
-		rival.yield_multiplier = mult
-		rival.personality = CivilizationPersonality.generate(rival_civ.race, hex_grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET + i + 1)
 		players.append(rival)
 		rival_players.append(rival)
 	for i in range(players.size()):
 		players[i].ai_rng.seed = hex_grid.map_seed + 83071 + i * 104729
+	for i in range(rival_players.size()):
+		V2StrategicAI.initialize_player(rival_players[i], i, hex_grid.map_seed, rival_players.size())
 
 	# Diplomacia inicial: todo mundo comeca em PAZ (pedido do usuario: "vamos
 	# fazer com que todos comecem o jogo em paz, ao inves de comecar em
@@ -283,64 +268,15 @@ func _apply_regen(unit: Unit) -> void:
 	if unit.unit_data.regen_fraction > 0.0 and unit.hp < unit.unit_data.max_hp:
 		unit.hp = min(unit.hp + unit.unit_data.max_hp * unit.unit_data.regen_fraction, unit.unit_data.max_hp)
 
-## Ciencia = soma da populacao das cidades do jogador (simples de proposito,
-## sem precisar de mais um tipo de yield em HexTileData). So acumula
-## progresso se houver uma pesquisa em andamento — ciencia gerada sem
-## nada selecionado e desperdicada, incentiva sempre ter algo na fila
-## (RivalAI.decide_research cuida disso pro rival; o jogador escolhe pela
-## HUD). current_research/research_progress sao um slot UNICO compartilhado
-## entre as duas arvores (Tecnologia/Magia, ver comentario de PlayerData)
-## — tenta resolver o id em TechDatabase primeiro, depois em MagicDatabase,
-## e grava a conclusao no dicionario correspondente.
-## Extraido de dentro de _process_research (Roadmap "polimento definitivo
-## V1") pra HUD.gd poder mostrar "Ciencia por turno" no cabecalho compacto
-## da aba Tecnologia sem duplicar a formula — MESMOS dois multiplicadores
-## (yield_multiplier de dificuldade + racial), nenhum comportamento novo.
-func science_per_turn_for(player: PlayerData) -> float:
-	var science := 0.0
-	for city in player.cities:
-		science += city.population * SCIENCE_PER_POPULATION
-	var race: String = player.civ.race if player.civ else ""
-	var mult := player.yield_multiplier * RaceEconomy.science_multiplier_for(race)
-	return science * mult
-
-func _process_research(player: PlayerData) -> void:
-	if player.current_research == "":
-		return
-	var tech: TechData = TechDatabase.get_tech(player.current_research)
-	var is_magic := false
-	if tech == null:
-		tech = MagicDatabase.get_tech(player.current_research)
-		is_magic = true
-	if tech == null:
-		player.current_research = ""
-		return
-
-	# Roadmap de gameplay Fase 3: ciencia era a UNICA "yield" que nunca
-	# passava por multiplicador nenhum (nem o de dificuldade que ja existe
-	# pra IA, nem agora o racial do elfo) — pipeline paralela desde sempre
-	# desconectada de City.collect_yields(), ver comentario da funcao. Fix
-	# minimo: aplicar os MESMOS dois multiplicadores aqui tambem, sem
-	# precisar mover ciencia pra dentro de collect_yields de verdade.
-	player.research_progress += science_per_turn_for(player)
-
-	if player.research_progress >= tech.cost:
-		player.research_saved_progress.erase(tech.id)
-		if is_magic:
-			player.researched_magic[tech.id] = true
-		else:
-			player.researched_techs[tech.id] = true
-		player.research_progress = 0.0
-		player.current_research = ""
-		if player == human_player:
-			EventBus.notify.emit("%s: %s" % ["Conhecimento mágico descoberto" if is_magic else "Tecnologia pesquisada", tech.display_name], "confirm")
-
 func _spawn_starting_forces() -> void:
 	# claimed_starts impede que duas capitais (do humano ou de rivais
 	# diferentes) acabem escolhendo o mesmo tile inicial — ver comentario
 	# em WorldSetup.find_start_tile.
 	var claimed_starts: Array[Vector2i] = []
 
+	# Forças iniciais (núcleo compartilhado, Fase 25): o Colonizador e o Guarda ("warrior") são as
+	# únicas unidades fora da progressão V2 que uma partida nova cria — o Guarda é só a escolta
+	# inicial, nunca uma linha de produção (UnitDatabase.CORE_TRAINABLE_KINDS).
 	var human_start = WorldSetup.find_start_tile(hex_grid, Vector2i(0, 0), claimed_starts)
 	claimed_starts.append(human_start)
 	hex_grid.spawn_unit(human_start, UnitDatabase.create_unit("settler"), human_player)
@@ -422,7 +358,7 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		var rival_civ_index: int = players.find(rival)
 		# Roadmap "Fase Macro" 5B.3-G -- "Preparation = tempo de preparacao
 		# militar" / "IA precisa reagir ao Dragao". Calculado UMA vez aqui
-		# (nao dentro de decide_production) pra tambem reutilizar embaixo na
+		# (nao dentro do planejamento de producao) pra tambem reutilizar embaixo na
 		# interceptacao (RivalAI.defend_against_dragon), sem duplicar a
 		# checagem de ameaca. Generico o bastante pra qualquer DragonEvent
 		# ativo -- civ_threatened concentra a regra (Preparation: so a civ
@@ -433,14 +369,9 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 			if event is DragonEvent and (event as DragonEvent).is_civ_threatened(rival_civ_index, players):
 				threatening_dragon = event as DragonEvent
 				break
-		# 5B.3-G v2 -- civ ameacada produz TROPAS especificamente (ver
-		# RivalAI.prepare_for_world_event/_troop_only_candidates), nunca
-		# mais so' uma pontuacao inclinada dentro da producao normal.
-		if threatening_dragon != null:
-			RivalAI.prepare_for_world_event(rival, hex_grid, human_player)
-		else:
-			RivalAI.decide_production(rival, hex_grid, human_player)
-		RivalAI.decide_research(rival)
+		# Fase 24/25: pesquisa, economia, filas e objetivos de vitória de todo rival major vêm de
+		# V2StrategicAI — os decisores V1 (produção/pesquisa/ritual/feitiços) foram removidos.
+		V2StrategicAI.plan_turn(rival, hex_grid)
 		RivalAI.decide_war(rival, hex_grid, human_player)
 		# Roadmap "Parte C" C3 — logo apos decide_war de proposito: uma
 		# guerra recem-declarada ja ganha campanha (objetivo+alvo
@@ -454,19 +385,12 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		# "decisao ve o mundo ate o fim do turno anterior" que decide_war/
 		# decide_campaign ja seguem.
 		RivalAI.decide_peace(rival, human_player)
-		RivalAI.decide_trade(rival, hex_grid, human_player)
-		# Roadmap "Fase F"/G — independente das decisoes de guerra acima de
-		# proposito (decisao explicita do usuario: a Ascensao Arcana nao
-		# pesa risco de guerra, so "tenho condicoes de tentar?").
-		RivalAI.decide_arcane_ritual(rival, hex_grid)
-		StrategicAI.cast_spells(rival, hex_grid)
 		for other in players:
 			if other == rival or other == human_player:
 				continue
 			RivalAI.decide_war(rival, hex_grid, other)
 			RivalAI.decide_campaign(rival, hex_grid, other)
 			RivalAI.decide_peace(rival, other)
-			RivalAI.decide_trade(rival, hex_grid, other)
 		# Roadmap "Fase Macro" 5B.2 -- generico por proposito (qualquer
 		# WorldEvent em Preparation, nao so DragonEvent especificamente).
 		for event in WorldEventManager.active_events:
@@ -479,16 +403,22 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 
 	for player in players:
 		UnitAbilities.process_turn(player, hex_grid)
-		_process_research(player)
-		var mana_income := 0.0
 		# Task 21 -- avisa o jogador humano ANTES de a milicia atuar (a
 		# posicao dos monstros ainda e' a do fim do turno anterior).
 		if player == human_player:
 			CityDefense.warn_player(player, hex_grid, hex_grid.compute_visible_tiles(player), TurnManager.turn_number)
+		# Ouro/Mana/Conhecimento globais vêm só da Economia V2 (V2EconomyRuntime), creditados UMA
+		# vez por civilização por turno, ANTES do loop de produção local das cidades abaixo (snapshot
+		# do início do turno). O Conhecimento alimenta a pesquisa (V2ResearchState) dentro deste
+		# mesmo crédito. Suprimentos não é creditado: é capacidade pura, consultada sob demanda.
+		V2EconomyRuntime.apply_turn_income(player)
 		for city in player.cities.duplicate():
-			# Task 21 -- defesa propria da cidade (jogador e IA): golpe
-			# automatico no monstro adjacente, ver CityDefense.militia_strike.
-			CityDefense.militia_strike(city, hex_grid)
+			# Aetherlands V2, Fase 16 -- a milicia AUTOMATICA (CityDefense.militia_strike) foi
+			# removida: a defesa ativa da cidade agora e' o Ataque da Cidade, uma acao explicita
+			# (o humano mira pelo SelectionManager). A IA tem so' a paridade tatica minima: sua
+			# cidade fortificada dispara uma vez no alvo mais ferido ao alcance.
+			if player != human_player:
+				CityDefense.ai_city_defense_turn(city, hex_grid)
 			# Modo debug (ver set_debug_mode acima): "o tempo de fazer
 			# qualquer unidade e 1 turno" — completa a producao atual
 			# (unidade OU predio, mesmo criterio de City.process_turn) so
@@ -497,11 +427,34 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 			if debug_mode and player == human_player:
 				city.stored_production = max(city.stored_production, city.production_cost())
 			var result = city.process_turn(hex_grid)
-			player.gold += result.gold
-			mana_income += result.mana
 			if result.spawn_unit_kind != "":
-				var spawn_coord = WorldSetup.find_spawn_tile(hex_grid, city.coord)
-				hex_grid.spawn_unit(spawn_coord, UnitDatabase.create_unit(result.spawn_unit_kind), player)
+				var spawn_mana_cost := UnitDatabase.create_unit(result.spawn_unit_kind).production_mana_cost
+				if not V2LegendarySystem.spawn_allowed(player, result.spawn_unit_kind):
+					# Fail-closed (Fase 6): jamais duas Lendárias ativas — não nasce, o custo volta pra cidade.
+					V2LegendarySystem.refuse_spawn(city, result.spawn_unit_kind, player == human_player)
+				elif not V2ManifestationSystem.spawn_allowed(player, result.spawn_unit_kind):
+					# Fail-closed (Fase 17): jamais duas Grandes Manifestações da MESMA Escola — não nasce, os PP voltam, Mana intacta.
+					V2ManifestationSystem.refuse_spawn(city, result.spawn_unit_kind, player == human_player)
+				elif spawn_mana_cost > 0.0 and player.mana < spawn_mana_cost:
+					# Fase 17: a Mana mudou entre a checagem da cidade e o nascimento (duas conclusões no mesmo ciclo):
+					# volta a ESPERAR completa, sem perder PP e sem Mana negativa.
+					city.production_item = result.spawn_unit_kind
+					city.stored_production += city.production_cost()
+				else:
+					# Fase 17: Mana de produção (UnitData.production_mana_cost) cobrada UMA vez, na conclusão, antes de nascer.
+					if spawn_mana_cost > 0.0:
+						player.mana -= spawn_mana_cost
+					var spawn_coord = WorldSetup.find_spawn_tile(hex_grid, city.coord)
+					var spawned := hex_grid.spawn_unit(spawn_coord, UnitDatabase.create_unit(result.spawn_unit_kind), player)
+					if spawned != null and player == human_player and V2LegendarySystem.is_legendary_unit(spawned):
+						EventBus.notify.emit("Unidade Lendária pronta: %s" % spawned.unit_data.unit_name, "confirm")
+					if spawned != null and player == human_player and V2ManifestationSystem.is_manifestation_unit(spawned):
+						EventBus.notify.emit("Grande Manifestação pronta: %s" % spawned.unit_data.unit_name, "confirm")
+					# Aetherlands V2, Fase 15 (§54-56 do pedido) — cargas do Construtor são setadas UMA
+					# vez, ao nascer, pelo tier de Indústria do dono NESTE instante; pesquisa posterior
+					# nunca recarrega um Construtor já existente.
+					if spawned != null and V2ConstructorRuntime.is_builder_unit(spawned):
+						spawned.work_charges_remaining = V2ConstructorRuntime.charges_for_new_builder(player)
 			if result.built_kind != "":
 				if result.built_coord != City.NO_PENDING_COORD:
 					hex_grid.place_building(result.built_coord, result.built_kind, player)
@@ -509,18 +462,13 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 				if player == human_player:
 					var building: BuildingData = BuildingDatabase.get_building(result.built_kind)
 					EventBus.notify.emit("%s concluiu: %s" % [city.city_name, building.display_name], "confirm")
-		player.mana += mana_income
-		player.mana_income_per_turn = mana_income
+			# Aetherlands V2, Fase 13 — City Project concluído (City.city_level já mudou dentro
+			# de process_turn; aqui só o feedback, mesmo padrão de built_kind acima).
+			if result.city_level_up > 0 and player == human_player:
+				EventBus.notify.emit("%s alcançou %s." % [city.city_name, V2CityLevelData.level_name(result.city_level_up)], "confirm")
+			if result.get("fortification_level_up", 0) > 0 and player == human_player:
+				EventBus.notify.emit("%s concluiu %s." % [city.city_name, V2FortificationData.display_name(result.fortification_level_up)], "confirm")
 		Diplomacy.process_war_weariness_and_upkeep(player)
-	for player in players:
-		MagicRuntime.process_turn(player, hex_grid)
-
-	# Roadmap de gameplay Fase 4A — FORA do loop `for player in players`
-	# acima de proposito: cada rota conecta 2 jogadores, processar dentro
-	# do loop por-jogador dessincronizaria a limpeza de rotas invalidas
-	# (a MESMA TradeRoute aparece nas listas dos dois lados). Ver
-	# TradeManager.process_all_routes.
-	TradeManager.process_all_routes(players)
 
 	# Pedido do usuario: "Civilization nao faz tudo acontecer no mapa ao
 	# mesmo tempo... em pequenos grupos... diminui o lag na passada de
@@ -629,6 +577,17 @@ func _finish_turn() -> void:
 	# turno inteiro sempre que comecava ou terminava.
 	hex_grid.refresh_construction_markers(_completed_building_coords_this_turn)
 	_completed_building_coords_this_turn.clear()
+	# V2 (Fase 4): o mundo já agiu (IA/monstros) — é o "início do próximo turno do dono",
+	# quando as Técnicas Militares ativadas no turno anterior terminam.
+	for player in players:
+		V2TechniqueRuntime.expire_finished(player)
+		V2MagicRuntime.expire_finished(player) # Fase 17: estados de feitiço (Égide) pela MESMA regra de V2OwnerTurnEffect
+	# Fase 22: UMA vez por rodada global, depois de humano + IAs + monstros. O
+	# sistema aplica dano, decrementa e expira antes do único refresh de fog abaixo.
+	V2EnvironmentalZoneSystem.process_global_round(hex_grid, true)
+	# Fase 23: valida e avança Rituais só DEPOIS do dano ambiental — uma
+	# Manifestação morta nesta rodada interrompe antes de o countdown chegar a zero.
+	V2TranscendenceSystem.process_global_round(hex_grid)
 	hex_grid.recompute_fog(human_player)
 	# World Event System (docs/WORLD_EVENT_CONTRACT.md, secao 1) -- ordem
 	# exata do contrato: DEPOIS que o mapa deste turno ja esta final (fog/
@@ -648,82 +607,7 @@ func _finish_turn() -> void:
 	# "em que turno o relogio do evento comeca a contar".
 	WorldEventManager.maybe_spawn_dragon(hex_grid, TurnManager.turn_number)
 	WorldEventManager.advance_turn(hex_grid, players)
-	_update_victory_state()
 	check_victories()
-
-## Roadmap "Fase F" F3 -- avanca o estado TEMPORAL das duas vitorias de
-## sustentacao (Dominacao nao precisa: e so ausencia de units/cities,
-## sempre atual). Chamado SO daqui (uma vez por turno REAL) -- nunca dos
-## outros 3 lugares que chamam check_victories() pra deteccao instantanea
-## (SelectionManager x2, SaveManager.load_game) -- carregar um save ou o
-## jogador atacar nao pode fazer um turno "passar" pra fins de streak
-## (pedido explicito do usuario).
-func _update_victory_state() -> void:
-	for player in ([human_player] as Array[PlayerData]) + rival_players:
-		if victory_rules_version >= 2:
-			VictoryCampaign.announce_supremacy(player, players)
-			VictoryCampaign.advance(player, hex_grid)
-			continue
-		_update_territorial_streak(player)
-		_update_arcane_ritual(player)
-
-func _update_territorial_streak(player: PlayerData) -> void:
-	if VictoryConditions.is_territorial_threshold_met(player, hex_grid):
-		player.territorial_streak += 1
-	else:
-		player.territorial_streak = 0
-
-## Ritual inativo: nada a fazer (ativacao e ACAO explicita do jogador, ver
-## activate_arcane_ritual abaixo -- nunca automatica, nunca decidida por
-## esta funcao). Ritual ativo: reavalia as 3 condicoes de sustentacao
-## (cidade-sede ainda e do jogador, >=3 Nodulos, mana suficiente pra
-## manutencao) TODO turno -- qualquer uma falhando interrompe por
-## completo (active=false + streak=0, decisao explicita do usuario: "nao
-## existe ritual pausado", nunca so um streak que zera enquanto o ritual
-## continua "esperando" as condicoes voltarem).
-func _update_arcane_ritual(player: PlayerData) -> void:
-	if not player.arcane_ritual_active:
-		return
-	var city := hex_grid.get_city_at(player.arcane_ritual_city_coord)
-	var city_intact := city != null and city.owner_player == player
-	var nodes_ok := VictoryConditions.arcane_nodes_controlled(player, hex_grid) >= VictoryConditions.ARCANE_NODES_REQUIRED
-	var mana_ok := player.mana >= VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN
-	if city_intact and nodes_ok and mana_ok:
-		player.mana -= VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN
-		player.arcane_ritual_streak += 1
-	else:
-		player.arcane_ritual_active = false
-		player.arcane_ritual_streak = 0
-
-## Acao explicita do jogador ("Ativar Ritual" na UI, ainda nao construida
-## -- ver Fase F passo 6/7) -- NUNCA automatica, nunca decidida por
-## _update_victory_state/IA (pedido explicito do usuario: decisao de IA
-## fica pra uma fatia futura). Escolhe a PRIMEIRA cidade do jogador com o
-## Santuario como sede (nao ha suporte a multiplas sedes simultaneas
-## nesta fatia). Retorna false SEM mutar nada se qualquer pre-requisito
-## falhar (pre-requisitos, Santuario construido, ou mana insuficiente pro
-## custo inicial).
-func activate_arcane_ritual(player: PlayerData) -> bool:
-	if victory_rules_version >= 2:
-		return VictoryCampaign.start(player, hex_grid)
-	if player.arcane_ritual_active:
-		return false
-	if not VictoryConditions.meets_arcane_ritual_prerequisites(player, hex_grid):
-		return false
-	var sanctuary_city: City = null
-	for city in player.cities:
-		if city.buildings.has(VictoryConditions.SANCTUARY_BUILDING_ID):
-			sanctuary_city = city
-			break
-	if sanctuary_city == null:
-		return false
-	if player.mana < VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST:
-		return false
-	player.mana -= VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST
-	player.arcane_ritual_active = true
-	player.arcane_ritual_city_coord = sanctuary_city.coord
-	player.arcane_ritual_streak = 0
-	return true
 
 ## Acao explicita do jogador humano (futura UI: prompt de Preparation, ver
 ## docs/DRAGON_EVENT_DESIGN.md) -- decide participar ou nao do PRIMEIRO
@@ -744,17 +628,15 @@ func respond_to_world_event(participate: bool) -> bool:
 		return true
 	return false
 
-## Roadmap "Fase F" F3 -- substitui a antiga check_game_over() (so
-## Dominacao) como autoridade UNICA de vitoria: agora verifica as TRES
-## condicoes desde o turno 1, sempre em paralelo (nenhuma excecao "so
-## checa Dominacao quando resta 1 jogador", decisao explicita do
-## usuario). Ordem de deteccao FIXA e DOCUMENTADA como regra tecnica de
-## desempate, NUNCA como prioridade estrategica entre vitorias (pedido
-## explicito do usuario): jogadores na ordem [humano] + rivais (ordem da
-## lista), tipos na ordem Dominacao -> Territorial -> Arcana: primeiro
-## par (jogador, tipo) verdadeiro encontrado vence. So chamada aqui
-## (deteccao PURA, nunca escreve streak) -- ver _update_victory_state
-## acima pra quem de fato avanca o estado temporal.
+## Autoridade ÚNICA de vitória (Fase 25). Só três condições encerram uma partida normal, verificadas
+## nesta ordem FIXA de precedência — a primeira verdadeira vence e uma única chamada nunca produz duas
+## telas (_end_game muda o estado para GAME_OVER e check_victories sai cedo depois disso):
+##   1. Dominação — última civilização major restante (VictoryConditions.is_dominance_achieved);
+##   2. Supremacia Militar (V2VictoryConditions.military_supremacy_achieved);
+##   3. Transcendência (V2VictoryConditions.transcendence_achieved, Ritual Final concluído).
+## Em cada condição os jogadores são testados na ordem [humano] + rivais (desempate técnico). Por
+## fim, o humano sem cidades e sem unidades perde. Nunca escreve estado de progresso — só detecta; o
+## Ritual Final avança em V2TranscendenceSystem.process_global_round, antes daqui no _finish_turn.
 func check_victories() -> void:
 	if state == GameState.GAME_OVER:
 		return
@@ -763,19 +645,13 @@ func check_victories() -> void:
 		if VictoryConditions.is_dominance_achieved(player, players_in_order):
 			_end_game(player, VictoryConditions.VICTORY_TYPE_DOMINANCE)
 			return
-		if victory_rules_version >= 2:
-			if VictoryCampaign.supremacy_achieved(player, players_in_order):
-				_end_game(player, VictoryCampaign.SUPREMACY)
-				return
-			if player.arcane_ritual_active and player.arcane_ritual_streak >= VictoryCampaign.CHANNEL_TURNS:
-				_end_game(player, VictoryCampaign.TRANSCENDENCE)
-				return
-			continue
-		if VictoryConditions.is_territorial_dominance_achieved(player):
-			_end_game(player, VictoryConditions.VICTORY_TYPE_TERRITORIAL)
+	for player in players_in_order:
+		if V2VictoryConditions.military_supremacy_achieved(player):
+			_end_game(player, V2VictoryConditions.VICTORY_TYPE_MILITARY_SUPREMACY)
 			return
-		if VictoryConditions.is_arcane_ascension_achieved(player):
-			_end_game(player, VictoryConditions.VICTORY_TYPE_ARCANE)
+	for player in players_in_order:
+		if V2VictoryConditions.transcendence_achieved(player):
+			_end_game(player, V2VictoryConditions.VICTORY_TYPE_TRANSCENDENCE)
 			return
 	if human_player and human_player.cities.is_empty() and human_player.units.is_empty():
 		_end_game(null, "eliminated")
@@ -798,36 +674,14 @@ func _end_game(winner: PlayerData, victory_type: String) -> void:
 ## --- Debug (HUD.gd, botao "Debug" so em builds de desenvolvimento via
 ## OS.is_debug_build()) ---
 
-## Liga/desliga o modo debug — pedido do usuario: "libere no modo debug,
-## quando eu ativar, tudo liberado, tudo fica disponivel todas as
-## pesquisas ficam feitas, e o tempo de fazer qualquer unidade e 1 turno
-## pra eu estar tudo". Dois efeitos, so pro jogador HUMANO (mesmo escopo
-## de debug_gold/debug_complete_current_research, nunca a IA rival):
-## 1) LIGAR marca TODAS as tecnologias como pesquisadas na hora (mesmo
-##    Dictionary id->true que _process_research usa de verdade, ver
-##    TechDatabase.all_techs) — efeito imediato, nao precisa esperar turno
-##    nenhum. Limpa current_research/research_progress junto (nao ha mais
-##    nada pra pesquisar, uma selecao antiga ali so confundiria a TechTree
-##    mostrando "Pesquisando: X" pra algo ja concluido).
-## 2) Enquanto LIGADO, toda cidade do jogador completa a producao atual
-##    (unidade OU predio, mesma condicao `stored_production >= cost` de
-##    sempre) no PROPRIO turno em vez de acumular aos poucos — aplicado em
-##    _on_turn_changed(), ver o `if debug_mode` logo antes de
-##    city.process_turn(). DESLIGAR so para esse efeito daqui pra frente;
-##    nao "desfaz" pesquisas ja marcadas (seria um cheat sem desfazer
-##    limpo possivel, e nem faz sentido — um dev usando isso pra testar
-##    conteudo tardio nao quer perder o progresso ao desligar por engano).
+## Liga/desliga o modo debug (só pro jogador HUMANO, nunca a IA): enquanto LIGADO, toda cidade do
+## jogador completa a producao atual (unidade OU predio) no PROPRIO turno — aplicado em
+## _on_turn_changed(), ver o `if debug_mode` logo antes de city.process_turn(). A pesquisa tem as
+## próprias ferramentas de debug dentro do quadro de Pesquisa (V2ResearchBoard, só em debug build).
 var debug_mode: bool = false
 
 func set_debug_mode(enabled: bool) -> void:
 	debug_mode = enabled
-	if enabled and human_player != null:
-		for tech in TechDatabase.all_techs():
-			human_player.researched_techs[tech.id] = true
-		for tech in MagicDatabase.all_techs():
-			human_player.researched_magic[tech.id] = true
-		human_player.current_research = ""
-		human_player.research_progress = 0.0
 
 ## Forca o fim de jogo na hora, sem esperar eliminar unidade/cidade
 ## nenhuma de verdade — reaproveita _end_game() (mesmo sinal
@@ -841,18 +695,9 @@ func debug_force_game_over(victory: bool) -> void:
 	var winner: PlayerData = human_player if victory else (rival_players[0] if not rival_players.is_empty() else null)
 	_end_game(winner, VictoryConditions.VICTORY_TYPE_DEBUG)
 
-## Completa a pesquisa atual do jogador humano na hora. Reaproveita
-## _process_research() de verdade (mesmo toast de "Tecnologia
-## pesquisada", mesma logica de completar) — so garante progresso
-## suficiente antes de chamar, em vez de duplicar a condicao de
-## conclusao aqui.
+## Completa na hora a pesquisa ATIVA do jogador humano (V2ResearchState) — mesmo caminho de conclusão
+## da pesquisa real (sinais, unlocks, toasts). Sem projeto ativo, não faz nada.
 func debug_complete_current_research() -> void:
-	if human_player == null or human_player.current_research == "":
+	if human_player == null:
 		return
-	var tech: TechData = TechDatabase.get_tech(human_player.current_research)
-	if tech == null:
-		tech = MagicDatabase.get_tech(human_player.current_research)
-	if tech == null:
-		return
-	human_player.research_progress = tech.cost
-	_process_research(human_player)
+	human_player.v2_research.debug_complete_active()

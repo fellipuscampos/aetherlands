@@ -256,19 +256,20 @@ func test_is_water_does_not_include_lava():
 ## (unidade terrestre nao anda), mas — diferente de Oceano aberto/Mar
 ## Gelado/Mar de Lava — PODE ser trabalhada por uma cidade (ver
 ## City._best_unassigned_neighbor/toggle_worked_tile, que agora usam
-## can_be_worked() em vez de blocks_land_units() direto).
-func test_coast_is_water_and_workable_but_ocean_is_not():
+## can_be_worked() em vez de blocks_land_units() direto). Fase 25: sem tiles trabalhados, a
+## mesma regra vive em is_usable_land() (território/fundação de cidade).
+func test_coast_is_water_and_usable_but_ocean_is_not():
 	var coast = TerrainDatabase.create_tile(HexTileData.TerrainType.COAST)
 	assert_true(coast.is_water())
 	assert_true(coast.blocks_land_units())
-	assert_true(coast.can_be_worked())
+	assert_true(coast.is_usable_land())
 
 	var ocean = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
 	assert_true(ocean.is_water())
-	assert_false(ocean.can_be_worked())
+	assert_false(ocean.is_usable_land())
 
 	var frozen = TerrainDatabase.create_tile(HexTileData.TerrainType.FROZEN_OCEAN)
-	assert_false(frozen.can_be_worked())
+	assert_false(frozen.is_usable_land())
 
 ## _reclassify_coastal_ocean (chamado em generate_map, ver HexGrid.gd) —
 ## Oceano vizinho de terra firme vira Costa; Oceano isolado no meio do mar

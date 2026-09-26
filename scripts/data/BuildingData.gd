@@ -1,67 +1,43 @@
 class_name BuildingData
 extends Resource
 
-## Um predio de cidade. Recurso puro de dados (igual TechData/UnitData) —
-## quem interpreta isto e BuildingDatabase (consultas) e City/CombatResolver
-## (aplicacao dos efeitos).
+## Um predio de cidade. Recurso puro de dados (igual UnitData) — quem
+## interpreta isto e BuildingDatabase (consultas), City (fila/slots/gates) e
+## V2EconomyRuntime (rendimento e manutenção dos prédios econômicos).
+##
+## Fase 25: os campos da economia V1 (bônus fixo de comida/produção/ouro/mana
+## por prédio, armazenamento de comida, defesa por prédio, upgrade de prédio,
+## auto-posicionamento das Muralhas e a flag de muralha vestigial) saíram junto
+## com os prédios V1.
 
 @export var id: String = ""
 @export var display_name: String = ""
 @export var production_cost: float = 20.0
 
-## Bonus PERMANENTE somado ao total da cidade (nao por tile, diferente de
-## TechData) uma vez construido — ver City.collect_yields().
-@export var bonus_food: int = 0
-@export var bonus_production: int = 0
-@export var bonus_gold: int = 0
-@export var bonus_mana: int = 0
-
-## Aumenta o TETO de armazenamento de comida da cidade (City.
-## food_storage_cap()) uma vez construido — so o Celeiro usa isto por
-## enquanto (pedido do usuario: redesenho do sistema de comida — cidade tem
-## um limite de armazenamento por padrao, consumido por turno pela
-## populacao, e o Celeiro aumenta esse limite em vez de so somar comida
-## bruta). Diferente de bonus_food (soma comida BRUTA todo turno, ANTES do
-## consumo), isso soma ao limite maximo que a cidade consegue guardar antes
-## de crescer populacao — ver City.process_turn()/food_storage_cap().
-@export var storage_bonus: float = 0.0
-
-## So Muralhas usa isso por enquanto: soma ao multiplicador de defesa de
-## unidade guarnicionada na cidade, igual bonus de terreno — ver
-## CombatResolver.predict().
-@export var defense_bonus: float = 0.0
-
-## Kind de UnitDatabase que este predio libera pra treino (ex: "warrior" pro
-## Quartel) — vazio pra predios de rendimento/defesa (Celeiro, Muralhas...),
-## que nao travam producao de unidade nenhuma. Ver City.can_train() e
+## Kind de UnitDatabase que este predio libera pra treino — vazio pra prédio
+## econômico/ritual sem tropa. Ver City.can_train() e
 ## BuildingDatabase.building_that_trains().
 @export var trains_unit: String = ""
 
 ## Id de OUTRO BuildingData que precisa estar construido NESTA cidade antes
-## deste poder ser construido (ex: "barracks" pro Estabulo) — vazio pra
-## predio sem pre-requisito de construcao nenhum (a maioria). Independente
-## do gate de TECNOLOGIA (ver TechDatabase.tech_that_unlocks/City.
-## _tech_unlocked_for_building) — os dois podem se combinar (o Estabulo
-## exige tanto o Quartel construido QUANTO a propria tech "Estabulo"
-## pesquisada). Ver City.can_build().
+## deste poder ser construido (ex.: o Salão de uma Doutrina pro prédio de
+## Maestria) — vazio pra predio sem pre-requisito. Combina com o gate de
+## pesquisa (City._research_unlocked_for_building). Ver City.can_build().
 @export var requires_building: String = ""
-## Uma melhoria aproveita o terreno da estrutura anterior.
-@export var upgrades_building: String = ""
-
-## true so pra Muralhas por enquanto: em vez do fluxo normal de escolher um
-## tile VIZINHO no mapa (SelectionManager.start_building_placement), a
-## producao comeca na hora (mesmo fluxo de treinar uma unidade) e o efeito
-## final e visual DENTRO da propria cidade (ver City._add_walls, acionado
-## por City.buildings.has("walls")) — nao existe Building.gd separado
-## posicionado em tile nenhum. Nao faz sentido escolher "onde" cercar uma
-## cidade que so tem um tile pra chamar de seu.
-@export var self_placed: bool = false
 
 ## Caminho de uma cena externa (.glb/.gltf, ex: KayKit) pra usar como visual
-## deste predio EM VEZ da geometria procedural de Building.gd — pedido do
-## usuario: "estude a questao de texturas e modelos 3d... pra gerar uma
-## identidade visual coerente", depois de duas tentativas anteriores com
-## pacotes prontos (Kenney/Quaternius) terem sido revertidas por destoar do
-## resto do visual. "" (padrao) mantem o comportamento procedural de sempre
-## — aditivo, nenhum predio existente quebra. Ver Building._build_visual().
+## deste predio EM VEZ da geometria procedural de Building.gd. "" mantém o
+## visual procedural. Ver Building._build_visual().
 @export var model_scene_path: String = ""
+
+## Aetherlands V2, Fase 13 — quantas cópias do MESMO id uma cidade pode ter. UNIQUE (padrão) = no
+## máximo 1 por cidade. CITY_LEVEL = o limite vem de V2CityLevelData.repeatable_building_limit(
+## city.city_level), ver City.max_copies_for_building()/building_count()/can_build() — os cinco
+## prédios econômicos (Fase 14).
+enum CopyLimitMode { UNIQUE, CITY_LEVEL }
+@export var copy_limit_mode: CopyLimitMode = CopyLimitMode.UNIQUE
+
+## Aetherlands V2, Fase 15 — Ouro/turno que CADA cópia deste prédio custa, somado por
+## V2EconomyRuntime.city_gold_upkeep/player_gold_upkeep. 0.0 no Mercado de propósito (rota de
+## recuperação de um Déficit). Nunca lido por id concreto no runtime — é dado puro.
+@export var gold_upkeep: float = 0.0

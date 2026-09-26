@@ -36,7 +36,6 @@ class _EliminatesPlayerEvent extends WorldEvent:
 		target.cities.clear()
 
 var _original_state
-var _original_victory_rules: int
 var _original_players: Array[PlayerData]
 var _original_human_player: PlayerData
 var _original_rival_players: Array[PlayerData]
@@ -55,8 +54,6 @@ var _original_world_event_next_id: int
 var _original_current_save_slot: String
 
 func before_each():
-	_original_victory_rules = GameManager.victory_rules_version
-	GameManager.victory_rules_version = 1 # Exercita também as regras dos saves anteriores.
 	_original_state = GameManager.state
 	_original_players = GameManager.players
 	_original_human_player = GameManager.human_player
@@ -84,7 +81,6 @@ func after_each():
 	for player in _owned_players:
 		player.release_relations()
 	_owned_players.clear()
-	GameManager.victory_rules_version = _original_victory_rules
 	GameManager.state = _original_state
 	GameManager.players = _original_players
 	GameManager.human_player = _original_human_player
@@ -159,68 +155,6 @@ func test_setup_players_gives_each_rival_a_distinct_civ_name():
 		names.append(rival.civ.civ_name)
 
 	hex_grid.queue_free()
-
-## Roadmap "Parte B" B4 — setup_players() gera personalidade (Civilization
-## Personality.generate) pra humano e todo rival, derivada de hex_grid.
-## map_seed. O valor exato bate com generate(race, map_seed+OFFSET[+slot])
-## — este UNICO teste ja protege o contrato de nao-colisao de slot (humano
-## =+0, rival no indice i=+i+1): se dois slots colidissem, a igualdade
-## exata falharia.
-func test_setup_players_personality_matches_civilization_personality_generate_for_the_grids_map_seed():
-	var hex_grid := HexGrid.new()
-	hex_grid._ready()
-	hex_grid.map_seed = 4242
-	GameManager.rival_count = 3
-
-	GameManager.setup_players(hex_grid)
-
-	var human := GameManager.human_player
-	assert_eq(human.personality, CivilizationPersonality.generate(human.civ.race, hex_grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET))
-	for i in range(GameManager.rival_players.size()):
-		var rival := GameManager.rival_players[i]
-		assert_eq(rival.personality, CivilizationPersonality.generate(rival.civ.race, hex_grid.map_seed + CivilizationPersonality.PERSONALITY_SEED_OFFSET + i + 1))
-
-	hex_grid.queue_free()
-
-func test_setup_players_assigns_a_personality_with_all_five_axes_to_everyone():
-	var hex_grid := HexGrid.new()
-	hex_grid._ready()
-	GameManager.rival_count = 3
-
-	GameManager.setup_players(hex_grid)
-
-	assert_eq(GameManager.human_player.personality.size(), 5)
-	for rival in GameManager.rival_players:
-		assert_eq(rival.personality.size(), 5)
-
-	hex_grid.queue_free()
-
-## Guarda de regressao da propriedade central de B4: regenerar com o MESMO
-## map_seed reproduz a personalidade IDENTICA — e o que garante que um
-## save/load nunca muda a personalidade de ninguem, sem precisar guardar
-## campo nenhum (ver test_save_manager.gd pro fluxo real de save/load).
-func test_setup_players_personality_is_deterministic_for_the_same_map_seed():
-	var hex_grid_a := HexGrid.new()
-	hex_grid_a._ready()
-	hex_grid_a.map_seed = 777
-	GameManager.rival_count = 3
-	GameManager.setup_players(hex_grid_a)
-	var human_personality_a := GameManager.human_player.personality.duplicate()
-	var rival_personalities_a := []
-	for rival in GameManager.rival_players:
-		rival_personalities_a.append(rival.personality.duplicate())
-
-	var hex_grid_b := HexGrid.new()
-	hex_grid_b._ready()
-	hex_grid_b.map_seed = 777
-	GameManager.setup_players(hex_grid_b)
-
-	assert_eq(GameManager.human_player.personality, human_personality_a)
-	for i in range(GameManager.rival_players.size()):
-		assert_eq(GameManager.rival_players[i].personality, rival_personalities_a[i])
-
-	hex_grid_a.queue_free()
-	hex_grid_b.queue_free()
 
 ## Cada rival e uma civilizacao de fantasia de verdade (anao/orc/elfo, ver
 ## GameManager.RIVAL_CIVS), nao mais uma copia generica do reino do
@@ -307,35 +241,6 @@ func test_setup_players_prefers_the_typed_kingdom_name_over_the_race_default():
 	hex_grid.queue_free()
 	GameManager.human_kingdom_name = original_kingdom_name
 
-## Dificuldade so deveria afetar a economia dos RIVAIS (PlayerData.
-## yield_multiplier, aplicado em City.collect_yields) — o humano fica
-## sempre em 1.0, senao "facil"/"dificil" tambem mudariam o jogador.
-func test_setup_players_applies_difficulty_multiplier_to_rivals_only():
-	var hex_grid := HexGrid.new()
-	hex_grid._ready()
-	GameManager.rival_count = 2
-	GameManager.difficulty = "hard"
-
-	GameManager.setup_players(hex_grid)
-
-	assert_almost_eq(GameManager.human_player.yield_multiplier, 1.0, 0.01, "dificuldade nao deveria afetar o jogador humano")
-	for rival in GameManager.rival_players:
-		assert_almost_eq(rival.yield_multiplier, GameManager.DIFFICULTY_MULTIPLIERS.hard, 0.01)
-
-	hex_grid.queue_free()
-
-func test_setup_players_defaults_to_normal_multiplier():
-	var hex_grid := HexGrid.new()
-	hex_grid._ready()
-	GameManager.rival_count = 1
-	GameManager.difficulty = "normal"
-
-	GameManager.setup_players(hex_grid)
-
-	assert_almost_eq(GameManager.rival_players[0].yield_multiplier, 1.0, 0.01)
-
-	hex_grid.queue_free()
-
 ## Roadmap "Fase F" F3 -- check_game_over() virou check_victories(),
 ## autoridade unica das 3 vitorias (antes so Dominacao). Nome do teste
 ## atualizado, comportamento identico pro caso de Dominacao.
@@ -386,44 +291,6 @@ func test_debug_force_game_over_sets_state_and_emits_signal():
 ## (check_victories). Nenhum destes testes passa por _finish_turn() de
 ## verdade -- chama as funcoes direto, mesmo padrao do resto do arquivo.
 
-func test_update_territorial_streak_increments_when_threshold_met():
-	var hex_grid := HexGrid.new()
-	hex_grid._ready()
-	hex_grid.tiles[Vector2i(0, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
-	GameManager.hex_grid = hex_grid
-	var player = _track_player(CivilizationData.new())
-	var city := City.new()
-	city.coord = Vector2i(0, 0)
-	city.owned_tiles = [Vector2i(0, 0)] # 100% do mapa (1 de 1 tile habitavel)
-
-	player.cities.append(city)
-
-	GameManager._update_territorial_streak(player)
-
-	assert_eq(player.territorial_streak, 1)
-	city.queue_free()
-	hex_grid.queue_free()
-
-func test_update_territorial_streak_resets_below_threshold():
-	var hex_grid := HexGrid.new()
-	hex_grid._ready()
-	hex_grid.tiles[Vector2i(0, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
-	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
-	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
-	GameManager.hex_grid = hex_grid
-	var player = _track_player(CivilizationData.new())
-	player.territorial_streak = 3 # ja vinha sustentando -- deveria zerar, nao so parar de crescer
-	var city := City.new()
-	city.coord = Vector2i(0, 0)
-	city.owned_tiles = [Vector2i(0, 0)] # 1 de 3 tiles = 33%, abaixo do limiar de 50%
-	player.cities.append(city)
-
-	GameManager._update_territorial_streak(player)
-
-	assert_eq(player.territorial_streak, 0)
-	city.queue_free()
-	hex_grid.queue_free()
-
 func _make_ritual_grid_with_three_nodes() -> HexGrid:
 	var hex_grid := HexGrid.new()
 	hex_grid._ready()
@@ -433,328 +300,30 @@ func _make_ritual_grid_with_three_nodes() -> HexGrid:
 		hex_grid.tiles[coord].resource = "mana_node"
 	return hex_grid
 
-func test_update_arcane_ritual_does_nothing_when_inactive():
-	var hex_grid := HexGrid.new()
-	hex_grid._ready()
-	GameManager.hex_grid = hex_grid
-	var player = _track_player(CivilizationData.new())
-
-	GameManager._update_arcane_ritual(player)
-
-	assert_false(player.arcane_ritual_active)
-	assert_eq(player.arcane_ritual_streak, 0)
-	hex_grid.queue_free()
-
-func test_update_arcane_ritual_increments_streak_and_pays_upkeep_when_sustained():
-	var hex_grid := _make_ritual_grid_with_three_nodes()
-	GameManager.hex_grid = hex_grid
-	var player = _track_player(CivilizationData.new())
-	var city := City.new()
-	city.coord = Vector2i(0, 0)
-	city.owner_player = player
-	city.owned_tiles = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
-	hex_grid.cities_by_coord[city.coord] = city
-	player.cities.append(city)
-	player.arcane_ritual_active = true
-	player.arcane_ritual_city_coord = city.coord
-	player.arcane_ritual_streak = 2
-	player.mana = 50.0
-
-	GameManager._update_arcane_ritual(player)
-
-	assert_true(player.arcane_ritual_active)
-	assert_eq(player.arcane_ritual_streak, 3)
-	assert_almost_eq(player.mana, 50.0 - VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN, 0.001)
-	city.queue_free()
-	hex_grid.queue_free()
-
-func test_update_arcane_ritual_interrupts_when_sanctuary_city_is_lost():
-	var hex_grid := _make_ritual_grid_with_three_nodes()
-	GameManager.hex_grid = hex_grid
-	var player = _track_player(CivilizationData.new())
-	player.arcane_ritual_active = true
-	player.arcane_ritual_city_coord = Vector2i(0, 0) # nenhuma cidade registrada nesse coord -- capturada/destruida
-	player.arcane_ritual_streak = 4
-	player.mana = 1000.0
-
-	GameManager._update_arcane_ritual(player)
-
-	assert_false(player.arcane_ritual_active, "cidade-sede perdida deveria interromper por completo, nao so pausar")
-	assert_eq(player.arcane_ritual_streak, 0)
-	hex_grid.queue_free()
-
-func test_update_arcane_ritual_interrupts_when_nodes_drop_below_three():
-	var hex_grid := _make_ritual_grid_with_three_nodes()
-	hex_grid.tiles[Vector2i(2, 0)].resource = "" # perdeu 1 Nodulo -- so 2 restam
-	GameManager.hex_grid = hex_grid
-	var player = _track_player(CivilizationData.new())
-	var city := City.new()
-	city.coord = Vector2i(0, 0)
-	city.owner_player = player
-	city.owned_tiles = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
-	hex_grid.cities_by_coord[city.coord] = city
-	player.cities.append(city)
-	player.arcane_ritual_active = true
-	player.arcane_ritual_city_coord = city.coord
-	player.arcane_ritual_streak = 4
-	player.mana = 1000.0
-
-	GameManager._update_arcane_ritual(player)
-
-	assert_false(player.arcane_ritual_active)
-	assert_eq(player.arcane_ritual_streak, 0)
-	city.queue_free()
-	hex_grid.queue_free()
-
-func test_update_arcane_ritual_interrupts_when_mana_insufficient_for_upkeep():
-	var hex_grid := _make_ritual_grid_with_three_nodes()
-	GameManager.hex_grid = hex_grid
-	var player = _track_player(CivilizationData.new())
-	var city := City.new()
-	city.coord = Vector2i(0, 0)
-	city.owner_player = player
-	city.owned_tiles = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
-	hex_grid.cities_by_coord[city.coord] = city
-	player.cities.append(city)
-	player.arcane_ritual_active = true
-	player.arcane_ritual_city_coord = city.coord
-	player.arcane_ritual_streak = 4
-	player.mana = VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN - 1.0 # insuficiente por pouco
-
-	GameManager._update_arcane_ritual(player)
-
-	assert_false(player.arcane_ritual_active)
-	assert_eq(player.arcane_ritual_streak, 0)
-	assert_eq(player.mana, VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN - 1.0, "manutencao nao paga NAO deveria descontar nada (nunca deixar mana negativa)")
-	city.queue_free()
-	hex_grid.queue_free()
-
-func _make_activation_ready_player(hex_grid: HexGrid) -> PlayerData:
-	var player = _track_player(CivilizationData.new())
-	for tech_id in ["canalizacao_base", "alquimia_botanica", "transmutacao_rocha", "geomancia"]:
-		player.researched_magic[tech_id] = true
-	var city := City.new()
-	city.coord = Vector2i(0, 0)
-	city.owned_tiles = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
-	player.cities.append(city)
-	return player
-
-func test_activate_arcane_ritual_fails_without_prerequisites():
-	var hex_grid := HexGrid.new()
-	hex_grid._ready()
-	GameManager.hex_grid = hex_grid
-	var player = _track_player(CivilizationData.new())
-	player.mana = 1000.0
-
-	assert_false(GameManager.activate_arcane_ritual(player))
-	assert_false(player.arcane_ritual_active)
-	hex_grid.queue_free()
-
-func test_activate_arcane_ritual_fails_without_sanctuary():
-	var hex_grid := _make_ritual_grid_with_three_nodes()
-	GameManager.hex_grid = hex_grid
-	var player := _make_activation_ready_player(hex_grid)
-	player.mana = 1000.0
-	# pre-requisitos batidos, mas NENHUMA cidade tem o Santuario construido
-
-	assert_false(GameManager.activate_arcane_ritual(player))
-	player.cities[0].queue_free()
-	hex_grid.queue_free()
-
-func test_activate_arcane_ritual_fails_without_enough_mana():
-	var hex_grid := _make_ritual_grid_with_three_nodes()
-	GameManager.hex_grid = hex_grid
-	var player := _make_activation_ready_player(hex_grid)
-	player.cities[0].buildings[VictoryConditions.SANCTUARY_BUILDING_ID] = true
-	player.mana = VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST - 1.0
-
-	assert_false(GameManager.activate_arcane_ritual(player))
-	assert_false(player.arcane_ritual_active)
-	assert_eq(player.mana, VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST - 1.0, "ativacao falha NAO deveria descontar mana nenhuma")
-	player.cities[0].queue_free()
-	hex_grid.queue_free()
-
-func test_activate_arcane_ritual_succeeds_and_pays_initial_cost():
-	var hex_grid := _make_ritual_grid_with_three_nodes()
-	GameManager.hex_grid = hex_grid
-	var player := _make_activation_ready_player(hex_grid)
-	player.cities[0].buildings[VictoryConditions.SANCTUARY_BUILDING_ID] = true
-	player.mana = 1000.0
-
-	var activated := GameManager.activate_arcane_ritual(player)
-
-	assert_true(activated)
-	assert_true(player.arcane_ritual_active)
-	assert_eq(player.arcane_ritual_city_coord, player.cities[0].coord)
-	assert_eq(player.arcane_ritual_streak, 0)
-	assert_almost_eq(player.mana, 1000.0 - VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST, 0.001)
-	player.cities[0].queue_free()
-	hex_grid.queue_free()
-
-func test_activate_arcane_ritual_fails_if_already_active():
-	var hex_grid := _make_ritual_grid_with_three_nodes()
-	GameManager.hex_grid = hex_grid
-	var player := _make_activation_ready_player(hex_grid)
-	player.cities[0].buildings[VictoryConditions.SANCTUARY_BUILDING_ID] = true
-	player.mana = 1000.0
-	player.arcane_ritual_active = true # ja ativo de antes
-
-	assert_false(GameManager.activate_arcane_ritual(player), "nao deveria ser possivel reativar/pagar de novo um ritual ja ativo")
-	player.cities[0].queue_free()
-	hex_grid.queue_free()
-
-func test_check_victories_declares_territorial_dominance_and_emits_both_signals():
-	GameManager.state = GameManager.GameState.PLAYING
-	GameManager.human_player = _track_player(CivilizationData.new())
-	GameManager.human_player.units.append(null) # vivo -- Dominacao nao deveria disparar primeiro
-	var rival = _track_player(CivilizationData.new())
-	rival.units.append(null)
-	GameManager.rival_players = [rival]
-	GameManager.human_player.territorial_streak = VictoryConditions.TERRITORIAL_SUSTAIN_TURNS
-	watch_signals(EventBus)
-
-	GameManager.check_victories()
-
-	assert_eq(GameManager.state, GameManager.GameState.GAME_OVER)
-	assert_signal_emitted_with_parameters(EventBus, "game_over", [true])
-	assert_signal_emitted_with_parameters(EventBus, "victory_achieved", [GameManager.human_player, VictoryConditions.VICTORY_TYPE_TERRITORIAL])
-
-func test_check_victories_declares_arcane_ascension():
-	GameManager.state = GameManager.GameState.PLAYING
-	GameManager.human_player = _track_player(CivilizationData.new())
-	GameManager.human_player.units.append(null)
-	var rival = _track_player(CivilizationData.new())
-	rival.units.append(null)
-	GameManager.rival_players = [rival]
-	GameManager.human_player.arcane_ritual_active = true
-	GameManager.human_player.arcane_ritual_streak = VictoryConditions.ARCANE_SUSTAIN_TURNS
-	watch_signals(EventBus)
-
-	GameManager.check_victories()
-
-	assert_eq(GameManager.state, GameManager.GameState.GAME_OVER)
-	assert_signal_emitted_with_parameters(EventBus, "victory_achieved", [GameManager.human_player, VictoryConditions.VICTORY_TYPE_ARCANE])
-
 ## Desempate FIXO combinado com o usuario: ordem tecnica, nunca prioridade
 ## estrategica entre vitorias (ver comentario de check_victories).
 
-func test_check_victories_resolves_same_player_multiple_conditions_by_fixed_type_order():
-	GameManager.state = GameManager.GameState.PLAYING
+## Fase 25: ligar o modo debug só liga a flag -- não concede pesquisa nenhuma (as ferramentas de
+## pesquisa ficam no próprio quadro, só em build de debug).
+func test_set_debug_mode_only_toggles_the_flag_and_never_touches_research():
 	GameManager.human_player = _track_player(CivilizationData.new())
-	GameManager.human_player.units.append(null)
-	var rival = _track_player(CivilizationData.new())
-	rival.units.append(null)
-	GameManager.rival_players = [rival]
-	GameManager.human_player.territorial_streak = VictoryConditions.TERRITORIAL_SUSTAIN_TURNS
-	GameManager.human_player.arcane_ritual_active = true
-	GameManager.human_player.arcane_ritual_streak = VictoryConditions.ARCANE_SUSTAIN_TURNS
-	watch_signals(EventBus)
-
-	GameManager.check_victories()
-
-	assert_signal_emitted_with_parameters(EventBus, "victory_achieved", [GameManager.human_player, VictoryConditions.VICTORY_TYPE_TERRITORIAL]) # Territorial vem antes de Arcana na ordem fixa de tipos
-
-func test_check_victories_resolves_different_players_by_fixed_player_order():
-	GameManager.state = GameManager.GameState.PLAYING
-	GameManager.human_player = _track_player(CivilizationData.new())
-	GameManager.human_player.units.append(null)
-	var rival = _track_player(CivilizationData.new())
-	rival.units.append(null)
-	GameManager.rival_players = [rival]
-	GameManager.human_player.territorial_streak = VictoryConditions.TERRITORIAL_SUSTAIN_TURNS
-	rival.territorial_streak = VictoryConditions.TERRITORIAL_SUSTAIN_TURNS # os dois batem ao mesmo tempo
-	watch_signals(EventBus)
-
-	GameManager.check_victories()
-
-	assert_signal_emitted_with_parameters(EventBus, "victory_achieved", [GameManager.human_player, VictoryConditions.VICTORY_TYPE_TERRITORIAL]) # humano vem primeiro na ordem fixa de jogadores ([human]+rivals)
-
-func test_check_victories_never_mutates_streak_state():
-	GameManager.state = GameManager.GameState.PLAYING
-	GameManager.human_player = _track_player(CivilizationData.new())
-	GameManager.human_player.units.append(null)
-	var rival = _track_player(CivilizationData.new())
-	rival.units.append(null)
-	GameManager.rival_players = [rival]
-	GameManager.human_player.territorial_streak = 2 # abaixo do limiar -- nao deveria disparar nem mudar
-
-	GameManager.check_victories()
-	GameManager.check_victories() # MESMA cadencia de SelectionManager/SaveManager chamando 2x
-
-	assert_eq(GameManager.human_player.territorial_streak, 2, "check_victories nunca deveria escrever streak, so ler")
-	assert_eq(GameManager.state, GameManager.GameState.PLAYING)
-
-## Debug: completa a pesquisa atual na hora, reaproveitando
-## _process_research() de verdade (mesmo efeito colateral de marcar
-## researched_techs e limpar current_research).
-func test_debug_complete_current_research_finishes_the_selected_tech():
-	GameManager.human_player = _track_player(CivilizationData.new())
-	GameManager.human_player.current_research = "canalizacao_base"
-
-	GameManager.debug_complete_current_research()
-
-	assert_true(GameManager.human_player.researched_magic.has("canalizacao_base"))
-	assert_eq(GameManager.human_player.current_research, "")
-
-func test_debug_complete_current_research_does_nothing_without_a_selected_tech():
-	GameManager.human_player = _track_player(CivilizationData.new())
-	GameManager.human_player.current_research = ""
-
-	GameManager.debug_complete_current_research() # nao deveria travar nem levantar erro nenhum
-
-	assert_eq(GameManager.human_player.current_research, "")
-
-## Roadmap "polimento definitivo V1" — science_per_turn_for foi extraido de
-## dentro de _process_research (mesma formula, so nomeada) pra HUD.gd poder
-## mostrar "Ciencia por turno" no cabecalho da aba Tecnologia sem duplicar
-## a conta. Confirma que o valor batido bate exatamente com o incremento
-## real que _process_research aplica num turno de pesquisa.
-func test_science_per_turn_for_matches_actual_research_progress_increment():
-	var player = _track_player(CivilizationData.new())
-	var city := City.new()
-	city.population = 3
-	player.cities.append(city)
-	player.current_research = "quartel"
-
-	var expected: float = GameManager.science_per_turn_for(player)
-	GameManager._process_research(player)
-
-	assert_almost_eq(player.research_progress, expected, 0.001)
-	assert_almost_eq(expected, 3.0 * GameManager.SCIENCE_PER_POPULATION, 0.001)
-	city.queue_free()
-
-func test_science_per_turn_for_is_zero_with_no_cities():
-	var player = _track_player(CivilizationData.new())
-	assert_eq(GameManager.science_per_turn_for(player), 0.0)
-
-## Debug: pedido do usuario "libere no modo debug, quando eu ativar, tudo
-## liberado, tudo fica disponivel todas as pesquisas ficam feitas" — ligar
-## marca TODA tecnologia como pesquisada na hora (nao so a que estava
-## selecionada, diferente de debug_complete_current_research) e limpa
-## qualquer selecao/progresso de pesquisa em andamento.
-func test_set_debug_mode_true_marks_every_tech_as_researched():
-	GameManager.human_player = _track_player(CivilizationData.new())
-	GameManager.human_player.current_research = "canalizacao_base"
-	GameManager.human_player.research_progress = 5.0
-
 	GameManager.set_debug_mode(true)
-
-	for tech in TechDatabase.all_techs():
-		assert_true(GameManager.human_player.researched_techs.has(tech.id), "%s deveria estar marcada como pesquisada" % tech.id)
-	for tech in MagicDatabase.all_techs():
-		assert_true(GameManager.human_player.researched_magic.has(tech.id), "%s deveria estar marcada como pesquisada" % tech.id)
-	assert_eq(GameManager.human_player.current_research, "")
-	assert_eq(GameManager.human_player.research_progress, 0.0)
 	assert_true(GameManager.debug_mode)
-
-func test_set_debug_mode_false_turns_off_the_flag_without_unresearching_anything():
-	GameManager.human_player = _track_player(CivilizationData.new())
-	GameManager.set_debug_mode(true)
-
+	assert_true(GameManager.human_player.v2_research.get_completed_ids().is_empty())
 	GameManager.set_debug_mode(false)
-
 	assert_false(GameManager.debug_mode)
-	assert_true(GameManager.human_player.researched_magic.has("arcanismo_1"), "desligar nao deveria desfazer pesquisas ja concedidas")
+
+func test_debug_complete_current_research_finishes_the_active_research():
+	GameManager.human_player = _track_player(CivilizationData.new())
+	assert_true(GameManager.human_player.v2_research.select_research("v2_doctrine_guardian_1"))
+	GameManager.debug_complete_current_research()
+	assert_true(GameManager.human_player.v2_research.is_completed("v2_doctrine_guardian_1"))
+	assert_eq(GameManager.human_player.v2_research.active_id, "")
+
+func test_debug_complete_current_research_does_nothing_without_an_active_research():
+	GameManager.human_player = _track_player(CivilizationData.new())
+	GameManager.debug_complete_current_research()
+	assert_true(GameManager.human_player.v2_research.get_completed_ids().is_empty())
 
 func test_set_debug_mode_does_not_crash_without_a_human_player():
 	GameManager.human_player = null
@@ -774,7 +343,7 @@ func test_debug_mode_completes_city_production_in_one_turn():
 	hex_grid._ready()
 	var coord := Vector2i(0, 0)
 	var rival_coord := Vector2i(10, 0)
-	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN) # so o piso minimo de producao (City.CITY_CENTER_MIN_PRODUCTION), sem debug 1 turno nao seria nem perto do suficiente
+	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN) # so a producao base V2 da cidade, sem debug 1 turno nao seria nem perto do suficiente
 	hex_grid.tiles[rival_coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
 	var rival := _track_player(CivilizationData.new())
 	GameManager.human_player = _track_player(CivilizationData.new())
@@ -783,16 +352,16 @@ func test_debug_mode_completes_city_production_in_one_turn():
 	GameManager.players = [GameManager.human_player, rival]
 	hex_grid.found_city(rival_coord, rival, "Capital Rival")
 	var city = hex_grid.found_city(coord, GameManager.human_player, "Capital")
-	city.set_production("warrior") # 15 producao, Guarda nao depende de predio nenhum
+	city.set_production("settler") # Colonizador nao depende de predio nenhum
 	GameManager.set_debug_mode(true)
 
 	GameManager._on_turn_changed(0, 0)
 
 	var spawned := false
 	for unit in GameManager.human_player.units:
-		if unit.unit_data.visual_kind == "warrior":
+		if unit.unit_data.can_found_city:
 			spawned = true
-	assert_true(spawned, "com modo debug ligado, o Guarda deveria ter sido produzido no mesmo turno")
+	assert_true(spawned, "com modo debug ligado, o Colonizador deveria ter sido produzido no mesmo turno")
 
 	hex_grid.queue_free()
 
@@ -810,7 +379,7 @@ func test_debug_mode_off_does_not_speed_up_production():
 	GameManager.players = [GameManager.human_player, rival]
 	hex_grid.found_city(rival_coord, rival, "Capital Rival")
 	var city = hex_grid.found_city(coord, GameManager.human_player, "Capital")
-	city.set_production("warrior")
+	city.set_production("settler")
 	GameManager.debug_mode = false
 
 	GameManager._on_turn_changed(0, 0)
@@ -1178,28 +747,6 @@ func test_finish_turn_collects_rival_participation_during_preparation():
 
 	var rival_index: int = GameManager.players.find(setup.rival)
 	assert_eq(event.participants.get(rival_index), {"decision": true})
-	setup.hex_grid.queue_free()
-
-## Roadmap "Fase Macro" 5B.3-G, "Preparation = tempo de preparacao militar"
-## -- integrado de verdade: _on_turn_changed() precisa consultar DragonEvent.
-## is_civ_threatened e chamar RivalAI.prepare_for_world_event pra civ
-## anunciada, nao so decide_world_event_participation (ja coberto acima).
-func test_finish_turn_gives_the_announced_civ_a_production_emergency_during_preparation():
-	var setup = _setup_minimal_hex_grid_with_one_rival()
-	setup.hex_grid.found_city(Vector2i(11, 0), setup.rival, "Capital Rival B") # 2a cidade: sai do ramo "sempre colonizador"
-	setup.hex_grid.tiles[Vector2i(11, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
-	var rival_index: int = GameManager.players.find(setup.rival)
-	var event := DragonEvent.new()
-	event.phase = WorldEvent.PHASE_PREPARATION
-	event.target_civ_index = rival_index
-	WorldEventManager.register_event(event)
-
-	GameManager._on_turn_changed(0, 0)
-
-	var city: City = setup.rival.cities[0]
-	var building := BuildingDatabase.get_building(city.production_item)
-	var produced_something_military: bool = (building == null) or building.trains_unit != "" or city.production_item == "walls"
-	assert_true(produced_something_military, "civ anunciada em Preparation deveria priorizar producao militar de emergencia")
 	setup.hex_grid.queue_free()
 
 ## Blocker #1 do contrato comportamental do Dragao (docs/DRAGON_EVENT_

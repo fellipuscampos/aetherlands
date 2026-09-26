@@ -55,15 +55,17 @@ var unit_data: UnitData
 var serial_id: int = 0
 var magic_cooldowns: Dictionary = {}
 var magic_status: Dictionary = {} # efeito -> turno de expiração exclusivo
-var summoner_id: int = 0
-var expires_turn: int = 0
-var ritual_id: String = ""
-var boss_target: Vector2i = Vector2i(999999, 999999)
 var owner_player: PlayerData
 var coord: Vector2i
 var movement_left: float = 0.0
 var kills: int = 0
 var veterancy_level: int = 0
+
+## Aetherlands V2, Fase 15 — cargas restantes do Construtor (V2ConstructorRuntime). Definido UMA
+## vez, ao nascer (GameManager, pelo tier de Indústria do dono naquele instante — §56 do pedido:
+## pesquisa posterior nunca recarrega um Construtor já existente). 0 pra qualquer unidade que não
+## seja o Construtor — nunca lido fora do runtime do Construtor.
+var work_charges_remaining: int = 0
 
 ## Destino de um pedido "mover ate" que pode levar VARIOS turnos pra
 ## completar (pedido do usuario: "no civilization eu posso colocar pra ela
@@ -228,10 +230,101 @@ func setup(data: UnitData, player: PlayerData, start_coord: Vector2i, camp_boss:
 	_build_visual()
 
 func reset_movement() -> void:
-	if ritual_id != "":
-		movement_left = 0
-		return
 	movement_left = unit_data.movement_points
+
+## Troca a FORMA desta MESMA unidade por `new_data` (upgrade V2, ver V2UnitUpgrade) —
+## não cria uma tropa nova: o objeto continua o mesmo, então dono, coord, serial_id,
+## kills/veterania, recargas/estados (magic_cooldowns/magic_status), ordens e o resto
+## do estado persistente seguem intactos. Só o que DEPENDE do tipo é refeito: o
+## visual (corpo, base, barra de vida, ícone) e o HP, que preserva o PERCENTUAL
+## (9/18 vira 12/24), nunca cura de graça nem passa do máximo novo.
+func apply_form(new_data: UnitData) -> void:
+	var old_max := unit_data.max_hp
+	var hp_fraction := clampf(hp / old_max, 0.0, 1.0) if old_max > 0.0 else 1.0
+	for t in _hit_reaction_tweens:
+		if t and t.is_valid():
+			t.kill()
+	_hit_reaction_tweens.clear()
+	for child in get_children():
+		remove_child(child)
+		child.queue_free()
+	_visual_root = null
+	_hp_bar_fg = null
+	_hp_bar_bg = null
+	_anim_player = null
+	_formation_players.clear()
+	idle_animation = DEFAULT_ANIMATION
+	moving_animation = WALK_ANIMATION
+	attack_animation = ""
+	_marker_height = HP_BAR_Y
+	unit_data = new_data
+	_build_visual()
+	set_hp_silent(minf(new_data.max_hp, hp_fraction * new_data.max_hp))
+	refresh_technique_marker()
+
+const TECHNIQUE_MARKER_NAME := "V2TechniqueMarker"
+const TECHNIQUE_MARKER_COLOR := Color(0.55, 0.95, 1.0, 0.95)
+
+## Anel azul na base enquanto a unidade tem uma Técnica Militar de Doutrina ATIVA
+## (V2TechniqueRuntime) — feedback mínimo no mapa, sem asset novo. Idempotente: chame
+## depois de ativar/expirar, de restaurar um save e de trocar de forma.
+func refresh_technique_marker() -> void:
+	var existing := get_node_or_null(TECHNIQUE_MARKER_NAME)
+	# Fase 17: o MESMO anel marca um estado de feitiço V2 ativo (Égide Sagrada) — sem asset novo.
+	var active := V2TechniqueRuntime.active_technique_name(self) != "" or V2MagicRuntime.active_status_name(self) != ""
+	if active and existing == null:
+		var ring := MeshInstance3D.new()
+		ring.name = TECHNIQUE_MARKER_NAME
+		var mesh := TorusMesh.new()
+		mesh.inner_radius = 0.43
+		mesh.outer_radius = 0.62
+		ring.mesh = mesh
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = TECHNIQUE_MARKER_COLOR
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		ring.material_override = mat
+		ring.position.y = 0.11
+		add_child(ring)
+	elif not active and existing != null:
+		remove_child(existing)
+		existing.queue_free()
+
+const COMMAND_MARKER_NAME := "V2UncommandedMarker"
+## Cinza neutro de propósito: não confunde com o ciano de Técnica/Égide nem com vermelho/verde de mira.
+const COMMAND_MARKER_COLOR := Color(0.62, 0.62, 0.66, 0.95)
+
+## Fase 19 — anel cinza (maior que o de Técnica) enquanto esta retinue está SEM COMANDO. Idempotente; quem
+## decide é V2RetinueSystem.refresh_markers (o estado é derivado, nunca guardado aqui).
+func refresh_command_marker(uncommanded: bool) -> void:
+	var existing := get_node_or_null(COMMAND_MARKER_NAME)
+	if uncommanded and existing == null:
+		var ring := MeshInstance3D.new()
+		ring.name = COMMAND_MARKER_NAME
+		var mesh := TorusMesh.new()
+		mesh.inner_radius = 0.66
+		mesh.outer_radius = 0.78
+		ring.mesh = mesh
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = COMMAND_MARKER_COLOR
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		ring.material_override = mat
+		ring.position.y = 0.12
+		add_child(ring)
+	elif not uncommanded and existing != null:
+		remove_child(existing)
+		existing.queue_free()
+
+## Fase 19 — HELPER GENÉRICO de "esta unidade pode receber ordens agora?" (mover, atacar, agir). Hoje compõe só o
+## estado de retinue (V2RetinueSystem.is_commanded, caminho rápido true para quem não é retinue); futuros bloqueios
+## entram aqui, não em HUD/SelectionManager/CombatResolver separadamente. Defender/retaliar NÃO passa por aqui.
+func can_receive_orders() -> bool:
+	return V2RetinueSystem.is_commanded(self)
+
+## O motivo (uma frase) de can_receive_orders() ser false, ou "".
+func order_block_reason() -> String:
+	return "" if can_receive_orders() else V2RetinueSystem.uncommanded_reason(self)
 
 ## Chamado por CombatResolver quando esta unidade vence um combate (mata o
 ## alvo, ou sobrevive ao contra-ataque de quem morreu tentando mata-la).
@@ -371,7 +464,7 @@ func _build_visual() -> void:
 	var bounds = _model_aabb(self)
 	if bounds != null:
 		_marker_height = maxf(HP_BAR_Y, bounds.end.y + 0.12)
-	if unit_data.magic_school != "":
+	if unit_data.is_caster():
 		_build_school_emblem()
 	_visual_root = Node3D.new()
 	add_child(_visual_root)
@@ -379,6 +472,8 @@ func _build_visual() -> void:
 	for child in get_children():
 		if child != _visual_root:
 			child.reparent(_visual_root, false)
+	if unit_data.visual_template != "":
+		_visual_root.scale = Vector3.ONE * unit_data.model_scale_multiplier # distingue as formas que compartilham o mesmo corpo procedural
 	_build_base_disc()
 	_build_hp_bar()
 	_build_troop_icon()
@@ -645,6 +740,36 @@ func _build_model_body() -> void:
 		_anim_player = _build_animation_player(model)
 		if _anim_player:
 			_anim_player.play(idle_animation)
+	_build_formation_copies(model)
+
+## Fase 19 — Hostes: `model_formation_count` > 1 repete o corpo em volta do centro do tile, como MALHA filha
+## desta mesma Unit (nenhuma lógica/HP/seleção individual). O corpo principal vai para o primeiro posto.
+## Cada cópia toca o próprio Idle (sem ela a cópia ficaria em bind pose); só o principal anda/ataca.
+const FORMATION_RADIUS := 0.34
+var _formation_players: Array[AnimationPlayer] = []
+
+func _build_formation_copies(main_model: Node3D) -> void:
+	var count := unit_data.model_formation_count
+	if count <= 1:
+		return
+	var scene: PackedScene = load(unit_data.model_scene_path)
+	for i in count:
+		var angle := TAU * float(i) / float(count) + PI / 6.0
+		var offset := Vector3(cos(angle), 0.0, sin(angle)) * FORMATION_RADIUS
+		if i == 0:
+			main_model.position += offset
+			continue
+		var copy: Node3D = scene.instantiate()
+		copy.name = "FormationBody%d" % i
+		copy.scale = main_model.scale
+		copy.rotation = main_model.rotation
+		copy.position = offset
+		add_child(copy)
+		if unit_data.animation_scene_path != "":
+			var player := _build_animation_player(copy)
+			if player:
+				player.play(idle_animation)
+				_formation_players.append(player)
 
 ## Bounding box combinado de toda malha dentro de `node`, em espaco LOCAL a
 ## `node` (nao depende da arvore de cena real). null se nao houver nenhum
@@ -711,6 +836,9 @@ func _copy_animations_into(library: AnimationLibrary, scene_path: String) -> voi
 func _play_animation(anim_name: String) -> void:
 	if _anim_player and _anim_player.has_animation(anim_name) and _anim_player.current_animation != anim_name:
 		_anim_player.play(anim_name)
+	for player in _formation_players: # Fase 19: a formação da Hoste anda/ataca junto (só visual)
+		if is_instance_valid(player) and player.has_animation(anim_name) and player.current_animation != anim_name:
+			player.play(anim_name)
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
@@ -743,7 +871,8 @@ func _build_procedural_body() -> void:
 	var race := owner_player.civ.race if owner_player else "human"
 	var kit := RaceTheme.style_kit(race)
 
-	match unit_data.visual_kind:
+	# `visual_template` (Fase 9): uma unidade V2 pode reaproveitar o corpo procedural de um visual V1 ("cavalry", "griffin"...).
+	match unit_data.visual_template if unit_data.visual_template != "" else unit_data.visual_kind:
 		"settler":
 			var body := MeshInstance3D.new()
 			var mesh := SphereMesh.new()
@@ -2112,11 +2241,12 @@ static func _hit_crossed_swords(d: Vector2) -> bool:
 func _build_school_emblem() -> void:
 	var emblem := Label3D.new()
 	emblem.name = "SchoolEmblem"
-	emblem.text = {"sagrada": "SA", "infernal": "IN", "necromancia": "NE", "druidismo": "DR", "arcanismo": "AR", "elementalismo": "EL"}.get(unit_data.magic_school, "")
+	var school := unit_data.v2_magic_school
+	emblem.text = V2MagicContent.school_emblem(school)
 	emblem.font_size = 28
 	emblem.outline_size = 5
 	emblem.pixel_size = 0.009
-	emblem.modulate = MagicOverlay.COLORS[unit_data.magic_school]
+	emblem.modulate = V2MagicContent.school_color(school)
 	emblem.position.y = _marker_height + 0.55
 	emblem.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(emblem)

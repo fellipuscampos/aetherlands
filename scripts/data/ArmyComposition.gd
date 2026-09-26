@@ -1,38 +1,47 @@
 class_name ArmyComposition
 extends RefCounted
 
+## Papéis de combate genéricos (corpo a corpo / à distância / mobilidade / cerco), usados pela escolha
+## de alvo de guerra da IA (RivalAI._role_counts/_role_fit_bonus) e como rótulo de fallback no
+## inspetor. Uma unidade pode ter mais de um papel.
+##
+## Fase 25: unidade da progressão (Doutrina V2) é classificada pela identidade semântica da PRÓPRIA
+## Doutrina (V2UnitLine.role_of -> branch_role), nunca por movimento/alcance/prédio de treino — a
+## heurística V1 (que chamava o Ladino de cavalaria e não reconhecia o Cerco V2) não se aplica mais a
+## ela. A heurística só sobra como fallback para unidades fora das Doutrinas (unidades legadas de saves
+## antigos, o Guarda inicial), agora pelos TRAÇOS do dado (`mounted`/`siege`), nunca por id de prédio.
+
 const ROLE_MELEE := "melee"
 const ROLE_RANGED := "ranged"
 const ROLE_CAVALRY := "cavalry"
 const ROLE_SIEGE := "siege"
 const ROLES := [ROLE_MELEE, ROLE_RANGED, ROLE_CAVALRY, ROLE_SIEGE]
-const BASELINE_MOVEMENT_POINTS := 2.0 # modal entre os 16 kinds treinaveis (UnitDatabase) -- acima disso conta como "mobilidade"
 
-## Deriva papeis puramente das propriedades que UnitData ja expoe -- sem
-## taxonomia nova. Settler (attack=0) e qualquer kind fora de
-## PLAYER_TRAINABLE_KINDS (inclusive ids de predio, que aparecem na mesma
-## lista de candidatos de RivalAI._production_candidates) devolvem [].
-## Guarda contra o match sem clausula "_:" em UnitDatabase.create_unit --
-## chamar com kind desconhecido NAO da erro, so devolve defaults de
-## @export (attack=1.0, attack_range=1), o que classificaria errado um id
-## de predio como unidade corpo-a-corpo se nao filtrasse antes.
+## branch_role canônico da Doutrina (V2ResearchDatabase) -> papéis genéricos.
+const ROLES_BY_BRANCH_ROLE := {
+	"tank_frontline": [ROLE_MELEE],
+	"melee_damage": [ROLE_MELEE],
+	"ranged_combat": [ROLE_RANGED],
+	"mobility_shock": [ROLE_MELEE, ROLE_CAVALRY],
+	"sabotage_assassination": [ROLE_MELEE],
+	"city_conquest": [ROLE_RANGED, ROLE_SIEGE],
+}
+
 static func roles_for_kind(kind: String) -> Array[String]:
 	var roles: Array[String] = []
-	if not (kind in UnitDatabase.PLAYER_TRAINABLE_KINDS):
+	var branch_role := V2UnitLine.role_of(kind)
+	if branch_role != "":
+		for role in ROLES_BY_BRANCH_ROLE.get(branch_role, []):
+			roles.append(role)
 		return roles
+	if kind == "" or V2ResearchDatabase.is_v2_id(kind) or not UnitDatabase.is_known_kind(kind):
+		return roles # conjuradores, Manifestações, Hostes, Construtor, ids de prédio/desconhecidos: sem papel
 	var data: UnitData = UnitDatabase.create_unit(kind)
-	if data.attack <= 0.0:
+	if data.attack <= 0.0 or not data.can_basic_attack:
 		return roles
-	if data.attack_range <= 1:
-		roles.append(ROLE_MELEE)
-	else:
-		roles.append(ROLE_RANGED)
-	if data.movement_points > BASELINE_MOVEMENT_POINTS or data.flies:
+	roles.append(ROLE_MELEE if data.attack_range <= 1 else ROLE_RANGED)
+	if data.has_trait(UnitData.TRAIT_MOUNTED) or data.flies:
 		roles.append(ROLE_CAVALRY)
-	var trainer: BuildingData = BuildingDatabase.building_that_trains(kind)
-	# "grand_arsenal" (Roadmap "arvore de 10 niveis", Nivel 9) treina Bombarda/
-	# Colosso de Cerco — as unidades de cerco mais tardias da arvore — entao
-	# precisa contar como cerco pra IA aqui, igual siege_workshop ja conta.
-	if trainer != null and (trainer.id == "siege_workshop" or trainer.id == "grand_arsenal"):
+	if data.has_trait(UnitData.TRAIT_SIEGE):
 		roles.append(ROLE_SIEGE)
 	return roles

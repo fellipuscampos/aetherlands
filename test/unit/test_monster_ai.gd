@@ -194,7 +194,7 @@ func test_troll_guardian_reacts_to_a_nearby_enemy_building_not_just_city():
 	hex_grid.lair_kind_by_coord[Vector2i.ZERO] = "troll"
 	var troll = _make_monster("troll", Vector2i.ZERO)
 	troll.reset_movement()
-	hex_grid.place_building(Vector2i(4, 0), "granary", human) # dentro do raio do Troll (5), sem cidade/unidade nenhuma por perto
+	hex_grid.place_building(Vector2i(4, 0), "v2_building_market", human) # dentro do raio do Troll (5), sem cidade/unidade nenhuma por perto
 
 	MonsterAI.take_turn(hex_grid)
 
@@ -261,9 +261,18 @@ func test_raider_attacks_weak_prey_even_if_escorted():
 ## "Ameacar melhorias" -- Saqueador tambem saqueia tile trabalhado, mesma
 ## mecanica do Invasor (_maybe_pillage_tile), mesmo sem nenhum inimigo
 ## por perto pra brigar.
+## Fase 25: o alvo de saque é o tile com Melhoria de Recurso V2 (os tiles trabalhados V1 não existem mais).
+func _improved_tile(city: City) -> Vector2i:
+	var coord: Vector2i = city.coord + HexGrid.NEIGHBOR_DIRS[0]
+	if not city.owned_tiles.has(coord):
+		city.claim_tile(coord)
+	hex_grid.get_tile(coord).resource = "iron"
+	city.resource_improvements[coord] = V2ResourceImprovementData.improvement_id_for_resource("iron")
+	return coord
+
 func test_raider_pillages_a_worked_tile_like_an_invader():
 	var city = hex_grid.found_city(Vector2i(3, 0), human, "Capital")
-	var worked_coord: Vector2i = city.worked_tiles[0]
+	var worked_coord: Vector2i = _improved_tile(city)
 	human.gold = 100.0
 
 	var raider = _make_monster("goblin", worked_coord)
@@ -293,7 +302,7 @@ func test_raider_approaches_a_nearby_building_when_no_prey_or_city_is_available(
 	hex_grid.lair_kind_by_coord[Vector2i.ZERO] = "goblin"
 	var raider = _make_monster("goblin", Vector2i.ZERO)
 	raider.reset_movement()
-	hex_grid.place_building(Vector2i(3, 0), "granary", human) # dentro do RAIDER_RADIUS (4)
+	hex_grid.place_building(Vector2i(3, 0), "v2_building_market", human) # dentro do RAIDER_RADIUS (4)
 
 	MonsterAI.take_turn(hex_grid)
 
@@ -403,7 +412,7 @@ func test_invader_reaching_an_undefended_city_never_captures_it():
 ## MonsterAI._take_invader_turn tentaria marchar sobre a cidade).
 func test_invader_ending_turn_on_worked_tile_pillages_it():
 	var city = hex_grid.found_city(Vector2i(3, 0), human, "Capital")
-	var worked_coord: Vector2i = city.worked_tiles[0]
+	var worked_coord: Vector2i = _improved_tile(city)
 	human.gold = 100.0
 
 	var invader = _make_monster("skeleton", worked_coord) # Esqueleto = Invasor por padrao
@@ -419,7 +428,7 @@ func test_invader_ending_turn_on_worked_tile_pillages_it():
 ## expirou (ver HexGrid.is_tile_pillaged/pillage_tile).
 func test_invader_does_not_repillage_an_already_pillaged_tile():
 	var city = hex_grid.found_city(Vector2i(3, 0), human, "Capital")
-	var worked_coord: Vector2i = city.worked_tiles[0]
+	var worked_coord: Vector2i = _improved_tile(city)
 	human.gold = 100.0
 	hex_grid.pillage_tile(worked_coord, 10, MonsterAI.PILLAGE_DURATION_TURNS)
 

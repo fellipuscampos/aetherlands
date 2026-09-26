@@ -2,41 +2,11 @@ class_name City
 extends Node3D
 
 var original_owner_index: int = -1
-var captured_developed: bool = false
 
-## Redesenho do sistema de comida (pedido do usuario): antes acumulava sem
-## limite ate um limiar calculado por FOOD_TO_GROW_BASE*populacao. Agora
-## toda cidade tem um TETO de armazenamento fixo (aumentado pelo Celeiro,
-## ver food_storage_cap()/BuildingData.storage_bonus), e a populacao
-## CONSOME comida todo turno — se a producao do turno nao cobre o consumo,
-## o estoque so PARA de crescer (nunca fica negativo, nunca reduz
-## populacao, decisao explicita do usuario: "só trava o crescimento").
-## Cidade cresce 1 populacao quando o estoque atinge o teto (ver
-## process_turn()).
-const FOOD_STORAGE_BASE := 15.0
-const FOOD_CONSUMPTION_PER_POP := 1.0
+## Aetherlands V2, Fase 25: a cidade não tem mais população, comida, tiles trabalhados nem rendimento
+## por tile — a economia inteira vem de V2EconomyRuntime (base por cidade + prédios + melhorias), e o
+## desenvolvimento urbano é o City Level. Ver docs/AETHERLANDS_V2_IMPLEMENTATION.md, Fase 25.
 const LABEL_HEIGHT := 1.4
-
-## Taxa de conversao ouro->producao do rush-buy do Mercado (ver
-## can_rush_buy()/rush_buy_cost()/rush_buy() abaixo) — cada ponto de
-## producao FALTANTE no item atual custa isso em ouro pra comprar na hora.
-const RUSH_BUY_GOLD_PER_PRODUCTION := 2.0
-
-## Piso de producao garantido pro tile CENTRAL da cidade (ver collect_
-## yields) — sem isso, uma cidade fundada em Planicie/Deserto/qualquer
-## terreno com production_yield 0 (ver TerrainDatabase) ficava com
-## stored_production LITERALMENTE travado em zero por varios turnos, ate a
-## populacao crescer o bastante pra reivindicar um segundo tile trabalhado
-## com producao de verdade — pedido do usuario apos reportar a barra de
-## progresso "vários turnos com ela no 0": "não sei se o problema é que a
-## construção realmente fica congelada no tempo no início". Era: o tile da
-## cidade nao tinha NENHUM piso, e auto_assign_worked_tiles (score = food*
-## 1.5 + production*1.3) prefere Planicie de producao 0 sobre Colina/
-## Floresta de producao 2 so por causa do peso maior em comida, entao nem o
-## primeiro tile trabalhado corrigia isso sozinho. Padrao consagrado de 4X
-## (Civilization e afins): o tile central sempre garante um minimo de
-## producao, nunca fica refem do terreno cru embaixo dele.
-const CITY_CENTER_MIN_PRODUCTION := 1.0
 
 ## Vida/escudo da cidade — pedido do usuario: "quero... estabelecer a vida
 ## da cidade, sempre mostrando na tela quanta vida ela tem, e o shield
@@ -48,13 +18,10 @@ const CITY_CENTER_MIN_PRODUCTION := 1.0
 ## — e Muralhas ganha proposito MECANICO alem do visual: o escudo absorve
 ## dano antes da vida cair, regenerando mais rapido entre ataques (mesmo
 ## espirito da cura de guarnicao, ver GameManager.GARRISON_HEAL_FRACTION).
-## max_hp cresce com a populacao (cidade tardia e mais dificil de arrasar);
-## max_shield e um valor fixo, so existe se o predio "walls" ja foi
-## construido (ver max_shield()).
-const CITY_BASE_MAX_HP := 20.0
-const CITY_MAX_HP_PER_POPULATION := 4.0
+## Aetherlands V2, Fase 16: max_hp vem do City Level (V2CityLevelData.max_hp) e max_shield da
+## Fortificação V2 (V2FortificationData.shield_max) — população e o prédio V1 "walls" não entram
+## mais. A regeneração por turno (frações abaixo) e o atrito de cerco continuam os de sempre.
 const CITY_HP_REGEN_FRACTION := 0.08 # fracao de max_hp curada por turno
-const CITY_MAX_SHIELD := 15.0
 const CITY_SHIELD_REGEN_FRACTION := 0.15 # fracao de max_shield recarregada por turno
 ## Atrito de cerco (roadmap de gameplay Fase 2): unidade inimiga adjacente
 ## por N turnos SEGUIDOS suspende a regeneracao de HP/escudo da cidade
@@ -65,23 +32,40 @@ const CITY_SHIELD_REGEN_FRACTION := 0.15 # fracao de max_shield recarregada por 
 ## intencao de cercar, nao deveria contar como sitio de verdade.
 const SIEGE_TURNS_TO_SUSPEND_REGEN := 2
 
-## Escala visual da cidade por populacao (pedido do usuario: "Populacao 1 =
-## 2-3 casinhas; Populacao 5 = distrito densamente povoado com torres/
-## muralhas") — 3 faixas, nao crescimento linear infinito: uma cidade tardia
-## com populacao 20+ continuaria com o MESMO teto de estruturas da faixa
-## "cidade murada", so a torre central engorda um pouco mais (ver
-## _add_tower), senao o numero de MeshInstance3D por cidade cresceria sem
-## limite e a leitura visual/FPS degradariam junto com o proprio sucesso da
-## cidade.
-const POP_HAMLET_MAX := 2 # 1-2: aldeia, so casinhas
-const POP_TOWN_MAX := 4 # 3-4: vila, casinhas + salao central
-## 5+: cidade grande — casinhas + torre (torre NAO implica muralha mais,
-## ver _build_visual_procedural/_add_walls: a muralha agora reflete se o
-## predio "walls" foi construido, independente de populacao)
+## Escala visual da cidade pelo City Level (Fase 25 — era pela população, removida): Cidade I =
+## aldeia (poucas casinhas + salão), Cidade II = vila, Cidade III+ = cidade com torre central. Teto de
+## estruturas fixo (ver _build_visual_procedural), então o número de meshes nunca cresce sem limite.
+const HUTS_BY_CITY_LEVEL := {1: 3, 2: 5, 3: 7, 4: 8}
 
 var owner_player: PlayerData
 var coord: Vector2i
 var city_name: String = "Cidade"
+
+## Aetherlands V2, Fase 13 — nível urbano LOCAL desta cidade (1..4, ver V2CityLevelData). Nunca
+## derivado de prédios/território/HP — estado próprio, explícito, salvo por cidade.
+## Nova cidade nasce em 1; cidade capturada mantém o nível (HexGrid.capture_city não toca isto).
+var city_level: int = 1
+## Pontos de Anexação desta cidade (LOCAIS — não é recurso de PlayerData, ver V2CityLevelData.
+## annexation_grant). Nunca expiram; não resetam ao subir de nível (§31/§32/§91 do pedido).
+var annexation_points: int = 0
+## id de prédio (CopyLimitMode.CITY_LEVEL) -> quantas cópias esta cidade já tem. Um prédio UNIQUE
+## (o padrão, ver BuildingData.copy_limit_mode) nunca entra aqui — `buildings.has(id)` já basta
+## pra ele. Ver building_count()/max_copies_for_building()/can_build().
+var repeatable_building_counts: Dictionary = {}
+## Aetherlands V2, Fase 14 — id de prédio CopyLimitMode.CITY_LEVEL -> Array[Vector2i] com a
+## coordenada de CADA cópia física já construída nesta cidade (§8/§58/§98 do pedido: cada cópia
+## precisa aparecer no mapa e sobreviver a save/load/captura). Dict SEPARADO de `building_coords`
+## (que continua guardando exatamente 1 coord por id, sem alteração nenhuma — segue correto pra
+## todo prédio UNIQUE, que nunca tem mais de 1 cópia) em vez de mudar o tipo de `building_coords`
+## pra Array em todo mundo — mesma decisão de design de `repeatable_building_counts` na Fase 13
+## (dict novo e aditivo em vez de arriscar um dict já usado por ~100 prédios existentes).
+var repeatable_building_coords: Dictionary = {}
+## Aetherlands V2, Fase 15 — melhorias de recurso do mapa construídas pelo Construtor nesta cidade
+## (Vector2i -> improvement_id de V2ResourceImprovementData). Vive na CIDADE (não no HexTileData/
+## num recurso global) porque o tile já pertence a ela — captura transfere a cidade inteira, e a
+## melhoria vai junto de graça, sem nenhum código novo (§75/§76 do pedido). Nunca conta como
+## prédio: não entra em `buildings`, não ocupa slot, não passa por CopyLimitMode.
+var resource_improvements: Dictionary = {}
 ## Circunraio REAL do hex do tile (HexGrid.hex_size, ver setup()) — pedido
 ## do usuario apos ver a muralha pequena demais e mal encaixada: "voce
 ## conseguiria fazer... como esse vermelho que tracei" (um hexagono do
@@ -91,17 +75,24 @@ var city_name: String = "Cidade"
 ## verdade — 1.0 aqui e so o fallback pro default de HexGrid.hex_size,
 ## usado por testes que criam City.new() bare sem passar por setup().
 var tile_radius: float = 1.0
-var population: int = 1
-## Nunca ultrapassa food_storage_cap() (ver process_turn(), que ja aplica o
-## clamp todo turno) — o "excedente" de um turno com producao muito alta
-## simplesmente e descartado ao cruzar o teto, nao acumula pro proximo
-## ciclo.
-var stored_food: float = 0.0
 var stored_production: float = 0.0
-## Ver comentario de CITY_BASE_MAX_HP acima — inicializados em setup()
+## Ver comentario de CITY_HP_REGEN_FRACTION acima — inicializados em setup()
 ## (hp cheio, shield 0 ate Muralhas ser construida).
 var hp: float = 0.0
 var shield: float = 0.0
+## Aetherlands V2, Fase 16 — Fortificação LOCAL desta cidade (0 = nenhuma, 1 = Muralhas I, 2 =
+## Muralhas II, 3 = Fortaleza; números em V2FortificationData). Construída como PROJETO na mesma
+## fila de produção, nunca um prédio: não ocupa slot, não entra em `buildings`. Sobrevive à captura
+## (a cidade inteira muda de dono) e é salva.
+var fortification_level: int = 0
+## Aetherlands V2, Fase 16 — TurnManager.turn_number em que esta cidade já usou o Ataque da Cidade
+## (uma vez por turno do dono; -1 = nunca). Salvo: recarregar o jogo não devolve o disparo. A
+## captura grava o turno corrente, então a cidade nunca dispara no mesmo turno em que mudou de dono.
+var last_city_attack_turn: int = -1
+## Aetherlands V2, Fase 16 — índice estável (GameManager.players) do dono anterior de quem o DONO
+## ATUAL conquistou esta cidade numa captura QUALIFICADA pra Supremacia Militar V2 (a cidade já era
+## Cidade III+ no instante da captura); -1 = nenhuma. Reescrito a cada captura. Salvo.
+var v2_supremacy_captured_from: int = -1
 ## Ver SIEGE_TURNS_TO_SUSPEND_REGEN acima — quantos turnos SEGUIDOS ate
 ## agora tem unidade inimiga adjacente; zera assim que ninguem ameacador
 ## fica adjacente por um turno.
@@ -125,37 +116,24 @@ var last_monster_warning_turn: int = -999
 ## cidade nova comecava com um item ja selecionado sem o jogador pedir.
 ## Agora toda cidade nasce ociosa, e process_turn() volta pra "" toda vez
 ## que um item (unidade OU predio) completa, em vez de cair pra
-## "settler"/repetir o mesmo item pra sempre sozinha. RivalAI.decide_
-## production ja rechama set_production() TODO turno pra IA rival
-## (inclusive na fundacao, ver GameManager._on_turn_changed chamando
-## decide_production ANTES de process_turn), entao ela nunca fica ociosa
-## de verdade — isso so afeta cidades sem ninguem escolhendo pra elas
-## todo turno, ou seja, so a do jogador humano.
+## "settler"/repetir o mesmo item pra sempre sozinha. A IA rival escolhe a
+## fila de cada cidade no próprio planejamento (V2StrategicAI.plan_turn, antes
+## de process_turn), entao ela nunca fica ociosa de verdade — isso so afeta
+## cidades sem ninguem escolhendo pra elas todo turno, ou seja, so a do
+## jogador humano.
 var production_item: String = ""
-
-## Cada ponto de populacao trabalha um tile vizinho (o tile da propria
-## cidade e sempre contado de graca, fora desta lista — ver
-## collect_yields()). Preenchido automaticamente ao fundar/crescer
-## (auto_assign_worked_tiles, prioriza melhor rendimento), mas o jogador
-## pode trocar via toggle_worked_tile() — da controle real sobre o que a
-## cidade produz, em vez de somar todos os vizinhos sempre.
-var worked_tiles: Array[Vector2i] = []
 
 ## Tiles que a cidade REALMENTE possui (territorio, ver HexGrid.
 ## city_territory_tiles/_build_city_tint_mesh — o tingimento de cor no chao
-## de cada tile e o unico sinal visual disso hoje) — cresce com a
-## populacao (ver process_turn/_claim_frontier_tile abaixo), independente
-## de worked_tiles (rendimento) e do raio de posicionamento de predio (os
-## dois continuam fixos em "vizinho direto da propria celula", fora do
-## escopo desta mudanca — so a POSSE de territorio fica dinamica). Iniciado
-## em HexGrid.found_city() com o mesmo conjunto de hoje (celula + 6
-## vizinhos), depois cresce um tile por vez.
+## de cada tile e o unico sinal visual disso hoje). Iniciado em
+## HexGrid.found_city() (celula + 6 vizinhos) e depois só cresce por anexação
+## manual (annex_tile, Pontos de Anexação do City Level) — Fase 13.
 var owned_tiles: Array[Vector2i] = []
 
-## Predios ja construidos (ver BuildingDatabase) — Dictionary id->true,
-## mesmo padrao de researched_techs. Diferente de unidade, um predio nao
-## "sai" da cidade ao completar, so fica valendo pra sempre (bonus em
-## collect_yields()/CombatResolver.predict()).
+## Predios ja construidos (ver BuildingDatabase) — Dictionary id->true
+## ("existe pelo menos uma cópia"; a contagem de prédio repetível vive em
+## repeatable_building_counts). O rendimento dos prédios econômicos é derivado
+## por V2EconomyRuntime.
 var buildings: Dictionary = {}
 
 ## Onde cada predio construido foi POSICIONADO no mapa (id -> coord) — o
@@ -203,36 +181,24 @@ func setup(player: PlayerData, start_coord: Vector2i, new_city_name: String, hex
 	shield = max_shield()
 	_build_visual()
 
+## Aetherlands V2, Fase 16: vem do City Level (V2CityLevelData.max_hp), nunca da população.
 func max_hp() -> float:
-	return CITY_BASE_MAX_HP + population * CITY_MAX_HP_PER_POPULATION
+	return V2CityLevelData.max_hp(city_level)
 
-## Teto de armazenamento de comida desta cidade — FOOD_STORAGE_BASE por
-## padrao, aumentado pelo Celeiro uma vez construido (BuildingData.
-## storage_bonus, ver BuildingDatabase.total_bonus()). Cidade cresce 1
-## populacao quando stored_food atinge este teto (ver process_turn()).
-func food_storage_cap() -> float:
-	return FOOD_STORAGE_BASE + BuildingDatabase.total_bonus(buildings).storage
-
-## 0.0 ate o predio "walls" ser construido (ver BuildingDatabase.gd/
-## City._add_walls) — sem Muralhas, a cidade nao tem escudo nenhum pra
-## absorver.
+## Aetherlands V2, Fase 16: o escudo (camada externa da muralha) vem da Fortificação V2
+## (V2FortificationData.shield_max(fortification_level)) — 0 sem fortificação. O prédio V1 "walls"
+## ficou vestigial (BuildingData.superseded_by_v2_fortification).
 func max_shield() -> float:
-	return CITY_MAX_SHIELD if buildings.has("walls") else 0.0
+	return V2FortificationData.shield_max(fortification_level)
 
-## Roadmap de gameplay Fase 4A — pedido do usuario: "Mercado ganha um
-## segundo efeito real: aumenta o numero maximo de rotas simultaneas que
-## uma cidade aguenta" (primeira vez que "Mercado" faz algo parecido com
-## o proprio nome — antes so descontava rush-buy). Ver TradeManager.
-## active_route_count/propose_route.
-const MARKET_ROUTE_CAPACITY_BONUS := 2
-## `hex_grid` OPCIONAL (Roadmap 2.0 Parte 1, B1) — so quando fornecido soma
-## o bonus de Seda (ResourceDatabase.extra_trade_route_capacity), mesma
-## convencao de parametro opcional de production_cost/rush_buy_cost abaixo.
-func max_trade_routes(hex_grid: HexGrid = null) -> int:
-	var base = MARKET_ROUTE_CAPACITY_BONUS if buildings.has("market") else 0
-	if hex_grid == null:
-		return base
-	return base + ResourceDatabase.extra_trade_route_capacity(self, hex_grid)
+func has_fortification() -> bool:
+	return fortification_level > 0
+
+## Bônus de defesa urbana — só a Fortificação V2 (Fase 25: os prédios defensivos V1 — Torre de Vigia,
+## Guarnição e a cadeia de muralhas — não existem mais no gameplay). Usado pela fórmula urbana de
+## sempre (CombatResolver.resolve_city_attack) e pela defesa de quem guarnece a cidade.
+func defense_bonus() -> float:
+	return V2FortificationData.city_defense_bonus(fortification_level)
 
 ## Trocar de projeto zera o progresso acumulado, como na maioria dos 4X:
 ## evita "salvar" producao de um item pra completar outro instantaneamente.
@@ -247,9 +213,6 @@ func set_production(kind: String) -> void:
 			pending_building_coord = NO_PENDING_COORD
 		production_item = kind
 		stored_production = 0.0
-		var upgrade := BuildingDatabase.get_building(kind)
-		if upgrade and upgrade.upgrades_building != "":
-			pending_building_coord = building_coords.get(upgrade.upgrades_building, NO_PENDING_COORD)
 
 ## production_item pode ser um kind de unidade OU um id de predio
 ## (BuildingDatabase) — checa predio primeiro pra nao precisar de um
@@ -257,213 +220,253 @@ func set_production(kind: String) -> void:
 ## comentario de production_item) devolve 0.0 direto — sem essa guarda,
 ## cairia em UnitDatabase.create_unit(""), que devolve o CUSTO DEFAULT de
 ## UnitData (15.0, nao 0), um numero enganoso pra quem chama isto achando
-## que reflete "nada em producao".
-## `hex_grid` OPCIONAL (roadmap de gameplay Fase 3) — so quando fornecido
-## aplica o desconto de Cavalos em Cavalaria (ver ResourceDatabase.
-## cavalry_cost_multiplier); todo chamador que nao passa (rush-buy,
-## HUD, debug) continua vendo o custo BASE, sem discrepancia funcional —
-## so o momento em que a producao de fato COMPLETA (process_turn, unico
-## chamador que ja tinha hex_grid em maos) usa o desconto de verdade.
-func production_cost(hex_grid: HexGrid = null) -> float:
+## que reflete "nada em producao". Fase 25: sem descontos V1 (identidade de
+## cidade, Ferro/Cavalos) — o custo é exatamente o do dado.
+func production_cost() -> float:
 	if production_item == "":
 		return 0.0
 	var building: BuildingData = BuildingDatabase.get_building(production_item)
 	if building:
 		return building.production_cost
-	var cost: float = UnitDatabase.create_unit(production_item).production_cost
-	# Identidade militar de cidade (Roadmap Parte B, B2) — so depende de
-	# buildings LOCAIS desta cidade (CityIdentity.axis_strength), diferente
-	# dos descontos de recurso abaixo (que precisam varrer tiles
-	# controlados via hex_grid); por isso se aplica em QUALQUER chamada,
-	# mesmo sem hex_grid (HUD, rush-buy via _production_remaining(), debug
-	# inclusive) — a cidade nao precisa "saber" do hex_grid pra saber quais
-	# predios ela mesma ja tem.
-	cost *= CityIdentity.militar_unit_cost_multiplier(self, production_item)
-	if hex_grid and owner_player:
-		if production_item == "cavalry":
-			cost *= ResourceDatabase.cavalry_cost_multiplier(owner_player, hex_grid)
-		elif production_item in ResourceDatabase.IRON_DISCOUNT_KINDS:
-			cost *= ResourceDatabase.heavy_unit_cost_multiplier(owner_player, hex_grid)
-	return cost
+	# Aetherlands V2, Fase 13 — City Project (v2_city_upgrade_2/3/4): custo em PP vem de
+	# V2CityLevelData, nunca de UnitDatabase.create_unit(production_item) (que devolveria o
+	# custo DEFAULT de UnitData pra um id desconhecido, um número enganoso — mesmo cuidado já
+	# documentado acima pra production_item == "").
+	var upgrade_target := V2CityLevelData.target_level_for_project(production_item)
+	if upgrade_target > 0:
+		return V2CityLevelData.upgrade_production_cost(upgrade_target)
+	# Aetherlands V2, Fase 16 — projeto de Fortificação: mesmo desvio do City Project acima.
+	var fortification_target := V2FortificationData.target_level_for_project(production_item)
+	if fortification_target > 0:
+		return V2FortificationData.production_cost(fortification_target)
+	return UnitDatabase.create_unit(production_item).production_cost
 
-## Quanto falta pra completar o item atual (nunca negativo) — usado tanto
-## pelo rush-buy abaixo quanto poderia ser reusado por qualquer outro
-## calculo futuro de "quanto falta".
-func _production_remaining() -> float:
-	return max(production_cost() - stored_production, 0.0)
-
-## Mercado permite "comprar" o resto da producao do item atual com ouro em
-## vez de esperar os turnos normais — pedido do usuario: "o mercado pode
-## servir pra aumentar a produção"/"é uma boa, faça isso" (rush-buy com
-## ouro). So disponivel com o predio "market" ja construido NESTA cidade
-## (efeito local, mesmo padrao de gate por predio de BuildingDatabase.
-## building_that_trains/can_train), so quando ha algo de fato em producao
-## (cidade OCIOSA nao tem o que comprar) e so quando ainda falta alguma
-## coisa (senao o botao apareceria pra comprar um item que ja completaria
-## sozinho neste mesmo turno).
-func can_rush_buy() -> bool:
-	return buildings.has("market") and production_item != "" and _production_remaining() > 0.0
-
-## Custo em ouro pra completar o restante da producao AGORA — proporcional
-## so ao que FALTA (production_cost() - stored_production), nao ao custo
-## total, senao comprar um item quase pronto custaria o mesmo que comprar
-## do zero. 0.0 quando can_rush_buy() e false (nada pra comprar).
-## `hex_grid` OPCIONAL (Roadmap 2.0 Parte 1, B1) — so quando fornecido
-## aplica o desconto de Gemas (ResourceDatabase.rush_buy_cost_multiplier),
-## mesma convencao de production_cost acima.
-func rush_buy_cost(hex_grid: HexGrid = null) -> float:
-	if not can_rush_buy():
-		return 0.0
-	var cost = _production_remaining() * RUSH_BUY_GOLD_PER_PRODUCTION
-	if hex_grid and owner_player:
-		cost *= ResourceDatabase.rush_buy_cost_multiplier(owner_player, hex_grid)
-	return cost
-
-## Completa o item atual instantaneamente gastando ouro do dono da cidade —
-## so seta stored_production pro custo total; a conclusao de fato (spawnar
-## unidade/marcar predio construido/voltar a ficar OCIOSA, ver
-## process_turn()) acontece no PROXIMO turno, reaproveitando a MESMA logica
-## de conclusao de sempre em vez de duplicar aqui (evita ter dois lugares
-## decidindo "o que acontece quando um item termina"). Devolve false sem
-## gastar nada se o rush-buy nao estiver disponivel ou faltar ouro.
-func rush_buy(hex_grid: HexGrid = null) -> bool:
-	if not can_rush_buy():
-		return false
-	var cost := rush_buy_cost(hex_grid)
-	if owner_player == null or owner_player.gold < cost:
-		return false
-	owner_player.gold -= cost
-	stored_production = production_cost()
-	return true
-
-## Limite de predios da cidade: cresce junto com a populacao (uma vila de
-## populacao 1 nao tem gente/espaco pra sustentar Celeiro+Oficina+Mercado+
-## Muralhas ao mesmo tempo) — da um motivo real pra cidade crescer alem de
-## so render mais, e evita empilhar toda a lista de predios numa cidade
-## que nunca saiu do tamanho inicial.
+## Aetherlands V2, Fase 13 — limite de prédios da cidade: vem do City Level (V2CityLevelData.
+## max_building_slots), a única fonte.
 func max_building_slots() -> int:
-	return population
+	return V2CityLevelData.max_building_slots(city_level)
 
+## Aetherlands V2, Fase 13 — cada CÓPIA de um prédio repetível (BuildingData.CopyLimitMode.
+## CITY_LEVEL) ocupa seu próprio slot: uma cidade com 3 Fazendas ocupa 3 slots, não 1 (§26 do
+## pedido). Prédio UNIQUE (o padrão) ocupa 1. Save legado ACIMA do cap atual (mais prédios do que o City Level de hoje permitiria)
+## nunca perde nenhum: used_building_slots() simplesmente reporta o valor real, maior que o cap —
+## can_build() é quem barra NOVO prédio enquanto isso (§24).
 func used_building_slots() -> int:
 	var count := 0
 	for id in buildings:
-		var building := BuildingDatabase.get_building(id)
-		if building == null or building.upgrades_building == "" or not buildings.has(building.upgrades_building):
-			count += 1
+		count += building_count(id)
 	return count
 
+## Quantas cópias de `building_id` esta cidade já tem — 0 se nenhuma, 1 pra qualquer prédio
+## UNIQUE presente (buildings.has), a contagem real pra um prédio CITY_LEVEL (ver
+## repeatable_building_counts). Nunca usar só has_building()/buildings.has() pra decidir
+## construção de prédio repetível (§28 do pedido) — este é o helper certo.
+func building_count(building_id: String) -> int:
+	if not buildings.has(building_id):
+		return 0
+	var building := BuildingDatabase.get_building(building_id)
+	if building != null and building.copy_limit_mode == BuildingData.CopyLimitMode.CITY_LEVEL:
+		return int(repeatable_building_counts.get(building_id, 1))
+	return 1
+
+## Máximo de cópias de `building` que esta cidade pode ter — 1 pra UNIQUE (sempre, em qualquer
+## City Level), V2CityLevelData.repeatable_building_limit(city_level) pra CITY_LEVEL (§26).
+func max_copies_for_building(building: BuildingData) -> int:
+	if building == null or building.copy_limit_mode != BuildingData.CopyLimitMode.CITY_LEVEL:
+		return 1
+	return V2CityLevelData.repeatable_building_limit(city_level)
+
 func can_build(building_id: String) -> bool:
-	if buildings.has(building_id):
-		return false
 	var building := BuildingDatabase.get_building(building_id)
 	if building == null:
 		return false
-	if building.upgrades_building == "" and used_building_slots() >= max_building_slots():
+	if building_count(building_id) >= max_copies_for_building(building):
+		return false
+	if used_building_slots() >= max_building_slots():
 		return false
 	if not _prerequisite_building_present(building_id):
 		return false
-	return _tech_unlocked_for_building(building_id)
+	# Aetherlands V2, Fase 15 (§43 do pedido): prédio com manutenção de Ouro não pode ser INICIADO
+	# durante Déficit — o Mercado (upkeep 0) continua disponível,
+	# então a economia sempre tem uma rota de recuperação. Construção já em andamento não é afetada
+	# (este gate só decide se PODE começar, nunca cancela o que já está na fila).
+	if building.gold_upkeep > 0.0 and owner_player != null and V2EconomyRuntime.is_gold_deficit(owner_player):
+		return false
+	return _research_unlocked_for_building(building_id)
 
-## Alguns predios exigem OUTRO predio ja construido nesta mesma cidade
-## antes (BuildingData.requires_building, ex: Estabulo exige o Quartel) —
-## pedido do usuario: "faca o estabulo ser uma coisa que so pode ser feita
-## depois do quartel". Independente do gate de TECNOLOGIA logo abaixo (os
-## dois se combinam pro Estabulo: Quartel construido E tech "Estabulo"
-## pesquisada).
+## Aetherlands V2, Fase 15 — por que `building_id` não pode ser construído agora POR CAUSA do
+## Déficit ("" = não é o motivo). Mesmo espírito de V2LegendarySystem.slot_only_reason: só tem algo
+## a dizer quando o Déficit é de fato o motivo (prédio tem upkeep e a civilização está em Déficit),
+## nunca some informação atrás de "Indisponível" genérico (§43 do pedido).
+func deficit_build_reason(building_id: String) -> String:
+	var building := BuildingDatabase.get_building(building_id)
+	if building == null or building.gold_upkeep <= 0.0:
+		return ""
+	if owner_player != null and V2EconomyRuntime.is_gold_deficit(owner_player):
+		return "Déficit de Ouro: estabilize a economia antes de adicionar manutenção."
+	return ""
+
+## Aetherlands V2, Fase 13 — is_developed_v2(): API semântica genérica de "Cidade Desenvolvida"
+## (§20 do pedido). Regra: city_level >= V2CityLevelData.DEVELOPED_MIN_LEVEL (3). Consultada pela
+## Supremacia Militar V2 (V2VictoryConditions) e pela IA.
+func is_developed_v2() -> bool:
+	return V2CityLevelData.is_developed(city_level)
+
+## Aetherlands V2, Fase 13 — por que esta cidade NÃO pode iniciar o projeto de upgrade pro
+## PRÓXIMO City Level agora ("" = pode). Única fonte do texto de bloqueio (§47 do pedido: motivos
+## distintos — "Requer <pesquisa>.", "Requer N Ouro.", "Produção da cidade já está ocupada.",
+## "Cidade já está no nível máximo." — nunca um "Indisponível" genérico).
+func city_upgrade_unavailable_reason() -> String:
+	var target := V2CityLevelData.next_level(city_level)
+	if target == 0:
+		return "Cidade já está no nível máximo."
+	var research_id := V2CityLevelData.research_required_for_level(target)
+	if research_id != "" and (owner_player == null or not owner_player.has_unlocked(V2CityLevelData.unlock_id_for_level(target))):
+		var node := V2ResearchDatabase.get_node(research_id)
+		return "Requer %s." % (node.display_name if node != null else research_id)
+	# §16 do pedido: precisa TER o Ouro pra INICIAR (não é descontado ainda — só na conclusão,
+	# ver process_turn). Sem isso o jogador poderia começar um projeto sem nunca conseguir pagar.
+	var gold_cost := V2CityLevelData.upgrade_gold_cost(target)
+	if owner_player == null or owner_player.gold < gold_cost:
+		return "Requer %d Ouro." % int(gold_cost)
+	var project_id := V2CityLevelData.project_id_for_level(target)
+	if production_item != "" and production_item != project_id:
+		return "Produção da cidade já está ocupada."
+	return ""
+
+func can_start_city_upgrade() -> bool:
+	return city_upgrade_unavailable_reason() == ""
+
+## Aetherlands V2, Fase 16 — por que esta cidade NÃO pode iniciar o PRÓXIMO nível de Fortificação
+## agora ("" = pode). Requisitos vêm todos de V2FortificationData (pesquisa, City Level, nível
+## anterior); um nível CAPTURADO acima da pesquisa do dono continua existindo, mas avançar exige a
+## pesquisa e o City Level do dono atual.
+func fortification_unavailable_reason() -> String:
+	var target := V2FortificationData.next_level(fortification_level)
+	if target == 0:
+		return "Fortificação já está no nível máximo."
+	var unlock_id := V2FortificationData.required_research_id(target)
+	if unlock_id != "" and (owner_player == null or not owner_player.has_unlocked(unlock_id)):
+		var node := V2ResearchDatabase.node_for_unlock_id(unlock_id)
+		return "Requer %s." % (node.display_name if node != null else unlock_id)
+	var needed_level := V2FortificationData.required_city_level(target)
+	if city_level < needed_level:
+		return "Requer %s." % V2CityLevelData.level_name(needed_level)
+	var project_id := V2FortificationData.project_id(target)
+	if production_item != "" and production_item != project_id:
+		return "Produção da cidade já está ocupada."
+	var deficit_reason := fortification_deficit_reason()
+	if deficit_reason != "" and production_item != project_id:
+		return deficit_reason
+	return ""
+
+func can_start_fortification() -> bool:
+	return fortification_unavailable_reason() == ""
+
+## Mesmo princípio de deficit_build_reason (Fase 15): um projeto de Fortificação com upkeep não pode
+## ser INICIADO em Déficit; um já em andamento continua.
+func fortification_deficit_reason() -> String:
+	var target := V2FortificationData.next_level(fortification_level)
+	if target == 0 or V2FortificationData.gold_upkeep(target) <= 0.0:
+		return ""
+	if owner_player != null and V2EconomyRuntime.is_gold_deficit(owner_player):
+		return "Déficit de Ouro: estabilize a economia antes de ampliar a fortificação."
+	return ""
+
+## Conclui um nível de Fortificação preservando o dano absoluto já sofrido pelo escudo (§24 do pedido):
+## novo = clamp(novo_max − (antigo_max − atual), 0, novo_max) — upgrade nunca cura de graça.
+func apply_fortification_level(new_level: int) -> void:
+	var old_missing := maxf(max_shield() - shield, 0.0)
+	fortification_level = V2FortificationData.clamp_level(new_level)
+	shield = clampf(max_shield() - old_missing, 0.0, max_shield())
+
+## Sobe o City Level preservando a FRAÇÃO de HP (§27 do pedido: 15/30 -> 18/36, nunca cura cheio).
+func apply_city_level(new_level: int) -> void:
+	var fraction := hp / maxf(max_hp(), 0.001)
+	city_level = new_level
+	hp = clampf(fraction * max_hp(), 0.0, max_hp())
+	# Fase 25: o visual (casinhas/torre) e o rótulo refletem o City Level — só se o visual já foi montado
+	# (City.new() de teste sem setup() não tem nós pra refazer).
+	if _name_label != null:
+		_build_visual_procedural()
+		_refresh_label()
+
+## Aetherlands V2, Fase 17 — Mana que falta para a unidade em produção nascer (0 se não há exigência ou já basta).
+## A HUD mostra "Aguardando N Mana." quando os PP já completaram e isto é > 0.
+func production_waiting_for_mana() -> int:
+	if production_item == "" or not V2ResearchDatabase.is_v2_id(production_item) or BuildingDatabase.get_building(production_item) != null:
+		return 0
+	var cost := UnitDatabase.create_unit(production_item).production_mana_cost
+	if cost <= 0.0 or owner_player == null or owner_player.mana >= cost:
+		return 0
+	return int(ceil(cost))
+
+## Aetherlands V2, Fase 13 — true enquanto o projeto de upgrade ATUAL já acumulou o PP total mas
+## está esperando Ouro suficiente pra concluir (ver process_turn: stored_production fica travado
+## no custo total sem perder nada). HUD usa isto pra mostrar "Aguardando N Ouro." (§16 do pedido).
+func city_upgrade_waiting_for_gold() -> int:
+	var target := V2CityLevelData.target_level_for_project(production_item)
+	if target == 0 or stored_production < production_cost():
+		return 0
+	var gold_cost := V2CityLevelData.upgrade_gold_cost(target)
+	return int(gold_cost) if owner_player == null or owner_player.gold < gold_cost else 0
+
+## Alguns prédios exigem OUTRO prédio já construído nesta mesma cidade antes
+## (BuildingData.requires_building, ex.: a Maestria de uma Doutrina exige o Salão dela).
+## Independente do gate de pesquisa logo abaixo — os dois se combinam.
 func _prerequisite_building_present(building_id: String) -> bool:
 	var building: BuildingData = BuildingDatabase.get_building(building_id)
 	if building == null or building.requires_building == "":
 		return true
 	return buildings.has(building.requires_building)
 
-## Predio de TREINO so fica disponivel pra construir depois de pesquisar a
-## mesma tecnologia que desbloqueia a tropa correspondente
-## (TechDatabase.tech_that_unlocks(building.trains_unit)) — pedido do
-## usuario: "so posso construir esses predios especiais quando pesquisar a
-## tecnologia, ai aparece disponivel pra construir". Predios de PRODUCAO
-## sem tech (so Torre dos Sabios) nao tem tecnologia associada
-## (tech_that_unlocks devolve null E tech_that_unlocks_building tambem),
-## fica sempre liberada por essa checagem, so sujeita ao limite de slots.
-## Quartel, Estabulo, Campo de Tiro, Muralhas, Celeiro, Oficina e Mercado TEM
-## tecnologia associada cada um (respectivamente "Quartel"/"Estabulo"/
-## "Arquearia"/"Muralhas", ver TechDatabase) — Homem de Armas so treina
-## depois da primeira, Cavaleiro (comum)/Cavaleiro Real/Batedor so depois
-## da segunda (Batedor ainda exige a PROPRIA tech "Batedor Montado" por
-## cima — gate SEPARADO, checado por has_unlocked()/is_unit_unlocked() na
-## HUD, nao aqui, ver comentario de TechData.unlocks_unit), Arqueiro so
-## depois da terceira, Muralhas so depois da quarta (essa via unlocks_
-## building, nao unlocks_unit — Muralhas nao treina tropa nenhuma). Celeiro,
-## Oficina e Mercado tambem passam por unlocks_building (techs "celeiro"/
-## "oficina"/"mercado", ver TechDatabase) — deixaram de ser sempre
-## liberados junto com o resto da familia RENDIMENTO (so Torre dos Sabios
-## continua sem tech nenhuma). Guarda nao depende de nenhum predio (ver
-## BuildingDatabase.building_that_trains), entao nunca passa por aqui.
-## Tenta TechDatabase primeiro, depois MagicDatabase (ex: Torre dos Sabios/
-## Santuario Arcano podem estar gateados por uma tech magica, ver
-## MagicDatabase.tech_that_unlocks) — as duas arvores de pesquisa estao
-## separadas (ver PlayerData.researched_techs/researched_magic), entao o
-## dicionario consultado no final precisa bater com a base que resolveu
-## `tech`. ORDEM importa desde a arvore de 10 niveis (Roadmap): a tech de
-## unlocks_building (gate da CONSTRUCAO, ex: "quartel" -> barracks) e
-## checada ANTES da tech de unlocks_unit via trains_unit (gate do TREINO,
-## ex: "homem_de_armas" -> men_at_arms) — as duas passaram a ser techs
-## SEPARADAS pra cada predio de treino novo (antes uma tech so fazia as
-## duas coisas), entao construir o predio nao pode mais depender da tech
-## que libera a TROPA dele.
-func _tech_unlocked_for_building(building_id: String) -> bool:
-	if building_id == "arcane_sanctuary" and GameManager.victory_rules_version < 2:
-		return true
-	if building_id == "arcane_tower" and owner_player and owner_player.researched_magic.has("invocacao_espiritos"):
-		return true
-	var building: BuildingData = BuildingDatabase.get_building(building_id)
-	if building == null:
-		return true
-	var tech: TechData = TechDatabase.tech_that_unlocks_building(building_id)
-	var researched: Dictionary = owner_player.researched_techs if owner_player else {}
-	if tech == null:
-		# Predio sem tech de unlocks_building propria (ex: magico, ver
-		# comentario acima) cai no gate de unlocks_unit via trains_unit.
-		tech = TechDatabase.tech_that_unlocks(building.trains_unit)
-	if tech == null:
-		tech = MagicDatabase.tech_that_unlocks_building(building_id)
-		researched = owner_player.researched_magic if owner_player else {}
-	if tech == null:
-		tech = MagicDatabase.tech_that_unlocks(building.trains_unit)
-		researched = owner_player.researched_magic if owner_player else {}
-	if tech == null:
-		return true
-	return owner_player != null and researched.has(tech.id)
+## Todo prédio é liberado pela pesquisa V2 da civilização dona (derivada de
+## v2_research.is_completed — nenhum estado duplicado, ver V2UnlockSystem). Fase 25: não existe mais
+## gate de Tecnologia/Magia V1 — os prédios V1 nem estão no catálogo (BuildingDatabase), então
+## can_build já os recusa antes deste gate.
+func _research_unlocked_for_building(building_id: String) -> bool:
+	return V2UnlockSystem.is_unlocked(owner_player, building_id)
 
-## Cada tropa de combate so pode ser produzida se a cidade ja tiver o
-## predio de treino correspondente construido (BuildingDatabase.
-## building_that_trains) — Colonizador e Guarda nao tem predio associado,
-## entao ficam sempre liberados. Como can_build() ja exige a tecnologia
-## certa pra CONSTRUIR o predio, uma tropa so fica trainable depois da cadeia
-## completa: pesquisar -> construir -> treinar. Chamado tanto por
-## HUD._on_produce_pressed (jogador) quanto por RivalAI.decide_production
-## (rival, desde o roadmap de gameplay Fase 1 — antes disso a IA rival
-## pulava can_build()/can_train() inteiramente via set_production() direto,
-## nunca construindo predio nenhum mas ainda assim treinando tropa
-## avancada de graca; ver RivalAI.gd).
-##
-## Tropa racial exclusiva (UnitDatabase.RACE_UNIQUE_KIND) tem uma segunda
-## trava, ANTES da checagem de predio: so a raca DONA da tropa pode
-## treinar ela (pedido do usuario: escolher raca na tela de titulo precisa
-## ter uma implicacao real) — um jogador Anao nunca deveria conseguir
-## treinar o Arqueiro Solar so por ter o Quartel construido.
+## Treino: toda unidade da progressão é V2 e exige a pesquisa do dono ALÉM do prédio de treino
+## (BuildingDatabase.building_that_trains). Fase 25: fora da V2 só o núcleo civil compartilhado
+## (UnitDatabase.CORE_TRAINABLE_KINDS — o Colonizador) é treinável; nenhuma tropa V1 abre fila.
+## Chamado tanto pela HUD (jogador) quanto por V2StrategicAI (rival) — mesmo gate, sem bypass.
 func can_train(kind: String) -> bool:
-	var owner_race: String = UnitDatabase.race_for_unique_kind(kind)
-	if owner_race != "":
-		var player_race: String = owner_player.civ.race if owner_player and owner_player.civ else ""
-		if player_race != owner_race:
+	# Aetherlands V2 (Fase 3): unidade V2 exige a pesquisa V2 do dono ALÉM do prédio
+	# de treino abaixo (Escudeiro: nó N3 + Salão dos Guardiões).
+	if V2ResearchDatabase.is_v2_id(kind):
+		# Fase 15: redireciona pra UnitData.required_v2_unlock_id quando declarado (Construtor —
+		# pesquisar Oficinas libera treiná-lo). Comportamento idêntico a antes pra toda outra unidade.
+		if not V2UnlockSystem.is_unit_unlocked(owner_player, kind):
 			return false
+		# Fase 4: numa linha de Doutrina só a forma MAIS AVANÇADA liberada é produção
+		# normal (com N5 o Salão oferece o Guardião, não mais o Escudeiro). Quem já
+		# existe continua existindo e evolui por upgrade (V2UnitUpgrade).
+		if V2UnitLine.is_line_unit(kind) and not V2UnitLine.is_current_trainable_form(owner_player, kind):
+			return false
+		# Fase 6: Unidade Lendária (de qualquer Doutrina) só se a civilização tem slot livre — nenhuma ativa
+		# e nenhuma em produção em OUTRA cidade (V2LegendarySystem; o prédio de treino é o gate normal abaixo).
+		if V2LegendarySystem.is_legendary_kind(kind) and not V2LegendarySystem.legendary_slot_available(owner_player, self):
+			return false
+		# Fase 17: Grande Manifestação — 1 por Escola (ativa ou em produção em OUTRA cidade), independente da Lendária.
+		if V2ManifestationSystem.is_manifestation_kind(kind) and not V2ManifestationSystem.slot_available(owner_player, V2ManifestationSystem.school_of_kind(kind), self):
+			return false
+		# Fase 17: Mana de produção exigida para INICIAR (nunca reservada/descontada aqui; a cidade que já produz não é barrada).
+		if V2ManifestationSystem.production_mana_reason(owner_player, self, kind) != "":
+			return false
+		# Fase 15: Suprimentos/Déficit (§11/§41 do pedido) — só tem efeito pra kind com supply_cost > 0
+		# (o Construtor, supply_cost 0, nunca é barrado por aqui).
+		if not V2LogisticsRuntime.can_afford_training(owner_player, self, kind):
+			return false
+	elif not kind in UnitDatabase.CORE_TRAINABLE_KINDS:
+		return false
 	var required: BuildingData = BuildingDatabase.building_that_trains(kind)
 	if required == null:
 		return true
 	return buildings.has(required.id)
 
 ## Tile valido pra POSICIONAR um predio: precisa ser vizinho imediato da
-## cidade (mesmo raio de worked_tiles — o "territorio" da cidade), terra
+## cidade ou parte do território dela (owned_tiles), terra
 ## firme, sem unidade/cidade em cima, e sem outro predio (desta cidade ou
 ## de qualquer outra, ver HexGrid.is_tile_building_site) ja la.
 func is_valid_building_tile(target: Vector2i, hex_grid: HexGrid) -> bool:
@@ -489,94 +492,6 @@ func change_owner(new_owner: PlayerData) -> void:
 		child.queue_free()
 	_build_visual()
 
-## Rendimento REAL de um tile pra esta cidade: dado cru do terreno + bonus
-## de tecnologia do dono (TechDatabase.yield_bonus_for + MagicDatabase.
-## yield_bonus_for, somados — as duas arvores de pesquisa podem conceder
-## bonus de bioma) + bonus de recurso estrategico/luxo do proprio tile
-## (ResourceDatabase.yield_for). Usado por collect_yields(),
-## _best_unassigned_neighbor() (senao o auto-assign sugeria uma planicie
-## comum em vez de uma colina com ferro, so porque o bonus nao entrava na
-## conta) e pela HUD (pra mostrar o numero que realmente vai contar, nao so
-## o "cru" do terreno).
-func effective_tile_yield(data: HexTileData) -> Dictionary:
-	var researched_techs = owner_player.researched_techs if owner_player else {}
-	var researched_magic = owner_player.researched_magic if owner_player else {}
-	var tech_bonus = TechDatabase.yield_bonus_for(data.terrain_type, researched_techs)
-	var magic_bonus = MagicDatabase.yield_bonus_for(data.terrain_type, researched_magic)
-	var resource_bonus = ResourceDatabase.yield_for(data.resource)
-	return {
-		"food": data.food_yield + tech_bonus.food + magic_bonus.food + resource_bonus.food,
-		"production": data.production_yield + tech_bonus.production + magic_bonus.production + resource_bonus.production,
-		"gold": data.gold_yield + tech_bonus.gold + magic_bonus.gold + resource_bonus.gold,
-		# Mana nao tem componente "cru" de terreno (HexTileData nao tem
-		# mana_yield, so food/production/gold) — vem inteiro de recurso
-		# estrategico (Nodulo Arcano, ver ResourceDatabase) ou tech, nunca
-		# do bioma sozinho.
-		"mana": tech_bonus.mana + magic_bonus.mana + resource_bonus.mana,
-	}
-
-## Soma o rendimento efetivo do tile da cidade (sempre de graca) + so os
-## tiles vizinhos atualmente TRABALHADOS (worked_tiles) — nao mais todo
-## vizinho automaticamente. O multiplicador de dificuldade (so != 1.0 pra
-## rivais, ver PlayerData.yield_multiplier) e aplicado no total final, nao
-## por tile — mais barato e da o mesmo resultado. Tile PILHADO por um
-## Invasor (ver HexGrid.pillage_tile/MonsterAI._maybe_pillage_tile) rende
-## zero enquanto durar — o tile da propria cidade nunca e alvo disso
-## (Invasor nao alcanca tile de cidade, HexGrid.compute_reachable ja
-## bloqueia), so um worked_tiles pode estar pilhado na pratica.
-func collect_yields(hex_grid: HexGrid) -> Dictionary:
-	var totals = {"food": 0.0, "production": 0.0, "gold": 0.0, "mana": 0.0}
-	var coords: Array[Vector2i] = [coord]
-	coords.append_array(worked_tiles)
-	# Ver RaceEconomy.apply_yield_bonus — anao precisa saber se algum tile
-	# TRABALHADO e Colina ou tem o recurso Ferro; calculado nesta mesma
-	# volta pra nao precisar de uma segunda varredura so pra isso.
-	var worked_has_hills := false
-	var worked_has_iron := false
-	for c in coords:
-		if hex_grid.is_tile_pillaged(c, TurnManager.turn_number):
-			continue
-		var data: HexTileData = hex_grid.get_tile(c)
-		if data == null:
-			continue
-		if data.terrain_type in RaceEconomy.HILLS_TERRAIN_TYPES:
-			worked_has_hills = true
-		if data.resource == "iron":
-			worked_has_iron = true
-		var y = effective_tile_yield(data)
-		if c == coord:
-			y.production = max(y.production, CITY_CENTER_MIN_PRODUCTION)
-		totals.food += y.food
-		totals.production += y.production
-		totals.gold += y.gold
-		totals.mana += y.mana
-	var building_bonus = BuildingDatabase.total_bonus(buildings)
-	totals.food += building_bonus.food
-	totals.production += building_bonus.production
-	totals.gold += building_bonus.gold
-	totals.mana += building_bonus.mana
-	var mult = owner_player.yield_multiplier if owner_player else 1.0
-	totals.food *= mult
-	totals.production *= mult
-	totals.gold *= mult
-	totals.mana *= mult
-	# Identidade economica racial (roadmap de gameplay Fase 3) — MESMO
-	# lugar que o multiplicador de dificuldade acima, so um segundo
-	# multiplicador independente por cima.
-	var race: String = owner_player.civ.race if (owner_player and owner_player.civ) else ""
-	RaceEconomy.apply_yield_bonus(totals, race, worked_has_hills, worked_has_iron)
-	# Identidade de cidade (Roadmap Parte B, B1/B2) — MESMO padrao de
-	# "segundo multiplicador independente" da raca acima, so que por CIDADE
-	# (derivado de buildings, ver CityIdentity.gd) em vez de por civilizacao
-	# inteira. Multiplicacao comuta, a ordem entre este bonus e o racial nao
-	# muda o resultado.
-	CityIdentity.apply_yield_bonus(totals, self)
-	if owner_player:
-		for school in MagicContent.SCHOOLS:
-			if owner_player.researched_magic.has(school + "_1"):
-				totals.mana += 1.0
-	return totals
-
 ## Unidade hostil (monstro neutro OU unidade de outro jogador em guerra
 ## com o dono desta cidade) grudada num tile vizinho AGORA — nao guarda
 ## memoria nenhuma alem do contador _consecutive_siege_turns acima
@@ -593,35 +508,16 @@ func _is_enemy_adjacent(hex_grid: HexGrid) -> bool:
 	return false
 
 func process_turn(hex_grid: HexGrid) -> Dictionary:
-	var yields = collect_yields(hex_grid)
-	stored_production += yields.production
-
-	# Consumo por populacao (pedido do usuario): cada habitante come
-	# FOOD_CONSUMPTION_PER_POP por turno, descontado da producao de comida
-	# do turno ANTES de somar ao estoque. clamp(..., 0.0, cap) cobre os dois
-	# lados: deficit so trava o estoque em 0 (nunca fica negativo, nunca
-	# reduz populacao), e excedente alem do teto e descartado (nunca
-	# acumula pro proximo ciclo) — o "cheio" do teto e o proprio gatilho de
-	# crescimento logo abaixo.
-	# Identidade racial orc (roadmap Fase 3, ver RaceEconomy.
-	# growth_multiplier_for): teto MENOR enche mais rapido com o MESMO
-	# yield de comida — "cresce mais rapido" sem mexer no yield de comida
-	# em si (esse ja ganhou o bonus generico do humano acima, se for o caso).
-	var race: String = owner_player.civ.race if (owner_player and owner_player.civ) else ""
-	var cap = food_storage_cap() / RaceEconomy.growth_multiplier_for(race)
-	var consumption = population * FOOD_CONSUMPTION_PER_POP
-	stored_food = clamp(stored_food + yields.food - consumption, 0.0, cap)
-	if stored_food >= cap:
-		stored_food -= cap
-		population += 1
-		_claim_frontier_tile(hex_grid) # territorio (owned_tiles) cresce junto com a populacao
-		auto_assign_worked_tiles(hex_grid)
-		_refresh_label()
-		_build_visual_procedural()
+	# Produção LOCAL desta cidade vem só de V2EconomyRuntime.city_production_income() — base fixa +
+	# Oficinas + melhorias de Ferro pelo tier de pesquisa do dono (Fase 14). Fase 25: não existe mais
+	# comida, população, crescimento nem tiles trabalhados — nada além disto entra aqui.
+	stored_production += V2EconomyRuntime.city_production_income(self)
 
 	var spawned_kind := ""
 	var built_kind := ""
 	var built_coord := NO_PENDING_COORD
+	var city_level_up := 0
+	var fortification_level_up := 0
 	# production_item == "" (cidade OCIOSA, ver comentario da variavel e
 	# set_production()) nunca completa nada sozinha — pedido do usuario:
 	# "a partir do momento que voce funda a cidade, ele fica produzindo
@@ -630,48 +526,84 @@ func process_turn(hex_grid: HexGrid) -> Dictionary:
 	# vez de so confiar em production_cost() devolver 0.0 pra "") pra
 	# nao chamar UnitDatabase.create_unit("") a toa todo turno.
 	if production_item != "":
-		var cost = production_cost(hex_grid)
-		var blocked_spawn := BuildingDatabase.get_building(production_item) == null and WorldSetup.find_spawn_tile(hex_grid, coord) == WorldSetup.NO_SPAWN_COORD
-		if blocked_spawn:
-			stored_production = minf(stored_production, cost)
-		if stored_production >= cost and not blocked_spawn:
-			stored_production -= cost
-			var building: BuildingData = BuildingDatabase.get_building(production_item)
-			if building:
-				buildings[production_item] = true
-				built_kind = production_item
-				if building.self_placed:
-					# Muralhas: sem modelo 3D separado pra hex_grid.
-					# place_building desenhar (ver comentario de self_placed em
-					# BuildingData.gd) — o efeito e o anel de muralha da PROPRIA
-					# cidade (_add_walls), que so seria redesenhado no PROXIMO
-					# crescimento de populacao. Forca agora, senao o jogador nao
-					# veria efeito nenhum da producao que acabou de terminar ate
-					# a cidade crescer de novo.
-					_build_visual_procedural()
-					# Escudo comeca CHEIO assim que a muralha fica pronta — o
-					# jogador acabou de terminar a obra, nao faz sentido ela
-					# comecar vazia e so encher aos poucos (ver CITY_MAX_SHIELD/
-					# max_shield()).
-					shield = max_shield()
-				# pending_building_coord so fica vazio se algo chamou
-				# set_production() direto (ex: testes) sem passar pelo fluxo de
-				# posicionamento — o predio ainda conta pro bonus/limite, so
-				# nao ganha modelo 3D no mapa.
-				if pending_building_coord != NO_PENDING_COORD:
-					building_coords[production_item] = pending_building_coord
-					built_coord = pending_building_coord
-				pending_building_coord = NO_PENDING_COORD
-				# Fica OCIOSA apos completar — pedido do usuario (ver
-				# comentario acima). ANTES caia de volta pra "settler" e
-				# ficava reconstruindo Colonizador pra sempre sozinha;
-				# agora o jogador escolhe o proximo item explicitamente
-				# (RivalAI.decide_production ja rechama set_production
-				# TODO turno de qualquer forma, independente disso).
+		# Aetherlands V2, Fase 13 — City Project (v2_city_upgrade_2/3/4): NÃO é unidade nem
+		# prédio, usa a MESMA fila local (§13/§14 do pedido), então precisa ser desviado ANTES
+		# do "blocked_spawn"/ramo unidade-ou-prédio abaixo (que assumiria "prédio == não-unidade"
+		# e tentaria spawnar uma unidade inexistente). Ver V2CityLevelData.target_level_for_project.
+		var upgrade_target := V2CityLevelData.target_level_for_project(production_item)
+		if upgrade_target > 0:
+			var cost = production_cost()
+			if stored_production >= cost:
+				# Ouro só é cobrado AQUI, na conclusão — nunca reservado ao selecionar o projeto
+				# (§16 do pedido: evita depósito salvo separadamente/refund/double-charge em
+				# load). Sem Ouro suficiente: PP fica TRAVADO no custo total (nunca perde, nunca
+				# ultrapassa) até a cidade ser processada de novo com Ouro suficiente — sem
+				# boolean de reserva, sem estado novo.
+				var gold_cost := V2CityLevelData.upgrade_gold_cost(upgrade_target)
+				if owner_player != null and owner_player.gold >= gold_cost:
+					owner_player.gold -= gold_cost
+					stored_production -= cost
+					apply_city_level(upgrade_target)
+					annexation_points += V2CityLevelData.annexation_grant(city_level) + V2RaceBonusRuntime.annexation_point_bonus(owner_player)
+					city_level_up = city_level
+					production_item = ""
+				else:
+					stored_production = cost
+		elif V2FortificationData.is_fortification_project(production_item):
+			# Aetherlands V2, Fase 16 — projeto de Fortificação: mesma fila local, sem Ouro na conclusão
+			# (o custo é só PP; o custo contínuo é o upkeep).
+			var cost = production_cost()
+			if stored_production >= cost:
+				stored_production -= cost
+				apply_fortification_level(V2FortificationData.target_level_for_project(production_item))
+				fortification_level_up = fortification_level
 				production_item = ""
-			else:
-				spawned_kind = production_item
-				production_item = "" # idem acima — tropa concluida tambem deixa a cidade ociosa
+				_build_visual_procedural()
+		else:
+			var cost = production_cost()
+			var blocked_spawn := BuildingDatabase.get_building(production_item) == null and WorldSetup.find_spawn_tile(hex_grid, coord) == WorldSetup.NO_SPAWN_COORD
+			# Aetherlands V2, Fase 17 — unidade com Mana de produção (Serafim): com os PP completos mas Mana insuficiente, a
+			# produção ESPERA completa (PP travados no custo, sem perder nada, sem cobrar nada, o slot continua reservado pela
+			# própria ordem). A Mana é descontada UMA vez no nascimento (GameManager), nunca aqui.
+			if not blocked_spawn and production_waiting_for_mana() > 0 and stored_production >= cost:
+				blocked_spawn = true
+			if blocked_spawn:
+				stored_production = minf(stored_production, cost)
+			if stored_production >= cost and not blocked_spawn:
+				stored_production -= cost
+				var building: BuildingData = BuildingDatabase.get_building(production_item)
+				if building:
+					buildings[production_item] = true
+					built_kind = production_item
+					if building.copy_limit_mode == BuildingData.CopyLimitMode.CITY_LEVEL:
+						repeatable_building_counts[production_item] = int(repeatable_building_counts.get(production_item, 0)) + 1
+					# pending_building_coord so fica vazio se algo chamou
+					# set_production() direto (ex: testes) sem passar pelo fluxo de
+					# posicionamento — o predio ainda conta pro limite/rendimento, so
+					# nao ganha modelo 3D no mapa.
+					if pending_building_coord != NO_PENDING_COORD:
+						# Aetherlands V2, Fase 14 — prédio CITY_LEVEL: cada cópia tem SEU PRÓPRIO
+						# tile (§8/§98 do pedido), então a coordenada é ACRESCENTADA a um array em
+						# vez de sobrescrever `building_coords[id]` (que só guarda 1 coord — correto
+						# pra prédio UNIQUE, errado pra uma 2ª/3ª/4ª cópia). Ver
+						# repeatable_building_coords acima.
+						if building.copy_limit_mode == BuildingData.CopyLimitMode.CITY_LEVEL:
+							var coords: Array = repeatable_building_coords.get(production_item, [])
+							coords.append(pending_building_coord)
+							repeatable_building_coords[production_item] = coords
+						else:
+							building_coords[production_item] = pending_building_coord
+						built_coord = pending_building_coord
+					pending_building_coord = NO_PENDING_COORD
+					# Fica OCIOSA apos completar — pedido do usuario (ver
+					# comentario acima). ANTES caia de volta pra "settler" e
+					# ficava reconstruindo Colonizador pra sempre sozinha;
+					# agora o jogador escolhe o proximo item explicitamente
+					# (a IA escolhe a própria fila todo turno, V2StrategicAI).
+					production_item = ""
+				else:
+					spawned_kind = production_item
+					production_item = "" # idem acima — tropa concluida tambem deixa a cidade ociosa
 
 	# Cura passiva de vida/escudo, todo turno — mesmo espirito da cura de
 	# guarnicao de unidade (GameManager._heal_if_garrisoned/_apply_regen).
@@ -691,164 +623,57 @@ func process_turn(hex_grid: HexGrid) -> Dictionary:
 			hp = min(hp + max_hp() * CITY_HP_REGEN_FRACTION, max_hp())
 		if shield < max_shield():
 			shield = min(shield + max_shield() * CITY_SHIELD_REGEN_FRACTION, max_shield())
-	# Tambem cobre o caso de max_hp() ter mudado so por causa do
-	# crescimento de populacao acima (fracao mostrada muda mesmo sem hp
-	# mudar).
 	_update_life_bars()
 
-	return {"gold": yields.gold, "mana": yields.mana, "spawn_unit_kind": spawned_kind, "built_kind": built_kind, "built_coord": built_coord}
-
-## Preenche worked_tiles ate `population` com os melhores vizinhos livres
-## (ver HexTileData.can_be_worked — terra firme ou Costa, nunca Oceano
-## aberto/Mar Gelado/Mar de Lava, nem ja trabalhados por esta ou outra
-## cidade). Chamado ao fundar a cidade (HexGrid.found_city) e sempre que a
-## populacao cresce — mantem um padrao razoavel sem exigir que o jogador
-## (ou a IA) microgerencie toda cidade manualmente.
-func auto_assign_worked_tiles(hex_grid: HexGrid) -> void:
-	while worked_tiles.size() < population:
-		var best_coord = _best_unassigned_neighbor(hex_grid)
-		if best_coord == null:
-			break
-		worked_tiles.append(best_coord)
-
-## Roadmap 2.0 Parte 1 (A1) — bonus fixo pra qualquer tile com recurso
-## estrategico, somado em cima da formula de yield de sempre (ver
-## _tile_claim_score). Sem isso um Nodulo Arcano pontuava 0 (nao rende
-## comida/producao/ouro, so mana) e nunca era mais atraente que um tile
-## barrento qualquer — o bonus da a QUALQUER recurso o mesmo empurrao,
-## independente do yield bruto dele. Tamanho nao ajustado por medicao ainda
-## (ver harness de simulacao, test_simulation_balance.gd — Fase 0 do roadmap
-## ja tem esse padrao de "medir antes de recalibrar").
-const FRONTIER_RESOURCE_SCORE_BONUS := 4.0
-
-## Roadmap 2.0 (fecha Parte A) — penaliza (NUNCA bloqueia) tile perto de um
-## covil de monstro perigoso ATIVO, mesmo tratamento aditivo do bonus de
-## recurso acima: um tile de recurso colado num covil de Dragao ainda pode
-## compensar e ser reivindicado, se o bonus de recurso superar essa
-## penalidade — essa TENSAO e o ponto ("recurso perto de covil perigoso"
-## vira escolha real, nao proibicao), pedido explicito do usuario. Peso
-## nao calibrado por medicao ainda (ver harness, test_simulation_balance.gd).
-const FRONTIER_LAIR_DANGER_WEIGHT := 3.0
-
-## Roadmap "Fase F"/G -- investigacao causal do gargalo de Nodulo Arcano
-## (F7 pos-decisao-minima de IA: 0 seeds nunca passavam de 2/3 Nodulos,
-## seed 1010 tinha 14 no mapa e so 1 jamais foi reivindicado por ninguem)
-## encontrou um erro arquitetural GENERICO nesta formula, nao algo
-## especifico de Arcana: mana e um yield valido de effective_tile_yield()
-## (ver comentario la — vem so de recurso/tech, nunca do bioma sozinho),
-## mas nunca entrava na pontuacao de posse/trabalho de tile. Valor inicial
-## EXPERIMENTAL, nao calibrado — mesma disciplina de FRONTIER_RESOURCE_
-## SCORE_BONUS/FRONTIER_LAIR_DANGER_WEIGHT acima (ver harness, test_
-## simulation_balance.gd F7, proximo passo: rodar a MESMA matriz de novo).
-const MANA_TILE_WEIGHT := 1.5
-
-## Formula de pontuacao de rendimento compartilhada por _best_unassigned_
-## neighbor (trabalho) e _claim_frontier_tile (posse) abaixo — ver
-## comentario de _claim_frontier_tile pra por que as duas precisam ficar em
-## sincronia. Deliberadamente compartilhada: representa "qual tile e melhor
-## pra esta cidade" de forma generica, entao o bonus de recurso e a
-## penalidade de covil (HexGrid.get_lair_danger_at) valem igual pra
-## trabalho E posse — nao e um efeito colateral acidental. Raciocina sobre
-## YIELD, nunca sobre o NOME do recurso (decisao explicita do usuario: "a
-## formula deve raciocinar sobre yield, nao sobre o nome do recurso") --
-## `if data.resource == "mana_node"` de proposito NAO aparece aqui, tanto
-## pra nao acoplar esta heuristica generica a um recurso especifico quanto
-## pra ja cobrir qualquer terreno/efeito futuro que produza mana sem
-## precisar mexer nesta formula de novo.
-func _tile_claim_score(data: HexTileData, hex_grid: HexGrid, coord: Vector2i) -> float:
-	var y = effective_tile_yield(data)
-	var score = y.food * 1.5 + y.production * 1.3 + y.gold + y.mana * MANA_TILE_WEIGHT
-	if data.resource != "":
-		score += FRONTIER_RESOURCE_SCORE_BONUS
-	score -= hex_grid.get_lair_danger_at(coord) * FRONTIER_LAIR_DANGER_WEIGHT
-	return score
-
-func _best_unassigned_neighbor(hex_grid: HexGrid):
-	var best_coord = null
-	var best_score = -INF
-	var candidates := hex_grid.get_neighbors(coord)
-	for owned in owned_tiles:
-		if owned != coord and not owned in candidates:
-			candidates.append(owned)
-	for n in candidates:
-		if n in worked_tiles or hex_grid.is_tile_worked(n, self):
-			continue
-		var owner := hex_grid.city_owning_tile(n)
-		if owner != null and owner != self:
-			continue
-		var data: HexTileData = hex_grid.get_tile(n)
-		if data == null or not data.can_be_worked():
-			continue
-		var score = _tile_claim_score(data, hex_grid, n)
-		if score > best_score:
-			best_score = score
-			best_coord = n
-	return best_coord
+	return {"spawn_unit_kind": spawned_kind, "built_kind": built_kind, "built_coord": built_coord, "city_level_up": city_level_up, "fortification_level_up": fortification_level_up}
 
 func claim_tile(coord_to_claim: Vector2i) -> void:
 	if not coord_to_claim in owned_tiles:
 		owned_tiles.append(coord_to_claim)
 
-## Reivindica UM tile de fronteira por vez (chamado a cada ponto de
-## populacao ganho, ver process_turn) — "fronteira" e qualquer vizinho de
-## um tile JA possuido que ainda nao esta em owned_tiles, varrendo o
-## territorio INTEIRO (nao so os 6 vizinhos da celula central, diferente
-## de _best_unassigned_neighbor acima) pra o territorio poder crescer pra
-## qualquer direcao conforme se expande. Mesma formula de pontuacao de
-## rendimento de _best_unassigned_neighbor, mas SEM o filtro can_be_worked
-## — posse de territorio (a borda visual) nao exige que o tile seja
-## trabalhavel, ao contrario de worked_tiles (ex: uma montanha pode ser
-## "sua" sem nunca ser trabalhada). city_owning_tile() evita reivindicar
-## um tile que ja e de OUTRA cidade; get_city_at() evita reivindicar o
-## proprio tile de uma cidade (nem a dela mesma, que ja e o centro, nem de
-## outra).
-func _claim_frontier_tile(hex_grid: HexGrid) -> void:
-	var frontier := {}
-	for owned in owned_tiles:
-		for n in hex_grid.get_neighbors(owned):
-			if not n in owned_tiles:
-				frontier[n] = true
+## Aetherlands V2, Fase 13 — por que `target` NÃO pode ser anexado por esta cidade agora ("" =
+## pode). Nenhuma restrição de terreno — água pode ser território (§39 do pedido da Fase 13): só barra tile inexistente, já possuído (por esta cidade ou outra), fora do
+## raio de V2CityLevelData.max_territory_radius(city_level), ou não contíguo ao território atual.
+func annex_unavailable_reason(target: Vector2i, hex_grid: HexGrid) -> String:
+	if annexation_points <= 0:
+		return "Sem Pontos de Anexação."
+	if not hex_grid.tiles.has(target):
+		return "Tile inexistente."
+	if target in owned_tiles:
+		return "Tile já pertence a esta cidade."
+	if hex_grid.get_city_at(target) != null or hex_grid.city_owning_tile(target) != null:
+		return "Tile já pertence a outra cidade."
+	if HexMetrics.axial_distance(coord, target) > V2CityLevelData.max_territory_radius(city_level):
+		return "Fora do raio territorial da cidade."
+	for n in hex_grid.get_neighbors(target):
+		if n in owned_tiles:
+			return ""
+	return "Tile não é contíguo ao território atual da cidade."
 
-	var best_coord = null
-	var best_score = -INF
-	for n in frontier.keys():
-		if hex_grid.get_city_at(n) != null or hex_grid.city_owning_tile(n) != null:
-			continue
-		var data: HexTileData = hex_grid.get_tile(n)
-		if data == null:
-			continue
-		var score = _tile_claim_score(data, hex_grid, n)
-		if score > best_score:
-			best_score = score
-			best_coord = n
-	if best_coord != null:
-		claim_tile(best_coord)
+func can_annex_tile(target: Vector2i, hex_grid: HexGrid) -> bool:
+	return annex_unavailable_reason(target, hex_grid) == ""
 
-## Alterna se um tile vizinho esta sendo trabalhado por um cidadao desta
-## cidade. Retorna false se a troca nao for valida: nao e vizinho, nao pode
-## ser trabalhado (ver HexTileData.can_be_worked — Oceano aberto/Mar
-## Gelado/Mar de Lava nao podem, Costa pode), ja trabalhado por OUTRA
-## cidade, ou nao ha cidadao livre pra adicionar mais um (worked_tiles.size()
-## >= population). O tile da propria cidade nunca entra aqui — ele sempre
-## conta de graca em collect_yields().
-func toggle_worked_tile(target: Vector2i, hex_grid: HexGrid) -> bool:
-	if target in worked_tiles:
-		worked_tiles.erase(target)
-		return true
-	if target == coord or (not target in hex_grid.get_neighbors(coord) and not target in owned_tiles):
+## Anexa `target` de verdade: gasta EXATAMENTE 1 ponto e reivindica o tile (claim_tile) — atômico (§41 do pedido): se a anexação falhar, nada é
+## gasto. Devolve false sem alterar nada se `target` não é elegível agora.
+func annex_tile(target: Vector2i, hex_grid: HexGrid) -> bool:
+	if not can_annex_tile(target, hex_grid):
 		return false
-	var owner := hex_grid.city_owning_tile(target)
-	if owner != null and owner != self:
-		return false
-	if worked_tiles.size() >= population:
-		return false
-	var data: HexTileData = hex_grid.get_tile(target)
-	if data == null or not data.can_be_worked():
-		return false
-	if hex_grid.is_tile_worked(target, self):
-		return false
-	worked_tiles.append(target)
+	annexation_points -= 1
+	claim_tile(target)
 	return true
+
+## Todos os tiles elegíveis pra anexação AGORA (pro destaque visual da UI, §48/§100 do pedido —
+## só recalculado ao entrar no modo, ao anexar ou quando level/pontos mudam, nunca por frame).
+## Bounded pelo raio territorial (V2CityLevelData.max_territory_radius <= 4), nunca varre o mapa
+## inteiro (§98/§99).
+func eligible_annexation_tiles(hex_grid: HexGrid) -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	if annexation_points <= 0:
+		return result
+	for candidate in HexMetrics.coords_within(coord, V2CityLevelData.max_territory_radius(city_level)):
+		if can_annex_tile(candidate, hex_grid):
+			result.append(candidate)
+	return result
 
 func _build_visual() -> void:
 	_build_visual_procedural()
@@ -904,9 +729,8 @@ func _build_life_bars() -> void:
 
 	_update_life_bars()
 
-## Chamado sempre que hp/shield/population/buildings muda (combate, regen
-## por turno, crescimento de populacao — que muda max_hp() mesmo sem hp
-## mudar — e conclusao de Muralhas) — so redesenha a TEXTURA, nunca mexe
+## Chamado sempre que hp/shield muda (combate, regen por turno, subida de
+## City Level — que muda max_hp() — e conclusao de Fortificação) — so redesenha a TEXTURA, nunca mexe
 ## em tamanho/posicao (mesmo motivo da barra de progresso de construcao,
 ## ver HexGrid._update_construction_marker_progress).
 func _update_life_bars() -> void:
@@ -915,7 +739,7 @@ func _update_life_bars() -> void:
 	var hp_frac = clamp(hp / max_hp(), 0.0, 1.0) if max_hp() > 0.0 else 1.0
 	_life_bar.texture = _build_life_bar_texture(hp_frac, _life_bar_fill_color(hp_frac), LIFE_BAR_EMPTY_COLOR)
 
-	var has_shield = buildings.has("walls")
+	var has_shield := max_shield() > 0.0 # Fase 16: escudo vem da Fortificação V2
 	_shield_bar.visible = has_shield
 	if has_shield:
 		var shield_frac = clamp(shield / max_shield(), 0.0, 1.0) if max_shield() > 0.0 else 0.0
@@ -946,12 +770,11 @@ func _build_life_bar_texture(frac: float, fill_color: Color, empty_color: Color)
 	return ImageTexture.create_from_image(img)
 
 ## Reconstroi o CLUSTER de construcoes (nao o label, ver _buildings_root)
-## a partir da populacao atual — chamado na fundacao (_build_visual) e de
-## novo a cada ponto de populacao ganho (process_turn). RNG seedado pelo
+## a partir do City Level atual — chamado na fundacao (_build_visual), ao subir
+## de nível (apply_city_level) e ao concluir Fortificação. RNG seedado pelo
 ## proprio `coord` (nao randi() puro): a disposicao das casinhas fica
-## ESTAVEL entre reconstrucoes (crescer de pop 3 pra 4 so ACRESCENTA uma
-## casinha nova, as antigas nao pulam de lugar) em vez de embaralhar tudo
-## a cada turno que a cidade cresce.
+## ESTAVEL entre reconstrucoes (subir de nível so ACRESCENTA casinhas, as
+## antigas nao pulam de lugar).
 func _build_visual_procedural() -> void:
 	if _buildings_root:
 		_buildings_root.queue_free()
@@ -962,14 +785,12 @@ func _build_visual_procedural() -> void:
 	rng.seed = hash(coord)
 
 	var civ_color = owner_player.civ.color.lightened(0.1) if owner_player else Color(0.6, 0.6, 0.6)
-	var is_town_or_bigger = population > POP_HAMLET_MAX
-	var is_city = population > POP_TOWN_MAX
+	var is_town_or_bigger = city_level >= 2
+	var is_city = city_level >= 3
 
-	# 2 casinhas na aldeia inicial, +1 por ponto de populacao, teto de 8 (a
-	# cidade murada nao ganha MAIS casinhas alem disso, so a torre central
-	# engorda — ver _add_tower) pra o numero de meshes nunca crescer sem
-	# limite numa cidade tardia de populacao alta.
-	var hut_count = clampi(population + 1, 2, 8)
+	# Teto fixo de casinhas por City Level (HUTS_BY_CITY_LEVEL, máx. 8) — o número de meshes nunca
+	# cresce sem limite; na Cidade IV só a torre central engorda (ver _add_tower).
+	var hut_count: int = HUTS_BY_CITY_LEVEL.get(V2CityLevelData.clamp_level(city_level), 3)
 	var hut_scale = 0.85 if not is_town_or_bigger else (1.0 if not is_city else 1.1)
 	for i in range(hut_count):
 		var angle = (TAU / hut_count) * i + rng.randf_range(-0.2, 0.2)
@@ -978,18 +799,12 @@ func _build_visual_procedural() -> void:
 		_add_hut(pos, hut_scale * rng.randf_range(0.85, 1.15), rng)
 
 	if is_city:
-		_add_tower(civ_color, population)
+		_add_tower(civ_color, city_level)
 	else:
 		_add_small_keep(civ_color)
-	# Anel de muralha: ANTES acionado so por populacao (junto com is_city
-	# acima) — pedido do usuario: "a muralha [predio] nao faz tanto
-	# sentido... adiciona como pesquisa... essa muralha simplesmente
-	# adiciona esteticamente uma muralha ao redor do tile da cidade...
-	# dando um shield a ela". Agora reflete se a cidade de fato CONSTRUIU
-	# o predio "walls" (gated pela tech "muralhas", ver BuildingDatabase.
-	# gd) — independente de populacao, uma aldeia pequena murada e tao
-	# valida quanto uma cidade grande sem muralha nenhuma.
-	if buildings.has("walls"):
+	# Anel de muralha: reflete a Fortificação V2 (fortification_level >= 1, Fase 16) — independente
+	# do City Level, uma aldeia murada é tão válida quanto uma cidade grande sem muralha.
+	if has_fortification():
 		_add_walls()
 
 func _add_hut(local_pos: Vector3, scale: float, rng: RandomNumberGenerator) -> void:
@@ -1020,7 +835,7 @@ func _add_hut(local_pos: Vector3, scale: float, rng: RandomNumberGenerator) -> v
 	roof.rotation.y = body.rotation.y
 	_buildings_root.add_child(roof)
 
-## Salao/casa grande central (aldeia e vila, populacao ate POP_TOWN_MAX) —
+## Salao/casa grande central (Cidade I e II) —
 ## essencialmente o antigo modelo unico de cidade (keep+prisma), um pouco
 ## menor pra nao dominar visualmente o anel de casinhas ao redor.
 func _add_small_keep(civ_color: Color) -> void:
@@ -1044,13 +859,13 @@ func _add_small_keep(civ_color: Color) -> void:
 	roof.position.y = 0.4 + 0.13
 	_buildings_root.add_child(roof)
 
-## Torre central da cidade murada (populacao > POP_TOWN_MAX) — maior que o
+## Torre central (Cidade III+) — maior que o
 ## salao de vila, e cresce um pouco mais alem disso (teto proprio, ver
 ## extra_tier) pra dar alguma diferenca visual entre uma cidade recem-
 ## murada (pop 5) e um imperio tardio (pop 15+) sem acrescentar NENHUM
 ## mesh novo (so escala o que ja existe).
-func _add_tower(civ_color: Color, population_value: int) -> void:
-	var extra_tier = clampi(population_value - POP_TOWN_MAX - 1, 0, 4)
+func _add_tower(civ_color: Color, level: int) -> void:
+	var extra_tier = clampi(level - 3, 0, 1) * 2
 	var height_bonus = extra_tier * 0.08
 
 	var keep := MeshInstance3D.new()
@@ -1152,4 +967,4 @@ func _add_walls() -> void:
 
 func _refresh_label() -> void:
 	if _name_label:
-		_name_label.text = "%s (%d)" % [city_name, population]
+		_name_label.text = "%s (%s)" % [city_name, V2CityLevelData.roman(city_level)]

@@ -19,10 +19,14 @@ extends Control
 @onready var gold_label: Label = $TopBar/TopBarRow/StatusGroup/GoldLabel
 @onready var mana_label: Label = $TopBar/TopBarRow/StatusGroup/ManaLabel
 @onready var stats_label: Label = $TopBar/TopBarRow/StatusGroup/StatsLabel
+## Aetherlands V2, Fase 14 — Conhecimento/turno e Capacidade de Suprimentos (§71 do pedido).
+## Criados em código (_build_v2_economy_status_labels), não no HUD.tscn — mesmo padrão de
+## V2Actions/V2CityActions (Fases 4/13): container dinâmico em vez de editar a cena.
+var v2_knowledge_label: Label
+var v2_supply_label: Label
 ## ActionBar (canto inferior direito, ver HUD.tscn): cluster de botoes de
-## menu/acao — pedido do usuario: "no canto inferior direito, você vao ter
-## o botao de passar de turno, de abrir a arvore de pesquisa, do grimorio
-## e qualquer outra coisa do tipo". Finalizar Turno fica por ULTIMO na
+## menu/acao — "Pesquisa" (quadro das três árvores, V2ResearchBoard) em cima
+## do botão de passar de turno. Finalizar Turno fica por ULTIMO na
 ## coluna (mais abaixo, maior — custom_minimum_size.y=44 no .tscn — pra
 ## ler como a acao PRINCIPAL, mesmo espirito do botao redondo grande do
 ## Civilization VI embaixo dos icones menores) — continua com borda
@@ -41,10 +45,6 @@ extends Control
 ## ver _refresh_production_progress().
 @onready var production_progress_label: Label = $TileInfoPanel/TileInfoBox/ProductionProgressLabel
 @onready var production_progress_bar: ProgressBar = $TileInfoPanel/TileInfoBox/ProductionProgressBar
-## Rush-buy do Mercado (ver City.can_rush_buy()/rush_buy_cost()/rush_buy())
-## — so aparece com o Mercado ja construido NESTA cidade e algo de fato em
-## producao, ver _refresh_production_progress().
-@onready var rush_buy_button: Button = $TileInfoPanel/TileInfoBox/RushBuyButton
 ## Duas abas (pedido do usuario — painel lateral parecia "uma muralha de
 ## 15+ botoes cinzas"): "Unidades" e "Construcoes" (predios de producao +
 ## treino/mana juntos, mas com secao propria dentro da aba). Titulos
@@ -60,53 +60,14 @@ extends Control
 ## a HUD "parecido com os de civilization 6", que usa uma GRADE de opcoes
 ## de producao em vez de uma lista vertical unica.
 @onready var production_row: GridContainer = $TileInfoPanel/TileInfoBox/ProductionTabs/UnitsTab/ProductionRow
-@onready var build_granary_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/BuildingsRow/BuildGranaryButton
-@onready var build_workshop_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/BuildingsRow/BuildWorkshopButton
-@onready var build_market_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/BuildingsRow/BuildMarketButton
-@onready var build_walls_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/BuildingsRow/BuildWallsButton
-@onready var build_barracks_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow/BuildBarracksButton
-@onready var build_archery_range_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow/BuildArcheryRangeButton
-@onready var build_stable_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow/BuildStableButton
-@onready var build_siege_workshop_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow/BuildSiegeWorkshopButton
-@onready var build_arcane_tower_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow/BuildArcaneTowerButton
-@onready var build_griffin_roost_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow/BuildGriffinRoostButton
-@onready var build_druid_grove_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow/BuildDruidGroveButton
-@onready var build_runic_anvil_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow/BuildRunicAnvilButton
-@onready var build_shadow_crypt_button: Button = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/TrainingRow/BuildShadowCryptButton
-@onready var worked_tiles_label: Label = $TileInfoPanel/TileInfoBox/WorkedTilesLabel
-## Envelope com altura MAXIMA fixa (118px, ver HUD.tscn) — pedido do
-## usuario: "o rodape NUNCA encoste ou passe por cima do Finalizar Turno".
-## worked_tiles_row (a lista de verdade, dentro dele) so cresce ATE esse
-## teto e depois rola por conta propria, em vez de empurrar o resto do
-## painel (e o botao de Finalizar Turno logo abaixo) pra baixo.
-@onready var worked_tiles_scroll: ScrollContainer = $TileInfoPanel/TileInfoBox/WorkedTilesScroll
-@onready var worked_tiles_row: HFlowContainer = $TileInfoPanel/TileInfoBox/WorkedTilesScroll/WorkedTilesRow
-## Roadmap "dois botoes": Magia e Tecnologia deixaram de ser abas dentro
-## de UM painel compartilhado (pedido explicito: "divida a arvore de
-## tecnologia da de magia, serao 2 botoes... nao serao mais abas juntas")
-## — agora sao DOIS paineis full-screen independentes, cada um com seu
-## proprio botao no ActionBar, reusando o MESMO mecanismo generico de
-## overlay (_show_overlay/_close_overlay_panels) que Diplomacia/Grimorio/
-## Vitoria ja usam. Magia continua no TechTree.gd de sempre (grafo/
-## componentes conexos, CONTEUDO intocado). Tecnologia usa TechTierBoard.
-## gd (layout por NIVEL). O CHROME (fundo/cabecalho) dos dois paineis usa
-## a mesma paleta escura local (ver _style_tech_panel_chrome) — so o
-## conteudo interno de Magia continua no visual antigo, regra de sempre.
-@onready var magic_button: Button = $ActionBar/ActionBarBox/MagicButton
-@onready var magic_panel: PanelContainer = $MagicPanel
-@onready var tech_tree_magic: TechTree = $MagicPanel/MagicBox/MagicScroll/MagicTree
-@onready var magic_close_button: Button = $MagicPanel/MagicBox/MagicHeader/MagicCloseButton
-
-@onready var tech_button: Button = $ActionBar/ActionBarBox/TechButton
-@onready var tech_panel: PanelContainer = $TechPanel
-@onready var tech_tree_doutrina: TechTierBoard = $TechPanel/TechBox/DoutrinaScroll/DoutrinaTree
-@onready var tech_close_button: Button = $TechPanel/TechBox/TechHeader/TechCloseButton
-## Roadmap "reorganizar barra lateral": Diplomacia e Vitoria saíram da
-## ActionBar (canto inferior direito) e viraram icones compactos no canto
-## SUPERIOR direito (dentro do TopBar, ver IconGroup em HUD.tscn) — pedido
-## explicito: "ficam no canto superior direito assim como no civilization
-## como icones". So o BOTAO mudou de lugar/tamanho — o painel/logica de
-## abrir continuam identicos (_show_overlay, mesmo mecanismo de sempre).
+## Grade da aba Construções — os botões de prédio são criados em código, um por prédio do
+## BuildingDatabase (_build_building_buttons).
+@onready var buildings_row: GridContainer = $TileInfoPanel/TileInfoBox/ProductionTabs/BuildingsTab/BuildingsTabBox/BuildingsRow
+## Botão normal de Pesquisa (Fase 25): abre o quadro das três árvores (V2ResearchBoard) — antes só
+## alcançável pelo painel de Debug. Os antigos botões Magia/Tecnologia/Grimório (árvores e magia V1)
+## foram removidos da cena.
+@onready var research_button: Button = $ActionBar/ActionBarBox/ResearchButton
+## Diplomacia e Vitória: ícones compactos no canto SUPERIOR direito (IconGroup do TopBar).
 @onready var diplomacy_button: Button = $TopBar/TopBarRow/IconGroup/DiplomacyButton
 @onready var diplomacy_panel: PanelContainer = $DiplomacyPanel
 @onready var diplomacy_rows: VBoxContainer = $DiplomacyPanel/DiplomacyBox/DiplomacyRows
@@ -116,8 +77,6 @@ extends Control
 @onready var victory_panel: PanelContainer = $VictoryPanel
 @onready var victory_rows: VBoxContainer = $VictoryPanel/VictoryBox/VictoryRows
 @onready var victory_close_button: Button = $VictoryPanel/VictoryBox/VictoryHeader/VictoryCloseButton
-@onready var grimoire_button: Button = $ActionBar/ActionBarBox/GrimoireButton
-@onready var grimoire_panel: PanelContainer = $GrimoirePanel
 ## Roadmap "Fase Macro" 5B.2 -- prompt minimo de Preparation (docs/DRAGON_
 ## EVENT_DESIGN.md): so aparece enquanto existir um WorldEvent em
 ## Preparation que o humano ainda nao respondeu (ver _refresh_world_event_
@@ -177,8 +136,6 @@ extends Control
 @onready var dragon_boss_bar_health_bar: ProgressBar = $DragonBossBar/DragonBossBarBox/DragonBossBarHealthBar
 @onready var dragon_boss_bar_health_label: Label = $DragonBossBar/DragonBossBarBox/DragonBossBarHealthLabel
 @onready var dragon_boss_bar_target_label: Label = $DragonBossBar/DragonBossBarBox/DragonBossBarTargetLabel
-@onready var grimoire_rows: VBoxContainer = $GrimoirePanel/GrimoireBox/GrimoireScroll/GrimoireRows
-@onready var grimoire_close_button: Button = $GrimoirePanel/GrimoireBox/GrimoireHeader/GrimoireCloseButton
 @onready var unit_panel: PanelContainer = $UnitPanel
 @onready var unit_info_label: Label = $UnitPanel/UnitBox/UnitInfoLabel
 ## Mover/Fortificar/Explorar (pedido do usuario: "as opções... que se me
@@ -188,7 +145,6 @@ extends Control
 @onready var move_button: Button = $UnitPanel/UnitBox/UnitActionsRow/MoveButton
 @onready var fortify_button: Button = $UnitPanel/UnitBox/UnitActionsRow/FortifyButton
 @onready var explore_button: Button = $UnitPanel/UnitBox/UnitActionsRow/ExploreButton
-@onready var embark_button: Button = $UnitPanel/UnitBox/UnitActionsRow/EmbarkButton
 @onready var found_city_button: Button = $UnitPanel/UnitBox/FoundCityButton
 @onready var game_over_panel: PanelContainer = $GameOverPanel
 @onready var game_over_label: Label = $GameOverPanel/GameOverBox/GameOverLabel
@@ -207,6 +163,14 @@ extends Control
 ## botoes INTERNOS dele continuam aqui, intocados.
 @onready var debug_panel: PanelContainer = $DebugPanel
 @onready var debug_close_button: Button = $DebugPanel/DebugBox/DebugHeader/DebugCloseButton
+## Quadro de Pesquisa: as três árvores (Doutrinas, Magia, Infraestrutura) ligadas ao estado REAL de
+## pesquisa da civilização humana (V2ResearchState). Aberto pelo botão normal "Pesquisa"
+## (research_button); as ferramentas que MANIPULAM o estado continuam só em debug build (dentro do
+## próprio V2ResearchBoard). Construído em código (_build_v2_research_panel).
+var v2_research_panel: PanelContainer
+var v2_research_board: V2ResearchBoard
+## Estado V2 de reserva, só usado se abrirem o painel sem jogador humano (testes/menus).
+var _v2_fallback_state: V2ResearchState = V2ResearchState.new()
 @onready var debug_mode_button: Button = $DebugPanel/DebugBox/DebugModeButton
 @onready var debug_reveal_map_button: Button = $DebugPanel/DebugBox/DebugRevealMapButton
 @onready var debug_gold_button: Button = $DebugPanel/DebugBox/DebugGoldButton
@@ -249,41 +213,21 @@ var _tile_info_panel_was_visible := false
 func _ready() -> void:
 	theme = UITheme.build()
 	_style_end_turn_button()
+	_build_v2_economy_status_labels()
 	production_tabs.set_tab_title(0, "Unidades")
 	production_tabs.set_tab_title(1, "Construções")
-	_build_additional_building_buttons()
-	_label_building_buttons()
+	_build_building_buttons()
 	_build_production_buttons()
 	end_turn_button.pressed.connect(_on_end_turn_pressed)
 	found_city_button.pressed.connect(_on_found_city_pressed)
 	move_button.pressed.connect(_on_move_pressed)
 	fortify_button.pressed.connect(_on_fortify_pressed)
 	explore_button.pressed.connect(_on_explore_pressed)
-	embark_button.pressed.connect(_on_embark_pressed)
-	build_granary_button.pressed.connect(_on_produce_pressed.bind("granary"))
-	build_workshop_button.pressed.connect(_on_produce_pressed.bind("workshop"))
-	build_market_button.pressed.connect(_on_produce_pressed.bind("market"))
-	build_walls_button.pressed.connect(_on_produce_pressed.bind("walls"))
-	build_barracks_button.pressed.connect(_on_produce_pressed.bind("barracks"))
-	build_archery_range_button.pressed.connect(_on_produce_pressed.bind("archery_range"))
-	build_stable_button.pressed.connect(_on_produce_pressed.bind("stable"))
-	build_siege_workshop_button.pressed.connect(_on_produce_pressed.bind("siege_workshop"))
-	build_arcane_tower_button.pressed.connect(_on_produce_pressed.bind("arcane_tower"))
-	build_griffin_roost_button.pressed.connect(_on_produce_pressed.bind("griffin_roost"))
-	build_druid_grove_button.pressed.connect(_on_produce_pressed.bind("druid_grove"))
-	build_runic_anvil_button.pressed.connect(_on_produce_pressed.bind("runic_anvil"))
-	build_shadow_crypt_button.pressed.connect(_on_produce_pressed.bind("shadow_crypt"))
-	magic_button.pressed.connect(_on_magic_pressed)
-	magic_close_button.pressed.connect(_on_magic_close_pressed)
-	tech_button.pressed.connect(_on_tech_pressed)
-	rush_buy_button.pressed.connect(_on_rush_buy_pressed)
-	tech_close_button.pressed.connect(_on_tech_close_pressed)
+	research_button.pressed.connect(_on_research_pressed)
 	diplomacy_button.pressed.connect(_on_diplomacy_pressed)
 	diplomacy_close_button.pressed.connect(_on_diplomacy_close_pressed)
 	victory_button.pressed.connect(_on_victory_pressed)
 	victory_close_button.pressed.connect(_on_victory_close_pressed)
-	grimoire_button.pressed.connect(_on_grimoire_pressed)
-	grimoire_close_button.pressed.connect(_on_grimoire_close_pressed)
 	world_event_participate_button.pressed.connect(_on_world_event_participate_pressed)
 	world_event_decline_button.pressed.connect(_on_world_event_decline_pressed)
 	dragon_announcement_continue_button.pressed.connect(_on_dragon_announcement_continue_pressed)
@@ -297,10 +241,7 @@ func _ready() -> void:
 	debug_win_button.pressed.connect(_on_debug_win_pressed)
 	debug_lose_button.pressed.connect(_on_debug_lose_pressed)
 	debug_force_dragon_button.pressed.connect(_on_debug_force_dragon_pressed)
-	tech_tree_magic.category = "magic"
-	tech_tree_magic.tech_selected.connect(_on_tech_selected)
-	tech_tree_doutrina.tech_selected.connect(_on_tech_selected)
-	_style_tech_panel_chrome()
+	_build_v2_research_panel()
 	TurnManager.turn_changed.connect(_on_turn_changed)
 	EventBus.tile_selected.connect(_on_tile_selected)
 	EventBus.fog_updated.connect(_refresh_inspection)
@@ -316,6 +257,11 @@ func _ready() -> void:
 	# _end_game, nao a ordem de conexao.
 	EventBus.victory_achieved.connect(_on_victory_achieved)
 	EventBus.notify.connect(_on_notify)
+	EventBus.v2_unlock_applied.connect(_on_v2_unlock_applied)
+	EventBus.v2_transcendence_started.connect(_on_v2_transcendence_changed)
+	EventBus.v2_transcendence_progressed.connect(_on_v2_transcendence_changed)
+	EventBus.v2_transcendence_interrupted.connect(_on_v2_transcendence_interrupted)
+	EventBus.fog_updated.connect(_refresh_selected_unit_panel)
 	# Roadmap "Fase Macro" 5B.2 -- os DOIS sinais podem mudar se o painel
 	# deveria estar visivel (announced nao muda fase por si, so cria o
 	# evento; phase_changed cobre toda transicao real, inclusive pra fora
@@ -328,13 +274,9 @@ func _ready() -> void:
 
 	unit_panel.visible = false
 	production_tabs.visible = false
-	worked_tiles_label.visible = false
-	worked_tiles_scroll.visible = false
 	production_progress_label.visible = false
 	production_progress_bar.visible = false
-	tech_panel.visible = false
 	diplomacy_panel.visible = false
-	grimoire_panel.visible = false
 	game_over_panel.visible = false
 	debug_panel.visible = false
 	dragon_announcement_panel.visible = false
@@ -404,41 +346,23 @@ func _update_tile_info_panel_size(expanded: bool) -> void:
 		_tile_info_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if expanded else Control.SIZE_EXPAND_FILL
 		_tile_info_scroll.custom_minimum_size.y = TILE_INFO_SCROLL_EXPANDED_MIN_HEIGHT if expanded else 0.0
 
-## Mostra o custo de producao de cada predio no proprio botao (pedido do
-## usuario: "cards compactos com custo de producao/tempo") — os nomes
-## crus (ex: "Celeiro") ja vem do .tscn, aqui so acrescenta o custo lido
-## de BuildingDatabase, uma unica fonte de verdade (sem duplicar numero
-## nenhum a mao no texto do node).
-func _label_building_buttons() -> void:
-	for id in _all_building_ids():
-		_build_button_for(id).text = _building_button_label(id, "human")
+## Um botão por prédio do BuildingDatabase (todos V2), criado UMA vez aqui dentro da grade da aba
+## Construções — visibilidade/habilitação por cidade em _on_tile_selected/_update_building_tooltips.
+var _building_buttons: Dictionary = {} # id -> Button
 
-var _additional_building_buttons: Dictionary = {}
-
-func _all_building_ids() -> Array:
-	return BuildingDatabase.all_buildings().map(func(b): return b.id)
-
-func _build_additional_building_buttons() -> void:
-	var row := build_granary_button.get_parent()
+func _build_building_buttons() -> void:
 	for building in BuildingDatabase.all_buildings():
-		if building.id in BUILDING_IDS:
-			continue
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(150, 0)
 		button.size_flags_horizontal = SIZE_EXPAND_FILL
+		button.text = _building_button_label(building.id)
 		button.pressed.connect(_on_produce_pressed.bind(building.id))
-		row.add_child(button)
-		_additional_building_buttons[building.id] = button
+		buildings_row.add_child(button)
+		_building_buttons[building.id] = button
 
-## Texto do botao de predio, tematizado por raca (RaceTheme.building_name
-## cai no nome cru de BuildingDatabase pra qualquer raca/predio fora do
-## ramo militar escopado, ver RaceTheme.gd) — usado tanto na rotulagem
-## inicial em _ready() (raca ainda desconhecida, "human" por padrao) quanto
-## na retematizacao em _on_tile_selected() assim que a raca do jogador
-## humano ja e conhecida.
-func _building_button_label(id: String, race: String) -> String:
+func _building_button_label(id: String, _race: String = "") -> String:
 	var building: BuildingData = BuildingDatabase.get_building(id)
-	return "%s  —  %d PP" % [RaceTheme.building_name(id, race), int(building.production_cost)]
+	return "%s  —  %d PP" % [building.display_name, int(building.production_cost)]
 
 ## Atalho de teclado pedido pelo usuario ("Espaço ou Enter") pro botao de
 ## acao principal — "ui_accept" e a acao embutida do proprio Godot pra
@@ -501,9 +425,6 @@ func _on_fortify_pressed() -> void:
 func _on_explore_pressed() -> void:
 	SelectionManager.toggle_explore_selected()
 
-func _on_embark_pressed() -> void:
-	SelectionManager.toggle_embark_selected()
-
 func _on_produce_pressed(kind: String) -> void:
 	if _viewed_city == null or not GameManager.human_player.has_unlocked(kind):
 		return
@@ -511,17 +432,10 @@ func _on_produce_pressed(kind: String) -> void:
 	if building:
 		if not _viewed_city.can_build(kind):
 			return
-		if not building.self_placed and building.upgrades_building == "":
-			# Predio precisa de um tile escolhido no mapa (como fundar
-			# cidade) — a producao so comeca de fato quando o jogador clica
-			# um tile valido (SelectionManager._handle_building_placement_
-			# click).
-			SelectionManager.start_building_placement(_viewed_city, kind)
-			return
-		# self_placed (Muralhas, ver BuildingData.gd): sem tile pra
-		# escolher — nao faz sentido "onde" cercar uma cidade que so tem
-		# um tile, entao cai direto no mesmo fluxo de treinar uma unidade
-		# logo abaixo, sem passar pela UI de posicionamento.
+		# Todo prédio precisa de um tile escolhido no mapa (como fundar cidade) — a produção só começa
+		# de fato quando o jogador clica um tile válido (SelectionManager._handle_building_placement_click).
+		SelectionManager.start_building_placement(_viewed_city, kind)
+		return
 	elif not _viewed_city.can_train(kind):
 		return
 	_viewed_city.set_production(kind)
@@ -536,34 +450,33 @@ func _refresh_viewed_city() -> void:
 	if _viewed_city:
 		_on_tile_selected(_viewed_city.coord, GameManager.hex_grid.get_tile(_viewed_city.coord))
 
-## Rush-buy do Mercado (ver City.rush_buy()) — gasta ouro do jogador pra
-## completar o item em producao na hora (conclusao de fato so no PROXIMO
-## turno, ver comentario de City.rush_buy()). Falha silenciosamente (sem
-## efeito nenhum) se faltar ouro ou o rush-buy nao estiver disponivel —
-## rush_buy_button so aparece habilitado quando ja da pra pagar (ver
-## _refresh_production_progress()), entao chegar aqui sem poder pagar so
-## aconteceria por uma condicao de corrida (ex: outro efeito descontando
-## ouro no mesmo frame), nao pelo fluxo normal.
-func _on_rush_buy_pressed() -> void:
-	if _viewed_city == null:
-		return
-	if _viewed_city.rush_buy(GameManager.hex_grid):
-		_refresh_viewed_city()
-		_refresh_stats() # ouro gasto precisa refletir na TopBar na hora, sem esperar o proximo turno
+## Aetherlands V2 (Fase 3): um unlock V2 acabou de valer pro jogador humano (o toast
+## já saiu por EventBus.notify) — os botões de prédio/tropa da cidade aberta
+## dependem dele. A pesquisa V2 costuma ser concluída COM o painel V2 aberto (que
+## esconde o painel de cidade), então nesse caso a atualização espera o painel
+## fechar (ver _close_overlay_panels) em vez de reabrir o painel de cidade por
+## cima do overlay.
+var _v2_city_refresh_pending := false
 
-## Tecnologia/Diplomacia/Grimorio/Debug/FimDeJogo sao todos paineis
+func _on_v2_unlock_applied(player: PlayerData, _unlock_type: String, _unlock_id: String) -> void:
+	if player != GameManager.human_player or _viewed_city == null:
+		return
+	if v2_research_panel.visible:
+		_v2_city_refresh_pending = true
+	else:
+		_refresh_viewed_city()
+
+## Pesquisa/Diplomacia/Vitória/Debug/FimDeJogo sao todos paineis
 ## centralizados na mesma posicao — sem isso, abrir um por cima do outro
 ## (ou o jogo acabar com um deles aberto) deixava tudo empilhado e
 ## ilegivel. So um fica visivel por vez, e o backdrop escurecido some
 ## junto (ver _show_overlay).
 func _close_overlay_panels() -> void:
-	tech_panel.visible = false
-	magic_panel.visible = false
 	diplomacy_panel.visible = false
 	victory_panel.visible = false
-	grimoire_panel.visible = false
 	game_over_panel.visible = false
 	debug_panel.visible = false
+	v2_research_panel.visible = false
 	dragon_announcement_panel.visible = false
 	dragon_resolution_panel.visible = false
 	overlay_backdrop.visible = false
@@ -577,6 +490,9 @@ func _close_overlay_panels() -> void:
 	tile_info_panel.visible = _tile_info_panel_was_visible
 	end_turn_button.visible = true
 	unit_panel.visible = _unit_panel_was_visible
+	if _v2_city_refresh_pending:
+		_v2_city_refresh_pending = false
+		_refresh_viewed_city()
 
 ## Fecha qualquer outro overlay (regra de "so um por vez" acima), esconde
 ## o resto da HUD de jogo (minimapa, painel de cidade/unidade, botao de
@@ -602,125 +518,10 @@ func _show_overlay(panel: Control) -> void:
 ## usuario). Devolve true se fechou algo, pra quem chamou saber que ja
 ## "consumiu" o ESC e nao precisa mais abrir a pausa.
 func close_topmost_overlay() -> bool:
-	if tech_panel.visible or magic_panel.visible or diplomacy_panel.visible or victory_panel.visible or grimoire_panel.visible or debug_panel.visible or dragon_announcement_panel.visible or dragon_resolution_panel.visible:
+	if diplomacy_panel.visible or victory_panel.visible or debug_panel.visible or v2_research_panel.visible or dragon_announcement_panel.visible or dragon_resolution_panel.visible:
 		_close_overlay_panels()
 		return true
 	return false
-
-func _on_tech_pressed() -> void:
-	if tech_panel.visible:
-		_close_overlay_panels()
-		return
-	_show_overlay(tech_panel)
-	_refresh_tech_panel()
-
-func _on_tech_close_pressed() -> void:
-	_close_overlay_panels()
-
-func _on_magic_pressed() -> void:
-	if magic_panel.visible:
-		_close_overlay_panels()
-		return
-	_show_overlay(magic_panel)
-	_refresh_tech_panel()
-
-func _on_magic_close_pressed() -> void:
-	_close_overlay_panels()
-
-
-## Roadmap "dois botoes": Magia e Tecnologia viraram paineis full-screen
-## INDEPENDENTES (ver onready vars acima) — o CHROME (fundo/cabecalho) dos
-## dois usa a MESMA paleta local que TechTierBoard.gd ja usa (nao toca
-## UITheme.gd, entao nenhum outro painel do jogo muda). O CONTEUDO de
-## Magia continua 100% no visual antigo (TechTree.gd, marrom/dourado) —
-## regra de sempre, so o chrome ao redor fica escuro/consistente com
-## Tecnologia. Achado da analise visual: "muito preto vazio sem funcao" —
-## um gradiente radial bem sutil (Gradient/GradientTexture2D — recursos
-## NATIVOS do Godot, gerados em codigo, nenhum asset/imagem externa) da
-## uma sensacao de profundidade sem shader/particula. Inserido como
-## PRIMEIRO filho de `panel` (PanelContainer encaixa todo filho no mesmo
-## retangulo de conteudo — o fundo desenha antes, o resto continua por
-## cima).
-func _add_panel_background_gradient(panel: PanelContainer) -> void:
-	var gradient := Gradient.new()
-	gradient.set_color(0, TechTierBoard.BG_LEVEL.lightened(0.035))
-	gradient.set_color(1, TechTierBoard.BG_LEVEL.darkened(0.2))
-	var texture := GradientTexture2D.new()
-	texture.gradient = gradient
-	texture.fill = GradientTexture2D.FILL_RADIAL
-	texture.fill_from = Vector2(0.5, 0.12)
-	texture.fill_to = Vector2(0.5, 1.05)
-	texture.width = 128
-	texture.height = 128
-	var bg_rect := TextureRect.new()
-	bg_rect.name = "PanelBackground"
-	bg_rect.texture = texture
-	bg_rect.stretch_mode = TextureRect.STRETCH_SCALE
-	bg_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(bg_rect)
-	panel.move_child(bg_rect, 0)
-
-## Restiliza um dos dois paineis full-screen (fundo + botao de fechar) —
-## chamado uma vez por painel em _ready(). Titulo "ARVORE DE TECNOLOGIA"/
-## "ARVORE DE MAGIA" foi apagado por completo (pedido explicito da rodada
-## anterior) — so o espacador (MagicHeaderSpacer/TechHeaderSpacer, Control
-## puro, sem texto) mantem o botao de fechar alinhado a direita.
-func _style_research_panel_chrome(panel: PanelContainer, close_button: Button) -> void:
-	var panel_sb := UITheme.panel_style(TechTierBoard.BG_LEVEL, TechTierBoard.BORDER_STEEL, 1, 0, false)
-	panel_sb.set_content_margin_all(28)
-	panel.add_theme_stylebox_override("panel", panel_sb)
-	_add_panel_background_gradient(panel)
-	_style_doutrina_chip_button(close_button, TechTierBoard.TEXT_PRIMARY)
-
-func _style_tech_panel_chrome() -> void:
-	_style_research_panel_chrome(tech_panel, tech_close_button)
-	_style_research_panel_chrome(magic_panel, magic_close_button)
-	_style_research_panel_chrome(grimoire_panel, grimoire_close_button)
-
-## Estilo "chip" (Roadmap "UI/UX exclusiva") — mesma paleta local de
-## TechTierBoard.gd, nao o Theme global. `accent_color` e a cor da propria
-## familia (ou dourado neutro pro "Todos") usada no estado marcado/hover —
-## pedido explicito: "usar as cores... das familias", nao dourado generico
-## pra tudo. Achado da analise visual: em repouso todo chip ficava com a
-## MESMA borda de aco neutro, a cor da familia so aparecia ao clicar/
-## passar o mouse — agora a borda de repouso ja carrega uma versao
-## discreta (lerp 65% em direcao ao aco) da cor da familia, dando
-## identidade constante sem competir com o estado ativo (saturacao cheia).
-func _style_doutrina_chip_button(b: Button, accent_color: Color) -> void:
-	var rest_border := accent_color.lerp(TechTierBoard.BORDER_STEEL, 0.65)
-	# Chapado (pedido explicito: sem sombra) — corner_radius reduzido (era
-	# 12) pra um pill mais discreto, nao mais um botao com relevo.
-	b.add_theme_stylebox_override("normal", UITheme.panel_style(TechTierBoard.BG_CARD, rest_border, 1, 6, false))
-	b.add_theme_stylebox_override("hover", UITheme.panel_style(TechTierBoard.BG_CARD.lightened(0.08), accent_color, 1, 6, false))
-	b.add_theme_stylebox_override("pressed", UITheme.panel_style(TechTierBoard.BG_LEVEL, accent_color, 1, 6, false))
-	b.add_theme_color_override("font_color", TechTierBoard.TEXT_MUTED)
-	b.add_theme_color_override("font_pressed_color", accent_color)
-	b.add_theme_color_override("font_hover_color", TechTierBoard.TEXT_PRIMARY)
-
-## Atualiza as DUAS arvores (Magia/Tecnologia, ver tech_tree_magic/
-## tech_tree_doutrina) mesmo os dois paineis sendo independentes agora
-## (Roadmap "dois botoes") — chamado de _on_tech_pressed() E
-## _on_magic_pressed()/_on_tech_selected() de proposito: o slot de
-## pesquisa ativa continua UNICO/compartilhado entre as duas arvores (ver
-## PlayerData), entao pesquisar algo numa reflete na outra mesmo fechada
-## (ex: escolher uma tech em Tecnologia marca a pesquisa anterior de Magia
-## como concluida) — reconstruir as duas sempre evita estado desatualizado
-## quando o jogador trocar de painel. Cada tecnologia vira um card
-## colorido por estado (TechTree.gd cuida do layout/desenho da Magia por
-## grafo; TechTierBoard.gd cuida do layout por NIVEL da Tecnologia).
-func _refresh_tech_panel() -> void:
-	var player = GameManager.human_player
-	if player == null:
-		return
-
-	var race: String = player.civ.race
-	tech_tree_magic.rebuild(player.researched_magic, player.current_research, player.research_progress, race)
-	tech_tree_doutrina.rebuild(player.researched_techs, player.current_research, player.research_progress, race)
-
-func _on_tech_selected(id: String) -> void:
-	GameManager.human_player.select_research(id)
-	_refresh_tech_panel()
 
 func _on_diplomacy_pressed() -> void:
 	if diplomacy_panel.visible:
@@ -799,65 +600,68 @@ func _on_victory_pressed() -> void:
 func _on_victory_close_pressed() -> void:
 	_close_overlay_panels()
 
-## Roadmap "Fase F" F1/F2/F5 -- camada de APRESENTACAO pura sobre
-## VictoryConditions (pedido explicito do usuario): "VictoryConditions ->
-## progress/read-only -> Victory UI", NUNCA o contrario -- esta funcao so
-## LE VictoryConditions.*_progress, nunca calcula uma condicao de vitoria
-## por conta propria, nunca escreve em PlayerData. Sem gating de fog-of-
-## war nesta fatia (decisao explicita de F2: visibilidade total de todos
-## os jogadores). LIVE -- chamada toda vez que o painel abre, ver F6 pra
-## contraste com o snapshot CONGELADO de _on_victory_achieved abaixo.
+## Painel de vitórias (Fase 25): só as TRÊS vias finais — Dominação, Supremacia Militar e
+## Transcendência — na ordem de precedência de GameManager.check_victories. Camada de APRESENTAÇÃO pura:
+## só lê VictoryConditions/V2VictoryConditions/V2TranscendenceSystem (a regra mora lá, nunca aqui) e
+## nunca escreve em PlayerData. Mostra a perspectiva do jogador humano + os Rituais Finais públicos dos
+## rivais (informação pública por regra). LIVE — consultado toda vez que o painel abre (ver
+## _on_victory_achieved pro snapshot CONGELADO da tela final).
 func _refresh_victory_panel() -> void:
 	_build_victory_progress_rows(victory_rows)
 
-## Roadmap "Fase F" F6 -- MESMA construcao de linhas de _refresh_victory_
-## panel, extraida pra ser reusada tambem pelo snapshot CONGELADO da tela
-## de resultado (_on_victory_achieved abaixo) sem duplicar a leitura de
-## VictoryConditions em dois lugares. `target` e o container que recebe
-## as linhas -- o painel "Vitória" (ao vivo) e o snapshot de fim de jogo
-## (congelado no momento da vitoria) usam a MESMA logica de montagem,
-## cada um no seu proprio VBoxContainer, nunca compartilhado.
+## Mesma montagem para o painel ao vivo e para o snapshot congelado da tela final, cada um no próprio
+## VBoxContainer.
 func _build_victory_progress_rows(target: VBoxContainer) -> void:
 	for child in target.get_children():
 		child.queue_free()
-
-	var human = GameManager.human_player
-	var hex_grid = GameManager.hex_grid
-	if human == null or hex_grid == null:
+	var human: PlayerData = GameManager.human_player
+	if human == null or GameManager.hex_grid == null:
 		return
 	var players: Array[PlayerData] = ([human] as Array[PlayerData]) + GameManager.rival_players
 
-	for player in players:
-		var name_label := Label.new()
-		name_label.text = player.civ.civ_name
-		name_label.theme_type_variation = &"PanelTitle"
-		target.add_child(name_label)
-		if GameManager.victory_rules_version >= 2:
-			_add_victory_progress_row(target, "Supremacia", VictoryCampaign.supremacy_progress(player, players))
-			_add_victory_progress_row(target, "Transcendência", VictoryCampaign.transcendence_progress(player, hex_grid))
-			var detail := Label.new()
-			detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			if player.arcane_ritual_active:
-				detail.text = "Transcendência em (%d, %d): faltam %d turnos!" % [player.arcane_ritual_city_coord.x, player.arcane_ritual_city_coord.y, maxi(0, VictoryCampaign.CHANNEL_TURNS - player.arcane_ritual_streak)]
-			elif player == human:
-				detail.text = "Supremacia: Exército Supremo + 2 cidades desenvolvidas conquistadas; representar cada rival por conquista ou eliminação. Cidade desenvolvida: população 3 e 2 edifícios no momento da conquista.\nTranscendência:\n" + "\n".join(VictoryCampaign.preparations(player, hex_grid))
-			target.add_child(detail)
+	_add_victory_heading(target, "Dominação")
+	_add_victory_progress_row(target, "Rivais eliminados", VictoryConditions.dominance_progress(human, players))
+	_add_victory_detail(target, "Civilizações restantes: %d. Vence quem for a última civilização restante." % VictoryConditions.civilizations_remaining(players))
+
+	_add_victory_heading(target, "Supremacia Militar")
+	var supremacy := V2VictoryConditions.military_supremacy_status(human)
+	var has_supremacy_access := human.has_unlocked(V2VictoryConditions.MILITARY_SUPREMACY_ACCESS)
+	var supremacy_progress := float(supremacy.satisfied_count) / float(maxi(1, supremacy.rival_count)) if has_supremacy_access else 0.0
+	_add_victory_progress_row(target, "Rivais satisfeitos", supremacy_progress)
+	var supremacy_lines: Array[String] = ["Exército Supremo pesquisado." if has_supremacy_access else "Requer pesquisa: Exército Supremo (duas Doutrinas completas)."]
+	supremacy_lines.append_array(V2VictoryConditions.military_supremacy_lines(human))
+	supremacy_lines.append("Conquiste e mantenha uma Cidade III+ de cada rival (rival eliminado também conta).")
+	_add_victory_detail(target, "\n".join(supremacy_lines))
+
+	_add_victory_heading(target, "Transcendência")
+	var transcendence := V2VictoryConditions.transcendence_status(human)
+	var transcendence_progress := 0.0
+	if transcendence.active:
+		transcendence_progress = 1.0 - float(transcendence.remaining_rounds) / float(V2TranscendenceSystem.ROUNDS_REQUIRED)
+	_add_victory_progress_row(target, "Ritual Final", transcendence_progress)
+	var transcendence_lines: Array[String] = ["Transcendência pesquisada." if transcendence.access else "Requer pesquisa: Transcendência (duas Escolas completas)."]
+	transcendence_lines.append_array(V2VictoryConditions.transcendence_lines(human))
+	for ritual in V2TranscendenceSystem.public_rituals():
+		if int(ritual.owner_index) == V2VictoryConditions.stable_id(human):
 			continue
+		transcendence_lines.append("%s — Ritual Final em (%d, %d): %d rodada(s) restante(s)." % [ritual.owner_name, ritual.site_coord.x, ritual.site_coord.y, ritual.remaining_rounds])
+	_add_victory_detail(target, "\n".join(transcendence_lines))
 
-		_add_victory_progress_row(target, "Dominação", VictoryConditions.dominance_progress(player, players))
-		_add_victory_progress_row(target, "Domínio Territorial", VictoryConditions.territorial_progress(player, hex_grid))
-		_add_victory_progress_row(target, "Ascensão Arcana", VictoryConditions.arcane_progress(player, hex_grid))
+func _add_victory_heading(target: VBoxContainer, text: String) -> void:
+	var heading := Label.new()
+	heading.text = text
+	heading.theme_type_variation = &"PanelTitle"
+	target.add_child(heading)
 
-## `progress` e SEMPRE 0.0-1.0 (contrato comum das 3 funcoes de
-## VictoryConditions), mas o SIGNIFICADO por tras de cada numero e
-## diferente por tipo (Territorial e uma razao simples contra o limiar;
-## Arcana e a media de 4 fracoes; Dominacao e a fracao de rivais
-## eliminados) -- esta funcao so formata o numero JA normalizado, nunca
-## reinterpreta o que ele significa por tipo (pedido explicito do
-## usuario: "a UI deve consumir 0.0-1.0 como contrato, mas nao deve
-## assumir que cada tipo de vitoria tem a mesma semantica" -- a
-## semantica fica inteiramente do lado de VictoryConditions, aqui so
-## chega o numero final).
+func _add_victory_detail(target: VBoxContainer, text: String) -> void:
+	var detail := Label.new()
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail.theme_type_variation = &"MutedLabel"
+	detail.text = text
+	target.add_child(detail)
+
+## `progress` e SEMPRE 0.0-1.0 — esta funcao so formata o numero JA normalizado, nunca reinterpreta
+## o que ele significa por tipo de vitória (a semântica fica em VictoryConditions/V2VictoryConditions).
 func _add_victory_progress_row(target: VBoxContainer, label_text: String, progress: float) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
@@ -884,9 +688,7 @@ func _add_victory_progress_row(target: VBoxContainer, label_text: String, progre
 
 ## Formatacao PURA (nenhuma dependencia de cena/PlayerData/HexGrid) --
 ## unit-testavel sem instanciar o HUD inteiro. Clampa e arredonda: nunca
-## mostra >100% nem negativo mesmo se o progresso bruto de entrada
-## passar disso (ver VictoryConditions.territorial_percentage, que NAO e
-## clampada -- so territorial_progress e).
+## mostra >100% nem negativo mesmo se o progresso bruto de entrada passar disso.
 static func format_victory_progress_percentage(progress: float) -> String:
 	return "%d%%" % int(round(clamp(progress, 0.0, 1.0) * 100.0))
 
@@ -900,59 +702,35 @@ static func format_victory_title(winner: PlayerData, victory_type: String) -> St
 		return "Fim de jogo forçado (Debug)"
 	if winner == null:
 		return "Fim de jogo"
-	var victory_name: String
 	match victory_type:
-		VictoryCampaign.SUPREMACY:
-			victory_name = "Supremacia"
-		VictoryCampaign.TRANSCENDENCE:
-			victory_name = "Transcendência"
 		VictoryConditions.VICTORY_TYPE_DOMINANCE:
-			victory_name = "Dominação"
-		VictoryConditions.VICTORY_TYPE_TERRITORIAL:
-			victory_name = "Domínio Territorial"
-		VictoryConditions.VICTORY_TYPE_ARCANE:
-			victory_name = "Ascensão Arcana"
-		_:
-			victory_name = victory_type
-	return "%s alcançou %s" % [winner.civ.civ_name, victory_name]
+			return "Vitória por Dominação — %s" % winner.civ.civ_name
+		V2VictoryConditions.VICTORY_TYPE_MILITARY_SUPREMACY:
+			return "Vitória por Supremacia Militar — %s" % winner.civ.civ_name
+		V2VictoryConditions.VICTORY_TYPE_TRANSCENDENCE:
+			return "Vitória por Transcendência — %s" % winner.civ.civ_name
+	return "%s venceu a partida" % winner.civ.civ_name
 
-## Roadmap "Fase F" F6 -- resumo FIXO por tipo (pedido explicito do
-## usuario), nunca gerado a partir do estado de UM jogador especifico --
-## so interpola as CONSTANTES ja existentes de VictoryConditions (numero
-## de escolas/nodulos/turnos exigidos), nunca calcula nada sobre a
-## partida. Texto narrativo/procedural fica pra F6 (identidade/lore),
-## combinado explicitamente como fora de escopo aqui.
+## Resumo FIXO por tipo de vitória (nunca gerado do estado de um jogador específico).
 static func format_victory_summary(victory_type: String) -> String:
 	match victory_type:
-		VictoryCampaign.SUPREMACY:
-			return "Pesquisou Exército Supremo e demonstrou superioridade sobre todos os rivais por conquistas desenvolvidas ou eliminação."
-		VictoryCampaign.TRANSCENDENCE:
-			return "Dominou duas escolas, concluiu dois Grandes Rituais e sustentou a Transcendência por sete turnos com cinco conjuradores e três Nódulos."
-		"eliminated":
-			return "Seu reino perdeu todas as cidades e unidades."
 		VictoryConditions.VICTORY_TYPE_DOMINANCE:
 			return "Eliminou todos os reinos rivais."
-		VictoryConditions.VICTORY_TYPE_TERRITORIAL:
-			return "Controlou pelo menos %d%% do mundo habitável por %d turnos consecutivos." % [
-				int(round(VictoryConditions.TERRITORIAL_VICTORY_THRESHOLD * 100.0)),
-				VictoryConditions.TERRITORIAL_SUSTAIN_TURNS,
-			]
-		VictoryConditions.VICTORY_TYPE_ARCANE:
-			return "Pesquisou %d das 7 escolas mágicas, controlou %d Nódulos Arcanos e sustentou o Ritual do Nódulo por %d turnos." % [
-				VictoryConditions.ARCANE_SCHOOLS_REQUIRED,
-				VictoryConditions.ARCANE_NODES_REQUIRED,
-				VictoryConditions.ARCANE_SUSTAIN_TURNS,
-			]
+		V2VictoryConditions.VICTORY_TYPE_MILITARY_SUPREMACY:
+			return "Seu império provou sua supremacia conquistando os centros desenvolvidos de seus rivais."
+		V2VictoryConditions.VICTORY_TYPE_TRANSCENDENCE:
+			return "Concluiu o Ritual Final mantendo duas Grandes Manifestações e uma cidade ritual por quatro rodadas."
+		"eliminated":
+			return "Seu reino perdeu todas as cidades e unidades."
 		VictoryConditions.VICTORY_TYPE_DEBUG:
 			return "Fim de jogo disparado manualmente pelo modo debug -- nenhuma condição de vitória real foi avaliada."
-		_:
-			return ""
+	return ""
 
 ## Roadmap "Fase F" F6 -- CONGELA o snapshot no momento exato da vitoria:
 ## chamado UMA vez, so pelo sinal EventBus.victory_achieved (nunca
 ## re-chamado por nenhum refresh posterior da HUD). Popula Labels/
 ## ProgressBars ESTATICOS (game_over_snapshot_rows) que NAO tem nenhuma
-## ligacao viva com VictoryConditions depois deste ponto -- diferente do
+## ligacao viva com as condições de vitória depois deste ponto -- diferente do
 ## painel "Vitória" (_refresh_victory_panel), que consulta de novo toda
 ## vez que abre. E exatamente essa diferenca que garante o contrato
 ## pedido explicito do usuario: a tela de resultado continua mostrando
@@ -963,146 +741,6 @@ func _on_victory_achieved(winner: PlayerData, victory_type: String) -> void:
 	game_over_title_label.text = format_victory_title(winner, victory_type)
 	game_over_summary_label.text = format_victory_summary(victory_type)
 	_build_victory_progress_rows(game_over_snapshot_rows)
-
-func _on_grimoire_pressed() -> void:
-	if grimoire_panel.visible:
-		_close_overlay_panels()
-		return
-	_show_overlay(grimoire_panel)
-	_refresh_grimoire_panel()
-
-func _on_grimoire_close_pressed() -> void:
-	_close_overlay_panels()
-
-## Uma linha por feitico ja desbloqueado (TechDatabase.unlocked_spells_for,
-## ver TechData.unlocks_spell) — pedido do usuario: "exiba os feiticos
-## ativos no HUD do jogador... permita que o jogador selecione o feitico e
-## aplique o efeito no mapa". "Conjurar" entra em modo de mira no mapa
-## (SelectionManager.start_spell_targeting) e fecha o painel na hora,
-## porque o proximo clique no MUNDO e o que escolhe o alvo de verdade
-## (mesma UX de _on_produce_pressed/start_building_placement) — o overlay
-## bloqueia clique no mapa enquanto aberto (ver OverlayBackdrop), entao
-## precisa sumir antes do jogador conseguir mirar.
-func _refresh_grimoire_panel() -> void:
-	for child in grimoire_rows.get_children():
-		child.queue_free()
-
-	var human = GameManager.human_player
-	if human == null:
-		return
-
-	var spell_names = MagicDatabase.unlocked_spells_for(human.researched_magic)
-	if spell_names.is_empty():
-		var empty_label := Label.new()
-		empty_label.theme_type_variation = &"MutedLabel"
-		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		empty_label.text = "Nenhum feitiço aprendido. Abra Magia, desenvolva uma escola e treine seu conjurador."
-		grimoire_rows.add_child(empty_label)
-		return
-
-	for category in ["spell", "great_spell", "ritual"]:
-		var heading := Label.new()
-		heading.text = {"spell": "FEITIÇOS", "great_spell": "GRANDES FEITIÇOS", "ritual": "GRANDES RITUAIS"}[category]
-		grimoire_rows.add_child(heading)
-		for spell_name in spell_names:
-			var data := SpellDatabase.get_spell(spell_name)
-			if data and data.category == category:
-				grimoire_rows.add_child(_build_spell_row(spell_name, human))
-	for ritual in human.rituals:
-		var progress := Label.new()
-		progress.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		var state_text: String = {"channeling": "Canalizando", "completed": "Concluído", "interrupted": "Interrompido"}.get(ritual.status, ritual.status)
-		progress.text = "%s — %s · %d/%d turnos%s" % [ritual.spell, state_text, int(ritual.progress), int(ritual.turns), " · " + str(ritual.reason) if ritual.has("reason") else ""]
-		grimoire_rows.add_child(progress)
-		if ritual.status == "channeling":
-			var cancel := Button.new()
-			cancel.text = "Interromper e liberar conjuradores (sem reembolso)"
-			cancel.pressed.connect(func():
-				MagicRuntime.interrupt_ritual(human, ritual, "cancelado pelo jogador")
-				_refresh_grimoire_panel())
-			grimoire_rows.add_child(cancel)
-	if GameManager.victory_rules_version >= 2:
-		var heading := Label.new()
-		heading.text = "TRANSCENDÊNCIA"
-		grimoire_rows.add_child(heading)
-		var description := Label.new()
-		description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		var missing := VictoryCampaign.preparations(human, GameManager.hex_grid)
-		description.text = "400 mana inicial · 40 por turno · 7 turnos\n" + "\n".join(missing)
-		if human.arcane_ritual_active:
-			description.text = "Canalizando Transcendência: %d/%d turnos · 40 mana/turno" % [human.arcane_ritual_streak, VictoryCampaign.CHANNEL_TURNS]
-		grimoire_rows.add_child(description)
-		var activate := Button.new()
-		activate.text = "Iniciar Transcendência"
-		activate.disabled = human.arcane_ritual_active or not missing.is_empty() or GameManager.is_turn_processing
-		activate.pressed.connect(func():
-			VictoryCampaign.start(human, GameManager.hex_grid)
-			_refresh_grimoire_panel())
-		grimoire_rows.add_child(activate)
-
-## Feitico sem SpellData cadastrado (Ruina Ignea/Metamorfose de Gaia,
-## tecnologias de Tier 3 ja pesquisaveis mas sem efeito implementado ainda
-## — ver comentario de topo de SpellDatabase.gd) aparece na lista com o
-## botao desabilitado em vez de sumir sem explicacao nenhuma.
-func _build_spell_row(spell_name: String, human: PlayerData) -> Control:
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 2)
-
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 10)
-	box.add_child(header)
-
-	var spell: SpellData = SpellDatabase.get_spell(spell_name)
-	var name_label := Label.new()
-	# Custo de mana exibido ja reflete o desconto de Nodulo Arcano (Roadmap
-	# 2.0 Parte 1, B1, ver SpellManager.effective_mana_cost) quando houver.
-	name_label.text = "%s (%d mana)" % [spell_name, int(SpellManager.effective_mana_cost(spell, human, GameManager.hex_grid))] if spell else spell_name
-	name_label.size_flags_horizontal = SIZE_EXPAND_FILL
-	header.add_child(name_label)
-
-	# Recarga (tempo) e mana (saldo) sao dois gates INDEPENDENTES — mostra
-	# qual dos dois esta bloqueando pra nao deixar o jogador adivinhando
-	# (mesma filosofia de tooltip explicito ja usada em _production_lock_
-	# reason/_building_lock_reason).
-	var cast_button := Button.new()
-	if spell and spell.effect != "":
-		var reason := MagicRuntime.reason(human, spell, GameManager.hex_grid)
-		cast_button.disabled = reason != "" or GameManager.is_turn_processing
-		cast_button.text = "Preparar ritual" if spell.category == "ritual" else "Conjurar"
-		cast_button.tooltip_text = reason if reason != "" else "Escolha o alvo no mapa."
-		cast_button.pressed.connect(_on_cast_spell_pressed.bind(spell_name))
-		if reason != "":
-			var blocked_label := Label.new()
-			blocked_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			blocked_label.text = reason
-			box.add_child(blocked_label)
-	elif spell == null:
-		cast_button.text = "Sem efeito"
-		cast_button.disabled = true
-	elif not SpellManager.can_cast(human, spell_name, TurnManager.turn_number):
-		var turns_left = SpellManager.cooldown_ends_at(human, spell_name) - TurnManager.turn_number
-		cast_button.text = "Recarga (%d)" % max(turns_left, 1)
-		cast_button.disabled = true
-	elif not SpellManager.has_enough_mana(human, spell_name, GameManager.hex_grid):
-		cast_button.text = "Sem mana"
-		cast_button.disabled = true
-	else:
-		cast_button.text = "Conjurar"
-		cast_button.pressed.connect(_on_cast_spell_pressed.bind(spell_name))
-	header.add_child(cast_button)
-
-	var description_label := Label.new()
-	description_label.theme_type_variation = &"MutedLabel"
-	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	description_label.text = spell.description if spell else "Efeito ainda não implementado."
-	box.add_child(description_label)
-
-	return box
-
-func _on_cast_spell_pressed(spell_name: String) -> void:
-	SelectionManager.start_spell_targeting(spell_name)
-	_close_overlay_panels()
-	EventBus.notify.emit("Escolha um alvo no mapa para %s." % spell_name, "")
 
 ## Painel de Debug (botao so visivel em OS.is_debug_build(), ver _ready())
 ## — pedido do usuario: "adicione opcoes debug onde eu posso tirar a fog
@@ -1119,29 +757,70 @@ func _on_debug_pressed() -> void:
 func _on_debug_close_pressed() -> void:
 	_close_overlay_panels()
 
+## Painel das árvores V2 — mesmo chrome escuro (fundo + gradiente)
+## das árvores V1, em tela cheia. O V2ResearchBoard só reconstrói o conteúdo
+## quando aberto/aba/estado muda (sem _process).
+func _build_v2_research_panel() -> void:
+	v2_research_panel = PanelContainer.new()
+	v2_research_panel.name = "ResearchPanel"
+	v2_research_panel.visible = false
+	add_child(v2_research_panel)
+	v2_research_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var panel_sb := UITheme.panel_style(V2ResearchBoard.BG_LEVEL, V2ResearchBoard.BORDER_STEEL, 1, 0, false)
+	panel_sb.set_content_margin_all(28)
+	v2_research_panel.add_theme_stylebox_override("panel", panel_sb)
+	_add_panel_background_gradient(v2_research_panel)
+	v2_research_board = V2ResearchBoard.new()
+	v2_research_board.close_requested.connect(_close_overlay_panels)
+	v2_research_panel.add_child(v2_research_board)
+
+## Gradiente radial sutil de fundo (recurso nativo do Godot, gerado em código) inserido como PRIMEIRO
+## filho do painel — o conteúdo continua desenhando por cima.
+func _add_panel_background_gradient(panel: PanelContainer) -> void:
+	var gradient := Gradient.new()
+	gradient.set_color(0, V2ResearchBoard.BG_LEVEL.lightened(0.035))
+	gradient.set_color(1, V2ResearchBoard.BG_LEVEL.darkened(0.2))
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.fill = GradientTexture2D.FILL_RADIAL
+	texture.fill_from = Vector2(0.5, 0.12)
+	texture.fill_to = Vector2(0.5, 1.05)
+	texture.width = 128
+	texture.height = 128
+	var bg_rect := TextureRect.new()
+	bg_rect.name = "PanelBackground"
+	bg_rect.texture = texture
+	bg_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	bg_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(bg_rect)
+	panel.move_child(bg_rect, 0)
+
+## Botão "Pesquisa" (Fase 25 — o acesso normal; antes o quadro só abria pelo painel de Debug). Liga o
+## quadro ao estado da civilização humana ATUAL (troca a cada partida nova/carregada; religar o mesmo
+## estado é no-op) e alterna o overlay.
+func _on_research_pressed() -> void:
+	if v2_research_panel.visible:
+		_close_overlay_panels()
+		return
+	v2_research_board.bind_state(V2ResearchState.for_player(GameManager.human_player) if GameManager.human_player != null else _v2_fallback_state)
+	_show_overlay(v2_research_panel)
+	v2_research_board.refresh()
+
 func _refresh_debug_panel() -> void:
 	var hex_grid = GameManager.hex_grid
 	var fog_disabled = hex_grid != null and hex_grid.debug_fog_disabled
 	debug_mode_button.button_pressed = GameManager.debug_mode
-	debug_mode_button.text = "Desativar Modo Debug" if GameManager.debug_mode else "Ativar Modo Debug (tudo liberado, producao instantanea)"
+	debug_mode_button.text = "Desativar Modo Debug" if GameManager.debug_mode else "Ativar Modo Debug (producao instantanea)"
 	debug_reveal_map_button.button_pressed = fog_disabled
 	debug_reveal_map_button.text = "Restaurar Neblina" if fog_disabled else "Revelar Mapa (sem neblina)"
-	debug_complete_research_button.disabled = GameManager.human_player == null or GameManager.human_player.current_research == ""
+	debug_complete_research_button.disabled = GameManager.human_player == null or GameManager.human_player.v2_research.active_id == ""
 
-## Pedido do usuario: "libere no modo debug, quando eu ativar, tudo
-## liberado, tudo fica disponivel todas as pesquisas ficam feitas, e o
-## tempo de fazer qualquer unidade e 1 turno". GameManager.set_debug_mode
-## faz o trabalho de verdade (marca toda tech como pesquisada + liga o
-## efeito continuo de producao instantanea, ver comentario la) — aqui so
-## atualiza o que ja esta na tela: o painel de Tecnologia (se aberto, as
-## techs viram "Pesquisada" na hora) e o painel de producao da cidade
-## sendo vista (novas tropas/predios liberados aparecem sem precisar
-## fechar/reabrir a cidade).
+## Modo debug: produção da cidade humana em 1 turno (GameManager.set_debug_mode). A pesquisa tem as
+## próprias ferramentas de debug dentro do quadro de Pesquisa.
 func _on_debug_mode_pressed() -> void:
 	GameManager.set_debug_mode(not GameManager.debug_mode)
 	_refresh_debug_panel()
-	if tech_panel.visible:
-		_refresh_tech_panel()
 	_refresh_viewed_city()
 
 func _on_debug_reveal_map_pressed() -> void:
@@ -1160,8 +839,6 @@ func _on_debug_gold_pressed() -> void:
 func _on_debug_complete_research_pressed() -> void:
 	GameManager.debug_complete_current_research()
 	_refresh_debug_panel()
-	if tech_panel.visible:
-		_refresh_tech_panel()
 
 func _on_debug_win_pressed() -> void:
 	GameManager.debug_force_game_over(true)
@@ -1178,15 +855,11 @@ func _on_restart_pressed() -> void:
 	EventBus.restart_requested.emit()
 	_close_overlay_panels()
 	end_turn_button.disabled = false
-	tech_button.disabled = false
-	magic_button.disabled = false
+	research_button.disabled = false
 	diplomacy_button.disabled = false
 	victory_button.disabled = false
-	grimoire_button.disabled = false
 	unit_panel.visible = false
 	production_tabs.visible = false
-	worked_tiles_label.visible = false
-	worked_tiles_scroll.visible = false
 	production_progress_label.visible = false
 	production_progress_bar.visible = false
 	_viewed_city = null
@@ -1202,12 +875,8 @@ func _on_restart_pressed() -> void:
 func _on_turn_changed(turn_number: int, _player_index: int) -> void:
 	turn_label.text = "Turno %d" % turn_number
 	_refresh_stats()
-	if tech_panel.visible:
-		_refresh_tech_panel()
 	if diplomacy_panel.visible:
 		_refresh_diplomacy_panel()
-	if grimoire_panel.visible:
-		_refresh_grimoire_panel()
 	# Roadmap "Fase Macro" 5B.2 -- NAO condicionado a world_event_panel.
 	# visible (diferente dos paineis acima): precisa rodar todo turno pra
 	# o texto de contagem regressiva ("faltam N turnos") ficar correto
@@ -1218,12 +887,33 @@ func _on_turn_changed(turn_number: int, _player_index: int) -> void:
 	_refresh_world_event_panel()
 	_refresh_world_event_tracker()
 	_refresh_dragon_boss_bar()
+	_refresh_selected_unit_panel()
 	# Regressao: o painel da cidade so se atualizava ao clicar de novo no
 	# tile (_on_produce_pressed/_on_worked_tile_pressed chamavam isso, mas
 	# _on_turn_changed nao) — produzir um predio parecia "nao fazer nada"
 	# pro jogador, porque progresso/predio concluido nunca aparecia sem
 	# reclicar a cidade manualmente.
 	_refresh_viewed_city()
+
+## Aetherlands V2, Fase 14 — cria os dois indicadores novos da barra superior (Conhecimento/turno,
+## Capacidade de Suprimentos) como filhos do MESMO StatusGroup que já tem Ouro/Mana/Cidades/FPS —
+## chamado uma vez em _ready(). Sem editar HUD.tscn (mesmo espírito de V2Actions/V2CityActions).
+## Fase 25: ordem fixa da barra — Ouro | Suprimentos | Mana | Conhecimento.
+func _build_v2_economy_status_labels() -> void:
+	v2_supply_label = Label.new()
+	v2_supply_label.name = "V2SupplyLabel"
+	_insert_status_label_after(gold_label, v2_supply_label)
+	v2_knowledge_label = Label.new()
+	v2_knowledge_label.name = "V2KnowledgeLabel"
+	_insert_status_label_after(mana_label, v2_knowledge_label)
+
+func _insert_status_label_after(anchor: Label, label: Label) -> void:
+	var status_group := anchor.get_parent()
+	var separator := VSeparator.new()
+	status_group.add_child(separator)
+	status_group.move_child(separator, anchor.get_index() + 1)
+	status_group.add_child(label)
+	status_group.move_child(label, separator.get_index() + 1)
 
 ## Fonte unica pro texto de ouro/mana/estatisticas da barra superior —
 ## chamada tanto em troca de turno quanto apos qualquer notificacao
@@ -1234,43 +924,49 @@ func _refresh_stats() -> void:
 	var player = GameManager.human_player
 	if player:
 		stats_label.text = "Cidades: %d | Unidades: %d" % [player.cities.size(), player.units.size()]
-		gold_label.text = "Ouro: %d" % int(player.gold)
-		mana_label.text = "Mana: %d (+%d)" % [int(player.mana), int(player.mana_income_per_turn)]
-		var upkeep := 0.0
-		for unit in player.units:
-			upkeep += unit.unit_data.mana_upkeep
-		for ritual in player.rituals:
-			if ritual.status == "channeling":
-				upkeep += 20
-		if player.arcane_ritual_active and GameManager.victory_rules_version >= 2:
-			upkeep += VictoryCampaign.TURN_MANA
-		mana_label.tooltip_text = "Produção: %.0f/turno\nManutenção de unidades e rituais: %.0f/turno\nSaldo previsto: %+.0f/turno" % [player.mana_income_per_turn, upkeep, player.mana_income_per_turn - upkeep]
-		_refresh_tech_button_progress(player)
+		var race_info: Dictionary = GameSetupScreen.RACE_INFO.get(player.civ.race, GameSetupScreen.RACE_INFO.human)
+		var racial_lines := V2RaceBonusRuntime.effect_lines(player)
+		stats_label.tooltip_text = "Raça: %s\n%s\n• %s" % [race_info.display_name, V2RaceBonusRuntime.summary(player), "\n• ".join(racial_lines)]
+		# Aetherlands V2, Fase 15 (§32 do pedido) — Ouro mostra o LÍQUIDO agora (bruto - upkeep dos
+		# prédios V2 com manutenção), com sinal explícito quando negativo ("Ouro: 12 (-3)"). A
+		# renda em si continua vindo inteira de V2EconomyRuntime; nenhum número daqui soma com a
+		# antiga renda V1 (auditoria em docs/AETHERLANDS_V2_IMPLEMENTATION.md Fase 14).
+		var gold_gross := V2EconomyRuntime.player_gold_gross_income(player)
+		var gold_upkeep := V2EconomyRuntime.player_gold_upkeep(player)
+		var gold_net := gold_gross - gold_upkeep
+		gold_label.text = "Ouro: %d (%s%d)" % [int(player.gold), "+" if gold_net >= 0.0 else "", int(gold_net)]
+		gold_label.tooltip_text = "Renda: +%.0f/turno\nManutenção: -%.0f/turno\nLíquido: %+.0f/turno%s" % [
+			gold_gross, gold_upkeep, gold_net,
+			"\n\nDÉFICIT: prédios com manutenção operam a 50%." if V2EconomyRuntime.is_gold_deficit(player) else "",
+		]
+		var mana_income := V2EconomyRuntime.player_mana_income(player)
+		mana_label.text = "Mana: %d (+%d)" % [int(player.mana), int(mana_income)]
+		mana_label.tooltip_text = "Produção: +%.0f/turno (base das cidades, Santuários Arcanos e Conduítes).
+Gasta em feitiços e na produção de Grandes Manifestações." % mana_income
+		# Conhecimento mostra só a renda por turno (não é estoque visível na barra — o "estoque" dele é o
+		# progresso da pesquisa ativa, visível no botão "Pesquisa", ver _refresh_research_button).
+		if v2_knowledge_label:
+			v2_knowledge_label.text = "Conhecimento: +%d/turno" % int(V2EconomyRuntime.player_knowledge_income(player))
+		# Aetherlands V2, Fase 15 (§22 do pedido) — Suprimentos passa a mostrar USADOS / CAPACIDADE
+		# (o consumo militar da Fase 14 era só capacidade, sem uso nenhum ainda). Em Tensão
+		# Logística (usados > capacidade), acrescenta "— TENSÃO" no texto.
+		if v2_supply_label:
+			var supply_used := V2LogisticsRuntime.player_supply_used(player)
+			var supply_capacity := int(V2EconomyRuntime.player_supply_capacity(player))
+			var strained := supply_used > supply_capacity
+			v2_supply_label.text = "Suprimentos: %d / %d%s" % [supply_used, supply_capacity, " — TENSÃO" if strained else ""]
+			v2_supply_label.tooltip_text = "Excesso logístico: unidades abastecidas sofrem -15% Ataque e Defesa." if strained else "Capacidade logística total (Fazendas + base por cidade + melhorias de Cavalos)."
+		_refresh_research_button(player)
 
-## Progresso da pesquisa atual direto no botao correspondente da barra
-## superior (pedido do usuario: reorganizar a HUD "parecido com os de
-## civilization 6" — la o icone de pesquisa na barra ja mostra o progresso
-## sem precisar abrir a arvore inteira). So texto (sem anel/barra grafica
-## nova) de proposito: menor risco, reusa o mesmo botao/tema que ja existe.
-## Roadmap "dois botoes": Magia e Tecnologia tem botao PROPRIO agora (o
-## slot de pesquisa continua unico/compartilhado, ver PlayerData) — o
-## progresso aparece so no botao do sistema DONO da pesquisa atual
-## (TechDatabase -> tech_button, MagicDatabase -> magic_button), o outro
-## volta pro rotulo padrao.
-func _refresh_tech_button_progress(player: PlayerData) -> void:
-	tech_button.text = "Tecnologia"
-	magic_button.text = "Magia"
-	if player.current_research == "":
+## Progresso da pesquisa ATIVA direto no botão "Pesquisa" (padrão do Civilization: o ícone de
+## pesquisa já mostra o progresso sem abrir a árvore). Sem projeto ativo, só "Pesquisa".
+func _refresh_research_button(player: PlayerData) -> void:
+	var active_id := player.v2_research.active_id
+	var node := V2ResearchDatabase.get_node(active_id) if active_id != "" else null
+	if node == null:
+		research_button.text = "Pesquisa"
 		return
-	var tech: TechData = TechDatabase.get_tech(player.current_research)
-	var target_button := tech_button
-	if tech == null:
-		tech = MagicDatabase.get_tech(player.current_research)
-		target_button = magic_button
-	if tech == null:
-		return
-	var pct = int(round(min(player.research_progress / tech.cost, 1.0) * 100.0)) if tech.cost > 0.0 else 100
-	target_button.text = "%s (%d%%)" % [RaceTheme.tech_name(tech.id, player.civ.race), pct]
+	research_button.text = "Pesquisa: %s (%d%%)" % [node.display_name, int(round(player.v2_research.get_progress_ratio(active_id) * 100.0))]
 
 ## Mensagens curtas (combate, fundacao/captura de cidade) que aparecem no
 ## topo da tela e somem sozinhas — sem isso, um ataque do rival fora de
@@ -1670,8 +1366,6 @@ func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 		tile_info_label.text = "Selecione um tile"
 		_clear_inspection()
 		production_tabs.visible = false
-		worked_tiles_label.visible = false
-		worked_tiles_scroll.visible = false
 		production_progress_label.visible = false
 		production_progress_bar.visible = false
 		return
@@ -1693,8 +1387,6 @@ func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 		_clear_inspection()
 		tile_info_panel.visible = false
 		production_tabs.visible = false
-		worked_tiles_label.visible = false
-		worked_tiles_scroll.visible = false
 		production_progress_label.visible = false
 		production_progress_bar.visible = false
 		return
@@ -1724,6 +1416,10 @@ func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 
 	_render_inspection()
 	production_tabs.visible = _viewed_city != null
+	# Aetherlands V2, Fase 16 (achado na validação visual): sem isto, as ações da cidade vista antes
+	# (Evoluir/Fortificar/Ataque da Cidade/Anexar) ficavam na tela — e clicáveis — sob um tile qualquer.
+	if _viewed_city == null:
+		_refresh_v2_city_actions(null)
 	_update_tile_info_panel_size(_viewed_city != null)
 	if _viewed_city:
 		# O painel de cidade toma conta da vizinhanca inteira do ActionBar
@@ -1735,68 +1431,31 @@ func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 		# funcao no mesmo clique (SelectionManager emite unit_selected
 		# primeiro), entao essa linha e quem tem a ultima palavra.
 		unit_panel.visible = false
-		# Pedido do usuario: "faca ser exibido somente tropas que voce pode
-		# fazer ao clicar na cidade" — antes TODO kind do roster ficava
-		# sempre visivel (so desabilitado com tooltip explicando o motivo,
-		# ver _production_lock_reason). Agora o botao so aparece se a
-		# tropa estiver REALMENTE treinavel agora (pesquisa E predio, e no
-		# caso de tropa racial, tambem a raca certa) — can_train() ja cobre
-		# os tres sozinho (ver comentario dela em City.gd), entao nao
-		# precisa de checagem separada de raca aqui como tinha antes.
-		#
-		# A propria grade de producao (botoes de predio/tropa) so aparece pra
-		# cidade PROPRIA (ver guarda "city.owner_player == GameManager.
-		# human_player" acima) — entao retematizar os rotulos aqui sempre com
-		# a raca do jogador humano esta correto, nunca precisa considerar
-		# outro dono. Reaplicar o texto a cada clique em vez de so uma vez e
-		# barato (mesma troca de string que os outros refreshes deste bloco
-		# ja fazem) e cobre o caso comum de a raca so ficar conhecida DEPOIS
-		# do _ready() (jogo ainda nao comecou quando os botoes sao criados,
-		# ver _build_production_buttons/_label_building_buttons).
+		# Só aparece o que a cidade REALMENTE pode produzir agora: tropa liberada pela pesquisa + prédio de
+		# treino (City.can_train), prédio liberado pela pesquisa (City._research_unlocked_for_building).
+		# Falta de slot/pré-requisito/Déficit só DESABILITA o botão de prédio, com o motivo no tooltip.
 		var race: String = GameManager.human_player.civ.race
-		for id in _all_building_ids():
-			var btn := _build_button_for(id)
-			btn.text = _building_button_label(id, race)
+		for id in _building_buttons:
+			var btn: Button = _building_buttons[id]
 			btn.disabled = not _viewed_city.can_build(id)
-			# Pedido do usuario: "as construcoes que precisam de pesquisa so
-			# aparecem listadas na cidade quando nos de fato criamos a
-			# pesquisa, enquanto isso elas nao aparecem no menu da cidade" —
-			# mesmo espirito ja aplicado as tropas acima (visivel so quando
-			# REALMENTE liberado). Predio de RENDIMENTO sem tech associada
-			# (so Torre dos Sabios) continua sempre visivel; predio com tech
-			# propria (Quartel/Estabulo/Arquearia via trains_unit, Muralhas/
-			# Celeiro/Oficina/Mercado via TechData.unlocks_building) some
-			# ate a tech correspondente ser pesquisada, reaproveitando o
-			# MESMO gate que ja trava a construcao em si (City._tech_
-			# unlocked_for_building) — falta de sala/predio pre-requisito
-			# continuam so DESABILITANDO o botao (com tooltip explicando,
-			# ver _building_lock_reason), nao escondendo.
-			btn.visible = _viewed_city._tech_unlocked_for_building(id)
+			btn.visible = _viewed_city._research_unlocked_for_building(id)
 		for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
 			_production_buttons[kind].text = _unit_button_label(kind, race)
-			_production_buttons[kind].visible = GameManager.human_player.has_unlocked(kind) and _viewed_city.can_train(kind)
-		build_granary_button.disabled = not _viewed_city.can_build("granary")
-		build_workshop_button.disabled = not _viewed_city.can_build("workshop")
-		build_market_button.disabled = not _viewed_city.can_build("market")
-		build_walls_button.disabled = not _viewed_city.can_build("walls")
-		build_barracks_button.disabled = not _viewed_city.can_build("barracks")
-		build_archery_range_button.disabled = not _viewed_city.can_build("archery_range")
-		build_stable_button.disabled = not _viewed_city.can_build("stable")
-		build_siege_workshop_button.disabled = not _viewed_city.can_build("siege_workshop")
-		build_arcane_tower_button.disabled = not _viewed_city.can_build("arcane_tower")
-		build_griffin_roost_button.disabled = not _viewed_city.can_build("griffin_roost")
-		build_druid_grove_button.disabled = not _viewed_city.can_build("druid_grove")
-		build_runic_anvil_button.disabled = not _viewed_city.can_build("runic_anvil")
-		build_shadow_crypt_button.disabled = not _viewed_city.can_build("shadow_crypt")
+			var can_start: bool = GameManager.human_player.has_unlocked(kind) and _viewed_city.can_train(kind)
+			# Fase 6: a Lendária cujo ÚNICO impedimento é o slot global aparece DESABILITADA, com o motivo
+			# no tooltip (em vez de sumir sem explicar); qualquer outro bloqueio continua escondendo o botão.
+			# Fase 15 (§15 do pedido): Déficit/Suprimentos insuficientes recebem o MESMO tratamento — nunca
+			# escondidos atrás de "Indisponível" genérico.
+			var slot_reason := "" if can_start else V2LegendarySystem.slot_only_reason(GameManager.human_player, _viewed_city, kind)
+			if slot_reason == "" and not can_start:
+				slot_reason = V2LogisticsRuntime.training_soft_reason(GameManager.human_player, _viewed_city, kind)
+			if slot_reason == "" and not can_start: # Fase 17: slot da Escola ocupado / Mana para iniciar
+				slot_reason = V2ManifestationSystem.training_soft_reason(GameManager.human_player, _viewed_city, kind)
+			_production_buttons[kind].visible = can_start or slot_reason != ""
+			_production_buttons[kind].disabled = slot_reason != ""
 		_update_production_tooltips()
 		_update_building_tooltips()
-	_refresh_worked_tiles_row()
-
-const BUILDING_IDS := [
-	"granary", "workshop", "market", "walls",
-	"barracks", "archery_range", "stable", "siege_workshop", "arcane_tower", "griffin_roost", "druid_grove",
-	"runic_anvil", "shadow_crypt",
-]
+		_refresh_v2_city_actions(_viewed_city)
 
 var _production_buttons: Dictionary = {} # kind -> Button, montado uma vez em _build_production_buttons()
 
@@ -1804,7 +1463,7 @@ var _production_buttons: Dictionary = {} # kind -> Button, montado uma vez em _b
 ## (nao recriado a cada refresh — perderia foco/hover toda hora a toa) e
 ## so tem .disabled/.tooltip_text atualizados depois (ver _on_tile_selected/
 ## _update_production_tooltips). Texto = nome + custo (mesmo formato de
-## _label_building_buttons, pra tile de unidade e tile de predio lerem
+## _building_button_label, pra tile de unidade e tile de predio lerem
 ## como a MESMA familia de card na grade) — um kind novo no roster ja
 ## aparece certo sem editar nenhum texto a mao. custom_minimum_size igual
 ## aos botoes de predio (ver HUD.tscn) pra grade ficar com colunas
@@ -1822,6 +1481,8 @@ func _build_production_buttons() -> void:
 ## Mesmo espirito de _building_button_label, pro roster de tropas.
 func _unit_button_label(kind: String, race: String) -> String:
 	var unit := UnitDatabase.create_unit(kind)
+	if unit.production_mana_cost > 0.0: # Fase 17: Serafim — 100 PP + 60 Mana (a Mana é cobrada na conclusão)
+		return "%s  —  %d PP + %d Mana" % [RaceTheme.unit_name(kind, race), int(unit.production_cost), int(unit.production_mana_cost)]
 	return "%s  —  %d PP" % [RaceTheme.unit_name(kind, race), int(unit.production_cost)]
 
 ## Botao de producao so fica visivel quando a tropa ja esta REALMENTE
@@ -1837,6 +1498,16 @@ func _update_production_tooltips() -> void:
 ## So chamado pra botoes ja VISIVEIS (ver comentario acima), entao nunca
 ## precisa mais explicar pesquisa/predio faltando — so o tempo estimado.
 func _production_lock_reason(kind: String) -> String:
+	if _viewed_city != null and GameManager.human_player != null:
+		var slot_reason := V2LegendarySystem.slot_only_reason(GameManager.human_player, _viewed_city, kind)
+		if slot_reason != "":
+			return slot_reason
+		var supply_reason := V2LogisticsRuntime.training_soft_reason(GameManager.human_player, _viewed_city, kind)
+		if supply_reason != "":
+			return supply_reason
+		var manifestation_reason := V2ManifestationSystem.training_soft_reason(GameManager.human_player, _viewed_city, kind)
+		if manifestation_reason != "":
+			return manifestation_reason
 	return _estimated_turns_tooltip(UnitDatabase.create_unit(kind).production_cost)
 
 ## "custo de producao/tempo" no card (pedido do usuario) — o NOME/custo
@@ -1858,18 +1529,22 @@ func _refresh_production_progress(city: City, hex_grid: HexGrid) -> void:
 	if city == null or city.production_item == "":
 		production_progress_label.visible = false
 		production_progress_bar.visible = false
-		rush_buy_button.visible = false
 		return
 
 	var city_race: String = city.owner_player.civ.race
 	var building_in_progress: BuildingData = BuildingDatabase.get_building(city.production_item)
 	var item_label = RaceTheme.building_name(city.production_item, city_race) if building_in_progress else RaceTheme.unit_name(city.production_item, city_race)
+	# Projetos locais V2 (Fases 13/16) não são prédio nem unidade: nome vem do próprio dado.
+	if V2CityLevelData.is_city_project(city.production_item):
+		item_label = V2CityLevelData.level_name(V2CityLevelData.target_level_for_project(city.production_item))
+	elif V2FortificationData.is_fortification_project(city.production_item):
+		item_label = V2FortificationData.display_name(V2FortificationData.target_level_for_project(city.production_item))
 	var cost := city.production_cost()
 	var stored := city.stored_production
 
 	var turns_text := ""
 	if hex_grid:
-		var production_per_turn = city.collect_yields(hex_grid).production
+		var production_per_turn := V2EconomyRuntime.city_production_income(city)
 		if production_per_turn > 0.0:
 			var turns = ceili(max(cost - stored, 0.0) / production_per_turn)
 			var suffix = "" if turns == 1 else "s"
@@ -1878,25 +1553,14 @@ func _refresh_production_progress(city: City, hex_grid: HexGrid) -> void:
 			turns_text = " (sem producao suficiente pra estimar o tempo)"
 
 	production_progress_label.text = "Produzindo: %s — %d/%d PP%s" % [item_label, int(stored), int(cost), turns_text]
+	# Fase 17: PP completos mas Mana insuficiente — a produção espera sem perder nada.
+	var waiting_mana := city.production_waiting_for_mana()
+	if waiting_mana > 0 and stored >= cost:
+		production_progress_label.text = "Produzindo: %s — %d/%d PP. Aguardando %d Mana." % [item_label, int(stored), int(cost), waiting_mana]
 	production_progress_bar.max_value = max(cost, 0.01)
 	production_progress_bar.value = stored
 	production_progress_label.visible = true
 	production_progress_bar.visible = true
-
-	# Rush-buy (Mercado, ver City.can_rush_buy()) — pedido do usuario: "o
-	# mercado pode servir pra [dar um uso real pro ouro]"/"é uma boa, faça
-	# isso". So aparece com o Mercado ja construido NESTA cidade E so pra
-	# cidade PROPRIA (mesmo gate de "city.owner_player == GameManager.human_
-	# player" usado pra _viewed_city/production_tabs logo abaixo — nao faz
-	# sentido comprar producao de uma cidade inimiga so por ela estar sendo
-	# espiada). Desabilita (mas continua visivel, com o custo no texto) se o
-	# jogador nao tiver ouro suficiente AINDA, em vez de sumir — assim ele
-	# sabe que a opcao existe e quanto falta juntar.
-	rush_buy_button.visible = city.owner_player == GameManager.human_player and city.can_rush_buy()
-	if rush_buy_button.visible:
-		var rush_cost := city.rush_buy_cost(GameManager.hex_grid)
-		rush_buy_button.text = "Comprar com Ouro (%d)" % int(rush_cost)
-		rush_buy_button.disabled = city.owner_player == null or city.owner_player.gold < rush_cost
 
 ## e so o tempo ESTIMADO no ritmo de producao atual da cidade vista, pra
 ## nao ter que fazer conta de cabeca. Arredonda pra cima (ceil): "pronto no
@@ -1905,113 +1569,37 @@ func _estimated_turns_tooltip(cost: float) -> String:
 	var hex_grid = GameManager.hex_grid
 	if hex_grid == null or _viewed_city == null:
 		return ""
-	var production_per_turn = _viewed_city.collect_yields(hex_grid).production
+	var production_per_turn := V2EconomyRuntime.city_production_income(_viewed_city)
 	if production_per_turn <= 0.0:
 		return "Custo: %d PP (sem producao suficiente pra estimar o tempo)" % int(cost)
 	var turns = ceili(cost / production_per_turn)
 	return "Custo: %d PP (~%d turno%s no ritmo atual)" % [int(cost), turns, "" if turns == 1 else "s"]
 
-func _build_button_for(id: String) -> Button:
-	if _additional_building_buttons.has(id):
-		return _additional_building_buttons[id]
-	match id:
-		"granary": return build_granary_button
-		"workshop": return build_workshop_button
-		"market": return build_market_button
-		"walls": return build_walls_button
-		"barracks": return build_barracks_button
-		"archery_range": return build_archery_range_button
-		"stable": return build_stable_button
-		"siege_workshop": return build_siege_workshop_button
-		"arcane_tower": return build_arcane_tower_button
-		"griffin_roost": return build_griffin_roost_button
-		"druid_grove": return build_druid_grove_button
-		"runic_anvil": return build_runic_anvil_button
-		"shadow_crypt": return build_shadow_crypt_button
-	return null
-
 func _update_building_tooltips() -> void:
-	var race: String = GameManager.human_player.civ.race
-	for id in _all_building_ids():
-		_build_button_for(id).tooltip_text = _building_lock_reason(id, race)
+	for id in _building_buttons:
+		_building_buttons[id].tooltip_text = _building_lock_reason(id)
 
-## "" quando o predio ja esta liberado pra construir. Predio de treino
-## (Quartel em diante) exige a mesma tecnologia que desbloqueia a tropa
-## correspondente (City._tech_unlocked_for_building) — pedido do usuario:
-## "so posso construir esses predios especiais quando pesquisar a
-## tecnologia, ai aparece disponivel pra construir". Falta de tecnologia
-## tem prioridade sobre limite de slots na mensagem (pesquisar primeiro e
-## sempre o proximo passo, crescer a cidade nao adianta sem a pesquisa).
-func _building_lock_reason(id: String, race: String) -> String:
-	if _viewed_city.buildings.has(id):
-		return ""
+## "" quando o prédio já está liberado pra construir — senão o motivo, na ordem: pesquisa → prédio
+## pré-requisito → cópias → slots (City Level) → Déficit. Só chamado para botões visíveis (a pesquisa
+## já liberou o prédio), mas a checagem de pesquisa fica por segurança.
+func _building_lock_reason(id: String, _race: String = "") -> String:
 	var building: BuildingData = BuildingDatabase.get_building(id)
-	# Ordem importa desde a arvore de 10 niveis (Roadmap): a tech de
-	# unlocks_building (gate da CONSTRUCAO) vem ANTES da tech de trains_unit
-	# (gate do TREINO) — ver comentario de City._tech_unlocked_for_building.
-	var tech: TechData = TechDatabase.tech_that_unlocks_building(id) if building else null
-	var researched: Dictionary = GameManager.human_player.researched_techs
-	if tech == null and building:
-		tech = TechDatabase.tech_that_unlocks(building.trains_unit)
-	if tech == null and building:
-		tech = MagicDatabase.tech_that_unlocks(building.trains_unit)
-		researched = GameManager.human_player.researched_magic
-	if tech == null and building:
-		tech = MagicDatabase.tech_that_unlocks_building(id)
-		researched = GameManager.human_player.researched_magic
-	if tech and not researched.has(tech.id):
-		return "Requer pesquisar: %s" % RaceTheme.tech_name(tech.id, race)
+	if building == null:
+		return ""
+	if not _viewed_city._research_unlocked_for_building(id):
+		var node := V2ResearchDatabase.node_for_unlock_id(id)
+		return "Requer pesquisa: %s" % (node.display_name if node != null else id)
 	if building.requires_building != "" and not _viewed_city.buildings.has(building.requires_building):
-		return "Requer construir: %s" % RaceTheme.building_name(building.requires_building, race)
-	if building.upgrades_building == "" and _viewed_city.used_building_slots() >= _viewed_city.max_building_slots():
-		return "Sem espaco: %d/%d predios (cidade precisa crescer)" % [_viewed_city.used_building_slots(), _viewed_city.max_building_slots()]
+		return "Requer construir: %s" % RaceTheme.building_name(building.requires_building)
+	if _viewed_city.building_count(id) >= _viewed_city.max_copies_for_building(building):
+		return "Limite de cópias atingido para %s" % V2CityLevelData.level_name(_viewed_city.city_level)
+	if _viewed_city.used_building_slots() >= _viewed_city.max_building_slots():
+		return "Sem espaço: %d/%d prédios (evolua a cidade de nível)" % [_viewed_city.used_building_slots(), _viewed_city.max_building_slots()]
+	# Fase 15 (§43): prédio com manutenção não pode ser INICIADO em Déficit — checado por ÚLTIMO.
+	var deficit_reason := _viewed_city.deficit_build_reason(id)
+	if deficit_reason != "":
+		return deficit_reason
 	return _estimated_turns_tooltip(building.production_cost)
-
-## Um botao por vizinho valido (nem oceano) da cidade vista, mostrando
-## terreno + rendimento; toggle_mode reflete se aquele cidadao ja esta
-## trabalhando ali. So aparece pra cidade PROPRIA (mesma regra do
-## production_tabs) — nao da pra microgerenciar cidade alheia.
-func _refresh_worked_tiles_row() -> void:
-	for child in worked_tiles_row.get_children():
-		child.queue_free()
-
-	if _viewed_city == null:
-		worked_tiles_label.visible = false
-		worked_tiles_scroll.visible = false
-		return
-
-	var hex_grid = GameManager.hex_grid
-	worked_tiles_label.visible = true
-	worked_tiles_scroll.visible = true
-	worked_tiles_label.text = "Tiles trabalhados: %d/%d (clique pra trocar)" % [
-		_viewed_city.worked_tiles.size(), _viewed_city.population
-	]
-
-	for n in hex_grid.get_neighbors(_viewed_city.coord):
-		var data: HexTileData = hex_grid.get_tile(n)
-		if data == null or data.blocks_land_units():
-			continue
-		var btn := Button.new()
-		btn.toggle_mode = true
-		btn.button_pressed = n in _viewed_city.worked_tiles
-		var label = data.display_name
-		if data.resource != "":
-			label += " (%s)" % ResourceDatabase.display_name(data.resource)
-		# Rendimento EFETIVO (com bonus de tecnologia/recurso ja somado) —
-		# mostrar so o "cru" do terreno confundiria o jogador sobre por que
-		# a cidade rende mais do que os numeros aqui sugerem. Simbolos em
-		# vez da notacao crua "F2 P0 G1" (pedido do usuario: "confusa e
-		# poluida") — mesma info, leitura visual mais rapida.
-		var y = _viewed_city.effective_tile_yield(data)
-		btn.text = "%s\n🌾%d ⚙️%d 🪙%d" % [label, y.food, y.production, y.gold]
-		btn.pressed.connect(_on_worked_tile_pressed.bind(n))
-		worked_tiles_row.add_child(btn)
-
-func _on_worked_tile_pressed(coord: Vector2i) -> void:
-	if _viewed_city == null:
-		return
-	_viewed_city.toggle_worked_tile(coord, GameManager.hex_grid)
-	_refresh_viewed_city()
 
 ## UnitPanel agora mora na MESMA vizinhanca que TileInfoPanel, ao lado do
 ## ActionBar (pedido do usuario: "ao clicar em tropas, elas fiquem ali do
@@ -2028,24 +1616,7 @@ func _on_unit_selected(unit: Unit) -> void:
 		unit_panel.visible = false
 		return
 	unit_panel.visible = true
-	var spell_actions := unit_panel.get_node_or_null("UnitBox/SpellActions")
-	if spell_actions:
-		spell_actions.get_parent().remove_child(spell_actions)
-		spell_actions.queue_free()
-	if unit.unit_data.magic_school != "" and unit.owner_player == GameManager.human_player:
-		spell_actions = HFlowContainer.new()
-		spell_actions.name = "SpellActions"
-		unit_panel.get_node("UnitBox").add_child(spell_actions)
-		for name in MagicDatabase.unlocked_spells_for(unit.owner_player.researched_magic):
-			var spell := SpellDatabase.get_spell(name)
-			if spell == null or spell.school != unit.unit_data.magic_school or spell.category == "ritual":
-				continue
-			var button := Button.new()
-			button.text = name
-			button.tooltip_text = spell.description
-			button.disabled = not MagicRuntime.eligible_caster(unit, spell) or unit.owner_player.mana < spell.mana_cost or GameManager.is_turn_processing
-			button.pressed.connect(func(): SelectionManager.start_spell_targeting(name, unit))
-			spell_actions.add_child(button)
+	_refresh_v2_unit_actions(unit)
 	var owner_race: String = unit.owner_player.civ.race if unit.owner_player else "human"
 	var text = "%s (%s)\nHP %d/%d | Ataque %.1f | Defesa %.1f | Movimento %.1f/%.1f" % [
 		RaceTheme.unit_name(unit.unit_data.visual_kind, owner_race), unit.veterancy_title(), int(unit.hp), int(unit.unit_data.max_hp),
@@ -2065,15 +1636,40 @@ func _on_unit_selected(unit: Unit) -> void:
 		text += "\nEm marcha ate (%d, %d)" % [unit.move_order_target.x, unit.move_order_target.y]
 	if SelectionManager.move_mode:
 		text += "\n» Clique no mapa pra mover «"
+	if SelectionManager.technique_targeting_id != "" and SelectionManager.technique_targeting_unit == unit:
+		var targeting := V2DoctrineTechniqueDatabase.get_technique(SelectionManager.technique_targeting_id)
+		text += "\n» Escolha o %s de %s (ESC cancela) «" % ["tile" if targeting.target_mode == V2DoctrineTechniqueData.TargetMode.TILE else "alvo", targeting.display_name]
+	if SelectionManager.v2_spell_targeting_id != "" and SelectionManager.v2_spell_targeting_unit == unit:
+		text += "\n» %s «" % V2MagicRuntime.targeting_hint(V2SpellDatabase.get_spell(SelectionManager.v2_spell_targeting_id)) # Fase 17
+	if not unit.unit_data.can_basic_attack:
+		text += "\nSem ataque básico." # Fase 17: conjurador (Clérigo/Serafim) — nada induz a tentar atacar
+	if unit.unit_data.spell_damage_multiplier > 1.0:
+		var spell_passive := unit.unit_data.spell_damage_multiplier_name if unit.unit_data.spell_damage_multiplier_name != "" else "Potência Mágica"
+		text += "\nPassiva da Manifestação — %s\n+%d%% de dano de feitiços." % [spell_passive, int(round((unit.unit_data.spell_damage_multiplier - 1.0) * 100.0))]
+	if unit.unit_data.spell_cooldown_reduction > 0:
+		var cooldown_passive := unit.unit_data.spell_cooldown_reduction_name if unit.unit_data.spell_cooldown_reduction_name != "" else "Fluxo Mágico"
+		text += "\nPassiva da Manifestação — %s\n-%d turno(s) na recarga aplicada por feitiços." % [cooldown_passive, unit.unit_data.spell_cooldown_reduction]
+	if unit.unit_data.environmental_zone_duration_bonus > 0:
+		var environmental_passive := unit.unit_data.environmental_zone_duration_bonus_name if unit.unit_data.environmental_zone_duration_bonus_name != "" else "Domínio Ambiental"
+		text += "\nPassiva da Manifestação — %s\n+%d rodada(s) na duração das zonas ambientais criadas." % [environmental_passive, unit.unit_data.environmental_zone_duration_bonus]
+	# Fase 19 — retinues: passiva de capacidade por dado (Soberania dos Mortos), estado SEM COMANDO e a seção compacta
+	# "Comando <Escola>: usado / capacidade" para comandante OU retinue. Tudo derivado (V2RetinueSystem).
+	if unit.unit_data.retinue_command_capacity_name != "" and unit.unit_data.is_retinue_commander():
+		var passive_owner := "Passiva da Manifestação" if V2ManifestationSystem.is_manifestation_unit(unit) else "Passiva"
+		text += "\n%s — %s\nConcede +%d de capacidade de %s." % [passive_owner, unit.unit_data.retinue_command_capacity_name, unit.unit_data.retinue_command_capacity, V2MagicContent.command_label(unit.unit_data.v2_magic_school)]
+	# Fase 20 — alcance extra de feitiços por dado (Domínio Natural); o botão mostra o alcance efetivo no tooltip.
+	if unit.unit_data.spell_range_bonus > 0 and unit.unit_data.is_v2_caster():
+		var range_passive := unit.unit_data.spell_range_bonus_name if unit.unit_data.spell_range_bonus_name != "" else "Alcance Mágico"
+		var range_owner := "Passiva da Manifestação" if V2ManifestationSystem.is_manifestation_unit(unit) else "Passiva"
+		text += "\n%s — %s\n+%d alcance de feitiços." % [range_owner, range_passive, unit.unit_data.spell_range_bonus]
+	if not unit.can_receive_orders():
+		text += "\nSEM COMANDO — não pode receber ordens."
+	for command_line in V2RetinueSystem.summary_lines(unit):
+		text += "\n" + command_line
 	unit_info_label.text = text
-	if unit.ritual_id != "":
-		unit_info_label.text += "\nCanalizando ritual: movimento e feitiços indisponíveis."
-	var autonomous := unit.unit_data.visual_kind in ["elder_lich", "archdemon"]
-	var orders_locked := unit.ritual_id != "" or autonomous or GameManager.is_turn_processing
-	if autonomous:
-		unit_info_label.text += "\nCriatura autônoma: avança ao objetivo do ritual e comanda suas invocações."
-	if unit.unit_data.mana_upkeep > 0:
-		unit_info_label.text += "\nManutenção: %.0f mana/turno" % unit.unit_data.mana_upkeep
+	if V2LegendarySystem.is_legendary_unit(unit):
+		unit_info_label.text = "LENDÁRIO\n" + unit_info_label.text # Unidade Lendária (Fase 6)
+	var orders_locked := GameManager.is_turn_processing or not unit.can_receive_orders() # Fase 19: retinue sem comando
 	# Task 23 -- mesmos fatos do painel de inspecao: classe/escola, efeitos
 	# ativos, acao/recarga do conjurador e o que mais existe neste tile
 	# (terreno continua consultavel mesmo com a unidade em cima).
@@ -2082,6 +1678,31 @@ func _on_unit_selected(unit: Unit) -> void:
 		unit_info_label.text += "\n" + status_line
 	for caster_line in TileInspector.caster_lines(unit):
 		unit_info_label.text += "\n" + caster_line
+	for environment_line in V2EnvironmentalZoneSystem.unit_lines(unit, GameManager.hex_grid):
+		unit_info_label.text += "\n" + environment_line
+	if unit.owner_player == GameManager.human_player:
+		for passive_line in V2TechniqueRuntime.passive_lines(unit): # Técnicas passivas V2: só texto, sem botão
+			unit_info_label.text += "\n" + passive_line
+		for aura_line in V2UnitAuras.lines(unit): # aura intrínseca (Comando Defensivo do Campeão)
+			unit_info_label.text += "\n" + aura_line
+		for execution_line in UnitAbilities.intrinsic_attack_lines(unit): # passivas intrínsecas de ataque (Execução, Caçada Lendária)
+			unit_info_label.text += "\n" + execution_line
+		for artillery_line in UnitAbilities.artillery_march_lines(unit): # Artilharia Andante (Colosso de Cerco, Fase 11)
+			unit_info_label.text += "\n" + artillery_line
+		if UnitAbilities.flight_text(unit.unit_data) != "": # perfil de voo tático (por dado)
+			unit_info_label.text += "\n" + UnitAbilities.flight_text(unit.unit_data)
+		if UnitAbilities.infiltration_text(unit.unit_data) != "": # perfil de infiltração / Passo Sombrio (por dado)
+			unit_info_label.text += "\n" + UnitAbilities.infiltration_text(unit.unit_data)
+		if UnitAbilities.ranged_vulnerability_text(unit.unit_data) != "": # counter por dado (vulnerabilidade a ataques à distância)
+			unit_info_label.text += "\n" + UnitAbilities.ranged_vulnerability_text(unit.unit_data)
+		# Aetherlands V2, Fase 15 (§23 do pedido): Suprimentos + Tensão Logística no painel da
+		# própria unidade -- só pra unidade com custo (civis e o Guarda inicial nunca mostram a linha).
+		if unit.unit_data.supply_cost > 0:
+			unit_info_label.text += "\nSuprimentos: %d" % unit.unit_data.supply_cost
+			if V2LogisticsRuntime.is_logistically_strained(unit.owner_player):
+				unit_info_label.text += "\nTensão Logística: -15% Ataque / Defesa."
+		if V2ConstructorRuntime.is_builder_unit(unit): # §80 do pedido: cargas restantes do Construtor
+			unit_info_label.text += "\nCargas restantes: %d" % unit.work_charges_remaining
 	if GameManager.hex_grid != null:
 		var here := TileInspector.inspect(GameManager.hex_grid, unit.coord, GameManager.human_player)
 		unit_info_label.text += "\nNeste tile: %s" % TileInspector.summary_line(here)
@@ -2101,25 +1722,291 @@ func _on_unit_selected(unit: Unit) -> void:
 	# recusa a acao, isto e so a segunda camada/feedback visual).
 	fortify_button.button_pressed = unit.fortified
 	move_button.disabled = orders_locked
+	move_button.tooltip_text = unit.order_block_reason() # Fase 19: "Hoste sem comando necromântico." (vazio para o resto)
 	fortify_button.disabled = unit.embarked or orders_locked
 	explore_button.button_pressed = unit.exploring
 	explore_button.disabled = unit.embarked or orders_locked
-	# Embarcar (Roadmap 2.0 Parte 1, acesso naval) — so aparece pra unidade
-	# terrestre com Navegação ja pesquisada; desabilitado (mas visivel, pra
-	# o jogador entender que existe) fora de um tile costeiro ou ja
-	# embarcada (toggle e mao unica, ver SelectionManager.
-	# toggle_embark_selected — desembarque e sempre automatico).
-	var owner_player := unit.owner_player
-	embark_button.visible = not unit.unit_data.flies and owner_player != null and TechDatabase.is_navigation_researched(owner_player.researched_techs)
-	if embark_button.visible:
-		embark_button.button_pressed = unit.embarked
-		embark_button.disabled = orders_locked or unit.embarked or (GameManager.hex_grid and not GameManager.hex_grid.is_coastal_tile(unit.coord))
+	# Embarcar foi desligado na Fase 25 (a trava era a tecnologia V1 "Navegação"; a navegação V2 é uma
+	# decisão futura). Uma unidade que já estava embarcada num save continua se movendo e desembarca
+	# sozinha ao chegar em terra (HexGrid.move_unit).
+
+## Aetherlands V2 (Fase 13): botão de upgrade urbano ("Evoluir para Cidade N — X PP + Y Ouro") e
+## de anexação ("Anexar território (N)") no painel de cidade — mesmo padrão de
+## _refresh_v2_unit_actions logo abaixo (container dinâmico, sem mexer no HUD.tscn). O upgrade é
+## um PROJETO LOCAL (compete pela mesma produção normal, ver City.gd) — clicar só chama
+## set_production, igual qualquer prédio/unidade; Cidade IV não mostra botão de upgrade (§46).
+func _refresh_v2_city_actions(city: City) -> void:
+	var box := tile_info_panel.get_node("TileInfoBox")
+	var old := box.get_node_or_null("V2CityActions")
+	if old:
+		box.remove_child(old)
+		old.queue_free()
+	if city == null:
+		return
+	var row := HFlowContainer.new()
+	row.name = "V2CityActions"
+	box.add_child(row)
+
+	var next_level := V2CityLevelData.next_level(city.city_level)
+	if next_level > 0:
+		var upgrade_button := Button.new()
+		upgrade_button.name = "CityUpgradeButton"
+		var pp := int(V2CityLevelData.upgrade_production_cost(next_level))
+		var gold_cost := int(V2CityLevelData.upgrade_gold_cost(next_level))
+		upgrade_button.text = "Evoluir para %s — %d PP + %d Ouro" % [V2CityLevelData.level_name(next_level), pp, gold_cost]
+		if city.production_item == V2CityLevelData.project_id_for_level(next_level):
+			var waiting := city.city_upgrade_waiting_for_gold()
+			if waiting > 0:
+				upgrade_button.text = "Aguardando %d Ouro." % waiting
+			else:
+				upgrade_button.text += " (em progresso)"
+		var reason := city.city_upgrade_unavailable_reason()
+		upgrade_button.tooltip_text = "Projeto local: usa a produção normal da cidade." if reason == "" else reason
+		upgrade_button.disabled = reason != "" or GameManager.is_turn_processing
+		upgrade_button.pressed.connect(_on_city_upgrade_pressed.bind(city, next_level))
+		row.add_child(upgrade_button)
+
+	# Aetherlands V2, Fase 16 — próximo nível de Fortificação (projeto local, mesma fila) e o Ataque
+	# da Cidade (ação explícita, uma vez por turno). Números/regras todos de V2FortificationData/
+	# City/CityDefense — a HUD só formata.
+	var next_fortification := V2FortificationData.next_level(city.fortification_level)
+	if next_fortification > 0:
+		var fort_button := Button.new()
+		fort_button.name = "FortificationButton"
+		fort_button.text = "Construir %s — %d PP" % [V2FortificationData.display_name(next_fortification), int(V2FortificationData.production_cost(next_fortification))]
+		if city.production_item == V2FortificationData.project_id(next_fortification):
+			fort_button.text += " (em progresso)"
+		var fort_reason := city.fortification_unavailable_reason()
+		fort_button.tooltip_text = ("Projeto local: usa a produção normal da cidade. Manutenção: %d Ouro/turno." % int(V2FortificationData.gold_upkeep(next_fortification))) if fort_reason == "" else fort_reason
+		fort_button.disabled = fort_reason != "" or GameManager.is_turn_processing
+		fort_button.pressed.connect(_on_fortification_pressed.bind(city, next_fortification))
+		row.add_child(fort_button)
+	if city.has_fortification():
+		var attack_button := Button.new()
+		attack_button.name = "CityAttackButton"
+		var attack_reason := CityDefense.city_attack_unavailable_reason(city)
+		var used := city.last_city_attack_turn == TurnManager.turn_number
+		attack_button.text = "Ataque da Cidade — Usado neste turno" if used else "Ataque da Cidade"
+		if attack_reason == "" and CityDefense.city_attack_targets(city, GameManager.hex_grid).is_empty():
+			attack_reason = "Nenhum alvo hostil visível ao alcance."
+		attack_button.tooltip_text = ("Poder %s | Alcance %d. Sem revide." % [TileInspector._format_power(CityDefense.city_attack_power(city)), CityDefense.city_attack_range(city)]) if attack_reason == "" else attack_reason
+		attack_button.disabled = attack_reason != "" or GameManager.is_turn_processing
+		attack_button.pressed.connect(_on_city_attack_pressed.bind(city))
+		row.add_child(attack_button)
+
+	var annex_button := Button.new()
+	annex_button.name = "AnnexButton"
+	annex_button.text = "Anexar território (%d)" % city.annexation_points
+	annex_button.disabled = city.annexation_points <= 0 or GameManager.is_turn_processing
+	annex_button.tooltip_text = "Escolha um tile de território no mapa." if city.annexation_points > 0 else "Sem Pontos de Anexação."
+	annex_button.pressed.connect(_on_annex_pressed.bind(city))
+	row.add_child(annex_button)
+
+	# Fase 23 — ação estratégica paralela à fila de produção. Antes do
+	# capstone a cidade não ganha ruído visual algum.
+	var player := city.owner_player
+	if player == GameManager.human_player and V2TranscendenceSystem.has_access(player):
+		if V2TranscendenceSystem.has_active_ritual(player):
+			var site := V2TranscendenceSystem.ritual_site(player)
+			var rounds := V2TranscendenceSystem.ritual_rounds_remaining(player)
+			var status := Label.new()
+			status.name = "TranscendenceRitualStatus"
+			if site == city:
+				status.text = "Ritual de Transcendência — %d rodadas restantes · ATIVO" % rounds
+			else:
+				status.text = "Ritual ativo em %s — %d rodadas restantes." % [site.city_name if site else "outro local", rounds]
+			row.add_child(status)
+			if site == city:
+				var cancel_button := Button.new()
+				cancel_button.name = "CancelTranscendenceRitualButton"
+				cancel_button.text = "Interromper Ritual"
+				cancel_button.tooltip_text = "Interrompe o Ritual. O progresso e a Mana não serão devolvidos."
+				cancel_button.disabled = GameManager.is_turn_processing
+				cancel_button.pressed.connect(_on_cancel_transcendence_pressed.bind(player))
+				row.add_child(cancel_button)
+		else:
+			var ritual_button := Button.new()
+			ritual_button.name = "StartTranscendenceRitualButton"
+			ritual_button.text = "Iniciar Ritual de Transcendência — %d Mana" % int(V2TranscendenceSystem.MANA_COST)
+			var ritual_reason := V2TranscendenceSystem.start_unavailable_reason(player, city)
+			ritual_button.disabled = ritual_reason != "" or GameManager.is_turn_processing
+			ritual_button.tooltip_text = "Ritual Final público: dura %d rodadas e pode ser interrompido. A Mana não será devolvida." % V2TranscendenceSystem.ROUNDS_REQUIRED if ritual_reason == "" else ritual_reason
+			ritual_button.pressed.connect(_on_start_transcendence_pressed.bind(player, city))
+			row.add_child(ritual_button)
+
+func _on_city_upgrade_pressed(city: City, target_level: int) -> void:
+	if city == null or not is_instance_valid(city) or V2CityLevelData.next_level(city.city_level) != target_level:
+		return
+	if not city.can_start_city_upgrade():
+		return
+	city.set_production(V2CityLevelData.project_id_for_level(target_level))
+	if GameManager.hex_grid:
+		GameManager.hex_grid.refresh_construction_markers()
+	_refresh_viewed_city()
+
+func _on_fortification_pressed(city: City, target_level: int) -> void:
+	if city == null or not is_instance_valid(city) or V2FortificationData.next_level(city.fortification_level) != target_level:
+		return
+	if not city.can_start_fortification():
+		return
+	city.set_production(V2FortificationData.project_id(target_level))
+	_refresh_viewed_city()
+
+func _on_city_attack_pressed(city: City) -> void:
+	if city == null or not is_instance_valid(city):
+		return
+	SelectionManager.start_city_attack_targeting(city)
+
+func _on_annex_pressed(city: City) -> void:
+	if city == null or not is_instance_valid(city):
+		return
+	SelectionManager.start_city_annexation(city)
+
+func _on_start_transcendence_pressed(player: PlayerData, city: City) -> void:
+	if V2TranscendenceSystem.start_ritual(player, city):
+		_refresh_viewed_city()
+		_refresh_stats()
+
+func _on_cancel_transcendence_pressed(player: PlayerData) -> void:
+	if V2TranscendenceSystem.cancel_ritual(player):
+		_refresh_viewed_city()
+
+func _on_v2_transcendence_changed(_player: PlayerData, _site_coord: Vector2i, _remaining: int) -> void:
+	_refresh_viewed_city()
+	if victory_panel.visible:
+		_refresh_victory_panel()
+
+func _on_v2_transcendence_interrupted(_player: PlayerData, _site_coord: Vector2i, _reason: String) -> void:
+	_refresh_viewed_city()
+	if victory_panel.visible:
+		_refresh_victory_panel()
+
+## Aetherlands V2 (Fase 4): acoes de Doutrina no painel da unidade — mesmo padrao do
+## SpellActions acima (um container dinamico refeito a cada selecao, sem mexer no
+## HUD.tscn). Uma linha com (a) um botao por Tecnica Militar que a unidade PODE ter
+## (linha da Doutrina + no concluido, ver V2TechniqueRuntime.techniques_for_unit) —
+## desabilitado com o motivo no tooltip quando em recarga/sem acao — e (b) o botao
+## "Evoluir para X — N Ouro" (V2UnitUpgrade) quando a civilizacao ja pesquisou a forma
+## seguinte; o resto (cidade, Salao, Ouro, acao) desabilita com o motivo.
+func _refresh_v2_unit_actions(unit: Unit) -> void:
+	var box := unit_panel.get_node("UnitBox")
+	var old := box.get_node_or_null("V2Actions")
+	if old:
+		box.remove_child(old)
+		old.queue_free()
+	if unit.owner_player == null or unit.owner_player != GameManager.human_player:
+		return
+	var techniques := V2TechniqueRuntime.active_techniques_for_unit(unit) # passivas não têm botão
+	var target := V2UnitUpgrade.get_upgrade_target(unit)
+	var show_upgrade := target != "" and V2UnlockSystem.is_unlocked(unit.owner_player, target)
+	var show_improve := V2ConstructorRuntime.is_builder_unit(unit)
+	var show_magic := V2MagicRuntime.is_v2_caster(unit) # Fase 17: seção "Magia — <Escola>" (repertório derivado da pesquisa)
+	var show_dissolve := V2RetinueSystem.is_retinue_unit(unit) # Fase 19: só retinue ganha "Dissolver Hoste"
+	var show_portal := V2PortalSystem.is_owned_endpoint(unit, GameManager.hex_grid) # Fase 21: ação explícita, nunca pathfinding
+	if techniques.is_empty() and not show_upgrade and not show_improve and not show_magic and not show_dissolve and not show_portal:
+		return
+	var row := HFlowContainer.new()
+	row.name = "V2Actions"
+	box.add_child(row)
+	if show_magic:
+		var header := Label.new()
+		header.name = "MagicHeader"
+		header.text = "Magia — %s" % V2MagicContent.school_title(unit.unit_data.v2_magic_school)
+		row.add_child(header)
+		var spells := V2MagicRuntime.spells_for_unit(unit) # ordem N4..N7, nunca a de Dictionary
+		if spells.is_empty():
+			var none := Label.new()
+			none.name = "MagicEmpty"
+			none.text = "Nenhum feitiço pesquisado."
+			row.add_child(none)
+		for spell in spells:
+			var spell_button := Button.new()
+			spell_button.name = "Spell_" + spell.id
+			spell_button.text = V2MagicRuntime.button_text(unit, spell)
+			var spell_reason := V2MagicRuntime.unavailable_reason(unit, spell.id)
+			var effect := V2SpellDatabase.effect_text(spell)
+			var command_line := V2MagicRuntime.command_tooltip_line(unit, spell) # Fase 19: "Comando disponível: N." (só invocação)
+			if command_line != "":
+				effect += "\n" + command_line
+			if unit.unit_data.spell_range_bonus != 0: # Fase 20: o texto do dado mostra o alcance BASE; aqui o efetivo
+				effect += "\nAlcance efetivo: %d." % V2MagicRuntime.effective_range(unit, spell)
+			spell_button.tooltip_text = effect if spell_reason == "" else "%s\n%s" % [effect, spell_reason]
+			spell_button.disabled = spell_reason != "" or GameManager.is_turn_processing
+			spell_button.pressed.connect(SelectionManager.use_v2_spell_selected.bind(spell.id))
+			row.add_child(spell_button)
+	if show_portal:
+		var portal_button := Button.new()
+		portal_button.name = "TraversePortalButton"
+		var portal_reason := V2PortalSystem.traversal_reason(unit, GameManager.hex_grid)
+		portal_button.text = "Atravessar Portal" if portal_reason == "" else "Atravessar Portal — %s" % portal_reason.trim_suffix(".").to_lower()
+		portal_button.tooltip_text = "Teleporta esta unidade pela saída pareada e consome todo o movimento." if portal_reason == "" else portal_reason
+		portal_button.disabled = portal_reason != "" or GameManager.is_turn_processing
+		portal_button.pressed.connect(SelectionManager.traverse_selected_portal)
+		row.add_child(portal_button)
+	if show_dissolve:
+		var dissolve_button := Button.new()
+		dissolve_button.name = "DissolveRetinueButton"
+		dissolve_button.text = "Dissolver Hoste"
+		dissolve_button.tooltip_text = "Remove esta Hoste e libera sua capacidade de Comando. Não concede recompensa."
+		dissolve_button.disabled = GameManager.is_turn_processing # vale mesmo SEM COMANDO (é como se libera um overload)
+		dissolve_button.pressed.connect(SelectionManager.dissolve_selected_retinue)
+		row.add_child(dissolve_button)
+	if show_improve:
+		var improve_button := Button.new()
+		improve_button.name = "ImproveResourceButton"
+		var tile := GameManager.hex_grid.get_tile(unit.coord) if GameManager.hex_grid else null
+		var resource_id := tile.resource if tile else ""
+		var improve_reason := V2ConstructorRuntime.unavailable_reason(unit, GameManager.hex_grid)
+		if V2ResourceImprovementData.has_resource(resource_id):
+			improve_button.text = "Construir %s" % V2ResourceImprovementData.display_name_for_resource(resource_id)
+		else:
+			improve_button.text = "Melhorar recurso"
+		improve_button.tooltip_text = "Instantâneo: consome uma carga e a ação. Sem Ouro/Mana/Suprimentos." if improve_reason == "" else improve_reason
+		improve_button.disabled = improve_reason != "" or GameManager.is_turn_processing
+		improve_button.pressed.connect(SelectionManager.improve_resource_with_selected)
+		row.add_child(improve_button)
+	for technique in techniques:
+		var button := Button.new()
+		button.name = "Technique_" + technique.id
+		var remaining := V2TechniqueRuntime.cooldown_remaining(unit, technique.id)
+		# Técnica de ATAQUE mostra o multiplicador no próprio botão ("Golpe Poderoso ×1.6"); as demais, só o nome.
+		var suffix := V2DoctrineTechniqueDatabase.button_suffix(technique)
+		var label := technique.display_name if suffix == "" else "%s %s" % [technique.display_name, suffix]
+		if V2TechniqueRuntime.is_active(unit, technique.id):
+			button.text = "%s — Ativa" % technique.display_name
+		elif remaining > 0:
+			button.text = "%s (recarga %d)" % [label, remaining]
+		else:
+			button.text = label
+		var reason := V2TechniqueRuntime.unavailable_reason(unit, technique.id)
+		button.tooltip_text = technique.description if reason == "" else "%s\n%s" % [technique.description, reason]
+		button.disabled = reason != "" or GameManager.is_turn_processing
+		button.pressed.connect(SelectionManager.use_technique_selected.bind(technique.id))
+		row.add_child(button)
+	if show_upgrade:
+		var upgrade_button := Button.new()
+		upgrade_button.name = "UpgradeButton"
+		upgrade_button.text = "Evoluir para %s — %d Ouro" % [V2UnitLine.node_for(target).display_name, int(ceil(V2UnitUpgrade.upgrade_cost(unit)))]
+		var upgrade_reason := V2UnitUpgrade.unavailable_upgrade_reason(unit.owner_player, unit, GameManager.hex_grid)
+		upgrade_button.tooltip_text = "Moderniza esta unidade na cidade (instantâneo; mantém veterania, HP proporcional e recargas)." if upgrade_reason == "" else upgrade_reason
+		upgrade_button.disabled = upgrade_reason != "" or GameManager.is_turn_processing
+		upgrade_button.pressed.connect(SelectionManager.upgrade_selected)
+		row.add_child(upgrade_button)
+
+## Recarrega o painel da unidade selecionada quando algo do MUNDO mudou o estado dela
+## (virada de turno: recarga/expiracao das Tecnicas; Ouro/visao). So se o painel ja esta
+## visivel (a cidade guarnecida "toma" a area, ver _on_unit_selected).
+func _refresh_selected_unit_panel() -> void:
+	var unit: Unit = SelectionManager.selected_unit
+	if unit == null or not is_instance_valid(unit) or not unit_panel.visible or unit.hp <= 0.0:
+		return
+	_on_unit_selected(unit)
 
 ## Regressao: o painel de fim de jogo podia aparecer POR CIMA de um
-## overlay (Tecnologia/Diplomacia/Grimorio) que o jogador tivesse deixado
+## overlay (Pesquisa/Diplomacia/Vitória) que o jogador tivesse deixado
 ## aberto — _close_overlay_panels() agora roda ANTES de mostrar este, e os
 ## botoes que abririam outro overlay ficam desabilitados (senao dava pra
-## "fechar" a tela de fim de jogo clicando em Tecnologia sem nenhum jeito
+## "fechar" a tela de fim de jogo clicando em Pesquisa sem nenhum jeito
 ## de trazer ela de volta, ja que so o restart limpa esse estado).
 func _on_game_over(victory: bool) -> void:
 	# _show_overlay ja fecha qualquer overlay aberto e esconde minimapa/
@@ -2127,11 +2014,9 @@ func _on_game_over(victory: bool) -> void:
 	# overlays agora) — sem precisar duplicar essa logica aqui.
 	_show_overlay(game_over_panel)
 	end_turn_button.disabled = true
-	tech_button.disabled = true
-	magic_button.disabled = true
+	research_button.disabled = true
 	diplomacy_button.disabled = true
 	victory_button.disabled = true
-	grimoire_button.disabled = true
 
 	var summary = ""
 	if GameManager.human_player:
@@ -2140,10 +2025,9 @@ func _on_game_over(victory: bool) -> void:
 			GameManager.human_player.units.size(), int(GameManager.human_player.gold)
 		]
 
-	# Roadmap "Fase F" F6 -- texto generico de proposito (nao mais "todos os
-	## reinos rivais foram derrotados"/"seu reino caiu"): desde que Territorial
-	## e Arcana existem, um fim de jogo pode nao ter eliminacao nenhuma
-	## envolvida, e este handler nao sabe QUAL vitoria aconteceu (so um bool
+	# Roadmap "Fase F" F6 -- texto generico de proposito: um fim de jogo (Supremacia Militar,
+	## Transcendência) pode nao ter eliminacao nenhuma envolvida, e este handler nao sabe QUAL
+	## vitoria aconteceu (so um bool
 	## human-perspective, ver EventBus.game_over) -- o veredito ESPECIFICO
 	## (quem, como) fica com _on_victory_achieved logo abaixo, que roda em
 	## seguida pra toda vitoria de verdade.

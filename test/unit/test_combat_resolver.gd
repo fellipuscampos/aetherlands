@@ -287,20 +287,19 @@ func test_mage_ignores_terrain_defense_bonus():
 ## Muralhas (BuildingData.defense_bonus) somam ao multiplicador de defesa
 ## de uma unidade guarnicionada DENTRO da propria cidade — mesmo mecanismo
 ## do bonus de terreno, so que vindo de um predio em vez do tile.
+## Fase 16: a comparação é a MESMA cidade sem e com Muralhas I (+10%) — o bônus V1 (+50%) era
+## grande o bastante pra superar até o terreno de colina do caso "sem cidade", o V2 não precisa.
 func test_walls_building_reduces_damage_to_garrisoned_defender():
-	var attacker_no_walls = _make_unit("warrior", human, Vector2i(0, 0))
-	var defender_no_walls = _make_unit("warrior", rival, Vector2i(1, 0)) # HILLS, sem cidade
-	var result_without_walls = CombatResolver.predict(attacker_no_walls, defender_no_walls, hex_grid)
-
 	var city := City.new()
 	city.owner_player = rival
 	city.coord = Vector2i(1, 0)
-	city.buildings["walls"] = true
 	hex_grid.cities_by_coord[Vector2i(1, 0)] = city
 
-	var attacker_with_walls = _make_unit("warrior", human, Vector2i(2, 0))
-	var defender_with_walls = _make_unit("warrior", rival, Vector2i(1, 0))
-	var result_with_walls = CombatResolver.predict(attacker_with_walls, defender_with_walls, hex_grid)
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var defender = _make_unit("warrior", rival, Vector2i(1, 0))
+	var result_without_walls = CombatResolver.predict(attacker, defender, hex_grid)
+	city.fortification_level = 1 # a defesa urbana vem da Fortificação V2
+	var result_with_walls = CombatResolver.predict(attacker, defender, hex_grid)
 
 	assert_lt(
 		result_with_walls.damage_to_defender, result_without_walls.damage_to_defender,
@@ -314,7 +313,7 @@ func test_mage_ignores_walls_defense_bonus():
 	var city := City.new()
 	city.owner_player = rival
 	city.coord = Vector2i(1, 0)
-	city.buildings["walls"] = true
+	city.fortification_level = 1 # Fase 16: a defesa urbana vem da Fortificação V2
 	hex_grid.cities_by_coord[Vector2i(1, 0)] = city
 
 	var mage = _make_unit("mage", human, Vector2i(0, 0))
@@ -389,14 +388,15 @@ func test_defeating_monster_lair_grants_gold_reward():
 ## sai reduzido por BuildingDatabase.defense_bonus_for({"walls":true})
 ## (0.5) ANTES de descontar do escudo — mesmo bonus que uma unidade
 ## guarnicionada ja recebia via predict(), agora tambem se aplica a uma
-## cidade indefesa. 4.0 / (1+0.5) = 2.67.
+## cidade indefesa. Fase 16 (V2): o bônus vem de Muralhas I (+10%, escudo 8):
+## 4.0 / 1.1 = 3.64.
 func test_attacking_undefended_city_with_walls_damages_shield_before_hp():
 	var attacker = _make_unit("warrior", human, Vector2i(0, 0)) # attack 4.0
 	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
-	city.buildings["walls"] = true
+	city.fortification_level = 1
 	city.shield = city.max_shield()
 	var hp_before = city.hp
-	var expected_damage = 4.0 / 1.5 # attack / (1 + defense_bonus_for walls)
+	var expected_damage = 4.0 / 1.1 # attack / (1 + defesa urbana de Muralhas I)
 
 	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
 
@@ -407,10 +407,10 @@ func test_attacking_undefended_city_with_walls_damages_shield_before_hp():
 func test_attacking_undefended_city_overflow_damage_spills_into_hp():
 	var attacker = _make_unit("warrior", human, Vector2i(0, 0)) # attack 4.0
 	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
-	city.buildings["walls"] = true
+	city.fortification_level = 1
 	city.shield = 1.0 # menos que o dano (ja reduzido pela Muralha) do ataque
 	var hp_before = city.hp
-	var expected_damage = 4.0 / 1.5
+	var expected_damage = 4.0 / 1.1
 	var expected_overflow = expected_damage - 1.0
 
 	CombatResolver.resolve_city_attack(attacker, city, hex_grid)
@@ -477,7 +477,7 @@ func test_resolve_city_attack_cap_still_respects_shield_first():
 	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
 	attacker.unit_data.attack = 50.0
 	var city = hex_grid.found_city(Vector2i(1, 0), rival, "Capital Rival")
-	city.buildings["walls"] = true
+	city.fortification_level = 3 # Fortaleza: escudo 22 > dano capado (35% de 24)
 	city.shield = city.max_shield()
 	var shield_before = city.shield
 	var hp_before = city.hp

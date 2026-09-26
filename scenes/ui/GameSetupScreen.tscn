@@ -113,23 +113,12 @@ fit_content = true
 scroll_active = false
 text = "Lore da raça."
 
-[node name="RaceUniqueSectionLabel" type="Label" parent="CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox"]
-layout_mode = 2
-theme_type_variation = &"SectionLabel"
-text = "Tropa Exclusiva"
-
-[node name="RaceUniqueNameLabel" type="Label" parent="CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox"]
-layout_mode = 2
-theme_type_variation = &"PanelTitle"
-theme_override_font_sizes/font_size = 19
-text = "Tropa Exclusiva: Cavaleiro Real"
-
-[node name="RaceUniqueBlurbLabel" type="RichTextLabel" parent="CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox"]
+[node name="RaceSpecialtiesLabel" type="RichTextLabel" parent="CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox"]
 layout_mode = 2
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
-text = "Descrição da tropa exclusiva."
+text = "[b]Especialidades:[/b]"
 
 [node name="RivalCountLabel" type="Label" parent="CenterBox/Box"]
 layout_mode = 2

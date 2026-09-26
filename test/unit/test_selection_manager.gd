@@ -502,25 +502,33 @@ func test_start_building_placement_lists_only_valid_neighbor_tiles():
 	var occupied = HexGrid.NEIGHBOR_DIRS[0]
 	_make_unit("warrior", human, occupied) # um vizinho ocupado, nao deveria entrar na lista
 
-	SelectionManager.start_building_placement(city, "granary")
+	_unlock_guardian_hall()
+	SelectionManager.start_building_placement(city, "v2_building_guardian_hall")
 
 	assert_false(occupied in SelectionManager.placeable_coords, "vizinho ocupado por unidade nao deveria ser um destino valido")
 	assert_eq(SelectionManager.placeable_coords.size(), HexGrid.NEIGHBOR_DIRS.size() - 1)
 
+## Fase 25: todo prédio construível é V2 e exige a pesquisa do dono.
+func _unlock_guardian_hall() -> void:
+	human.v2_research.complete_research("v2_doctrine_guardian_1")
+	human.v2_research.complete_research("v2_doctrine_guardian_2")
+
 func test_clicking_a_valid_tile_confirms_building_placement():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
 	var target = HexGrid.NEIGHBOR_DIRS[0]
-	SelectionManager.start_building_placement(city, "granary")
+	_unlock_guardian_hall()
+	SelectionManager.start_building_placement(city, "v2_building_guardian_hall")
 
 	SelectionManager.handle_world_click(HexMetrics.axial_to_world(target.x, target.y, hex_grid.hex_size))
 
-	assert_eq(city.production_item, "granary")
+	assert_eq(city.production_item, "v2_building_guardian_hall")
 	assert_eq(city.pending_building_coord, target)
 	assert_null(SelectionManager.placing_city, "modo de posicionamento deveria encerrar apos confirmar")
 
 func test_clicking_an_invalid_tile_cancels_building_placement():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
-	SelectionManager.start_building_placement(city, "granary")
+	_unlock_guardian_hall()
+	SelectionManager.start_building_placement(city, "v2_building_guardian_hall")
 
 	# Vector2i(0,0) e a propria cidade — nunca esta em placeable_coords
 	# (so vizinhos entram), entao clicar nela deveria cancelar.
@@ -529,80 +537,3 @@ func test_clicking_an_invalid_tile_cancels_building_placement():
 	assert_eq(city.production_item, "", "producao nao deveria ter mudado quando o posicionamento e cancelado (cidade nasce ociosa)")
 	assert_eq(city.pending_building_coord, City.NO_PENDING_COORD)
 	assert_null(SelectionManager.placing_city)
-
-## Mira de feitico (SelectionManager.start_spell_targeting/Grimorio da
-## HUD): "Lança de Arcana" (enemy_unit_in_vision) so aceita unidade
-## inimiga/monstro ATUALMENTE VISIVEL, "Reanimar" (friendly_unit) so
-## aceita unidade do proprio jogador.
-
-func test_valid_spell_target_accepts_a_visible_enemy_for_enemy_unit_in_vision():
-	human.researched_magic["invocacao_espiritos"] = true
-	var enemy_coord = Vector2i(1, 0)
-	var enemy = _make_unit("warrior", rival, enemy_coord)
-	_make_unit("warrior", human, Vector2i(0, 0)) # vision vem das PROPRIAS unidades/cidades (HexGrid.compute_visible_tiles) — sem uma aqui perto, nada fica visivel
-	hex_grid.recompute_fog(human) # sem isso nenhum tile fica VISIBLE, ver HexGrid.compute_visible_tiles
-
-	var target = SelectionManager._valid_spell_target(hex_grid, "Lança de Arcana", enemy_coord)
-
-	assert_eq(target, enemy)
-
-func test_valid_spell_target_rejects_own_unit_for_enemy_unit_in_vision():
-	human.researched_magic["invocacao_espiritos"] = true
-	var own_coord = Vector2i(0, 0)
-	_make_unit("warrior", human, own_coord)
-	hex_grid.recompute_fog(human)
-
-	assert_null(SelectionManager._valid_spell_target(hex_grid, "Lança de Arcana", own_coord))
-
-## Regressao: sem recompute_fog nenhum, nenhum tile esta VISIBLE ainda —
-## um inimigo tecnicamente no mapa mas nunca "visto" nao deveria ser
-## mirável, mesma regra que ja vale pra ataque normal (so alcance nao
-## basta, ver requisito "em alcance de visão" do pedido original).
-func test_valid_spell_target_rejects_enemy_not_currently_visible():
-	var enemy_coord = Vector2i(1, 0)
-	_make_unit("warrior", rival, enemy_coord)
-
-	assert_null(SelectionManager._valid_spell_target(hex_grid, "Lança de Arcana", enemy_coord))
-
-func test_valid_spell_target_accepts_own_unit_for_friendly_unit():
-	var own_coord = Vector2i(0, 0)
-	var ally = _make_unit("warrior", human, own_coord)
-
-	assert_eq(SelectionManager._valid_spell_target(hex_grid, "Reanimar", own_coord), ally)
-
-func test_valid_spell_target_rejects_enemy_for_friendly_unit():
-	var enemy_coord = Vector2i(1, 0)
-	_make_unit("warrior", rival, enemy_coord)
-
-	assert_null(SelectionManager._valid_spell_target(hex_grid, "Reanimar", enemy_coord))
-
-func test_valid_spell_target_returns_null_for_spell_without_spelldata():
-	var enemy_coord = Vector2i(1, 0)
-	_make_unit("warrior", rival, enemy_coord)
-	hex_grid.recompute_fog(human)
-
-	assert_null(SelectionManager._valid_spell_target(hex_grid, "Ruína Ígnea", enemy_coord))
-
-func test_clicking_a_valid_target_casts_the_spell_and_clears_targeting_mode():
-	human.researched_magic["invocacao_espiritos"] = true
-	human.mana = 100.0 # Lança de Arcana custa 25 (ver SpellDatabase)
-	var enemy_coord = Vector2i(1, 0)
-	var enemy = _make_unit("warrior", rival, enemy_coord)
-	_make_unit("warrior", human, Vector2i(0, 0)) # vision vem das PROPRIAS unidades/cidades
-	hex_grid.recompute_fog(human)
-	TurnManager.turn_number = 1
-
-	SelectionManager.start_spell_targeting("Lança de Arcana")
-	SelectionManager.handle_world_click(HexMetrics.axial_to_world(enemy_coord.x, enemy_coord.y, hex_grid.hex_size))
-
-	assert_almost_eq(enemy.hp, enemy.unit_data.max_hp - 6.0, 0.01, "clicar o alvo deveria ter aplicado o dano do feitico")
-	assert_eq(SelectionManager.casting_spell_name, "", "modo de mira deveria encerrar apos o clique, alvo valido ou nao")
-
-func test_clicking_an_invalid_target_cancels_spell_targeting_without_casting():
-	human.researched_magic["invocacao_espiritos"] = true
-	SelectionManager.start_spell_targeting("Lança de Arcana")
-
-	# (0,0) esta vazio nesse fixture — nenhuma unidade la, alvo invalido.
-	SelectionManager.handle_world_click(HexMetrics.axial_to_world(0, 0, hex_grid.hex_size))
-
-	assert_eq(SelectionManager.casting_spell_name, "", "clique invalido deveria cancelar a mira mesmo sem conjurar nada")

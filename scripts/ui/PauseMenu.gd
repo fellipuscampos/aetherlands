@@ -76,6 +76,18 @@ func _ready() -> void:
 ## um aberto — so abre a pausa de verdade se nao tinha nenhum.
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and GameManager.state == GameManager.GameState.PLAYING:
+		if SelectionManager.cancel_technique_targeting(): # Fase 7: ESC cancela a mira do Golpe Poderoso, sem pausar
+			get_viewport().set_input_as_handled()
+			return
+		if SelectionManager.cancel_city_annexation(): # Fase 13: ESC cancela o modo de anexação de território, sem pausar
+			get_viewport().set_input_as_handled()
+			return
+		if SelectionManager.cancel_city_attack_targeting(): # Fase 16: ESC cancela a mira do Ataque da Cidade, sem gastar o disparo
+			get_viewport().set_input_as_handled()
+			return
+		if SelectionManager.cancel_v2_spell_targeting(): # Fase 17: ESC cancela a mira do feitiço V2, sem gastar Mana/recarga/ação
+			get_viewport().set_input_as_handled()
+			return
 		if hud.close_topmost_overlay():
 			get_viewport().set_input_as_handled()
 			return

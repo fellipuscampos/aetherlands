@@ -23,14 +23,17 @@ extends Control
 ##   320x84, ver HexGrid.get_world_half_extents) em vez do quase-quadrado
 ##   de antes, que espremia o mapa verticalmente e prejudicava a leitura
 ##   espacial.
-## - _draw() continua so' redesenhando o CONTEUDO caro (todos os tiles) em
-##   eventos discretos (fog mudou/partida reiniciou, nunca por frame — mapa
-##   Grande tem ~27 mil tiles). O indicador de camera e' MUITO mais barato
-##   (4 raios + um poligono), entao pode redesenhar toda vez que a camera
-##   realmente se move/dá zoom sem custo perceptivel — _process() so pede
-##   redraw quando a posicao/zoom da camera de fato mudou desde o ultimo
-##   frame (mesmo espirito de RTSCamera._process, ver PERFORMANCE_GUIDE.md
-##   secao 3: nunca fazer trabalho quando nada mudou).
+## - Os TILES vivem numa Image persistente (_terrain_image): o mapa Grande
+##   tem ~27 mil tiles e desenha-los (draw_rect um a um) custava ~60ms por
+##   redraw com o mapa revelado — a cada passo de unidade (fog_updated) E a
+##   cada frame de camera em movimento. Agora fog_updated pinta SO os tiles
+##   que HexGrid.last_fog_changed diz que mudaram (dezenas, nao 27 mil) e a
+##   textura e' so' reenviada; a imagem inteira so' e' refeita quando a
+##   grade recomeca (last_fog_was_full), o painel muda de tamanho ou a
+##   partida reinicia. Unidades/cidades/indicador de camera (poucas dezenas
+##   de formas) continuam desenhados ao vivo em _draw(), que so' roda quando
+##   a camera de fato mudou (_process, mesmo espirito de RTSCamera._process,
+##   ver PERFORMANCE_GUIDE.md secao 3: nunca fazer trabalho quando nada mudou).
 const DOT_UNIT := 2.5
 const DOT_CITY := 4.5
 const CONTENT_PADDING := 5.0
@@ -41,22 +44,72 @@ var _dragging := false
 var _last_cam_position := Vector3.INF
 var _last_cam_basis_z := Vector3.INF
 var _last_cam_local_pos := Vector3.INF
+var _terrain_image: Image
+var _terrain_texture: ImageTexture
+var _last_screen_size := Vector2.ZERO
 
 func _ready() -> void:
 	_panel_style = UITheme.panel_style(UITheme.COLOR_BG_PANEL, UITheme.COLOR_BORDER, 2, 8)
-	EventBus.fog_updated.connect(queue_redraw)
-	EventBus.restart_requested.connect(queue_redraw)
+	EventBus.fog_updated.connect(_on_fog_updated)
+	EventBus.restart_requested.connect(_rebuild_terrain)
+	resized.connect(_rebuild_terrain)
+	_rebuild_terrain()
+
+## Refaz a imagem de tiles do zero (mapa novo/carregado, reinicio, painel
+## redimensionado). Caro (~27 mil tiles) — so' nesses eventos raros.
+func _rebuild_terrain() -> void:
+	_terrain_image = Image.create(maxi(2, ceili(size.x)), maxi(2, ceili(size.y)), false, Image.FORMAT_RGBA8)
+	var grid = GameManager.hex_grid
+	if grid != null and not grid.tiles.is_empty():
+		_paint_tiles(grid.tiles.keys(), grid)
+	_terrain_texture = ImageTexture.create_from_image(_terrain_image)
+	queue_redraw()
+
+## Delta de fog: pinta so' os tiles que mudaram, a menos que a grade tenha
+## recomecado (a imagem antiga nao tem como "despintar" tiles do mapa velho).
+func _on_fog_updated() -> void:
+	var grid = GameManager.hex_grid
+	if grid == null:
+		return
+	if _terrain_image == null or grid.last_fog_was_full:
+		_rebuild_terrain()
+		return
+	_paint_tiles(grid.last_fog_changed, grid)
+	_terrain_texture.update(_terrain_image)
+	queue_redraw()
+
+func _paint_tiles(coords: Array, grid: HexGrid) -> void:
+	var half_extents: Vector2 = grid.get_world_half_extents()
+	if half_extents.x <= 0.0 or half_extents.y <= 0.0:
+		return
+	var content := _content_rect()
+	for coord in coords:
+		var vis = grid.visibility.get(coord, HexGrid.Visibility.UNSEEN)
+		if vis == HexGrid.Visibility.UNSEEN:
+			continue
+		var data: HexTileData = grid.tiles.get(coord)
+		if data == null:
+			continue
+		var px := _project(coord, grid.hex_size, half_extents.x, half_extents.y, content)
+		var color := data.color
+		if vis == HexGrid.Visibility.EXPLORED:
+			color = color * 0.5
+		_terrain_image.fill_rect(Rect2i(roundi(px.x - 1.2), roundi(px.y - 1.2), 2, 2), color)
 
 ## So pede redraw quando a camera de fato mudou (posicao do rig, rotacao do
 ## rig, ou zoom/posicao local da Camera3D dentro dele) — parado (jogador
 ## olhando um painel, por exemplo) custa 3 comparacoes de Vector3 por
 ## frame, nada mais.
 func _process(_delta: float) -> void:
+	if not is_visible_in_tree():
+		return
 	var cam: RTSCamera = GameManager.camera_rig
 	if cam == null or not is_instance_valid(cam):
 		return
 	var basis_z := cam.global_transform.basis.z
-	if cam.global_position != _last_cam_position or basis_z != _last_cam_basis_z or cam.camera.position != _last_cam_local_pos:
+	var screen_size := cam.camera.get_viewport().get_visible_rect().size
+	if cam.global_position != _last_cam_position or basis_z != _last_cam_basis_z or cam.camera.position != _last_cam_local_pos or screen_size != _last_screen_size:
+		_last_screen_size = screen_size
 		_last_cam_position = cam.global_position
 		_last_cam_basis_z = basis_z
 		_last_cam_local_pos = cam.camera.position
@@ -67,30 +120,19 @@ func _content_rect() -> Rect2:
 
 func _draw() -> void:
 	_panel_style.draw(get_canvas_item(), Rect2(Vector2.ZERO, size))
-
-	var hex_grid = GameManager.hex_grid
-	if hex_grid == null or hex_grid.tiles.is_empty():
+	if _terrain_texture:
+		draw_texture(_terrain_texture, Vector2.ZERO)
+	var grid = GameManager.hex_grid
+	if grid == null or grid.tiles.is_empty():
 		return
-
-	var half_extents = hex_grid.get_world_half_extents()
-	var half_w = half_extents.x
-	var half_d = half_extents.y
-	if half_w <= 0.0 or half_d <= 0.0:
+	var extents: Vector2 = grid.get_world_half_extents()
+	if extents.x <= 0.0 or extents.y <= 0.0:
 		return
-
 	var content := _content_rect()
+	_draw_entities(grid, extents.x, extents.y, content)
+	_draw_camera_viewport(extents.x, extents.y, content)
 
-	for coord in hex_grid.tiles.keys():
-		var vis = hex_grid.visibility.get(coord, HexGrid.Visibility.UNSEEN)
-		if vis == HexGrid.Visibility.UNSEEN:
-			continue
-		var data: HexTileData = hex_grid.tiles[coord]
-		var px = _project(coord, hex_grid.hex_size, half_w, half_d, content)
-		var color = data.color
-		if vis == HexGrid.Visibility.EXPLORED:
-			color = color * 0.5
-		draw_rect(Rect2(px - Vector2(1.2, 1.2), Vector2(2.4, 2.4)), color)
-
+func _draw_entities(hex_grid: HexGrid, half_w: float, half_d: float, content: Rect2) -> void:
 	for coord in hex_grid.units_by_coord.keys():
 		var unit: Unit = hex_grid.units_by_coord[coord]
 		if not unit.visible:
@@ -105,8 +147,6 @@ func _draw() -> void:
 		var px = _project(coord, hex_grid.hex_size, half_w, half_d, content)
 		draw_circle(px, DOT_CITY, city.owner_player.civ.color)
 		draw_arc(px, DOT_CITY + 1.0, 0.0, TAU, 12, Color.WHITE, 1.0)
-
-	_draw_camera_viewport(half_w, half_d, content)
 
 ## Pedido do usuario: "quero um retangulo ou forma equivalente que
 ## represente o viewport/campo atual da camera sobre o mapa". A RTSCamera

@@ -2,8 +2,9 @@ extends GutTest
 
 ## Roadmap "Parte C" (composicao de exercito), fatia C1 — papeis DERIVADOS
 ## (ArmyComposition.gd) das propriedades que UnitData ja expoe, sem
-## taxonomia nova. Cobre so ArmyComposition.roles_for_kind aqui; o uso em
-## RivalAI._role_counts/_role_gap_bonus fica em test_rival_ai.gd.
+## taxonomia nova. Fase 25: unidade de Doutrina V2 pelo branch_role da
+## Doutrina; unidade legada (fora das Doutrinas) por alcance + TRACOS do dado
+## (montado/voo -> cavalaria, cerco -> cerco), nunca mais por movimento.
 
 func test_settler_has_no_role():
 	assert_eq(ArmyComposition.roles_for_kind("settler"), [] as Array[String])
@@ -12,12 +13,9 @@ func test_unknown_kind_has_no_role():
 	assert_eq(ArmyComposition.roles_for_kind("dragon"), [] as Array[String])
 
 func test_building_id_has_no_role():
-	# regressao: UnitDatabase.create_unit() nao tem clausula "_:" no match,
-	# entao um kind desconhecido (aqui, um id de PREDIO real, que aparece
-	# na mesma lista de candidatos que RivalAI._production_candidates monta)
-	# devolveria silenciosamente os defaults de @export (attack=1.0,
-	# attack_range=1) se roles_for_kind nao filtrasse por
-	# PLAYER_TRAINABLE_KINDS antes de chamar create_unit.
+	# regressao: UnitDatabase.create_unit() devolve os defaults de @export
+	# (attack=1.0) pra um kind desconhecido -- roles_for_kind filtra por
+	# UnitDatabase.is_known_kind antes de classificar.
 	assert_eq(ArmyComposition.roles_for_kind("walls"), [] as Array[String])
 	assert_eq(ArmyComposition.roles_for_kind("barracks"), [] as Array[String])
 
@@ -32,19 +30,18 @@ func test_ranged_only_kinds():
 		assert_eq(ArmyComposition.roles_for_kind(kind), [ArmyComposition.ROLE_RANGED] as Array[String], kind)
 
 func test_melee_cavalry_kinds():
-	var melee_cavalry := ["cavalry", "scout", "griffin", "human_knight"]
+	var melee_cavalry := ["cavalry", "griffin", "human_knight"]
 	for kind in melee_cavalry:
 		assert_eq(ArmyComposition.roles_for_kind(kind), [ArmyComposition.ROLE_MELEE, ArmyComposition.ROLE_CAVALRY] as Array[String], kind)
 
 func test_catapult_is_ranged_and_siege():
 	assert_eq(ArmyComposition.roles_for_kind("catapult"), [ArmyComposition.ROLE_RANGED, ArmyComposition.ROLE_SIEGE] as Array[String])
 
-func test_elf_ranger_is_ranged_and_cavalry():
-	# movement_points=3.0 > BASELINE_MOVEMENT_POINTS=2.0 -- regra de
-	# mobilidade aplicada de forma uniforme, mesmo elf_ranger sendo a
-	# distancia: nao ha excecao especial "unidade a distancia nunca e
-	# cavalaria" no modelo.
-	assert_eq(ArmyComposition.roles_for_kind("elf_ranger"), [ArmyComposition.ROLE_RANGED, ArmyComposition.ROLE_CAVALRY] as Array[String])
+## Fase 25: movimento alto sozinho nao faz cavalaria (Batedor/Patrulheiro Elfico legados
+## nao tem o traco montado).
+func test_fast_legacy_units_without_the_mounted_trait_are_not_cavalry():
+	assert_eq(ArmyComposition.roles_for_kind("scout"), [ArmyComposition.ROLE_MELEE] as Array[String])
+	assert_eq(ArmyComposition.roles_for_kind("elf_ranger"), [ArmyComposition.ROLE_RANGED] as Array[String])
 
 ## Roadmap "arvore de 10 niveis" — cerco deixou de ser so a Catapulta:
 ## Balista/Ariete/Torre de Cerco/Trebuchet (via siege_workshop) e Bombarda/
@@ -52,11 +49,11 @@ func test_elf_ranger_is_ranged_and_cavalry():
 ## tambem ganham ROLE_SIEGE agora.
 const SIEGE_KINDS := ["catapult", "balista", "ariete", "torre_de_cerco", "trebuchet", "bombarda", "colosso_de_cerco"]
 
-func test_only_catapult_has_siege_role():
+## Fase 25: no roster produzivel, so a Doutrina de Cerco (city_conquest) tem papel de cerco.
+func test_only_the_siege_doctrine_has_the_siege_role_in_the_trainable_roster():
 	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
-		if kind in SIEGE_KINDS:
-			continue
-		assert_false(ArmyComposition.ROLE_SIEGE in ArmyComposition.roles_for_kind(kind), kind)
+		var is_siege_line := V2UnitLine.role_of(kind) == "city_conquest"
+		assert_eq(ArmyComposition.ROLE_SIEGE in ArmyComposition.roles_for_kind(kind), is_siege_line, kind)
 
 func test_siege_kinds_all_have_the_siege_role():
 	for kind in SIEGE_KINDS:
@@ -65,7 +62,10 @@ func test_siege_kinds_all_have_the_siege_role():
 ## Roadmap "arvore de 10 niveis" — Mercador/Engenheiro de Cerco/General sao
 ## unidades de SUPORTE de proposito (attack 0.0, mesmo padrao do
 ## Colonizador) — ainda sem tropa nenhuma pra defender, so utilidade.
-const NON_COMBAT_KINDS := ["settler", "mercador", "engenheiro_de_cerco", "general"]
+## Aetherlands V2, Fase 15 — o Construtor (v2_unit_builder) é civil, como o Colonizador: sem
+## composição militar/papel de combate (§53 do pedido).
+## Aetherlands V2, Fases 17–22 — conjuradores V2 SEM ataque básico não entram na composição de ataque físico.
+const NON_COMBAT_KINDS := ["settler", "mercador", "engenheiro_de_cerco", "general", "v2_unit_builder", "v2_unit_sacred_cleric", "v2_manifestation_seraph", "v2_unit_infernal_warlock", "v2_manifestation_archdemon", "v2_unit_necromancer", "v2_manifestation_lich_sovereign", "v2_unit_druid", "v2_manifestation_nature_avatar", "v2_unit_arcanist", "v2_manifestation_veil_archon", "v2_unit_elementalist", "v2_manifestation_elemental_primordial"]
 
 func test_every_trainable_combat_kind_has_at_least_one_role():
 	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:

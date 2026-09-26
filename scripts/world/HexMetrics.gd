@@ -14,6 +14,27 @@ static func axial_to_world(q: int, r: int, size: float) -> Vector3:
 	var z = size * 1.5 * float(r)
 	return Vector3(x, 0.0, z)
 
+## Coordenadas a distância 1..`radius` de `center` (sem o próprio centro), por aritmética axial: sem BFS, sem alocar
+## vizinhos e sem consultar o grid (quem chama filtra por tile/ocupação). O(área) = 3r(r+1). Usada pelas técnicas de
+## ataque de longo alcance (V2TechniqueRuntime), que só precisam do alcance exato da técnica.
+static func coords_within(center: Vector2i, radius: int) -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	for dq in range(-radius, radius + 1):
+		for dr in range(maxi(-radius, -dq - radius), mini(radius, -dq + radius) + 1):
+			if dq != 0 or dr != 0:
+				result.append(center + Vector2i(dq, dr))
+	return result
+
+## Os hexágonos da linha reta de `a` até `b` (sem `a`, com `b`): interpolação em coordenadas cúbicas com um desempate estável.
+## Usada para animar o deslocamento em linha do voo (HexGrid.flight_path) — o voo não segue rota de terreno.
+static func axial_line(a: Vector2i, b: Vector2i) -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	var steps := axial_distance(a, b)
+	for i in range(1, steps + 1):
+		var t := float(i) / float(steps)
+		result.append(_round_axial(lerpf(float(a.x), float(b.x), t) + 0.000001, lerpf(float(a.y), float(b.y), t) + 0.000002))
+	return result
+
 static func axial_distance(a: Vector2i, b: Vector2i) -> int:
 	var ax = a.x
 	var az = a.y

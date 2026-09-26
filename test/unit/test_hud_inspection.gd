@@ -83,7 +83,7 @@ func _tab_labels() -> Array:
 # --- Painel de tile ----------------------------------------------------------
 
 func test_clicking_an_enemy_caster_shows_the_caster_not_just_the_terrain():
-	_unit("elementalist", rival, Vector2i(2, 0))
+	_unit("v2_unit_elementalist", rival, Vector2i(2, 0))
 	_select(Vector2i(2, 0))
 	assert_true(hud.tile_info_panel.visible)
 	var text: String = hud.tile_info_label.text
@@ -113,9 +113,9 @@ func test_clicking_a_boss_and_a_lair_structure_are_both_identified():
 	assert_string_contains(hud.tile_info_label.text, "Chefe")
 
 func test_building_and_resource_tiles_are_identified():
-	hex_grid.place_building(Vector2i(1, 1), "granary", human)
+	hex_grid.place_building(Vector2i(1, 1), "v2_building_market", human)
 	_select(Vector2i(1, 1))
-	assert_string_contains(hud.tile_info_label.text, "Efeitos:")
+	assert_string_contains(hud.tile_info_label.text, "Rendimento:")
 	hex_grid.tiles[Vector2i(3, 0)].resource = "gems"
 	_select(Vector2i(3, 0))
 	assert_string_contains(hud.tile_info_label.text, "Recurso: Gemas")
@@ -127,7 +127,7 @@ func test_empty_tile_shows_terrain_without_tabs():
 
 func test_multiple_entities_get_one_tab_each_and_tabs_switch_the_text():
 	hex_grid.tiles[Vector2i(1, 0)].resource = "horses"
-	hex_grid.place_building(Vector2i(1, 0), "granary", rival)
+	hex_grid.place_building(Vector2i(1, 0), "v2_building_market", rival)
 	_unit("warrior", rival, Vector2i(1, 0))
 	_select(Vector2i(1, 0))
 	assert_true(hud._inspect_tabs.visible)
@@ -137,7 +137,7 @@ func test_multiple_entities_get_one_tab_each_and_tabs_switch_the_text():
 	assert_string_contains(hud.tile_info_label.text, "Recurso: Cavalos")
 	assert_string_contains(hud.tile_info_label.text, "Terreno: Selva", "o terreno acompanha qualquer aba")
 	hud._on_inspect_tab_pressed("building")
-	assert_string_contains(hud.tile_info_label.text, "Efeitos:")
+	assert_string_contains(hud.tile_info_label.text, "Rendimento:")
 
 func test_selected_tab_survives_a_reclick_of_the_same_tile_but_resets_on_another_tile():
 	hex_grid.tiles[Vector2i(1, 0)].resource = "horses"
@@ -235,14 +235,15 @@ func test_deselecting_clears_tabs_and_state():
 # --- Painel de unidade propria ------------------------------------------------
 
 func test_own_caster_panel_shows_class_action_cooldown_and_tile_summary():
-	var mage := _unit("elementalist", human, Vector2i(1, 0))
-	mage.magic_cooldowns["Onda Glacial"] = TurnManager.turn_number + 2
+	var mage := _unit("v2_unit_elementalist", human, Vector2i(1, 0))
+	mage.magic_cooldowns["v2_spell_dense_mist"] = TurnManager.turn_number + 2
 	hex_grid.tiles[Vector2i(1, 0)].resource = "iron"
 	hud._on_unit_selected(mage)
 	var text: String = hud.unit_info_label.text
-	assert_string_contains(text, "Classe: Conjurador — Elementalismo")
+	assert_string_contains(text, "Classe: Conjurador — ")
+	assert_string_contains(text, "Elementalismo")
 	assert_string_contains(text, "Ação: pronto para conjurar")
-	assert_string_contains(text, "Recarga: Onda Glacial (2)")
+	assert_string_contains(text, "%s — recarga: 2 turno(s)" % V2SpellDatabase.get_spell("v2_spell_dense_mist").display_name)
 	assert_string_contains(text, "Neste tile: Selva (1, 0)")
 	assert_string_contains(text, "também aqui: Ferro")
 

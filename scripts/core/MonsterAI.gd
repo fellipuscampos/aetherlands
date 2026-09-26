@@ -102,8 +102,8 @@ const HUNTER_WEAK_HP_FRACTION := 0.5 # presa abaixo desta fracao de HP conta com
 ## — Esqueleto ja nasce Invasor por padrao, nao precisa de gatilho.
 const INVADER_GROUP_THRESHOLD := 2
 
-## Duracao (em turnos) que um tile saqueado fica sem rendimento (ver
-## HexGrid.pillage_tile/City.collect_yields) e quanto ouro o dono da
+## Duracao (em turnos) que uma melhoria saqueada fica sem rendimento (ver
+## HexGrid.pillage_tile/V2EconomyRuntime) e quanto ouro o dono da
 ## cidade perde no momento do saque — pedido do usuario: "melhoria
 ## desativada por X turnos" + "cidade perde uma pequena quantia de ouro".
 const PILLAGE_DURATION_TURNS := 6
@@ -292,13 +292,16 @@ static func _take_invader_turn(unit: Unit, hex_grid: HexGrid, turn: int) -> void
 static func _maybe_pillage_tile(unit: Unit, hex_grid: HexGrid, turn: int) -> void:
 	if hex_grid.is_tile_pillaged(unit.coord, turn):
 		return
-	var city = hex_grid.city_working_tile(unit.coord)
-	if city == null:
+	# Fase 25: o alvo é uma melhoria de recurso V2 (a única fonte de rendimento POR TILE da economia
+	# V2 — os tiles trabalhados V1 não existem mais). Tile de território sem melhoria não é saqueado.
+	var city: City = hex_grid.city_owning_tile(unit.coord)
+	if city == null or city.owner_player == null or not city.resource_improvements.has(unit.coord):
 		return
 	hex_grid.pillage_tile(unit.coord, turn, PILLAGE_DURATION_TURNS)
 	city.owner_player.gold = max(0.0, city.owner_player.gold - PILLAGE_GOLD_LOSS)
 	if city.owner_player == GameManager.human_player:
-		EventBus.notify.emit("Invasores saquearam um tile trabalhado por %s!" % city.city_name, "combat")
+		var improvement_name := V2ResourceImprovementData.display_name_for_resource(V2ResourceImprovementData.resource_for_improvement(String(city.resource_improvements[unit.coord])))
+		EventBus.notify.emit("Invasores saquearam %s de %s!" % [improvement_name, city.city_name], "combat")
 
 ## Saqueador (Goblin por padrao, ver COMPORTAMENTO DOS MONSTROS no topo do
 ## arquivo): BUSCA ATIVAMENTE presa fraca/isolada (mesmo criterio do

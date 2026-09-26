@@ -271,60 +271,6 @@ func test_ranged_unit_advances_with_melee_escort_nearby():
 
 	assert_ne(archer.coord, Vector2i(0, 0), "com escolta por perto, arqueiro deveria avancar normalmente")
 
-## Civilizacoes de fantasia (CivilizationData.race, ver GameManager.
-## RIVAL_CIVS): cada raca com tropa propria (UnitDatabase.RACE_UNIQUE_KIND)
-## ve essa tropa no proprio pool de producao, mas so a sua — um anao nunca
-## sorteia Berserker da Horda, e uma civ sem raca reconhecida nenhuma (um rival
-## hipotetico sem `race`) nunca sorteia tropa racial nenhuma.
-func test_military_kinds_for_includes_the_racial_unique_unit():
-	var dwarf_civ := CivilizationData.new()
-	dwarf_civ.race = "dwarf"
-	var dwarf_player := _track_player(dwarf_civ)
-
-	assert_true("dwarf_axeguard" in RivalAI._military_kinds_for(dwarf_player))
-
-func test_military_kinds_for_does_not_leak_other_races_unique_unit():
-	var dwarf_civ := CivilizationData.new()
-	dwarf_civ.race = "dwarf"
-	var dwarf_player := _track_player(dwarf_civ)
-
-	var kinds = RivalAI._military_kinds_for(dwarf_player)
-	assert_false("orc_berserker" in kinds)
-	assert_false("elf_ranger" in kinds)
-
-func test_military_kinds_for_has_no_racial_unit_without_a_race():
-	var human_civ := CivilizationData.new() # race = "" (padrao)
-	var human_without_race := _track_player(human_civ)
-
-	var kinds = RivalAI._military_kinds_for(human_without_race)
-	assert_false("dwarf_axeguard" in kinds)
-	assert_false("orc_berserker" in kinds)
-	assert_false("elf_ranger" in kinds)
-
-## Regressao de integracao: com 2+ cidades e o predio de treino ja pronto,
-## um rival orc escolhe Berserker da Horda via decide_production (nao so a
-## lista de candidatos em si, o fluxo completo ate city.production_item).
-## Desde a Fase 1 (decide_production pontuado, deterministico — nao mais
-## um sorteio aleatorio), NAO faz mais sentido rodar em loop esperando a
-## sorte favorecer a tropa racial: mesmo estado sempre da a mesma
-## pontuacao. Berserker da Horda exige o Quartel construido (fallback de
-## treino pra tropa racial sem predio proprio, ver BuildingDatabase.
-## building_that_trains) — sem ele nunca vira candidato, entao a cidade
-## precisa ja "ter" o predio pronto pra este teste fazer sentido (simular
-## turnos de producao de verdade ate completar o Quartel esta fora do
-## escopo deste teste).
-func test_decide_production_can_pick_the_racial_unit_for_that_race():
-	var orc_civ := CivilizationData.new()
-	orc_civ.race = "orc"
-	var orc_player := _track_player(orc_civ)
-	var city_a = hex_grid.found_city(Vector2i(0, 0), orc_player, "Cidade A")
-	hex_grid.found_city(Vector2i(5, 0), orc_player, "Cidade B") # 2 cidades: sai do ramo "sempre colonizador"
-	city_a.buildings["barracks"] = true
-
-	RivalAI.decide_production(orc_player, hex_grid, human)
-
-	assert_eq(city_a.production_item, "orc_berserker", "com o Quartel pronto e nenhuma outra tropa em vantagem, o rival orc deveria preferir a propria tropa exclusiva (empate quebrado por SCORE_RACIAL_UNIT_TIE_BREAK)")
-
 ## Roadmap "Parte C" (composicao de exercito), C1 — _role_counts/
 ## _role_gap_bonus/hierarquia de pesos em _score_production_candidate.
 ## Papeis vem de ArmyComposition.roles_for_kind (ver test_army_composition.
@@ -342,98 +288,6 @@ func test_role_counts_multi_role_unit_counts_toward_every_role_it_has():
 	assert_eq(counts[ArmyComposition.ROLE_CAVALRY], 1)
 	assert_eq(counts[ArmyComposition.ROLE_RANGED], 0)
 	assert_eq(counts[ArmyComposition.ROLE_SIEGE], 0)
-
-func test_role_gap_bonus_is_zero_for_candidate_with_no_role():
-	var counts := RivalAI._role_counts(rival)
-	assert_eq(RivalAI._role_gap_bonus("walls", counts), 0.0)
-	assert_eq(RivalAI._role_gap_bonus("barracks", counts), 0.0)
-
-func test_role_gap_bonus_decreases_monotonically_as_role_count_grows():
-	var counts := {ArmyComposition.ROLE_MELEE: 0, ArmyComposition.ROLE_RANGED: 0, ArmyComposition.ROLE_CAVALRY: 0, ArmyComposition.ROLE_SIEGE: 0}
-	assert_almost_eq(RivalAI._role_gap_bonus("warrior", counts), 1.0, 0.001)
-	counts[ArmyComposition.ROLE_MELEE] = 1
-	assert_almost_eq(RivalAI._role_gap_bonus("warrior", counts), 0.5, 0.001)
-	counts[ArmyComposition.ROLE_MELEE] = 2
-	assert_almost_eq(RivalAI._role_gap_bonus("warrior", counts), 1.0 / 3.0, 0.001)
-	counts[ArmyComposition.ROLE_MELEE] = 3
-	assert_almost_eq(RivalAI._role_gap_bonus("warrior", counts), 0.25, 0.001)
-
-func test_role_gap_bonus_takes_max_across_roles_not_sum():
-	# cavalry = [melee, cavalry]: exercito cheio de melee mas zero cavalaria
-	# deveria pontuar pela lacuna de CAVALARIA (maior), nao a soma das duas.
-	var counts := {ArmyComposition.ROLE_MELEE: 10, ArmyComposition.ROLE_RANGED: 0, ArmyComposition.ROLE_CAVALRY: 0, ArmyComposition.ROLE_SIEGE: 0}
-	assert_almost_eq(RivalAI._role_gap_bonus("cavalry", counts), 1.0, 0.001, "lacuna de cavalaria (0 unidades) deveria dominar, nao a soma com a lacuna de melee (ja cheia)")
-
-## Hierarquia de pesos (ver comentario de SCORE_WEIGHT_ROLE_GAP em RivalAI.
-## gd): deficit militar maximo sozinho (score 2.0) vence ameaca maxima +
-## role gap maximo combinados sem deficit (score 1.5) — valores exatos, nao
-## so a desigualdade em prosa. "barracks" (predio de TREINO, sem papel
-## proprio — roles_for_kind so cobre kinds de UNIDADE) isola o termo de
-## deficit sem contribuicao de role gap nenhuma, exatamente como o proprio
-## _production_candidates mistura predio de treino e unidade no mesmo ramo
-## militar do score.
-func test_score_production_candidate_military_deficit_alone_beats_threat_plus_role_gap_combined():
-	var empty_counts := {ArmyComposition.ROLE_MELEE: 0, ArmyComposition.ROLE_RANGED: 0, ArmyComposition.ROLE_CAVALRY: 0, ArmyComposition.ROLE_SIEGE: 0}
-	var deficit_alone := RivalAI._score_production_candidate("barracks", 0.0, 0.0, 1.0, empty_counts)
-	var threat_and_role_gap := RivalAI._score_production_candidate("warrior", 0.0, 1.0, 0.0, empty_counts)
-	assert_almost_eq(deficit_alone, 2.0, 0.001)
-	assert_almost_eq(threat_and_role_gap, 1.5, 0.001)
-	assert_gt(deficit_alone, threat_and_role_gap, "deficit militar real deveria sempre vencer ameaca+composicao combinados no maximo")
-
-## Integracao: exercito so com corpo-a-corpo (warrior) deveria preferir
-## treinar algo a distancia (papel ausente) em vez de mais um warrior,
-## quando os outros termos do score empatam entre os candidatos. Torre dos
-## Sabios (unico predio SEM gate de tecnologia, ver comentario de City.
-## _tech_unlocked_for_building) e construida de proposito pra remover o
-## unico concorrente de ECONOMY_GAP (1.5) que dominaria os dois candidatos
-## militares nesse cenario sem ameaca/deficit — sobra so warrior vs archer,
-## decidido pelo role gap.
-func test_decide_production_prefers_missing_role_when_otherwise_tied():
-	var city_a = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
-	hex_grid.found_city(Vector2i(5, 0), rival, "Cidade B") # 2 cidades: sai do ramo "sempre colonizador"
-	city_a.buildings["sages_tower"] = true
-	city_a.buildings["archery_range"] = true
-	rival.researched_techs["arqueiro"] = true # libera has_unlocked("archer")
-	_make_unit("warrior", rival, Vector2i(1, 0))
-	_make_unit("warrior", rival, Vector2i(2, 0))
-
-	RivalAI.decide_production(rival, hex_grid, human)
-
-	assert_eq(city_a.production_item, "archer", "exercito so com corpo-a-corpo deveria preferir treinar arqueiro (papel ausente) sobre mais um warrior")
-
-## Roadmap de gameplay Fase 4A — pequeno acrescimo ao escopo do plano
-## original: sem isto, TradeManager.propose_route nunca teria como
-## comecar sozinho (so existe UI humana pra guerra/paz, nenhuma pra
-## comercio ainda). Chance baixa por turno (RivalAI.
-## TRADE_PROPOSE_CHANCE_PER_TURN), entao roda em loop confirmando que
-## EVENTUALMENTE propoe — nao que propoe sempre.
-func test_decide_trade_eventually_proposes_a_route_to_a_known_city_at_peace():
-	var city_a := hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
-	city_a.buildings["market"] = true
-	var city_b := hex_grid.found_city(Vector2i(5, 0), human, "Capital Humana")
-	city_b.buildings["market"] = true
-	rival.known_enemy_cities[Vector2i(5, 0)] = true
-	assert_true(Diplomacy.propose_peace(human, rival), "pre-condicao: paz devia ser aceita (0 unidades dos dois lados)")
-
-	var proposed := false
-	for i in range(200):
-		RivalAI.decide_trade(rival, hex_grid, human)
-		if rival.trade_routes.size() > 0:
-			proposed = true
-			break
-
-	assert_true(proposed, "com cidade conhecida em paz e Mercado nos dois lados, deveria eventualmente propor uma rota")
-
-func test_decide_trade_never_proposes_while_at_war():
-	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival").buildings["market"] = true
-	hex_grid.found_city(Vector2i(5, 0), human, "Capital Humana").buildings["market"] = true
-	rival.known_enemy_cities[Vector2i(5, 0)] = true
-	# before_each ja deixa human/rival em guerra (Diplomacy.declare_war)
-
-	for i in range(200):
-		RivalAI.decide_trade(rival, hex_grid, human)
-
-	assert_eq(rival.trade_routes.size(), 0, "em guerra, nunca deveria propor rota de comercio")
 
 ## Roadmap 2.0 Parte 1 (A3) — regressao: antes _far_enough_from_cities so
 ## olhava as cidades do PROPRIO player, entao uma cidade RIVAL (inclusive
@@ -491,7 +345,7 @@ func test_known_enemy_cities_of_excludes_recaptured_city():
 
 func test_role_fit_bonus_rewards_siege_for_walled_target():
 	var city := hex_grid.found_city(Vector2i(0, 0), human, "Cidade Muralhada")
-	city.buildings["walls"] = true
+	city.fortification_level = 1 # Fase 16: muralha = Fortificação V2
 	var counts := {ArmyComposition.ROLE_SIEGE: 0}
 	assert_almost_eq(RivalAI._role_fit_bonus(city, counts), 0.0, 0.001)
 	counts[ArmyComposition.ROLE_SIEGE] = 1
@@ -506,7 +360,7 @@ func test_role_fit_bonus_rewards_cavalry_for_undefended_target():
 
 func test_role_fit_bonus_is_role_specific_not_general_military_presence():
 	var city := hex_grid.found_city(Vector2i(0, 0), human, "Cidade Muralhada")
-	city.buildings["walls"] = true
+	city.fortification_level = 1 # Fase 16: muralha = Fortificação V2
 	var counts := {ArmyComposition.ROLE_CAVALRY: 5, ArmyComposition.ROLE_SIEGE: 0}
 	assert_almost_eq(RivalAI._role_fit_bonus(city, counts), 0.0, 0.001, "muralha exige cerco, nao importa quanta cavalaria o atacante tenha")
 
@@ -531,7 +385,7 @@ func test_best_war_objective_picks_best_scoring_city_among_multiple_known():
 	var far_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	hex_grid.tiles[Vector2i(12, 0)] = far_tile
 	var bad_target := hex_grid.found_city(Vector2i(12, 0), human, "Alvo Ruim") # longe, muralhado, sem recurso
-	bad_target.buildings["walls"] = true
+	bad_target.fortification_level = 1 # Fase 16: muralha = Fortificação V2
 
 	rival.known_enemy_cities[good_target.coord] = true
 	rival.known_enemy_cities[bad_target.coord] = true
@@ -543,7 +397,7 @@ func test_best_war_objective_picks_best_scoring_city_among_multiple_known():
 func test_best_war_objective_prefers_secure_resources_when_target_is_resource_rich():
 	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
 	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
-	target.buildings["walls"] = true # isola vulnerabilidade=0, mesmo truque do teste de B2 abaixo
+	target.fortification_level = 1 # isola vulnerabilidade=0, mesmo truque do teste de B2 abaixo
 	var resource_coords = [Vector2i(50, 0), Vector2i(51, 0), Vector2i(52, 0), Vector2i(53, 0)]
 	for coord in resource_coords:
 		var tile = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
@@ -559,7 +413,7 @@ func test_best_war_objective_prefers_secure_resources_when_target_is_resource_ri
 func test_best_war_objective_prefers_conquer_when_target_has_no_resources():
 	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
 	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
-	target.buildings["walls"] = true
+	target.fortification_level = 1 # Fase 16: muralha = Fortificação V2
 	rival.known_enemy_cities[target.coord] = true
 
 	var best = RivalAI._best_war_objective(rival, hex_grid, human)
@@ -581,7 +435,7 @@ func test_role_fit_alone_never_crosses_war_threshold_from_zero_baseline():
 	_make_unit("catapult", human, Vector2i(-1, 0))
 	_make_unit("catapult", human, Vector2i(0, -1))
 	var target := hex_grid.found_city(Vector2i(1, -1), human, "Alvo")
-	target.buildings["walls"] = true
+	target.fortification_level = 1 # Fase 16: muralha = Fortificação V2
 	rival.known_enemy_cities[target.coord] = true
 
 	var best = RivalAI._best_war_objective(rival, hex_grid, human)
@@ -595,7 +449,7 @@ func test_close_undefended_target_beats_far_defended_target_with_maxed_role_fit(
 	var far_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	hex_grid.tiles[Vector2i(12, 0)] = far_tile
 	var far_defended := hex_grid.found_city(Vector2i(12, 0), human, "Candidato B") # longe, muralhado
-	far_defended.buildings["walls"] = true
+	far_defended.fortification_level = 1
 	_make_unit("catapult", rival, Vector2i(1, 0))
 	_make_unit("catapult", rival, Vector2i(1, -1)) # 2 catapultas -> role_fit maximo (1.0) especificamente pro alvo B (muralhado)
 
@@ -636,7 +490,7 @@ func test_campaign_still_viable_false_below_threshold():
 	var far_tile = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	hex_grid.tiles[Vector2i(12, 0)] = far_tile
 	var target := hex_grid.found_city(Vector2i(12, 0), human, "Alvo") # sem cidade propria do rival -> proximidade=0; muralhado -> vulnerabilidade=0
-	target.buildings["walls"] = true
+	target.fortification_level = 1 # Fase 16: muralha = Fortificação V2
 
 	var viable := RivalAI._campaign_still_viable(rival, hex_grid, human, target, RivalAI.WAR_OBJECTIVE_CONQUER)
 
@@ -670,7 +524,7 @@ func test_decide_campaign_does_not_create_campaign_below_war_score_threshold():
 	# sem cidade propria do rival (proximidade=0), alvo muralhado (vulnerabilidade=0),
 	# sem recurso, sem unidade nenhuma dos dois lados -> score = 0.0 < 1.5
 	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
-	target.buildings["walls"] = true
+	target.fortification_level = 1 # Fase 16: muralha = Fortificação V2
 	rival.known_enemy_cities[target.coord] = true
 
 	RivalAI.decide_campaign(rival, hex_grid, human)
@@ -727,7 +581,7 @@ func test_advance_campaign_abandons_when_invalidated_with_no_replacement():
 
 func test_advance_campaign_abandons_when_no_longer_viable():
 	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo") # ainda do oponente, so deixou de ser viavel
-	target.buildings["walls"] = true
+	target.fortification_level = 1 # Fase 16: muralha = Fortificação V2
 	_make_unit("warrior", human, Vector2i(0, 0)) # rival sem unidade nenhuma -> strength_advantage = -1.0
 	rival.war_campaigns[human] = {
 		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
@@ -1094,7 +948,7 @@ func test_decide_campaign_notifies_human_on_abandon_invalid_target():
 
 func test_decide_campaign_notifies_human_on_abandon_no_longer_viable():
 	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
-	target.buildings["walls"] = true
+	target.fortification_level = 1 # Fase 16: muralha = Fortificação V2
 	_make_unit("warrior", human, Vector2i(0, 0))
 	rival.war_campaigns[human] = {
 		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
@@ -1205,7 +1059,7 @@ func test_decide_war_eventually_declares_only_once_target_city_is_resource_rich(
 	hex_grid.found_city(Vector2i(0, 0), attacker, "Capital Atacante")
 	var target_coord := Vector2i(5, 0)
 	var target_city := hex_grid.found_city(target_coord, opponent, "Capital Alvo")
-	target_city.buildings["walls"] = true # vulnerabilidade 0, isola o termo de recursos
+	target_city.fortification_level = 1 # Fase 16 (Fortificação V2): vulnerabilidade 0, isola o termo de recursos
 	attacker.known_enemy_cities[target_coord] = true
 
 	var declared_without_resources := false
@@ -1285,214 +1139,7 @@ func test_site_score_ignores_lair_with_dead_defender():
 
 	assert_eq(result.parts.security, 0.0, "covil sem defensor vivo nao deveria penalizar o candidato")
 
-## Roadmap "Parte B" (B3) — RivalAI._tech_identity_axis: eixo DERIVADO de
-## unlocks_building/unlocks_unit (via BuildingDatabase.building_that_trains),
-## nunca uma tabela nova. Nao depende de hex_grid/human/rival do fixture,
-## so de TechDatabase/BuildingDatabase/CityIdentity.
-func test_tech_identity_axis_derives_from_unlocks_building():
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("celeiro")), CityIdentity.AXIS_AGRICOLA)
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("oficina")), CityIdentity.AXIS_INDUSTRIAL)
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("mercado")), CityIdentity.AXIS_COMERCIAL)
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("muralhas")), CityIdentity.AXIS_MILITAR)
-
-func test_tech_identity_axis_derives_from_unlocks_unit_via_trainer_building():
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("quartel")), CityIdentity.AXIS_MILITAR)
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("arqueiro")), CityIdentity.AXIS_MILITAR)
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("estabulo")), CityIdentity.AXIS_MILITAR)
-	assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech("constructos_de_guerra")), CityIdentity.AXIS_MILITAR)
-	assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech("invocacao_espiritos")), CityIdentity.AXIS_ARCANA)
-	assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech("pacto_florestal")), CityIdentity.AXIS_ARCANA)
-	assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech("forja_runica")), CityIdentity.AXIS_ARCANA)
-	assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech("lordes_dos_ventos")), CityIdentity.AXIS_ARCANA)
-	assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech("necromancia_pratica")), CityIdentity.AXIS_ARCANA)
-
-func test_tech_identity_axis_resolves_batedor_montado_via_stable_fallback():
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("batedor_montado")), CityIdentity.AXIS_MILITAR, "batedor_montado treina no Estabulo (fallback de BuildingDatabase.UNIT_TRAINER_FALLBACK), deveria herdar o eixo militar")
-
-func test_tech_identity_axis_is_empty_for_techs_without_building_or_unit_unlock():
-	assert_eq(RivalAI._tech_identity_axis(TechDatabase.get_tech("navegacao")), "", "navegacao nao desbloqueia predio nem unidade, nao deveria ter eixo de identidade")
-	for id in ["canalizacao_base", "cataclismo_elemental", "transcendencia_florestal", "alquimia_botanica", "transmutacao_rocha", "geomancia"]:
-		assert_eq(RivalAI._tech_identity_axis(MagicDatabase.get_tech(id)), "", "%s nao desbloqueia predio nem unidade, nao deveria ter eixo de identidade" % id)
-
-## Protege a propriedade "sem predio/unidade, identidade nao inventa
-## preferencia" — pontuacao de uma tech sem eixo e EXATAMENTE igual com a
-## civ sem identidade nenhuma e com a civ no auge de qualquer eixo.
-## Especialmente relevante com 7 das 21 techs caindo nesse caso.
-func test_score_research_candidate_identity_has_no_effect_for_unmapped_tech():
-	var navegacao: TechData = TechDatabase.get_tech("navegacao")
-	var player_no_identity := _track_player(CivilizationData.new())
-
-	var player_max_identity := _track_player(CivilizationData.new())
-	var city := City.new()
-	for id in ["walls", "barracks", "archery_range", "stable", "siege_workshop"]:
-		city.buildings[id] = true
-	player_max_identity.cities.append(city)
-
-	assert_eq(
-		RivalAI._score_research_candidate(navegacao, player_no_identity),
-		RivalAI._score_research_candidate(navegacao, player_max_identity),
-		"tech sem eixo de identidade nao deveria pontuar diferente so por causa da identidade da civ"
-	)
-	city.queue_free()
-
-## Roadmap "Parte B" B4.2 — mesmo padrao do teste equivalente de identidade
-## (B3): tech sem eixo pontua igual com personalidade vazia e personalidade
-## no maximo em qualquer eixo.
-func test_score_research_candidate_personality_has_no_effect_for_unmapped_tech():
-	var navegacao: TechData = TechDatabase.get_tech("navegacao")
-	var player_no_personality := _track_player(CivilizationData.new())
-
-	var player_max_personality := _track_player(CivilizationData.new())
-	player_max_personality.personality[CityIdentity.AXIS_MILITAR] = 1.0
-
-	assert_eq(
-		RivalAI._score_research_candidate(navegacao, player_no_personality),
-		RivalAI._score_research_candidate(navegacao, player_max_personality),
-		"tech sem eixo de identidade nao deveria pontuar diferente so por causa da personalidade da civ"
-	)
-
-## Tech com eixo soma exatamente RESEARCH_WEIGHT_PERSONALITY * personality[axis]
-## quando identidade e continuacao estao zeradas (civ sem cidade, sem
-## pesquisa em andamento).
-func test_score_research_candidate_adds_personality_term_for_mapped_tech():
-	var quartel: TechData = TechDatabase.get_tech("quartel") # unlocks_building "barracks" -> militar
-	var player := _track_player(CivilizationData.new())
-	player.personality[CityIdentity.AXIS_MILITAR] = 1.0
-
-	var score := RivalAI._score_research_candidate(quartel, player)
-
-	assert_almost_eq(score, RivalAI.RESEARCH_WEIGHT_PERSONALITY * 1.0, 0.001)
-
-## Identidade (B3, retrospectiva) e personalidade (B4, prospectiva) sao
-## independentes e ADITIVAS — nenhuma anula a outra, os dois termos aparecem
-## juntos no score (mandato do usuario: "as duas convivem").
-func test_score_research_candidate_personality_and_identity_are_independent_and_additive():
-	var invocacao: TechData = MagicDatabase.get_tech("invocacao_espiritos") # unlocks_unit "mage" -> arcane_tower -> arcana
-	var player := _track_player(CivilizationData.new())
-	var city := City.new()
-	city.buildings["sages_tower"] = true # arcana 1/7, identidade > 0
-	player.cities.append(city)
-	player.personality[CityIdentity.AXIS_ARCANA] = 0.5
-
-	var identity_strength := CityIdentity.civilization_axis_strength(player, CityIdentity.AXIS_ARCANA)
-	var expected := RivalAI.RESEARCH_WEIGHT_IDENTITY * identity_strength + RivalAI.RESEARCH_WEIGHT_PERSONALITY * 0.5
-	var score := RivalAI._score_research_candidate(invocacao, player)
-
-	assert_almost_eq(score, expected, 0.001, "identidade e personalidade deveriam somar juntas, nenhuma zerando a outra")
-	city.queue_free()
-
-## Espelha o "nunca sobrepoe" de B3: mesmo com identidade E personalidade
-## no maximo simultaneo (0.2+0.15=0.35), uma continuacao de cadeia real
-## (score 1.0) ainda vence.
-## Roadmap "arvore de 10 niveis": o Nivel 2 so abre com 2 techs do Nivel 1
-## pesquisadas — celeiro + batedor (nenhuma delas militar) abre o Nivel 2
-## sem tocar em "quartel", entao SO "oficina" (ancora cosmetica em
-## "celeiro") continua uma cadeia; homem_de_armas/campo_de_tiro/arqueiro
-## (todas ancoradas em "quartel", nao pesquisada) ficam sem continuidade,
-## mesmo com identidade+personalidade militar no maximo.
-func test_decide_research_personality_never_overrides_stronger_continuation():
-	var player := _track_player(CivilizationData.new())
-	player.researched_techs["celeiro"] = true
-	player.researched_techs["batedor"] = true # 2 techs do Nivel 1 -> abre o Nivel 2, so "oficina" continua cadeia
-
-	var city := City.new()
-	for id in ["walls", "barracks", "archery_range", "stable", "siege_workshop"]:
-		city.buildings[id] = true # militar 1.0, identidade perfeita
-	player.cities.append(city)
-	player.personality[CityIdentity.AXIS_MILITAR] = 1.0 # personalidade tambem no maximo
-
-	RivalAI.decide_research(player)
-
-	assert_eq(player.current_research, "oficina", "continuacao de cadeia deve vencer mesmo com identidade E personalidade militar no maximo simultaneo, ambas noutra tech sem continuidade")
-	city.queue_free()
-
 ## --- Roadmap "Fase F"/G: decisao minima de IA pra Ascensao Arcana --------
-
-func _grant_arcane_ritual_prerequisites(city: City) -> void:
-	var node_coords: Array[Vector2i] = [Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)]
-	for coord in node_coords:
-		hex_grid.tiles[coord].resource = "mana_node"
-	city.owned_tiles = node_coords
-	for tech_id in ["canalizacao_base", "alquimia_botanica", "transmutacao_rocha", "geomancia"]:
-		rival.researched_magic[tech_id] = true
-
-## Decisao explicita do usuario: nao e um novo peso de balanceamento, e um
-## filtro de candidato obviamente prematuro — a IA nao deveria gastar
-## producao numa infraestrutura cujo beneficio de vitoria esta muito
-## distante, so pelo +2 mana modesto.
-func test_production_candidates_excludes_sanctuary_without_arcane_prerequisites():
-	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
-	var candidates = RivalAI._production_candidates(rival, city, hex_grid)
-	assert_false("arcane_sanctuary" in candidates, "sem os pre-requisitos do ritual, o Santuario nao deveria competir na producao")
-
-func test_production_candidates_includes_sanctuary_once_arcane_prerequisites_are_met():
-	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
-	_grant_arcane_ritual_prerequisites(city)
-	var candidates = RivalAI._production_candidates(rival, city, hex_grid)
-	assert_true("arcane_sanctuary" in candidates, "com os pre-requisitos do ritual cumpridos, o Santuario deveria poder competir na producao")
-
-## Especificacao fechada pelo usuario: "tenho condicoes de tentar?", nunca
-## "e seguro tentar?" — pre-requisitos + Santuario construido + mana pra
-## ativacao MAIS uma manutencao inteira (pra nao comecar um ritual que seria
-## interrompido no proprio primeiro processamento de turno por falta de
-## mana).
-func test_decide_arcane_ritual_activates_once_prerequisites_sanctuary_and_mana_are_met():
-	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
-	city.buildings[VictoryConditions.SANCTUARY_BUILDING_ID] = true
-	_grant_arcane_ritual_prerequisites(city)
-	rival.mana = VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST + VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN
-
-	RivalAI.decide_arcane_ritual(rival, hex_grid)
-
-	assert_true(rival.arcane_ritual_active, "com pre-requisitos + Santuario + mana suficiente pra ativacao e uma manutencao, a IA deveria ativar o ritual")
-
-func test_decide_arcane_ritual_does_not_activate_without_the_sanctuary():
-	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
-	_grant_arcane_ritual_prerequisites(city)
-	rival.mana = VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST + VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN
-
-	RivalAI.decide_arcane_ritual(rival, hex_grid)
-
-	assert_false(rival.arcane_ritual_active, "sem o Santuario construido, meets_arcane_ritual_prerequisites nao cobre isso, mas activate_arcane_ritual ainda deveria recusar")
-
-## Falta exatamente a manutencao de UM turno em cima do custo de ativacao —
-## a IA nao deveria comecar conscientemente um ritual que ja seria
-## interrompido no primeiro processamento de turno por falta de mana.
-func test_decide_arcane_ritual_does_not_activate_without_mana_for_one_full_upkeep():
-	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
-	city.buildings[VictoryConditions.SANCTUARY_BUILDING_ID] = true
-	_grant_arcane_ritual_prerequisites(city)
-	rival.mana = VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST # falta a manutencao
-
-	RivalAI.decide_arcane_ritual(rival, hex_grid)
-
-	assert_false(rival.arcane_ritual_active, "mana so pra ativacao, sem sobra pra uma manutencao, nao deveria ativar")
-
-func test_decide_arcane_ritual_does_nothing_when_already_active():
-	rival.arcane_ritual_active = true
-	rival.mana = 1000.0
-
-	RivalAI.decide_arcane_ritual(rival, hex_grid)
-
-	assert_almost_eq(rival.mana, 1000.0, 0.01, "ritual ja ativo: decide_arcane_ritual nao deveria descontar mana nem mexer em mais nada")
-
-## Decisao explicita do usuario: SEM peso de guerra — a Ascensao Arcana
-## responde so "tenho condicoes de tentar?", nunca "e seguro tentar?". O
-## proprio ritual ja tem mecanismo de risco embutido (GameManager.
-## _update_arcane_ritual interrompe sozinho se a cidade cair ou os nodulos
-## carem abaixo de 3); before_each ja coloca human x rival em guerra
-## (Diplomacy.declare_war), entao este teste confirma a premissa antes de
-## provar que ela nao bloqueia a ativacao.
-func test_decide_arcane_ritual_activates_even_while_at_war():
-	assert_true(rival.is_at_war_with(human), "premissa do before_each: human e rival ja deveriam estar em guerra")
-	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade A")
-	city.buildings[VictoryConditions.SANCTUARY_BUILDING_ID] = true
-	_grant_arcane_ritual_prerequisites(city)
-	rival.mana = VictoryConditions.ARCANE_RITUAL_ACTIVATION_COST + VictoryConditions.ARCANE_RITUAL_UPKEEP_COST_PER_TURN
-
-	RivalAI.decide_arcane_ritual(rival, hex_grid)
-
-	assert_true(rival.arcane_ritual_active, "estar em guerra nao deveria impedir a IA de ativar o ritual — sem peso de guerra nesta decisao, por design")
 
 ## --- Roadmap "Fase Macro" 5B.2: decisao minima de participacao em
 ## eventos mundiais -------------------------------------------------------
@@ -1527,25 +1174,6 @@ func test_decide_world_event_participation_only_decides_once():
 ## NADA de arvore de decisao nova. v2 (pedido explicito apos playtest):
 ## prepare_for_world_event() restringe os candidatos a SO' tropa/predio de
 ## treino (_troop_only_candidates) -- Muralhas/economia nunca competem.
-
-func test_prepare_for_world_event_restricts_production_to_troops_only():
-	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Cidade")
-	hex_grid.found_city(Vector2i(5, 0), rival, "Cidade B") # 2 cidades: sai do ramo "sempre colonizador"
-
-	RivalAI.prepare_for_world_event(rival, hex_grid, human)
-
-	var building := BuildingDatabase.get_building(city.production_item)
-	assert_true(building == null or building.trains_unit != "", "durante o evento, a cidade so' deveria produzir tropa ou o predio de treino que falta -- nunca economia pura")
-	assert_ne(city.production_item, "walls", "muralhas nao e' uma tropa -- pedido explicito do usuario e' 'tropas apenas'")
-
-func test_prepare_for_world_event_never_falls_back_to_settler_even_with_a_single_city():
-	var city = hex_grid.found_city(Vector2i(0, 0), rival, "Unica")
-	city.production_item = "granary" # o que estava produzindo antes do evento
-
-	RivalAI.prepare_for_world_event(rival, hex_grid, human)
-
-	assert_ne(city.production_item, "settler", "colonizador e' economia disfarcada, nao uma tropa -- o atalho de 'cidade unica' de decide_production nao deveria se aplicar aqui")
-
 
 func test_react_to_dragon_moves_a_military_unit_toward_a_distant_dragon():
 	var soldier := _make_unit("warrior", rival, Vector2i(0, 0))
