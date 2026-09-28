@@ -11,6 +11,135 @@ arquitetura futura. Não altera regras, balanceamento, save, assets ou gameplay.
 Referências externas não foram usadas: as conclusões vêm do repositório, da
 execução real e das mecânicas já implementadas em Aetherlands.
 
+## Atualização pós-auditoria — Fase 28B
+
+**FOUNDATION IMPLEMENTED em 27/09/2026.** Os achados originais abaixo foram
+preservados como registro da Fase 28A; esta nota registra o que a primeira das
+quatro fases do roadmap efetivamente resolveu, sem reescrever o diagnóstico.
+
+| Recomendação da auditoria | Estado após 28B |
+|---|---|
+| Design tokens, Theme e componentes reutilizáveis | **FOUNDATION IMPLEMENTED** |
+| `UIShell` com regiões e camadas estáveis | **FOUNDATION IMPLEMENTED** no HUD real |
+| Navegação exclusiva de Pesquisa/Diplomacia/Vitória | **FOUNDATION IMPLEMENTED** |
+| Stack modal, dimmer, captura de input, foco e prioridade de ESC | **FOUNDATION IMPLEMENTED** para novas integrações; modais legados migram por etapas |
+| Evento estruturado, histórico runtime, unread, fila e dedupe de toast | **FOUNDATION IMPLEMENTED** |
+| Guerra, pesquisa, produção, cidade, ritual, vitória e evento mundial estruturados | **FOUNDATION IMPLEMENTED** nos hooks disponíveis |
+| Barra global e FPS fora da experiência normal | **FOUNDATION IMPLEMENTED** |
+| Attention System, checklist e Turn Controller | **PENDENTE — UI-2** |
+| Event Center visual/drawer e alertas críticos dedicados | **PENDENTE — UI-2** |
+| Unit/City/Tile, Diplomacia e Vitória redesenhados | **PENDENTE — UI-3** |
+| Menus, Loading, Settings, Save/Load e acessibilidade finais | **PENDENTE — UI-4** |
+
+A mudança não altera gameplay nem save: o histórico/unread é deliberadamente
+apenas da sessão e é limpo em nova partida ou após um load bem-sucedido. A
+Fase 28B é a fundação **1/4**, não o encerramento do redesign. Detalhes de
+arquitetura, testes, performance e validação visual estão na seção Fase 28B de
+`AETHERLANDS_V2_IMPLEMENTATION.md`.
+
+## Atualização pós-auditoria — Fase 29
+
+**UI-2 IMPLEMENTED em 27/09/2026.** A segunda fase do roadmap usa a fundação da
+28B no `Main.tscn` real e resolve os cinco P0 da auditoria sem alterar regra de
+gameplay nem formato de save.
+
+| Recomendação da auditoria | Estado após 29 |
+|---|---|
+| Attention System derivado + checklist | **IMPLEMENTED** |
+| Turn Controller com Required, warnings e override deliberado | **IMPLEMENTED** |
+| Pesquisa ativa/ociosa e progresso persistentes na HUD | **IMPLEMENTED** |
+| Resumo de produção e cidades ociosas/esperando Mana | **IMPLEMENTED** |
+| Event Center visual, unread, filtros e navegação | **IMPLEMENTED** |
+| War Alert, cidade perdida/ameaçada e Ritual a uma rodada | **IMPLEMENTED** |
+| Estado persistente de guerra, Déficit, Tensão e Ritual crítico | **IMPLEMENTED** |
+| Minimap dentro do `UIShell` e HUD responsiva nas três baselines | **IMPLEMENTED** |
+| Unit/City/Tile, Diplomacia, Vitória e Research responsivo | **PENDENTE — UI-3** |
+| Menus, Loading, Settings, Save/Load e acessibilidade finais | **PENDENTE — UI-4** |
+
+Attention e histórico continuam runtime-only. O primeiro é recalculado das
+fontes reais; o segundo é limpo em nova partida ou depois de load bem-sucedido.
+Logo, nenhum dos dois cria uma segunda verdade persistida. Detalhes e evidência
+estão na seção Fase 29 de `AETHERLANDS_V2_IMPLEMENTATION.md`. O redesign está em
+**2/4**, não concluído.
+
+## Atualização pós-auditoria — Fase 30
+
+**UI-3 IMPLEMENTED em 27/09/2026.** A terceira fase do roadmap substituiu os
+painéis de contexto e as telas estratégicas no `Main.tscn` real, sem alterar
+regras, balanceamento, IA nem formato de save.
+
+| Recomendação da auditoria | Estado após 30 |
+|---|---|
+| Unit Panel novo + `AbilityButton` com recarga, bloqueio e passiva | **IMPLEMENTED** |
+| Passivas/traços separados de status temporários | **IMPLEMENTED** |
+| Targeting explícito (banner, ESC, feedback de clique inválido) | **IMPLEMENTED** |
+| City Panel em abas + produção categorizada e explicável | **IMPLEMENTED** |
+| Tile Inspector componentizado em camadas, respeitando névoa | **IMPLEMENTED** |
+| Empire Overview, City List e Unit List (uma tela, três abas) | **IMPLEMENTED** |
+| Diplomacia com lista/detalhe, só dados públicos e confirmação de guerra | **IMPLEMENTED** |
+| Vitória em Summary/Detail | **IMPLEMENTED** |
+| Research responsivo (compacto, zoom, cabeçalhos fixos, atalhos) | **IMPLEMENTED** |
+| Menus, Loading, Settings, Save/Load, acessibilidade e Game Over finais | **PENDENTE — UI-4** |
+
+Correção registrada sobre esta auditoria: o gameplay final V2 não tem
+População, Comida, Ciência nem tiles trabalhados. As menções a esses termos nas
+seções de Cidade/Informação acima descrevem o legado observado em 28A e **não**
+foram implementadas na UI-3; a City UI usa apenas a economia V2.
+
+O diagnóstico original abaixo continua preservado como registro. Detalhes,
+métricas, capturas e matriz de paridade estão na seção Fase 30 de
+`AETHERLANDS_V2_IMPLEMENTATION.md`. O redesign está em **3/4**, não concluído.
+
+## Atualização pós-auditoria — Fase 31
+
+**UI-4 IMPLEMENTED em 27/09/2026.** A quarta e última entrega planejada do
+roadmap modernizou o front-end, opções, persistência visual e encerramento da
+partida. A auditoria 28A permanece abaixo como registro histórico; esta tabela
+é o estado do produto depois das quatro fases.
+
+| Fase do roadmap | Resultado |
+|---|---|
+| UI-1 — Design System, `UIShell`, navegação, modais e eventos | **IMPLEMENTED — Fase 28B** |
+| UI-2 — HUD vivo, Attention, Turn Controller e Event Center | **IMPLEMENTED — Fase 29** |
+| UI-3 — Contextos, Império, Diplomacia, Vitória e Pesquisa responsiva | **IMPLEMENTED — Fase 30** |
+| UI-4 — menus, setup, loading, pausa, settings, save/load, acessibilidade e fim de jogo | **IMPLEMENTED — Fase 31** |
+
+Os cinco P0 da auditoria continuam cobertos e o roadmap está **4/4
+implementado**. Isso significa pronto para a revisão final do produto, não
+“UI perfeita”: arte final, alto contraste global, remapeamento de teclas,
+virtualização do Event Center e os pontos de polish listados em
+“Post-UI4 Review Candidates” continuam candidatos explícitos, não escopo
+silenciosamente prometido. A Fase 31 não alterou gameplay, balanceamento, IA,
+condições de vitória nem `SAVE_VERSION`. Evidências completas estão na seção
+Fase 31 de `AETHERLANDS_V2_IMPLEMENTATION.md`.
+
+## Atualização pós-auditoria — Fase 32
+
+**POST-UI4 FINAL REFINEMENT IMPLEMENTED em 28/09/2026.** A UI-5 tratou os
+watchpoints deixados pela Fase 31 sem reabrir as arquiteturas aprovadas e sem
+alterar gameplay, balanceamento, IA, save ou `SAVE_VERSION`.
+
+| Finding da revisão final | Ação | Resultado |
+|---|---|---|
+| Menu com card vazio e marca duplicada | composição editorial aberta, uma marca e hierarquia de ações | **RESOLVIDO** |
+| Setup ainda parecido com formulário | três regiões, quatro tiles de facção, duas especialidades e stepper 1–3 | **RESOLVIDO** |
+| Global Bar alta e fragmentada | superfície contínua de 56 px, resource strip e navegação responsiva | **RESOLVIDO** |
+| Navy/azul competindo com Research | graphite/slate neutro; azul semântico; bronze seletivo | **RESOLVIDO** |
+| Strategic screens grandes/vazias | safe margins centrais, altura por conteúdo e scroll interno | **RESOLVIDO** |
+| Event Center/Context/Settings podiam competir | prioridade formal, supressão e restauração no `UIShell` | **RESOLVIDO** |
+| Unit/City/Tile com proporções e barras laterais diferentes | identity tile 1:1 compartilhado, acento superior | **RESOLVIDO** |
+| HUD inferior desalinhado | minimapa e Turn Controller na mesma margem/baseline | **RESOLVIDO** |
+| Minimapa mostrava o mundo cedo demais | frame por cidades/unidades próprias, expansão/contração com histerese | **RESOLVIDO** |
+| Copy e `-0` inconsistentes | correção de strings e `UIFormat` compartilhado | **RESOLVIDO** |
+| Opening/Colonizador | deliberadamente não tratado nesta fase | **DEFERRED — Gameplay Opening + Release Balance Lab** |
+
+O produto foi verificado no `Main.tscn` real em 1280×720, 1600×900,
+1920×1080 e 2560×1080. Menu, Setup, HUD, Research, Contextos, Empire,
+Diplomacy, Victory, Event Center, Pause e Settings agora pertencem à mesma
+família visual. O diagnóstico 28A abaixo permanece como registro histórico; o
+estado implementado final está na Fase 32 de
+`AETHERLANDS_V2_IMPLEMENTATION.md`.
+
 ## Método e evidência
 
 - Auditoria estática das 7 cenas em `scenes/ui`, de `Main.tscn`, dos 12 scripts
@@ -937,7 +1066,9 @@ regressão visual e performance.
 - Arte final prematura mascararia problemas de hierarquia; componentes e
   contraste devem vir antes.
 
-## Decisão de encerramento
+## Decisão de encerramento da Fase 28A
 
-Esta fase termina no plano. Nenhuma das recomendações acima foi implementada.
-O próximo escopo deve ser aprovado externamente antes de virar mudança de UI.
+Esta fase terminou no plano. Na data da auditoria, nenhuma das recomendações
+acima havia sido implementada. As notas pós-auditoria no início do documento
+registram a execução posterior das Fases 28B (fundação, 1/4), 29 (UI-2, 2/4) e
+30 (UI-3, 3/4) sem apagar este estado histórico.

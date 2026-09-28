@@ -75,6 +75,18 @@ func has_any_slots(dir: String = SAVE_DIR) -> bool:
 ## simplesmente PULADO (nunca derruba a lista inteira por causa de 1 slot
 ## ruim). Ordenado por saved_at decrescente (mais recente primeiro).
 func list_slots(dir: String = SAVE_DIR) -> Array[Dictionary]:
+	var valid: Array[Dictionary] = []
+	for slot in inspect_slots(dir):
+		# Mantem o contrato historico: JSON parseavel aparece na listagem
+		# programatica, mesmo quando a UI o marca como cabecalho corrompido.
+		if not bool(slot.get("parse_error", false)) and slot.status != "incompatible":
+			valid.append(slot)
+	return valid
+
+## Inventario de front-end: diferente de list_slots(), nao esconde arquivos
+## quebrados. A tela pode explicar "corrompido" ou "incompativel" sem tentar
+## carregar e sem mudar o schema do save.
+func inspect_slots(dir: String = SAVE_DIR) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var da := DirAccess.open(dir)
 	if da == null:
@@ -96,14 +108,25 @@ func list_slots(dir: String = SAVE_DIR) -> Array[Dictionary]:
 				var parse_error := json.parse(file.get_as_text())
 				file.close()
 				var data = json.data if parse_error == OK else null
-				if typeof(data) == TYPE_DICTIONARY:
+				var slot_id := fname.trim_suffix(".json")
+				if typeof(data) != TYPE_DICTIONARY:
+					out.append({"slot_id": slot_id, "status": "corrupt", "parse_error": true, "saved_at": 0, "version": -1})
+				else:
+					var version := int(data.get("version", -1))
+					var status := "valid"
+					if version != SAVE_VERSION and version not in MIGRATABLE_SAVE_VERSIONS:
+						status = "incompatible"
+					elif not _valid_save_header(data):
+						status = "corrupt"
 					out.append({
-						"slot_id": fname.trim_suffix(".json"),
+						"slot_id": slot_id,
 						"kingdom_name": data.get("human_kingdom_name", "?"),
 						"race": data.get("human_race", "human"),
 						"turn_number": int(data.get("turn_number", 0)),
 						"difficulty": data.get("difficulty", "normal"),
 						"saved_at": int(data.get("saved_at", 0)),
+						"version": version,
+						"status": status,
 					})
 		fname = da.get_next()
 	da.list_dir_end()
@@ -276,7 +299,7 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 		# Diplomacy.propose_peace aqui: isso tem heuristica de aceitacao da
 		# IA, e a gente quer restaurar o estado EXATO salvo, nao renegociar).
 		if rival_data.get("at_war_with_human", true) and not data.has("relations"):
-			Diplomacy.declare_war(rival, GameManager.human_player)
+			Diplomacy.declare_war(rival, GameManager.human_player, "Disputa territorial", true)
 	_restore_relations(data)
 	# Depois de jogadores, cidades, prédios e melhorias: identidade por índice já existe e qualquer
 	# endpoint que uma estrutura restaurada tornou impossível é descartado fail-safe.
@@ -362,7 +385,7 @@ func _restore_relations(data: Dictionary) -> void:
 		for enemy_index in relation.get("wars", []):
 			var index := int(enemy_index)
 			if index >= 0 and index < players.size() and index != i:
-				Diplomacy.declare_war(players[i], players[index], relation.get("reasons", {}).get(str(index), "Disputa territorial"))
+				Diplomacy.declare_war(players[i], players[index], relation.get("reasons", {}).get(str(index), "Disputa territorial"), true)
 		players[i].war_campaigns.clear()
 		for c in relation.get("campaigns", []):
 			var index := int(c.opponent)

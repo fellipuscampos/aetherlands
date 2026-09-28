@@ -1,0 +1,212 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/UIShell.gd" id="1_shell"]
+[ext_resource type="Script" path="res://scripts/ui/GlobalBarPresenter.gd" id="2_bar"]
+[ext_resource type="Script" path="res://scripts/ui/ModalManager.gd" id="3_modal"]
+[ext_resource type="Script" path="res://scripts/ui/ToastPresenter.gd" id="4_toast"]
+[ext_resource type="Script" path="res://scripts/ui/components/AETooltipHost.gd" id="5_tooltip"]
+[ext_resource type="Script" path="res://scripts/ui/NavigationManager.gd" id="6_navigation"]
+
+[node name="UIShell" type="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_shell")
+
+[node name="MapPassThrough" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+z_index = 0
+
+[node name="GlobalBar" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 56.0
+grow_horizontal = 2
+z_index = 10
+script = ExtResource("2_bar")
+
+[node name="ContextHost" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -448.0
+offset_top = 72.0
+offset_right = -8.0
+offset_bottom = -88.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_filter = 0
+theme_type_variation = &"SurfacePanel"
+z_index = 10
+
+[node name="BottomHost" type="Control" parent="."]
+layout_mode = 1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -80.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+z_index = 10
+
+[node name="AttentionHost" type="HBoxContainer" parent="BottomHost"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -400.0
+offset_top = -68.0
+offset_right = 200.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="TurnControllerHost" type="HBoxContainer" parent="BottomHost"]
+layout_mode = 1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -430.0
+offset_top = -68.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="MinimapHost" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -160.0
+offset_right = 240.0
+offset_bottom = -16.0
+grow_vertical = 0
+mouse_filter = 0
+theme_type_variation = &"SurfacePanel"
+z_index = 10
+
+[node name="AuxiliaryHost" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+z_index = 20
+
+[node name="CriticalAlertHost" type="CenterContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+offset_top = 72.0
+offset_bottom = 178.0
+grow_horizontal = 2
+mouse_filter = 2
+z_index = 40
+
+[node name="StrategicOverlayHost" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+z_index = 30
+
+[node name="Dimmer" type="ColorRect" parent="StrategicOverlayHost"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.02, 0.03, 0.05, 0.76)
+
+[node name="ModalManager" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+z_index = 50
+script = ExtResource("3_modal")
+
+[node name="Dimmer" type="ColorRect" parent="ModalManager"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.02, 0.03, 0.05, 0.82)
+
+[node name="ContentHost" type="CenterContainer" parent="ModalManager"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="ToastPresenter" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -210.0
+offset_top = 188.0
+offset_right = 210.0
+offset_bottom = 430.0
+grow_horizontal = 2
+mouse_filter = 2
+z_index = 60
+script = ExtResource("4_toast")
+
+[node name="TooltipHost" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_right = 280.0
+offset_bottom = 100.0
+mouse_filter = 2
+z_index = 70
+script = ExtResource("5_tooltip")
+
+[node name="DebugHost" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+z_index = 80
+
+[node name="NavigationManager" type="Node" parent="."]
+script = ExtResource("6_navigation")

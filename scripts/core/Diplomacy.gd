@@ -14,13 +14,15 @@ static func truce_remaining(a: PlayerData, b: PlayerData) -> int:
 static func can_declare_war(a: PlayerData, b: PlayerData) -> bool:
 	return a != b and truce_remaining(a, b) == 0 and truce_remaining(b, a) == 0
 
-static func declare_war(a: PlayerData, b: PlayerData, reason: String = "Disputa territorial") -> void:
+static func declare_war(a: PlayerData, b: PlayerData, reason: String = "Disputa territorial", silent: bool = false) -> void:
 	if not can_declare_war(a, b):
 		return
 	a.enemies[b] = true
 	b.enemies[a] = true
 	a.war_reasons[b] = reason
 	b.war_reasons[a] = reason
+	if not silent:
+		EventBus.diplomacy_changed.emit("war", a, b, reason)
 
 ## `proposer` costuma ser o jogador humano; `other` o rival sendo
 ## abordado. Retorna true (e ja aplica a paz nos dois lados) se aceita.
@@ -41,6 +43,7 @@ static func propose_peace(proposer: PlayerData, other: PlayerData) -> bool:
 	proposer.truces[other] = TurnManager.turn_number + TRUCE_TURNS
 	other.truces[proposer] = TurnManager.turn_number + TRUCE_TURNS
 	RivalAI.end_campaigns_on_peace(proposer, other)
+	EventBus.diplomacy_changed.emit("peace", proposer, other, "Acordo de paz")
 	return true
 
 static func relation_description(a: PlayerData, b: PlayerData) -> String:

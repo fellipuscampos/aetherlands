@@ -255,13 +255,19 @@ func start_building_placement(city: City, building_id: String) -> void:
 		EventBus.notify.emit("Nenhum terreno livre para construir. Expanda a cidade ou libere um terreno ocupado.", "")
 		return
 	hex_grid.set_highlight([], [], [], placeable_coords)
+	EventBus.targeting_changed.emit()
 
-func cancel_building_placement() -> void:
+## true se havia um posicionamento ativo (Fase 30: o ESC também o encerra, sem gastar nada).
+func cancel_building_placement() -> bool:
+	var was_active := placing_city != null
 	placing_city = null
 	placing_building_id = ""
 	placeable_coords.clear()
 	if GameManager.hex_grid:
 		GameManager.hex_grid.clear_highlight()
+	if was_active:
+		EventBus.targeting_changed.emit()
+	return was_active
 
 func _handle_building_placement_hover(world_pos: Vector3) -> void:
 	var hex_grid = GameManager.hex_grid
@@ -290,6 +296,8 @@ func _handle_building_placement_click(coord: Vector2i) -> void:
 		hex_grid.refresh_construction_markers()
 		var building_name = BuildingDatabase.get_building(building_id).display_name
 		EventBus.notify.emit("Construcao de %s iniciada em %s" % [building_name, city.city_name], "confirm")
+	else:
+		EventBus.targeting_rejected.emit("Posicionamento cancelado: tile fora das opções. Nada foi gasto.")
 	cancel_building_placement()
 	hex_grid.show_selection_marker(city.coord)
 	EventBus.tile_selected.emit(city.coord, hex_grid.get_tile(city.coord))
@@ -314,6 +322,7 @@ func start_city_annexation(city: City) -> void:
 		EventBus.notify.emit("Nenhum tile elegível para anexação agora.", "")
 		return
 	hex_grid.set_highlight([], [], [], annexable_coords)
+	EventBus.targeting_changed.emit()
 
 ## true se havia um modo de anexação ativo (mesma convenção de cancel_technique_targeting, usada
 ## pelo ESC em PauseMenu.gd). Sai do modo sem gastar Ponto de Anexação nem mudar território.
@@ -324,6 +333,7 @@ func cancel_city_annexation() -> bool:
 	annexable_coords.clear()
 	if GameManager.hex_grid:
 		GameManager.hex_grid.clear_highlight()
+	EventBus.targeting_changed.emit()
 	return true
 
 func _refresh_annexable_coords() -> void:
@@ -350,6 +360,7 @@ func _handle_city_annexation_click(coord: Vector2i) -> void:
 	var hex_grid = GameManager.hex_grid
 	var city = annexing_city
 	if not coord in annexable_coords:
+		EventBus.targeting_rejected.emit("Tile não elegível para anexação. Nenhum ponto foi gasto.")
 		return
 	if not city.annex_tile(coord, hex_grid):
 		return
@@ -383,6 +394,7 @@ func start_city_attack_targeting(city: City) -> void:
 		EventBus.notify.emit("Nenhum alvo hostil visível ao alcance do Ataque da Cidade.", "")
 		return
 	hex_grid.set_highlight([], city_attack_coords)
+	EventBus.targeting_changed.emit()
 	EventBus.notify.emit(CITY_ATTACK_HINT, "")
 
 ## true se havia uma mira do Ataque da Cidade ativa (mesma convenção de cancel_city_annexation, usada
@@ -394,6 +406,7 @@ func cancel_city_attack_targeting() -> bool:
 	city_attack_coords.clear()
 	if GameManager.hex_grid:
 		GameManager.hex_grid.clear_highlight()
+	EventBus.targeting_changed.emit()
 	return true
 
 func _handle_city_attack_hover(world_pos: Vector3) -> void:
@@ -412,6 +425,7 @@ func _handle_city_attack_click(coord: Vector2i) -> void:
 	var hex_grid = GameManager.hex_grid
 	var city := city_attack_city
 	if not coord in city_attack_coords:
+		EventBus.targeting_rejected.emit("Fora dos alvos do Ataque da Cidade. O disparo não foi gasto.")
 		return
 	var target: Unit = hex_grid.get_unit_at(coord)
 	if target == null or not CityDefense.resolve_city_defense_attack(city, target, hex_grid):
@@ -473,6 +487,37 @@ func _clear_selection() -> void:
 	if GameManager.hex_grid:
 		GameManager.hex_grid.clear_highlight()
 	EventBus.unit_selected.emit(null)
+
+## Fase 30 — entrada PÚBLICA de seleção usada pelas listas/painéis (Unit List,
+## seletor de ocupantes): exatamente o mesmo efeito de clicar na unidade própria.
+func select_unit(unit: Unit) -> void:
+	if unit == null or not is_instance_valid(unit) or unit.owner_player != GameManager.human_player or GameManager.hex_grid == null:
+		return
+	cancel_building_placement()
+	cancel_city_annexation()
+	cancel_city_attack_targeting()
+	_select_unit(unit)
+	GameManager.hex_grid.show_selection_marker(unit.coord)
+	EventBus.tile_selected.emit(unit.coord, GameManager.hex_grid.get_tile(unit.coord))
+
+## Fase 30 — fecha o contexto (botão × do painel): mesma limpeza de um clique vazio.
+func clear_selection() -> void:
+	_clear_selection()
+	if GameManager.hex_grid:
+		GameManager.hex_grid.show_selection_marker(Vector2i(999999, 999999))
+
+## Fase 30 — encerra QUALQUER mira ativa sem gastar nada (overlay estratégico abrindo,
+## troca de contexto). true se havia alguma.
+func cancel_active_targeting() -> bool:
+	var cancelled := cancel_technique_targeting()
+	cancelled = cancel_v2_spell_targeting() or cancelled
+	cancelled = cancel_city_annexation() or cancelled
+	cancelled = cancel_city_attack_targeting() or cancelled
+	cancelled = cancel_building_placement() or cancelled
+	return cancelled
+
+func is_targeting() -> bool:
+	return technique_targeting_id != "" or v2_spell_targeting_id != "" or placing_city != null or annexing_city != null or city_attack_city != null
 
 ## SO MODO DEBUG (GameManager.debug_mode) -- pedido do usuario: "eu nao
 ## tenho limite de andar e ao clicar num lugar com a movimentacao meu
@@ -637,6 +682,7 @@ func start_technique_targeting(unit: Unit, technique_id: String) -> void:
 		hex_grid.set_highlight(technique_target_coords, [])
 	else:
 		hex_grid.set_highlight([], technique_target_coords)
+	EventBus.targeting_changed.emit()
 	EventBus.unit_selected.emit(unit) # a HUD mostra a dica "escolha o alvo (ESC cancela)"
 
 ## Cancela a mira SEM consumir ação nem recarga e restaura a seleção normal da unidade. true se havia mira.
@@ -653,9 +699,12 @@ func cancel_technique_targeting() -> bool:
 
 ## Só zera o estado da mira (sem tocar na seleção/realce) — usado por _select_unit/_clear_selection.
 func _end_technique_targeting() -> void:
+	var was_active := technique_targeting_id != ""
 	technique_targeting_id = ""
 	technique_targeting_unit = null
 	technique_target_coords.clear()
+	if was_active:
+		EventBus.targeting_changed.emit()
 
 func _handle_technique_targeting_hover(world_pos: Vector3) -> void:
 	var hex_grid = GameManager.hex_grid
@@ -678,6 +727,7 @@ func _handle_technique_targeting_click(coord: Vector2i) -> void:
 	var unit := technique_targeting_unit
 	var technique_id := technique_targeting_id
 	if not (coord in technique_target_coords):
+		EventBus.targeting_rejected.emit("Alvo inválido: mira cancelada. Nenhuma ação ou recarga foi gasta.")
 		cancel_technique_targeting()
 		return
 	_end_technique_targeting()
@@ -736,6 +786,7 @@ func start_v2_spell_targeting(unit: Unit, spell_id: String) -> void:
 		hex_grid.set_highlight([], [], [], v2_spell_target_coords)
 	else:
 		hex_grid.set_highlight(v2_spell_target_coords, [])
+	EventBus.targeting_changed.emit()
 	EventBus.unit_selected.emit(unit) # a HUD mostra a dica "Escolha o alvo de ... (ESC cancela)"
 
 ## Cancela a mira do feitiço SEM gastar nada e restaura a seleção da unidade. true se havia mira.
@@ -751,9 +802,12 @@ func cancel_v2_spell_targeting() -> bool:
 	return true
 
 func _end_v2_spell_targeting() -> void:
+	var was_active := v2_spell_targeting_id != ""
 	v2_spell_targeting_id = ""
 	v2_spell_targeting_unit = null
 	v2_spell_target_coords.clear()
+	if was_active:
+		EventBus.targeting_changed.emit()
 
 func _handle_v2_spell_targeting_hover(world_pos: Vector3) -> void:
 	var hex_grid = GameManager.hex_grid
@@ -776,6 +830,7 @@ func _handle_v2_spell_targeting_click(coord: Vector2i) -> void:
 	var unit := v2_spell_targeting_unit
 	var spell_id := v2_spell_targeting_id
 	if not (coord in v2_spell_target_coords):
+		EventBus.targeting_rejected.emit("Alvo inválido: mira cancelada. Nenhuma Mana, ação ou recarga foi gasta.")
 		cancel_v2_spell_targeting()
 		return
 	_end_v2_spell_targeting()

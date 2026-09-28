@@ -33,6 +33,18 @@ var _mid_angle := 0.0
 var _inner_angle := 0.0
 var _pulse_time := 0.0
 
+func _ready() -> void:
+	Settings.accessibility_changed.connect(_apply_motion_preference)
+	_apply_motion_preference()
+
+func _apply_motion_preference() -> void:
+	set_process(not Settings.reduced_motion)
+	if Settings.reduced_motion:
+		_mid_angle = 0.0
+		_inner_angle = PI
+		_pulse_time = 0.0
+	queue_redraw()
+
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return

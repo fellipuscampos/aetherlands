@@ -82,6 +82,11 @@ func _init(civ_data: CivilizationData) -> void:
 	civ = civ_data
 	v2_unlocks.unlock_applied.connect(_on_v2_unlock_applied)
 	v2_research.state_reset.connect(_on_v2_research_state_reset)
+	v2_research.research_completed.connect(_on_v2_research_completed_event)
+
+func _on_v2_research_completed_event(research_id: String) -> void:
+	var node := V2ResearchDatabase.get_node(research_id)
+	EventBus.ui_research_completed.emit(self, research_id, node.display_name if node != null else research_id)
 
 func _on_v2_research_state_reset() -> void:
 	# load_dict também emite state_reset, mas SaveManager limpa o estado antes de

@@ -446,6 +446,8 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 						player.mana -= spawn_mana_cost
 					var spawn_coord = WorldSetup.find_spawn_tile(hex_grid, city.coord)
 					var spawned := hex_grid.spawn_unit(spawn_coord, UnitDatabase.create_unit(result.spawn_unit_kind), player)
+					if spawned != null:
+						EventBus.ui_production_completed.emit(player, city.city_name, result.spawn_unit_kind, spawned.unit_data.unit_name, city.coord)
 					if spawned != null and player == human_player and V2LegendarySystem.is_legendary_unit(spawned):
 						EventBus.notify.emit("Unidade Lendária pronta: %s" % spawned.unit_data.unit_name, "confirm")
 					if spawned != null and player == human_player and V2ManifestationSystem.is_manifestation_unit(spawned):
@@ -462,6 +464,7 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 				if player == human_player:
 					var building: BuildingData = BuildingDatabase.get_building(result.built_kind)
 					EventBus.notify.emit("%s concluiu: %s" % [city.city_name, building.display_name], "confirm")
+					EventBus.ui_production_completed.emit(player, city.city_name, result.built_kind, building.display_name, city.coord)
 			# Aetherlands V2, Fase 13 — City Project concluído (City.city_level já mudou dentro
 			# de process_turn; aqui só o feedback, mesmo padrão de built_kind acima).
 			if result.city_level_up > 0 and player == human_player:
@@ -608,6 +611,7 @@ func _finish_turn() -> void:
 	WorldEventManager.maybe_spawn_dragon(hex_grid, TurnManager.turn_number)
 	WorldEventManager.advance_turn(hex_grid, players)
 	check_victories()
+	EventBus.ui_state_changed.emit("turn_finished")
 
 ## Acao explicita do jogador humano (futura UI: prompt de Preparation, ver
 ## docs/DRAGON_EVENT_DESIGN.md) -- decide participar ou nao do PRIMEIRO
@@ -625,6 +629,7 @@ func respond_to_world_event(participate: bool) -> bool:
 		if event.participants.has(human_civ_index):
 			continue
 		event.participants[human_civ_index] = {"decision": participate}
+		EventBus.ui_state_changed.emit("world_event_decision")
 		return true
 	return false
 

@@ -31,7 +31,7 @@ func _make_unit(kind: String, player: PlayerData) -> Unit:
 func test_unit_dot_color_falls_back_to_monster_color_without_an_owner():
 	var monster := _make_unit("goblin", null)
 
-	var minimap: Control = hud.get_node("Minimap")
+	var minimap: Control = hud.minimap
 	var color = minimap._unit_dot_color(monster)
 
 	assert_eq(color, Unit.MONSTER_COLOR)
@@ -41,7 +41,7 @@ func test_unit_dot_color_uses_civilization_color_when_owned():
 	human.civ.color = Color(0.1, 0.2, 0.3)
 	var warrior := _make_unit("warrior", human)
 
-	var minimap: Control = hud.get_node("Minimap")
+	var minimap: Control = hud.minimap
 	var color = minimap._unit_dot_color(warrior)
 
 	assert_eq(color, Color(0.1, 0.2, 0.3))
@@ -66,7 +66,8 @@ func test_fog_update_paints_only_the_changed_tiles_into_the_terrain_image():
 	grid._ready()
 	grid.generate_map(21, 21, 555)
 	GameManager.hex_grid = grid
-	var minimap: Control = hud.get_node("Minimap")
+	var minimap: Control = hud.minimap
+	minimap.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	minimap.size = Vector2(300, 80)
 	var player := PlayerData.new(CivilizationData.new())
 	var land := _land_coords(grid)
@@ -98,7 +99,8 @@ func test_terrain_image_restarts_when_the_grid_restarts():
 	grid._ready()
 	grid.generate_map(21, 21, 555)
 	GameManager.hex_grid = grid
-	var minimap: Control = hud.get_node("Minimap")
+	var minimap: Control = hud.minimap
+	minimap.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	minimap.size = Vector2(300, 80)
 	var player := PlayerData.new(CivilizationData.new())
 	var first: Vector2i = _land_coords(grid)[0]
@@ -121,5 +123,64 @@ func test_terrain_image_restarts_when_the_grid_restarts():
 	assert_gt(_terrain_alpha_at(minimap, grid, scouted), 0.0)
 	assert_eq(_terrain_alpha_at(minimap, grid, untouched), 0.0, "nada do mapa antigo sobra pintado")
 
+	GameManager.hex_grid = original_grid
+	grid.queue_free()
+
+func test_adaptive_frame_starts_local_and_waits_two_turns_for_a_distant_scout():
+	var original_grid: HexGrid = GameManager.hex_grid
+	var original_human: PlayerData = GameManager.human_player
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.generate_map(61, 61, 777)
+	var player := PlayerData.new(CivilizationData.new())
+	GameManager.hex_grid = grid
+	GameManager.human_player = player
+	var land := _land_coords(grid)
+	var start: Vector2i = land[0]
+	var far: Vector2i = land[land.size() - 1]
+	assert_not_null(grid.spawn_unit(start, UnitDatabase.create_unit("warrior"), player))
+	var minimap: Control = hud.minimap
+	minimap.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	minimap.size = Vector2(300, 120)
+	minimap._reset_adaptive_frame()
+	var local_frame: Rect2 = minimap.world_frame()
+	var world_extents := grid.get_world_half_extents()
+	assert_lt(local_frame.size.x, world_extents.x * 2.0)
+	assert_lt(local_frame.size.y, world_extents.y * 2.0)
+	var far_unit := grid.spawn_unit(far, UnitDatabase.create_unit("warrior"), player)
+	assert_not_null(far_unit)
+	var far_world3 := HexMetrics.axial_to_world(far.x, far.y, grid.hex_size)
+	var far_world := Vector2(far_world3.x, far_world3.z)
+	minimap._update_adaptive_frame(grid, false, true)
+	assert_false(minimap.world_frame().has_point(far_world), "um pico de um turno não faz o enquadramento saltar")
+	minimap._update_adaptive_frame(grid, false, true)
+	assert_true(minimap.world_frame().has_point(far_world), "exploração distante persistente expande o enquadramento")
+	GameManager.human_player = original_human
+	GameManager.hex_grid = original_grid
+	grid.queue_free()
+
+func test_minimap_click_uses_the_current_adaptive_frame():
+	var original_grid: HexGrid = GameManager.hex_grid
+	var original_human: PlayerData = GameManager.human_player
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.generate_map(41, 41, 778)
+	var player := PlayerData.new(CivilizationData.new())
+	GameManager.hex_grid = grid
+	GameManager.human_player = player
+	assert_not_null(grid.spawn_unit(_land_coords(grid)[0], UnitDatabase.create_unit("warrior"), player))
+	var minimap: Control = hud.minimap
+	minimap.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	minimap.size = Vector2(300, 120)
+	minimap._reset_adaptive_frame()
+	var received: Array[Vector3] = []
+	var callback := func(world: Vector3): received.append(world)
+	EventBus.minimap_clicked.connect(callback)
+	minimap._pan_to(minimap._content_rect().get_center())
+	EventBus.minimap_clicked.disconnect(callback)
+	assert_eq(received.size(), 1)
+	assert_almost_eq(received[0].x, minimap.world_frame().get_center().x, 0.01)
+	assert_almost_eq(received[0].z, minimap.world_frame().get_center().y, 0.01)
+	GameManager.human_player = original_human
 	GameManager.hex_grid = original_grid
 	grid.queue_free()

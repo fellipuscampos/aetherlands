@@ -6151,3 +6151,1811 @@ seis Escolas, Lendárias, Manifestações, raças, IA e vias de vitória foram a
 runs multi-seed; os valores que exigiam correção foram ajustados centralmente, os que não tinham evidência para
 mudança foram preservados, e o jogo apresenta progressão coerente do opening ao endgame sem apagar a identidade
 dos papéis ou introduzir cheats e sistemas paralelos.
+
+---
+
+# Fase 28B — UI/UX Foundation, UIShell e Eventos
+
+Primeira das quatro fases do roadmap produzido pela auditoria 28A. O objetivo
+foi criar a linguagem visual e a infraestrutura comum da nova interface, já no
+caminho real de `Main.tscn`, sem redesenhar prematuramente os painéis complexos
+e sem alterar nenhuma regra de gameplay, balanceamento ou schema de save.
+
+## Design System
+
+`UIThemeTokens` é a fonte única dos valores novos: papéis de cor, escala de
+spacing 4/8/12/16/24/32, três raios, três níveis de elevação, tempos de motion,
+altura mínima de alvo e breakpoints. A paleta troca o marrom/pergaminho por
+azul-negro e slate, texto ivory, borda neutra, brass controlado para foco/CTA,
+ciano informativo, verde de sucesso, âmbar de alerta e crimson crítico.
+
+A hierarquia tipográfica central cobre Display, H1, H2, H3, Body, Body Small,
+Label e Caption. Nenhuma fonte externa foi baixada: a fase usa a fonte já
+disponível ao projeto e deixa um asset pass tipográfico para o polish final.
+O recurso real `ui/themes/aetherlands_theme.tres`, por meio de
+`AetherlandsTheme`, configura as variações semânticas:
+
+- `PrimaryButton`, `SecondaryButton`, `DangerButton`, `GhostButton` e
+  `IconButton`;
+- `HeadingLabel`, `SubheadingLabel`, `SectionLabel`, `BodySmallLabel`,
+  `UIControlLabel`, `MutedLabel` e `CaptionLabel`;
+- `SurfacePanel`, `ElevatedPanel` e `ModalPanel`.
+
+Os aliases em `UITheme` mantêm os consumidores legados funcionando enquanto a
+fonte oficial passa a ser o arquivo de tokens. Estados normal, hover, pressed,
+focus, disabled e selected têm contraste próprio; dourado não contorna todo
+elemento. Hover de botão, entrada de modal e entrada/saída de toast usam os
+tempos centralizados e não adicionam `_process`.
+
+## Component Library
+
+| Componente | Responsabilidade | Usado agora? | Uso futuro |
+|---|---|---:|---|
+| `AEButton` | CTA semântico, foco e alvo mínimo | sim | todas as telas novas |
+| `AEIconButton` | ação compacta com nome acessível | sim | headers/toolbars |
+| `AEPanel` | surface standard/elevated/modal | style guide | painéis contextuais |
+| `AESectionHeader` | título de seção + ações | style guide | Unit/City/overview |
+| `AEStatDisplay` | valor, legenda e detalhe | style guide | recursos/stats |
+| `AEProgressBar` | progresso com label e fonte única | style guide | pesquisa/produção/ritual |
+| `AEBadge` | contador compacto | style guide | unread/attention |
+| `AEStatusChip` | estado positivo/negativo/neutro + duração | style guide | buffs, debuffs e status |
+| `AETooltipHost` | tooltip novo com título/corpo/atalho/motivo | shell | tooltips consistentes |
+| `AEModalFrame` | moldura e header padrão | sim | decisões bloqueantes |
+| `AEAbilityButton` | available/selected/disabled/cooldown/cost/passive | style guide | Unit UX da UI-3 |
+
+`AEAbilityButton` não conhece id de spell, Técnica, Escola ou Doutrina. Aceita
+textura futura e usa um marcador vetorial/glyph coerente como fallback, sem
+“missing texture”. `UIStyleGuide.tscn` demonstra tipografia, botões, surfaces,
+badge, stats, progresso, ability states, chips e modal; o próprio script se
+remove fora de debug build e não entra na navegação de release.
+
+## UIShell
+
+`UIShell.tscn` foi instanciado diretamente dentro da HUD usada por
+`Main.tscn`; não é uma segunda HUD de debug. Regiões definitivas:
+
+- `GlobalBar` no topo;
+- `MapPassThrough`, que nunca captura o centro do mapa;
+- `ContextHost` à direita, preparado mas ainda vazio;
+- `BottomHost/AttentionHost`, vazio e invisível para o jogador nesta fase;
+- `StrategicOverlayHost` para telas grandes;
+- `ModalManager` para decisões bloqueantes;
+- `ToastPresenter`, `TooltipHost` e `DebugHost` em camadas próprias.
+
+Ordem documentada/testada: mapa `0` → chrome/contexto `10` → strategic `30`
+→ modal `50` → toast `60` → tooltip `70` → debug `80`. A shell centraliza a
+hierarquia; painéis futuros não precisarão criar backdrop, ESC e z-order
+locais.
+
+## Responsive Layout
+
+Há três comportamentos simples, não um framework CSS: Large em largura
+`>=1600`, Medium em `1280..1599` e Small abaixo de 1280 como fallback. O dock
+futuro mede 440/400/até 360 px, sempre abaixo de 40% da viewport; a largura de
+toast é limitada a 420 px. A barra troca somente nomes longos por abreviações
+legíveis (`Sup.`, `Conhec.`, `Cid.`, `Uni.`) no modo compacto, preservando
+Pesquisa, Diplomacia e Vitória por extenso.
+
+Os gates reais 1920×1080, 1600×900 e 1280×720 passaram. Em 1280, barra,
+navegação e End Turn continuam acessíveis, o host contextual não domina o mapa
+e não houve clipping severo. 2560×1080 também é coberto como smoke de bounds;
+ultrawide e UI Scale final permanecem para UI-4.
+
+## NavigationManager
+
+Destinos semânticos: `RESEARCH`, `DIPLOMACY`, `VICTORY` e `PAUSE`, além dos
+overlays legados registrados durante a transição. Só um overlay estratégico
+fica aberto: abrir outro fecha o anterior; ESC fecha primeiro o ativo; sem
+overlay, o fluxo existente de Pause continua. A barra nova é o caminho visível
+para as três telas e o botão antigo de Pesquisa foi removido da experiência,
+sem duplicar entrada.
+
+O Research Board foi preservado como referência interna e apenas passou a ser
+aberto pela nova infraestrutura. Diplomacia e Vitória receberam somente a nova
+entrada/navegação, como definido no escopo.
+
+## ModalManager
+
+Stack central limitada a três entradas, com preferência prática por uma;
+dimmer único, captura de mouse/teclado, prioridade sobre targeting/overlay e
+Pause, restauração do foco anterior e foco garantido no frame apresentado.
+ESC fecha apenas modal cancelável; em não cancelável ele é consumido sem fechar.
+Enquanto aberto, clique, Space/End Turn e hotkeys ficam bloqueados. O modal não
+salva estado e a API decide explicitamente se possui o Control apresentado.
+
+Modais antigos de dragão/fim de jogo continuam hospedados como overlays
+estratégicos por compatibilidade. Migrá-los fisicamente para a stack, depois de
+paridade funcional, é dívida explícita — não se duplicou estado nesta fase.
+
+## Structured Events
+
+`UIEventData` contém `event_type`, categoria, severidade, título, mensagem,
+turno, origem opcional, coordenada opcional, entidade estável opcional,
+`dedup_key`, `focus_action`, timestamp e ordem. Nunca contém referência de
+Node. Severidades: `INFO`, `IMPORTANT`, `CRITICAL`; categorias: Research,
+Production, Diplomacy, War, City, Military, Magic, Victory, World, Economy e
+System.
+
+`UIEventService` é autoload (`UIEvents`), signal-driven, com histórico FIFO de
+200 eventos, contador unread, `mark_all_read` e `clear_session`. O histórico,
+fila, unread e overlay aberto são runtime only: não há `to_dict`, `load_dict`,
+alteração de `SAVE_VERSION` nem novo bloco de save. Nova partida e load
+bem-sucedido iniciam sessão limpa; load que falha preserva a sessão atual.
+
+`EventBus.notify` possui ponte temporária `legacy_notification`, permitindo a
+migração gradual. `ToastPresenter` apresenta a taxonomia nova sem bloquear
+input: máximo três simultâneos, fila para o restante, timeout por severidade e
+coalescing apenas de `dedup_key` idêntica enquanto visível. Cada ocorrência
+continua no histórico.
+
+## Events Migrated
+
+| Evento | Categoria / severidade | Payload estável |
+|---|---|---|
+| pesquisa concluída do humano | Research / Important | research id + nome visível |
+| unidade/prédio produzido | Production / Important | cidade, item id e coordenada |
+| guerra envolvendo o humano | War / **Critical** | civilizações + motivo |
+| paz envolvendo o humano | Diplomacy / Important | civilizações |
+| cidade fundada | City / Important | nome + coordenada |
+| cidade capturada/perdida | City / Critical | nome + coordenada |
+| ritual iniciado/interrompido | Victory / Important ou Critical contextual | civilização + coordenada |
+| vitória/fim de jogo | Victory / Critical | vencedor + tipo |
+| evento mundial principal | World / Important | id estável quando disponível |
+
+Foram adicionados somente sinais neutros de domínio ao `EventBus`. Pesquisa é
+adaptada em `PlayerData`; guerra/paz em `Diplomacy`; fundação/captura em
+`HexGrid`; conclusão de produção em `GameManager`. O restore de guerras no
+`SaveManager` usa `silent = true`, portanto carregar não inventa acontecimentos
+novos. Nenhum runtime chama painel/toast diretamente para essas integrações.
+
+## Global Bar
+
+A barra oficial agora é uma surface azul-slate agrupada, não uma sequência de
+labels na faixa marrom. Chips mostram Turno, Ouro + delta, Suprimentos usados/
+capacidade, Mana + renda, Conhecimento por turno, Cidades e Unidades. Cada chip
+já reserva API/slot invisível para `Texture2D` futuro, sem exigir reescrever o
+layout quando houver ícones finais. O presenter consulta
+`V2EconomyRuntime`/`V2LogisticsRuntime` e o estado real; não reproduz fórmulas.
+
+O cluster Pesquisa/Diplomacia/Vitória usa nomes completos e alvos de 40 px. A
+barra atualiza por sinais/transições, nunca por `_process`. O FPS legado só é
+visível em debug build e não ocupa a barra de release.
+
+## Legacy UI Temporariamente Hospedada
+
+Unit, City, Tile Inspector, Diplomacia, Vitória, End Turn, minimapa, Pause,
+menus, setup, loading, Settings, Save/Load, Developer Tools, dragão e fim de
+jogo mantêm seu conteúdo e suas regras. Research, Diplomacia e Vitória passam
+pela navegação central; os demais coexistem com os hosts definitivos. A barra
+antiga, o botão duplicado de Pesquisa e a pilha visual antiga de notificações
+foram ocultados, mas seus nodes permanecem durante a migração para não romper
+os testes/contratos existentes.
+
+Não houve reparenting agressivo do Unit/City Panel: o `ContextHost` é a porta de
+entrada para UI-3. Isso diverge deliberadamente da arquitetura final proposta
+porque os painéis legados concentram inspeção, produção e ações; reparentá-los
+agora aumentaria o risco de mudar gameplay. O HUD ainda possui seu `_process`
+legado para o estado de processamento de turno/FPS debug; nenhum `_process`
+novo foi introduzido pela fundação.
+
+## Tests
+
+Novos: `test_ui_foundation.gd` (11) e `test_ui_events.gd` (8), total de 19.
+Cobrem Theme/variations, instanciação dos 11 componentes, ability/status,
+layers/hosts, exclusividade e ESC, Pause semântico, bloqueio/cancelabilidade de
+modal, bounds das quatro resoluções, dados reais da Global Bar, ocultação dos
+elementos legados, schema/order/target, cap/unread, guerra Critical, pesquisa,
+produção, rajada de 20 eventos, limite de toast, dedupe sem perda e ausência de
+serialização.
+
+Os testes existentes de HUD, Pause, pesquisa, IA, save/load, cidades, fog,
+minimapa, movimento, magia e gameplay continuam sendo a regressão de paridade.
+**Suíte completa:** **3.294 / 3.294** (159 scripts; 367.060 asserts; 496,774 s).
+
+## Performance
+
+Godot 4.7.1 headless, média por operação no mesmo processo:
+
+| Operação | Resultado |
+|---|---:|
+| `GlobalBar.refresh` | 28,42 µs |
+| criação de toast | 541,44 µs |
+| rajada de 20 eventos (histórico + fila) | 794,00 µs total |
+| ciclo Research → Diplomacy → fechar | 15,30 µs |
+| abrir/fechar modal | 26,56 µs |
+| instanciar HUD completa | 113,389 ms |
+
+Consultas simples continuam sub-ms; o custo dominante é a montagem completa
+da HUD legada, não os services/primitives. Não há polling, timer periódico ou
+rebuild por frame novo. Toast usa Timer local apenas durante sua vida; overlays
+e modais são reutilizados. As animações são Tweens de duração curta disparados
+por evento.
+
+## Visual Validation
+
+Uma execução não-headless real de `Main.tscn`, Vulkan/RTX 3060, mapa 20×15 e
+um rival validou shell, mapa, navegação, Research, modal, toast, guerra e rajada
+nas três resoluções. Bounds observados: barra 1920/1600/1280 × 72; navegação
+264 × 40; dock-alvo 440/440/400. Em 1920 a rajada mostrou exatamente três
+toasts e quatro em fila; a guerra da IA apareceu em crimson como Critical. O
+Research Board abriu pela barra, exclusivo e sem a shell piorar seu layout. O
+modal escureceu e bloqueou o mundo. Em 1280 a barra compacta, navegação e End
+Turn permaneceram dentro da viewport. O Style Guide foi inspecionado em debug.
+
+Capturas (runtime `user://`, não adicionadas ao repositório):
+
+- `user://phase28b_ui_shell_1920x1080.png`;
+- `user://phase28b_ui_research_1920x1080.png`;
+- `user://phase28b_ui_shell_1600x900.png`;
+- `user://phase28b_ui_modal_1600x900.png`;
+- `user://phase28b_ui_shell_1280x720.png`;
+- `user://phase28b_ui_style_guide_1280x720.png`.
+
+## Known Limitations
+
+- **Attention System, checklist e Turn Controller ainda não existem**; End Turn
+  não ganhou gates novos.
+- **Event Center visual/drawer ainda não existe**; o histórico estruturado já
+  existe e alimentará essa tela na UI-2.
+- Critical ainda é um toast semanticamente distinto; banner/War Alert dedicado
+  pertence à UI-2.
+- Unit/City/Tile continuam legados; Diplomacia/Vitória continuam com conteúdo
+  legado; menus, setup, Pause, Settings, Save/Load e Loading continuam legados.
+- O bug medido da Loading (texto longo move e alarga a barra) continua conhecido
+  e explicitamente reservado à UI-4.
+- Research ainda tem a limitação auditada de visão global em 1280; a nova shell
+  não a agravou.
+- Tooltips, foco e target mínimo estão fundados para componentes novos, mas a
+  acessibilidade completa e UI Scale pertencem à UI-4.
+- Parte dos modais antigos ainda não usa fisicamente `ModalManager`; a stack é o
+  contrato definitivo para migrações futuras.
+- Não há ícones finais nem nova fonte/arte; slots existem e os fallbacks são
+  intencionais.
+
+Esta é a fundação **1/4**. Não chamar o redesign de concluído.
+
+## Próxima fase
+
+Não iniciada. O roadmap esperado é UI-2: HUD + `AttentionService` + Turn
+Controller + Event Center visual + alertas Critical dedicados + visibilidade de
+pesquisa e produção ociosas. Ela deve consumir os hosts, eventos e componentes
+da Fase 28B sem criar outra arquitetura paralela.
+
+A fundação da nova interface de Aetherlands está funcional: o jogo possui agora
+um Design System centralizado, componentes reutilizáveis, um UIShell responsivo,
+navegação e modais coordenados, uma barra global reorganizada e uma infraestrutura
+estruturada de eventos que substitui strings descartáveis como base de comunicação.
+O gameplay continua sendo a única fonte das regras e a nova arquitetura funciona
+em 1280×720, 1600×900 e 1920×1080, preparando o HUD, o sistema de atenção e os
+painéis complexos para serem reconstruídos sem repetir a arquitetura fragmentada
+anterior.
+
+---
+
+## Fase 29 — UI-2: HUD, Attention e Turn Controller
+
+A segunda das quatro etapas do redesign transforma a fundação da Fase 28B numa
+HUD viva. A camada nova somente **observa, apresenta e navega**: pesquisa,
+produção, economia, logística, diplomacia, Ritual e eventos mundiais continuam
+com seus runtimes como fonte única. Nenhuma regra, custo, IA ou versão de save
+foi alterada.
+
+### AttentionService
+
+`AttentionService` é um `RefCounted` ligado ao jogador humano atual e mantido
+pelo `UIShell`. Ele reconstrói uma lista de `AttentionItem` a partir do estado
+real quando recebe sinais de pesquisa, turno, cidade, diplomacia, Ritual ou
+evento mundial. Não há `_process`, polling, flag `resolved` nem bloco no save.
+
+Cada item possui id estável, prioridade (`REQUIRED`, `WARNING`, `SUGGESTION`),
+categoria, severidade, título, descrição, ação primária e alvo opcional. A
+ordenação também é estável: evento mundial → pesquisa → cidades na ordem do
+jogador → Ritual → Mana → economia → logística. O serviço é human-only;
+estados dos rivais só entram quando representam ameaça pública ao humano.
+
+### Attention Items Implementados
+
+| Estado derivado | Prioridade | Id / ação |
+|---|---|---|
+| Evento mundial aguardando decisão | Required | `world_event_decision:<id>` → decidir |
+| Nenhuma pesquisa ativa, com árvore incompleta | Required | `research_idle` → Pesquisa |
+| Cidade própria sem produção | Required | `city_idle:<coord>` → focar cidade |
+| Produção pronta aguardando Mana | Warning | `production_waiting_mana:<coord>` → cidade |
+| Ritual rival a uma rodada | Warning/Critical | `rival_ritual:<player>` → Vitória |
+| Déficit real de Ouro | Warning | `economy_deficit` → resumo de cidades |
+| Tensão Logística real | Warning | `logistics_tension` → resumo de cidades |
+
+Conhecimento em overflow aparece no texto de pesquisa ociosa. Completar os 128
+nós elimina corretamente esse item. Renda líquida negativa sem o estado real de
+Déficit e Supply apenas próximo do limite não viram warning. `Waiting Mana`
+também não bloqueia turno. Sugestões de unidade, builder, upgrade e Hoste sem
+comando foram deliberadamente adiadas para a UI-3, onde existirão contexto e
+ações adequados; unidade sem movimento nunca virou pendência.
+
+O `AttentionPresenter` oferece uma faixa compacta com a quantidade de
+pendências e um checklist expansível. Clique numa decisão navega para Pesquisa,
+Vitória, evento ou para o painel legado da cidade; abrir City Summary, Event
+Center ou Attention fecha os outros drawers.
+
+### Turn Controller
+
+O botão humano de fim de turno agora possui um único caminho:
+
+```text
+mouse ou Space
+    → TurnController.request_primary_action()
+        → próxima Required, se existir
+        → end_turn_requested, caso contrário
+            → HUD._perform_end_turn()
+                → TurnManager.end_turn()
+```
+
+- Com Required, a ação principal conduz à próxima pendência e não avança.
+- `Encerrar mesmo assim` abre confirmação listando todas as Required; confirmar
+  emite o fim de turno exatamente uma vez.
+- Só warnings exibem badge e não pedem confirmação.
+- Durante processamento, o controle mostra `Processando Turno…` e fica inerte.
+- Space usa exatamente a mesma decisão; Enter continua reservado ao foco atual.
+- Modal tem prioridade sobre targeting, drawers e atalhos globais.
+- Override não é persistido: no turno seguinte a lista volta a ser derivada.
+
+O botão legado permanece apenas como compatibilidade interna, oculto. Não há
+segundo entry point humano que contorne o controller.
+
+### Research Status
+
+`ResearchStatusWidget` fica permanentemente na barra global. Com projeto ativo
+mostra nome, barra, progresso/custo, restante e ETA por renda real de
+Conhecimento; renda zero vira `Sem progresso`, nunca divisão por zero. Sem
+projeto mostra `Escolher Pesquisa`, badge e Conhecimento guardado. Com 128/128,
+mostra `Pesquisas concluídas` sem falsa pendência. Clique abre o mesmo Research
+Board da Fase 28B; conclusão gera evento consultável e o estado ocioso promove
+imediatamente a próxima decisão.
+
+### City Production Summary
+
+`CityProductionPresenter` é um drawer acionado pelo chip `Cidades`. Há uma linha
+por cidade própria, na ordem estável de `player.cities`:
+
+- `Produzindo`: item, progresso/custo e ETA;
+- `Ociosa`: destaque Required e ação `Escolher produção`;
+- `Aguardando Mana`: produção pronta, Mana faltante e warning;
+- estados opcionais de projeto continuam descritos pelo runtime real.
+
+Selecionar uma linha foca a coordenada e abre o City Panel legado na cidade
+correta. O drawer é construído sob demanda; se fechado, sinais apenas atualizam
+os chips e não remontam sua lista.
+
+### Event Center
+
+`EventCenterPresenter` torna visível o histórico runtime da Fase 28B. O drawer
+abre pela navegação `Eventos`, mostra os eventos mais novos primeiro e oferece
+filtros `Todos`, `Importantes` e `Críticos`. Cada linha contém categoria,
+turno, corpo resumido, severidade e `Abrir`/`Ir para` quando há ação ou
+coordenada. Abrir marca tudo como lido sem apagar o histórico; o badge acompanha
+`unread_count`.
+
+O limite continua em 200 entradas e o histórico continua somente na sessão:
+new game e load bem-sucedido o limpam. Toast é confirmação transitória, não
+histórico; o Event Center não tenta ser um combat log completo. A ponte legada
+ignora o `notify` de cidade fundada quando o evento estruturado correspondente
+é emitido, evitando a duplicação da mesma ocorrência.
+
+### Critical Alerts
+
+`CriticalAlertPresenter` usa banner dedicado, sem modal e sem depender de toast:
+
+- guerra declarada pela IA contra o humano;
+- cidade do humano perdida;
+- cidade do humano ameaçada;
+- Ritual rival a uma rodada.
+
+Os banners entram numa fila, aparecem um por vez, têm ação contextual, podem
+ser dispensados e expiram em 8 segundos. Dispensar nunca remove o evento do
+histórico. Guerra permanece também como estado estratégico até a paz; Ritual
+crítico é reconstituído do runtime após load sem fabricar evento histórico.
+Cidade capturada pelo humano é Important, não Critical.
+
+### Strategic Alerts
+
+A barra global diferencia estado contínuo de ocorrência passada:
+
+- `Em guerra · N`, enquanto houver rival em guerra;
+- `Déficit`, somente quando `V2EconomyRuntime.is_gold_deficit` for verdadeiro;
+- `Tensão`, somente quando `V2LogisticsRuntime.is_logistically_strained` for
+  verdadeiro;
+- `Ritual rival · 1`, durante Transcendência inimiga iminente.
+
+Ouro líquido negativo sem Déficit permanece apenas como dado econômico.
+Supply ≥ 80% ganha aviso visual/tooltip no chip, mas só Tensão vira attention.
+Mana e Conhecimento exibem estoque e renda real. Em 1920 os alertas são
+explícitos; em 1600/1280 colapsam para `Alertas · N`, com tooltip priorizado,
+para preservar Pesquisa, navegação e mapa.
+
+### Minimap
+
+O minimapa existente foi fisicamente reparentado para `UIShell/MinimapHost`.
+Desenho, dados, clique, fog e frequência de atualização não foram reescritos.
+Somente frame, posição e bounds pertencem ao shell novo. Em 1280 ele continua
+no canto inferior esquerdo e não invade o Turn Controller nem o painel de
+contexto.
+
+### Responsive Layout
+
+Validado em 1920×1080, 1600×900 e 1280×720. A barra troca para modo compacto em
+larguras ≤ 1600; drawers usam 420/400/360 px; o contexto legado termina acima
+da faixa inferior; toast, banner e drawer têm regiões separadas; Attention e
+Turn Controller encolhem sem cobrir minimapa ou mapa central. Nenhum painel
+Unit/City/Tile foi redesenhado nesta fase.
+
+### Events/Signals Added
+
+`EventBus.city_threatened(player, city_name, coord, description)` transforma o
+aviso real do `CityDefense` em evento estruturado. `EventBus.ui_state_changed`
+é a invalidação discreta usada por produção, fim de turno e decisão de evento
+mundial. `UIEventService` passou a publicar progressão de Ritual, classificar
+guerra conforme o alvo humano e distinguir captura de perda. Pesquisa e
+produção continuam pelos sinais estruturados da 28B. Nenhum desses sinais é
+estado salvo.
+
+### Arquivos
+
+Novos da Fase 29: `AttentionItem.gd`, `AttentionService.gd`,
+`AttentionPresenter.gd`, `TurnController.gd`, `ResearchStatusWidget.gd`,
+`CityProductionPresenter.gd`, `EventCenterPresenter.gd`,
+`CriticalAlertPresenter.gd`, `StrategicAlertPresenter.gd`,
+`test_ui_attention.gd` e `test_ui_event_center.gd`.
+
+Alterados nesta fase: `UIShell.gd/.tscn`, `GlobalBarPresenter.gd`,
+`UIThemeTokens.gd`, `HUD.gd/.tscn`, `EventBus.gd`, `UIEventService.gd`,
+`GameManager.gd`, `City.gd`, `CityDefense.gd`, `test_ui_foundation.gd` e
+`test_minimap.gd`. Os demais arquivos já modificados no conjunto pertencem à
+fundação 28B sobre a qual esta fase foi construída.
+
+### Tests
+
+Novos testes focados: `test_ui_attention.gd` (**17/17**, 46 asserts) e
+`test_ui_event_center.gd` (**12/12**, 33 asserts). Com foundation e minimap, o
+recorte final soma **45/45**. Cobre derivação, ids/ordem, human-only, pesquisa
+ociosa/completa, múltiplas cidades, Waiting Mana, warnings econômicos,
+Ritual, widget, City Summary, Required/override/processamento, história,
+unread, filtros, alvo, cap 200, banners e classificação de cidade/guerra.
+
+**Suíte completa:** **3.324 / 3.324** (161 scripts; 367.865 asserts;
+550,054 s).
+
+Resultado do contrato P0:
+
+| P0 | Resultado | Evidência |
+|---|---|---|
+| P0-A — Attention/checklist inexistente | **PASS** | serviço derivado + faixa/checklist + testes |
+| P0-B — guerra perdida em toast | **PASS** | banner, estado persistente e histórico |
+| P0-C — pesquisa ociosa invisível | **PASS** | widget, Required e Turn Controller |
+| P0-D — cidade ociosa invisível | **PASS** | chip, Required e City Summary |
+| P0-E — sem Event Center consultável | **PASS** | drawer, filtros, unread e navegação |
+
+### Performance
+
+Godot 4.7.1 headless, médias no mesmo processo:
+
+| Operação | Resultado |
+|---|---:|
+| Attention, 1 cidade | 51,45 µs |
+| Attention, 10 cidades | 210,53 µs |
+| Attention, 10 cidades + 20 unidades | 219,59 µs |
+| Attention + Ritual crítico | 229,83 µs |
+| Research widget refresh | 2,42 µs |
+| City Summary, 10 cidades | 6,779 ms |
+| Event Center, 10 / 100 / 200 entradas | 4,189 / 44,625 / 89,837 ms |
+| Criação de banner | 41,77 µs |
+| Strategic alerts refresh | 358,63 µs |
+| Turn request com Required | 1,03 µs |
+| Refresh completo da HUD viva | 15,933 ms |
+
+Não há `_process`, timer periódico ou rebuild por frame novo. Attention usa
+sinais; banner só usa timer durante a própria vida. O Event Center de 200 itens
+tem custo de abertura explícito (~90 ms); não foi virtualizado porque é um
+drawer ocasional com limite rígido. City Summary fechado não é reconstruído.
+
+### Visual Validation
+
+Uma execução não-headless do `Main.tscn` real, Vulkan/RTX 3060, criou mapa
+61×61, três rivais e seis capturas. O roteiro exercitou Pesquisa real,
+produção em três cidades, duas cidades ociosas, checklist com três Required,
+override, drawer exclusivo, guerra real, evento persistente, Déficit, Tensão,
+Ritual rival a uma rodada e os bounds do minimapa/contexto.
+
+| Captura (`user://`, fora do repositório) | Resolução / estado |
+|---|---|
+| `phase29_1920_normal.png` | 1920×1080, HUD normal |
+| `phase29_1920_attention.png` | 1920×1080, Attention expandida |
+| `phase29_1920_cities.png` | 1920×1080, City Summary |
+| `phase29_1920_war_events.png` | 1920×1080, War Alert + Event Center |
+| `phase29_1600_strategic.png` | 1600×900, Déficit/Tensão/Ritual |
+| `phase29_1280_context.png` | 1280×720, contexto + minimapa + Turn |
+
+Resultado: **6/6 capturas, 3/3 resoluções, 0 falhas**. A validação confirmou
+também que banner, toast e drawer não se sobrepõem, e que a barra compacta cabe
+integralmente em 1280 e 1600.
+
+### Known Limitations
+
+- Unit Panel, City Panel, Tile Inspector, Diplomacia, Vitória e Research Board
+  responsivo continuam legados; pertencem à UI-3.
+- Retinue sem comando, upgrades/builders e demais sugestões de unidade foram
+  adiados para a UI-3; cada unidade sem movimento não é attention.
+- Event Center ainda não é Combat Log e sua lista de 200 itens não é virtual.
+- Alertas usam texto/fallbacks do Design System; não houve passe final de
+  ícones, arte ou áudio dedicado.
+- Loading, Settings, Save/Load, controles e acessibilidade final continuam
+  reservados à UI-4.
+- Attention e histórico não sobrevivem como objetos ao load: attention é
+  recalculada e estados críticos públicos reaparecem; histórico inicia vazio,
+  de propósito.
+
+### Próxima fase
+
+Não iniciada. O gate seguinte é UI-3: Unit/City/Tile, `AbilityButton`,
+Empire/City/Unit lists, Diplomacia, Vitória e Research responsivo. A Fase 29
+encerra o redesign em **2/4**, não como produto visual concluído.
+
+A HUD de Aetherlands agora comunica continuamente o estado estratégico do
+império e impede omissões acidentais sem sequestrar a agência do jogador:
+pesquisa e produção ociosas viram decisões visíveis, o Turn Controller conduz
+às pendências e permite override deliberado, cidades e pesquisas em andamento
+têm progresso legível, eventos importantes permanecem consultáveis no Event
+Center e ameaças críticas como guerra, perda de cidade e Transcendência
+iminente recebem alertas dedicados. Déficit, Tensão, guerras e Rituais possuem
+estado persistente na HUD, enquanto toda a atenção é derivada dos runtimes
+reais e não cria uma segunda verdade ou novo estado de save.
+
+---
+
+# Fase 30 — UI-3: Context Panels e Strategy Screens
+
+Terceira das quatro etapas do redesign. Tile, Unidade e Cidade deixam de usar os
+painéis textuais legados e passam a morar no `ContextHost` da `UIShell`, com
+cenas próprias; Técnicas, feitiços, recargas, passivas e status ganham uma
+linguagem visual comum; o império ganha a tela `EmpireScreen` (Visão geral,
+Cidades, Unidades); Diplomacia e Vitória viram telas estratégicas próprias em
+Summary/Detail; e o Research Board ficou responsivo sem perder a identidade.
+Nenhuma regra, custo, fórmula, IA ou `SAVE_VERSION` mudou: a camada nova só
+consulta os runtimes e chama as mesmas APIs de ação que o mapa e o HUD legado já
+usavam.
+
+Correção aplicada sobre a auditoria 28A: recomendações que citavam População,
+Comida, Ciência ou tiles trabalhados foram ignoradas. A City UI mostra somente a
+economia V2 (Produção local, Ouro, capacidade de Suprimentos, Conhecimento, Mana,
+manutenção) e um teste varre todas as abas das Cidades I–IV contra esses termos.
+
+## Context Architecture
+
+```text
+EventBus.tile_selected / unit_selected / fog_updated / ui_state_changed /
+targeting_changed / TurnManager.turn_changed / transcendência / diplomacia
+        │ (coalescidos: 1 reconcile por frame, call_deferred)
+        ▼
+ContextRouter (Node da UIShell)
+  decide UM contexto principal: CITY > UNIT (própria selecionada ou rival visível) > TILE
+  seletor compacto "Cidade · X | Unidade · Y | Terreno" quando há mais de um ocupante
+        ▼
+UnitContextPanel.tscn · CityContextPanel.tscn · TileContextPanel.tscn
+        │ view models imutáveis
+        ▼
+UnitPresenter · CityPresenter · TilePresenter · TargetingPresenter
+        │ só consultas
+        ▼
+runtimes V2 (Técnicas, Magia, Hostes, Portais, Construtor, upgrade,
+logística, economia, City, CityDefense, Transcendência, TileInspector)
+```
+
+- **Exatamente um painel primário** fica visível; nunca três empilhados.
+  Guarnição (cidade própria + unidade) abre a Cidade e oferece o seletor.
+- O `ContextHost` fica ancorado ao pé, logo acima da faixa inferior: Tile e
+  unidades simples usam só a altura do conteúdo; Cidade usa a coluna inteira. A
+  altura é recalculada por `minimum_size_changed` (sem polling) e respeita a base
+  **real** da barra global (mais alta no modo compacto).
+- Larguras: 440 px em ≥1600 e 400 px em 1280 (<40% da viewport, validado).
+- O botão × do painel limpa a seleção pela API pública nova
+  `SelectionManager.clear_selection()`.
+- Deep links (`open_city(city, tab)`, `open_unit(unit)`) passam pelo mesmo
+  roteamento do clique e vencem sinais pendentes do mesmo frame.
+- Refresh granular: cada painel calcula a assinatura da visão (`view_key`) e
+  **não remonta** quando nada visível mudou (névoa, turno ou mira de outra
+  unidade). Nenhuma superfície nova usa `_process`.
+
+## Unit Panel
+
+Cena `UnitContextPanel.tscn`; o `HUD.gd` não monta mais nada da unidade.
+
+| Seção | Conteúdo | Fonte |
+|---|---|---|
+| Cabeçalho | retrato-slot (glyph de papel + faixa do dono), nome racial, classe, forma/tier (`Forma-base/Evolução/Elite · N`), dono e relação, badges | `TileInspector.unit_class_label`, `V2UnitLine`, `V2LegendarySystem`, `V2ManifestationSystem` |
+| Aviso | `SEM COMANDO` + motivo, apenas para Hoste sem comando | `Unit.can_receive_orders`, `order_block_reason` |
+| Vitais | barra real de Vida; Ataque, Defesa, Movimento restante/máximo, Alcance (se >1) em blocos | `UnitData`, `Unit` |
+| Comandos | Mover, Fortificar, Explorar, Fundar Cidade, Construir melhoria, Atravessar Portal | `SelectionManager` + helpers de motivo |
+| Habilidades | grid de `AEAbilityButton`: feitiços (N4→N7), Técnicas ativas, upgrade, Dissolver | `V2MagicRuntime`, `V2TechniqueRuntime`, `V2UnitUpgrade`, `V2RetinueSystem` |
+| Passivas e traços | chips-contorno: Técnica passiva, aura, Execução/Caçada Lendária, passivas de Manifestação, voo, Passo Sombrio, vulnerabilidade, regeneração | dados da unidade |
+| Efeitos ativos | chips com polaridade e duração: Técnica ativa, Égide, Silêncio, buffs, fortificação, zona ambiental, Tensão | `magic_status` + `V2OwnerTurnEffect` |
+| Contexto | Suprimentos (+ Tensão), veterania e próximo marco, cargas, Comando da Escola, ordem, tile | runtimes correspondentes |
+
+- **Caster sem ataque básico** mostra `Ataque —` com tooltip "Sem ataque
+  básico."; nenhum comando de ataque aparece.
+- **Movimento** mostra restante/máximo e escurece quando consumido. Mover
+  continua disponível com 0 PM porque ordens de vários turnos são uma ação real
+  do jogo (paridade); o metadado explica "Ordem futura".
+- **Unidade rival/monstro é somente leitura**: sem comandos nem habilidades,
+  sem movimento restante, sem recargas, sem Técnicas passivas (pesquisa) e sem
+  ordens. Traços de dados e status públicos continuam, como no inspector.
+- **Construtor** mostra cargas e o comando de melhoria com o motivo real;
+  **Colonizador** mostra Fundar Cidade, sem seção de habilidades vazia e sem
+  linha de Suprimentos.
+- **Lendária** (badge forte) e **Grande Manifestação** (badge com a Escola)
+  usam a mesma arquitetura; Manifestação nunca recebe o badge Lendária.
+- **Retrato:** o preview 3D em SubViewport foi avaliado e adiado por risco
+  (instanciaria visual de unidade fora do mundo); `AEPortrait` entrega o slot
+  com fallback elegante e `set_texture()` para a arte futura.
+
+## Ability UX
+
+`UnitAbilityViewData` é o descriptor genérico (id, nome, descrição, categoria,
+glyph/ícone opcional, estado, custo, recarga atual/máxima, tipo de alvo,
+alcance, atalho, motivo, passiva, ação). Não guarda `Node`. O mesmo grid atende
+Técnicas, feitiços, Portal, Hoste, upgrade e Construtor sem nenhum
+`if spell == ...`: um teste varre as **12 Técnicas e os 24 feitiços** e outro
+garante que nenhum dos arquivos de Ability UX cita um id literal.
+
+`AEAbilityButton` foi reescrito sem quebrar o contrato da 28B:
+
+- estados READY, TARGETING (aceso, "Escolha o alvo"), ACTIVE (verde),
+  COOLDOWN (sombra + número grande **no ícone** + "Recarga NT"), BLOCKED
+  (metadado âmbar com o motivo curto) e PASSIVE (plano, sem foco, sem cursor de
+  clique);
+- tipo de alvo, alcance **efetivo** (inclui a passiva de alcance da
+  Manifestação), recarga máxima e custo no tooltip; custo de Mana continua
+  visível quando falta Mana;
+- motivos vêm sempre do helper real (`V2MagicRuntime.unavailable_reason`,
+  `V2TechniqueRuntime.unavailable_reason`, `V2PortalSystem.traversal_reason`,
+  `V2ConstructorRuntime.unavailable_reason`, `V2UnitUpgrade...`);
+- clicar de novo numa habilidade em mira cancela a mira (mesmo efeito do ESC).
+
+## Passives and Status
+
+Passivas/traços (permanentes) e efeitos ativos (com duração) ficam em seções
+separadas com o mesmo `AEStatusChip`: o tom `TRAIT` (contorno sem preenchimento)
+nunca parece botão; status usam POSITIVE/NEGATIVE/WARNING + `NT`. A Égide é
+status (1 turno, positivo), nunca passiva; Silêncio é status negativo e os
+feitiços mostram o motivo do runtime. Trait ids internos não aparecem.
+
+## Targeting UX
+
+`TargetingBanner` fica na área do mapa entre o minimapa e o contexto, acima da
+faixa inferior, e vale para Técnica, feitiço, posicionamento de prédio,
+anexação e Ataque da Cidade. Mostra modo, ação, alvo válido, alcance, custo,
+quantidade de alvos, instrução, "ESC cancela" e um botão Cancelar. O estado vem
+de `TargetingPresenter`, que só lê o `SelectionManager`.
+
+Sinais neutros adicionados ao `EventBus`: `targeting_changed` (entrar/sair de
+qualquer mira) e `targeting_rejected(message)` (clique fora dos alvos). O
+feedback curto dura 1,8 s por `Timer`, sem `_process`, e deixa claro que nada foi
+gasto. Saídas testadas: sucesso, ESC/cancelar, troca de seleção e abertura de
+tela estratégica (a shell chama `SelectionManager.cancel_active_targeting()`). O
+ESC passou a cobrir também o posicionamento de prédio
+(`cancel_building_placement()` agora devolve bool). Os destaques do mapa e seus
+rótulos 3D (`ATACAR`, nome do feitiço) foram preservados.
+
+## City Panel
+
+Cena `CityContextPanel.tscn`. Cabeçalho persistente com retrato do nível (I–IV),
+dono, badges reais (sem produção, aguardando Mana/Ouro, Déficit, ameaçada,
+fortificação, Ritual) e barras de Vida/Escudo. Abas **Geral / Produção / Prédios
+/ Território / Defesa**; o Ritual aparece na aba Geral só quando relevante.
+
+- **Geral:** produção atual com ETA e "Trocar/Escolher", rendimento por turno
+  (Produção, Ouro, Suprimentos, Conhecimento, Mana) com breakdown no tooltip,
+  manutenção separada como custo, slots, território, anexação e o próximo nível
+  da cidade (custo, benefícios, gate, iniciar).
+- **Prédios:** grupos Economia / Treinamento / Maestria / Ritual derivados do
+  papel do nó de pesquisa (sem id concreto), cópias `N/máx` dos repetíveis e
+  manutenção por prédio; o rendimento usa a pesquisa do dono atual (prédio
+  capturado reflete o tier efetivo).
+- **Território:** raio máximo, tiles, pontos de anexação, Anexar (entra na mira
+  real com banner) e recursos do território com melhoria/rendimento/saque. Sem
+  tiles trabalhados.
+- **Defesa:** fortificação, bônus, escudo, Ataque da Cidade (poder, alcance,
+  uma vez por turno, motivo) e o próximo nível de Fortificação.
+- **Cidade rival:** só fatos públicos (nível, fortificação, bônus, Ataque da
+  Cidade, Ritual público); sem abas, produção, prédios ou economia.
+
+## Production UX
+
+`CityPresenter.production_snapshot` virou a fonte única do estado de produção
+(ocioso / produzindo / aguardando Mana / aguardando Ouro) e o City Summary da F29
+delega a ele. O catálogo tem três categorias: **Unidades** (subgrupos Exército,
+Magia, Civis, Lendárias e Manifestações), **Edifícios** (Economia, Treinamento,
+Maestria, Ritual) e **Projetos** (Desenvolvimento = nível da cidade; Defesa =
+Fortificação). ESPECIAIS foi absorvido pelo subgrupo de Lendárias e
+Manifestações para não criar uma aba de um item.
+
+`AEProductionItem` mostra nome, custo (PP e Mana), ETA, Suprimentos ou
+manutenção, cópias e uma única linha de motivo quando bloqueado. A visibilidade
+preserva a regra legada (nada não pesquisado aparece; forma de linha antiga some);
+itens conhecidos e bloqueados aparecem com o motivo do runtime: Suprimentos,
+Déficit, prédio exigido, slots, cópias, nível da cidade, slot Lendário, slot da
+Escola, Mana para iniciar e treinamento ausente. Prédio único já construído sai
+do catálogo e mora em Prédios. Todas as ações passam por `CityCommands` — o
+mesmo caminho usado agora pelo HUD legado —, então não existe handler duplicado.
+Prédio continua entrando no posicionamento de tile.
+
+## Tile Inspector
+
+`TilePresenter` reorganiza `TileInspector.inspect` (a mesma consulta com névoa)
+em camadas: **Terreno-base** (custo, defesa física, território),
+**Modificação de terreno** (Druidismo, com deltas), **Ambiente temporário**
+(zona, Escola, dono, duração, efeitos) e **Neste tile** (recurso/melhoria,
+Portal, covil, obra). Ocupantes viram o seletor do router. Tile inexplorado não
+revela nada; tile lembrado avisa que a informação pode estar desatualizada e
+nunca abre unidade rival fora da visão. Portal e ambiente mantêm as regras de
+visibilidade do inspector.
+
+## Empire Overview
+
+`EmpireScreen` (destino `NavigationManager.EMPIRE`, botão "Império" na barra)
+responde "o que meu reino possui e onde preciso olhar". Blocos: Economia (com
+Déficit/Tensão), Cidades (ociosas, aguardando Mana, ameaçadas), Exército
+(militares, conjuradores, especiais, podem agir, sem comando), Pesquisa,
+Diplomacia e Vitória, cada um com deep link, e a lista "Onde olhar agora" lida
+do `AttentionService` (sem segundo cálculo). Construída só quando aberta.
+
+## City List
+
+Uma linha-botão por cidade: nome, nível, fortificação, Vida, produção/ETA ou
+"Sem produção — escolher" e chips de alerta. Ordenação por Atenção (padrão),
+Nome, Nível ou Produção. Clique fecha a tela, centraliza a câmera e abre o City
+Panel (na aba Produção quando a cidade está ociosa).
+
+## Unit List
+
+Uma linha-botão por unidade: nome racial, badge de identidade, papel, Vida, "Pode
+agir"/"Sem ação" + movimento, local (cidade ou coordenada), status principal
+(`SEM COMANDO`, Silêncio, Fortificada, Explorando, Em marcha, Técnica/feitiço
+ativo), cargas do Construtor e badge discreto de upgrade. Filtros: Todas,
+Militares, Conjuradores e Especiais (Lendária, Manifestação, Hoste, Construtor,
+Colonizador). Clique seleciona a unidade pela API pública
+`SelectionManager.select_unit` e abre o Unit Panel.
+
+## Diplomacy
+
+`DiplomacyScreen`: facções à esquerda com cor, estado (`EM GUERRA`, `EM PAZ`,
+`TRÉGUA` com turnos, `ELIMINADA`) e alerta de Ritual público; detalhe dominante à
+direita com situação, consequências, ações e até 5 eventos recentes da sessão
+lidos do mesmo histórico do Event Center. Só dado já público: motivo público
+(`war_reasons`), cansaço (já exibido pelo painel legado), trégua e Ritual. Nada de
+campanhas, pesos, pesquisa, estoque ou fila da IA (teste de fonte garante). A
+duração da guerra não existe no runtime e não foi inventada.
+
+Declarar guerra abre uma confirmação curta no `ModalManager` (Cancelar /
+Declarar Guerra); cancelar não muda nada e confirmar declara exatamente uma vez,
+seguindo o fluxo de eventos da F29 (não há mais toast legado duplicado). Propor
+Paz usa a regra existente e mostra "aceitou/recusou" no detalhe. War Alert e
+Event Center abrem a tela já na facção correta.
+
+## Victory
+
+`VictoryScreen` em duas camadas. **Summary:** três cards comparáveis
+(Dominação, Supremacia Militar, Transcendência) com estado, progresso
+**segmentado** (rivais eliminados, rivais satisfeitos, rodadas do Ritual),
+próximo requisito e ameaça pública; nenhum percentual arbitrário. **Detail:**
+checklist (Supremacia: Doutrinas completas via `capstone_progress`, Exército
+Supremo e cada rival por `military_supremacy_status`; Transcendência: Escolas N9,
+pesquisa, Manifestações, Estrutura Ritual utilizável, Mana, Ritual), "Ameaças
+públicas" e "Como vencer". Rival só aparece por `public_rituals()`; pesquisa e
+Manifestações rivais nunca. Alerta de Ritual e eventos de Ritual abrem direto o
+detalhe da Transcendência. A tela final da partida não foi alterada (UI-4).
+
+## Research Responsive
+
+O quadro preservou cards, cinco estados, linhas/tiers, capstone, rodapé,
+tooltips, build lazy e refresh por sinal. Mudanças:
+
+- **Modo compacto** abaixo de 1440 px: card 144×72, conectores de 10 px, coluna
+  de linhas de 156 px e metadado em 10 px; o nome continua em 12 px e o alvo de
+  clique ≥ 60 px de altura.
+- **Zoom 80%/100%** no cabeçalho (o nome nunca desce de 11 px).
+- **Cabeçalho de tiers e coluna de linhas fixos**: ScrollContainers irmãos
+  sincronizados por `value_changed` nos dois sentidos, e a coluna fixa recebe a
+  altura restante real via `resized` — nenhum offset por frame.
+- **Affordance horizontal**: esmaecimento nas bordas e chip "Mais níveis ›"
+  quando há tiers escondidos; a barra horizontal continua visível.
+- **Ir para ativo** e **Ir para disponível** (determinístico: aba atual, linhas
+  e tiers em ordem, depois o universal, depois as outras abas; PARCIAL só se não
+  houver DISPONÍVEL).
+- **Debug** numa faixa "Dev" recolhida por padrão; em build normal nem o botão
+  nem a faixa existem.
+
+Custos, slot, progresso, overflow, pré-requisitos, capstone e unlocks não foram
+tocados. O `ResearchStatusWidget` da F29 continua sendo o resumo da barra.
+
+## Legacy UI Removed/Hidden
+
+| Superfície legada | Estado |
+|---|---|
+| `DiplomacyPanel` (cena + código do HUD) | **removido** |
+| Painel "Vitória" ao vivo | **removido**; o construtor de linhas continua só para o snapshot da tela final (UI-4) |
+| `UnitPanel` e `TileInfoPanel` (unidade, cidade, inspeção textual) | **ocultos e inertes**: com `legacy_context_enabled = false` (padrão do jogo) não montam conteúdo, não aparecem e não têm entrada; só os testes legados ligam o flag como oráculo de paridade |
+| Handlers de produção/cidade do HUD | delegam a `CityCommands` (um caminho só) |
+| `ActionBar` legado vazio | oculto |
+
+Nenhum legado visível é descrito como novo.
+
+## Attention Integration
+
+- WARNING agregado `retinue_uncommanded` ("N Hostes sem comando"), nunca
+  REQUIRED; a ação abre a primeira Hoste no Unit Panel.
+- O serviço passou a ouvir `fog_updated` (comando se perde em combate no meio do
+  turno) e só reemite `items_changed` quando a lista derivada muda (assinatura
+  id/título/descrição/alvo), evitando remontar a faixa sem necessidade.
+- Sugestões de Construtor/upgrade/unidade não viraram Attention: foram
+  resolvidas no contexto e nas listas (badge "Upgrade", cargas, motivos),
+  conforme a diretriz "só se barato e sem spam".
+
+## Events/Deep Links
+
+| Origem | Destino |
+|---|---|
+| Attention "Escolher Produção", City Summary, City List ociosa | City Panel › Produção |
+| War Alert / evento de guerra ou paz no Event Center | Diplomacia com a facção selecionada |
+| Alerta/evento de Ritual | Vitória › Detalhe Transcendência |
+| Empire › Vitória | detalhe da rota em destaque |
+| Empire › Hostes sem comando / Attention de Hoste | Unit List filtrada / Unit Panel da Hoste |
+| Vitória › Ameaça pública "Ir para o local" | câmera no local público do Ritual |
+
+## Responsive Layout
+
+1920×1080, 1600×900 e 1280×720 validados no `Main.tscn` real: contexto
+440/440/400 px (<40%), nunca sobre minimapa, Turn Controller ou barra global;
+banner de mira entre minimapa e contexto; telas estratégicas centradas com
+largura máxima de 1320 px abaixo da barra real; toasts descem para a base da tela
+enquanto uma tela estratégica está aberta, para nunca cobrir abas. Em 1280 todas
+as superfícies continuam operáveis (Unit com rolagem interna, Cidade com abas,
+Research compacto). Ultrawide não foi validado nesta fase (gate da UI-4).
+
+## Tests
+
+Novos: `test_ui_context.gd` (**31**), `test_ui_city_panel.gd` (**15**) e
+`test_ui_strategy.gd` (**22**) — 68 testes. Cobrem roteamento e seletor,
+larguras, matriz de unidades (mundane, caster com 4 feitiços/recarga/Mana/
+Silêncio, Égide, Manifestação, Lendária, Hoste sem comando, Construtor,
+Colonizador, Cerco, Voadora, rival somente leitura), estados do
+`AEAbilityButton`, varredura 12 + 24, ausência de ids concretos, mira/banner/ESC/
+clique inválido/overlay, Tile com camadas e névoa, invalidação por morte,
+Cidades I–IV sem termos V1, rendimentos, abas, catálogo, motivos do runtime,
+Aguardando Mana, estruturas, território, Ataque da Cidade, Ritual, cidade rival,
+deep links, Império (contagens, ordenação, filtros, clique), Diplomacia (estados,
+confirmação, deep link, sem dado privado), Vitória (cards, dominação,
+supremacia, transcendência, rival público), Research responsivo, exclusividade/
+ESC, foco, Space e ausência de estado salvo. A matriz de paridade é exercitada
+pressionando os botões novos: Mover, Fortificar, Explorar, Fundar Cidade,
+Técnica, upgrade, Portal, melhoria do Construtor, Dissolver, produção,
+evolução urbana, Fortificação, Anexar, Ataque da Cidade e Ritual.
+
+Ajustados: `test_hud.gd` (overlays de Diplomacia/Vitória apontam para as telas
+novas; testes do construtor de linhas de vitória usam o construtor direto) e os
+arquivos legados de HUD ligam `legacy_context_enabled` para continuar como
+oráculo de paridade.
+
+**Suíte completa:** **3.392 / 3.392** (164 scripts; 370.550 asserts; 769,3 s),
+sem falhas e sem testes pendentes.
+
+## Performance
+
+Godot 4.7.1 headless, mesma fixture (10 cidades, 20 unidades, 3 rivais, pesquisa
+de Guardião/Sagrada/Infernal completa). "Com mudança" força o render completo;
+"sem mudança" é o caminho real quando o sinal não altera nada visível.
+
+| Operação | Com mudança | Sem mudança |
+|---|---:|---:|
+| Unit — Escudeiro | 11,18 ms | 1,10 ms |
+| Unit — caster 4 feitiços | 13,92 ms | 1,75 ms |
+| Unit — Manifestação | 14,57 ms | 2,13 ms |
+| Unit — status-heavy | 9,06 ms | 0,72 ms |
+| City I — Geral | 15,41 ms | 0,75 ms |
+| City IV — Geral | 15,41 ms | 0,96 ms |
+| City IV — Produção (itens atualizados no lugar) | 12,33 ms | 4,14 ms |
+| City IV — Prédios | 9,82 ms | 0,97 ms |
+| City IV — Defesa | 9,38 ms | 0,77 ms |
+| Tile — simples | 2,61 ms | — |
+| Tile — todas as camadas | 6,80 ms | 0,34 ms |
+| Seleção real → contexto (SelectionManager + render) | 15,30 ms | — |
+
+| Abertura / navegação | Resultado |
+|---|---:|
+| Troca Geral → Produção (1ª montagem da aba, Cidade IV) | ~23 ms |
+| Empire — abrir Visão geral | 22,14 ms |
+| Empire — Cidades / Unidades (20 linhas) / filtro | 24,67 / 52,91 / 23,35 ms |
+| Diplomacia — abrir / trocar facção | 6,41 / 6,14 ms |
+| Vitória — Summary / Detail | 5,07 / 6,88 ms |
+| Research — rebuild (atual / baseline F29 na mesma fixture) | 50,84 / 50,04 ms |
+| Research — abrir cacheado / ir para disponível | 0,026 / 1,72 ms |
+| HUD — `_on_turn_changed` | 1,74 ms |
+| Event Center — abrir com 200 eventos | 119,1 ms |
+
+Todo refresh normal de contexto fica abaixo de 16 ms. A medição mostrou que o
+custo dominante é criar Labels (~0,13 ms cada ao entrar na árvore), não os
+presenters (Unit 1,4 ms; Cidade 4,1 ms). Por isso: configuração estática dos
+componentes no construtor, nós de recarga/custo/motivo criados sob demanda,
+assinatura de visão para não remontar sem mudança, presenter de cidade por aba e
+itens do catálogo atualizados no lugar. Exceção documentada: a primeira
+montagem da aba Produção da Cidade IV (~23 ms) é navegação única (8 itens +
+cartão). Empire é aberto sob demanda, sem listas vivas escondidas, e não foi
+virtualizado. O Research não piorou (mesma fixture). O Event Center não foi
+tocado; os 119 ms desta fixture não são comparáveis diretamente aos ~90 ms da F29.
+O "Refresh completo da HUD viva" da F29 (15,9 ms) usou outra fixture, então não
+há comparação direta.
+
+## Visual Validation
+
+Execuções não-headless do `Main.tscn` real (Vulkan, RTX 3060, mapa 61×61, três
+rivais) com cenário montado pelo fluxo real (capital Cidade IV, Muralhas II,
+Fazendas ×3, Mercado ×2, Salão/Bastião, Templo/estrutura ritual, Escudeiro
+fortificado, Clérigo com recarga e Mana baixa, Serafim, Arquidemônio, Campeão,
+Hoste sem comando, Construtor, guerra/paz/trégua, três cidades, Druidismo +
+Névoa). A primeira passada revelou 5 problemas (contexto encostando na barra
+compacta, deep link de cidade perdendo para seleção pendente, rótulo "Filtrar"
+quebrando letra a letra, dica "Mais níveis" sobre card, toasts cobrindo abas), que
+foram corrigidos; a passada final terminou com **0 falhas**.
+
+| Captura (`user://`, fora do repositório) | Resolução / estado |
+|---|---|
+| `phase30_1920_unit_mundane.png` | Escudeiro: stats, comandos, Técnica, passiva, status, contexto |
+| `phase30_1920_unit_caster.png` | Clérigo: 4 feitiços (pronto, recarga, 2 bloqueados por Mana) |
+| `phase30_1920_unit_legendary.png` / `_manifestation.png` | Campeão Guardião / Serafim |
+| `phase30_1920_unit_retinue.png` | Hoste SEM COMANDO |
+| `phase30_1920_targeting.png` | mira de Luz Restauradora com banner |
+| `phase30_1920_city_{overview,production,structures,defense}.png` | Cidade IV pelas abas |
+| `phase30_1920_empire_{overview,cities,units}.png` | Império |
+| `phase30_1920_diplomacy_{war,peace}.png` | guerra / paz (trégua na lista) |
+| `phase30_1920_victory_{summary,detail}.png` | Summary + Transcendência |
+| `phase30_1600_{unit_caster,city_production,diplomacy,victory}.png` | baseline intermediária |
+| `phase30_1280_{full_hud_unit,city,tile}.png` | HUD completa com contexto, minimapa, Turn Controller e barra |
+| `phase30_1280_{empire,diplomacy,victory}.png` | telas estratégicas em 1280 |
+| `phase30_1280_research_{compact,zoom80}.png` | Research compacto e 80% |
+
+Resultado final: **29/29 capturas, 3/3 resoluções, 0 falhas** nas checagens de
+bounds (contexto <40%, fora de minimapa/Turn Controller/barra, dentro da
+viewport; banner fora do contexto e do minimapa; Research compacto em 1280 com
+indicador de conteúdo à direita e sem estourar a altura).
+
+## Parity Matrix
+
+| Feature | Ação legada | Ação nova | Paridade |
+|---|---|---|---|
+| Mover | `MoveButton` → `wake_selected_for_move` | Comando Mover → mesma função | PASS |
+| Fortificar | `FortifyButton` → `fortify_selected` | Comando (toggle) → mesma função | PASS |
+| Explorar | `ExploreButton` → `toggle_explore_selected` | Comando (toggle) → mesma função | PASS |
+| Fundar cidade | `FoundCityButton` + `CitySite` | Comando + mesmo motivo `CitySite` | PASS |
+| Construir melhoria | botão V2Actions | Comando Construir → `improve_resource_with_selected` | PASS |
+| Ataque básico | clique no mapa (`attackable`) | inalterado (mapa) | PASS |
+| 12 Técnicas | botões V2Actions | `AEAbilityButton` → `use_technique_selected` | PASS |
+| 24 feitiços | botões Spell_* | `AEAbilityButton` → `use_v2_spell_selected` | PASS |
+| Portal | botão Atravessar | Comando Portal → `traverse_selected_portal` | PASS |
+| Dissolver | botão Dissolver | Habilidade Retinue → `dissolve_selected_retinue` | PASS |
+| Upgrade | botão Evoluir | Habilidade Upgrade → `upgrade_selected` | PASS |
+| Produção | grades Unidades/Construções | catálogo → `CityCommands.produce` | PASS |
+| Evolução urbana | botão Evoluir cidade | Geral › Iniciar evolução / Projetos → `CityCommands` | PASS |
+| Fortificação | botão Construir Muralhas | Defesa/Projetos → `CityCommands.start_fortification` | PASS |
+| Anexação | botão Anexar | Território › Anexar → mesma mira | PASS |
+| Ataque da Cidade | botão Ataque da Cidade | Defesa › Escolher alvo → mesma mira | PASS |
+| Ritual | Iniciar/Interromper | Geral › Ritual → `CityCommands` | PASS |
+| Diplomacia | Declarar Guerra / Propor Paz | tela nova (+ confirmação de guerra) | PASS |
+| Vitória | painel textual | Summary/Detail | PASS |
+| Pesquisa | quadro V2 | mesmo quadro responsivo | PASS |
+
+## Complex State Matrix
+
+| Estado | Validação |
+|---|---|
+| Caster com 4 feitiços | teste + captura (1920/1600) |
+| Recarga | teste (número no ícone) + captura |
+| Buff (Égide) / debuff (Silêncio) | testes de status; Égide na Unit List (captura) |
+| Lendária / Manifestação | testes + capturas |
+| Hoste sem comando | teste (aviso, bloqueio, Dissolver, Attention) + captura |
+| Cargas do Construtor | teste + Unit List (captura) |
+| Cidade I–IV | teste (Vida por nível, sem termos V1) + captura IV |
+| Fortificação | testes + captura Defesa |
+| Aguardando Mana | teste (estado próprio, resumo F29 igual) |
+| Déficit | teste (motivos do runtime) |
+| Tensão | status/rodapé derivados do runtime (unidade e Império) |
+| Recurso melhorado | teste de território |
+| Portal | teste de tile |
+| Terreno druídico / ambiente | teste + captura Tile 1280 |
+| Ritual | teste disponível → ativo → interrompido |
+
+## Arquivos
+
+Novos: `scenes/ui/context/{Unit,City,Tile}ContextPanel.tscn`,
+`scenes/ui/strategy/{Empire,Diplomacy,Victory}Screen.tscn`,
+`scripts/ui/context/{ContextRouter,ContextUI,UnitContextPanel,CityContextPanel,
+TileContextPanel,TargetingBanner}.gd`,
+`scripts/ui/strategy/{StrategyScreen,EmpireScreen,DiplomacyScreen,
+VictoryScreen}.gd`, `scripts/ui/presenters/{UnitAbilityViewData,UnitPresenter,
+CityPresenter,CityCommands,TilePresenter,TargetingPresenter,EmpirePresenter,
+DiplomacyPresenter,VictoryPresenter}.gd`,
+`scripts/ui/components/{AETooltip,AEStatItem,AETabStrip,AEProductionItem,
+AEPortrait,AESegmentedBar,AECommandButton}.gd` e os três testes novos.
+
+Alterados: `AEAbilityButton`, `AEStatusChip`, `AETooltipHost`, `UITheme`
+(TooltipPanel), `UIShell`, `NavigationManager` (EMPIRE + foco),
+`GlobalBarPresenter` (Império), `AttentionService`, `CityProductionPresenter`,
+`V2ResearchBoard`, `HUD.gd/.tscn`, `PauseMenu` (ESC no posicionamento),
+`EventBus` (2 sinais neutros), `SelectionManager` (emissões de mira e API pública
+`select_unit`/`clear_selection`/`cancel_active_targeting`/`is_targeting`), e os
+testes `test_hud`, `test_hud_inspection`, `test_v2_*_hud` e `test_game_manager`
+(comentário).
+
+## Known Limitations
+
+- Retrato ainda é glyph + slot; sem preview 3D nem arte final.
+- Os destaques de tile no mapa continuam na mesma paleta; o reforço além de cor
+  vem do banner fixo e dos rótulos 3D já existentes, não de um padrão/contorno
+  novo nos hexes.
+- Cursor por modo, ícones finais, áudio de UI e reduced motion: UI-4.
+- Primeira montagem da aba Produção da Cidade IV (~23 ms) e da Unit List com 20
+  unidades (~53 ms) são custos de navegação acima de um frame; o refresh normal
+  fica abaixo de 16 ms.
+- Event Center segue sem virtualização (~119 ms com 200 eventos nesta fixture).
+- Ultrawide não validado nesta fase.
+- `UnitPanel`/`TileInfoPanel` legados ainda existem tecnicamente (ocultos, sem
+  entrada) enquanto os testes legados servirem de oráculo; remoção física é
+  limpeza de UI-4.
+- Game Over, menus, Loading, Settings, Save/Load, controles e UI Scale
+  continuam fora do escopo (UI-4).
+
+## Próxima fase
+
+Não iniciada. UI-4: Main Menu, Setup, Loading, Pause, Settings, Save/Load,
+Controls, acessibilidade, UI Scale, reduced motion, ajuda contextual,
+confirmações, motion/áudio/cursor, identidade de facção, Game Over final e polish
+geral. O redesign está em **3/4**.
+
+A terceira etapa do redesign de Aetherlands está funcional: seleção de unidades,
+cidades e tiles usa agora painéis contextuais modernos e específicos às mecânicas
+reais do jogo; Técnicas, feitiços, cooldowns, passivas e status possuem uma
+linguagem visual comum; produção urbana está categorizada e explicável; o império
+possui visão navegável de cidades e unidades; Diplomacia e Vitória foram
+transformadas em telas estratégicas com summary/detail; e a árvore de pesquisa
+preservou sua identidade enquanto passou a funcionar adequadamente em resoluções
+menores. Todas as ações legadas permanecem acessíveis pelas novas superfícies,
+nenhum dado privado foi revelado, nenhum sistema de gameplay foi duplicado e
+1280×720 continua plenamente jogável.
+
+---
+
+## Fase 31 — UI-4: Front-End Final, Menus, Setup, Loading, Pause, Settings, Save/Load e Acessibilidade
+
+Quarta e última entrega **planejada** do roadmap de UI/UX iniciado na Fase 28A.
+Ela fecha o front-end que circunda a partida e aplica a fundação das Fases
+28B–30 a menu, configuração, transições, opções, persistência visual e fim de
+jogo. O roadmap está **4/4 implementado e pronto para revisão final**; isso não
+significa que toda decisão visual seja definitiva nem que inexista um futuro
+UI-5 de polish.
+
+Escopo mantido: nenhuma regra, número de balanceamento, IA, pesquisa, economia,
+combate, condição de vitória ou formato do save foi alterado. `SAVE_VERSION`
+permanece o mesmo. As preferências de apresentação continuam em
+`user://settings.cfg`, separadas da partida.
+
+### Main Menu
+
+`TitleScreen` deixou de ser apenas uma coluna genérica: em telas largas há um
+painel editorial de identidade à esquerda e as ações ficam numa coluna curta à
+direita; abaixo de 1440 px o painel secundário some e o menu volta ao centro.
+`Novo Jogo` é a ação primária, carregar/configurar são secundárias e sair é uma
+ação discreta com confirmação. A versão de desenvolvimento fica no rodapé. O
+menu usa o mesmo `Theme`, foco e navegação das demais superfícies e não mantém o
+mundo antigo rodando ao voltar de uma partida.
+
+### Game Setup
+
+As quatro escolhas são as raças reais — Humanos, Elfos, Anões e Orcs — com
+cor de identidade, nome do reino e **exatamente dois bônus reais** vindos de
+`V2RaceBonusDatabase.effect_lines`. A lore passou a detalhe expansível
+(`Conhecer história`), em vez de dominar a decisão. O jogador escolhe 1–3
+rivais reais; mapa e dificuldade continuam fixos e não ganharam controles
+falsos. Nome vazio usa explicitamente o nome oficial da raça; um nome digitado
+com menos de dois caracteres bloqueia o início e mostra validação inline.
+
+### Loading
+
+Título, detalhe da etapa, barra fixa de 640 px e percentual agora são âncoras
+independentes. Textos longos de fase quebram dentro de uma área estável e não
+movem nem redimensionam a barra. As partículas derivam do centro/tamanho atual
+da viewport e são desligadas por `reduced_motion`. O progresso de geração é o
+progresso real já emitido pelo mapa; o texto informa honestamente que a
+restauração de save ainda possui uma etapa síncrona. O fade de saída é aguardado
+antes de revelar HUD/menu, eliminando o empilhamento transitório das duas
+superfícies.
+
+### Pause
+
+A pausa mostra reino, turno, cidades e unidades da sessão atual. Salvar um slot
+existente, carregar outra partida, voltar ao menu principal e sair têm
+confirmação proporcional ao risco; não foi inventado um “dirty flag” que o
+runtime não possui. `ESC` volta de Load/Settings para a página da pausa antes de
+fechá-la. Developer Tools tem rota própria e só aparece em debug build.
+
+### Settings
+
+`SettingsScreen` passou a uma tela categorizada: Áudio, Vídeo, Interface,
+Controles e Ajuda. Só há opções que executam algo real e persistem fora do save
+da partida. As categorias preservam foco e funcionam tanto no título quanto na
+pausa. A entrada Debug legada continua apenas como contrato compatível de
+script, sempre oculta e sem conexão na interface de jogador.
+
+### Video
+
+- modo Janela, Sem borda e Tela cheia via `DisplayServer`;
+- resoluções 1280×720, 1600×900, 1920×1080 e 2560×1440 em modos aplicáveis;
+- VSync ligado/desligado pelo caminho já existente;
+- resolução fica indisponível em tela cheia, onde a escolha é do monitor;
+- APIs de janela são ignoradas de modo seguro no backend headless.
+
+### UI Scale
+
+Escalas **80, 90, 100, 110, 125 e 150%** são persistidas e aplicadas somente a
+`Control`/`CanvasLayer`. Fontes, constantes e métricas de `StyleBox` do tema são
+escaladas de verdade; `Camera3D`, viewport do mundo, mapa e coordenadas não são
+alterados. O `UIShell` também acompanha mudanças em runtime. Em 125%/1280 o
+Event Center troca filtros para `HFlowContainer` e títulos podem quebrar linha,
+preservando o limite compacto de 400 px.
+
+### Accessibility
+
+`Reduced Motion` é uma preferência real: hover/click, abertura de painel,
+toasts, alertas críticos, modais, contexto e fade passam por
+`Settings.motion_duration`; spinner e motes viram apresentação estática. A
+informação continua por texto, foco e estado. Alto contraste **não foi exposto**:
+uma troca parcial de cores seria enganosa porque mapa, destaques 3D e superfícies
+legadas ainda não obedecem a uma paleta global segura.
+
+### Controls
+
+A página é gerada do `InputMap` para `ui_accept`/`ui_cancel` e documenta os
+controles reais adicionais (mouse, câmera e Espaço para turno) sem prometer
+atalhos inexistentes. Remapeamento ainda não é suportado e isso aparece em
+texto, em vez de um controle decorativo sem efeito.
+
+### Developer Tools
+
+Developer Tools saiu de Configurações. Em debug build ele aparece como uma
+rota própria da pausa, fecha corretamente a pausa e abre o painel de ferramentas
+do HUD. Em release a entrada nem é apresentada. O FPS continua fora da
+experiência normal, como decidido na fundação.
+
+### Save / Load
+
+`SaveManager.inspect_slots` classifica cada arquivo como `valid`, `corrupt` ou
+`incompatible` sem tentar restaurar o mundo. A lista mostra reino, raça, turno,
+data e versão quando válidos; arquivos inválidos permanecem visíveis com um
+diagnóstico legível, têm Load desabilitado e ainda podem ser excluídos com
+confirmação. `list_slots` preserva o contrato legado para consumidores antigos.
+Não houve thumbnail, migração nem bump de schema. O smoke visual criou um slot
+pela pausa, restaurou-o por `_try_load_game`/`SaveManager.load_from_slot` e o
+removeu no fim.
+
+### Contextual Help
+
+A aba Ajuda contém um glossário mínimo dos termos que aparecem no front-end:
+Conhecimento/pesquisa, Suprimentos/Tensão, Mana, PP, Lendária/Manifestação,
+Attention e vitória. É ajuda curta e contextual ao produto atual, não um codex
+nem tutorial modal novo.
+
+### World Events
+
+Convite, anúncio, resolução, tracker e barra do Dragão preservam os runtimes e
+variantes dramáticas existentes. A UI-4 não criou outra estrutura: os hooks
+estruturados e o Event Center das Fases 28B/29 continuam sendo o histórico, e
+os modais especializados continuam usando a camada modal do shell.
+
+### Motion / Audio / Cursor
+
+Os timings vêm de tokens/`Settings.motion_duration`, sem tweens contínuos nem
+polling. `AEButton` e `AEIconButton` usam feedback sonoro curto pelo
+`AudioManager`; volume segue a categoria SFX. O cursor muda para mira durante
+qualquer targeting real do `SelectionManager` e retorna à seta quando o modo é
+cancelado/concluído. Não foram criados cursores bitmap ou sons finais.
+
+### Faction Identity
+
+As raças ganharam acento de cor e identidade textual no setup, sem pintar
+painéis inteiros nem duplicar dados raciais. A identidade continua vindo de
+`CivilizationData`/`V2RaceBonusDatabase`; nenhum bônus de interface virou regra
+de gameplay.
+
+### Game Over
+
+A tela final distingue **Vitória** e **Derrota**, apresenta Dominação,
+Supremacia ou Transcendência em linguagem de jogador e mantém snapshot de
+turno/cidades/unidades/Ouro. IDs como `v2_*` nunca aparecem. As ações são
+`Jogar Novamente`, `Carregar Partida` (desabilitada sem slot válido) e
+`Menu Principal`; Load abre o fluxo real da pausa e Menu encerra a partida pelo
+mesmo `GameManager.end_match` já usado fora da tela final.
+
+### Responsive / Ultrawide
+
+O smoke não-headless executou `Main.tscn` real, mapa 61×61, geração, pausa,
+save/load e Game Over. A matriz final foi:
+
+| Superfície | 1280×720 | 1600×900 | 1920×1080 | 2560×1080 |
+|---|---|---|---|---|
+| Main Menu | coluna compacta | — | composição editorial | canvas expande; painéis mantêm max-width |
+| Setup | PASS | — | — | — |
+| Settings 100% | PASS | — | — | — |
+| Settings 125% | PASS, sem corte | — | — | — |
+| Loading com texto longo | — | — | PASS, barra fixa | — |
+| Pause no jogo real | — | PASS | — | — |
+| Game Over | — | — | PASS | — |
+
+Os oito PNGs `ui4_*` foram gravados apenas em `user://`, fora do repositório.
+Todos reportaram o tamanho físico esperado e todas as verificações de bounds
+terminaram com zero falhas.
+
+### Input / Focus
+
+Prioridade preservada: modal → targeting → tela/painel → mapa → atalhos
+globais. `ESC` recua um nível no título, setup e pausa; targeting ainda cancela
+antes da pausa; Space não atravessa modal/overlay/controle focado para terminar
+o turno. Menu, setup e Load definem foco inicial útil, e a stack existente
+restaura o foco do abridor nas telas estratégicas.
+
+### Tests
+
+Novo: `test_ui_frontend_final.gd` (6) cobre loading sem reflow, escala em
+métricas reais sem tocar o mundo, duas especialidades por raça, lore/validação,
+slots corrompidos/incompatíveis e categorias reais sem Debug. Ajustados:
+`test_settings.gd` (+2), `test_settings_screen.gd`, `test_pause_menu.gd` e
+`test_hud.gd` (+2), além dos contratos de HUD/UI das fases anteriores.
+
+Validações adicionais:
+
+- parse/import completo do editor Godot 4.7.1;
+- smoke não-headless `VisualUI4.tscn`: 8/8 capturas, quatro resoluções,
+  save/load real e zero falhas;
+- regressão focada do Event Center em escala 125%: 12/12;
+- **suíte completa: 3.404 / 3.404**, 165 scripts, **370.593 asserts**, 702,631 s,
+  sem falhas e sem testes pendentes.
+
+### Performance
+
+Medição headless, 300–1000 iterações, sem threshold dependente de hardware:
+
+| Operação UI-4 | Média |
+|---|---:|
+| Construir Theme em 100% | 2,39 ms |
+| Construir Theme em 150% (fontes/constantes/styles escalados) | 2,71 ms |
+| Instanciar TitleScreen completo | 5,76 ms |
+| Trocar categoria de Settings | 6,81 µs |
+| Inspecionar slots (1 arquivo no ambiente) | 1,24 ms |
+
+Theme é reconstruído apenas ao entrar numa raiz ou mudar acessibilidade;
+inspeção de slots ocorre ao abrir/atualizar Load. Não foi adicionado `_process`,
+timer ou rebuild por frame. A geração/restauração do mundo mantém o perfil já
+documentado; UI scale não toca renderização 3D.
+
+### Visual Validation
+
+A primeira execução correta em janela verificou a estabilidade das oito
+superfícies. A leitura das imagens encontrou dois defeitos que os asserts
+iniciais não percebiam: `default_base_scale` sozinho não alterava métricas
+explícitas do tema, e a pausa podia ser capturada durante o fade do Loading.
+Ambos foram corrigidos (escala real das métricas; fade aguardado) e a execução
+final terminou com `failures=0`. Uma terceira checagem de suíte encontrou o
+drawer com 409 px em escala persistida de 125%; filtros fluidos e títulos com
+wrap devolveram o limite a ≤400 px. A validação visual final confirmou:
+
+- menu amplo em 1920 e ultrawide sem esticar os painéis;
+- setup legível em 1280, lore recolhida e duas especialidades reais;
+- Settings em 100/125% com diferença visual efetiva e sem corte;
+- Loading longo sem deslocar a barra;
+- Pause sem camada residual, com contexto da sessão;
+- Game Over legível com as três ações finais;
+- save criado e restaurado pelo caminho real.
+
+### Remaining Limitations
+
+- Load continua com etapa síncrona; a barra não finge progresso durante ela.
+- Não há remapeamento de teclas, suporte completo a gamepad nem alto contraste
+  global.
+- Não há thumbnails de save nem mudança de schema.
+- Arte, ícones, cursores e sons são placeholders/sistema atual, não pacote final
+  de produção.
+- UI scale cobre as raízes migradas e o shell; superfícies legadas ocultas não
+  receberam um redesign adicional.
+- Event Center segue sem virtualização e pode custar ~119 ms na fixture de 200
+  eventos medida na Fase 30.
+- Confirmação de retorno ao menu é conservadora porque o runtime não expõe um
+  estado confiável de “alterado desde o último save”.
+
+### Post-UI4 Review Candidates
+
+Itens deliberadamente deixados para a revisão final, não tratados como falhas
+ocultas desta fase:
+
+1. densidade e agrupamento da barra global em 1280/ultrawide;
+2. decidir se o slate/charcoal global deve ganhar mais azul sem perder a
+   hierarquia da árvore de Pesquisa;
+3. enquadramento adaptativo e legenda/filtros do minimapa;
+4. abertura da partida/Colonizador: foco, enquadramento e primeiro comando;
+5. auditoria de qualquer empilhamento residual entre superfícies antigas e o
+   `UIShell`;
+6. observação visual subjetiva com arte/ícones/áudio finais;
+7. alto contraste, remapeamento, gamepad e virtualização do Event Center como
+   candidatos de produto, não promessas já implementadas.
+
+A Fase 31 termina aqui. O roadmap de redesign está **4/4 implementado** e o
+produto está pronto para a revisão pós-UI4; nenhuma Fase UI-5 foi iniciada.
+
+---
+
+## Fase 32 — UI-5: Final UI/UX Refinement
+
+Rodada final de refinamento sobre as arquiteturas aprovadas nas Fases 28B–31.
+Não é uma quinta reconstrução: reorganiza peso visual, densidade, bounds e
+orquestração, preservando dados, comandos e fluxos existentes. Nenhuma regra de
+gameplay, número de balanceamento, IA, pesquisa, produção, diplomacia, vitória,
+save ou `SAVE_VERSION` mudou. O Colonizador e a abertura da partida foram
+explicitamente deixados fora do escopo.
+
+## Visual Direction
+
+A direção final aproxima o produto do tom da Research Board: graphite/slate de
+baixa saturação, superfícies escuras em elevações discretas, bronze apenas para
+hierarquia e azul reservado a foco/informação semântica. Raios passaram a
+4/6/8 px para controle/painel/modal; bordas e elevações substituem sombras
+pesadas. Separadores, alinhamento e tipografia carregam valores simples sem
+transformar cada métrica em um card.
+
+**KEEP — intencionalmente sem mudança estrutural:** Unit Context, City Context,
+Tile Inspector, Research Board, Empire, Diplomacy, Victory Summary/Detail,
+Attention, Turn Controller, Event model/history, `ModalManager`,
+`NavigationManager`, `UIShell`, categorias de produção, `AbilityButton`,
+separação passiva/status e targeting. O refinamento ocorreu dentro dessas
+fundações, não ao lado delas.
+
+**REFINE:** paleta, espaçamento, chrome, tipografia, densidade, identity tiles,
+responsividade e altura adaptativa. **REWORK visual:** Main Menu, Game Setup e
+Global Bar. **BUG:** bounds excessivos, stacking de superfícies, drawer herdando
+altura incorreta, HUD vazando por Settings, signed zero e enquadramento global
+prematuro do minimapa.
+
+## Main Menu
+
+`TitleScreen` agora usa uma composição editorial aberta: uma única marca
+`AETHERLANDS`, tagline, descrição curta e metadata à esquerda; ações com
+hierarquia real à direita. O grande card vazio e o segundo título foram
+removidos. Linework geométrico discreto enriquece o fundo sem asset externo,
+ruído visual ou mundo 3D executando atrás do menu. `Novo Jogo` é a única CTA
+primária; Carregar/Configurações são secundárias e Sair é discreto.
+
+## Game Setup
+
+A tela passou de formulário vertical para três regiões legíveis: identidade da
+partida, escolha de facção e configuração/confirmação. As quatro raças ocupam
+tiles equivalentes com acento e estado selecionado. O detalhe mostra reino,
+tagline e exatamente duas especialidades vindas de
+`V2RaceBonusDatabase.effect_lines`; a história permanece expansível. Os três
+botões de rivais viraram um stepper `− / valor / +`, limitado a 1–3, com foco,
+tooltip e estado desabilitado. `Iniciar partida` é primário e Voltar, terciário.
+
+## Global Bar
+
+`GlobalBarPresenter` foi recomposto como uma superfície contínua de **56 px**:
+
+- esquerda: turno e uma resource strip separada por linhas sutis;
+- centro flexível: pesquisa ativa/ociosa e progresso compacto;
+- direita: navegação estratégica.
+
+Ouro, Suprimentos, Mana e Conhecimento deixaram de ser mini-painéis. Cidades e
+unidades são contadores compactos com affordance, sem competir com recursos.
+Em 1920 os labels de Pesquisa/Império/Diplomacia/Vitória/Eventos permanecem
+inteiros; abaixo de 1600 a barra usa abreviações com tooltips, preservando todos
+os destinos sem reduzir a fonte a um tamanho ilegível.
+
+## Palette
+
+`UIThemeTokens` é a fonte única dos papéis finais:
+
+| Papel | Uso |
+|---|---|
+| graphite `COLOR_CANVAS` | fundo/base |
+| slate `COLOR_SURFACE` / `RAISED` / `MODAL` | hierarquia de superfícies |
+| azul `COLOR_INFO` | foco, informação e estado secundário |
+| bronze `COLOR_ACCENT` | CTA primária, seleção e headings especiais |
+| vermelho / verde | perigo real / sucesso |
+
+Gold não fecha todas as bordas e azul não ocupa massas de fundo. Tooltip,
+scrollbar, campos, slider, tabs e botões consomem o mesmo vocabulário.
+
+## Strategic Screen Bounds
+
+`StrategyScreen` centraliza a política: safe margin de **32 px horizontal** e
+**24 px vertical**, reserva a altura real da Global Bar, limita a moldura ao
+viewport e delega overflow ao `ScrollContainer` interno com cabeçalho fixo.
+Sizing roda ao abrir, redimensionar ou mudar UI scale, nunca por frame.
+
+Alturas preferidas passaram a refletir o conteúdo: Empire overview 560 px e
+listas 760 px; Diplomacy 440 px; Victory Summary 390 px e Detail 480 px. São
+preferências dentro de min/max, não alturas capazes de furar a viewport; listas
+futuras continuam crescendo por scroll.
+
+## Surface Exclusivity
+
+O `UIShell` formaliza a prioridade visual:
+
+1. modal bloqueante;
+2. Settings/Save/Load/Pause subscreen;
+3. tela estratégica;
+4. drawer auxiliar;
+5. contexto;
+6. HUD persistente;
+7. mapa.
+
+Event Center, City Summary e Attention Expanded são mutuamente exclusivos no
+rail. Abrir drawer suprime o contexto sem apagar seleção; fechar restaura o
+contexto atual. Abrir Research/Empire/Diplomacy/Victory fecha drawers e targeting.
+Settings pela pausa oculta Global Bar, minimapa, Turn Controller, Attention,
+toasts, alertas, targeting e contexto; nada atravessa o subscreen.
+
+## Identity Tiles
+
+`AEPortrait` virou o padrão quadrado 1:1 para Unidade, Cidade e Terreno, com o
+mesmo frame, glyph/fallback e baseline. A antiga barra lateral foi removida. A
+identidade de facção/tipo usa uma borda superior de 3 px e o glyph, sem um
+retângulo separado roubando largura.
+
+## Unit / City / Tile Refinement
+
+Os três painéis mantêm toda a informação e todos os comandos da UI-3. O ajuste
+foi de hierarquia: identity tile consistente, seções com bordas mais leves,
+métricas alinhadas, tabs do mesmo vocabulário e altura de contexto derivada do
+conteúdo. Unidade e tile compactos não ocupam o rail inteiro; Cidade continua
+maior porque sua densidade é real, não removível.
+
+## Settings
+
+As cinco categorias aprovadas continuam. A coluna de conteúdo foi limitada a
+680 px (painel 680 × 440 em 100%), sliders a 480 px e a sidebar ganhou selected
+state coerente. O fundo geral absorve o espaço restante, em vez de um painel de
+formulário atravessar a tela. Pause apenas adotou a paleta/radii refinados.
+
+## Empire
+
+Mantém Overview/Cidades/Unidades e os deep links reais. O overview agora usa uma
+moldura menor com cards alinhados e sem grande faixa vazia inferior; listas
+podem crescer até o máximo seguro e então rolam internamente.
+
+## Diplomacy
+
+A arquitetura lista + detalhe foi preservada, assim como dados públicos,
+confirmação de guerra e proposta de paz. A altura preferida caiu para 440 px,
+eliminando a área vazia vista na primeira validação, e as ações continuam no
+detalhe rolável.
+
+## Victory
+
+Summary continua com três rotas comparáveis, mas mede 390 px e não estica o
+modal por conteúdo curto. Detail mede 480 px, usa back `←` compacto no mesmo
+chrome do `×` e preserva Requisitos, cada rival e Como vencer. Conteúdo maior
+rola sem alterar a moldura.
+
+## Event Center
+
+Filtros viraram controles leves no mesmo vocabulário de tabs. A altura é
+`clamp(180 + min(eventos, 5) × 76, 300, 560)`: histórico curto não ocupa toda a
+tela; histórico longo rola. Um bug de layout do `PanelContainer` mantinha o
+offset antigo ao voltar de invisível e produzia ~700 px apesar da altura
+preferida; a shell reaplica offsets uma vez no frame seguinte, sem polling.
+
+## Bottom HUD Alignment
+
+Minimapa e Turn Controller agora usam o mesmo `HUD_EDGE_MARGIN = 16` e a mesma
+baseline inferior. Attention compartilha a faixa do Turn Controller e o banner
+de targeting se centraliza na área útil do mapa, entre minimapa e contexto.
+
+## Minimap Adaptive Framing
+
+O frame nasce regional ao redor de cidades e unidades próprias, com margem de
+9 hexes e janela mínima de 28 × 18 hexes. Cidades fundadas/capturadas expandem
+imediatamente. Uma unidade isolada fora do frame precisa permanecer distante por
+**duas viradas** antes de expandi-lo; o frame só encolhe depois de **três
+viradas estáveis**, evitando zoom oscilante. Império tardio aproxima-se
+naturalmente da visão global.
+
+O cálculo percorre apenas cidades e unidades próprias. Terreno continua vindo
+da imagem de fog conhecida; nenhuma cidade/unidade rival invisível é revelada.
+Atualiza em nova grade, fundação/captura, virada e fog incremental; não há scan
+do mapa nem recomputação de bounds por frame. Clique/arraste usa `_world_frame`,
+logo continua apontando para a coordenada correta em qualquer zoom.
+
+## Typography / Copy
+
+A hierarquia Display/H1/H2/H3/Body/Body Small/Caption passou a tokens comuns.
+Valores estratégicos têm prioridade sobre labels sem tornar todo texto bold.
+Strings player-facing foram normalizadas (`Anões`, `Áudio`, `Vídeo`,
+`Conhecer história`, `Especialidades:`). `UIFormat.number/delta` elimina
+`-0`, preserva `+N` apenas onde delta positivo é informativo e mostra zero como
+`0`, sem mudar nenhum cálculo.
+
+## Responsive Layout
+
+Validação final cobriu 1280×720, 1600×900, 1920×1080 e 2560×1080. Em 1280
+a navegação compacta e os rails de 400 px preservam o mapa; em 1920 os labels
+ficam completos; em ultrawide contexto e telas estratégicas mantêm max-width em
+vez de se espalharem. Safe margins são reduzidos por clamp somente quando a
+viewport/UI scale exige; o body permanece rolável.
+
+## Accessibility Regression
+
+Foco, teclado, tooltip, ESC, target mínimo de 40 px, UI scales 80/90/100/110/
+125/150% e `Reduced Motion` permanecem. O stepper respeita limites e não inicia
+a partida por `ui_accept` incidental. Modal/Settings ainda vencem targeting e
+atalhos globais. Não foi prometido alto contraste, remapeamento ou gamepad
+completo: continuam limitações de produto já documentadas.
+
+## Tests
+
+Novo `test_ui_refinement.gd` cobre paleta, marca única, setup/stepper, Global
+Bar contínua/compacta, bounds e alturas estratégicas, exclusividade/restauração,
+identity tile, baseline inferior, Settings e signed zero. `test_minimap.gd`
+ganhou framing/histerese e transform do clique; `test_ui_event_center.gd`
+protege a altura real do drawer. Contratos UI-1–UI-4, gameplay e save foram
+reexecutados.
+
+- focados finais: `test_ui_refinement` 10/10 (58 asserts),
+  `test_ui_strategy` 22/22 (138 asserts), `test_v2_race_bonuses` 23/23
+  (660 asserts);
+- editor/import e smoke real sem erro de parse;
+- suíte completa final: **3.416 / 3.416**, 166 scripts, **370.748 asserts**,
+  632,177 s, sem falhas e sem testes pendentes.
+
+**Bugs objetivos corrigidos separadamente do polish:** Global Bar extrapolava
+60 px por margens recursivas; Settings deixava chrome do HUD visível; Victory
+tentava focar um botão já liberado; drawers herdavam altura de 700 px; contexto
+competia com Event Center; telas estratégicas tinham heights desproporcionais;
+o contrato textual de `Especialidades:` perdeu os dois-pontos durante o polish
+e foi restaurado por regressão; signed zero vazava em métricas.
+
+## Performance
+
+Medição em janela real, Godot 4.7.1, sem threshold dependente de hardware:
+
+| Operação UI-5 | Média |
+|---|---:|
+| Instanciar Main Menu | 3,87 ms |
+| Instanciar Game Setup | 1,05 ms |
+| Refresh da Global Bar | 0,84 ms |
+| Recalcular layout estratégico | 2,42 µs |
+| Event Center, 200 eventos | 101,56 ms |
+| Trocar contexto | 1,04 ms |
+| Recalcular frame do minimapa | 6,94 µs |
+| Refresh completo da shell | 0,96 ms |
+
+O watchpoint de 200 eventos melhorou em relação aos ~119 ms da Fase 30, mas
+continua sem virtualização. Nenhum `_process`, timer, scan integral do mapa ou
+rebuild contínuo foi adicionado para sizing/framing; os mesmos sinais e fontes
+de dados alimentam a Global Bar.
+
+## Visual Validation
+
+Smoke não-headless de `Main.tscn` real: **20 capturas**, quatro resoluções e
+`failures=0`. A leitura manual encontrou e corrigiu a altura ainda excessiva de
+Diplomacy/Victory Detail; a segunda inspeção confirmou a composição final.
+Arquivos em `user://` (fora do repositório):
+
+```text
+ui5_1920_main_menu.png
+ui5_1920_game_setup.png
+ui5_1920_global_bar.png
+ui5_1920_unit_context.png
+ui5_1920_tile_context.png
+ui5_1920_city_context.png
+ui5_1920_minimap_early.png
+ui5_1920_bottom_hud.png
+ui5_1920_empire.png
+ui5_1920_diplomacy.png
+ui5_1920_victory_summary.png
+ui5_1920_victory_detail.png
+ui5_1920_event_center.png
+ui5_1920_context_restored.png
+ui5_1280_hud.png
+ui5_1280_pause.png
+ui5_1280_settings.png
+ui5_1600_hud.png
+ui5_2560_hud.png
+ui5_2560_minimap_expanded.png
+```
+
+Antes/depois qualitativo: menu perdeu card/branding duplicado; setup deixou de
+ser um formulário; Global Bar deixou de ser uma coleção de boxes; minimapa saiu
+da visão global precoce para contexto regional; Victory Summary perdeu o vazio
+inferior; Settings trocou o campo horizontal quase integral por coluna limitada.
+As 14 perguntas de design review foram verificadas nas imagens: hierarquia,
+uso seletivo de gold/azul, bounds, exclusividade, identity tiles, legibilidade,
+mapa dominante e ausência de copy interna passaram.
+
+## Remaining Limitations
+
+- assets, glyphs, cursor e áudio continuam o pacote atual/placeholder;
+- Event Center com 200 linhas ainda custa ~102 ms e não é virtualizado;
+- não há alto contraste global, remapeamento, gamepad completo ou thumbnails;
+- o minimapa expande por cidades e unidades próprias; markers futuros precisam
+  declarar explicitamente se participam do frame;
+- screenshots ficam em `user://`, não no repositório;
+- os avisos conhecidos de orphan/RID no encerramento da suíte continuam fora
+  do escopo deste refinement e não representam falha de teste.
+
+## Deferred to Gameplay/Balance
+
+Não iniciado: **Gameplay Opening + Release Balance Lab** — abertura,
+Colonizador, pressão de produção, partidas completas IA-vs-IA, pacing das
+vitórias, alvo de 2–3 horas, distribuições p90/p95 e timings de pesquisa/
+produção. Nenhum desses temas foi antecipado pela UI-5.
+
+**Final UI/UX refinement completed and ready to leave the interface workstream.**
+
+A interface de Aetherlands agora possui uma direção visual coesa, um fluxo
+inicial mais forte, um HUD global mais limpo, telas estratégicas mais contidas,
+um sistema de superfícies coerente e um minimapa mais útil.
+
+“A rodada final de refinamento de UI/UX foi concluída sem reabrir as arquiteturas
+já aprovadas: o front-end perdeu a aparência de formulário/protótipo, a Global
+Bar foi recomposta como um instrumento contínuo e mais leve, o sistema visual
+foi aproximado do graphite/slate da Research Board, strategic screens agora
+respeitam a viewport e adaptam altura ao conteúdo, superfícies mutuamente
+exclusivas não se sobrepõem, Unit/City/Tile usam identity tiles quadrados e
+consistentes sem barras laterais, o HUD inferior está alinhado aos cantos e o
+minimapa usa enquadramento adaptativo baseado apenas no estado conhecido pelo
+jogador. Todas as informações e ações da V2 permanecem intactas, nenhuma regra
+de gameplay foi alterada e a interface está pronta para sair do workstream de
+redesign e entrar no Gameplay Opening + Release Balance Lab.”
+
+---
+
+# Fase 33 — Gameplay Completion + Release Balance
+
+## Etapa A — Gameplay Completion Audit
+
+**Escopo executado:** auditoria funcional do jogo completo, do Title ao Game Over, sem iniciar o Release Balance
+Lab. Nenhum custo, rendimento, atributo, peso de IA, pacing ou condição de vitória foi alterado. O relatório
+detalhado, com matriz de completude e alcance, está em `docs/AETHERLANDS_GAMEPLAY_COMPLETION_AUDIT.md`.
+
+### Resultado do gate
+
+**READY AFTER SMALL COMPLETION FIX PASS.** O loop V2 está completo e não há P0: todas as 128 pesquisas possuem
+consumidor, todo o conteúdo atual é alcançável e as três vitórias terminam pelo fluxo normal. A entrada no F33B foi
+interrompida porque a auditoria encontrou um P1 localizado no opening e um P2 de observabilidade:
+
+- **P1 — GAMEPLAY GAP:** depois de fundar a capital, somente o Colonizador pode ser iniciado até a primeira
+  infraestrutura ser pesquisada. Attention exige uma decisão embora exista uma única opção real;
+- **P2 — BUG:** o `UIShell` recebe `GameManager.human_player` no `_ready` do HUD, antes da criação do jogador numa
+  partida nova. O painel da cidade funciona, mas Attention global fica vazio até um rebind/refresh posterior.
+
+Nenhum dos dois foi corrigido nesta etapa: ambos são pequenos, não bloqueiam uma partida e devem ser tratados numa
+Completion Fix curta antes de qualquer tuning numérico.
+
+### Opening real (`Main.tscn`)
+
+Foi criado o harness reexecutável `test/integration/GameplayCompletionPhase33A.tscn`. Ele abre Title, atravessa Setup
+e Loading, funda a capital pela ação real do Colonizador, escolhe pesquisa/produção pelo runtime e avança turnos
+reais até T30. Execução final: **failures=0**, Vulkan/RTX 3060, aproximadamente **8,1 s**, captura em
+`user://phase33a_opening_t30.png`.
+
+| Marco | Catálogo iniciável | Bloqueado/ausente | Estado observado |
+|---|---|---|---|
+| T1 | Colonizador (25 PP) | Cidade II e Muralhas I: “Requer Planejamento Urbano”; nenhum prédio/Other | pesquisa e produção ociosas |
+| T3 | Colonizador em produção, 8/25 PP | mesmos gates | Academia I em pesquisa |
+| T5 | Colonizador em produção, 16/25 PP | mesmos gates | sem alternativa de produção |
+| T8 | Colonizador disponível novamente | mesmos gates | primeiro Colonizador concluiu; cidade ociosa |
+| T9–T10 | Colonizador ou Academia (24 PP) | Cidade II/Muralhas I | primeira escolha real; Academia I completou |
+| T15–T20 | Colonizador ou Academia | Cidade II/Muralhas I | Guardião N1→N2 |
+| T30 | Colonizador, Academia ou Salão dos Guardiões (22 PP) | Cidade II/Muralhas I | Guardião N1/N2 completos; N3 ativo |
+
+O diagnóstico responde às nove perguntas obrigatórias: existe uma produção imediata; existe só uma escolha real;
+ela é o Colonizador; o estado dura até T8; Academia I o encerra no T9; Attention pressiona expansão; nunca há zero
+opções; a IA usa os mesmos gates sem sofrer o prompt humano; e o resultado é **GAMEPLAY GAP P1**, não um problema de
+custo e não um deadlock.
+
+### Completude verificada
+
+- **Loop:** Title → Setup → Loading → exploração → capital → pesquisa → produção → economia → expansão →
+  especialização → guerra/magia → late game → vitória/derrota → Game Over;
+- **Cidade/economia:** Cidade I–IV, anexação, cinco recursos econômicos, Déficit, Supply/Tensão, cinco famílias de
+  infraestrutura, fortificação I–III, proprietário atual e dois bônus por raça;
+- **território:** cinco recursos, cinco melhorias e Construtor com cargas;
+- **pesquisa:** 55 nós militares + 55 mágicos + 18 de Infraestrutura, slot único e capstones;
+- **militar:** seis Doutrinas, doze Técnicas, três formas por linha, upgrades e seis Lendárias no slot global;
+- **magia:** seis Escolas, vinte e quatro feitiços, seis estruturas rituais e seis Manifestações com slot por Escola;
+- **mundo:** combate, movimento terrestre/aéreo/infiltrador, terreno, captura, diplomacia, eventos, monstros e Dragão;
+- **IA:** as três orientações pesquisam, constroem, expandem, compõem, lutam, usam magia e perseguem vitória sem
+  onisciência estratégica;
+- **fim:** Dominação, Supremacia e Transcendência fecham pelo mesmo Game Over e expõem o motivo;
+- **persistência:** opening, midgame e late game preservam os sistemas acima; saves antigos são saneados sem reativar
+  gameplay V1.
+
+A autonomia por “missão estratégica” para toda Manifestação, dificuldades adicionais, alianças/comércio profundo,
+navegação como eixo e assets finais permanecem **INTENTIONALLY OUT OF SCOPE** ou **DEFERRED POST-1.0**; não são
+consumidores ausentes do conteúdo 1.0.
+
+### Evidência
+
+| Verificação | Resultado |
+|---|---|
+| Opening real T1/T3/T5/T10/T15/T20/T30 | PASS, failures=0 |
+| Pesquisa integrada | 4/4, 43 asserts |
+| Economia/Builder/recursos | 1/1, 136 asserts |
+| Supremacia/cidade/fortificação/captura | 3/3, 122 asserts |
+| Transcendência/ritual/interrupção | 1/1, 71 asserts |
+| GameManager/Dominação/Game Over | 43/43, 117 asserts |
+| SaveManager transversal | 65/65, 424 asserts |
+| IA real até T151 | 1/1, 10.598 asserts |
+| Suíte GUT completa | **3416/3416**, 166 scripts, 370.748 asserts, código 0 |
+
+Os warnings conhecidos de orphan/RID/resource no teardown do GUT permanecem sem falha de assert. `git diff --check`
+passou. A F33B não foi iniciada.
+
+## Fase 33 — Gameplay Completion + Release Balance
+
+### Etapa A.2 — Small Completion Fix Pass
+
+**Resultado:** os dois achados localizados da Etapa A foram corrigidos sem alterar a baseline de gameplay. A análise
+anterior permanece no documento e o relatório completo, incluindo a matriz de semântica e as evidências, está em
+`docs/AETHERLANDS_GAMEPLAY_COMPLETION_AUDIT.md`, seção `Completion Fix Pass Result`.
+
+#### P1 — produção do opening
+
+`CityPresenter.startable_production_items(city)` expõe exatamente os itens `available` do catálogo real já usado pela
+UI. `CityPresenter.is_settler_production_item(item)` identifica a unidade fundadora pelo `id` e por
+`UnitData.can_found_city`, sem comparar o texto localizado.
+
+`AttentionService` aplica a seguinte semântica apenas quando a cidade está sem item em produção:
+
+- zero opções iniciáveis: WARNING `Sem produção disponível`;
+- somente Colonizador: WARNING `Cidade ociosa — somente Colonizador disponível`;
+- uma opção não fundadora ou duas ou mais opções: REQUIRED `Escolher Produção`.
+
+Warnings não acionam o override do controlador de turno; a pesquisa ociosa continua REQUIRED. A regra anterior de
+produção concluída aguardando Mana continua WARNING. Ao concluir Academia I no T9, a Academia entra no catálogo e a
+pendência REQUIRED retorna automaticamente. O Colonizador continua disponível e com os mesmos 25 PP.
+
+#### P2 — ligação do Attention no primeiro estado útil
+
+`Main._enter_gameplay()` chama `hud.ui_shell.bind_player(GameManager.human_player)` depois que o jogador existe. Partida
+nova e load já convergiam para esse ponto; restart também passou a convergir. O próprio `bind_player` garante a troca de
+dono e a idempotência das conexões. O ciclo new → restart → load → menu principal → new foi exercitado com `Main.tscn`
+real e confirmou o jogador correto em todas as entradas.
+
+#### Arquivos desta passagem
+
+| Papel | Arquivo |
+|---|---|
+| Fonte do catálogo iniciável e identificação por metadata | `scripts/ui/presenters/CityPresenter.gd` |
+| Semântica WARNING/REQUIRED da cidade ociosa | `scripts/ui/AttentionService.gd` |
+| Rebind no ponto canônico de entrada | `scripts/main/Main.gd` |
+| Regressões unitárias e benchmark | `test/unit/test_ui_attention.gd` |
+| Ciclo de vida real | `test/integration/attention_lifecycle_phase33a2.gd`, `AttentionLifecyclePhase33A2.tscn` |
+| Opening e capturas | `test/integration/gameplay_completion_phase33a.gd`, `GameplayCompletionPhase33A.tscn` |
+
+#### Validação
+
+- opening real T1–T30: PASS, `failures=0`; Colonizador conclui no T8, Academia cria a primeira alternativa no T9;
+- ciclo new/load/restart/main→new: PASS, `failures=0`, sem bind manual de recuperação;
+- `test_ui_attention.gd`: 25/25;
+- suíte GUT completa: **3424/3424**, 166 scripts, **370.779 asserts**, código 0;
+- benchmark: 100 refreshes / 10 cidades em 1.806.055 µs durante a suíte; execução somente por sinal/evento;
+- visual em 1600×900: somente Colonizador como aviso, Attention expandido e segunda opção restaurando REQUIRED;
+- `git diff --check`: PASS.
+
+Não houve mudança de custo, unlock, rendimento, IA, vitória, slot de pesquisa ou save. A etapa termina aqui, antes de
+qualquer tuning do F33B.
+
+**READY FOR F33B — RELEASE BALANCE BASELINE.**

@@ -18,7 +18,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.03, 0.04, 0.07, 0.82)
+color = Color(0.043, 0.059, 0.078, 0.97)
 
 [node name="MainPage" type="Control" parent="."]
 layout_mode = 1
@@ -26,6 +26,70 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="AccentStrip" type="ColorRect" parent="MainPage"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 0.0
+anchor_bottom = 1.0
+offset_right = 3.0
+grow_vertical = 2
+color = Color(0.74, 0.58, 0.31, 0.88)
+
+[node name="LineworkTop" type="Label" parent="MainPage"]
+layout_mode = 1
+anchor_left = 0.06
+anchor_top = 0.12
+anchor_right = 0.48
+anchor_bottom = 0.2
+modulate = Color(0.32, 0.39, 0.46, 0.2)
+theme_override_font_sizes/font_size = 20
+text = "◇ ─────── ◇ ─────── ◇"
+
+[node name="LineworkBottom" type="Label" parent="MainPage"]
+layout_mode = 1
+anchor_left = 0.08
+anchor_top = 0.81
+anchor_right = 0.48
+anchor_bottom = 0.88
+modulate = Color(0.32, 0.39, 0.46, 0.14)
+theme_override_font_sizes/font_size = 16
+text = "⌬   ·   ⌬   ·   ⌬   ·   ⌬"
+
+[node name="BrandPanel" type="MarginContainer" parent="MainPage"]
+layout_mode = 1
+anchor_left = 0.08
+anchor_top = 0.25
+anchor_right = 0.47
+anchor_bottom = 0.75
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 8
+[node name="BrandBox" type="VBoxContainer" parent="MainPage/BrandPanel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 18
+[node name="Kicker" type="Label" parent="MainPage/BrandPanel/BrandBox"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "UM MUNDO ENTRE ERAS"
+[node name="Brand" type="Label" parent="MainPage/BrandPanel/BrandBox"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 52
+text = "AETHERLANDS"
+[node name="Description" type="Label" parent="MainPage/BrandPanel/BrandBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Erga cidades, domine doutrinas e escolas de magia, atravesse crises mundiais e conduza seu reino a uma das tres vias de vitoria."
+[node name="Divider" type="HSeparator" parent="MainPage/BrandPanel/BrandBox"]
+layout_mode = 2
+[node name="Promise" type="Label" parent="MainPage/BrandPanel/BrandBox"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+autowrap_mode = 3
+text = "Estrategia 4X medieval de fantasia · seis doutrinas · seis escolas"
 
 [node name="CenterBox" type="CenterContainer" parent="MainPage"]
 layout_mode = 1
@@ -37,22 +101,23 @@ grow_vertical = 2
 [node name="Box" type="VBoxContainer" parent="MainPage/CenterBox"]
 layout_mode = 2
 theme_override_constants/separation = 14
-custom_minimum_size = Vector2(320, 0)
+custom_minimum_size = Vector2(340, 0)
 
 [node name="TitleLabel" type="Label" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 40
-text = "Aetherlands"
+theme_type_variation = &"MutedLabel"
+theme_override_font_sizes/font_size = 13
+text = "INICIAR JORNADA"
 
 [node name="SubtitleLabel" type="Label" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
-horizontal_alignment = 1
+theme_type_variation = &"CaptionLabel"
 autowrap_mode = 3
-text = "Um 4X medieval de fantasia"
+text = "Escolha como entrar no mundo."
 
 [node name="NewGameButton" type="Button" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
+theme_type_variation = &"PrimaryButton"
 text = "Novo Jogo"
 
 [node name="LoadGameButton" type="Button" parent="MainPage/CenterBox/Box"]
@@ -65,6 +130,7 @@ text = "Configurações"
 
 [node name="QuitButton" type="Button" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
+theme_type_variation = &"GhostButton"
 text = "Sair"
 
 [node name="StatusLabel" type="Label" parent="MainPage/CenterBox/Box"]
@@ -74,9 +140,33 @@ autowrap_mode = 3
 modulate = Color(1.0, 0.55, 0.5, 1.0)
 text = ""
 
+[node name="BuildLabel" type="Label" parent="MainPage"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_top = -42.0
+offset_right = -20.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_type_variation = &"CaptionLabel"
+text = "Aetherlands"
+horizontal_alignment = 2
+
 [node name="LoadGameScreen" parent="." instance=ExtResource("LoadGameScreen_scn")]
 layout_mode = 1
 
 [node name="SettingsScreen" parent="." instance=ExtResource("SettingsScreen_scn")]
 layout_mode = 1
 show_debug = false
+
+[node name="ConfirmQuitDialog" type="ConfirmationDialog" parent="."]
+title = "Sair do jogo"
+initial_position = 1
+size = Vector2i(460, 150)
+ok_button_text = "Sair"
+dialog_text = "Encerrar Aetherlands?"

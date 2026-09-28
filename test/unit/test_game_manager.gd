@@ -128,7 +128,7 @@ func test_setup_players_clamps_rival_count_to_available_civs():
 ## Pedido do usuario: "vamos fazer com que todos comecem o jogo em paz, ao
 ## inves de comecar em guerra" — antes disso o humano nascia automaticamente
 ## em guerra com todo rival, sem escolha nenhuma. Guerra agora so acontece
-## se o jogador declarar de proposito (ver HUD._on_declare_war_pressed).
+## se o jogador declarar de proposito (ver DiplomacyScreen.confirm_declare_war).
 func test_setup_players_starts_everyone_at_peace():
 	var hex_grid := HexGrid.new()
 	hex_grid._ready()

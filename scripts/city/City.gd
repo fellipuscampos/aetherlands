@@ -213,6 +213,7 @@ func set_production(kind: String) -> void:
 			pending_building_coord = NO_PENDING_COORD
 		production_item = kind
 		stored_production = 0.0
+		EventBus.ui_state_changed.emit("production_changed")
 
 ## production_item pode ser um kind de unidade OU um id de predio
 ## (BuildingDatabase) — checa predio primeiro pra nao precisar de um

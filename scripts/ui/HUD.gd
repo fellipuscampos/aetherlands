@@ -1,5 +1,8 @@
 extends Control
 
+signal game_over_load_requested
+signal game_over_main_menu_requested
+
 ## Contador de FPS (pedido do usuario: "coloque o fps na tela") — vive
 ## dentro do StatusGroup da barra superior, junto dos outros indicadores
 ## (pedido do usuario numa rodada seguinte: "a barra de cima vai ficar so
@@ -7,6 +10,7 @@ extends Control
 ## na barra superior" — FPS e um status como outro qualquer). Atualizado
 ## todo frame em _process(), unica razao de HUD ter um agora.
 @onready var fps_label: Label = $TopBar/TopBarRow/StatusGroup/FpsLabel
+@onready var ui_shell: UIShell = $UIShell
 
 ## Barra superior: SO leitura de status agora (Turno/Ouro/Mana/Cidades-
 ## Unidades/FPS) — pedido do usuario: "vamos tentar copiar a logica do hud
@@ -69,14 +73,8 @@ var v2_supply_label: Label
 @onready var research_button: Button = $ActionBar/ActionBarBox/ResearchButton
 ## Diplomacia e Vitória: ícones compactos no canto SUPERIOR direito (IconGroup do TopBar).
 @onready var diplomacy_button: Button = $TopBar/TopBarRow/IconGroup/DiplomacyButton
-@onready var diplomacy_panel: PanelContainer = $DiplomacyPanel
-@onready var diplomacy_rows: VBoxContainer = $DiplomacyPanel/DiplomacyBox/DiplomacyRows
-@onready var diplomacy_close_button: Button = $DiplomacyPanel/DiplomacyBox/DiplomacyHeader/DiplomacyCloseButton
 ## Roadmap "Fase F" F1/F2/F5 -- mesmo padrao de overlay do Diplomacy acima.
 @onready var victory_button: Button = $TopBar/TopBarRow/IconGroup/VictoryButton
-@onready var victory_panel: PanelContainer = $VictoryPanel
-@onready var victory_rows: VBoxContainer = $VictoryPanel/VictoryBox/VictoryRows
-@onready var victory_close_button: Button = $VictoryPanel/VictoryBox/VictoryHeader/VictoryCloseButton
 ## Roadmap "Fase Macro" 5B.2 -- prompt minimo de Preparation (docs/DRAGON_
 ## EVENT_DESIGN.md): so aparece enquanto existir um WorldEvent em
 ## Preparation que o humano ainda nao respondeu (ver _refresh_world_event_
@@ -155,6 +153,8 @@ var v2_supply_label: Label
 @onready var game_over_summary_label: Label = $GameOverPanel/GameOverBox/GameOverSummaryLabel
 @onready var game_over_snapshot_rows: VBoxContainer = $GameOverPanel/GameOverBox/GameOverSnapshotScroll/GameOverSnapshotRows
 @onready var restart_button: Button = $GameOverPanel/GameOverBox/RestartButton
+@onready var game_over_load_button: Button = $GameOverPanel/GameOverBox/LoadButton
+@onready var game_over_main_menu_button: Button = $GameOverPanel/GameOverBox/MainMenuButton
 @onready var overlay_backdrop: ColorRect = $OverlayBackdrop
 ## Roadmap "reorganizar barra lateral": o botao que ABRE o debug_panel
 ## saiu da HUD por completo e foi pro menu de pausa (pedido explicito: "o
@@ -185,6 +185,13 @@ var _v2_fallback_state: V2ResearchState = V2ResearchState.new()
 
 var _viewed_city: City = null
 
+## Fase 30 (UI-3): Tile/Unidade/Cidade vivem no ContextHost da UIShell
+## (ContextRouter + painéis próprios). Os painéis legados (TileInfoPanel/UnitPanel)
+## continuam na cena só como oráculo de paridade dos testes antigos: com este
+## flag desligado (o padrão do jogo) eles não montam conteúdo, não aparecem e não
+## oferecem nenhuma ação ao jogador. Só testes legados o ligam.
+var legacy_context_enabled := false
+
 ## Task 23 -- inspecao unificada (ver TileInspector.gd). O painel guarda so'
 ## COORD + CHAVE da entidade mostrada (nunca uma referencia a Unit/City):
 ## cada refresh reconsulta o mapa, entao entidade destruida/capturada/
@@ -211,7 +218,8 @@ var _unit_panel_was_visible := false
 var _tile_info_panel_was_visible := false
 
 func _ready() -> void:
-	theme = UITheme.build()
+	theme = Settings.build_ui_theme()
+	Settings.accessibility_changed.connect(_apply_accessibility_theme)
 	_style_end_turn_button()
 	_build_v2_economy_status_labels()
 	production_tabs.set_tab_title(0, "Unidades")
@@ -225,14 +233,14 @@ func _ready() -> void:
 	explore_button.pressed.connect(_on_explore_pressed)
 	research_button.pressed.connect(_on_research_pressed)
 	diplomacy_button.pressed.connect(_on_diplomacy_pressed)
-	diplomacy_close_button.pressed.connect(_on_diplomacy_close_pressed)
 	victory_button.pressed.connect(_on_victory_pressed)
-	victory_close_button.pressed.connect(_on_victory_close_pressed)
 	world_event_participate_button.pressed.connect(_on_world_event_participate_pressed)
 	world_event_decline_button.pressed.connect(_on_world_event_decline_pressed)
 	dragon_announcement_continue_button.pressed.connect(_on_dragon_announcement_continue_pressed)
 	dragon_resolution_continue_button.pressed.connect(_on_dragon_resolution_continue_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
+	game_over_load_button.pressed.connect(func(): game_over_load_requested.emit())
+	game_over_main_menu_button.pressed.connect(func(): game_over_main_menu_requested.emit())
 	debug_close_button.pressed.connect(_on_debug_close_pressed)
 	debug_mode_button.pressed.connect(_on_debug_mode_pressed)
 	debug_reveal_map_button.pressed.connect(_on_debug_reveal_map_pressed)
@@ -242,9 +250,12 @@ func _ready() -> void:
 	debug_lose_button.pressed.connect(_on_debug_lose_pressed)
 	debug_force_dragon_button.pressed.connect(_on_debug_force_dragon_pressed)
 	_build_v2_research_panel()
+	_integrate_ui_shell()
 	TurnManager.turn_changed.connect(_on_turn_changed)
 	EventBus.tile_selected.connect(_on_tile_selected)
 	EventBus.fog_updated.connect(_refresh_inspection)
+	EventBus.ui_state_changed.connect(_on_ui_state_changed)
+	EventBus.targeting_changed.connect(_refresh_cursor_feedback)
 	_build_inspector_ui()
 	EventBus.unit_selected.connect(_on_unit_selected)
 	EventBus.game_over.connect(_on_game_over)
@@ -271,12 +282,10 @@ func _ready() -> void:
 	# fog_updated dispara ao fim de start_new_game/recompute_fog — cobre o
 	# caso do primeiro turno, onde turn_changed ainda nao foi emitido.
 	EventBus.fog_updated.connect(_refresh_stats)
-
 	unit_panel.visible = false
 	production_tabs.visible = false
 	production_progress_label.visible = false
 	production_progress_bar.visible = false
-	diplomacy_panel.visible = false
 	game_over_panel.visible = false
 	debug_panel.visible = false
 	dragon_announcement_panel.visible = false
@@ -284,7 +293,162 @@ func _ready() -> void:
 	world_event_tracker.visible = false
 	dragon_boss_bar.visible = false
 	overlay_backdrop.visible = false
+	# A barra nova e a fonte visual oficial. Os nodes antigos permanecem por
+	# compatibilidade de testes e durante a migracao dos paineis de contexto.
+	$TopBar.visible = false
+	research_button.visible = false
+	end_turn_button.visible = false
+	$ActionBar/ActionBarBox/ActionBarSep.visible = false
+	notification_stack.visible = false
+	# Fase 30: sem painéis de contexto legados, o ActionBar vazio não tem função.
+	action_bar.visible = false
+	fps_label.visible = OS.is_debug_build()
 	_on_turn_changed(TurnManager.turn_number, TurnManager.current_player_index)
+
+func _apply_accessibility_theme() -> void:
+	theme = Settings.build_ui_theme()
+
+func _integrate_ui_shell() -> void:
+	ui_shell.destination_requested.connect(_on_shell_destination_requested)
+	ui_shell.attention_action_requested.connect(_on_attention_action_requested)
+	ui_shell.event_action_requested.connect(_on_event_action_requested)
+	ui_shell.city_requested.connect(_focus_city_from_live_hud)
+	ui_shell.end_turn_requested.connect(_perform_end_turn)
+	ui_shell.empire_city_requested.connect(_on_empire_city_requested)
+	ui_shell.empire_unit_requested.connect(_on_empire_unit_requested)
+	ui_shell.empire_attention_requested.connect(_on_empire_attention_requested)
+	ui_shell.victory_detail_requested.connect(open_victory_detail)
+	ui_shell.map_location_requested.connect(_on_map_location_requested)
+	ui_shell.register_strategic_overlay(NavigationManager.RESEARCH, v2_research_panel)
+	# Fase 30: Diplomacia, Vitória e Império são telas próprias registradas pela
+	# UIShell. Os painéis legados ficam fora da navegação (sem entrada de jogador).
+	ui_shell.register_strategic_overlay(&"debug", debug_panel)
+	ui_shell.register_strategic_overlay(&"dragon_announcement", dragon_announcement_panel)
+	ui_shell.register_strategic_overlay(&"dragon_resolution", dragon_resolution_panel)
+	ui_shell.register_strategic_overlay(&"game_over", game_over_panel)
+	for panel in [v2_research_panel, debug_panel, dragon_announcement_panel, dragon_resolution_panel, game_over_panel]:
+		(panel as Control).z_index = 31
+	# O backdrop legado continua refletindo estado para compatibilidade; o
+	# dimmer/captura reais pertencem agora ao UIShell.
+	overlay_backdrop.color = Color(0, 0, 0, 0)
+	overlay_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	action_bar.offset_top = -72.0
+	# O minimapa existente conserva script, desenho, fog e clique; apenas muda
+	# fisicamente de host para participar do novo shell.
+	minimap.reparent(ui_shell.minimap_host, false)
+	minimap.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ui_shell.bind_player(GameManager.human_player)
+
+func _on_shell_destination_requested(destination: StringName) -> void:
+	match destination:
+		NavigationManager.RESEARCH:
+			_on_research_pressed()
+		NavigationManager.EMPIRE:
+			_on_empire_pressed()
+		NavigationManager.DIPLOMACY:
+			_on_diplomacy_pressed()
+		NavigationManager.VICTORY:
+			_on_victory_pressed()
+
+func _on_attention_action_requested(action: String, item: AttentionItem) -> void:
+	match action:
+		"research":
+			_on_research_pressed()
+		"focus_city":
+			# Cidade ociosa/aguardando Mana: o City Panel novo abre direto em Produção.
+			_open_city_at(item.target_coord, "production")
+		"city_summary":
+			ui_shell.toggle_city_summary()
+		"victory":
+			if item != null and item.category == "victory":
+				open_victory_detail(VictoryPresenter.TRANSCENDENCE)
+			else:
+				_on_victory_pressed()
+		"diplomacy":
+			_on_diplomacy_pressed()
+		"retinue":
+			_focus_first_uncommanded_retinue()
+		"world_event":
+			_refresh_world_event_panel()
+			world_event_panel.visible = true
+
+func _on_event_action_requested(event: UIEventData) -> void:
+	ui_shell.close_auxiliary_drawer()
+	match event.focus_action:
+		"research":
+			_on_research_pressed()
+			return
+		"diplomacy":
+			open_diplomacy_for(event.target_entity if DiplomacyPresenter.find_rival_by_name(event.target_entity) != null else event.source_player)
+			return
+		"victory":
+			if event.category == UIEventData.Category.VICTORY and event.event_type.contains("ritual"):
+				open_victory_detail(VictoryPresenter.TRANSCENDENCE)
+			else:
+				_on_victory_pressed()
+			return
+	if event.has_target_coord:
+		_focus_coord_and_select_city(event.target_coord)
+
+func _focus_city_from_live_hud(city: City) -> void:
+	if city == null or not is_instance_valid(city):
+		return
+	ui_shell.close_auxiliary_drawer()
+	_open_city_at(city.coord, "production")
+
+func _focus_coord_and_select_city(coord: Vector2i) -> void:
+	var grid := GameManager.hex_grid
+	if grid == null or not grid.tiles.has(coord):
+		return
+	_focus_camera(coord)
+	grid.show_selection_marker(coord)
+	EventBus.tile_selected.emit(coord, grid.get_tile(coord))
+
+func _focus_camera(coord: Vector2i) -> void:
+	var grid := GameManager.hex_grid
+	if grid != null and GameManager.camera_rig != null:
+		GameManager.camera_rig._on_minimap_clicked(HexMetrics.axial_to_world(coord.x, coord.y, grid.hex_size))
+
+## Deep link de cidade: câmera + marcador + City Panel novo já na aba pedida.
+func _open_city_at(coord: Vector2i, tab: String = "") -> void:
+	var grid := GameManager.hex_grid
+	if grid == null or not grid.tiles.has(coord):
+		return
+	var city := grid.get_city_at(coord)
+	if city == null:
+		_focus_coord_and_select_city(coord)
+		return
+	ui_shell.close_strategic_overlay()
+	_focus_camera(coord)
+	grid.show_selection_marker(coord)
+	ui_shell.context_router.open_city(city, tab)
+
+func _on_empire_city_requested(city: City) -> void:
+	if city == null or not is_instance_valid(city):
+		return
+	_open_city_at(city.coord, "production" if city.production_item == "" else "")
+
+func _on_empire_unit_requested(unit: Unit) -> void:
+	if unit == null or not is_instance_valid(unit):
+		return
+	ui_shell.close_strategic_overlay()
+	_focus_camera(unit.coord)
+	ui_shell.context_router.open_unit(unit)
+
+func _on_empire_attention_requested(item: AttentionItem) -> void:
+	ui_shell.close_strategic_overlay()
+	if item != null:
+		_on_attention_action_requested(item.primary_action, item)
+
+func _on_map_location_requested(coord: Vector2i) -> void:
+	ui_shell.close_strategic_overlay()
+	_focus_coord_and_select_city(coord)
+
+func _focus_first_uncommanded_retinue() -> void:
+	var retinues := EmpirePresenter.uncommanded_retinues(GameManager.human_player)
+	if retinues.is_empty():
+		return
+	_on_empire_unit_requested(retinues[0])
 
 ## Botao de acao IMPONENTE (pedido do usuario: "borda dourada/brilhante"),
 ## unico da tela com essa borda de destaque — todo o resto dos botoes usa
@@ -331,13 +495,17 @@ const TILE_INFO_SCROLL_EXPANDED_MIN_HEIGHT := 250.0
 ## painel sempre "cresce pra cima e pra direita" a partir do mesmo canto,
 ## nunca muda de lado.
 func _update_tile_info_panel_size(expanded: bool) -> void:
+	# A faixa inferior do UIShell (Attention + Turn Controller) ocupa os 88 px
+	# finais. O painel legado de contexto preserva sua altura, mas termina antes
+	# dessa faixa em vez de competir com os controles de turno.
+	tile_info_panel.offset_bottom = -88.0
 	if expanded:
 		tile_info_panel.anchor_top = 0.0
 		tile_info_panel.offset_top = TILE_INFO_PANEL_TOP_MARGIN
 		tile_info_panel.offset_right = TILE_INFO_PANEL_EXPANDED_RIGHT
 	else:
 		tile_info_panel.anchor_top = 1.0
-		tile_info_panel.offset_top = -TILE_INFO_PANEL_COMPACT_HEIGHT
+		tile_info_panel.offset_top = -TILE_INFO_PANEL_COMPACT_HEIGHT - 88.0
 		tile_info_panel.offset_right = TILE_INFO_PANEL_COMPACT_RIGHT
 	# Task 23 -- o texto de inspecao rola dentro do painel: compacto usa toda a
 	# altura livre; expandido (cidade) so' o que o texto da cidade precisa, o
@@ -380,7 +548,8 @@ const END_TURN_BUTTON_TEXT := "Finalizar Turno (Espaço)"
 const END_TURN_BUTTON_PROCESSING_TEXT := "Processando Turno..."
 
 func _process(_delta: float) -> void:
-	fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
+	if fps_label.visible:
+		fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
 	# GameManager.is_turn_processing (ver stagger_ai_turns) fica true
 	# enquanto a fila de acoes de IA do turno ainda esta drenando aos
 	# poucos — desabilita "Encerrar Turno" nesse meio-tempo (junto com
@@ -403,15 +572,26 @@ func _process(_delta: float) -> void:
 		end_turn_button.text = wanted_text
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not event.is_action_pressed("ui_accept"):
+	# Espaço é o único atalho global do turno. Enter permanece com o foco/modal.
+	if not (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE):
 		return
-	if GameManager.state != GameManager.GameState.PLAYING or overlay_backdrop.visible or end_turn_button.disabled:
+	if GameManager.state != GameManager.GameState.PLAYING or overlay_backdrop.visible or ui_shell.modal_manager.is_modal_open() or ui_shell.navigation_manager.is_overlay_open() or end_turn_button.disabled:
 		return
-	_on_end_turn_pressed()
+	ui_shell.turn_controller.request_primary_action()
 	get_viewport().set_input_as_handled()
 
 func _on_end_turn_pressed() -> void:
+	ui_shell.turn_controller.request_primary_action()
+
+func _perform_end_turn() -> void:
 	TurnManager.end_turn()
+
+func _on_ui_state_changed(_reason: String) -> void:
+	if ui_shell != null:
+		ui_shell.refresh_live_state()
+
+func _refresh_cursor_feedback() -> void:
+	Input.set_default_cursor_shape(Input.CURSOR_CROSS if SelectionManager.is_targeting() else Input.CURSOR_ARROW)
 
 func _on_found_city_pressed() -> void:
 	SelectionManager.found_city_with_selected()
@@ -425,25 +605,14 @@ func _on_fortify_pressed() -> void:
 func _on_explore_pressed() -> void:
 	SelectionManager.toggle_explore_selected()
 
+## Fase 30: o painel legado (só em testes) usa o MESMO caminho do City Panel novo
+## (CityCommands.produce): prédio entra no posicionamento; unidade vai para a fila.
 func _on_produce_pressed(kind: String) -> void:
-	if _viewed_city == null or not GameManager.human_player.has_unlocked(kind):
+	if _viewed_city == null:
 		return
-	var building = BuildingDatabase.get_building(kind)
-	if building:
-		if not _viewed_city.can_build(kind):
-			return
-		# Todo prédio precisa de um tile escolhido no mapa (como fundar cidade) — a produção só começa
-		# de fato quando o jogador clica um tile válido (SelectionManager._handle_building_placement_click).
-		SelectionManager.start_building_placement(_viewed_city, kind)
+	if not CityCommands.produce(_viewed_city, kind) or BuildingDatabase.get_building(kind) != null:
 		return
-	elif not _viewed_city.can_train(kind):
-		return
-	_viewed_city.set_production(kind)
-	# Trocar pra unidade pode ter abandonado um predio em obra (City.
-	# set_production ja limpou pending_building_coord) — sincroniza o
-	# marcador de construcao pra ele sumir do mapa junto.
-	if GameManager.hex_grid:
-		GameManager.hex_grid.refresh_construction_markers()
+	ui_shell.refresh_live_state()
 	_refresh_viewed_city()
 
 func _refresh_viewed_city() -> void:
@@ -472,8 +641,8 @@ func _on_v2_unlock_applied(player: PlayerData, _unlock_type: String, _unlock_id:
 ## ilegivel. So um fica visivel por vez, e o backdrop escurecido some
 ## junto (ver _show_overlay).
 func _close_overlay_panels() -> void:
-	diplomacy_panel.visible = false
-	victory_panel.visible = false
+	if ui_shell != null:
+		ui_shell.navigation_manager.close_all()
 	game_over_panel.visible = false
 	debug_panel.visible = false
 	v2_research_panel.visible = false
@@ -488,7 +657,7 @@ func _close_overlay_panels() -> void:
 	# sempre visiveis fora de um overlay.
 	minimap.visible = true
 	tile_info_panel.visible = _tile_info_panel_was_visible
-	end_turn_button.visible = true
+	end_turn_button.visible = false
 	unit_panel.visible = _unit_panel_was_visible
 	if _v2_city_refresh_pending:
 		_v2_city_refresh_pending = false
@@ -505,7 +674,8 @@ func _show_overlay(panel: Control) -> void:
 	_unit_panel_was_visible = unit_panel.visible
 	_tile_info_panel_was_visible = tile_info_panel.visible
 	overlay_backdrop.visible = true
-	panel.visible = true
+	if ui_shell == null or not ui_shell.navigation_manager.open_panel(panel):
+		panel.visible = true
 	minimap.visible = false
 	tile_info_panel.visible = false
 	unit_panel.visible = false
@@ -518,99 +688,55 @@ func _show_overlay(panel: Control) -> void:
 ## usuario). Devolve true se fechou algo, pra quem chamou saber que ja
 ## "consumiu" o ESC e nao precisa mais abrir a pausa.
 func close_topmost_overlay() -> bool:
-	if diplomacy_panel.visible or victory_panel.visible or debug_panel.visible or v2_research_panel.visible or dragon_announcement_panel.visible or dragon_resolution_panel.visible:
+	if debug_panel.visible or v2_research_panel.visible or dragon_announcement_panel.visible or dragon_resolution_panel.visible:
 		_close_overlay_panels()
+		return true
+	if ui_shell != null and ui_shell.handle_escape():
 		return true
 	return false
 
+## Fase 30: Diplomacia é a tela estratégica nova (DiplomacyScreen), aberta pela
+## navegação central; o painel legado não tem mais entrada de jogador.
 func _on_diplomacy_pressed() -> void:
-	if diplomacy_panel.visible:
-		_close_overlay_panels()
-		return
-	_show_overlay(diplomacy_panel)
-	_refresh_diplomacy_panel()
+	_toggle_strategy(NavigationManager.DIPLOMACY)
 
-func _on_diplomacy_close_pressed() -> void:
-	_close_overlay_panels()
+func _on_empire_pressed() -> void:
+	_toggle_strategy(NavigationManager.EMPIRE)
 
-## Uma linha por civ rival: nome + status (guerra/paz) + um botao pra
-## inverter. Propor paz pode ser recusado pela IA (Diplomacy.propose_peace,
-## heuristica simples de quem esta "perdendo") — o toast avisa o
-## resultado, porque um botao que as vezes nao faz nada sem feedback
-## nenhum seria confuso.
-func _refresh_diplomacy_panel() -> void:
-	for child in diplomacy_rows.get_children():
-		child.queue_free()
+func _toggle_strategy(destination: StringName) -> void:
+	_close_legacy_overlays_only()
+	ui_shell.open_destination(destination)
 
-	var human = GameManager.human_player
-	if human == null:
-		return
+## Deep link de War Alert/Event Center: Diplomacia já com a facção selecionada.
+func open_diplomacy_for(faction_name: String) -> void:
+	_close_legacy_overlays_only()
+	ui_shell.diplomacy_screen.select_faction_by_name(faction_name)
+	if ui_shell.navigation_manager.active_destination != NavigationManager.DIPLOMACY:
+		ui_shell.open_destination(NavigationManager.DIPLOMACY)
 
-	for rival in GameManager.rival_players:
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 10)
+## Deep link de Ritual/alerta: Vitória já no detalhe da rota.
+func open_victory_detail(detail: String) -> void:
+	_close_legacy_overlays_only()
+	ui_shell.victory_screen.show_detail(detail)
+	if ui_shell.navigation_manager.active_destination != NavigationManager.VICTORY:
+		ui_shell.open_destination(NavigationManager.VICTORY)
 
-		var at_war = human.is_at_war_with(rival)
-		var eliminated = rival.units.size() == 0 and rival.cities.size() == 0
-		var status = "Em guerra" if at_war else "Em paz"
-		if eliminated:
-			status += " (eliminado)"
-		var label := Label.new()
-		label.text = "%s: %s" % [rival.civ.civ_name, status]
-		label.text += "\n" + Diplomacy.relation_description(human, rival)
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.size_flags_horizontal = SIZE_EXPAND_FILL
-		row.add_child(label)
-
-		var btn := Button.new()
-		if at_war:
-			btn.text = "Propor Paz"
-			btn.pressed.connect(_on_propose_peace_pressed.bind(rival))
-		else:
-			btn.text = "Declarar Guerra"
-			btn.disabled = eliminated or not Diplomacy.can_declare_war(human, rival)
-			btn.tooltip_text = "Acordos de paz garantem dez turnos de trégua. Declarar guerra encerra o comércio."
-			btn.pressed.connect(_on_declare_war_pressed.bind(rival))
-		row.add_child(btn)
-
-		diplomacy_rows.add_child(row)
-
-func _on_propose_peace_pressed(rival: PlayerData) -> void:
-	var accepted = Diplomacy.propose_peace(GameManager.human_player, rival)
-	if accepted:
-		EventBus.notify.emit("%s aceitou a paz." % rival.civ.civ_name, "confirm")
-	else:
-		EventBus.notify.emit("%s recusou a paz." % rival.civ.civ_name, "")
-	_refresh_diplomacy_panel()
-
-func _on_declare_war_pressed(rival: PlayerData) -> void:
-	if not Diplomacy.can_declare_war(GameManager.human_player, rival):
-		return
-	Diplomacy.declare_war(GameManager.human_player, rival)
-	EventBus.notify.emit("Voce declarou guerra a %s!" % rival.civ.civ_name, "combat")
-	_refresh_diplomacy_panel()
+## Fecha overlays legados ainda hospedados pelo HUD (Pesquisa, Debug, Dragão) sem
+## reabrir os painéis de contexto antigos.
+func _close_legacy_overlays_only() -> void:
+	for panel in [v2_research_panel, debug_panel, dragon_announcement_panel, dragon_resolution_panel]:
+		(panel as Control).visible = false
+	overlay_backdrop.visible = false
 
 func _on_victory_pressed() -> void:
-	if victory_panel.visible:
-		_close_overlay_panels()
-		return
-	_show_overlay(victory_panel)
-	_refresh_victory_panel()
+	if ui_shell.navigation_manager.active_destination != NavigationManager.VICTORY:
+		ui_shell.victory_screen.current_detail = ""
+	_toggle_strategy(NavigationManager.VICTORY)
 
-func _on_victory_close_pressed() -> void:
-	_close_overlay_panels()
-
-## Painel de vitórias (Fase 25): só as TRÊS vias finais — Dominação, Supremacia Militar e
-## Transcendência — na ordem de precedência de GameManager.check_victories. Camada de APRESENTAÇÃO pura:
-## só lê VictoryConditions/V2VictoryConditions/V2TranscendenceSystem (a regra mora lá, nunca aqui) e
-## nunca escreve em PlayerData. Mostra a perspectiva do jogador humano + os Rituais Finais públicos dos
-## rivais (informação pública por regra). LIVE — consultado toda vez que o painel abre (ver
-## _on_victory_achieved pro snapshot CONGELADO da tela final).
-func _refresh_victory_panel() -> void:
-	_build_victory_progress_rows(victory_rows)
-
-## Mesma montagem para o painel ao vivo e para o snapshot congelado da tela final, cada um no próprio
-## VBoxContainer.
+## Linhas de progresso das TRÊS vias finais (Dominação, Supremacia Militar, Transcendência) na ordem
+## de GameManager.check_victories. Fase 30: o painel "Vitória" ao vivo virou a VictoryScreen
+## (Summary/Detail); este construtor sobrevive só para o snapshot CONGELADO da tela final (UI-4).
+## Apresentação pura: só lê VictoryConditions/V2VictoryConditions/V2TranscendenceSystem.
 func _build_victory_progress_rows(target: VBoxContainer) -> void:
 	for child in target.get_children():
 		child.queue_free()
@@ -730,16 +856,20 @@ static func format_victory_summary(victory_type: String) -> String:
 ## chamado UMA vez, so pelo sinal EventBus.victory_achieved (nunca
 ## re-chamado por nenhum refresh posterior da HUD). Popula Labels/
 ## ProgressBars ESTATICOS (game_over_snapshot_rows) que NAO tem nenhuma
-## ligacao viva com as condições de vitória depois deste ponto -- diferente do
-## painel "Vitória" (_refresh_victory_panel), que consulta de novo toda
-## vez que abre. E exatamente essa diferenca que garante o contrato
+## ligacao viva com as condições de vitória depois deste ponto -- diferente da
+## VictoryScreen ao vivo, que consulta de novo toda vez que abre. E exatamente essa diferenca que garante o contrato
 ## pedido explicito do usuario: a tela de resultado continua mostrando
 ## os valores do MOMENTO da vitoria mesmo que o estado do jogo mude
 ## depois (partida ja acabou, mas os nodes worldwide/PlayerData podem
 ## teoricamente continuar existindo/mudando ate a cena ser trocada).
 func _on_victory_achieved(winner: PlayerData, victory_type: String) -> void:
-	game_over_title_label.text = format_victory_title(winner, victory_type)
-	game_over_summary_label.text = format_victory_summary(victory_type)
+	if winner == GameManager.human_player:
+		game_over_title_label.text = format_victory_title(winner, victory_type)
+		game_over_summary_label.text = format_victory_summary(victory_type)
+	else:
+		game_over_title_label.text = "Derrota — %s venceu" % winner.civ.civ_name
+		var reason := format_victory_summary(victory_type)
+		game_over_summary_label.text = reason if not reason.is_empty() else "Outro reino cumpriu uma condicao de vitoria."
 	_build_victory_progress_rows(game_over_snapshot_rows)
 
 ## Painel de Debug (botao so visivel em OS.is_debug_build(), ver _ready())
@@ -864,7 +994,9 @@ func _on_restart_pressed() -> void:
 	production_progress_bar.visible = false
 	_viewed_city = null
 	_clear_inspection()
-	action_bar.visible = true
+	if ui_shell != null and ui_shell.context_router != null:
+		ui_shell.context_router.reset()
+	action_bar.visible = legacy_context_enabled
 	tile_info_panel.visible = false
 	_update_tile_info_panel_size(false)
 	tile_info_label.text = "Selecione um tile"
@@ -875,8 +1007,6 @@ func _on_restart_pressed() -> void:
 func _on_turn_changed(turn_number: int, _player_index: int) -> void:
 	turn_label.text = "Turno %d" % turn_number
 	_refresh_stats()
-	if diplomacy_panel.visible:
-		_refresh_diplomacy_panel()
 	# Roadmap "Fase Macro" 5B.2 -- NAO condicionado a world_event_panel.
 	# visible (diferente dos paineis acima): precisa rodar todo turno pra
 	# o texto de contagem regressiva ("faltam N turnos") ficar correto
@@ -888,6 +1018,8 @@ func _on_turn_changed(turn_number: int, _player_index: int) -> void:
 	_refresh_world_event_tracker()
 	_refresh_dragon_boss_bar()
 	_refresh_selected_unit_panel()
+	if ui_shell != null:
+		ui_shell.refresh_live_state()
 	# Regressao: o painel da cidade so se atualizava ao clicar de novo no
 	# tile (_on_produce_pressed/_on_worked_tile_pressed chamavam isso, mas
 	# _on_turn_changed nao) — produzir um predio parecia "nao fazer nada"
@@ -972,29 +1104,10 @@ func _refresh_research_button(player: PlayerData) -> void:
 ## topo da tela e somem sozinhas — sem isso, um ataque do rival fora de
 ## tela passaria despercebido ate o jogador notar sozinho.
 func _on_notify(text: String, _sfx_kind: String) -> void:
-	var label := Label.new()
-	label.text = text
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	# Roadmap "Fase Macro" 5B.2 -- achado de playtest visual: sem autowrap,
-	# um texto mais longo que a NotificationStack (largura fixa, ver
-	# HUD.tscn) forcava o container inteiro a crescer alem da propria
-	# ancora, cortando o texto pra fora dos dois lados da tela (so
-	# acontecia com notificacoes de uma frase so, como "Jogo salvo.";
-	# nunca apareceu ate os toasts narrativos do Dragao, mais longos).
-	# SIZE_EXPAND_FILL garante que o Label realmente ocupe a largura fixa
-	# do container em vez de encolher pro texto de uma so palavra.
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
-	label.add_theme_constant_override("shadow_offset_x", 1)
-	label.add_theme_constant_override("shadow_offset_y", 1)
-	notification_stack.add_child(label)
-
-	var tween = create_tween()
-	tween.tween_interval(2.5)
-	tween.tween_property(label, "modulate:a", 0.0, 0.6)
-	tween.tween_callback(label.queue_free)
-
+	# ToastPresenter recebe o mesmo evento pela ponte UIEventService. O HUD
+	# legado conserva apenas o refresh de dados que alguns comandos esperam.
+	if ui_shell != null:
+		ui_shell.global_bar.refresh()
 	_refresh_stats()
 
 ## Roadmap "Fase Macro" 5B.3-C (Dragon Event UX) -- pedido explicito do
@@ -1270,10 +1383,12 @@ func _refresh_dragon_boss_bar() -> void:
 func _on_world_event_participate_pressed() -> void:
 	GameManager.respond_to_world_event(true)
 	_refresh_world_event_panel()
+	ui_shell.refresh_live_state()
 
 func _on_world_event_decline_pressed() -> void:
 	GameManager.respond_to_world_event(false)
 	_refresh_world_event_panel()
+	ui_shell.refresh_live_state()
 
 ## Task 23 -- monta (uma vez) o que o painel de inspecao precisa alem do .tscn:
 ## uma barra de abas (uma por entidade do tile, so' aparece com 2+) e um
@@ -1350,6 +1465,11 @@ func _refresh_inspection() -> void:
 
 func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 	_viewed_city = null
+	if not legacy_context_enabled:
+		# Fase 30: o ContextRouter da UIShell é o único destino visível da seleção.
+		tile_info_panel.visible = false
+		unit_panel.visible = false
+		return
 	# ActionBar so some quando uma cidade PROPRIA esta selecionada (ver mais
 	# abaixo, "city.owner_player == GameManager.human_player") — pedido do
 	# usuario: "ao clicar na cidade, essa area do menu some, e fica so o
@@ -1612,7 +1732,7 @@ func _building_lock_reason(id: String, _race: String = "") -> String:
 ## dessa mesma area inteira nesse caso (pedido do usuario: "ao clicar na
 ## cidade... fica so o menu da cidade ocupando a parte direita").
 func _on_unit_selected(unit: Unit) -> void:
-	if unit == null:
+	if unit == null or not legacy_context_enabled:
 		unit_panel.visible = false
 		return
 	unit_panel.visible = true
@@ -1835,51 +1955,33 @@ func _refresh_v2_city_actions(city: City) -> void:
 			row.add_child(ritual_button)
 
 func _on_city_upgrade_pressed(city: City, target_level: int) -> void:
-	if city == null or not is_instance_valid(city) or V2CityLevelData.next_level(city.city_level) != target_level:
-		return
-	if not city.can_start_city_upgrade():
-		return
-	city.set_production(V2CityLevelData.project_id_for_level(target_level))
-	if GameManager.hex_grid:
-		GameManager.hex_grid.refresh_construction_markers()
-	_refresh_viewed_city()
+	if CityCommands.start_city_upgrade(city, target_level):
+		_refresh_viewed_city()
 
 func _on_fortification_pressed(city: City, target_level: int) -> void:
-	if city == null or not is_instance_valid(city) or V2FortificationData.next_level(city.fortification_level) != target_level:
-		return
-	if not city.can_start_fortification():
-		return
-	city.set_production(V2FortificationData.project_id(target_level))
-	_refresh_viewed_city()
+	if CityCommands.start_fortification(city, target_level):
+		_refresh_viewed_city()
 
 func _on_city_attack_pressed(city: City) -> void:
-	if city == null or not is_instance_valid(city):
-		return
-	SelectionManager.start_city_attack_targeting(city)
+	CityCommands.start_city_attack(city)
 
 func _on_annex_pressed(city: City) -> void:
-	if city == null or not is_instance_valid(city):
-		return
-	SelectionManager.start_city_annexation(city)
+	CityCommands.start_annexation(city)
 
 func _on_start_transcendence_pressed(player: PlayerData, city: City) -> void:
-	if V2TranscendenceSystem.start_ritual(player, city):
+	if CityCommands.start_ritual(player, city):
 		_refresh_viewed_city()
 		_refresh_stats()
 
 func _on_cancel_transcendence_pressed(player: PlayerData) -> void:
-	if V2TranscendenceSystem.cancel_ritual(player):
+	if CityCommands.cancel_ritual(player):
 		_refresh_viewed_city()
 
 func _on_v2_transcendence_changed(_player: PlayerData, _site_coord: Vector2i, _remaining: int) -> void:
 	_refresh_viewed_city()
-	if victory_panel.visible:
-		_refresh_victory_panel()
 
 func _on_v2_transcendence_interrupted(_player: PlayerData, _site_coord: Vector2i, _reason: String) -> void:
 	_refresh_viewed_city()
-	if victory_panel.visible:
-		_refresh_victory_panel()
 
 ## Aetherlands V2 (Fase 4): acoes de Doutrina no painel da unidade — mesmo padrao do
 ## SpellActions acima (um container dinamico refeito a cada selecao, sem mexer no
@@ -2017,6 +2119,7 @@ func _on_game_over(victory: bool) -> void:
 	research_button.disabled = true
 	diplomacy_button.disabled = true
 	victory_button.disabled = true
+	game_over_load_button.disabled = not SaveManager.has_any_slots()
 
 	var summary = ""
 	if GameManager.human_player:
@@ -2033,5 +2136,9 @@ func _on_game_over(victory: bool) -> void:
 	## seguida pra toda vitoria de verdade.
 	if victory:
 		game_over_label.text = "VITÓRIA!" + summary
+		game_over_title_label.text = "Vitoria confirmada"
+		game_over_summary_label.text = "O resultado final esta sendo consolidado."
 	else:
 		game_over_label.text = "DERROTA..." + summary
+		game_over_title_label.text = "Seu reino caiu"
+		game_over_summary_label.text = format_victory_summary("eliminated")

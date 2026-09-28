@@ -1845,6 +1845,8 @@ func found_city(coord: Vector2i, player: PlayerData, city_name: String, silent: 
 	_update_city_tint(city)
 	if player == GameManager.human_player and not silent:
 		EventBus.notify.emit("Cidade fundada: %s" % city_name, "city")
+	if not silent:
+		EventBus.city_founded.emit(player, city_name, coord)
 	return city
 
 ## Saque de Invasor (MonsterAI._maybe_pillage_tile): a melhoria de recurso em `coord` fica sem
@@ -1902,6 +1904,7 @@ func capture_city(city: City, new_owner: PlayerData) -> void:
 			if building and building.owner_player != new_owner:
 				place_building(building_coord, building.building_id, new_owner, false) # captura não é construção nova; Portal persiste
 	_update_city_tint(city) # tingimento do territorio precisa seguir o novo dono
+	EventBus.city_captured.emit(old_owner, new_owner, city_display_name, city.coord)
 	if new_owner == GameManager.human_player:
 		EventBus.notify.emit("Voce capturou %s!" % city_display_name, "city")
 		if qualified and not already_satisfied and city.v2_supremacy_captured_from >= 0:

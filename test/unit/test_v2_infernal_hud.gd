@@ -21,6 +21,8 @@ func before_each():
 	_original_rivals = GameManager.rival_players
 	hud = load("res://scenes/ui/HUD.tscn").instantiate()
 	add_child_autofree(hud)
+	# Fase 30: estes testes usam o painel de contexto LEGADO como oráculo de paridade.
+	hud.legacy_context_enabled = true
 	grid = HexGrid.new()
 	grid._ready()
 	for q in range(-6, 7):

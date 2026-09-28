@@ -20,7 +20,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.03, 0.04, 0.07, 0.82)
+color = Color(0.035, 0.045, 0.058, 0.94)
 
 [node name="MainPage" type="Control" parent="."]
 layout_mode = 1
@@ -39,7 +39,7 @@ grow_vertical = 2
 [node name="Box" type="VBoxContainer" parent="MainPage/CenterBox"]
 layout_mode = 2
 theme_override_constants/separation = 12
-custom_minimum_size = Vector2(280, 0)
+custom_minimum_size = Vector2(320, 0)
 
 [node name="TitleLabel" type="Label" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
@@ -47,8 +47,15 @@ horizontal_alignment = 1
 theme_override_font_sizes/font_size = 30
 text = "Pausado"
 
+[node name="SessionLabel" type="Label" parent="MainPage/CenterBox/Box"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+horizontal_alignment = 1
+text = "Partida em andamento"
+
 [node name="ResumeButton" type="Button" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
+theme_type_variation = &"PrimaryButton"
 text = "Continuar"
 
 [node name="SaveButton" type="Button" parent="MainPage/CenterBox/Box"]
@@ -63,12 +70,19 @@ text = "Carregar Jogo"
 layout_mode = 2
 text = "Configurações"
 
+[node name="DeveloperToolsButton" type="Button" parent="MainPage/CenterBox/Box"]
+layout_mode = 2
+visible = false
+text = "Developer Tools"
+
 [node name="MainMenuButton" type="Button" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
+theme_type_variation = &"GhostButton"
 text = "Voltar ao Menu Principal"
 
 [node name="QuitButton" type="Button" parent="MainPage/CenterBox/Box"]
 layout_mode = 2
+theme_type_variation = &"GhostButton"
 text = "Sair do Jogo"
 
 [node name="StatusLabel" type="Label" parent="MainPage/CenterBox/Box"]
@@ -82,10 +96,31 @@ layout_mode = 1
 
 [node name="SettingsScreen" parent="." instance=ExtResource("SettingsScreen_scn")]
 layout_mode = 1
-show_debug = true
+show_debug = false
 
 [node name="ConfirmLoadDialog" type="ConfirmationDialog" parent="."]
 title = "Confirmar"
 initial_position = 1
 size = Vector2i(460, 150)
-dialog_text = "Carregar esta partida descarta o progresso atual não salvo. Continuar?"
+dialog_text = "Carregar esta partida descarta o progresso atual nao salvo. Continuar?"
+
+[node name="ConfirmSaveDialog" type="ConfirmationDialog" parent="."]
+title = "Substituir save"
+initial_position = 1
+size = Vector2i(500, 160)
+ok_button_text = "Substituir"
+dialog_text = "Salvar neste slot substitui o estado anterior. Continuar?"
+
+[node name="ConfirmMainMenuDialog" type="ConfirmationDialog" parent="."]
+title = "Voltar ao menu principal"
+initial_position = 1
+size = Vector2i(520, 160)
+ok_button_text = "Voltar ao menu"
+dialog_text = "O progresso desde o ultimo save sera perdido. Continuar?"
+
+[node name="ConfirmQuitDialog" type="ConfirmationDialog" parent="."]
+title = "Sair do jogo"
+initial_position = 1
+size = Vector2i(500, 160)
+ok_button_text = "Sair"
+dialog_text = "O progresso desde o ultimo save sera perdido. Sair do jogo?"

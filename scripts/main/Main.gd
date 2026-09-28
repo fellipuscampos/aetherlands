@@ -33,6 +33,8 @@ func _ready() -> void:
 	game_setup_screen.back_requested.connect(_on_game_setup_back_requested)
 	pause_menu.load_requested.connect(_on_pause_load_requested)
 	pause_menu.main_menu_requested.connect(_on_pause_main_menu_requested)
+	hud.game_over_load_requested.connect(_on_game_over_load_requested)
+	hud.game_over_main_menu_requested.connect(_on_pause_main_menu_requested)
 	hud.visible = false
 	game_setup_screen.visible = false
 
@@ -55,13 +57,13 @@ func _on_new_game_requested(width: int, height: int, kingdom_name: String, rival
 	game_setup_screen.visible = false
 	await _show_loading_screen("Gerando o Mapa...")
 	await _start_game()
-	_hide_loading_screen()
+	await _hide_loading_screen()
 	_enter_gameplay()
 
 func _on_title_load_requested(slot_id: String) -> void:
 	await _show_loading_screen("Carregando Partida...")
 	var success := _try_load_game(slot_id)
-	_hide_loading_screen()
+	await _hide_loading_screen()
 	if success:
 		_enter_gameplay()
 	else:
@@ -77,20 +79,25 @@ func _on_title_load_requested(slot_id: String) -> void:
 func _on_pause_load_requested(slot_id: String) -> void:
 	await _show_loading_screen("Carregando Partida...")
 	var success := _try_load_game(slot_id)
-	_hide_loading_screen()
+	await _hide_loading_screen()
 	if success:
 		_enter_gameplay()
 	else:
 		EventBus.notify.emit("Nao foi possivel carregar a partida salva.", "")
 
-## Restaurar apos "Vencer/Perder Agora" (Debug) ou o botao "Jogar de Novo"
-## da tela de fim de jogo — HUD ja fica visivel (a tela de fim de jogo e
-## so mais um overlay por cima dela), entao nao precisa de _enter_gameplay()
-## de novo aqui, so regenerar o mapa com a tela de loading no meio.
+func _on_game_over_load_requested() -> void:
+	hud.close_topmost_overlay()
+	pause_menu.open()
+	pause_menu._on_load_button_pressed()
+
+## Restaurar apos "Vencer/Perder Agora" (Debug) ou o botao "Jogar de Novo".
+## A superficie ja esta visivel, mas _enter_gameplay() tambem religa os
+## presenters ao novo PlayerData criado pelo restart.
 func _on_restart_requested() -> void:
 	await _show_loading_screen("Gerando o Mapa...")
 	await _start_game()
-	_hide_loading_screen()
+	await _hide_loading_screen()
+	_enter_gameplay()
 
 ## Roadmap "sistema de menu de jogo moderno" — pedido do usuario: "voltar
 ## pro menu principal de fato volta pro menu principal, atualmente ele
@@ -158,20 +165,22 @@ func _show_loading_screen(message: String) -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-## Fade curto e NAO bloqueante (chamado sem `await` nos handlers acima) — o
-## mapa/HUD ja ficam clicaveis imediatamente (mouse_filter solto antes do
-## tween comecar), o fade e' so cosmetico por cima, a "transicao suave"
-## pedida pelo usuario em vez do corte seco de antes (visible = false direto).
+## Fade curto aguardado pelos handlers: o mapa pode aparecer por baixo, mas o
+## HUD/menu seguinte so entra depois que a camada de loading saiu. Isso evita
+## empilhar transitoriamente textos e controles das duas superficies.
 func _hide_loading_screen() -> void:
 	loading_screen.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var tween := create_tween()
-	tween.tween_property(loading_screen, "modulate:a", 0.0, 0.35)
+	tween.tween_property(loading_screen, "modulate:a", 0.0, Settings.motion_duration(0.35))
 	await tween.finished
 	loading_screen.visible = false
 
 func _try_load_game(slot_id: String) -> bool:
 	if not SaveManager.load_from_slot(hex_grid, slot_id):
 		return false
+	# O histórico estruturado pertence à sessão de UI, não ao save. Limpar
+	# apenas depois do sucesso preserva a sessão atual se o arquivo falhar.
+	UIEvents.clear_session()
 	hex_grid.visible = true
 	GameManager.current_save_slot = slot_id
 	SelectionManager.reset()
@@ -180,9 +189,15 @@ func _try_load_game(slot_id: String) -> bool:
 
 func _enter_gameplay() -> void:
 	title_screen.visible = false
+	# HUD._ready roda antes de GameManager atribuir a civilização humana. Este é
+	# o primeiro ponto comum a partida nova, load e restart em que o dono real
+	# já existe; bind_player é idempotente e desconecta o dono anterior.
+	if GameManager.human_player != null:
+		hud.ui_shell.bind_player(GameManager.human_player)
 	hud.visible = true
 
 func _start_game() -> void:
+	UIEvents.clear_session()
 	hex_grid.visible = true
 	await hex_grid.generate_map(GameManager.map_width, GameManager.map_height, -1, loading_screen.set_progress)
 	GameManager.start_new_game(hex_grid)

@@ -11,11 +11,15 @@ var screen: Control
 var _original_music_volume: float
 var _original_sfx_volume: float
 var _original_vsync_enabled: bool
+var _original_ui_scale: int
+var _original_reduced_motion: bool
 
 func before_each():
 	_original_music_volume = Settings.music_volume
 	_original_sfx_volume = Settings.sfx_volume
 	_original_vsync_enabled = Settings.vsync_enabled
+	_original_ui_scale = Settings.ui_scale_percent
+	_original_reduced_motion = Settings.reduced_motion
 	screen = load("res://scenes/ui/SettingsScreen.tscn").instantiate()
 	add_child_autofree(screen)
 
@@ -23,6 +27,8 @@ func after_each():
 	Settings.music_volume = _original_music_volume
 	Settings.sfx_volume = _original_sfx_volume
 	Settings.vsync_enabled = _original_vsync_enabled
+	Settings.ui_scale_percent = _original_ui_scale
+	Settings.reduced_motion = _original_reduced_motion
 
 func test_music_slider_updates_settings_music_volume():
 	screen.music_slider.value = 0.35
@@ -61,12 +67,12 @@ func test_vsync_check_button_updates_settings_vsync_enabled():
 ## num .tscn seria aplicada, ver TitleScreen.tscn/PauseMenu.tscn) — usa
 ## uma instancia PROPRIA em vez do fixture `screen` (que ja rodou _ready()
 ## com o valor padrao da cena) pra testar os dois valores de verdade.
-func test_debug_button_visible_when_show_debug_true():
+func test_debug_button_stays_hidden_when_legacy_show_debug_is_true():
 	var s: Control = load("res://scenes/ui/SettingsScreen.tscn").instantiate()
 	s.show_debug = true
 	add_child_autofree(s)
 
-	assert_true(s.debug_button.visible)
+	assert_false(s.debug_button.visible, "Developer Tools tem rota propria")
 
 func test_debug_button_hidden_when_show_debug_false():
 	var s: Control = load("res://scenes/ui/SettingsScreen.tscn").instantiate()
@@ -75,7 +81,7 @@ func test_debug_button_hidden_when_show_debug_false():
 
 	assert_false(s.debug_button.visible)
 
-func test_debug_button_emits_debug_requested():
+func test_hidden_debug_button_does_not_emit_debug_requested():
 	# Caixa de 1 elemento, nao um bool solto: lambdas em GDScript capturam
 	# variaveis locais por VALOR — mutar "emitted" direto dentro do lambda
 	# so mudaria a copia dele. Array e passado por referencia.
@@ -84,7 +90,17 @@ func test_debug_button_emits_debug_requested():
 
 	screen.debug_button.pressed.emit()
 
-	assert_true(emitted[0])
+	assert_false(emitted[0])
+
+func test_ui_scale_and_reduced_motion_controls_update_real_settings():
+	var scale_index := Settings.UI_SCALE_OPTIONS.find(125)
+	screen.ui_scale_option.select(scale_index)
+	screen.ui_scale_option.item_selected.emit(scale_index)
+	screen.reduced_motion_check.button_pressed = true
+	screen.reduced_motion_check.toggled.emit(true)
+
+	assert_eq(Settings.ui_scale_percent, 125)
+	assert_true(Settings.reduced_motion)
 
 func test_back_button_emits_back_requested():
 	var emitted := [false] # ver comentario acima

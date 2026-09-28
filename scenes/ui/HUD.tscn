@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="HUD_gd"]
 [ext_resource type="Script" path="res://scripts/ui/Minimap.gd" id="Minimap_gd"]
+[ext_resource type="PackedScene" path="res://scenes/ui/UIShell.tscn" id="UIShell_scn"]
 [node name="HUD" type="Control"]
 layout_mode = 1
 anchor_right = 1.0
@@ -10,6 +11,8 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("HUD_gd")
+
+[node name="UIShell" parent="." instance=ExtResource("UIShell_scn")]
 
 [node name="TopBar" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -114,9 +117,9 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -688.0
-offset_top = -310.0
+offset_top = -398.0
 offset_right = -208.0
-offset_bottom = -16.0
+offset_bottom = -88.0
 grow_horizontal = 0
 grow_vertical = 0
 
@@ -180,9 +183,9 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -688.0
-offset_top = -310.0
+offset_top = -398.0
 offset_right = -208.0
-offset_bottom = -16.0
+offset_bottom = -88.0
 grow_horizontal = 0
 grow_vertical = 0
 
@@ -257,80 +260,6 @@ grow_vertical = 2
 mouse_filter = 0
 color = Color(0.01, 0.01, 0.01, 0.65)
 visible = false
-
-[node name="DiplomacyPanel" type="PanelContainer" parent="."]
-layout_mode = 1
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -240.0
-offset_top = -180.0
-offset_right = 240.0
-offset_bottom = 180.0
-grow_horizontal = 2
-grow_vertical = 2
-visible = false
-
-[node name="DiplomacyBox" type="VBoxContainer" parent="DiplomacyPanel"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="DiplomacyHeader" type="HBoxContainer" parent="DiplomacyPanel/DiplomacyBox"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="DiplomacyTitleLabel" type="Label" parent="DiplomacyPanel/DiplomacyBox/DiplomacyHeader"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_type_variation = &"PanelTitle"
-text = "Diplomacia"
-
-[node name="DiplomacyCloseButton" type="Button" parent="DiplomacyPanel/DiplomacyBox/DiplomacyHeader"]
-layout_mode = 2
-custom_minimum_size = Vector2(32, 32)
-text = "X"
-
-[node name="DiplomacyRows" type="VBoxContainer" parent="DiplomacyPanel/DiplomacyBox"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="VictoryPanel" type="PanelContainer" parent="."]
-layout_mode = 1
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -240.0
-offset_top = -220.0
-offset_right = 240.0
-offset_bottom = 220.0
-grow_horizontal = 2
-grow_vertical = 2
-visible = false
-
-[node name="VictoryBox" type="VBoxContainer" parent="VictoryPanel"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="VictoryHeader" type="HBoxContainer" parent="VictoryPanel/VictoryBox"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="VictoryTitleLabel" type="Label" parent="VictoryPanel/VictoryBox/VictoryHeader"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_type_variation = &"PanelTitle"
-text = "Progresso de Vitória"
-
-[node name="VictoryCloseButton" type="Button" parent="VictoryPanel/VictoryBox/VictoryHeader"]
-layout_mode = 2
-custom_minimum_size = Vector2(32, 32)
-text = "X"
-
-[node name="VictoryRows" type="VBoxContainer" parent="VictoryPanel/VictoryBox"]
-layout_mode = 2
-theme_override_constants/separation = 6
 
 [node name="WorldEventPanel" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -590,10 +519,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -260.0
-offset_top = -260.0
-offset_right = 260.0
-offset_bottom = 260.0
+offset_left = -340.0
+offset_top = -325.0
+offset_right = 340.0
+offset_bottom = 325.0
 grow_horizontal = 2
 grow_vertical = 2
 visible = false
@@ -634,4 +563,14 @@ theme_override_constants/separation = 6
 
 [node name="RestartButton" type="Button" parent="GameOverPanel/GameOverBox"]
 layout_mode = 2
+theme_type_variation = &"PrimaryButton"
 text = "Jogar Novamente"
+
+[node name="LoadButton" type="Button" parent="GameOverPanel/GameOverBox"]
+layout_mode = 2
+text = "Carregar Partida"
+
+[node name="MainMenuButton" type="Button" parent="GameOverPanel/GameOverBox"]
+layout_mode = 2
+theme_type_variation = &"SecondaryButton"
+text = "Menu Principal"

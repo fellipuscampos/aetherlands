@@ -60,11 +60,16 @@ const MAIN_ZONE_SIZE := {"width": 96, "height": 60}
 @onready var status_label: Label = $MainPage/CenterBox/Box/StatusLabel
 @onready var load_game_screen: Control = $LoadGameScreen
 @onready var settings_screen: Control = $SettingsScreen
+@onready var confirm_quit_dialog: ConfirmationDialog = $ConfirmQuitDialog
+@onready var build_label: Label = $MainPage/BuildLabel
+@onready var brand_panel: MarginContainer = $MainPage/BrandPanel
+@onready var center_box: CenterContainer = $MainPage/CenterBox
 
 var _pager: MenuPager
 
 func _ready() -> void:
-	theme = UITheme.build()
+	_apply_accessibility_theme()
+	Settings.accessibility_changed.connect(_apply_accessibility_theme)
 	_pager = MenuPager.new([main_page, load_game_screen, settings_screen])
 	_pager.reset_to(main_page)
 	new_game_button.pressed.connect(_on_new_game_pressed)
@@ -74,7 +79,43 @@ func _ready() -> void:
 	load_game_screen.back_requested.connect(_pager.back)
 	load_game_screen.slot_load_requested.connect(_on_slot_load_requested)
 	settings_screen.back_requested.connect(_pager.back)
+	confirm_quit_dialog.confirmed.connect(AudioManager.request_quit)
+	build_label.text = "Desenvolvimento · Fase UI-5" if OS.is_debug_build() else "Aetherlands"
+	get_viewport().size_changed.connect(_layout_for_viewport)
+	_layout_for_viewport()
 	refresh_load_button()
+	new_game_button.call_deferred("grab_focus")
+
+func _apply_accessibility_theme() -> void:
+	theme = Settings.build_ui_theme()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed("ui_cancel") and _pager.current() != main_page:
+		_pager.back()
+		new_game_button.call_deferred("grab_focus")
+		get_viewport().set_input_as_handled()
+
+func _layout_for_viewport() -> void:
+	var wide := get_viewport_rect().size.x >= 1440.0
+	brand_panel.visible = true
+	if wide:
+		brand_panel.anchor_left = 0.08
+		brand_panel.anchor_top = 0.25
+		brand_panel.anchor_right = 0.47
+		brand_panel.anchor_bottom = 0.75
+		center_box.anchor_left = 0.52
+		center_box.anchor_top = 0.0
+		center_box.anchor_right = 0.96
+		center_box.anchor_bottom = 1.0
+	else:
+		brand_panel.anchor_left = 0.12
+		brand_panel.anchor_top = 0.08
+		brand_panel.anchor_right = 0.88
+		brand_panel.anchor_bottom = 0.47
+		center_box.anchor_left = 0.12
+		center_box.anchor_top = 0.45
+		center_box.anchor_right = 0.88
+		center_box.anchor_bottom = 0.96
 
 func refresh_load_button() -> void:
 	load_game_button.disabled = not SaveManager.has_any_slots()
@@ -95,6 +136,7 @@ func _on_load_game_pressed() -> void:
 func _on_settings_pressed() -> void:
 	settings_screen.refresh()
 	_pager.go_to(settings_screen)
+	settings_screen._show_page(0)
 
 ## Carregar da tela de titulo nunca tem partida em andamento pra perder —
 ## repassa direto, sem confirmacao nenhuma (diferente de PauseMenu, ver
@@ -103,4 +145,4 @@ func _on_slot_load_requested(slot_id: String) -> void:
 	load_game_requested.emit(slot_id)
 
 func _on_quit_pressed() -> void:
-	AudioManager.request_quit()
+	confirm_quit_dialog.popup_centered()

@@ -41,7 +41,7 @@ func refresh(dir: String = SaveManager.SAVE_DIR) -> void:
 	for c in slot_list.get_children():
 		slot_list.remove_child(c)
 		c.queue_free()
-	var slots := SaveManager.list_slots(dir)
+	var slots := SaveManager.inspect_slots(dir)
 	# ScrollContainer some quando vazio (nao so o label): senao ele
 	# continuaria ocupando o espaco expand-fill vazio, empurrando a
 	# mensagem "nenhuma partida salva" pro rodape da tela em vez de
@@ -50,6 +50,21 @@ func refresh(dir: String = SaveManager.SAVE_DIR) -> void:
 	scroll_container.visible = not slots.is_empty()
 	for s in slots:
 		slot_list.add_child(_build_row(s, dir))
+	if slots.is_empty():
+		back_button.call_deferred("grab_focus")
+	else:
+		var first_button := _first_enabled_load_button(slot_list)
+		if first_button != null:
+			first_button.call_deferred("grab_focus")
+
+func _first_enabled_load_button(root: Node) -> Button:
+	for child in root.get_children():
+		if child is Button and child.text == "Carregar" and not child.disabled:
+			return child
+		var nested := _first_enabled_load_button(child)
+		if nested != null:
+			return nested
+	return null
 
 func _build_row(s: Dictionary, dir: String = SaveManager.SAVE_DIR) -> Control:
 	var panel := PanelContainer.new()
@@ -64,17 +79,22 @@ func _build_row(s: Dictionary, dir: String = SaveManager.SAVE_DIR) -> Control:
 	row.add_child(info)
 
 	var name_label := Label.new()
-	name_label.text = "%s (%s)" % [s.kingdom_name, _race_display(s.race)]
+	var status := String(s.get("status", "valid"))
+	var kingdom_name := String(s.get("kingdom_name", "Arquivo de save"))
+	var race := String(s.get("race", "human"))
+	name_label.text = "%s (%s)" % [kingdom_name, _race_display(race)] if status == "valid" else _status_title(status)
 	info.add_child(name_label)
 
 	var detail_label := Label.new()
 	detail_label.theme_type_variation = &"MutedLabel"
-	detail_label.text = "Turno %d — %s" % [s.turn_number, _format_saved_at(s.saved_at)]
+	detail_label.text = _slot_detail(s)
 	info.add_child(detail_label)
 
 	var load_button := Button.new()
 	load_button.text = "Carregar"
 	load_button.pressed.connect(func(): slot_load_requested.emit(s.slot_id))
+	load_button.disabled = status != "valid"
+	load_button.tooltip_text = _status_reason(status)
 	row.add_child(load_button)
 
 	var delete_button := Button.new()
@@ -83,6 +103,21 @@ func _build_row(s: Dictionary, dir: String = SaveManager.SAVE_DIR) -> Control:
 	row.add_child(delete_button)
 
 	return panel
+
+func _slot_detail(s: Dictionary) -> String:
+	var status := String(s.get("status", "valid"))
+	if status != "valid":
+		return "%s · versao %s" % [_status_reason(status), str(s.get("version", "?"))]
+	return "Turno %d · %s · save v%d" % [int(s.get("turn_number", 0)), _format_saved_at(int(s.get("saved_at", 0))), int(s.get("version", 0))]
+
+func _status_title(status: String) -> String:
+	return "Save incompativel" if status == "incompatible" else "Save corrompido"
+
+func _status_reason(status: String) -> String:
+	match status:
+		"incompatible": return "Este arquivo foi criado por uma versao nao suportada."
+		"corrupt": return "O arquivo nao contem uma partida valida."
+	return ""
 
 func _on_delete_pressed(slot_id: String, dir: String = SaveManager.SAVE_DIR) -> void:
 	_pending_delete_slot_id = slot_id

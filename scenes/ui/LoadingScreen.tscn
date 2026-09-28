@@ -76,7 +76,7 @@ expand_mode = 1
 stretch_mode = 0
 
 [node name="Motes" type="CPUParticles2D" parent="."]
-position = Vector2(800, 450)
+position = Vector2(0, 0)
 amount = 14
 lifetime = 6.0
 preprocess = 3.0
@@ -104,6 +104,7 @@ grow_vertical = 2
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
+custom_minimum_size = Vector2(640, 0)
 
 [node name="KickerLabel" type="Label" parent="CenterBox/Box"]
 layout_mode = 2
@@ -125,9 +126,18 @@ horizontal_alignment = 1
 theme_override_font_sizes/font_size = 28
 text = "Gerando o Mapa..."
 
+[node name="DetailLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+custom_minimum_size = Vector2(640, 48)
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+text = "Preparando os sistemas da partida."
+
 [node name="ProgressRow" type="HBoxContainer" parent="CenterBox/Box"]
 layout_mode = 2
-custom_minimum_size = Vector2(360, 0)
+custom_minimum_size = Vector2(640, 0)
 theme_override_constants/separation = 10
 
 [node name="ProgressBar" type="ProgressBar" parent="CenterBox/Box/ProgressRow"]
@@ -147,6 +157,13 @@ text = "0%"
 layout_mode = 2
 horizontal_alignment = 1
 autowrap_mode = 3
-custom_minimum_size = Vector2(360, 0)
+custom_minimum_size = Vector2(640, 0)
 modulate = Color(0.75, 0.7, 0.6, 1.0)
 text = "Mapas grandes podem levar alguns segundos — isso é normal."
+
+[node name="LoadLimitLabel" type="Label" parent="CenterBox/Box"]
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+horizontal_alignment = 1
+autowrap_mode = 3
+text = "A geracao informa progresso real. A restauracao de saves ainda possui uma etapa sincrona."

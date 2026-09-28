@@ -30,6 +30,8 @@ func before_each():
 	var hud_scene: PackedScene = load("res://scenes/ui/HUD.tscn")
 	hud = hud_scene.instantiate()
 	add_child_autofree(hud)
+	# Fase 30: estes testes usam o painel de contexto LEGADO como oráculo de paridade.
+	hud.legacy_context_enabled = true
 
 func after_each():
 	GameManager.state = _original_state
@@ -45,12 +47,14 @@ func after_each():
 func test_close_topmost_overlay_returns_false_when_nothing_is_open():
 	assert_false(hud.close_topmost_overlay())
 
+## Fase 30: Diplomacia é a tela estratégica nova (DiplomacyScreen) na navegação central.
 func test_close_topmost_overlay_closes_diplomacy_panel():
 	hud._on_diplomacy_pressed()
-	assert_true(hud.diplomacy_panel.visible)
+	assert_true(hud.ui_shell.diplomacy_screen.visible)
+	assert_false(hud.has_node("DiplomacyPanel"), "o painel legado foi removido da cena")
 
 	assert_true(hud.close_topmost_overlay())
-	assert_false(hud.diplomacy_panel.visible)
+	assert_false(hud.ui_shell.diplomacy_screen.visible)
 
 ## Regressao: abrir Diplomacia enquanto Tecnologia esta aberta precisa
 ## fechar a primeira — essa regra ja existia antes, so confirmando que
@@ -60,33 +64,35 @@ func test_opening_a_second_overlay_closes_the_first_one():
 	hud._on_diplomacy_pressed()
 
 	assert_false(hud.v2_research_panel.visible, "abrir diplomacia deveria fechar a pesquisa")
-	assert_true(hud.diplomacy_panel.visible)
+	assert_true(hud.ui_shell.diplomacy_screen.visible)
 
 ## Roadmap "Fase F" F1/F2/F5 -- painel de progresso de vitoria, mesmo
 ## padrao de overlay "so um por vez" de Tecnologia/Diplomacia acima.
 
 func test_victory_panel_opens_and_closes():
-	assert_false(hud.victory_panel.visible)
+	var screen: VictoryScreen = hud.ui_shell.victory_screen
+	assert_false(screen.visible)
 
 	hud._on_victory_pressed()
-	assert_true(hud.victory_panel.visible)
-	assert_true(hud.overlay_backdrop.visible)
+	assert_true(screen.visible)
+	assert_true(hud.ui_shell.overlay_dimmer.visible, "o dimmer da shell substitui o backdrop legado")
+	assert_false(hud.has_node("VictoryPanel"), "o painel legado foi removido da cena")
 
 	hud._on_victory_pressed()
-	assert_false(hud.victory_panel.visible)
+	assert_false(screen.visible)
 
 func test_opening_victory_panel_closes_diplomacy():
 	hud._on_diplomacy_pressed()
-	assert_true(hud.diplomacy_panel.visible)
+	assert_true(hud.ui_shell.diplomacy_screen.visible)
 
 	hud._on_victory_pressed()
 
-	assert_false(hud.diplomacy_panel.visible)
-	assert_true(hud.victory_panel.visible)
+	assert_false(hud.ui_shell.diplomacy_screen.visible)
+	assert_true(hud.ui_shell.victory_screen.visible)
 
 ## format_victory_progress_percentage e PURA (nenhuma dependencia de
 ## cena/PlayerData/HexGrid) -- testada direto, sem precisar de
-## _refresh_victory_panel nem GameManager nenhum. Clampa e arredonda:
+## _build_victory_progress_rows nem GameManager nenhum. Clampa e arredonda:
 ## nunca mostra >100% nem negativo mesmo com entrada fora de [0,1].
 func test_format_victory_progress_percentage_at_zero_intermediate_and_full():
 	assert_eq(hud.format_victory_progress_percentage(0.0), "0%")
@@ -113,23 +119,25 @@ func test_victory_panel_builds_the_three_active_victories_with_correct_values():
 	GameManager.human_player = human
 	GameManager.rival_players = [alive_rival, eliminated_rival]
 
-	hud._refresh_victory_panel()
+	var victory_rows := VBoxContainer.new()
+	add_child_autofree(victory_rows)
+	hud._build_victory_progress_rows(victory_rows)
 
-	assert_eq(hud.victory_rows.get_child_count(), 9, "3 vitórias x (título + barra + detalhe)")
-	assert_eq(hud.victory_rows.get_child(0).text, "Dominação")
-	var dominance_row: HBoxContainer = hud.victory_rows.get_child(1)
+	assert_eq(victory_rows.get_child_count(), 9, "3 vitórias x (título + barra + detalhe)")
+	assert_eq(victory_rows.get_child(0).text, "Dominação")
+	var dominance_row: HBoxContainer = victory_rows.get_child(1)
 	assert_eq(dominance_row.get_child(2).text, "50%", "1 de 2 rivais eliminados")
 	assert_almost_eq(dominance_row.get_child(1).value, 50.0, 0.01)
-	assert_eq(hud.victory_rows.get_child(3).text, "Supremacia Militar")
-	assert_eq(hud.victory_rows.get_child(6).text, "Transcendência")
-	for child in hud.victory_rows.get_children():
+	assert_eq(victory_rows.get_child(3).text, "Supremacia Militar")
+	assert_eq(victory_rows.get_child(6).text, "Transcendência")
+	for child in victory_rows.get_children():
 		if child is Label:
 			for legacy in ["Territorial", "Ascensão Arcana", "Ritual do Nódulo", "V1", "V2"]:
 				assert_false(child.text.contains(legacy), "%s em '%s'" % [legacy, child.text])
 
 	hex_grid.queue_free()
 
-## NAO testa "refresh 2x sem passar frame nenhum": _refresh_victory_panel
+## NAO testa "refresh 2x sem passar frame nenhum": _build_victory_progress_rows
 ## usa queue_free() (MESMO padrao de _refresh_diplomacy_panel, ver
 ## comentario la) pra limpar linhas antigas, que so libera de verdade no
 ## proximo frame -- chamar 2x seguidas SEM deixar um frame passar
@@ -142,9 +150,11 @@ func test_victory_panel_row_count_matches_player_count_after_refresh():
 	GameManager.human_player = PlayerData.new(CivilizationData.new())
 	GameManager.rival_players = []
 
-	hud._refresh_victory_panel()
+	var victory_rows := VBoxContainer.new()
+	add_child_autofree(victory_rows)
+	hud._build_victory_progress_rows(victory_rows)
 
-	assert_eq(hud.victory_rows.get_child_count(), 9, "a estrutura não depende do número de jogadores")
+	assert_eq(victory_rows.get_child_count(), 9, "a estrutura não depende do número de jogadores")
 	hex_grid.queue_free()
 
 ## Roadmap "Fase F" F6 -- tela de resultado final: titulo + resumo fixo +
@@ -192,7 +202,7 @@ func test_on_victory_achieved_populates_title_summary_and_snapshot():
 ## a tela de resultado precisa continuar mostrando os valores do MOMENTO
 ## da vitoria, mesmo que o jogo mude depois. _on_victory_achieved congela
 ## o snapshot em Labels/ProgressBars ESTATICOS (game_over_snapshot_rows)
-## -- diferente do painel "Vitória" ao vivo (_refresh_victory_panel), que
+## -- diferente da VictoryScreen ao vivo (Fase 30), que
 ## le VictoryConditions de novo toda vez que e chamado.
 func test_game_over_snapshot_does_not_change_after_later_state_mutation_or_live_panel_refresh():
 	var hex_grid := HexGrid.new()
@@ -216,8 +226,10 @@ func test_game_over_snapshot_does_not_change_after_later_state_mutation_or_live_
 
 	# O painel AO VIVO reflete a mudanca (prova que a mudanca de estado e
 	# real, nao um erro de teste)...
-	hud._refresh_victory_panel()
-	var live_dominance_row: HBoxContainer = hud.victory_rows.get_child(1)
+	var live_rows := VBoxContainer.new()
+	add_child_autofree(live_rows)
+	hud._build_victory_progress_rows(live_rows)
+	var live_dominance_row: HBoxContainer = live_rows.get_child(1)
 	assert_ne(live_dominance_row.get_child(2).text, "100%", "pre-condicao: o painel AO VIVO deveria refletir o novo rival")
 
 	# ...mas o snapshot CONGELADO da tela de resultado NAO muda.
@@ -1206,7 +1218,7 @@ func test_v2_board_close_button_and_other_overlays_hide_the_v2_panel():
 	hud._on_research_pressed()
 	hud._on_diplomacy_pressed()
 	assert_false(hud.v2_research_panel.visible, "abrir outro overlay fecha a pesquisa")
-	assert_true(hud.diplomacy_panel.visible)
+	assert_true(hud.ui_shell.diplomacy_screen.visible)
 
 ## Fase 1: o painel V2 mostra e altera o estado REAL da civilização humana.
 func test_v2_panel_is_bound_to_the_human_civilization_state():
@@ -3193,9 +3205,11 @@ func test_rival_transcendence_ritual_is_public_in_the_victory_panel_without_reve
 	_phase23_manifestation(rival_scene, "v2_manifestation_archdemon")
 	rival.mana = 120.0
 	assert_true(V2TranscendenceSystem.start_ritual(rival, rival_city))
-	hud._refresh_victory_panel()
+	var victory_rows := VBoxContainer.new()
+	add_child_autofree(victory_rows)
+	hud._build_victory_progress_rows(victory_rows)
 	var combined := ""
-	for child in hud.victory_rows.get_children():
+	for child in victory_rows.get_children():
 		if child is Label:
 			combined += child.text + "\n"
 		elif child is HBoxContainer and child.get_child_count() > 0 and child.get_child(0) is Label:
@@ -3230,3 +3244,17 @@ func test_transcendence_victory_screen_has_its_own_title_and_summary():
 	var summary: String = hud.format_victory_summary(V2VictoryConditions.VICTORY_TYPE_TRANSCENDENCE)
 	assert_true(summary.contains("Ritual Final"))
 	assert_true(summary.contains("quatro rodadas"))
+
+func test_ui4_game_over_exposes_restart_load_and_main_menu_without_raw_ids():
+	hud._on_game_over(false)
+	assert_true(hud.restart_button.visible)
+	assert_true(hud.game_over_load_button.visible)
+	assert_true(hud.game_over_main_menu_button.visible)
+	assert_eq(hud.game_over_title_label.text, "Seu reino caiu")
+	assert_false("v2_" in hud.game_over_summary_label.text)
+
+func test_ui4_game_over_main_menu_action_is_routed_to_main():
+	var requested := [false]
+	hud.game_over_main_menu_requested.connect(func(): requested[0] = true)
+	hud.game_over_main_menu_button.pressed.emit()
+	assert_true(requested[0])

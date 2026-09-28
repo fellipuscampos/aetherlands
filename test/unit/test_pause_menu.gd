@@ -89,14 +89,15 @@ func test_reopening_pause_always_shows_main_page_even_after_visiting_settings():
 
 ## --- Debug (agora dentro de SettingsScreen) ---
 
-func test_debug_button_only_visible_in_debug_builds():
-	assert_eq(pause_menu.settings_screen.debug_button.visible, OS.is_debug_build(), "botao de Debug nao deveria aparecer num export de release")
+func test_developer_tools_has_its_own_debug_only_route():
+	assert_false(pause_menu.settings_screen.debug_button.visible)
+	assert_eq(pause_menu.developer_tools_button.visible, OS.is_debug_build())
 
-func test_debug_requested_from_settings_closes_pause_and_opens_the_hud_debug_panel():
+func test_developer_tools_button_closes_pause_and_opens_the_hud_debug_panel():
 	pause_menu.open()
 	assert_true(pause_menu.visible)
 
-	pause_menu.settings_screen.debug_requested.emit()
+	pause_menu.developer_tools_button.pressed.emit()
 
 	assert_false(pause_menu.visible, "pausa deveria fechar ao abrir o debug")
 	assert_false(get_tree().paused, "despausar e obrigatorio, senao o jogo trava atras do painel de debug")
@@ -128,10 +129,22 @@ func test_save_button_overwrites_the_same_slot_on_repeated_saves():
 
 	pause_menu._on_save_pressed()
 	pause_menu._on_save_pressed()
+	assert_true(pause_menu.confirm_save_dialog.visible)
+	pause_menu.confirm_save_dialog.confirmed.emit()
 
 	assert_eq(GameManager.current_save_slot, slot_id, "salvar de novo nao deveria trocar de slot")
 	assert_eq(SaveManager.list_slots().filter(func(s): return s.slot_id == slot_id).size(), 1)
 	SaveManager.delete_slot(slot_id)
+
+func test_return_to_main_menu_requires_confirmation():
+	pause_menu.open()
+	var emitted := [false]
+	pause_menu.main_menu_requested.connect(func(): emitted[0] = true)
+	pause_menu._on_main_menu_pressed()
+	assert_true(pause_menu.confirm_main_menu_dialog.visible)
+	assert_false(emitted[0])
+	pause_menu.confirm_main_menu_dialog.confirmed.emit()
+	assert_true(emitted[0])
 
 ## --- Carregar (navega sem fechar; confirma antes de descartar a partida) ---
 

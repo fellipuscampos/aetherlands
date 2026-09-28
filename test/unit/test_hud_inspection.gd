@@ -41,6 +41,8 @@ func before_each():
 	var hud_scene: PackedScene = load("res://scenes/ui/HUD.tscn")
 	hud = hud_scene.instantiate()
 	add_child_autofree(hud)
+	# Fase 30: estes testes usam o painel de contexto LEGADO como oráculo de paridade.
+	hud.legacy_context_enabled = true
 
 func after_each():
 	SelectionManager.selected_unit = null

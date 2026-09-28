@@ -18,6 +18,23 @@ signal restart_requested
 ## nenhum) — melhor do que o AudioManager tentar adivinhar pelo texto da
 ## mensagem, que e fragil se a redacao mudar.
 signal notify(text: String, sfx_kind: String)
+## Fase 28B: sinais de dominio neutros para a camada de eventos estruturados.
+## Nenhum carrega Control/Node de UI e nenhum deles e persistido.
+signal ui_research_completed(player: PlayerData, research_id: String, display_name: String)
+signal ui_production_completed(player: PlayerData, city_name: String, item_id: String, display_name: String, target_coord: Vector2i)
+signal diplomacy_changed(change_type: String, source: PlayerData, target: PlayerData, reason: String)
+signal city_founded(player: PlayerData, city_name: String, target_coord: Vector2i)
+signal city_captured(old_owner: PlayerData, new_owner: PlayerData, city_name: String, target_coord: Vector2i)
+signal city_threatened(player: PlayerData, city_name: String, target_coord: Vector2i, threat_description: String)
+## Apresentacao pode recomputar estado derivado sem observar gameplay por frame.
+signal ui_state_changed(reason: String)
+## Fase 30: SelectionManager entrou/saiu de um modo de mira (Técnica, feitiço,
+## posicionamento de prédio, anexação, Ataque da Cidade). O estado continua
+## sendo lido do próprio SelectionManager; o sinal só evita polling na UI.
+signal targeting_changed
+## Fase 30: clique fora dos alvos destacados durante a mira. Nada foi gasto;
+## a mensagem é apenas feedback curto para o TargetingBanner.
+signal targeting_rejected(message: String)
 signal fog_updated
 ## Aetherlands V2 (Fase 3): um unlock V2 conectado passou a valer pro jogador
 ## HUMANO (ver V2UnlockSystem/PlayerData._on_v2_unlock_applied). A HUD só usa pra

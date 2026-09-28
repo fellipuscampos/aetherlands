@@ -9,16 +9,28 @@ const TEST_SETTINGS_PATH := "user://test_settings.cfg"
 var _original_music_volume: float
 var _original_sfx_volume: float
 var _original_vsync_enabled: bool
+var _original_window_mode: String
+var _original_window_resolution: Vector2i
+var _original_ui_scale: int
+var _original_reduced_motion: bool
 
 func before_each():
 	_original_music_volume = Settings.music_volume
 	_original_sfx_volume = Settings.sfx_volume
 	_original_vsync_enabled = Settings.vsync_enabled
+	_original_window_mode = Settings.window_mode
+	_original_window_resolution = Settings.window_resolution
+	_original_ui_scale = Settings.ui_scale_percent
+	_original_reduced_motion = Settings.reduced_motion
 
 func after_each():
 	Settings.music_volume = _original_music_volume
 	Settings.sfx_volume = _original_sfx_volume
 	Settings.vsync_enabled = _original_vsync_enabled
+	Settings.window_mode = _original_window_mode
+	Settings.window_resolution = _original_window_resolution
+	Settings.ui_scale_percent = _original_ui_scale
+	Settings.reduced_motion = _original_reduced_motion
 	if FileAccess.file_exists(TEST_SETTINGS_PATH):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_SETTINGS_PATH))
 
@@ -85,3 +97,28 @@ func test_load_settings_without_a_file_keeps_current_vsync_value():
 	Settings.vsync_enabled = false
 	Settings.load_settings(TEST_SETTINGS_PATH)
 	assert_false(Settings.vsync_enabled, "sem arquivo, deveria manter o valor atual em vez de resetar")
+
+func test_frontend_settings_round_trip_without_touching_save_schema():
+	Settings.window_mode = Settings.BORDERLESS
+	Settings.window_resolution = Vector2i(1920, 1080)
+	Settings.ui_scale_percent = 125
+	Settings.reduced_motion = true
+	Settings.save_settings(TEST_SETTINGS_PATH)
+	Settings.window_mode = Settings.WINDOWED
+	Settings.window_resolution = Vector2i(1280, 720)
+	Settings.ui_scale_percent = 80
+	Settings.reduced_motion = false
+
+	Settings.load_settings(TEST_SETTINGS_PATH)
+
+	assert_eq(Settings.window_mode, Settings.BORDERLESS)
+	assert_eq(Settings.window_resolution, Vector2i(1920, 1080))
+	assert_eq(Settings.ui_scale_percent, 125)
+	assert_true(Settings.reduced_motion)
+	assert_eq(SaveManager.SAVE_VERSION, 21)
+
+func test_motion_duration_is_zero_only_in_reduced_motion():
+	Settings.reduced_motion = false
+	assert_almost_eq(Settings.motion_duration(0.24), 0.24, 0.001)
+	Settings.reduced_motion = true
+	assert_eq(Settings.motion_duration(0.24), 0.0)

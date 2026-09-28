@@ -380,3 +380,4 @@ static func warn_player(player: PlayerData, hex_grid: HexGrid, visible: Dictiona
 		var count: int = assessment.monsters.size()
 		var label: String = nearest.unit_data.unit_name if count == 1 else "%s e mais %d monstro(s)" % [nearest.unit_data.unit_name, count - 1]
 		EventBus.notify.emit("%s esta ameacada: %s se aproximam!" % [city.city_name, label], "combat")
+		EventBus.city_threatened.emit(player, city.city_name, city.coord, label)
