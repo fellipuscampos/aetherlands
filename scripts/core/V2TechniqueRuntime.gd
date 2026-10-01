@@ -172,7 +172,7 @@ static func strike_range_of(unit: Unit, technique: V2DoctrineTechniqueData) -> i
 ## adjacente sempre é visível): o alvo precisa estar VISÍVEL — o Disparo Preciso de um Atirador de Elite chega a 4 tiles,
 ## além da visão 3. Sem neblina calculada (partida de teste) ou para a IA, sem restrição.
 static func _visible_to_owner(unit: Unit, coord: Vector2i, grid: HexGrid) -> bool:
-	if unit.owner_player != GameManager.human_player or grid.visibility.is_empty():
+	if not GameManager.is_human_controlled(unit.owner_player) or grid.visibility.is_empty():
 		return true
 	return grid.visibility.get(coord, HexGrid.Visibility.UNSEEN) == HexGrid.Visibility.VISIBLE
 

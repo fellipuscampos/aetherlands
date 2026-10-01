@@ -205,16 +205,22 @@ func test_the_new_owner_of_a_captured_city_does_not_inherit_the_old_owners_resea
 	assert_false(city.can_start_city_upgrade(), "o novo dono não pesquisou Urbanização -- não pode evoluir a cidade capturada")
 
 func test_city_project_in_progress_survives_capture_same_semantics_as_any_production():
+	# Fase 33D1 (Bug #1): a fila herdada só continua se for legítima para o NOVO dono. Sem a própria
+	# Urbanização o projeto é limpo (antes persistia e podia concluir sem a pesquisa); com ela, continua
+	# com os mesmos PP, como qualquer produção em andamento.
 	var city := _founded_city(rival, Vector2i(3, 0))
 	rival.v2_research.complete_research(URBANIZATION_1)
 	rival.gold = 100.0
 	city.set_production("v2_city_upgrade_2")
 	city.stored_production = 10.0
 	hex_grid.capture_city(city, human)
-	# City.gd não zera production_item na captura (mesma regra de qualquer produção em andamento,
-	# ver docs Fase 13 #44) -- o projeto persiste, mas o NOVO dono precisa da PRÓPRIA pesquisa
-	# pra ele algum dia concluir de verdade.
-	assert_eq(city.production_item, "v2_city_upgrade_2")
+	assert_eq(city.production_item, "", "novo dono sem Urbanização I não herda o projeto")
+	assert_eq(city.stored_production, 0.0)
+	# Recaptura pelo rival, que tem a pesquisa: o projeto em andamento continua com os mesmos PP.
+	city.production_item = "v2_city_upgrade_2"
+	city.stored_production = 10.0
+	hex_grid.capture_city(city, rival)
+	assert_eq(city.production_item, "v2_city_upgrade_2", "com a própria pesquisa o projeto continua")
 	assert_almost_eq(city.stored_production, 10.0, 0.001)
 
 # --- §74/IA: compatibilidade mínima --------------------------------------------------------------

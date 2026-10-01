@@ -96,6 +96,10 @@ static func unit_power(unit: Unit) -> float:
 	var raw := data.attack + data.defense + data.max_hp * 0.15
 	return raw * clampf(unit.hp / maxf(data.max_hp, 1.0), 0.25, 1.0)
 
+## Mesmo poder bruto de unit_power para uma unidade de vida cheia (estimativa a partir de catálogo).
+static func unit_data_power(data: UnitData) -> float:
+	return data.attack + data.defense + data.max_hp * 0.15
+
 ## 1.0 ate 2 tiles, cai 0.2 por tile (0.2 a 6 tiles).
 static func proximity_weight(distance: int) -> float:
 	return clampf(1.0 - 0.2 * float(distance - 2), 0.2, 1.0)
@@ -130,7 +134,7 @@ static func assess(city: City, hex_grid: HexGrid, visible: Variant = null) -> Di
 		if distance < nearest_distance:
 			nearest_distance = distance
 			nearest = monster
-	if raw_threat > 0.0 and _live_lair_near(city, hex_grid):
+	if raw_threat > 0.0 and _live_lair_near(city, hex_grid, visible != null):
 		raw_threat += LAIR_PRESSURE_POWER
 
 	# Importancia estrategica (City Level — Fase 25, era a populacao) e fragilidade (vida+escudo) da
@@ -169,9 +173,16 @@ static func assess(city: City, hex_grid: HexGrid, visible: Variant = null) -> Di
 static func is_emergency(assessment: Dictionary) -> bool:
 	return assessment.level >= LEVEL_EMERGENCY and assessment.deficit > 0.0
 
-static func _live_lair_near(city: City, hex_grid: HexGrid) -> bool:
+## Fase 33D2 (Bug Register #7): com filtro de névoa (IA), só covil que o dono da cidade CONHECE conta, e
+## sem ler a população escondida ao redor dele (o monstro visível que gerou raw_threat já é a evidência).
+static func _live_lair_near(city: City, hex_grid: HexGrid, knowledge_limited: bool = false) -> bool:
 	for lair_coord in hex_grid.lairs_by_coord.keys():
-		if HexMetrics.axial_distance(lair_coord, city.coord) <= LAIR_NEAR_RADIUS and hex_grid._count_live_monsters_near_lair(lair_coord) > 0:
+		if HexMetrics.axial_distance(lair_coord, city.coord) > LAIR_NEAR_RADIUS:
+			continue
+		if knowledge_limited:
+			if city.owner_player != null and city.owner_player.explored_tiles.has(lair_coord):
+				return true
+		elif hex_grid._count_live_monsters_near_lair(lair_coord) > 0:
 			return true
 	return false
 
@@ -317,7 +328,7 @@ static func city_attack_targets(city: City, hex_grid: HexGrid, visible: Variant 
 ## nunca recalcula a neblina: compute_visible_tiles custava ~3 ms no mapa Grande a cada refresh do
 ## botão). IA / partida sem neblina: sem restrição.
 static func _visible_to_owner(city: City, coord: Vector2i, hex_grid: HexGrid) -> bool:
-	if city.owner_player != GameManager.human_player or hex_grid.visibility.is_empty():
+	if not GameManager.is_human_controlled(city.owner_player) or hex_grid.visibility.is_empty():
 		return true
 	return hex_grid.visibility.get(coord, HexGrid.Visibility.UNSEEN) == HexGrid.Visibility.VISIBLE
 

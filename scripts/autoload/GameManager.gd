@@ -72,6 +72,24 @@ var players: Array[PlayerData] = []
 var human_player: PlayerData
 var rival_players: Array[PlayerData] = []
 
+## Fase 33B (Release Balance Lab): fixture DEV-ONLY, nunca salva e nunca ligada pelo jogo normal.
+## Ligada, o assento formal `human_player` continua existindo, mas suas decisões passam pelo MESMO
+## stack V2 dos rivais (V2StrategicAI, RivalAI, V2AITacticalAI, defesa de cidade da IA) e ele
+## deixa de ser tratado como "humano com UI" nas regras de visibilidade de mira. Desligada (padrão),
+## todo caminho abaixo é idêntico ao anterior.
+var ai_controls_human_seat: bool = false
+
+## `player` é o humano de verdade, operando pela UI? Falso para rivais e para o assento humano
+## automatizado do laboratório (ai_controls_human_seat).
+func is_human_controlled(player: PlayerData) -> bool:
+	return player != null and player == human_player and not ai_controls_human_seat
+
+## Civilizações cujas decisões vêm do stack de IA, na ordem de GameManager.players.
+func ai_controlled_players() -> Array[PlayerData]:
+	if ai_controls_human_seat and human_player != null:
+		return ([human_player] as Array[PlayerData]) + rival_players
+	return rival_players
+
 ## Escolhido na tela de titulo antes de start_new_game(); "" mantem o padrao
 ## (nome de reino da RACA escolhida, ver _default_kingdom_name_for_race —
 ## NAO mais um unico nome fixo humano, ver comentario la pro bug que isso
@@ -152,8 +170,7 @@ func end_match() -> void:
 	_ai_turn_queue.clear()
 	_ai_batch_timer = 0.0
 	_completed_building_coords_this_turn.clear()
-	WorldEventManager.active_events.clear()
-	WorldEventManager._next_event_id = 0
+	WorldEventManager.reset_for_new_match()
 	if hex_grid != null:
 		hex_grid.reset_to_empty()
 	_release_player_relations()
@@ -228,6 +245,9 @@ func setup_players(grid: HexGrid) -> void:
 	TurnManager.player_count = 1
 	TurnManager.turn_number = 1
 	TurnManager.current_player_index = 0
+	# Fase 33D1: estado de mundo sempre nasce limpo (inclusive em "Jogar de Novo", que não passa por
+	# end_match); o load restaura por cima logo depois (WorldEventManager.from_save_dict).
+	WorldEventManager.reset_for_new_match(TurnManager.turn_number)
 
 func _release_player_relations() -> void:
 	for player in players:
@@ -248,7 +268,7 @@ func _heal_if_garrisoned(unit: Unit) -> void:
 	var city = hex_grid.get_city_at(unit.coord)
 	if city and city.owner_player == unit.owner_player:
 		if unit.hp < unit.unit_data.max_hp:
-			unit.hp = min(unit.hp + unit.unit_data.max_hp * GARRISON_HEAL_FRACTION, unit.unit_data.max_hp)
+			unit.hp = min(unit.hp + unit.unit_data.max_hp * GARRISON_HEAL_FRACTION * MonsterHazardSystem.heal_multiplier(unit), unit.unit_data.max_hp)
 		return
 	_heal_if_fortified(unit)
 
@@ -258,7 +278,7 @@ func _heal_if_garrisoned(unit: Unit) -> void:
 ## acima) pra nunca curar duas vezes no mesmo turno.
 func _heal_if_fortified(unit: Unit) -> void:
 	if unit.fortified and unit.hp < unit.unit_data.max_hp:
-		unit.hp = min(unit.hp + unit.unit_data.max_hp * FORTIFY_HEAL_FRACTION, unit.unit_data.max_hp)
+		unit.hp = min(unit.hp + unit.unit_data.max_hp * FORTIFY_HEAL_FRACTION * MonsterHazardSystem.heal_multiplier(unit), unit.unit_data.max_hp)
 
 ## Ent (UnitData.regen_fraction): regenera sozinho todo turno, em qualquer
 ## lugar do mapa — nao depende de estar guarnicionado como o resto do
@@ -266,13 +286,25 @@ func _heal_if_fortified(unit: Unit) -> void:
 ## _heal_if_garrisoned.
 func _apply_regen(unit: Unit) -> void:
 	if unit.unit_data.regen_fraction > 0.0 and unit.hp < unit.unit_data.max_hp:
-		unit.hp = min(unit.hp + unit.unit_data.max_hp * unit.unit_data.regen_fraction, unit.unit_data.max_hp)
+		unit.hp = min(unit.hp + unit.unit_data.max_hp * unit.unit_data.regen_fraction * MonsterHazardSystem.heal_multiplier(unit), unit.unit_data.max_hp)
+
+## Fase 33D2 — partidas novas recebem ameaças regionais (sempre no jogo). Só fixtures de teste de CONTEÚDO que
+## dependem do layout exato do mapa gerado desligam (e restauram) isto.
+var regional_threats_on_new_match := true
+## V3 / Combat Ecology — partidas novas recebem a população ecológica completa (MonsterEcologySystem) e saves
+## anteriores à V3 ligam a reposição gradual. Flag de FIXTURE de teste (default true, nunca salva, sem UI): só
+## testes de conteúdo que dependem do mapa sem monstros desligam e restauram no after_each.
+var combat_ecology_on_new_match := true
 
 func _spawn_starting_forces() -> void:
 	# claimed_starts impede que duas capitais (do humano ou de rivais
 	# diferentes) acabem escolhendo o mesmo tile inicial — ver comentario
 	# em WorldSetup.find_start_tile.
 	var claimed_starts: Array[Vector2i] = []
+	# Fase 33D2: só partidas NOVAS recebem ameaças regionais. As capitais do setup são planejadas juntas no
+	# fim (todas as âncoras conhecidas); a do humano, quando o Colonizador fundar (HexGrid.found_city).
+	WorldEventManager.regional_threats_enabled = regional_threats_on_new_match
+	RegionalThreatSystem.defer_planning = true
 
 	# Forças iniciais (núcleo compartilhado, Fase 25): o Colonizador e o Guarda ("warrior") são as
 	# únicas unidades fora da progressão V2 que uma partida nova cria — o Guarda é só a escolta
@@ -291,6 +323,11 @@ func _spawn_starting_forces() -> void:
 		hex_grid.found_city(rival_start, rival, rival.civ.civ_name + " - Capital")
 		var guard_coord = WorldSetup.find_spawn_tile(hex_grid, rival_start)
 		hex_grid.spawn_unit(guard_coord, UnitDatabase.create_unit("warrior"), rival)
+	RegionalThreatSystem.defer_planning = false
+	RegionalThreatSystem.plan_pending(hex_grid)
+	# V3 / Combat Ecology: mapa, capitais/tiles iniciais e ameaças regionais do setup já existem — a ecologia
+	# completa nasce agora, antes do primeiro turno (nunca em _process).
+	MonsterEcologySystem.populate_new_match(hex_grid, combat_ecology_on_new_match)
 
 ## Espalha os rivais em angulos igualmente espacados ao redor do centro do
 ## mapa (onde o humano comeca), numa elipse escalada pela largura/altura
@@ -354,7 +391,7 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 	for unit in hex_grid.neutral_units():
 		unit.reset_movement()
 
-	for rival in rival_players:
+	for rival in ai_controlled_players():
 		var rival_civ_index: int = players.find(rival)
 		# Roadmap "Fase Macro" 5B.3-G -- "Preparation = tempo de preparacao
 		# militar" / "IA precisa reagir ao Dragao". Calculado UMA vez aqui
@@ -400,6 +437,11 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		# producao (acima), nao ha Unit nenhuma pra interceptar ainda.
 		if threatening_dragon != null and threatening_dragon.dragon_unit != null:
 			RivalAI.defend_against_dragon(rival, hex_grid, threatening_dragon.dragon_unit)
+		else:
+			# Fase 33D3: participante que decidiu entrar na caçada (não-alvo) desloca uma força pequena.
+			for event in WorldEventManager.active_events:
+				if event is DragonEvent and event.phase == WorldEvent.PHASE_ACTIVE and bool(event.participants.get(rival_civ_index, {}).get("decision", false)) and (event as DragonEvent).dragon_unit != null:
+					RivalAI.join_dragon_hunt(rival, hex_grid, (event as DragonEvent).dragon_unit)
 
 	for player in players:
 		UnitAbilities.process_turn(player, hex_grid)
@@ -417,7 +459,7 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 			# removida: a defesa ativa da cidade agora e' o Ataque da Cidade, uma acao explicita
 			# (o humano mira pelo SelectionManager). A IA tem so' a paridade tatica minima: sua
 			# cidade fortificada dispara uma vez no alvo mais ferido ao alcance.
-			if player != human_player:
+			if not is_human_controlled(player):
 				CityDefense.ai_city_defense_turn(city, hex_grid)
 			# Modo debug (ver set_debug_mode acima): "o tempo de fazer
 			# qualquer unidade e 1 turno" — completa a producao atual
@@ -426,7 +468,10 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 			# verdade, em vez de duplicar a logica de spawn/construcao aqui.
 			if debug_mode and player == human_player:
 				city.stored_production = max(city.stored_production, city.production_cost())
+			var item_before_turn: String = city.production_item
 			var result = city.process_turn(hex_grid)
+			# Fase 33B: observabilidade pura para o Release Balance Lab (ninguém conecta no jogo normal).
+			EventBus.city_production_processed.emit(player, city, item_before_turn, result)
 			if result.spawn_unit_kind != "":
 				var spawn_mana_cost := UnitDatabase.create_unit(result.spawn_unit_kind).production_mana_cost
 				if not V2LegendarySystem.spawn_allowed(player, result.spawn_unit_kind):
@@ -498,7 +543,7 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 			_ai_batch_timer = 0.0
 			is_turn_processing = true
 	else:
-		for rival in rival_players:
+		for rival in ai_controlled_players():
 			RivalAI.take_turn(rival, hex_grid, human_player)
 		hex_grid.process_monster_lairs(TurnManager.turn_number)
 		MonsterAI.take_turn(hex_grid, TurnManager.turn_number)
@@ -510,7 +555,7 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 ## act_for_unit() aos poucos depois.
 func _build_rival_turn_items() -> Array:
 	var items: Array = []
-	for rival in rival_players:
+	for rival in ai_controlled_players():
 		var visible := RivalAI.begin_turn(rival, hex_grid, human_player)
 		for unit in rival.units.duplicate():
 			if is_instance_valid(unit):
@@ -591,6 +636,10 @@ func _finish_turn() -> void:
 	# Fase 23: valida e avança Rituais só DEPOIS do dano ambiental — uma
 	# Manifestação morta nesta rodada interrompe antes de o countdown chegar a zero.
 	V2TranscendenceSystem.process_global_round(hex_grid)
+	# V3 / Etapa 2: início do próximo turno das vítimas — dano de Veneno/Chamas, fim dos estados de criatura e dano
+	# de quem começa o turno em infecção micótica. Uma vez por rodada global, nunca por frame.
+	UnitStatusEffects.process_round(players, hex_grid, TurnManager.turn_number)
+	MonsterHazardSystem.process_turn_start(players, hex_grid)
 	hex_grid.recompute_fog(human_player)
 	# World Event System (docs/WORLD_EVENT_CONTRACT.md, secao 1) -- ordem
 	# exata do contrato: DEPOIS que o mapa deste turno ja esta final (fog/
@@ -609,7 +658,11 @@ func _finish_turn() -> void:
 	# turn_started/turn_deadline (Blocker #2, 5B.2) vierem a assumir sobre
 	# "em que turno o relogio do evento comeca a contar".
 	WorldEventManager.maybe_spawn_dragon(hex_grid, TurnManager.turn_number)
+	WorldEventManager.maybe_start_reliquary(hex_grid, TurnManager.turn_number) # Fase 33D3 (Dragão tem prioridade)
 	WorldEventManager.advance_turn(hex_grid, players)
+	# Fase 33D1: era do mundo avaliada UMA vez por rodada global, depois dos eventos e antes da vitória.
+	WorldEventManager.advance_world_phase(players, TurnManager.turn_number)
+	PublicVictoryMilestones.evaluate_round(players, TurnManager.turn_number) # Fase 33D3: fatos públicos, uma vez
 	check_victories()
 	EventBus.ui_state_changed.emit("turn_finished")
 
@@ -658,7 +711,9 @@ func check_victories() -> void:
 		if V2VictoryConditions.transcendence_achieved(player):
 			_end_game(player, V2VictoryConditions.VICTORY_TYPE_TRANSCENDENCE)
 			return
-	if human_player and human_player.cities.is_empty() and human_player.units.is_empty():
+	# No laboratório 4-IA o assento humano é só mais uma civilização: sua eliminação conta para a
+	# Dominação dos outros, mas não encerra a partida sozinha.
+	if human_player and not ai_controls_human_seat and human_player.cities.is_empty() and human_player.units.is_empty():
 		_end_game(null, "eliminated")
 
 ## `winner` pode ser QUALQUER jogador (humano ou rival) desde F3 -- antes

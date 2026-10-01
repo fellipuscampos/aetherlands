@@ -55,6 +55,7 @@ func _ready() -> void:
 	_build_live_hud()
 	global_bar.navigation_requested.connect(_on_navigation_requested)
 	global_bar.city_summary_requested.connect(toggle_city_summary)
+	global_bar.location_requested.connect(func(coord: Vector2i): map_location_requested.emit(coord))
 	global_bar.event_center_requested.connect(toggle_event_center)
 	navigation_manager.overlay_visibility_changed.connect(_on_overlay_visibility_changed)
 	resized.connect(_on_resized)

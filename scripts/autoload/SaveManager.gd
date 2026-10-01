@@ -11,12 +11,31 @@ const SAVE_PATH := "user://savegame.json"
 ## Versoes anteriores aceitas por load_game ALEM de SAVE_VERSION (pedido do usuario: "NAO simplesmente
 ## invalide saves antigos"). As migrações específicas delas (pesquisa Tecnologia/Magia V1) perderam o
 ## objeto na Fase 25: o conteúdo V1 é ignorado/sanitizado, o resto do save carrega normalmente.
-const MIGRATABLE_SAVE_VERSIONS: Array[int] = [17, 18, 19, 20]
+const MIGRATABLE_SAVE_VERSIONS: Array[int] = [17, 18, 19, 20, 21, 22, 23, 24, 25]
 ## Fase 25: continua 21 de propósito — o loader é tolerante (campos antigos são ignorados, campos
 ## novos têm default, conteúdo removido passa por _sanitize_legacy_city/_deserialize_player). As
 ## versões 17-20 ainda carregam: tudo o que as migrações antigas convertiam (pesquisa Tecnologia/
 ## Magia V1) deixou de existir e simplesmente é ignorado.
-const SAVE_VERSION := 21
+## Fase 33D1: 22 — o bloco world_events ganha estado real de mundo (era, histórico de eras, eventos
+## concluídos por tipo para ONCE_PER_GAME). Um save 21 carrega: a era é reconstruída pelo estado
+## (WorldEventManager._load_world_state) e nenhum evento concluído é inferido.
+## Fase 33D2: 23 — ameaças regionais e Guardiões Troll (bloco "regional" de world_events), alterações de
+## covil do planner ("lair_state": covis criados/removidos/papéis) e covil de origem de cada monstro
+## ("source_lair"). Um save 22 carrega sem ameaça nem Guardião retroativos (regional desligado).
+## Fase 33D3: 24 — agendadores do Dragão/Relicário, Relicário como evento salvo, marcos públicos já anunciados
+## (world_events), guardião de evento por monstro ("source_event") e último nível observado das cidades
+## inimigas conhecidas (terceiro valor de known_enemy_cities). Um save 23 carrega: agendadores derivam no
+## próximo round (nada nasce no load) e marcos já satisfeitos contam como anunciados (sem anúncio retroativo).
+## V3 / Combat Ecology (Etapa 1): 25 — bloco "combat_ecology" (sítios ecológicos, alvos por tier, memória de
+## esvaziamento, relógio de reposição e estado do RNG da ecologia) e sítio de origem por monstro
+## ("ecology_site"). Um save 24 carrega com a ecologia LIGADA mas VAZIA: nenhuma população retroativa no load;
+## a reposição normal começa na próxima fronteira de rodada (MonsterEcologySystem.load_save_dict).
+## V3 / Etapa 2: 26 — habilidades da Combat Ecology: estado de habilidade por monstro ("ability_state",
+## "arcane_barrier", "regen_interrupted"), sítio com "raised_turn", e no bloco combat_ecology os perigos
+## ("hazards": raízes, infecção, dano de infecção por unidade) e os Vermes subterrâneos ("burrowed"). Estados de
+## criatura nas unidades de civilização (eco_*) e recargas de habilidade viajam nos dicionários magic_status/
+## magic_cooldowns que já existiam. Um save 25 carrega: nenhum perigo, nenhum Verme subterrâneo, nada retroativo.
+const SAVE_VERSION := 26
 
 ## path e parametrizavel so pros testes GUT usarem um arquivo isolado, sem
 ## tocar no save de verdade do jogador — o jogo em si sempre usa SAVE_PATH.
@@ -159,6 +178,7 @@ func save_game(hex_grid: HexGrid, path: String = SAVE_PATH, extra_fields: Dictio
 		"cleared_lair_coords": _serialize_cleared_lairs(hex_grid),
 		"lair_structure_hp": _serialize_lair_structure_hp(hex_grid),
 		"lair_alerts": _serialize_lair_alerts(hex_grid),
+		"lair_state": _serialize_lair_state(hex_grid),
 		# STRING, nao int direto: `RandomNumberGenerator.state` e um inteiro
 		# de 64 bits, mas JSON nao tem tipo inteiro (so "number" = double) —
 		# `JSON.parse_string` devolveria o valor como float, perdendo
@@ -169,6 +189,7 @@ func save_game(hex_grid: HexGrid, path: String = SAVE_PATH, extra_fields: Dictio
 		"human": _serialize_player(GameManager.human_player, false),
 		"rivals": rivals,
 		"world_events": WorldEventManager.to_save_dict(),
+		"combat_ecology": MonsterEcologySystem.to_save_dict(), # V3 (v25)
 		"relations": _serialize_relations(),
 		"terrain_changes": _serialize_coord_values(hex_grid.terrain_changes),
 		"terrain_resources": _serialize_terrain_resources(hex_grid),
@@ -255,6 +276,9 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 	# (guardiao original sobrevivente, reforco, ou o resultado de uma
 	# patrulha — todos indistinguiveis entre si, ver HexGrid.neutral_units).
 	hex_grid.clear_neutral_units()
+	# Fase 33D2: alterações de covil do planner regional/Guardiões por cima do mapa da seed — ANTES dos
+	# monstros (que trazem source_lair) e dos covis destruídos (que podem incluir covis criados em runtime).
+	_deserialize_lair_state(data.get("lair_state", {}), hex_grid)
 	_deserialize_neutral_units(data.get("neutral_units", []), hex_grid)
 	# Mesma logica por cima dos covis que ja tinham sido DESTRUIDOS antes do
 	# save (ver HexGrid.destroy_lair) — generate_map() os respawnou do zero
@@ -327,6 +351,9 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 	# avanca streak nenhum). .get(..., {}) tolera um save sem esta chave
 	# (ex.: um dict de save montado a mao por teste) sem travar o load.
 	WorldEventManager.from_save_dict(data.get("world_events", {}))
+	# V3 / Combat Ecology (v25): só restaura o registro — nunca popula nem repõe dentro do load. Ausente (≤ v24):
+	# runtime vazio; a reposição começa no próximo round. Depois de setup_players (que reseta o estado).
+	MonsterEcologySystem.load_save_dict(data.get("combat_ecology"), hex_grid)
 	# Roadmap "Fase Macro" 5B.3-A -- a Unit fisica de um DragonEvent em
 	# Active nunca e' serializada diretamente (e' so mais um monstro
 	# neutro pro save generico, ja restaurado acima em _deserialize_
@@ -336,6 +363,8 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 	for event in WorldEventManager.active_events:
 		if event is DragonEvent:
 			(event as DragonEvent).relink_unit(hex_grid)
+		elif event is ReliquaryEvent:
+			(event as ReliquaryEvent).relink(hex_grid) # Fase 33D3: só o marcador visual; nenhum avanço no load
 	GameManager.check_victories()
 	return true
 
@@ -461,8 +490,40 @@ func _valid_save_header(data: Dictionary) -> bool:
 	for unit in data.get("neutral_units", []):
 		if not _valid_entity(unit, ["kind"], ["hp"]) or occupied.has(str(unit.coord)):
 			return false
+		if unit.has("source_lair") and not _valid_coord(unit.source_lair):
+			return false
+		if unit.has("ecology_site") and not _is_number(unit.ecology_site):
+			return false
 		occupied[str(unit.coord)] = true
+	if data.has("combat_ecology") and not _valid_combat_ecology(data.combat_ecology):
+		return false
+	if not _valid_lair_state(data.get("lair_state", {})):
+		return false
 	return _valid_world_state(data)
+
+## V3 (v25): bloco opcional (ausente em saves ≤ v24).
+func _valid_combat_ecology(value: Variant) -> bool:
+	if typeof(value) != TYPE_DICTIONARY or typeof(value.get("sites", [])) != TYPE_ARRAY:
+		return false
+	for site in value.get("sites", []):
+		if typeof(site) != TYPE_DICTIONARY or typeof(site.get("species")) != TYPE_STRING or not _is_number(site.get("id")):
+			return false
+		if not _valid_coord(site.get("anchor")) or not _valid_coord(site.get("lair")):
+			return false
+	return _valid_coord_list(value.get("depleted", []))
+
+## Fase 33D2 (v23): bloco opcional (ausente em saves antigos).
+func _valid_lair_state(value: Variant) -> bool:
+	if typeof(value) != TYPE_DICTIONARY:
+		return false
+	for key in ["added", "removed", "roles"]:
+		if not _valid_coord_list(value.get(key, [])):
+			return false
+	for key in ["added", "roles"]:
+		for entry in value.get(key, []):
+			if entry.size() != 3 or typeof(entry[2]) != TYPE_STRING:
+				return false
+	return true
 
 func _numeric_dict(value: Variant) -> bool:
 	if typeof(value) != TYPE_DICTIONARY:
@@ -572,6 +633,25 @@ func _valid_world_events(value: Variant) -> bool:
 		for participant in event.get("participants", {}).values():
 			if typeof(participant) != TYPE_DICTIONARY or typeof(participant.get("decision", false)) != TYPE_BOOL:
 				return false
+	# Fase 33D1 (v22): estado de mundo opcional — ausente em saves antigos (reconstruído no load).
+	if value.has("world_phase") and not WorldPhaseRules.is_valid_phase(value.world_phase):
+		return false
+	if typeof(value.get("phase_history", [])) != TYPE_ARRAY or not _numeric_dict(value.get("completed_event_types", {})):
+		return false
+	# Fase 33D3 (v24): blocos opcionais de agendamento/marcos.
+	for key in ["dragon_schedule", "reliquary_schedule", "public_milestones"]:
+		if value.has(key) and typeof(value[key]) != TYPE_DICTIONARY:
+			return false
+	# Fase 33D2 (v23): ameaças regionais/Guardiões opcionais — ausentes = desligado, nada retroativo.
+	var regional: Variant = value.get("regional", {})
+	if typeof(regional) != TYPE_DICTIONARY:
+		return false
+	for key in ["threats", "guardians"]:
+		if typeof(regional.get(key, [])) != TYPE_ARRAY:
+			return false
+		for entry in regional.get(key, []):
+			if typeof(entry) != TYPE_DICTIONARY or not _valid_coord(entry.get("coord")) or typeof(entry.get("state", "")) != TYPE_STRING:
+				return false
 	return true
 
 func _is_number(value: Variant) -> bool:
@@ -649,8 +729,44 @@ func _serialize_neutral_units(hex_grid: HexGrid) -> Array:
 			"is_camp_boss": unit.is_camp_boss,
 			"behavior_state": unit.monster_behavior_state,
 			"movement_left": unit.movement_left,
+			"source_lair": [unit.source_lair_coord.x, unit.source_lair_coord.y],
+			"source_event": unit.source_event_id,
+			"ecology_site": unit.ecology_site_id, # V3 (v25)
+			"ecology_rest": unit.ecology_rest_until,
+			# V3 / Etapa 2 (v26): estado de habilidade da própria criatura.
+			"ability_state": unit.ability_state,
+			"arcane_barrier": unit.arcane_barrier,
+			"regen_interrupted": unit.took_damage_since_regen,
 		})
 	return out
+
+## Fase 33D2 — o que o planner regional/Guardiões mudou nos covis da seed. generate_map() no load recria só
+## os covis da seed; isto reaplica remoções/realocações, covis criados em runtime e papéis.
+func _serialize_lair_state(hex_grid: HexGrid) -> Dictionary:
+	var added := []
+	for coord in hex_grid.added_lairs:
+		added.append([coord.x, coord.y, String(hex_grid.added_lairs[coord])])
+	var removed := []
+	for coord in hex_grid.removed_seed_lairs:
+		removed.append([coord.x, coord.y])
+	var roles := []
+	for coord in hex_grid.lair_roles:
+		roles.append([coord.x, coord.y, String(hex_grid.lair_roles[coord])])
+	return {"added": added, "removed": removed, "roles": roles}
+
+func _deserialize_lair_state(value: Variant, hex_grid: HexGrid) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		return
+	var removed: Array = []
+	for entry in value.get("removed", []):
+		removed.append(Vector2i(int(entry[0]), int(entry[1])))
+	var added: Array = []
+	for entry in value.get("added", []):
+		added.append({"coord": Vector2i(int(entry[0]), int(entry[1])), "kind": String(entry[2])})
+	var roles: Array = []
+	for entry in value.get("roles", []):
+		roles.append({"coord": Vector2i(int(entry[0]), int(entry[1])), "role": String(entry[2])})
+	hex_grid.apply_saved_lair_state(removed, added, roles)
 
 ## Coords de covil ja DESTRUIDOS nesta partida (ver HexGrid.destroy_lair) —
 ## ao contrario dos monstros vivos acima, generate_map() no load sempre
@@ -704,6 +820,19 @@ func _deserialize_neutral_units(saved: Array, hex_grid: HexGrid) -> void:
 		unit.veterancy_level = int(u.get("veterancy_level", 0))
 		unit.monster_behavior_state = u.get("behavior_state", "")
 		unit.movement_left = float(u.get("movement_left", unit.unit_data.movement_points))
+		if _valid_coord(u.get("source_lair")):
+			unit.source_lair_coord = Vector2i(int(u.source_lair[0]), int(u.source_lair[1]))
+		if _is_number(u.get("source_event")):
+			unit.source_event_id = int(u.source_event)
+		if _is_number(u.get("ecology_site")):
+			unit.ecology_site_id = int(u.ecology_site)
+		if _is_number(u.get("ecology_rest")):
+			unit.ecology_rest_until = int(u.ecology_rest)
+		if typeof(u.get("ability_state")) == TYPE_DICTIONARY:
+			unit.ability_state = (u.ability_state as Dictionary).duplicate(true)
+		if _is_number(u.get("arcane_barrier")):
+			unit.arcane_barrier = float(u.arcane_barrier)
+		unit.took_damage_since_regen = bool(u.get("regen_interrupted", false))
 
 func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 	var units := []
@@ -789,7 +918,8 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 		cities.append(city_dict)
 	var known_cities := []
 	for coord in player.known_enemy_cities.keys():
-		known_cities.append([coord.x, coord.y])
+		# Fase 33D3: terceiro valor = último City Level observado (-1 = nunca visto com nível).
+		known_cities.append([coord.x, coord.y, int(player.known_enemy_city_levels.get(coord, -1))])
 
 	var result := {
 		"gold": player.gold, "units": units, "cities": cities, "known_enemy_cities": known_cities,
@@ -929,7 +1059,10 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 		city._refresh_label()
 		city._update_life_bars()
 	for coord_arr in saved.get("known_enemy_cities", []):
-		player.known_enemy_cities[Vector2i(int(coord_arr[0]), int(coord_arr[1]))] = true
+		var known_coord := Vector2i(int(coord_arr[0]), int(coord_arr[1]))
+		player.known_enemy_cities[known_coord] = true
+		if coord_arr.size() >= 3 and _is_number(coord_arr[2]) and int(coord_arr[2]) >= 0:
+			player.known_enemy_city_levels[known_coord] = int(coord_arr[2])
 	# Fase 25: os campos da pesquisa Tecnologia/Magia V1 de um save antigo (researched_techs,
 	# researched_magic, current_research, research_progress...) são IGNORADOS — nunca convertidos em
 	# pesquisa V2 (não existe mapeamento canônico; seria progresso de graça).
@@ -1016,6 +1149,8 @@ static func _sanitize_magic_dict(value) -> Dictionary:
 		return result
 	for key in value:
 		var id := String(key)
-		if V2DoctrineTechniqueDatabase.get_technique(id) != null or V2SpellDatabase.is_spell(id):
+		# V3 / Etapa 2: estados de criatura (UnitStatusEffects, eco_*) e recargas de habilidade de monstro
+		# (MonsterAbilityData) usam os MESMOS dicionários.
+		if V2DoctrineTechniqueDatabase.get_technique(id) != null or V2SpellDatabase.is_spell(id) or UnitStatusEffects.is_status_id(id) or MonsterAbilityData.ABILITIES.has(id):
 			result[id] = value[key]
 	return result

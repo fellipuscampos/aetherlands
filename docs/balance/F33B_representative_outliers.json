@@ -1,0 +1,8735 @@
+{
+ "note": "Casos representativos da F33B (baseline cap 240). Trace a cada 10 turnos, candidatas e timeout report completos; para a extensão até T300 veja extension_result.",
+ "cases": [
+  {
+   "civs": [
+    {
+     "cities": 0.0,
+     "focus": "MILITARY_SUPREMACY",
+     "gates": {},
+     "index": 0.0,
+     "interruptions": 0.0,
+     "n9_second": -1,
+     "orientation": "MILITARY",
+     "pursuit": {
+      "turns_after_access": 0.0,
+      "turns_at_war_with_pending_rival": 0.0
+     },
+     "race": "elf",
+     "relevant_units": 0.0,
+     "ritual_ready": -1,
+     "rituals": 0.0,
+     "status": "eliminated",
+     "supremacy_ready": -1,
+     "transcendence_ready": -1
+    },
+    {
+     "cities": 2.0,
+     "focus": "TRANSCENDENCE",
+     "gates": {
+      "in_production": 24.0,
+      "ritual_ready_not_started": 1.0,
+      "ritual_structure_buildable_cities_busy": 14.0,
+      "ritual_structure_buildable_idle_city_not_chosen": 10.0,
+      "ritual_structure_in_production": 13.0,
+      "trainable_idle_city_not_chosen": 2.0
+     },
+     "index": 1.0,
+     "interruptions": 0.0,
+     "n9_second": 124.0,
+     "orientation": "BALANCED",
+     "pursuit": {
+      "turns_after_access": 0.0,
+      "turns_at_war_with_pending_rival": 0.0
+     },
+     "race": "dwarf",
+     "relevant_units": 10.0,
+     "ritual_ready": 220.0,
+     "rituals": 1.0,
+     "status": "winner",
+     "supremacy_ready": -1,
+     "transcendence_ready": 157.0
+    },
+    {
+     "cities": 6.0,
+     "focus": "TRANSCENDENCE",
+     "gates": {
+      "ritual_structure_buildable_cities_busy": 25.0,
+      "ritual_structure_buildable_idle_city_not_chosen": 15.0
+     },
+     "index": 2.0,
+     "interruptions": 0.0,
+     "n9_second": 172.0,
+     "orientation": "ARCANE",
+     "pursuit": {
+      "turns_after_access": 0.0,
+      "turns_at_war_with_pending_rival": 0.0
+     },
+     "race": "orc",
+     "relevant_units": 8.0,
+     "ritual_ready": -1,
+     "rituals": 0.0,
+     "status": "alive",
+     "supremacy_ready": -1,
+     "transcendence_ready": 186.0
+    },
+    {
+     "cities": 8.0,
+     "focus": "MILITARY_SUPREMACY",
+     "gates": {},
+     "index": 3.0,
+     "interruptions": 0.0,
+     "n9_second": 154.0,
+     "orientation": "MILITARY",
+     "pursuit": {
+      "turns_after_access": 61.0,
+      "turns_at_war_with_pending_rival": 18.0
+     },
+     "race": "human",
+     "relevant_units": 20.0,
+     "ritual_ready": -1,
+     "rituals": 0.0,
+     "status": "alive",
+     "supremacy_ready": 165.0,
+     "transcendence_ready": -1
+    }
+   ],
+   "contenders": [
+    {
+     "access_turn": 157,
+     "category": "PRODUCTION_LATE",
+     "civ": "1:dwarf/BALANCED",
+     "economic_collapse": false,
+     "evidence": {
+      "MANA_LATE": 0,
+      "NO_VICTORY_PURSUIT": 13,
+      "PRODUCTION_LATE:content": 0,
+      "PRODUCTION_LATE:queue": 51
+     },
+     "focus": "TRANSCENDENCE",
+     "index": 1.0,
+     "path": "TRANSCENDENCE",
+     "post_access_turns": 68,
+     "subcategory": "PRODUCTION_LATE:queue"
+    },
+    {
+     "access_turn": 165,
+     "category": "NO_VICTORY_PURSUIT",
+     "civ": "3:human/MILITARY",
+     "economic_collapse": false,
+     "evidence": {
+      "developed_city_attacks": 7.0,
+      "pending_rivals": [
+       2
+      ],
+      "qualifying_captures": 1.0,
+      "turns_after_access": 61,
+      "turns_at_war_with_pending_rival": 18
+     },
+     "focus": "MILITARY_SUPREMACY",
+     "index": 3.0,
+     "path": "MILITARY_SUPREMACY",
+     "post_access_turns": 60
+    },
+    {
+     "access_turn": 186,
+     "category": "PRODUCTION_LATE",
+     "civ": "2:orc/ARCANE",
+     "economic_collapse": false,
+     "evidence": {
+      "MANA_LATE": 0,
+      "NO_VICTORY_PURSUIT": 15,
+      "PRODUCTION_LATE:content": 0,
+      "PRODUCTION_LATE:queue": 25
+     },
+     "focus": "TRANSCENDENCE",
+     "index": 2.0,
+     "path": "TRANSCENDENCE",
+     "post_access_turns": 39,
+     "subcategory": "PRODUCTION_LATE:queue"
+    }
+   ],
+   "end_reason": "TRANSCENDENCE",
+   "match_id": "F33B-006",
+   "multiple_causes": true,
+   "primary_category": "PRODUCTION_LATE",
+   "secondary_categories": [
+    "NO_VICTORY_PURSUIT"
+   ],
+   "seed": 33137.0,
+   "timeout_report": [],
+   "trace_every_10": [
+    {
+     "index": 0.0,
+     "points": [
+      {
+       "cities": 1.0,
+       "gold": 18.0,
+       "mana": 9.9,
+       "research": "v2_infrastructure_industry_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 10.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 38.0,
+       "mana": 20.9,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 20.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 1.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 48.0,
+       "mana": 31.9,
+       "research": "v2_doctrine_cavalry_4",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 30.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 62.0,
+       "mana": 42.9,
+       "research": "v2_infrastructure_urbanization_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/4.0",
+       "t": 40.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 0.0,
+       "gold": 45.0,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/0.0",
+       "t": 50.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 0.0,
+       "gold": 37.0,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "1/0.0",
+       "t": 60.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 70.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 80.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 90.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 100.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 110.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 120.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 130.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 140.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 150.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 160.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 170.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 180.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 190.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 200.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 210.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 36.5,
+       "mana": 50.6,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/0.0",
+       "t": 220.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      }
+     ]
+    },
+    {
+     "index": 1.0,
+     "points": [
+      {
+       "cities": 1.0,
+       "gold": 19.8,
+       "mana": 9.0,
+       "research": "v2_infrastructure_industry_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 10.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 41.8,
+       "mana": 19.0,
+       "research": "v2_infrastructure_academy_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 20.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 51.8,
+       "mana": 29.0,
+       "research": "v2_infrastructure_academy_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 30.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 81.1,
+       "mana": 43.0,
+       "research": "v2_infrastructure_academy_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/8.0",
+       "t": 40.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 89.7,
+       "mana": 66.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/12.0",
+       "t": 50.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 1.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 94.7,
+       "mana": 96.0,
+       "research": "v2_doctrine_guardian_6",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/12.0",
+       "t": 60.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 5.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 63.7,
+       "mana": 126.0,
+       "research": "v2_doctrine_guardian_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "12/12.0",
+       "t": 70.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 7.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 15.7,
+       "mana": 156.0,
+       "research": "v2_doctrine_guardian_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "12/12.0",
+       "t": 80.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 0.0,
+       "mana": 186.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "10/12.0",
+       "t": 90.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 95.7,
+       "mana": 216.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "7/12.0",
+       "t": 100.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 3.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 297.7,
+       "mana": 246.0,
+       "research": "v2_magic_arcanism_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "8/12.0",
+       "t": 110.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 7.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 457.5,
+       "mana": 280.0,
+       "research": "v2_magic_arcanism_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "12/24.0",
+       "t": 120.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 8.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 595.0,
+       "mana": 320.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "15/24.0",
+       "t": 130.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 775.5,
+       "mana": 372.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "18/24.0",
+       "t": 140.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 888.7,
+       "mana": 432.0,
+       "research": "v2_transcendence",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "18/24.0",
+       "t": 150.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 913.1,
+       "mana": 490.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "18/20.0",
+       "t": 160.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 2.0,
+       "gold": 805.7,
+       "mana": 532.0,
+       "research": "v2_doctrine_cavalry_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "20/32.0",
+       "t": 170.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 7.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 2.0,
+       "gold": 769.7,
+       "mana": 572.0,
+       "research": "v2_doctrine_cavalry_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "21/32.0",
+       "t": 180.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 7.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 2.0,
+       "gold": 775.7,
+       "mana": 612.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "21/32.0",
+       "t": 190.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 7.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 606.2,
+       "mana": 522.0,
+       "research": "v2_doctrine_rogue_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "21/32.0",
+       "t": 200.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 8.0,
+       "wars": [
+        2.0
+       ]
+      },
+      {
+       "cities": 2.0,
+       "gold": 536.3,
+       "mana": 515.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "24/32.0",
+       "t": 210.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 9.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 545.1,
+       "mana": 431.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "24/32.0",
+       "t": 220.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 2.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 10.0,
+       "wars": [
+        2.0
+       ]
+      }
+     ]
+    },
+    {
+     "index": 2.0,
+     "points": [
+      {
+       "cities": 1.0,
+       "gold": 18.0,
+       "mana": 9.0,
+       "research": "v2_infrastructure_academy_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.4",
+       "t": 10.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 38.0,
+       "mana": 19.0,
+       "research": "v2_magic_druidism_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.4",
+       "t": 20.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 48.0,
+       "mana": 45.0,
+       "research": "v2_magic_druidism_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.4",
+       "t": 30.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 2.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 43.0,
+       "mana": 75.0,
+       "research": "v2_infrastructure_urbanization_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/4.4",
+       "t": 40.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 3.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 35.0,
+       "mana": 106.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "4/8.8",
+       "t": 50.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 3.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 45.0,
+       "mana": 146.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "6/8.8",
+       "t": 60.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 3.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 43.0,
+       "mana": 156.0,
+       "research": "v2_magic_druidism_5",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "6/8.8",
+       "t": 70.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 4.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 40.0,
+       "mana": 199.0,
+       "research": "v2_magic_druidism_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "10/13.2",
+       "t": 80.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 6.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 40.0,
+       "mana": 245.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "10/13.2",
+       "t": 90.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 7.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 40.0,
+       "mana": 247.0,
+       "research": "v2_magic_druidism_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "10/13.2",
+       "t": 100.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 7.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 56.0,
+       "mana": 325.0,
+       "research": "v2_magic_druidism_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "10/17.6",
+       "t": 110.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 8.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 72.0,
+       "mana": 405.0,
+       "research": "v2_magic_druidism_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "10/17.6",
+       "t": 120.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 8.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 48.0,
+       "mana": 485.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "10/17.6",
+       "t": 130.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 5.0,
+       "gold": 0.0,
+       "mana": 556.0,
+       "research": "v2_magic_elementalism_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "10/22.0",
+       "t": 140.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 20.0,
+       "mana": 625.0,
+       "research": "v2_infrastructure_economy_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "10/22.0",
+       "t": 150.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 6.0,
+       "gold": 170.0,
+       "mana": 651.0,
+       "research": "v2_magic_elementalism_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "10/26.4",
+       "t": 160.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 6.0,
+       "gold": 331.0,
+       "mana": 751.0,
+       "research": "v2_magic_elementalism_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "12/26.4",
+       "t": 170.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 6.0,
+       "gold": 335.0,
+       "mana": 851.0,
+       "research": "v2_transcendence",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "14/26.4",
+       "t": 180.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 7.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 6.0,
+       "gold": 415.0,
+       "mana": 833.0,
+       "research": "v2_infrastructure_academy_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "14/26.4",
+       "t": 190.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 8.0,
+       "wars": []
+      },
+      {
+       "cities": 6.0,
+       "gold": 432.0,
+       "mana": 915.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "14/26.4",
+       "t": 200.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 8.0,
+       "wars": [
+        1.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 6.0,
+       "gold": 272.5,
+       "mana": 964.0,
+       "research": "v2_doctrine_warrior_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "19/26.4",
+       "t": 210.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 9.0,
+       "wars": []
+      },
+      {
+       "cities": 6.0,
+       "gold": 159.5,
+       "mana": 826.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "24/26.4",
+       "t": 220.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 8.0,
+       "wars": [
+        1.0
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3.0,
+     "points": [
+      {
+       "cities": 1.0,
+       "gold": 18.0,
+       "mana": 9.0,
+       "research": "v2_infrastructure_industry_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 10.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 38.0,
+       "mana": 19.0,
+       "research": "v2_doctrine_ranger_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 20.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 48.0,
+       "mana": 29.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 30.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 40.0,
+       "mana": 39.0,
+       "research": "v2_infrastructure_urbanization_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/4.0",
+       "t": 40.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 30.0,
+       "mana": 63.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/4.0",
+       "t": 50.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 38.0,
+       "mana": 112.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "4/8.0",
+       "t": 60.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 52.0,
+       "mana": 175.0,
+       "research": "v2_doctrine_ranger_5",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "5/12.0",
+       "t": 70.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 66.0,
+       "mana": 245.0,
+       "research": "v2_doctrine_ranger_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "5/12.0",
+       "t": 80.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 6.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 61.0,
+       "mana": 333.0,
+       "research": "v2_doctrine_ranger_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "5/12.0",
+       "t": 90.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 7.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 57.0,
+       "mana": 426.0,
+       "research": "v2_doctrine_ranger_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "5/16.0",
+       "t": 100.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 110.0,
+       "mana": 526.0,
+       "research": "v2_doctrine_ranger_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "5/16.0",
+       "t": 110.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 102.0,
+       "mana": 626.0,
+       "research": "v2_doctrine_warrior_6",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "10/16.0",
+       "t": 120.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 13.5,
+       "mana": 726.0,
+       "research": "v2_infrastructure_logistics_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "14/16.0",
+       "t": 130.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 8.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 6.0,
+       "mana": 838.0,
+       "research": "v2_doctrine_warrior_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "20/20.0",
+       "t": 140.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 9.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 8.0,
+       "mana": 968.0,
+       "research": "v2_doctrine_warrior_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "19/20.0",
+       "t": 150.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 10.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 7.0,
+       "gold": 32.0,
+       "mana": 1100.0,
+       "research": "v2_supreme_army",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 1.0
+       },
+       "supply": "33/44.0",
+       "t": 160.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 11.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 8.0,
+       "gold": 68.5,
+       "mana": 1274.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 2.0
+       },
+       "supply": "39/48.0",
+       "t": 170.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 1.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 13.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 8.0,
+       "gold": 441.0,
+       "mana": 1614.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 2.0
+       },
+       "supply": "39/104.0",
+       "t": 180.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 15.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 8.0,
+       "gold": 375.0,
+       "mana": 1794.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 2.0
+       },
+       "supply": "38/104.0",
+       "t": 190.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 14.0,
+       "wars": []
+      },
+      {
+       "cities": 8.0,
+       "gold": 293.0,
+       "mana": 1974.0,
+       "research": "v2_doctrine_cavalry_9",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 2.0
+       },
+       "supply": "49/104.0",
+       "t": 200.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 17.0,
+       "wars": [
+        2.0
+       ]
+      },
+      {
+       "cities": 8.0,
+       "gold": 680.0,
+       "mana": 2314.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 2.0
+       },
+       "supply": "57/104.0",
+       "t": 210.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 18.0,
+       "wars": []
+      },
+      {
+       "cities": 8.0,
+       "gold": 534.0,
+       "mana": 2506.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 2.0
+       },
+       "supply": "57/104.0",
+       "t": 220.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 19.0,
+       "wars": []
+      }
+     ]
+    }
+   ],
+   "turn": 225,
+   "winner_timeline": {
+    "category": "PRODUCTION_LATE",
+    "evidence": {
+     "MANA_LATE": 0,
+     "NO_VICTORY_PURSUIT": 13,
+     "PRODUCTION_LATE:content": 0,
+     "PRODUCTION_LATE:queue": 51
+    },
+    "path": "TRANSCENDENCE",
+    "research_ready": 157,
+    "research_to_ritual_ready": 63,
+    "ritual_ready": 220,
+    "ritual_ready_to_victory": 5,
+    "subcategory": "PRODUCTION_LATE:queue",
+    "victory_turn": 225
+   },
+   "why_representative": "PRODUCTION_LATE — vitória tardia (T225): 63 turnos entre research-ready e Ritual pronto"
+  },
+  {
+   "civs": [
+    {
+     "cities": 7.0,
+     "focus": "MILITARY_SUPREMACY",
+     "gates": {},
+     "index": 0.0,
+     "interruptions": 0.0,
+     "n9_second": 126.0,
+     "orientation": "BALANCED",
+     "pursuit": {
+      "turns_after_access": 105.0,
+      "turns_at_war_with_pending_rival": 74.0
+     },
+     "race": "dwarf",
+     "relevant_units": 19.0,
+     "ritual_ready": -1,
+     "rituals": 0.0,
+     "status": "alive",
+     "supremacy_ready": 136.0,
+     "transcendence_ready": -1
+    },
+    {
+     "cities": 6.0,
+     "focus": "MILITARY_SUPREMACY",
+     "gates": {},
+     "index": 1.0,
+     "interruptions": 0.0,
+     "n9_second": 166.0,
+     "orientation": "MILITARY",
+     "pursuit": {
+      "turns_after_access": 58.0,
+      "turns_at_war_with_pending_rival": 0.0
+     },
+     "race": "orc",
+     "relevant_units": 13.0,
+     "ritual_ready": -1,
+     "rituals": 0.0,
+     "status": "alive",
+     "supremacy_ready": 183.0,
+     "transcendence_ready": -1
+    },
+    {
+     "cities": 6.0,
+     "focus": "TRANSCENDENCE",
+     "gates": {
+      "ritual_structure_buildable_cities_busy": 23.0,
+      "ritual_structure_buildable_idle_city_not_chosen": 19.0
+     },
+     "index": 2.0,
+     "interruptions": 0.0,
+     "n9_second": 174.0,
+     "orientation": "ARCANE",
+     "pursuit": {
+      "turns_after_access": 0.0,
+      "turns_at_war_with_pending_rival": 0.0
+     },
+     "race": "human",
+     "relevant_units": 11.0,
+     "ritual_ready": -1,
+     "rituals": 0.0,
+     "status": "alive",
+     "supremacy_ready": -1,
+     "transcendence_ready": 199.0
+    },
+    {
+     "cities": 7.0,
+     "focus": "MILITARY_SUPREMACY",
+     "gates": {},
+     "index": 3.0,
+     "interruptions": 0.0,
+     "n9_second": 148.0,
+     "orientation": "MILITARY",
+     "pursuit": {
+      "turns_after_access": 78.0,
+      "turns_at_war_with_pending_rival": 42.0
+     },
+     "race": "elf",
+     "relevant_units": 20.0,
+     "ritual_ready": -1,
+     "rituals": 0.0,
+     "status": "alive",
+     "supremacy_ready": 163.0,
+     "transcendence_ready": -1
+    }
+   ],
+   "contenders": [
+    {
+     "access_turn": 136,
+     "category": "MAP_ACCESS",
+     "civ": "0:dwarf/BALANCED",
+     "economic_collapse": false,
+     "evidence": {
+      "developed_city_attacks": 0.0,
+      "pending_rivals": [
+       1,
+       2,
+       3
+      ],
+      "qualifying_captures": 0.0,
+      "turns_after_access": 105,
+      "turns_at_war_with_pending_rival": 74
+     },
+     "focus": "MILITARY_SUPREMACY",
+     "index": 0.0,
+     "path": "MILITARY_SUPREMACY",
+     "post_access_turns": 104
+    },
+    {
+     "access_turn": 163,
+     "category": "MAP_ACCESS",
+     "civ": "3:elf/MILITARY",
+     "economic_collapse": false,
+     "evidence": {
+      "developed_city_attacks": 4.0,
+      "pending_rivals": [
+       0,
+       1,
+       2
+      ],
+      "qualifying_captures": 0.0,
+      "turns_after_access": 78,
+      "turns_at_war_with_pending_rival": 42
+     },
+     "focus": "MILITARY_SUPREMACY",
+     "index": 3.0,
+     "path": "MILITARY_SUPREMACY",
+     "post_access_turns": 77
+    },
+    {
+     "access_turn": 183,
+     "category": "NO_VICTORY_PURSUIT",
+     "civ": "1:orc/MILITARY",
+     "economic_collapse": false,
+     "evidence": {
+      "developed_city_attacks": 0.0,
+      "pending_rivals": [
+       0,
+       2,
+       3
+      ],
+      "qualifying_captures": 0.0,
+      "turns_after_access": 58,
+      "turns_at_war_with_pending_rival": 0
+     },
+     "focus": "MILITARY_SUPREMACY",
+     "index": 1.0,
+     "path": "MILITARY_SUPREMACY",
+     "post_access_turns": 57
+    },
+    {
+     "access_turn": 199,
+     "category": "PRODUCTION_LATE",
+     "civ": "2:human/ARCANE",
+     "economic_collapse": false,
+     "evidence": {
+      "MANA_LATE": 0,
+      "NO_VICTORY_PURSUIT": 19,
+      "PRODUCTION_LATE:content": 0,
+      "PRODUCTION_LATE:queue": 23
+     },
+     "focus": "TRANSCENDENCE",
+     "index": 2.0,
+     "path": "TRANSCENDENCE",
+     "post_access_turns": 41,
+     "subcategory": "PRODUCTION_LATE:queue"
+    }
+   ],
+   "end_reason": "TIMEOUT",
+   "match_id": "F33B-019",
+   "multiple_causes": true,
+   "primary_category": "MAP_ACCESS",
+   "secondary_categories": [
+    "NO_VICTORY_PURSUIT",
+    "PRODUCTION_LATE"
+   ],
+   "seed": 33227.0,
+   "timeout_report": [
+    {
+     "active_wars": [
+      2.0
+     ],
+     "alive": true,
+     "capstones": {
+      "supreme_army": true,
+      "transcendence": false
+     },
+     "closest_path": "TRANSCENDENCE",
+     "focus": "MILITARY_SUPREMACY",
+     "index": 0.0,
+     "orientation": "BALANCED",
+     "paths": {
+      "DOMINATION": {
+       "gates_passed": 0.0,
+       "gates_total": 3.0,
+       "missing": [
+        {
+         "have": 0.0,
+         "need": 3.0,
+         "requirement": "rivals_eliminated"
+        }
+       ]
+      },
+      "MILITARY_SUPREMACY": {
+       "gates_passed": 3.0,
+       "gates_total": 6.0,
+       "missing": [
+        {
+         "missing_turns": 104.0,
+         "requirement": "rival_1_satisfied",
+         "since": "access"
+        },
+        {
+         "missing_turns": 104.0,
+         "requirement": "rival_2_satisfied",
+         "since": "access"
+        },
+        {
+         "missing_turns": 104.0,
+         "requirement": "rival_3_satisfied",
+         "since": "access"
+        }
+       ],
+       "satisfied_rivals": 0.0
+      },
+      "TRANSCENDENCE": {
+       "gates_passed": 5.0,
+       "gates_total": 8.0,
+       "has_ritual_structure": true,
+       "mana": 1980.0,
+       "manifestations": 1.0,
+       "missing": [
+        {
+         "missing_turns": 5.0,
+         "requirement": "transcendence_research"
+        },
+        {
+         "have": 1.0,
+         "missing_turns": 239.0,
+         "requirement": "two_active_manifestations"
+        }
+       ]
+      }
+     },
+     "race": "dwarf",
+     "ritual_history": []
+    },
+    {
+     "active_wars": [],
+     "alive": true,
+     "capstones": {
+      "supreme_army": true,
+      "transcendence": false
+     },
+     "closest_path": "MILITARY_SUPREMACY",
+     "focus": "MILITARY_SUPREMACY",
+     "index": 1.0,
+     "orientation": "MILITARY",
+     "paths": {
+      "DOMINATION": {
+       "gates_passed": 0.0,
+       "gates_total": 3.0,
+       "missing": [
+        {
+         "have": 0.0,
+         "need": 3.0,
+         "requirement": "rivals_eliminated"
+        }
+       ]
+      },
+      "MILITARY_SUPREMACY": {
+       "gates_passed": 3.0,
+       "gates_total": 6.0,
+       "missing": [
+        {
+         "missing_turns": 57.0,
+         "requirement": "rival_0_satisfied",
+         "since": "access"
+        },
+        {
+         "missing_turns": 57.0,
+         "requirement": "rival_2_satisfied",
+         "since": "access"
+        },
+        {
+         "missing_turns": 57.0,
+         "requirement": "rival_3_satisfied",
+         "since": "access"
+        }
+       ],
+       "satisfied_rivals": 0.0
+      },
+      "TRANSCENDENCE": {
+       "gates_passed": 2.0,
+       "gates_total": 8.0,
+       "has_ritual_structure": false,
+       "mana": 959.0,
+       "manifestations": 0.0,
+       "missing": [
+        {
+         "have": 1.0,
+         "missing_turns": 239.0,
+         "requirement": "two_school_n9"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "transcendence_research"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "ritual_structure_city"
+        },
+        {
+         "have": 0.0,
+         "missing_turns": 239.0,
+         "requirement": "two_active_manifestations"
+        }
+       ]
+      }
+     },
+     "race": "orc",
+     "ritual_history": []
+    },
+    {
+     "active_wars": [
+      0.0
+     ],
+     "alive": true,
+     "capstones": {
+      "supreme_army": false,
+      "transcendence": true
+     },
+     "closest_path": "TRANSCENDENCE",
+     "focus": "TRANSCENDENCE",
+     "index": 2.0,
+     "orientation": "ARCANE",
+     "paths": {
+      "DOMINATION": {
+       "gates_passed": 0.0,
+       "gates_total": 3.0,
+       "missing": [
+        {
+         "have": 0.0,
+         "need": 3.0,
+         "requirement": "rivals_eliminated"
+        }
+       ]
+      },
+      "MILITARY_SUPREMACY": {
+       "gates_passed": 1.0,
+       "gates_total": 6.0,
+       "missing": [
+        {
+         "have": 1.0,
+         "missing_turns": 239.0,
+         "requirement": "two_doctrine_n9"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "supreme_army"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "rival_0_satisfied",
+         "since": "match_start"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "rival_1_satisfied",
+         "since": "match_start"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "rival_3_satisfied",
+         "since": "match_start"
+        }
+       ],
+       "satisfied_rivals": 0.0
+      },
+      "TRANSCENDENCE": {
+       "gates_passed": 6.0,
+       "gates_total": 8.0,
+       "has_ritual_structure": true,
+       "mana": 691.0,
+       "manifestations": 1.0,
+       "missing": [
+        {
+         "have": 1.0,
+         "missing_turns": 41.0,
+         "requirement": "two_active_manifestations"
+        }
+       ]
+      }
+     },
+     "race": "human",
+     "ritual_history": []
+    },
+    {
+     "active_wars": [],
+     "alive": true,
+     "capstones": {
+      "supreme_army": true,
+      "transcendence": false
+     },
+     "closest_path": "MILITARY_SUPREMACY",
+     "focus": "MILITARY_SUPREMACY",
+     "index": 3.0,
+     "orientation": "MILITARY",
+     "paths": {
+      "DOMINATION": {
+       "gates_passed": 0.0,
+       "gates_total": 3.0,
+       "missing": [
+        {
+         "have": 0.0,
+         "need": 3.0,
+         "requirement": "rivals_eliminated"
+        }
+       ]
+      },
+      "MILITARY_SUPREMACY": {
+       "gates_passed": 3.0,
+       "gates_total": 6.0,
+       "missing": [
+        {
+         "missing_turns": 77.0,
+         "requirement": "rival_0_satisfied",
+         "since": "access"
+        },
+        {
+         "missing_turns": 77.0,
+         "requirement": "rival_1_satisfied",
+         "since": "access"
+        },
+        {
+         "missing_turns": 77.0,
+         "requirement": "rival_2_satisfied",
+         "since": "access"
+        }
+       ],
+       "satisfied_rivals": 0.0
+      },
+      "TRANSCENDENCE": {
+       "gates_passed": 3.0,
+       "gates_total": 8.0,
+       "has_ritual_structure": true,
+       "mana": 1833.7,
+       "manifestations": 0.0,
+       "missing": [
+        {
+         "have": 1.0,
+         "missing_turns": 239.0,
+         "requirement": "two_school_n9"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "transcendence_research"
+        },
+        {
+         "have": 0.0,
+         "missing_turns": 239.0,
+         "requirement": "two_active_manifestations"
+        }
+       ]
+      }
+     },
+     "race": "elf",
+     "ritual_history": []
+    }
+   ],
+   "trace_every_10": [
+    {
+     "index": 0.0,
+     "points": [
+      {
+       "cities": 1.0,
+       "gold": 19.8,
+       "mana": 9.0,
+       "research": "v2_infrastructure_industry_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 10.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 41.8,
+       "mana": 19.0,
+       "research": "v2_infrastructure_academy_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 20.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 51.8,
+       "mana": 29.0,
+       "research": "v2_infrastructure_academy_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 30.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 77.0,
+       "mana": 47.0,
+       "research": "v2_infrastructure_academy_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/8.0",
+       "t": 40.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 85.0,
+       "mana": 87.0,
+       "research": "v2_infrastructure_urbanization_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "1/8.0",
+       "t": 50.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 39.0,
+       "mana": 127.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "3/8.0",
+       "t": 60.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 15.0,
+       "mana": 167.0,
+       "research": "v2_doctrine_ranger_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "4/16.0",
+       "t": 70.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 6.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 59.4,
+       "mana": 217.0,
+       "research": "v2_doctrine_ranger_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "6/16.0",
+       "t": 80.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 7.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 55.4,
+       "mana": 267.0,
+       "research": "v2_doctrine_ranger_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "8/16.0",
+       "t": 90.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 95.4,
+       "mana": 319.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "16/20.0",
+       "t": 100.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 291.2,
+       "mana": 379.0,
+       "research": "v2_infrastructure_logistics_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "22/22.0",
+       "t": 110.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 8.0,
+       "wars": [
+        2.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 226.2,
+       "mana": 439.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "24/40.0",
+       "t": 120.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 8.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 177.2,
+       "mana": 499.0,
+       "research": "v2_supreme_army",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "33/48.0",
+       "t": 130.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 10.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 96.2,
+       "mana": 559.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "38/56.0",
+       "t": 140.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 4.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 12.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 155.7,
+       "mana": 681.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "44/56.0",
+       "t": 150.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 8.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 14.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 67.7,
+       "mana": 727.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "46/60.0",
+       "t": 160.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 16.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 7.0,
+       "gold": 219.6,
+       "mana": 790.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "52/68.0",
+       "t": 170.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 16.0,
+       "wars": []
+      },
+      {
+       "cities": 8.0,
+       "gold": 750.6,
+       "mana": 895.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "55/72.0",
+       "t": 180.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 18.0,
+       "wars": [
+        2.0
+       ]
+      },
+      {
+       "cities": 8.0,
+       "gold": 1154.2,
+       "mana": 1044.0,
+       "research": "v2_doctrine_cavalry_9",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "55/88.0",
+       "t": 190.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 18.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 7.0,
+       "gold": 1548.4,
+       "mana": 1253.0,
+       "research": "v2_doctrine_guardian_8",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "58/76.0",
+       "t": 200.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 20.0,
+       "wars": []
+      },
+      {
+       "cities": 7.0,
+       "gold": 1584.9,
+       "mana": 1458.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "58/76.0",
+       "t": 210.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 17.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 7.0,
+       "gold": 1493.4,
+       "mana": 1638.0,
+       "research": "v2_doctrine_warrior_9",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "61/84.0",
+       "t": 220.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 19.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 7.0,
+       "gold": 1440.7,
+       "mana": 1798.0,
+       "research": "v2_magic_druidism_8",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "61/84.0",
+       "t": 230.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 21.0,
+       "wars": []
+      },
+      {
+       "cities": 7.0,
+       "gold": 1530.3,
+       "mana": 1980.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "55/84.0",
+       "t": 240.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 19.0,
+       "wars": [
+        2.0
+       ]
+      }
+     ]
+    },
+    {
+     "index": 1.0,
+     "points": [
+      {
+       "cities": 1.0,
+       "gold": 18.0,
+       "mana": 9.0,
+       "research": "v2_infrastructure_industry_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.4",
+       "t": 10.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 38.0,
+       "mana": 19.0,
+       "research": "v2_doctrine_guardian_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.4",
+       "t": 20.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 48.0,
+       "mana": 29.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.4",
+       "t": 30.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 40.0,
+       "mana": 39.0,
+       "research": "v2_infrastructure_urbanization_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/4.4",
+       "t": 40.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 36.0,
+       "mana": 52.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "3/8.8",
+       "t": 50.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 46.0,
+       "mana": 72.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "4/8.8",
+       "t": 60.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 46.0,
+       "mana": 94.0,
+       "research": "v2_doctrine_guardian_6",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/13.2",
+       "t": 70.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 5.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 48.0,
+       "mana": 124.0,
+       "research": "v2_doctrine_guardian_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "6/17.6",
+       "t": 80.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 6.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 48.0,
+       "mana": 154.0,
+       "research": "v2_doctrine_guardian_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/17.6",
+       "t": 90.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 7.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 52.0,
+       "mana": 186.0,
+       "research": "v2_doctrine_guardian_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/22.0",
+       "t": 100.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 7.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 72.0,
+       "mana": 226.0,
+       "research": "v2_doctrine_guardian_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/26.4",
+       "t": 110.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 64.0,
+       "mana": 266.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/26.4",
+       "t": 120.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 5.0,
+       "gold": 30.0,
+       "mana": 311.0,
+       "research": "v2_doctrine_siege_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "17/35.2",
+       "t": 130.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 5.0,
+       "gold": 0.0,
+       "mana": 361.0,
+       "research": "v2_infrastructure_economy_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "21/35.2",
+       "t": 140.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 8.0,
+       "wars": []
+      },
+      {
+       "cities": 5.0,
+       "gold": 16.0,
+       "mana": 411.0,
+       "research": "v2_doctrine_siege_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "27/35.2",
+       "t": 150.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 10.0,
+       "wars": []
+      },
+      {
+       "cities": 6.0,
+       "gold": 56.0,
+       "mana": 461.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "27/39.6",
+       "t": 160.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 12.0,
+       "wars": []
+      },
+      {
+       "cities": 6.0,
+       "gold": 124.0,
+       "mana": 521.0,
+       "research": "v2_supreme_army",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "31/39.6",
+       "t": 170.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 13.0,
+       "wars": []
+      },
+      {
+       "cities": 6.0,
+       "gold": 23.0,
+       "mana": 581.0,
+       "research": "v2_supreme_army",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "35/39.6",
+       "t": 180.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 13.0,
+       "wars": []
+      },
+      {
+       "cities": 6.0,
+       "gold": 135.0,
+       "mana": 641.0,
+       "research": "v2_infrastructure_academy_3",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "38/46.2",
+       "t": 190.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 13.0,
+       "wars": []
+      },
+      {
+       "cities": 6.0,
+       "gold": 497.0,
+       "mana": 701.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "39/52.8",
+       "t": 200.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 5.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 13.0,
+       "wars": []
+      },
+      {
+       "cities": 6.0,
+       "gold": 726.0,
+       "mana": 761.0,
+       "research": "v2_magic_sacred_9",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "39/52.8",
+       "t": 210.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 8.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 13.0,
+       "wars": []
+      },
+      {
+       "cities": 6.0,
+       "gold": 1096.0,
+       "mana": 821.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "39/52.8",
+       "t": 220.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 13.0,
+       "wars": []
+      },
+      {
+       "cities": 6.0,
+       "gold": 1498.0,
+       "mana": 899.0,
+       "research": "v2_doctrine_cavalry_9",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "39/52.8",
+       "t": 230.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 13.0,
+       "wars": []
+      },
+      {
+       "cities": 6.0,
+       "gold": 1858.0,
+       "mana": 959.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "39/52.8",
+       "t": 240.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 13.0,
+       "wars": []
+      }
+     ]
+    },
+    {
+     "index": 2.0,
+     "points": [
+      {
+       "cities": 1.0,
+       "gold": 18.0,
+       "mana": 9.0,
+       "research": "v2_infrastructure_academy_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 10.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 38.0,
+       "mana": 19.0,
+       "research": "v2_magic_druidism_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 20.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 48.0,
+       "mana": 45.0,
+       "research": "v2_magic_druidism_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 30.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 2.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 43.0,
+       "mana": 75.0,
+       "research": "v2_infrastructure_urbanization_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/4.0",
+       "t": 40.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 3.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 35.0,
+       "mana": 106.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "4/8.0",
+       "t": 50.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 3.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 45.0,
+       "mana": 146.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "6/8.0",
+       "t": 60.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 3.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 45.0,
+       "mana": 169.0,
+       "research": "v2_magic_druidism_5",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "8/12.0",
+       "t": 70.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 4.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 48.0,
+       "mana": 221.0,
+       "research": "v2_magic_druidism_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "8/12.0",
+       "t": 80.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 6.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 48.0,
+       "mana": 291.0,
+       "research": "v2_magic_druidism_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "8/12.0",
+       "t": 90.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 7.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 50.0,
+       "mana": 344.0,
+       "research": "v2_magic_druidism_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/16.0",
+       "t": 100.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 7.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 70.0,
+       "mana": 412.0,
+       "research": "v2_magic_druidism_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/16.0",
+       "t": 110.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 8.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 66.0,
+       "mana": 492.0,
+       "research": "v2_magic_druidism_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/16.0",
+       "t": 120.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 8.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 6.0,
+       "mana": 560.0,
+       "research": "v2_magic_infernal_6",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/16.0",
+       "t": 130.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 8.0,
+       "mana": 635.0,
+       "research": "v2_infrastructure_economy_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/20.0",
+       "t": 140.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 80.0,
+       "mana": 654.0,
+       "research": "v2_magic_infernal_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/20.0",
+       "t": 150.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 133.0,
+       "mana": 729.0,
+       "research": "v2_magic_infernal_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/20.0",
+       "t": 160.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 160.0,
+       "mana": 737.0,
+       "research": "v2_magic_infernal_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "12/16.0",
+       "t": 170.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 7.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 160.0,
+       "mana": 727.0,
+       "research": "v2_transcendence",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "12/12.0",
+       "t": 180.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 7.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 185.0,
+       "mana": 731.0,
+       "research": "v2_transcendence",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/16.0",
+       "t": 190.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 243.0,
+       "mana": 707.0,
+       "research": "v2_infrastructure_academy_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/16.0",
+       "t": 200.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 5.0,
+       "gold": 273.0,
+       "mana": 607.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "12/20.0",
+       "t": 210.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 241.0,
+       "mana": 608.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "12/20.0",
+       "t": 220.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 6.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 7.0,
+       "wars": [
+        0.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 6.0,
+       "gold": 191.0,
+       "mana": 665.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "21/24.0",
+       "t": 230.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 7.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 6.0,
+       "gold": 63.5,
+       "mana": 691.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "27/32.0",
+       "t": 240.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 1.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 11.0,
+       "wars": [
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3.0,
+     "points": [
+      {
+       "cities": 1.0,
+       "gold": 18.0,
+       "mana": 9.9,
+       "research": "v2_infrastructure_industry_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 10.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 38.0,
+       "mana": 20.9,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 20.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 1.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 48.0,
+       "mana": 31.9,
+       "research": "v2_doctrine_guardian_4",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 30.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 0.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 40.0,
+       "mana": 42.9,
+       "research": "v2_infrastructure_urbanization_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/4.0",
+       "t": 40.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 36.0,
+       "mana": 57.2,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "3/8.0",
+       "t": 50.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 46.0,
+       "mana": 79.2,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "4/8.0",
+       "t": 60.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 46.0,
+       "mana": 103.4,
+       "research": "v2_doctrine_guardian_6",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "6/12.0",
+       "t": 70.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 5.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 68.0,
+       "mana": 136.4,
+       "research": "v2_doctrine_guardian_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "6/12.0",
+       "t": 80.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 6.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 64.0,
+       "mana": 169.4,
+       "research": "v2_doctrine_guardian_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "8/12.0",
+       "t": 90.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 7.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 113.0,
+       "mana": 204.6,
+       "research": "v2_doctrine_guardian_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "7/16.0",
+       "t": 100.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 172.0,
+       "mana": 248.6,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "7/16.0",
+       "t": 110.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 71.5,
+       "mana": 292.6,
+       "research": "v2_doctrine_ranger_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "15/16.0",
+       "t": 120.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 30.0,
+       "mana": 336.6,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "21/24.0",
+       "t": 130.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 3.0,
+       "mana": 410.3,
+       "research": "v2_doctrine_ranger_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "27/28.0",
+       "t": 140.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 8.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 151.0,
+       "mana": 594.3,
+       "research": "v2_supreme_army",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "28/28.0",
+       "t": 150.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 8.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 127.0,
+       "mana": 671.3,
+       "research": "v2_supreme_army",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "37/60.0",
+       "t": 160.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 10.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 80.5,
+       "mana": 748.3,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "37/60.0",
+       "t": 170.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 12.0,
+       "wars": []
+      },
+      {
+       "cities": 5.0,
+       "gold": 13.5,
+       "mana": 829.7,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "40/60.0",
+       "t": 180.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 12.0,
+       "wars": []
+      },
+      {
+       "cities": 6.0,
+       "gold": 4.0,
+       "mana": 932.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "47/64.0",
+       "t": 190.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 12.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 7.0,
+       "gold": 88.0,
+       "mana": 1070.6,
+       "research": "v2_doctrine_rogue_9",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "56/76.0",
+       "t": 200.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 14.0,
+       "wars": []
+      },
+      {
+       "cities": 7.0,
+       "gold": 739.5,
+       "mana": 1213.6,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "59/76.0",
+       "t": 210.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 7.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 17.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 7.0,
+       "gold": 1189.5,
+       "mana": 1356.6,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "62/84.0",
+       "t": 220.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 20.0,
+       "wars": [
+        0.0,
+        2.0
+       ]
+      },
+      {
+       "cities": 7.0,
+       "gold": 2032.5,
+       "mana": 1634.6,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "62/92.0",
+       "t": 230.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 19.0,
+       "wars": [
+        2.0
+       ]
+      },
+      {
+       "cities": 7.0,
+       "gold": 2549.5,
+       "mana": 1833.7,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "62/92.0",
+       "t": 240.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 20.0,
+       "wars": []
+      }
+     ]
+    }
+   ],
+   "turn": 240,
+   "winner_timeline": {},
+   "why_representative": "MAP_ACCESS — candidatas de Supremacia com rival pendente em outra massa de terra",
+   "extension_result": {
+    "end_reason": "TIMEOUT",
+    "turn": 300,
+    "primary_category": "MAP_ACCESS",
+    "secondary_categories": [
+     "NO_VICTORY_PURSUIT",
+     "PRODUCTION_LATE"
+    ]
+   }
+  },
+  {
+   "civs": [
+    {
+     "cities": 0.0,
+     "focus": "MILITARY_SUPREMACY",
+     "gates": {},
+     "index": 0.0,
+     "interruptions": 0.0,
+     "n9_second": -1,
+     "orientation": "BALANCED",
+     "pursuit": {
+      "turns_after_access": 0.0,
+      "turns_at_war_with_pending_rival": 0.0
+     },
+     "race": "dwarf",
+     "relevant_units": 1.0,
+     "ritual_ready": -1,
+     "rituals": 0.0,
+     "status": "alive",
+     "supremacy_ready": -1,
+     "transcendence_ready": -1
+    },
+    {
+     "cities": 15.0,
+     "focus": "MILITARY_SUPREMACY",
+     "gates": {},
+     "index": 1.0,
+     "interruptions": 0.0,
+     "n9_second": 150.0,
+     "orientation": "MILITARY",
+     "pursuit": {
+      "turns_after_access": 81.0,
+      "turns_at_war_with_pending_rival": 52.0
+     },
+     "race": "orc",
+     "relevant_units": 17.0,
+     "ritual_ready": -1,
+     "rituals": 0.0,
+     "status": "alive",
+     "supremacy_ready": 160.0,
+     "transcendence_ready": -1
+    },
+    {
+     "cities": 4.0,
+     "focus": "TRANSCENDENCE",
+     "gates": {
+      "ritual_structure_in_production": 4.0
+     },
+     "index": 2.0,
+     "interruptions": 0.0,
+     "n9_second": 217.0,
+     "orientation": "ARCANE",
+     "pursuit": {
+      "turns_after_access": 0.0,
+      "turns_at_war_with_pending_rival": 0.0
+     },
+     "race": "human",
+     "relevant_units": 5.0,
+     "ritual_ready": -1,
+     "rituals": 0.0,
+     "status": "alive",
+     "supremacy_ready": -1,
+     "transcendence_ready": 237.0
+    },
+    {
+     "cities": 5.0,
+     "focus": "MILITARY_SUPREMACY",
+     "gates": {},
+     "index": 3.0,
+     "interruptions": 0.0,
+     "n9_second": 135.0,
+     "orientation": "MILITARY",
+     "pursuit": {
+      "turns_after_access": 98.0,
+      "turns_at_war_with_pending_rival": 65.0
+     },
+     "race": "elf",
+     "relevant_units": 12.0,
+     "ritual_ready": -1,
+     "rituals": 0.0,
+     "status": "alive",
+     "supremacy_ready": 143.0,
+     "transcendence_ready": -1
+    }
+   ],
+   "contenders": [
+    {
+     "access_turn": 143,
+     "category": "MILITARY_STALEMATE",
+     "civ": "3:elf/MILITARY",
+     "economic_collapse": false,
+     "evidence": {
+      "developed_city_attacks": 3.0,
+      "pending_rivals": [
+       0,
+       1,
+       2
+      ],
+      "qualifying_captures": 0.0,
+      "turns_after_access": 98,
+      "turns_at_war_with_pending_rival": 65
+     },
+     "focus": "MILITARY_SUPREMACY",
+     "index": 3.0,
+     "path": "MILITARY_SUPREMACY",
+     "post_access_turns": 97
+    },
+    {
+     "access_turn": 160,
+     "category": "MILITARY_STALEMATE",
+     "civ": "1:orc/MILITARY",
+     "economic_collapse": false,
+     "evidence": {
+      "developed_city_attacks": 4.0,
+      "pending_rivals": [
+       0,
+       2,
+       3
+      ],
+      "qualifying_captures": 0.0,
+      "turns_after_access": 81,
+      "turns_at_war_with_pending_rival": 52
+     },
+     "focus": "MILITARY_SUPREMACY",
+     "index": 1.0,
+     "path": "MILITARY_SUPREMACY",
+     "post_access_turns": 80
+    },
+    {
+     "access_turn": 237,
+     "category": "PRODUCTION_LATE",
+     "civ": "2:human/ARCANE",
+     "economic_collapse": false,
+     "evidence": {
+      "MANA_LATE": 0,
+      "NO_VICTORY_PURSUIT": 0,
+      "PRODUCTION_LATE:content": 0,
+      "PRODUCTION_LATE:queue": 4
+     },
+     "focus": "TRANSCENDENCE",
+     "index": 2.0,
+     "path": "TRANSCENDENCE",
+     "post_access_turns": 3,
+     "subcategory": "PRODUCTION_LATE:queue"
+    }
+   ],
+   "end_reason": "TIMEOUT",
+   "match_id": "F33B-043",
+   "multiple_causes": true,
+   "primary_category": "MILITARY_STALEMATE",
+   "secondary_categories": [
+    "PRODUCTION_LATE"
+   ],
+   "seed": 33393.0,
+   "timeout_report": [
+    {
+     "active_wars": [],
+     "alive": true,
+     "capstones": {
+      "supreme_army": false,
+      "transcendence": false
+     },
+     "closest_path": "TRANSCENDENCE",
+     "focus": "MILITARY_SUPREMACY",
+     "index": 0.0,
+     "orientation": "BALANCED",
+     "paths": {
+      "DOMINATION": {
+       "gates_passed": 0.0,
+       "gates_total": 3.0,
+       "missing": [
+        {
+         "have": 0.0,
+         "need": 3.0,
+         "requirement": "rivals_eliminated"
+        }
+       ]
+      },
+      "MILITARY_SUPREMACY": {
+       "gates_passed": 0.0,
+       "gates_total": 6.0,
+       "missing": [
+        {
+         "have": 0.0,
+         "missing_turns": 239.0,
+         "requirement": "two_doctrine_n9"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "supreme_army"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "rival_1_satisfied",
+         "since": "match_start"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "rival_2_satisfied",
+         "since": "match_start"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "rival_3_satisfied",
+         "since": "match_start"
+        }
+       ],
+       "satisfied_rivals": 0.0
+      },
+      "TRANSCENDENCE": {
+       "gates_passed": 1.0,
+       "gates_total": 8.0,
+       "has_ritual_structure": false,
+       "mana": 313.0,
+       "manifestations": 0.0,
+       "missing": [
+        {
+         "have": 0.0,
+         "missing_turns": 239.0,
+         "requirement": "two_school_n9"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "transcendence_research"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "ritual_structure_city"
+        },
+        {
+         "have": 0.0,
+         "missing_turns": 239.0,
+         "requirement": "two_active_manifestations"
+        }
+       ]
+      }
+     },
+     "race": "dwarf",
+     "ritual_history": []
+    },
+    {
+     "active_wars": [],
+     "alive": true,
+     "capstones": {
+      "supreme_army": true,
+      "transcendence": false
+     },
+     "closest_path": "MILITARY_SUPREMACY",
+     "focus": "MILITARY_SUPREMACY",
+     "index": 1.0,
+     "orientation": "MILITARY",
+     "paths": {
+      "DOMINATION": {
+       "gates_passed": 0.0,
+       "gates_total": 3.0,
+       "missing": [
+        {
+         "have": 0.0,
+         "need": 3.0,
+         "requirement": "rivals_eliminated"
+        }
+       ]
+      },
+      "MILITARY_SUPREMACY": {
+       "gates_passed": 3.0,
+       "gates_total": 6.0,
+       "missing": [
+        {
+         "missing_turns": 80.0,
+         "requirement": "rival_0_satisfied",
+         "since": "access"
+        },
+        {
+         "missing_turns": 80.0,
+         "requirement": "rival_2_satisfied",
+         "since": "access"
+        },
+        {
+         "missing_turns": 80.0,
+         "requirement": "rival_3_satisfied",
+         "since": "access"
+        }
+       ],
+       "satisfied_rivals": 0.0
+      },
+      "TRANSCENDENCE": {
+       "gates_passed": 4.0,
+       "gates_total": 8.0,
+       "has_ritual_structure": true,
+       "mana": 3155.0,
+       "manifestations": 0.0,
+       "missing": [
+        {
+         "missing_turns": 13.0,
+         "requirement": "transcendence_research"
+        },
+        {
+         "have": 0.0,
+         "missing_turns": 239.0,
+         "requirement": "two_active_manifestations"
+        }
+       ]
+      }
+     },
+     "race": "orc",
+     "ritual_history": []
+    },
+    {
+     "active_wars": [
+      3.0
+     ],
+     "alive": true,
+     "capstones": {
+      "supreme_army": false,
+      "transcendence": true
+     },
+     "closest_path": "TRANSCENDENCE",
+     "focus": "TRANSCENDENCE",
+     "index": 2.0,
+     "orientation": "ARCANE",
+     "paths": {
+      "DOMINATION": {
+       "gates_passed": 0.0,
+       "gates_total": 3.0,
+       "missing": [
+        {
+         "have": 0.0,
+         "need": 3.0,
+         "requirement": "rivals_eliminated"
+        }
+       ]
+      },
+      "MILITARY_SUPREMACY": {
+       "gates_passed": 0.0,
+       "gates_total": 6.0,
+       "missing": [
+        {
+         "have": 0.0,
+         "missing_turns": 239.0,
+         "requirement": "two_doctrine_n9"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "supreme_army"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "rival_0_satisfied",
+         "since": "match_start"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "rival_1_satisfied",
+         "since": "match_start"
+        },
+        {
+         "missing_turns": 239.0,
+         "requirement": "rival_3_satisfied",
+         "since": "match_start"
+        }
+       ],
+       "satisfied_rivals": 0.0
+      },
+      "TRANSCENDENCE": {
+       "gates_passed": 4.0,
+       "gates_total": 8.0,
+       "has_ritual_structure": false,
+       "mana": 701.0,
+       "manifestations": 0.0,
+       "missing": [
+        {
+         "missing_turns": 3.0,
+         "requirement": "ritual_structure_city"
+        },
+        {
+         "have": 0.0,
+         "missing_turns": 3.0,
+         "requirement": "two_active_manifestations"
+        }
+       ]
+      }
+     },
+     "race": "human",
+     "ritual_history": []
+    },
+    {
+     "active_wars": [
+      2.0
+     ],
+     "alive": true,
+     "capstones": {
+      "supreme_army": true,
+      "transcendence": false
+     },
+     "closest_path": "MILITARY_SUPREMACY",
+     "focus": "MILITARY_SUPREMACY",
+     "index": 3.0,
+     "orientation": "MILITARY",
+     "paths": {
+      "DOMINATION": {
+       "gates_passed": 0.0,
+       "gates_total": 3.0,
+       "missing": [
+        {
+         "have": 0.0,
+         "need": 3.0,
+         "requirement": "rivals_eliminated"
+        }
+       ]
+      },
+      "MILITARY_SUPREMACY": {
+       "gates_passed": 3.0,
+       "gates_total": 6.0,
+       "missing": [
+        {
+         "missing_turns": 97.0,
+         "requirement": "rival_0_satisfied",
+         "since": "access"
+        },
+        {
+         "missing_turns": 97.0,
+         "requirement": "rival_1_satisfied",
+         "since": "access"
+        },
+        {
+         "missing_turns": 97.0,
+         "requirement": "rival_2_satisfied",
+         "since": "access"
+        }
+       ],
+       "satisfied_rivals": 0.0
+      },
+      "TRANSCENDENCE": {
+       "gates_passed": 4.0,
+       "gates_total": 8.0,
+       "has_ritual_structure": true,
+       "mana": 2357.4,
+       "manifestations": 0.0,
+       "missing": [
+        {
+         "missing_turns": 29.0,
+         "requirement": "transcendence_research"
+        },
+        {
+         "have": 0.0,
+         "missing_turns": 239.0,
+         "requirement": "two_active_manifestations"
+        }
+       ]
+      }
+     },
+     "race": "elf",
+     "ritual_history": []
+    }
+   ],
+   "trace_every_10": [
+    {
+     "index": 0.0,
+     "points": [
+      {
+       "cities": 1.0,
+       "gold": 19.8,
+       "mana": 9.0,
+       "research": "v2_infrastructure_industry_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 10.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 41.8,
+       "mana": 19.0,
+       "research": "v2_infrastructure_academy_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 20.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 51.8,
+       "mana": 29.0,
+       "research": "v2_infrastructure_academy_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 30.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 62.6,
+       "mana": 43.0,
+       "research": "v2_infrastructure_academy_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/8.0",
+       "t": 40.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 107.4,
+       "mana": 63.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/8.0",
+       "t": 50.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 2.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 132.9,
+       "mana": 103.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "3/8.0",
+       "t": 60.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": [
+        1.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 1.0,
+       "gold": 123.6,
+       "mana": 134.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "3/4.0",
+       "t": 70.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": [
+        1.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 1.0,
+       "gold": 142.6,
+       "mana": 164.0,
+       "research": "v2_infrastructure_logistics_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "3/4.0",
+       "t": 80.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 5.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": [
+        1.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 1.0,
+       "gold": 118.6,
+       "mana": 194.0,
+       "research": "v2_infrastructure_logistics_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "4/10.0",
+       "t": 90.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 5.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": [
+        1.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 1.0,
+       "gold": 75.1,
+       "mana": 224.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "7/12.0",
+       "t": 100.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 6.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": [
+        1.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 79.7,
+       "mana": 262.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "6/28.0",
+       "t": 110.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 7.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": [
+        1.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 2.0,
+       "gold": 121.1,
+       "mana": 285.0,
+       "research": "v2_doctrine_siege_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "7/16.0",
+       "t": 120.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 7.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 151.1,
+       "mana": 305.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "7/16.0",
+       "t": 130.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 0.0,
+       "gold": 111.1,
+       "mana": 313.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/0.0",
+       "t": 140.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 0.0,
+       "gold": 111.1,
+       "mana": 313.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/0.0",
+       "t": 150.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 111.1,
+       "mana": 313.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/0.0",
+       "t": 160.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 111.1,
+       "mana": 313.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/0.0",
+       "t": 170.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 139.6,
+       "mana": 313.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/0.0",
+       "t": 180.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 139.6,
+       "mana": 313.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/0.0",
+       "t": 190.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 139.6,
+       "mana": 313.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/0.0",
+       "t": 200.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 0.0,
+       "gold": 138.1,
+       "mana": 313.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/0.0",
+       "t": 210.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 0.0,
+       "gold": 133.1,
+       "mana": 313.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/0.0",
+       "t": 220.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 0.0,
+       "gold": 130.1,
+       "mana": 313.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/0.0",
+       "t": 230.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 0.0,
+       "gold": 126.6,
+       "mana": 313.0,
+       "research": "v2_doctrine_siege_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/0.0",
+       "t": 240.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      }
+     ]
+    },
+    {
+     "index": 1.0,
+     "points": [
+      {
+       "cities": 1.0,
+       "gold": 18.0,
+       "mana": 9.0,
+       "research": "v2_infrastructure_industry_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.4",
+       "t": 10.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 38.0,
+       "mana": 19.0,
+       "research": "v2_doctrine_cavalry_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.4",
+       "t": 20.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 48.0,
+       "mana": 29.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.4",
+       "t": 30.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 40.0,
+       "mana": 39.0,
+       "research": "v2_infrastructure_urbanization_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/4.4",
+       "t": 40.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 36.0,
+       "mana": 52.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "3/8.8",
+       "t": 50.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 25.0,
+       "mana": 72.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "4/8.8",
+       "t": 60.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 16.0,
+       "mana": 95.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "5/13.2",
+       "t": 70.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 5.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 20.0,
+       "mana": 145.0,
+       "research": "v2_doctrine_cavalry_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "5/13.2",
+       "t": 80.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 6.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 43.0,
+       "mana": 195.0,
+       "research": "v2_doctrine_cavalry_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "4/13.2",
+       "t": 90.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 6.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 83.5,
+       "mana": 249.0,
+       "research": "v2_doctrine_cavalry_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "7/17.6",
+       "t": 100.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 7.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 87.0,
+       "mana": 309.0,
+       "research": "v2_doctrine_cavalry_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "7/17.6",
+       "t": 110.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 6.0,
+       "gold": 0.0,
+       "mana": 376.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "13/26.4",
+       "t": 120.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": [
+        2.0
+       ]
+      },
+      {
+       "cities": 7.0,
+       "gold": 94.0,
+       "mana": 504.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "16/35.2",
+       "t": 130.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 7.0,
+       "gold": 450.0,
+       "mana": 674.0,
+       "research": "v2_doctrine_ranger_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "29/35.2",
+       "t": 140.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 8.0,
+       "wars": []
+      },
+      {
+       "cities": 8.0,
+       "gold": 735.5,
+       "mana": 851.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "36/39.6",
+       "t": 150.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 12.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 9.0,
+       "gold": 988.0,
+       "mana": 1032.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "42/48.4",
+       "t": 160.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 13.0,
+       "wars": []
+      },
+      {
+       "cities": 9.0,
+       "gold": 1048.0,
+       "mana": 1222.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "44/92.4",
+       "t": 170.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 15.0,
+       "wars": []
+      },
+      {
+       "cities": 9.0,
+       "gold": 1038.0,
+       "mana": 1407.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "47/83.6",
+       "t": 180.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 3.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 13.0,
+       "wars": [
+        2.0
+       ]
+      },
+      {
+       "cities": 10.0,
+       "gold": 904.5,
+       "mana": 1599.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "56/88.0",
+       "t": 190.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 16.0,
+       "wars": [
+        2.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 10.0,
+       "gold": 1056.5,
+       "mana": 1799.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "59/88.0",
+       "t": 200.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 18.0,
+       "wars": []
+      },
+      {
+       "cities": 11.0,
+       "gold": 1539.5,
+       "mana": 2117.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "59/92.4",
+       "t": 210.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 20.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 12.0,
+       "gold": 1420.5,
+       "mana": 2376.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "58/123.2",
+       "t": 220.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 18.0,
+       "wars": []
+      },
+      {
+       "cities": 12.0,
+       "gold": 674.5,
+       "mana": 2736.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "61/123.2",
+       "t": 230.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 20.0,
+       "wars": [
+        0.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 15.0,
+       "gold": 394.5,
+       "mana": 3155.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "60/145.2",
+       "t": 240.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 17.0,
+       "wars": []
+      }
+     ]
+    },
+    {
+     "index": 2.0,
+     "points": [
+      {
+       "cities": 1.0,
+       "gold": 18.0,
+       "mana": 9.0,
+       "research": "v2_infrastructure_academy_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 10.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 38.0,
+       "mana": 19.0,
+       "research": "v2_magic_druidism_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 20.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 48.0,
+       "mana": 45.0,
+       "research": "v2_magic_druidism_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 30.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 2.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 43.0,
+       "mana": 75.0,
+       "research": "v2_infrastructure_urbanization_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/4.0",
+       "t": 40.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 3.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 33.0,
+       "mana": 105.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/4.0",
+       "t": 50.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 3.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 37.0,
+       "mana": 142.0,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "6/8.0",
+       "t": 60.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 3.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 51.0,
+       "mana": 166.0,
+       "research": "v2_magic_druidism_5",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "8/12.0",
+       "t": 70.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 4.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 67.0,
+       "mana": 186.0,
+       "research": "v2_magic_druidism_6",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "8/12.0",
+       "t": 80.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 5.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 51.0,
+       "mana": 234.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "8/12.0",
+       "t": 90.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 7.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 21.0,
+       "mana": 324.0,
+       "research": "v2_magic_druidism_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "8/16.0",
+       "t": 100.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 7.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 11.0,
+       "mana": 424.0,
+       "research": "v2_magic_druidism_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/16.0",
+       "t": 110.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 8.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 0.0,
+       "mana": 515.0,
+       "research": "v2_infrastructure_logistics_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/8.0",
+       "t": 120.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        1.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 11.0,
+       "mana": 524.0,
+       "research": "v2_infrastructure_logistics_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/12.0",
+       "t": 130.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 50.0,
+       "mana": 503.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/20.0",
+       "t": 140.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 100.0,
+       "mana": 431.0,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/16.0",
+       "t": 150.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 6.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 92.5,
+       "mana": 485.0,
+       "research": "v2_magic_infernal_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/16.0",
+       "t": 160.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 16.0,
+       "mana": 490.0,
+       "research": "v2_magic_infernal_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "13/16.0",
+       "t": 170.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 3.0,
+       "gold": 0.0,
+       "mana": 490.0,
+       "research": "v2_infrastructure_economy_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "7/12.0",
+       "t": 180.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 48.0,
+       "mana": 541.0,
+       "research": "v2_infrastructure_economy_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "3/16.0",
+       "t": 190.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": [
+        1.0,
+        3.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 261.0,
+       "mana": 579.0,
+       "research": "v2_magic_infernal_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "3/16.0",
+       "t": 200.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 500.0,
+       "mana": 633.0,
+       "research": "v2_magic_infernal_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "7/16.0",
+       "t": 210.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 699.0,
+       "mana": 667.0,
+       "research": "v2_transcendence",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "11/16.0",
+       "t": 220.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": [
+        3.0
+       ]
+      },
+      {
+       "cities": 4.0,
+       "gold": 808.5,
+       "mana": 703.0,
+       "research": "v2_transcendence",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "11/16.0",
+       "t": 230.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": []
+      },
+      {
+       "cities": 4.0,
+       "gold": 886.5,
+       "mana": 701.0,
+       "research": "v2_infrastructure_academy_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "11/16.0",
+       "t": 240.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": true,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        3.0
+       ]
+      }
+     ]
+    },
+    {
+     "index": 3.0,
+     "points": [
+      {
+       "cities": 1.0,
+       "gold": 18.0,
+       "mana": 9.9,
+       "research": "v2_infrastructure_industry_1",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 10.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 0.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 38.0,
+       "mana": 20.9,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 20.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 1.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 48.0,
+       "mana": 31.9,
+       "research": "v2_doctrine_rogue_4",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "0/4.0",
+       "t": 30.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 3.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 1.0,
+       "wars": []
+      },
+      {
+       "cities": 1.0,
+       "gold": 40.0,
+       "mana": 42.9,
+       "research": "v2_infrastructure_urbanization_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "2/4.0",
+       "t": 40.0,
+       "tiers": {
+        "infrastructure": 1.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 51.0,
+       "mana": 57.2,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "3/8.0",
+       "t": 50.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": []
+      },
+      {
+       "cities": 2.0,
+       "gold": 62.0,
+       "mana": 79.2,
+       "research": "v2_infrastructure_urbanization_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "4/8.0",
+       "t": 60.0,
+       "tiers": {
+        "infrastructure": 2.0,
+        "magic": 0.0,
+        "military": 4.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 20.0,
+       "mana": 111.1,
+       "research": "v2_doctrine_rogue_7",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "4/12.0",
+       "t": 70.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 6.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 2.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 0.0,
+       "mana": 144.1,
+       "research": "v2_infrastructure_economy_2",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "8/12.0",
+       "t": 80.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 7.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 4.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 57.0,
+       "mana": 177.1,
+       "research": "v2_doctrine_rogue_8",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "8/12.0",
+       "t": 90.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 7.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 188.0,
+       "mana": 210.1,
+       "research": "v2_infrastructure_logistics_3",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/12.0",
+       "t": 100.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 3.0,
+       "gold": 316.5,
+       "mana": 243.1,
+       "research": "v2_doctrine_rogue_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "10/20.0",
+       "t": 110.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 8.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 3.0,
+       "wars": [
+        0.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 439.5,
+       "mana": 313.5,
+       "research": "",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "16/36.0",
+       "t": 120.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 5.0,
+       "wars": [
+        2.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 515.0,
+       "mana": 390.5,
+       "research": "v2_doctrine_warrior_9",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "28/36.0",
+       "t": 130.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 7.0,
+       "wars": [
+        0.0,
+        2.0
+       ]
+      },
+      {
+       "cities": 7.0,
+       "gold": 688.5,
+       "mana": 498.3,
+       "research": "v2_supreme_army",
+       "sup": {
+        "access": false,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "37/60.0",
+       "t": 140.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 10.0,
+       "wars": [
+        0.0,
+        2.0
+       ]
+      },
+      {
+       "cities": 7.0,
+       "gold": 869.0,
+       "mana": 619.3,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "40/60.0",
+       "t": 150.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 13.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 6.0,
+       "gold": 708.0,
+       "mana": 739.2,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "38/48.0",
+       "t": 160.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 0.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 11.0,
+       "wars": [
+        2.0
+       ]
+      },
+      {
+       "cities": 6.0,
+       "gold": 797.5,
+       "mana": 851.4,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "49/64.0",
+       "t": 170.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 1.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 16.0,
+       "wars": []
+      },
+      {
+       "cities": 7.0,
+       "gold": 891.5,
+       "mana": 968.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "49/100.0",
+       "t": 180.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 15.0,
+       "wars": []
+      },
+      {
+       "cities": 8.0,
+       "gold": 746.5,
+       "mana": 1094.5,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "56/104.0",
+       "t": 190.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 17.0,
+       "wars": [
+        1.0,
+        2.0
+       ]
+      },
+      {
+       "cities": 9.0,
+       "gold": 768.0,
+       "mana": 1243.0,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "59/108.0",
+       "t": 200.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 20.0,
+       "wars": []
+      },
+      {
+       "cities": 9.0,
+       "gold": 887.5,
+       "mana": 1590.7,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "50/108.0",
+       "t": 210.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 15.0,
+       "wars": [
+        0.0,
+        1.0,
+        2.0
+       ]
+      },
+      {
+       "cities": 8.0,
+       "gold": 915.0,
+       "mana": 1894.3,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "53/80.0",
+       "t": 220.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 14.0,
+       "wars": [
+        0.0,
+        2.0
+       ]
+      },
+      {
+       "cities": 8.0,
+       "gold": 846.5,
+       "mana": 2158.3,
+       "research": "",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "56/80.0",
+       "t": 230.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 19.0,
+       "wars": [
+        1.0
+       ]
+      },
+      {
+       "cities": 5.0,
+       "gold": 853.5,
+       "mana": 2357.4,
+       "research": "v2_magic_necromancy_9",
+       "sup": {
+        "access": true,
+        "rivals": 3.0,
+        "satisfied": 0.0
+       },
+       "supply": "49/68.0",
+       "t": 240.0,
+       "tiers": {
+        "infrastructure": 3.0,
+        "magic": 9.0,
+        "military": 9.0
+       },
+       "tr": {
+        "access": false,
+        "manifestations": 0.0,
+        "ritual_active": false,
+        "ritual_remaining": 0.0
+       },
+       "units": 12.0,
+       "wars": [
+        2.0
+       ]
+      }
+     ]
+    }
+   ],
+   "turn": 240,
+   "winner_timeline": {},
+   "why_representative": "MILITARY_STALEMATE — timeout que continua sem vencedor no T300",
+   "extension_result": {
+    "end_reason": "TIMEOUT",
+    "turn": 300,
+    "primary_category": "MILITARY_STALEMATE",
+    "secondary_categories": []
+   }
+  }
+ ]
+}

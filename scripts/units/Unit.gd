@@ -35,6 +35,15 @@ const MONSTER_KIND_COLORS := {
 	"wyvern": Color(0.85, 0.35, 0.05),
 	"dragon": Color(0.55, 0.1, 0.55),
 	"skeleton": Color(0.92, 0.9, 0.82),
+	# V3 / Combat Ecology — placeholders (MonsterPlaceholderVisuals); o Presentation Pass substitui.
+	"worg": Color(0.38, 0.3, 0.24),
+	"giant_spider": Color(0.16, 0.14, 0.18),
+	"minotaur": Color(0.55, 0.32, 0.18),
+	"basilisk": Color(0.3, 0.52, 0.25),
+	"colossal_worm": Color(0.7, 0.55, 0.42),
+	"arboreal_ancient": Color(0.28, 0.4, 0.16),
+	"mana_devourer": Color(0.3, 0.2, 0.75),
+	"mycotic_hive": Color(0.7, 0.4, 0.55),
 }
 
 ## Veterania: unidade que vence combate (mata ou sobrevive matando quem a
@@ -94,6 +103,10 @@ var move_order_target: Vector2i = NO_MOVE_ORDER
 const NO_SETTLE_TARGET := Vector2i(-999999, -999999)
 var settle_target: Vector2i = NO_SETTLE_TARGET
 var settle_wait_turns: int = 0
+## Fase 33D2 (Bug #6): locais em que a fundação real FALHOU para este Colonizador. A IA escolhe o local só
+## com o que conhece; se o runtime recusar (ex.: cidade rival escondida perto demais), o tile sai da busca
+## — sem revelar a causa. Estado de sessão, não salvo (mesma regra de settle_target).
+var settle_rejected_sites: Dictionary = {}
 
 ## Modo "Fortificar" tipo Civilization (pedido do usuario: "um modo em que
 ## se você tiver ferido, você fica se curando um pouco todo turno... e em
@@ -151,6 +164,20 @@ var is_camp_boss: bool = false
 ## (owner_player == null); unidade de jogador/rival ignora este campo.
 var monster_behavior_state: String = ""
 
+## Fase 33D2 — covil que gerou este monstro (chefe original, reforço ou guardião). Base da população
+## POR COVIL das ameaças regionais/guardiões (HexGrid.lair_population) e do teatro regional da
+## MonsterAI. Salvo com o monstro (SaveManager, campo opcional); Vector2i(-999999, -999999) = sem covil.
+var source_lair_coord: Vector2i = Vector2i(-999999, -999999)
+## Fase 33D3 — evento mundial que gerou este monstro (guardião do Relicário); -1 = nenhum. Salvo com o
+## monstro; o evento conta os PRÓPRIOS guardiões por isto (nunca entra no sistema de covil).
+var source_event_id: int = -1
+## V3 / Combat Ecology — sítio ecológico dono deste monstro (MonsterEcologySystem); -1 = fora da ecologia.
+## Salvo com o monstro ("ecology_site"); a população POR SÍTIO e a diretiva de atividade por Era saem daqui.
+var ecology_site_id: int = -1
+## V3 / Combat Ecology — turno global até o qual o monstro descansa depois de um raide (cidade/melhoria):
+## volta ao território e não escolhe outro objetivo de raide antes disto (MonsterAI._take_ecology_turn). Salvo.
+var ecology_rest_until: int = 0
+
 ## Roadmap "Fase Macro" 5B.3-C -- pedido do usuario apos reportar que o
 ## Dragao "nunca aparece": WorldEventTrigger.choose_dragon_origin_region
 ## sorteia a origem entre TODOS os tiles do mapa, entao a Unit quase
@@ -203,9 +230,24 @@ var world_event_managed: bool = false
 var hp: float = 10.0:
 	set(value):
 		if value < hp and not _suppress_hit_reaction:
-			_play_hit_reaction()
+			# V3 / Etapa 2: Barreira Arcana (Devorador de Mana) absorve dano real antes da Vida, por QUALQUER fonte.
+			if arcane_barrier > 0.0:
+				var absorbed := minf(arcane_barrier, hp - value)
+				arcane_barrier -= absorbed
+				value += absorbed
+			if value < hp:
+				took_damage_since_regen = true # V3: interrompe a Regeneração Monstruosa do Troll neste ciclo
+				_play_hit_reaction()
 		hp = value
 		_update_hp_bar()
+
+## V3 / Etapa 2 — estado de habilidade de monstro guardado na própria unidade (salvo com o monstro):
+## escudo da Barreira Arcana e se a unidade levou dano real desde a última checagem de regeneração.
+var arcane_barrier: float = 0.0
+var took_damage_since_regen: bool = false
+## Estado específico de espécie (Verme: subterrâneo/destino; Devorador: rodada da Fome Arcana; Worg: turno do
+## bônus de caça). Dicionário pequeno, salvo como está (só tipos JSON).
+var ability_state: Dictionary = {}
 
 var _suppress_hit_reaction := false
 
@@ -230,7 +272,8 @@ func setup(data: UnitData, player: PlayerData, start_coord: Vector2i, camp_boss:
 	_build_visual()
 
 func reset_movement() -> void:
-	movement_left = unit_data.movement_points
+	# V3 / Etapa 2: Petrificação/Enraizado (Movimento 0) e Abalado (−1) no turno próprio da vítima.
+	movement_left = UnitStatusEffects.adjusted_movement(self, unit_data.movement_points)
 
 ## Troca a FORMA desta MESMA unidade por `new_data` (upgrade V2, ver V2UnitUpgrade) —
 ## não cria uma tropa nova: o objeto continua o mesmo, então dono, coord, serial_id,
@@ -1437,6 +1480,9 @@ func _build_procedural_body() -> void:
 			orb.position.y = 0.88
 			add_child(orb)
 		_: # kind desconhecido cai no padrao (capsula nua, sem arma/acessorio)
+			# V3 / Combat Ecology: espécie nova sem modelo final ganha uma silhueta provisória própria.
+			if MonsterPlaceholderVisuals.build(unit_data.visual_kind, self, mat):
+				return
 			var body := MeshInstance3D.new()
 			var mesh := CapsuleMesh.new()
 			mesh.radius = 0.2

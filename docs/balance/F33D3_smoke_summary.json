@@ -1,0 +1,259 @@
+{
+ "phase": "F33D3",
+ "source": "24 partidas 4-IA, --matches=0-23 --cap=200 --run=phase33d3 --tag=smoke (observação funcional; NÃO é baseline F33E nem comparável à F33B)",
+ "determinism": "matches 0,5,12,20 reexecutados até T200: registros idênticos",
+ "save_load": "matches 0,5 com save/load no T100: registros idênticos à execução contínua",
+ "matches": 24,
+ "ends": {
+  "TIMEOUT": 12,
+  "TRANSCENDENCE": 6,
+  "MILITARY_SUPREMACY": 6
+ },
+ "victory_turn": {
+  "n": 12,
+  "min": 160,
+  "median": 170.5,
+  "max": 196
+ },
+ "ascension_turn": {
+  "n": 24,
+  "min": 36,
+  "median": 48.5,
+  "max": 70
+ },
+ "convergence_turn": {
+  "n": 24,
+  "min": 100,
+  "median": 114.0,
+  "max": 133
+ },
+ "convergence_causes": {
+  "PROGRESS": 24
+ },
+ "dragon": {
+  "eligible": 24,
+  "announced": 24,
+  "forced": 18,
+  "convergence_edge": 0,
+  "superseded": {},
+  "results": {
+   "devastated": 11,
+   "defeated": 13
+  },
+  "announce_turn": {
+   "n": 24,
+   "min": 57,
+   "median": 83.0,
+   "max": 105
+  },
+  "announce_minus_ascension": {
+   "n": 24,
+   "min": 10,
+   "median": 35.0,
+   "max": 35
+  },
+  "resolution_turn": {
+   "n": 24,
+   "min": 102,
+   "median": 115.0,
+   "max": 141
+  },
+  "duration": {
+   "n": 24,
+   "min": 15,
+   "median": 37.0,
+   "max": 58
+  },
+  "phase_at_start": {
+   "ASCENSION": 24
+  },
+  "phase_at_end": {
+   "CONVERGENCE": 14,
+   "ASCENSION": 10
+  },
+  "target_seat": {
+   "3": 11,
+   "2": 6,
+   "1": 5,
+   "0": 2
+  },
+  "participation": {
+   "too_far": 28,
+   "war_pressure": 18,
+   "no_mobile_force": 21,
+   "target": 24,
+   "no_city": 5
+  },
+  "joined_non_target": 0,
+  "damage_civs_per_dragon": {
+   "n": 24,
+   "min": 0,
+   "median": 2.0,
+   "max": 3
+  },
+  "reward_gold_total": 2275.0,
+  "reward_mana_total": 1040.0,
+  "rewarded_dragons": 13,
+  "max_single_reward_gold": 175.0
+ },
+ "reliquary": {
+  "eligible": 24,
+  "announced": 22,
+  "results": {
+   "expired": 19,
+   "claimed": 3
+  },
+  "superseded": {
+   "CONVERGENCE": 2
+  },
+  "waited_for_dragon": 4,
+  "announce_turn": {
+   "n": 22,
+   "min": 51,
+   "median": 63.5,
+   "max": 114
+  },
+  "announce_minus_ascension": {
+   "n": 22,
+   "min": 15,
+   "median": 15.0,
+   "max": 70
+  },
+  "resolved_turn": {
+   "n": 3,
+   "min": 92,
+   "median": 121,
+   "max": 121
+  },
+  "responders_per_event": {
+   "n": 22,
+   "min": 0,
+   "median": 0.0,
+   "max": 2
+  },
+  "guardians_cleared": 8,
+  "max_control_progress": {
+   "0": 18,
+   "2": 3,
+   "1": 1
+  },
+  "contested_rounds_total": 0,
+  "reward_choices": {
+   "gold": 3
+  },
+  "winners_seat": {
+   "0": 2,
+   "2": 1
+  }
+ },
+ "milestones": {
+  "supreme_army": 35,
+  "second_manifestation": 8,
+  "supreme_army_turn": {
+   "n": 35,
+   "min": 123,
+   "median": 155,
+   "max": 192
+  },
+  "second_manifestation_turn": {
+   "n": 8,
+   "min": 155,
+   "median": 168.5,
+   "max": 196
+  }
+ },
+ "supremacy_qualifying_captures": 122,
+ "civs_with_qualifying_capture": 43,
+ "imperatives_at_convergence": {
+  "domination": {
+   "eliminate": 96
+  },
+  "supremacy": {
+   "research": 95,
+   "capture": 1
+  },
+  "transcendence": {
+   "schools": 96
+  }
+ },
+ "imperatives_at_end": {
+  "domination": {
+   "eliminate": 96
+  },
+  "supremacy": {
+   "capture": 29,
+   "research": 61,
+   "done": 6
+  },
+  "transcendence": {
+   "schools": 67,
+   "second_manifestation": 10,
+   "maintain": 7,
+   "structure": 4,
+   "research": 7,
+   "first_manifestation": 1
+  }
+ },
+ "regional_alive_at": {
+  "30": "95/96",
+  "50": "89/96",
+  "75": "76/96",
+  "100": "59/96"
+ },
+ "regional_discovery_to_clear": {
+  "n": 66,
+  "min": 5,
+  "median": 46.0,
+  "max": 161
+ },
+ "regional_unresolved_at_first_war": "58/92",
+ "overlap": {
+  "ascension_rounds": 1577,
+  "rounds_by_count": {
+   "0": 0,
+   "1": 0,
+   "2": 252,
+   "3": 487,
+   "4": 838
+  },
+  "all_four_rounds_per_match": {
+   "n": 24,
+   "min": 0,
+   "median": 39.0,
+   "max": 53
+  },
+  "extreme_matches": [
+   [
+    "F33B-010",
+    53
+   ],
+   [
+    "F33B-023",
+    53
+   ],
+   [
+    "F33B-013",
+    50
+   ]
+  ]
+ },
+ "objectives": {
+  "issued": 269,
+  "resolved": 83,
+  "resolved_by_other": 123,
+  "superseded": 8
+ },
+ "early_eliminations_lt60": 0,
+ "turn_p95_ms": {
+  "n": 24,
+  "min": 276.87,
+  "median": 425.79499999999996,
+  "max": 1648.43
+ },
+ "turn_mean_ms": {
+  "n": 24,
+  "min": 155.29,
+  "median": 205.43,
+  "max": 460.13
+ }
+}

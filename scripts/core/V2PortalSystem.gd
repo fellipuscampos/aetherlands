@@ -132,7 +132,7 @@ static func clear_all(hex_grid: HexGrid = null) -> void:
 	grid.refresh_v2_portal_markers()
 
 static func _visible_to_owner(unit: Unit, coord: Vector2i, grid: HexGrid) -> bool:
-	if unit.owner_player != GameManager.human_player or grid.visibility.is_empty():
+	if not GameManager.is_human_controlled(unit.owner_player) or grid.visibility.is_empty():
 		return true
 	return grid.visibility.get(coord, HexGrid.Visibility.UNSEEN) == HexGrid.Visibility.VISIBLE
 

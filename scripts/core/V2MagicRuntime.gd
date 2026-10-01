@@ -62,7 +62,7 @@ static func _grid(hex_grid: HexGrid) -> HexGrid:
 
 ## Mesma regra das técnicas de alcance > 1: só o humano com neblina calculada precisa ver o tile agora.
 static func _visible_to_owner(unit: Unit, coord: Vector2i, grid: HexGrid) -> bool:
-	if unit.owner_player != GameManager.human_player or grid.visibility.is_empty():
+	if not GameManager.is_human_controlled(unit.owner_player) or grid.visibility.is_empty():
 		return true
 	return grid.visibility.get(coord, HexGrid.Visibility.UNSEEN) == HexGrid.Visibility.VISIBLE
 
@@ -330,7 +330,10 @@ static func cast(unit: Unit, spell_id: String, target_coord: Vector2i, hex_grid:
 		return false
 	var spell := V2SpellDatabase.get_spell(spell_id)
 	if spell.targets_tile():
-		return _cast_on_tile(unit, spell, target_coord, grid)
+		var tile_ok := _cast_on_tile(unit, spell, target_coord, grid)
+		if tile_ok:
+			MonsterAbilitySystem.on_spell_cast(unit, grid) # V3 / Etapa 2: Fome Arcana reage DEPOIS do feitiço resolver
+		return tile_ok
 	var target := grid.get_unit_at(target_coord)
 	if target_reason(unit, spell, target, grid) != "":
 		return false
@@ -341,6 +344,7 @@ static func cast(unit: Unit, spell_id: String, target_coord: Vector2i, hex_grid:
 	for affected_unit in affected:
 		_apply(unit, spell, affected_unit, grid)
 	_commit_action(unit, spell)
+	MonsterAbilitySystem.on_spell_cast(unit, grid) # V3 / Etapa 2: Fome Arcana reage DEPOIS do feitiço resolver
 	return true
 
 ## Custo comum de todo cast bem-sucedido: ação + cancelar fortificar/explorar/marcha.
@@ -409,7 +413,9 @@ static func _apply(caster: Unit, spell: V2SpellData, target: Unit, grid: HexGrid
 	if spell.is_heal() and _is_injured(target):
 		var before := target.hp
 		# Sem overheal: nunca passa do máximo, nunca cria Vida temporária.
-		target.hp = target.unit_data.max_hp if spell.heal_to_full else minf(target.hp + spell.heal_amount, target.unit_data.max_hp)
+		# V3 / Etapa 2: em tile de infecção micótica a cura recebida cai pela metade (MonsterHazardSystem).
+		var heal := (target.unit_data.max_hp if spell.heal_to_full else spell.heal_amount) * MonsterHazardSystem.heal_multiplier(target)
+		target.hp = minf(target.hp + heal, target.unit_data.max_hp)
 		if grid != null and target.hp > before:
 			grid.spawn_heal_popup(target.coord, target.hp - before)
 	if spell.applies_status():
@@ -424,6 +430,8 @@ static func _apply(caster: Unit, spell: V2SpellData, target: Unit, grid: HexGrid
 static func is_spellcasting_silenced(unit: Unit) -> bool:
 	if unit == null or unit.magic_status.is_empty():
 		return false
+	if UnitStatusEffects.silences_spells(unit): # V3 / Etapa 2: Silenciado (Ruptura Etérea do Devorador de Mana)
+		return true
 	for status_id in unit.magic_status.keys():
 		if not V2OwnerTurnEffect.is_active(unit.magic_status, String(status_id)):
 			continue

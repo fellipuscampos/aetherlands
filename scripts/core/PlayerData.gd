@@ -24,6 +24,9 @@ var cities: Array[City] = []
 ## so contam se estiverem VISIVEIS agora (ver HexGrid.compute_visible_tiles
 ## e RivalAI._choose_target). So a IA rival usa isso por enquanto.
 var known_enemy_cities: Dictionary = {} # Vector2i -> true
+## Fase 33D3 — último City Level VISTO de cada cidade inimiga conhecida (informação observada, pode ficar
+## desatualizada até a próxima observação). Base dos alvos de Supremacia sugeridos à IA/UI; salvo.
+var known_enemy_city_levels: Dictionary = {} # Vector2i -> int
 var explored_tiles: Dictionary = {} # conhecimento individual da IA
 ## Task 22 -- IA: ate que turno nao adianta procurar local de cidade de novo (ver RivalAI._has_settle_site). Estado de sessao, nao salvo.
 var settle_search_blocked_until: int = -1
@@ -66,6 +69,14 @@ var war_weariness: float = 0.0
 ## nunca referencia a City -- ver comentario de RivalAI._advance_campaign),
 ## "status" (RivalAI.CAMPAIGN_STATUS_*).
 var war_campaigns: Dictionary = {} # PlayerData (opponent) -> Dictionary
+
+## Fase 33D3 — uma cidade estrangeira está VISÍVEL agora para esta civilização: entra na memória de cidades
+## conhecidas com o nível observado neste instante.
+func remember_enemy_city(city) -> void:
+	if city == null:
+		return
+	known_enemy_cities[city.coord] = true
+	known_enemy_city_levels[city.coord] = int(city.city_level)
 
 ## Remove os ciclos PlayerData -> inimigo/campanha -> PlayerData ao encerrar.
 func release_relations() -> void:

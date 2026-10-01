@@ -195,7 +195,16 @@ static func tile_points(data: HexTileData) -> float:
 ## `known` = Dictionary de tiles conhecidos (PlayerData.explored_tiles) ou
 ## null (sem filtro de nevoa: HUD/testes/diagnostico). A IA nunca enxerga
 ## alem do que explorou.
+##
+## Fase 33D2 (Bug Register #6) — com `known` (modo IA, "limited"), o contexto só contém o que a
+## civilização legitimamente sabe: cidades próprias, cidades estrangeiras CONHECIDAS (known_enemy_cities
+## ou visíveis agora) e o território delas, monstros VISÍVEIS agora e covis em tiles conhecidos. Uma cidade
+## rival escondida ou um monstro na névoa nunca entram na pontuação. A LEGALIDADE final continua sendo a do
+## mundo real (rejection_reason em WorldSetup.found_city_from_settler): se o runtime recusar um local que a
+## IA achou bom, o Colonizador só marca o tile como recusado (Unit.settle_rejected_sites), sem saber por quê.
 static func build_context(hex_grid: HexGrid, player: PlayerData, known: Variant = null) -> Dictionary:
+	var limited := typeof(known) == TYPE_DICTIONARY and player != null
+	var visible: Dictionary = hex_grid.compute_visible_tiles(player) if limited else {}
 	var own_cities: Array[City] = []
 	var foreign_cities: Array[City] = []
 	var owner_of := {}
@@ -204,6 +213,8 @@ static func build_context(hex_grid: HexGrid, player: PlayerData, known: Variant 
 		if city.owner_player == player:
 			own_cities.append(city)
 		else:
+			if limited and not player.known_enemy_cities.has(city.coord) and not visible.has(city.coord):
+				continue
 			foreign_cities.append(city)
 		if not owner_of.has(city.coord):
 			owner_of[city.coord] = city.owner_player
@@ -213,12 +224,16 @@ static func build_context(hex_grid: HexGrid, player: PlayerData, known: Variant 
 	var monsters: Array[Vector2i] = []
 	for monster in hex_grid.neutral_units():
 		if is_instance_valid(monster) and CityDefense.is_mobile_threat(monster):
+			if limited and not visible.has(monster.coord):
+				continue
 			monsters.append(monster.coord)
 	var controlled := {}
 	for resource_id in ResourceDatabase.DISPLAY_NAMES:
 		controlled[resource_id] = ResourceDatabase.count_controlled(player, hex_grid, resource_id)
 	return {
 		"known": known,
+		"limited": limited,
+		"visible": visible,
 		"own_cities": own_cities,
 		"foreign_cities": foreign_cities,
 		"owner_of": owner_of,
@@ -227,6 +242,51 @@ static func build_context(hex_grid: HexGrid, player: PlayerData, known: Variant 
 		"arcane": player != null and player.v2_ai_strategy.orientation == V2AIStrategyState.Orientation.ARCANE,
 		"player": player,
 	}
+
+## Mesma regra estrutural de rejection_reason, avaliada só com o que o contexto sabe (modo IA). Sem
+## conhecimento limitado, é a própria regra real.
+static func known_rejection_reason(hex_grid: HexGrid, coord: Vector2i, context: Dictionary) -> String:
+	if not bool(context.get("limited", false)):
+		return rejection_reason(hex_grid, coord, context.player)
+	var tile: HexTileData = hex_grid.get_tile(coord)
+	if tile == null or tile.blocks_land_units():
+		return REASON_TERRAIN
+	var known_cities: Array[City] = []
+	known_cities.append_array(context.own_cities)
+	known_cities.append_array(context.foreign_cities)
+	for city in known_cities:
+		if city.coord == coord:
+			return REASON_CITY
+	if hex_grid.lairs_by_coord.has(coord) and _is_known(context, coord):
+		return REASON_LAIR
+	var building = hex_grid.buildings_by_coord.get(coord)
+	if building != null and (building.owner_player == context.player or (context.visible as Dictionary).has(coord)):
+		return REASON_BUILDING
+	for city in known_cities:
+		if HexMetrics.axial_distance(coord, city.coord) < min_city_distance:
+			return REASON_TOO_CLOSE
+	var territory_owner: Variant = context.owner_of.get(coord)
+	if territory_owner != null and territory_owner != context.player:
+		return REASON_FOREIGN_TERRITORY
+	return ""
+
+## Unidade ocupando `coord` que o contexto conhece (modo IA: só visível; sem limite: qualquer uma).
+static func _known_occupant(hex_grid: HexGrid, coord: Vector2i, context: Dictionary) -> Unit:
+	var occupant: Unit = hex_grid.get_unit_at(coord)
+	if occupant == null or not bool(context.get("limited", false)):
+		return occupant
+	if occupant.owner_player == context.player or (context.visible as Dictionary).has(coord):
+		return occupant
+	return null
+
+## Pressão rival (HexGrid.RIVAL_PRESSURE_RADIUS) só com as cidades estrangeiras do contexto.
+static func _rival_pressure(hex_grid: HexGrid, coord: Vector2i, context: Dictionary) -> bool:
+	if not bool(context.get("limited", false)):
+		return hex_grid.is_under_rival_pressure(coord, context.player)
+	for city in context.foreign_cities:
+		if HexMetrics.axial_distance(coord, city.coord) <= HexGrid.RIVAL_PRESSURE_RADIUS:
+			return true
+	return false
 
 static func _nearest_distance(coord: Vector2i, cities: Array[City]) -> int:
 	var best := 999999
@@ -366,13 +426,14 @@ static func evaluate(hex_grid: HexGrid, coord: Vector2i, context: Dictionary) ->
 	parts.cohesion = -cohesion_penalty(nearest_own)
 
 	# Seguranca.
-	parts.security -= LAIR_DANGER_PENALTY * hex_grid.get_lair_danger_at(coord)
+	# Fase 33D1: com contexto de conhecimento (IA), só covis em tiles que a civilização conhece.
+	parts.security -= LAIR_DANGER_PENALTY * hex_grid.get_lair_danger_at(coord, context.known)
 	var monsters_near := 0
 	for monster_coord in context.monsters:
 		if HexMetrics.axial_distance(coord, monster_coord) <= MONSTER_RADIUS:
 			monsters_near += 1
 	parts.security -= MONSTER_PENALTY_EACH * float(mini(monsters_near, MONSTER_PENALTY_MAX_COUNT))
-	var rival_pressure := hex_grid.is_under_rival_pressure(coord, player)
+	var rival_pressure := _rival_pressure(hex_grid, coord, context)
 	if rival_pressure:
 		parts.security -= RIVAL_PRESSURE_PENALTY
 
@@ -412,10 +473,12 @@ static func rank_sites(hex_grid: HexGrid, player: PlayerData, context: Dictionar
 				seen[coord] = true
 				if not _is_known(context, coord):
 					continue
-				var occupant: Unit = hex_grid.get_unit_at(coord)
+				if unit != null and unit.settle_rejected_sites.has(coord):
+					continue
+				var occupant: Unit = _known_occupant(hex_grid, coord, context)
 				if occupant != null and occupant != unit:
 					continue
-				if rejection_reason(hex_grid, coord, player) != "":
+				if known_rejection_reason(hex_grid, coord, context) != "":
 					continue
 				quick.append({"coord": coord, "quick": _quick_score(hex_grid, coord, context)})
 	quick.sort_custom(func(a, b): return a.quick > b.quick)
@@ -451,7 +514,7 @@ static func choose_site(hex_grid: HexGrid, player: PlayerData, unit: Unit, accep
 	# Histerese: mantem o alvo anterior se ainda for valido, alcancavel e
 	# quase tao bom quanto o melhor de agora.
 	var target: Vector2i = unit.settle_target
-	if rejection_reason(hex_grid, target, player) == "" and _reachable(hex_grid, unit, target):
+	if not unit.settle_rejected_sites.has(target) and known_rejection_reason(hex_grid, target, context) == "" and _reachable(hex_grid, unit, target):
 		var result := evaluate(hex_grid, target, context)
 		var target_score: float = result.total - TRAVEL_PENALTY_PER_TILE * float(HexMetrics.axial_distance(unit.coord, target))
 		if target_score >= floor_score and best.score - target_score < SWITCH_MARGIN:

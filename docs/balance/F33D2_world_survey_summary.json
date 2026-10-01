@@ -1,0 +1,99 @@
+{
+ "phase": "F33D2",
+ "source": "--world-survey --matches=0-47 --run=phase33d2 (mundo inicial; Guardiões avaliados sobre o mundo inicial como aproximação)",
+ "capitals_moved_by_landmass_rule": 5,
+ "min_capital_landmass": 350,
+ "worlds": 48,
+ "expected": 192,
+ "threats_exist": 192,
+ "valid": 192,
+ "under7": 0,
+ "over10": 0,
+ "other_component": 0,
+ "distance": {
+  "min": 7,
+  "p25": 8.0,
+  "median": 8.0,
+  "p75": 9.0,
+  "max": 10
+ },
+ "distance_hist": {
+  "7": 8,
+  "8": 89,
+  "9": 83,
+  "10": 12
+ },
+ "kinds": {
+  "goblin": 150,
+  "skeleton": 42
+ },
+ "sources": {
+  "created": 140,
+  "reused": 52
+ },
+ "visible_at_creation": 0,
+ "corridor_pairs": 26,
+ "threats_with_close_neighbor": 26,
+ "in_corridor": 0,
+ "relocated": 52,
+ "removed": 0,
+ "preserved_close": 0,
+ "wild_lairs_under_7_after": 0,
+ "wake_delay": {
+  "8": 43,
+  "9": 33,
+  "10": 53,
+  "11": 37,
+  "12": 26
+ },
+ "nearest_other_capital": {
+  "min": 9,
+  "median": 26.0
+ },
+ "by_seat_kind": {
+  "0": {
+   "goblin": 37,
+   "skeleton": 11
+  },
+  "1": {
+   "skeleton": 11,
+   "goblin": 37
+  },
+  "2": {
+   "goblin": 39,
+   "skeleton": 9
+  },
+  "3": {
+   "goblin": 37,
+   "skeleton": 11
+  }
+ },
+ "min_capital_pair_distance_min": 12,
+ "start_distance_violations": 0,
+ "guardian_sites": 190,
+ "guardian_by_resource": {
+  "horses": 39,
+  "gems": 37,
+  "iron": 38,
+  "silk": 45,
+  "mana_node": 31
+ },
+ "guardian_shared": 2,
+ "guardian_civs_without_candidate": 0,
+ "guardian_skipped_sole": 8,
+ "guardian_candidates_per_civ": {
+  "min": 4,
+  "median": 24.0,
+  "max": 46
+ },
+ "guardian_nearest_capital": {
+  "min": 12,
+  "median": 16.0,
+  "max": 20
+ },
+ "guardian_sites_per_world": {
+  "3": 2,
+  "4": 46
+ },
+ "guardian_civ_coverage": 192
+}

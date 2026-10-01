@@ -466,6 +466,67 @@ func can_train(kind: String) -> bool:
 		return true
 	return buildings.has(required.id)
 
+## Fase 33D1 — o item ATUAL da fila é legítimo para o dono ATUAL? "" = sim; senão o motivo interno.
+## Só ELEGIBILIDADE (pesquisa do dono, forma, prédio de treino/pré-requisito, cópias/slots, nível de
+## cidade, slot de Lendária/Manifestação): as travas de AFFORDABILITY que valem só para INICIAR (Mana de
+## produção, Suprimentos/Déficit, Ouro do City Project) não entram — produção em andamento nunca foi
+## cancelada por elas e nada é cobrado de novo. Usado na captura (HexGrid.capture_city).
+func production_eligibility_reason() -> String:
+	if production_item == "":
+		return ""
+	var player := owner_player
+	if player == null:
+		return "no_owner"
+	var building := BuildingDatabase.get_building(production_item)
+	if building != null:
+		if not _research_unlocked_for_building(production_item):
+			return "research"
+		if not _prerequisite_building_present(production_item):
+			return "prerequisite"
+		if building_count(production_item) >= max_copies_for_building(building):
+			return "copies"
+		if used_building_slots() >= max_building_slots():
+			return "slots"
+		return ""
+	var level_target := V2CityLevelData.target_level_for_project(production_item)
+	if level_target > 0:
+		if level_target != V2CityLevelData.next_level(city_level):
+			return "city_level"
+		return "" if player.has_unlocked(V2CityLevelData.unlock_id_for_level(level_target)) else "research"
+	var fortification_target := V2FortificationData.target_level_for_project(production_item)
+	if fortification_target > 0:
+		if fortification_target != V2FortificationData.next_level(fortification_level):
+			return "fortification_level"
+		var unlock_id := V2FortificationData.required_research_id(fortification_target)
+		if unlock_id != "" and not player.has_unlocked(unlock_id):
+			return "research"
+		return "" if city_level >= V2FortificationData.required_city_level(fortification_target) else "city_level"
+	if V2ResearchDatabase.is_v2_id(production_item):
+		if not V2UnlockSystem.is_unit_unlocked(player, production_item):
+			return "research"
+		if V2LegendarySystem.is_legendary_kind(production_item) and not V2LegendarySystem.legendary_slot_available(player, self):
+			return "legendary_slot"
+		if V2ManifestationSystem.is_manifestation_kind(production_item) and not V2ManifestationSystem.slot_available(player, V2ManifestationSystem.school_of_kind(production_item), self):
+			return "manifestation_slot"
+	elif not production_item in UnitDatabase.CORE_TRAINABLE_KINDS:
+		return "not_trainable"
+	var trainer := BuildingDatabase.building_that_trains(production_item)
+	if trainer != null and not buildings.has(trainer.id):
+		return "trainer_building"
+	return ""
+
+## Fase 33D1 — aplica a revalidação acima. Item legítimo: fila e progresso preservados. Item ilegítimo:
+## a cidade fica ociosa e o progresso acumulado se perde (nada é transferido nem reembolsado; nenhuma
+## produção nova é escolhida). Devolve true se a fila foi limpa.
+func revalidate_production_for_owner() -> bool:
+	if production_eligibility_reason() == "":
+		return false
+	if BuildingDatabase.get_building(production_item) != null:
+		pending_building_coord = NO_PENDING_COORD
+	production_item = ""
+	stored_production = 0.0
+	return true
+
 ## Tile valido pra POSICIONAR um predio: precisa ser vizinho imediato da
 ## cidade ou parte do território dela (owned_tiles), terra
 ## firme, sem unidade/cidade em cima, e sem outro predio (desta cidade ou

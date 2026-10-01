@@ -7959,3 +7959,265 @@ Não houve mudança de custo, unlock, rendimento, IA, vitória, slot de pesquisa
 qualquer tuning do F33B.
 
 **READY FOR F33B — RELEASE BALANCE BASELINE.**
+
+## Fase 33 — Gameplay Completion + Release Balance
+
+### Etapa B — Release Balance Baseline
+
+**Escopo executado:** laboratório determinístico de partidas completas AI × AI × AI × AI e a baseline de release
+`RELEASE_BALANCE_BASELINE_PRE_TUNING`. **Nenhum custo, rendimento, unlock, peso de IA, regra de vitória, slot de
+pesquisa ou schema de save foi alterado.** O relatório completo (18 seções, estatísticas, outliers, gargalos e eixos
+candidatos para a F33C) está em `docs/AETHERLANDS_RELEASE_BALANCE_BASELINE.md`.
+
+#### Harness
+
+| Papel | Arquivo |
+|---|---|
+| Seed set versionado (48 + 16 reservas, raça/orientação por assento, paridade balanceada) | `tools/balance/BalanceSeedSet.gd` |
+| Runner de partida (mapa real 320×84, pipeline real de turno, teardown) | `tools/balance/BalanceMatchRunner.gd` |
+| TELEMETRY OBSERVER (lê tudo, não escreve gameplay, não alimenta a IA) | `tools/balance/BalanceTelemetry.gd` |
+| Baseline numérica lida do código + agregação + CSV/JSON/markdown | `tools/balance/BalanceReport.gd` |
+| CLI headless paralelizável | `tools/balance/BalanceLab.tscn`, `tools/balance/balance_lab.gd` |
+| Testes (fixture, no-cheat, visão, marcos, fim, rotação, reset, smoke determinístico) | `test/unit/test_balance_lab_phase33b.gd` |
+| Ferramenta DEV-ONLY de tempo humano (desligada por padrão) | `scripts/core/HumanTimingTelemetry.gd`, `test/unit/test_human_timing_telemetry.gd` |
+
+Mudanças no runtime, todas neutras com a fixture desligada (padrão):
+
+- `GameManager.ai_controls_human_seat` (nunca salva), `is_human_controlled()` e `ai_controlled_players()`: com a flag,
+  o `human_player` formal entra no mesmo loop de IA dos rivais; sem ela, `ai_controlled_players() == rival_players`;
+- `V2StrategicAI.is_enabled_for` usa `ai_controlled_players()`; as cinco regras "alvo visível na neblina do humano"
+  (Técnica, feitiço, zona, Portal, Ataque da Cidade) usam `is_human_controlled()`; a defesa de cidade da IA idem;
+- `check_victories`: a eliminação do assento humano automatizado não encerra a partida (conta para a Dominação dos
+  outros);
+- sinais de observabilidade pura em `EventBus` (`city_production_processed`, `unit_removed`, `combat_engagement`),
+  emitidos em `GameManager`, `HexGrid.remove_unit` e `CombatResolver`; nenhum sistema do jogo os escuta.
+
+#### Execução
+
+Stage 1 → 2 → 3: **48 partidas completas** (192 observações de civilização), cap 240, as 24 que deram TIMEOUT
+reexecutadas até 300 como dataset separado, 4 reexecuções de determinismo e 4 de save/load no T60. Duas execuções
+anteriores foram **invalidadas por problemas do harness** e não entram em nenhum número: capital do assento 0 pelo
+Colonizador (rejeitada por `CitySite` em 2/12 mapas) e seed set v1 só com seeds ímpares (acoplava o foco-reserva
+do BALANCED ao assento via `posmod(strategy_seed, 2)`).
+
+#### Resultado
+
+- Vitórias válidas: 24 (18 Transcendência, 6 Supremacia, 0 Dominação), mediana **T200** [191–210], p90 224;
+  **24/48 TIMEOUT** no T240.
+- Gargalos confirmados (≥ 2 sinais cada): execução da Supremacia (79 civs com Exército Supremo, 6 vitórias; 44% nunca
+  capturam uma Cidade III+; 27% dos rivais pendentes não têm cidade desenvolvida), conversão pós-pesquisa da
+  Transcendência (research-ready → Ritual pronto em 39 turnos; Estrutura Ritual construível e não construída em
+  1.570 turnos; Mana bloqueou 2 turnos) e economia de Conhecimento das orientações MILITARY/ARCANE (BALANCED gera ~2×
+  no T100 e vence 19/24).
+- Sem evidência para mudar: custos de pesquisa, **slot único (NO)**, Mana, Ritual, Supply, Ouro, Colonizador, raças.
+- 2–3 h por partida: **não garantível ainda** — calibração humana pendente (F33D).
+- Bug documentado e não corrigido: `HexGrid.capture_city` preserva a fila do dono anterior sem revalidar unlock/slot
+  do novo dono (1 recusa fail-closed de Manifestação em 48 partidas).
+
+#### Validação
+
+- determinismo: 4/4 reexecuções idênticas e 24/24 partidas estendidas idênticas até o T240; save/load no T60 4/4
+  idêntico à execução contínua; memória/objetos estáveis entre partidas (0 órfãos);
+- suíte GUT completa: **3442/3442, 168 scripts, 371.274 asserts**, código 0 (antes 3424/166/370.779);
+- `git diff --check`: PASS; nenhum JSON/CSV bruto versionado (brutos em `user://balance/`, resumos em `docs/balance/`).
+
+**READY FOR F33C — EVIDENCE-BASED TUNING.**
+
+### Etapa C — Strategic Pacing & Objectives Design
+
+**Escopo executado:** design da camada final de engagement, **sem implementação**. Nenhuma regra, custo, peso de IA,
+geração de mundo ou save foi alterado. Documento: `docs/AETHERLANDS_STRATEGIC_PACING_OBJECTIVES_DESIGN.md`.
+
+Única adição de código: análise somente leitura `tools/balance/BalanceWorldSurvey.gd` (`--world-survey` no
+`BalanceLab`), que gera os 48 mundos da F33B e mede covis por capital e o gatilho do Dragão
+(`docs/balance/F33C_world_survey.json`). Achados que fundamentam o design: 52% das capitais sem covil a ≤ 10 tiles;
+só o humano consegue destruir covis; o Dragão pode repetir após resolução; e as capitais dos assentos 0 e 2 nascem a
+1–8 tiles em 7/48 mapas, explicando 4 das 5 eliminações precoces do assento central.
+
+Decisão: 3 eras globais (Despertar/Ascensão/Convergência) com transição por maioria + piso + fallback, uma ameaça
+regional por capital com Goblin/Esqueleto existentes, Troll como guardião de recurso, Dragão ONCE_PER_GAME na
+Ascensão, imperativos estratégicos derivados do runtime de vitória, Relicário Desperto como SHOULD. Bug register com
+dois blockers (fila da cidade capturada; distância mínima entre capitais).
+
+**READY FOR F33D — STRATEGIC PACING & OBJECTIVES IMPLEMENTATION** (condicionado às correções da D1).
+
+## Fase 33D — Strategic Pacing & Objectives Implementation
+
+### D1 — Correções + Núcleo de Era
+
+**Escopo executado:** só a D1 do plano aprovado em `docs/AETHERLANDS_STRATEGIC_PACING_OBJECTIVES_DESIGN.md` (status
+detalhado na seção "Implementation Status" desse documento). Nenhum custo, rendimento, peso de IA, tamanho de
+exército, recompensa, regra de Ritual/Colonizador/City Level ou condição de vitória foi alterado. D2 e D3 não foram
+iniciadas.
+
+#### Correções
+
+| Bug | Correção | Evidência |
+|---|---|---|
+| #1 fila da cidade capturada | `City.production_eligibility_reason()`/`revalidate_production_for_owner()` em `HexGrid.capture_city`: item legítimo para o novo dono continua com os PP; ilegítimo → cidade ociosa, PP zerados, sem reembolso nem escolha automática. Só elegibilidade (pesquisa, prédio de treino/pré-requisito, cópias/slots, nível, slots de Lendária/Manifestação); travas de início (Mana, Suprimentos/Déficit, Ouro) não recobram nada | 7 testes + `test_v2_city_level_flow` atualizado para a semântica nova |
+| #2 distância entre capitais | `WorldSetup.MIN_CAPITAL_DISTANCE = 12` em `find_start_tile`, estágios determinísticos, `start_distance_violations` + `push_warning` se impossível | survey 48/48: 0 pares < 12 (antes: mínimo 1), 0 violações, 14/192 capitais movidas |
+| #3 Dragão repete | `REPEAT_POLICY`/`completed_event_types`/`can_start_event_type` no `WorldEventManager` (salvo) | Dragão resolvido não volta nem após 570 turnos de gatilho e save/load |
+| #4 covis escondidos | `V2AIWorldView.known_lairs`; `HexGrid.get_lair_danger_at(coord, known)` usado pela exploração e pela escolha de local da IA | covil fora de `explored_tiles` não existe para a IA |
+| #5 nome de classe | `WorldEvent.display_name()/public_summary()`; Dragão "O Dragão desperta" | nenhum nome interno no Event Center |
+
+Registrado como aberto (D2): `CitySite.build_context` ainda lê monstros móveis e cidades estrangeiras de todo o mapa.
+Efeito colateral corrigido: "Jogar de Novo" não passava por `end_match`, então eventos ativos da partida anterior
+sobreviviam; `GameManager.setup_players` agora zera o estado de mundo (`WorldEventManager.reset_for_new_match`).
+
+#### Eras do mundo
+
+- `scripts/core/WorldPhaseRules.gd` — regras puras: Despertar → Ascensão (piso T35; 2 civs ativas com ≥ 2 cidades;
+  fallback T70) e Ascensão → Convergência (piso T100; 2 civs com N9 ou 1 capstone de vitória; fallback T150). Com 2
+  civs ativas, ambas. Um passo por chamada, sem regressão.
+- `WorldEventManager` é o dono: `world_phase`, `phase_history` `{phase, turn, cause}` (INITIAL/PROGRESS/FALLBACK/
+  MIGRATED), avaliação única por rodada em `GameManager._finish_turn` antes de `check_victories`, sinal
+  `EventBus.world_phase_changed(old, new, turn, cause)`.
+- Nenhum script de regra de jogo lê a era (teste de varredura de fonte): sem bônus.
+- UI mínima: "T62 · Ascensão" na barra global (sem corte em 1280, normal e compacta); transição como evento
+  `WORLD`/IMPORTANT (Toast + Event Center) com o texto aprovado; nunca Attention.
+- Save: `SAVE_VERSION` 21 → 22; saves 21 carregam com a era reconstruída pelo estado e histórico `MIGRATED`, sem sinal
+  nem recompensa retroativa.
+
+#### Telemetria de engagement
+
+`BalanceTelemetry` registra a timeline de eras (turno e causa), primeiro contato/combate PvP/ataque a cidade/captura,
+primeiro uso de unidade e `units_without_purpose_lag`, EMPTY_WAR e LOW_ACTIVITY_WAR por par em guerra, inatividade
+máxima por era (interações significativas definidas no design) e o schema de monstros/covis/ameaça regional/objetivos
+que D2/D3 preencherão. `BalanceReport` agrega em `engagement`. `BalanceWorldSurvey` mede a menor distância entre
+capitais e violações.
+
+#### Validação
+
+- Survey das 48 seeds: 4 capitais em 48/48, vizinho mais próximo mín 12 / p25 21 / mediana 27 / p75 34 / máx 53;
+  reexecução de 4 seeds com capitais idênticas.
+- Smoke 4-IA (2 partidas até T130): eras em T49/T110 e T38/T100, ambas por progresso; reexecução bit a bit idêntica
+  (marcos, séries, inatividade, guerras); 0 órfãos.
+- Performance: `WorldPhaseRules.next_transition` 21 µs por rodada; consulta de covil conhecido 10 µs por chamada.
+- Suíte GUT completa: **3467/3467, 170 scripts, 371.525 asserts**, código 0 (antes 3442/168/371.274; +25 testes em 2 arquivos novos, 3 testes antigos atualizados para a semântica nova: `SAVE_VERSION` 22 em `test_settings`/`test_v2_race_bonuses` e captura de City Project em `test_v2_city_level_flow`).
+- `git diff --check`: PASS.
+
+**READY FOR F33D2 — REGIONAL THREATS & GUARDIANS.**
+
+### D2 — Regional Threats & Guardians
+
+**Escopo executado:** só a D2 (status detalhado em "D2 Implementation Status" de
+`docs/AETHERLANDS_STRATEGIC_PACING_OBJECTIVES_DESIGN.md`). Nenhum custo de pesquisa, rendimento de Conhecimento, Ouro/
+Mana/Produção base, Suprimentos, alvo/teto de tokens de exército, peso de pesquisa/guerra/paz da IA, stat de unidade ou
+monstro, valor de feitiço, custo de cidade, Ritual, Colonizador ou condição de vitória foi alterado. D3 não foi iniciada.
+
+#### Correções
+
+| Bug | Correção |
+|---|---|
+| #6 CitySite onisciente | contexto da IA só com cidades conhecidas/visíveis, monstros visíveis, covis conhecidos; `CitySite.known_rejection_reason` para a busca; legalidade real no runtime; recusa → `Unit.settle_rejected_sites` |
+| #7 CityDefense lia covis escondidos | `_live_lair_near` com filtro de névoa só conta covil conhecido pelo dono |
+| #8 capital em ilhota | `WorldSetup.MIN_START_LANDMASS = 120` (massa de terra contínua do tile inicial; `HexGrid.land_component_size`; mapas menores usam tiles/32) |
+
+#### Ameaças regionais e Guardiões
+
+- `scripts/core/RegionalThreatPlanner.gd` (estático): colocação da ameaça regional (anel 7–10, componente da capital
+  real, fora da visão, corredor, reuso, realocação/remoção de covil selvagem < 7, mundo observado preservado, tipo pelo
+  bioma, despertar `fundação + 8..12`) e dos Guardiões Troll (Ascensão; recurso existente, livre, 12–20; tipo sorteado
+  entre os disponíveis; nunca a cópia única do teatro; compartilhado = um site).
+- `scripts/core/RegionalThreatSystem.gd` (estático, estado em `WorldEventManager`): criação na primeira capital
+  (`_spawn_starting_forces` para o setup, `HexGrid.found_city` para fundação manual), `DORMANT → AWAKE → RESOLVED`,
+  descoberta por `explored_tiles` (`recompute_fog`/`V2AIWorldView.capture`), diretiva de monstro por papel/era,
+  recompensas por papel (40 / 40+5 Mana / 75, provisórias), objetivo derivado, save.
+- `HexGrid`: `lair_roles`, `added_lairs`, `removed_seed_lairs`, `create_lair`, `remove_lair_silently`,
+  `lair_population`/`lair_members` (por `Unit.source_lair_coord`), reforço regional com população própria de 3 fora do
+  teto global, Guardião sem reforço, `lair_clear_rewards` (papel substitui tipo). `explored_tiles` agora também recebe a
+  visão do assento com névoa renderizada (conhecimento uniforme).
+- `MonsterAI`: dormente guarda a porta sem saque; desperto no Despertar preso ao teatro (Goblin Saqueador, Esqueleto
+  pressão local), sem promoção a Invasor; Ascensão = comportamento normal; Guardião ancorado no covil.
+- IA: `V2AIWorldView.known_lairs` com papel e `known_lair_defense`; `V2StrategicAI.lair_response_plan` (none/gather/
+  attack, `CityDefense.OVERMATCH`, prioridade abaixo de pressão grave) e bônus de produção da resposta mínima (+30 até
+  3 unidades relevantes, depois do teto de tokens); `StrategicAI.respond_to_lair` chamado por `RivalAI.act_for_unit`.
+- `CombatResolver.can_attack_lair`: regra canônica usada pelo destaque do humano e pela IA.
+- UI: Event Center (descoberta, despertar ao dono que conhece, resolução sem revelar quem, Guardião junto a recurso
+  conhecido), chip "Ameaça regional" com foco no covil, TileInspector com papel/estado/recompensa do papel.
+- Save: `SAVE_VERSION` 22 → **23**; bloco `regional` em `world_events`, `lair_state`, `source_lair` por monstro; 22
+  migrável sem nada retroativo.
+- Telemetria: `regional_threat`/`lairs`/`guardian`/objetivos por civ, `world_threats` por partida, auditoria de ataque
+  a covil desconhecido; `BalanceReport.engagement.world_threats`; `BalanceWorldSurvey` com bloco regional/Guardiões.
+- `GameManager.regional_threats_on_new_match` (padrão `true`): só três fixtures de conteúdo V2 que dependem do layout exato
+  do mapa gerado (`test_v2_phase22_main_flow`, `test_v2_cavalry_flow`, `test_v2_rogue_flow`) desligam e restauram.
+- Higiene: `docs/balance/.gdignore` (o importador do Godot gerava `.translation`/`.csv.import` a partir dos CSV).
+
+#### Validação
+
+- Survey 48 mundos (`--world-survey --run=phase33d2`): 192/192 ameaças a 7–10 (mín 7 · p25 8 · med 8 · p75 9 · máx 10),
+  mesmo componente, invisíveis na criação, 0 no corredor, 0 covil selvagem < 7; 150 Goblin / 42 Esqueleto; 140 criadas
+  / 52 reusadas; 52 realocados, 0 removidos. Guardiões: 190 sites, 192/192 civs com candidato, 8 cópias únicas poupadas.
+- Smokes 4-IA (24 partidas até T80, não é baseline): 67/96 ameaças descobertas, 61 respostas, 19 limpas pela própria
+  civ, 0 ataques a covil desconhecido; vivas 95/90/81 de 96 no T30/50/75; 0 eliminações antes do T60.
+- Determinismo: 4 seeds reexecutadas idênticas; save/load no T30 idêntico à execução contínua.
+- Performance: planner ~6,7 ms por capital (evento raro), captura da WorldView ~0,3 ms, plano de resposta ~0,1 ms,
+  diretivas + despertar ~45 µs por turno, Guardiões ~40 ms uma vez por partida; nada por frame.
+- Suíte GUT completa: **3504/3504, 172 scripts, 372.007 asserts**, código 0 (antes 3467/170/371.525; +37 testes em 2
+  arquivos novos; atualizados: `SAVE_VERSION` 23 em `test_settings`/`test_v2_race_bonuses`, varredura de era e versão
+  em `test_phase33d1_world_phase`, e os três fixtures de conteúdo com `regional_threats_on_new_match = false`).
+- `git diff --check`: PASS.
+
+**READY FOR F33D3 — MIDGAME & ENDGAME OBJECTIVES.**
+
+### D3 — Midgame & Endgame Objectives
+
+**Escopo executado:** só a D3 (status detalhado em "D3 Implementation Status" de
+`docs/AETHERLANDS_STRATEGIC_PACING_OBJECTIVES_DESIGN.md`). Nenhum custo de pesquisa, rendimento de Conhecimento,
+Produção/Ouro/Mana base, Suprimentos, alvo 20/teto 24 de exército, alocação de pesquisa da IA, reserva de Ouro,
+pontuação de guerra/paz, custo de City Level, valor de feitiço, Mana/duração do Ritual, stat de monstro, recompensa
+ou cadência regional foi alterado. Os únicos números novos são defaults provisórios dos eventos redesenhados:
+recompensa do Dragão (pool 175/80, piso 15/5), recompensa do Relicário (90 Ouro ou 60 Mana) e timers (Dragão
+Ascensão+10/+35; Relicário Ascensão+15, 5 de preparação, 10 ativo, 3 de escolha, +5 depois do Dragão). F33E não foi
+iniciada.
+
+- Supremacia: `V2VictoryConditions.is_supremacy_qualifying_city` / `max_city_level` / `capital_of` /
+  `known_supremacy_targets`; `HexGrid.capture_city` avalia antes de a cidade sair do rival; posse, perda, recaptura
+  e eliminação inalteradas. Textos de regra atualizados (Vitória, HUD).
+- `scripts/core/StrategicImperatives.gd` (derivado): próximo passo por rota; "Próximo passo" na tela de Vitória e
+  chip na Convergência (chips de objetivo limitados a 2, Ritual rival ocupa vaga).
+- `scripts/core/PublicVictoryMilestones.gd`: Exército Supremo e 2ª Manifestação distinta, anúncio único por civ,
+  `EventBus.public_milestone_reached`, `V2AIWorldView.public_milestones`.
+- Dragão: agendamento em `WorldEventManager.maybe_spawn_dragon` (Ascensão, +10, 2%, garantia +35, virada para a
+  Convergência em `_close_ascension_events`), alvo com 2+ cidades (`DragonEvent.eligible_target_indices`),
+  `V2StrategicAI.dragon_participation` + `RivalAI.join_dragon_hunt`, `DragonEvent.split_pool`, desfecho no Event
+  Center (`UIEventService`), modal de resultado removido, participação WARNING (não bloqueia).
+- `scripts/core/ReliquaryEvent.gd` + `WorldEventManager.maybe_start_reliquary`/`choose_reliquary_reward`:
+  local justo determinístico, marcador público, guardiões por `Unit.source_event_id` (fora do teto dos selvagens,
+  guardam o local), posse 2 rodadas, expiração, escolha de recompensa pelo painel de evento existente (Attention
+  WARNING). IA: `V2StrategicAI.reliquary_plan` + `StrategicAI.respond_to_reliquary`; unidades especiais usam o local
+  como alvo estratégico de menor prioridade.
+- Save 24 (23 migrável), telemetria/relatório D3, `docs/balance/F33D3_smoke_summary.json`.
+
+#### Validação
+
+- Smokes (24 partidas 4-IA até T200; observação funcional): ver números em "D3 Implementation Status"; 0 erros.
+- Determinismo: 4 seeds reexecutadas até T200 com registros idênticos; save/load no T100 (2 seeds) idêntico à
+  execução contínua.
+- Performance: local do Relicário ~214 ms uma vez por partida; plano de IA ~8 µs/chamada; imperativos das 4 civs
+  ~0,7 ms (só em refresh de UI); marcos + agendadores ~160 µs/rodada; nada por frame.
+- Suíte GUT completa: **3541/3541, 174 scripts, 372.473 asserts**, código 0 (antes 3504/172/372.007; +41 testes em
+  2 arquivos novos). Testes antigos atualizados para a semântica nova de propósito: `SAVE_VERSION` 24; Supremacia
+  (Cidade II só não conta quando o rival tem cidade de nível maior — `test_v2_military_supremacy`,
+  `test_v2_phase16_main_flow`); gatilho do Dragão só na Ascensão (`test_world_event_manager`, `test_game_manager`);
+  participação decidida (`test_rival_ai`, `test_game_manager`); recompensa por pool (`test_system_completion`); modal
+  de resultado substituído por Event Center (`test_hud`). Fixtures de MECÂNICA do Dragão com civs de uma cidade
+  (`test_dragon_event`, rastreador em `test_hud`) usam `DragonEvent.min_target_cities = 1` e restauram.
+- `git diff --check`: PASS.
+
+**READY FOR F33E — POST-OBJECTIVES BASELINE + EVIDENCE-BASED TUNING.**
+
+### F33D-R — Post-Implementation Review
+
+Revisão de corretude da camada D1–D3 inteira antes da baseline F33E (detalhe, ordem canônica da rodada e
+watchpoints em "F33D Post-Implementation Review" de `docs/AETHERLANDS_STRATEGIC_PACING_OBJECTIVES_DESIGN.md`).
+Nenhum número de balanceamento mudou.
+
+- R1 (P2): `WorldEventManager.dragon_guarantee_deadline()` — o Relicário anunciado antes do Dragão agora também
+  termina antes do piso da Convergência; antes, num caso raro (Ascensão T69–70 + Convergência no piso + posse na
+  última rodada), podia anular o Dragão da partida.
+- R2 (P2): `DragonEvent._choose_target_city` só continua a perseguição se o dono ainda tem 2+ cidades.
+- R3 (P1, visual): marcador do Relicário no grupo `HexGrid.WORLD_EVENT_MARKER_GROUP`, limpo por `_clear_entities`.
+- Testes: +5 (`test_phase33d_review.gd`); suíte completa 3546/3546, 175 scripts, 372.490 asserts (antes 3541/174/372.473); smokes D3 até T200: 24/24 sem erro; 23 idênticas aos registros pré-revisão; só F33B-014 mudou (efeito de R1: TIMEOUT T200 → Supremacia T197), com reexecução idêntica (determinismo); R2 não foi acionada em nenhum smoke.
+
+**CLEARED AFTER FIXES — FIXES APPLIED AND VERIFIED.**

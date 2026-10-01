@@ -249,6 +249,7 @@ func _ready() -> void:
 	debug_win_button.pressed.connect(_on_debug_win_pressed)
 	debug_lose_button.pressed.connect(_on_debug_lose_pressed)
 	debug_force_dragon_button.pressed.connect(_on_debug_force_dragon_pressed)
+	_build_ecology_debug_button()
 	_build_v2_research_panel()
 	_integrate_ui_shell()
 	TurnManager.turn_changed.connect(_on_turn_changed)
@@ -572,6 +573,15 @@ func _process(_delta: float) -> void:
 		end_turn_button.text = wanted_text
 
 func _unhandled_input(event: InputEvent) -> void:
+	# V3 / Etapa 2: F = Fundar Cidade com o Colonizador selecionado (mesmo caminho do botão; tile inválido = no-op,
+	# o motivo já está no tooltip). Sem conflito: a câmera usa WASD/QE/setas e Espaço é o fim de turno.
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F:
+		if GameManager.state == GameManager.GameState.PLAYING and not overlay_backdrop.visible and not ui_shell.modal_manager.is_modal_open() and not ui_shell.navigation_manager.is_overlay_open():
+			var selected := SelectionManager.selected_unit
+			if selected != null and is_instance_valid(selected) and selected.unit_data.can_found_city and selected.owner_player == GameManager.human_player:
+				SelectionManager.found_city_with_selected()
+				get_viewport().set_input_as_handled()
+		return
 	# Espaço é o único atalho global do turno. Enter permanece com o foco/modal.
 	if not (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE):
 		return
@@ -756,7 +766,7 @@ func _build_victory_progress_rows(target: VBoxContainer) -> void:
 	_add_victory_progress_row(target, "Rivais satisfeitos", supremacy_progress)
 	var supremacy_lines: Array[String] = ["Exército Supremo pesquisado." if has_supremacy_access else "Requer pesquisa: Exército Supremo (duas Doutrinas completas)."]
 	supremacy_lines.append_array(V2VictoryConditions.military_supremacy_lines(human))
-	supremacy_lines.append("Conquiste e mantenha uma Cidade III+ de cada rival (rival eliminado também conta).")
+	supremacy_lines.append("Conquiste e mantenha uma cidade do maior nível de cada rival (rival eliminado também conta).")
 	_add_victory_detail(target, "\n".join(supremacy_lines))
 
 	_add_victory_heading(target, "Transcendência")
@@ -979,6 +989,32 @@ func _on_debug_lose_pressed() -> void:
 func _on_debug_force_dragon_pressed() -> void:
 	WorldEventManager.debug_force_dragon_event(GameManager.hex_grid)
 
+## V3 / Combat Ecology — DEV-ONLY (painel de Debug, nunca UI de jogo): cada clique mostra as contagens por
+## tier/espécie e leva a câmera até um exemplar vivo da PRÓXIMA espécie do bestiário (ciclo das 12).
+var _ecology_debug_index := -1
+
+func _build_ecology_debug_button() -> void:
+	var button := Button.new()
+	button.name = "DebugEcologyButton"
+	button.text = "Ecologia: contagens + próxima espécie"
+	button.pressed.connect(_on_debug_ecology_pressed)
+	debug_force_dragon_button.get_parent().add_child(button)
+
+func _on_debug_ecology_pressed() -> void:
+	var grid := GameManager.hex_grid
+	if grid == null:
+		return
+	print(MonsterEcologySystem.debug_summary(grid))
+	for step in MonsterEcologyData.SPECIES_ORDER.size():
+		_ecology_debug_index = (_ecology_debug_index + 1) % MonsterEcologyData.SPECIES_ORDER.size()
+		var kind: String = MonsterEcologyData.SPECIES_ORDER[_ecology_debug_index]
+		var coord := MonsterEcologySystem.debug_example_coord(grid, kind)
+		if coord != HexGrid.NO_LAIR:
+			_focus_camera(coord)
+			EventBus.notify.emit("[Debug] %s (%s) em %s — %s" % [String(MonsterDatabase.KIND_DATA[kind].unit_name), MonsterEcologyData.tier_display(MonsterEcologyData.tier_of(kind)), str(coord), MonsterEcologySystem.debug_summary(grid)], "")
+			return
+	EventBus.notify.emit("[Debug] %s" % MonsterEcologySystem.debug_summary(grid), "")
+
 ## Emite o pedido de reinicio (Main.gd regenera mapa/jogo de forma sincrona
 ## nesse mesmo emit) e so entao atualiza a propria HUD com o estado novo.
 func _on_restart_pressed() -> void:
@@ -1136,32 +1172,8 @@ func _on_world_event_phase_changed(event: WorldEvent, _old_phase: String, new_ph
 	if new_phase == WorldEvent.PHASE_ANNOUNCED and event is DragonEvent:
 		dragon_announcement_text_label.text = format_dragon_announcement_text(event)
 		_show_overlay(dragon_announcement_panel)
-	# 5B.3-G -- mesmo padrao acima, agora pro DESFECHO (defeated/devastated/
-	# no_target). DragonEvent nao emite mais toast nenhum pro proprio
-	# desfecho (ver _resolve_with_outcome) -- este modal e' agora a UNICA
-	# comunicacao do resultado.
-	if new_phase == WorldEvent.PHASE_RESOLUTION and event is DragonEvent:
-		var dragon_event := event as DragonEvent
-		var outcome := String(event.result.get("outcome", ""))
-		dragon_resolution_title_label.text = format_dragon_resolution_title(outcome)
-		dragon_resolution_text_label.text = format_dragon_resolution_text(outcome)
-		for child in dragon_resolution_ranking_box.get_children():
-			# free() imediato, nao queue_free() -- precisa estar fora da
-			# arvore JA, antes de repopular linhas novas logo abaixo (nao
-			# so' no fim do frame), senao um evento novo veria as linhas do
-			# evento ANTERIOR ainda presentes por um frame inteiro.
-			child.free()
-		var ranking_lines := format_dragon_damage_ranking(dragon_event.damage_by_civ, GameManager.players)
-		for index in dragon_event.result.get("rewards", {}):
-			var reward: Dictionary = dragon_event.result.rewards[index]
-			if int(index) < GameManager.players.size():
-				ranking_lines.append("%s: +%d ouro · +%d mana" % [GameManager.players[int(index)].civ.civ_name, int(reward.gold), int(reward.mana)])
-		dragon_resolution_ranking_header_label.visible = not ranking_lines.is_empty()
-		for line in ranking_lines:
-			var row := Label.new()
-			row.text = line
-			dragon_resolution_ranking_box.add_child(row)
-		_show_overlay(dragon_resolution_panel)
+	# Fase 33D3: o DESFECHO do Dragão vai para o Event Center (UIEventService._on_world_event_phase_changed_d3)
+	# com o resumo de contribuição — nenhum modal bloqueante.
 
 func _on_dragon_announcement_continue_pressed() -> void:
 	_close_overlay_panels()
@@ -1177,6 +1189,10 @@ func _refresh_world_event_panel() -> void:
 	world_event_panel.visible = true
 	world_event_title_label.text = format_world_event_title(event)
 	world_event_text_label.text = format_world_event_prompt(event, GameManager.players, TurnManager.turn_number)
+	# Fase 33D3: o mesmo painel oferece a escolha de recompensa do Relicário (dois botões existentes).
+	var reliquary := event is ReliquaryEvent
+	world_event_participate_button.text = "%d Ouro" % int(ReliquaryEvent.REWARD_GOLD) if reliquary else "Participar"
+	world_event_decline_button.text = "%d Mana" % int(ReliquaryEvent.REWARD_MANA) if reliquary else "Não participar"
 
 ## Civilizacao-alvo travada (Blocker #3/5B.2) -- extraido de format_world_
 ## event_prompt pra ser reusado tambem pelo Tracker (mesma info, fase
@@ -1189,6 +1205,8 @@ static func _dragon_target_civ_name(dragon: DragonEvent, players: Array[PlayerDa
 static func format_world_event_title(event: WorldEvent) -> String:
 	if event is DragonEvent:
 		return "A Caçada ao Dragão"
+	if event is ReliquaryEvent:
+		return "Relicário reivindicado"
 	return "Evento Mundial"
 
 ## Puro/testavel -- so formata texto, nunca calcula fase/alvo/prazo (esses
@@ -1202,7 +1220,9 @@ static func format_world_event_prompt(event: WorldEvent, players: Array[PlayerDa
 		var dragon := event as DragonEvent
 		var target_name := _dragon_target_civ_name(dragon, players)
 		var turns_left: int = max(event.turn_deadline - current_turn, 0)
-		return "A Guilda dos Aventureiros confirmou a ameaça. Um Dragão poderoso está avançando pelo continente e eventualmente atacará %s em seu caminho. A Guilda convocou todos os reinos para ajudar a derrotá-lo. Faltam %d turno(s) para decidir.\n\nParticipar: seu reino será reconhecido como um dos que enfrentaram a criatura e poderá receber recompensas pela contribuição.\nNão participar: você não receberá essas recompensas, mas o Dragão continuará sua marcha normalmente." % [target_name, turns_left]
+		return "A Guilda dos Aventureiros confirmou a ameaça. Um Dragão poderoso está avançando pelo continente e eventualmente atacará %s em seu caminho. A Guilda convocou todos os reinos para ajudar a derrotá-lo. Faltam %d turno(s) para decidir.\n\nParticipar: seu reino se junta à expedição; quem causar dano ao Dragão divide as recompensas pela contribuição.\nNão participar: nenhuma penalidade — o Dragão continua sua marcha normalmente." % [target_name, turns_left]
+	if event is ReliquaryEvent:
+		return "Seu reino reivindicou o Relicário Desperto. Escolha a recompensa: %d Ouro ou %d Mana." % [int(ReliquaryEvent.REWARD_GOLD), int(ReliquaryEvent.REWARD_MANA)]
 	return "Um evento mundial está em preparação. Deseja participar?"
 
 ## Texto do modal BLOQUEANTE de Announced (etapa "alerta", separada da
@@ -1258,27 +1278,14 @@ static func format_dragon_resolution_text(outcome: String) -> String:
 ## "Sua contribuição: X de Y — Z%" fica pra depois (pedido do usuario:
 ## "eventualmente"), fora de escopo agora.
 static func format_dragon_damage_ranking(damage_by_civ: Dictionary, players: Array[PlayerData]) -> Array[String]:
-	var entries: Array = []
-	for civ_index in damage_by_civ:
-		var damage: float = damage_by_civ[civ_index]
-		if damage <= 0.0:
-			continue
-		var index: int = civ_index
-		if index < 0 or index >= players.size():
-			continue
-		entries.append({"name": players[index].civ.civ_name, "damage": damage})
-	entries.sort_custom(func(a, b): return a.damage > b.damage)
-	var medals := ["🥇", "🥈", "🥉"]
-	var lines: Array[String] = []
-	for i in range(entries.size()):
-		var rank_label: String = medals[i] if i < medals.size() else "%dº" % (i + 1)
-		lines.append("%s %s — %d de dano" % [rank_label, entries[i].name, int(round(entries[i].damage))])
-	return lines
+	return DragonEvent.damage_ranking_lines(damage_by_civ, players) # Fase 33D3: fonte única (também usada pelo Event Center)
 
 func _find_preparation_event_awaiting_human_decision() -> WorldEvent:
 	var human_index: int = GameManager.players.find(GameManager.human_player)
 	for event in WorldEventManager.active_events:
 		if event.phase == WorldEvent.PHASE_PREPARATION and not event.participants.has(human_index):
+			return event
+		if event is ReliquaryEvent and (event as ReliquaryEvent).awaiting_choice_from(human_index):
 			return event
 	return null
 
@@ -1381,12 +1388,18 @@ func _refresh_dragon_boss_bar() -> void:
 	dragon_boss_bar_target_label.text = "Alvo: %s" % info.target
 
 func _on_world_event_participate_pressed() -> void:
-	GameManager.respond_to_world_event(true)
+	if _find_preparation_event_awaiting_human_decision() is ReliquaryEvent:
+		WorldEventManager.choose_reliquary_reward(GameManager.human_player, ReliquaryEvent.CHOICE_GOLD)
+	else:
+		GameManager.respond_to_world_event(true)
 	_refresh_world_event_panel()
 	ui_shell.refresh_live_state()
 
 func _on_world_event_decline_pressed() -> void:
-	GameManager.respond_to_world_event(false)
+	if _find_preparation_event_awaiting_human_decision() is ReliquaryEvent:
+		WorldEventManager.choose_reliquary_reward(GameManager.human_player, ReliquaryEvent.CHOICE_MANA)
+	else:
+		GameManager.respond_to_world_event(false)
 	_refresh_world_event_panel()
 	ui_shell.refresh_live_state()
 

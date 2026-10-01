@@ -51,9 +51,13 @@ func before_each():
 		for r in range(-15, 16):
 			if absi(q + r) <= 15:
 				_grid.tiles[Vector2i(q, r)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	# V3 / Combat Ecology: fluxo de CONTEÚDO V2 que depende do layout exato do mapa gerado — sem a população
+	# ecológica (coberta por test_v3_ecology_*). Restaurado em after_each.
+	GameManager.combat_ecology_on_new_match = false
 	GameManager.start_new_game(_grid)
 
 func after_each():
+	GameManager.combat_ecology_on_new_match = true
 	SelectionManager.reset()
 	SaveManager.delete_save(SAVE_PATH)
 	for player in GameManager.players:

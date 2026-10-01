@@ -54,3 +54,40 @@ signal minimap_clicked(world_pos: Vector3)
 signal world_event_announced(event: WorldEvent)
 signal world_event_phase_changed(event: WorldEvent, old_phase: String, new_phase: String)
 signal world_event_completed(event: WorldEvent, result: Dictionary)
+## Fase 33D1: a era do mundo avançou (WorldPhaseRules.Phase). `cause` é interno (PROGRESS/FALLBACK) — a
+## apresentação é a mesma nos dois casos; telemetria e testes podem ler.
+signal world_phase_changed(old_phase: int, new_phase: int, turn: int, cause: String)
+## Fase 33B (Release Balance Lab): observabilidade pura. Nenhum sistema do jogo conecta nestes
+## sinais; só o observador de telemetria do laboratório (BalanceTelemetry) os escuta, e ele nunca
+## escreve estado de gameplay nem alimenta decisões da IA.
+## - city_production_processed: uma vez por cidade por turno, logo após City.process_turn;
+##   item_id é o item em produção ANTES do processamento ("" = cidade ociosa neste turno).
+## - unit_removed: toda remoção de unidade do mapa (morte, fundação, carga final do Construtor...).
+## - combat_engagement: um ataque comum resolvido (target_kind "unit" ou "city", no tile target_coord).
+signal city_production_processed(player: PlayerData, city: City, item_id: String, result: Dictionary)
+signal unit_removed(former_owner: PlayerData, unit: Unit)
+signal combat_engagement(attacker_owner: PlayerData, defender_owner: PlayerData, target_kind: String, target_coord: Vector2i)
+## Fase 33D1 (observabilidade pura, mesma regra acima): covil destruído por uma civilização e melhoria
+## saqueada por monstro (dono do tile). target_kind de combat_engagement ganha "lair" (ataque à estrutura).
+signal lair_cleared(player: PlayerData, lair_coord: Vector2i, kind: String)
+signal tile_pillaged(owner_player: PlayerData, coord: Vector2i)
+## Fase 33D2 — ameaças do mundo (RegionalThreatSystem). `role` = HexGrid.LAIR_ROLE_REGIONAL/GUARDIAN.
+## - regional_threat_created: covil regional associado à primeira capital de `owner_player`.
+## - regional_threat_awakened: DORMANT → AWAKE (o covil em si pode ainda não ter sido descoberto; a UI
+##   só anuncia ao dono que já o conhece).
+## - world_threat_discovered: `player` passou a conhecer (tile explorado) um covil regional/guardião.
+## - world_threat_resolved: estrutura destruída; `owner_player` = dono conceitual (null para guardião),
+##   `resolver` = quem destruiu.
+## - guardian_site_spawned: Guardião Troll criado na entrada da Ascensão junto a um recurso existente.
+signal regional_threat_created(owner_player: PlayerData, lair_coord: Vector2i, kind: String)
+signal regional_threat_awakened(owner_player: PlayerData, lair_coord: Vector2i, kind: String)
+signal world_threat_discovered(player: PlayerData, lair_coord: Vector2i, role: String)
+signal world_threat_resolved(role: String, owner_player: PlayerData, lair_coord: Vector2i, resolver: PlayerData)
+signal guardian_site_spawned(lair_coord: Vector2i, resource_coord: Vector2i, resource: String)
+## Fase 33D3 — marco público de vitória atingido (PublicVictoryMilestones): só o FATO, nunca posição/unidades.
+signal public_milestone_reached(player: PlayerData, milestone: String)
+## V3 / Combat Ecology (observabilidade pura, mesma regra da Fase 33B: só a telemetria do laboratório
+## escuta). `action`: move (info.reason = chase/city/improvement/return/roam), attack, city_attack, pillage,
+## civ_unit_killed, refill, site_depleted. `info`: species, tier, phase (id da era), ecology (monstro de
+## sítio ecológico?) e, quando houver, target (índice da civilização alvo).
+signal combat_ecology_event(action: String, info: Dictionary)

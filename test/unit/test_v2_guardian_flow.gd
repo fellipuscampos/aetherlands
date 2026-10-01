@@ -69,6 +69,7 @@ func before_each():
 	GameManager.debug_mode = true
 
 func after_each():
+	GameManager.combat_ecology_on_new_match = true
 	SelectionManager.reset()
 	for player in GameManager.players:
 		player.release_relations()
@@ -109,6 +110,9 @@ func _new_game() -> HexGrid:
 	grid._ready()
 	grid.generate_map(MAP_WIDTH, MAP_HEIGHT, 555)
 	_hex_grids.append(grid)
+	# V3 / Etapa 2: fluxo de CONTEÚDO com layout fixo (sem fundar/jogando turnos) — sem a população ecológica, coberta
+	# por test_v3_*. Restaurado em after_each.
+	GameManager.combat_ecology_on_new_match = false
 	GameManager.start_new_game(grid)
 	return grid
 

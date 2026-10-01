@@ -82,6 +82,7 @@ func before_each():
 	GameManager.debug_mode = true
 
 func after_each():
+	GameManager.regional_threats_on_new_match = true
 	SelectionManager.reset()
 	for player in GameManager.players:
 		player.release_relations()
@@ -122,6 +123,9 @@ func _new_game() -> HexGrid:
 	grid._ready()
 	grid.generate_map(MAP_WIDTH, MAP_HEIGHT, 555)
 	_hex_grids.append(grid)
+	# Fase 33D2: fluxo de CONTEÚDO V2 que depende do layout exato do mapa gerado — sem ameaças regionais (cobertas
+	# por test_phase33d2_*). Restaurado em after_each.
+	GameManager.regional_threats_on_new_match = false
 	GameManager.start_new_game(grid)
 	return grid
 

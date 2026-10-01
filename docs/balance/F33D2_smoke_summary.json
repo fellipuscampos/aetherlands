@@ -1,0 +1,156 @@
+{
+ "phase": "F33D2",
+ "source": "24 partidas 4-IA, --matches=0-23 --cap=80 --run=phase33d2 --tag=smoke (NÃO é baseline F33E)",
+ "determinism": "matches 0,5,12,20 reexecutados: registros idênticos",
+ "save_load": "matches 0,5 com save/load no T30: registros idênticos à execução contínua",
+ "matches": 24,
+ "ends": {
+  "TIMEOUT": 24
+ },
+ "threats": 96,
+ "kinds": {
+  "goblin": 70,
+  "skeleton": 26
+ },
+ "discovered": 67,
+ "responded": 61,
+ "response_before_discovery": 1,
+ "cleared_self": 19,
+ "cleared_other": 0,
+ "discovered_turn": {
+  "n": 67,
+  "min": 3,
+  "median": 36,
+  "max": 79
+ },
+ "first_response_turn": {
+  "n": 61,
+  "min": 3,
+  "median": 36,
+  "max": 79
+ },
+ "cleared_turn": {
+  "n": 19,
+  "min": 15,
+  "median": 52,
+  "max": 80
+ },
+ "discovery_to_clear": {
+  "n": 19,
+  "min": 5,
+  "median": 27,
+  "max": 75
+ },
+ "alive_at": {
+  "30": "95/96",
+  "50": "90/96",
+  "75": "81/96"
+ },
+ "lairs": {
+  "cleared": 20,
+  "cleared_guardian": 0,
+  "cleared_regional_other": 0,
+  "cleared_regional_own": 19,
+  "cleared_wild": 1,
+  "structure_attacks": 21,
+  "structure_attacks_unknown": 0
+ },
+ "guardian_sites": 95,
+ "guardian_resolved": 0,
+ "guardian_resources": {
+  "gems": 16,
+  "horses": 20,
+  "iron": 20,
+  "silk": 22,
+  "mana_node": 17
+ },
+ "guardian_discovered_civs": 49,
+ "guardian_engaged_civs": 2,
+ "lag": {
+  "n": 55,
+  "min": 0,
+  "median": 0,
+  "max": 16
+ },
+ "first_combat_unit": {
+  "n": 60,
+  "min": 34,
+  "median": 36.5,
+  "max": 80
+ },
+ "first_monster_attack": {
+  "n": 96,
+  "min": 4,
+  "median": 22.0,
+  "max": 63
+ },
+ "ascension_turn": {
+  "n": 24,
+  "min": 36,
+  "median": 48.0,
+  "max": 70
+ },
+ "civs_with_war": 46,
+ "first_war_turn": {
+  "n": 46,
+  "min": 35,
+  "median": 51.0,
+  "max": 75
+ },
+ "matches_with_war_before_60": 12,
+ "early_eliminations_lt60": 0,
+ "eliminations_by_seat": {
+  "0": 1
+ },
+ "unresolved_at_first_war": 41,
+ "with_first_war": 46,
+ "civs_war_while_awake": 41,
+ "seat_breakdown": {
+  "0": {
+   "discovered": 16,
+   "cleared_self": 3,
+   "first_war": {
+    "n": 15,
+    "min": 35,
+    "median": 51,
+    "max": 75
+   }
+  },
+  "1": {
+   "discovered": 18,
+   "cleared_self": 5,
+   "first_war": {
+    "n": 12,
+    "min": 37,
+    "median": 62.0,
+    "max": 75
+   }
+  },
+  "2": {
+   "discovered": 17,
+   "cleared_self": 4,
+   "first_war": {
+    "n": 11,
+    "min": 37,
+    "median": 51,
+    "max": 69
+   }
+  },
+  "3": {
+   "discovered": 16,
+   "cleared_self": 7,
+   "first_war": {
+    "n": 8,
+    "min": 35,
+    "median": 52.0,
+    "max": 73
+   }
+  }
+ },
+ "turn_p95_ms": {
+  "n": 24,
+  "min": 120.85,
+  "median": 143.05,
+  "max": 207.6
+ }
+}

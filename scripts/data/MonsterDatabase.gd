@@ -151,6 +151,69 @@ const KIND_DATA := {
 		"movement_points": 2.0, "vision_range": 2, "gold_reward": 200.0, "clear_reward": 150.0, "clear_reward_mana": 35.0,
 		"flies": true, "visual_kind": "dragon",
 	},
+	# ------------------------------------------------------------------
+	# V3 / Combat Ecology — Etapa 1: espécies NOVAS do bestiário ecológico (tier em MonsterEcologyData).
+	# V3 COMBAT ECOLOGY PLACEHOLDER — TUNE LATER: stats só funcionais (spawnar, mover, atacar, defender,
+	# morrer), em bandas coerentes com o conteúdo existente — BASIC ≈ Goblin/Esqueleto, INTERMEDIATE ≈
+	# Troll/Vivern, ADVANCED claramente acima e ainda abaixo do Dragão. Nenhuma habilidade (Etapas 2–4).
+	# Fora de KINDS de propósito: nunca são sorteadas pelos covis da seed (random_kind); só a ecologia as
+	# cria. biomes/weight/min_threat/caps existem só para leitores genéricos de KIND_DATA.
+	"worg": {
+		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 2, "global_cap": 5, "batch_spawn": 1,
+		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
+		"unit_name": "Worg", "attack": 4.0, "defense": 1.5, "max_hp": 8.0,
+		"movement_points": 3.0, "vision_range": 1, "gold_reward": 15.0, "clear_reward": 75.0, "clear_reward_mana": 0.0,
+		"flies": false, "visual_kind": "worg",
+	},
+	"giant_spider": {
+		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 2, "global_cap": 5, "batch_spawn": 1,
+		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
+		"unit_name": "Aranha Gigante", "attack": 3.5, "defense": 2.0, "max_hp": 9.0,
+		"movement_points": 2.0, "vision_range": 1, "gold_reward": 15.0, "clear_reward": 75.0, "clear_reward_mana": 0.0,
+		"flies": false, "visual_kind": "giant_spider",
+	},
+	"minotaur": {
+		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
+		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
+		"unit_name": "Minotauro", "attack": 7.0, "defense": 3.5, "max_hp": 20.0,
+		"movement_points": 2.0, "vision_range": 1, "gold_reward": 40.0, "clear_reward": 100.0, "clear_reward_mana": 0.0,
+		"flies": false, "visual_kind": "minotaur",
+	},
+	"basilisk": {
+		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
+		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
+		"unit_name": "Basilisco", "attack": 6.0, "defense": 5.0, "max_hp": 18.0,
+		"movement_points": 1.0, "vision_range": 1, "gold_reward": 40.0, "clear_reward": 100.0, "clear_reward_mana": 0.0,
+		"flies": false, "visual_kind": "basilisk",
+	},
+	"colossal_worm": {
+		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
+		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
+		"unit_name": "Verme Colossal", "attack": 11.0, "defense": 5.0, "max_hp": 32.0,
+		"movement_points": 2.0, "vision_range": 1, "gold_reward": 90.0, "clear_reward": 150.0, "clear_reward_mana": 0.0,
+		"flies": false, "visual_kind": "colossal_worm",
+	},
+	"arboreal_ancient": {
+		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
+		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
+		"unit_name": "Ancião Arbóreo", "attack": 9.0, "defense": 7.0, "max_hp": 36.0,
+		"movement_points": 1.0, "vision_range": 1, "gold_reward": 90.0, "clear_reward": 150.0, "clear_reward_mana": 0.0,
+		"flies": false, "visual_kind": "arboreal_ancient",
+	},
+	"mana_devourer": {
+		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
+		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
+		"unit_name": "Devorador de Mana", "attack": 12.0, "defense": 4.0, "max_hp": 28.0,
+		"movement_points": 2.0, "vision_range": 1, "gold_reward": 90.0, "clear_reward": 150.0, "clear_reward_mana": 0.0,
+		"flies": false, "visual_kind": "mana_devourer",
+	},
+	"mycotic_hive": {
+		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
+		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
+		"unit_name": "Colmeia Micótica", "attack": 8.0, "defense": 6.0, "max_hp": 34.0,
+		"movement_points": 1.0, "vision_range": 1, "gold_reward": 80.0, "clear_reward": 150.0, "clear_reward_mana": 0.0,
+		"flies": false, "visual_kind": "mycotic_hive",
+	},
 }
 const KINDS := ["goblin", "troll", "wyvern", "skeleton", "dragon"] # ordem fixa (nao KIND_DATA.keys(), ver nota abaixo), usada por WEIGHTS-like iteracao e testes que esperam ordem estavel
 

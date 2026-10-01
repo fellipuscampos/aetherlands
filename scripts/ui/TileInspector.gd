@@ -283,6 +283,9 @@ static func status_effect_lines(unit: Unit) -> Array[String]:
 	var lines: Array[String] = []
 	lines.append_array(V2TechniqueRuntime.status_lines(unit)) # Técnicas Militares V2 ativas (Fase 4)
 	lines.append_array(V2MagicRuntime.status_lines(unit)) # estados de feitiço V2 ativos (Fase 17, Égide): fato público
+	lines.append_array(UnitStatusEffects.status_lines(unit)) # V3 / Etapa 2: Veneno, Em Chamas, Abalado, Petrificação...
+	if unit.arcane_barrier > 0.0:
+		lines.append("Barreira Arcana — absorve %d de dano" % ceili(unit.arcane_barrier))
 	return lines
 
 ## Acao e recarga do conjurador: so' o DONO ve (recarga de magia inimiga e' segredo).
@@ -343,8 +346,23 @@ static func _monster_entry(unit: Unit, hex_grid: HexGrid) -> Dictionary:
 		var home: String = " do covil de %s" % MonsterDatabase.KIND_DATA[lair_kind].unit_name if lair_kind != "" else " do covil"
 		lines.append("Chefe%s — não sai do covil" % home)
 	lines.append(_faction_line(null, null))
+	# V3 / Combat Ecology: tier da ESPÉCIE (Básica/Intermediária/Avançada), independente do papel do covil.
+	var tier := MonsterEcologyData.tier_of(data.visual_kind)
+	if tier != "" and not unit.world_event_managed:
+		lines.append("Criatura %s" % MonsterEcologyData.tier_display(tier))
 	lines.append("HP %d/%d | Ataque %.1f | Defesa %.1f | Movimento %.1f%s" % [int(unit.hp), int(data.max_hp), data.attack, data.defense, data.movement_points, " (voa)" if data.flies else ""])
-	if not unit.is_camp_boss and not unit.world_event_managed:
+	var ecology_label := MonsterEcologySystem.behavior_label(unit)
+	if ecology_label != "" and not unit.is_camp_boss:
+		lines.append("Comportamento: %s" % ecology_label)
+	# V3 / Etapa 2: habilidade(s) assinatura da espécie (criatura da ecologia), descrição curta e recarga atual.
+	if MonsterEcologySystem.is_ecology_unit(unit):
+		for ability_id in MonsterAbilityData.for_species(data.visual_kind):
+			var ability := MonsterAbilityData.get_ability(ability_id)
+			var cooldown := MonsterAbilitySystem.cooldown_remaining(unit, ability_id)
+			lines.append("%s%s: %s" % [String(ability.name), " (recarga %d)" % cooldown if cooldown > 0 else "", String(ability.description)])
+		if MonsterAbilitySystem.is_burrowed(unit):
+			lines.append("Sob a terra — emerge no Rastro Subterrâneo.")
+	elif not unit.is_camp_boss and not unit.world_event_managed:
 		lines.append("Comportamento: %s" % BEHAVIOR_LABELS.get(MonsterAI._effective_behavior(unit), "Desconhecido"))
 	var statuses := status_effect_lines(unit)
 	if not statuses.is_empty():
@@ -382,11 +400,24 @@ static func _lair_entry(lair: LairStructure, coord: Vector2i, hex_grid: HexGrid,
 			lines.append("Estado: sem defensores à vista — pode ser destruído por ataque")
 	else:
 		lines.append("Estado atual desconhecido (fora da sua visão).")
-	var gold := MonsterDatabase.lair_clear_reward(lair.kind)
-	var mana := MonsterDatabase.lair_clear_mana_reward(lair.kind)
-	var reward := "Recompensa ao destruir: %d ouro" % int(gold)
-	if mana > 0.0:
-		reward += " + %d mana" % int(mana)
+	# Fase 33D2: papel público do covil (Ameaça regional com Adormecido/Desperto; Guardião do recurso). O
+	# turno exato de despertar nunca aparece.
+	match hex_grid.lair_role(coord):
+		HexGrid.LAIR_ROLE_REGIONAL:
+			lines.insert(1, "Papel: Ameaça regional")
+			var threat_state := RegionalThreatSystem.public_state_text(coord)
+			if threat_state != "":
+				lines.insert(2, "Ameaça: %s" % threat_state)
+		HexGrid.LAIR_ROLE_ECOLOGY:
+			lines.insert(1, "Papel: Covil selvagem (%s)" % MonsterEcologyData.tier_display(MonsterEcologyData.tier_of(lair.kind)))
+		HexGrid.LAIR_ROLE_GUARDIAN:
+			var site := RegionalThreatSystem.guardian_for_lair(coord)
+			var resource_name := ResourceDatabase.display_name(String(site.get("resource", "")))
+			lines.insert(1, "Papel: Guardião de %s" % (resource_name if resource_name != "" else "recurso"))
+	var rewards := hex_grid.lair_clear_rewards(coord)
+	var reward := "Recompensa ao destruir: %d ouro" % int(rewards.gold)
+	if float(rewards.mana) > 0.0:
+		reward += " + %d mana" % int(rewards.mana)
 	lines.append(reward)
 	return {"key": "lair", "kind": KIND_LAIR, "tag": "Covil", "title": "Covil de %s" % kind_name, "lines": lines}
 

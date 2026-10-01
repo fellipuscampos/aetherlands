@@ -29,8 +29,13 @@ func before_each():
 	_original_turn_number = TurnManager.turn_number
 	_created_cities = []
 	_created_hex_grids = []
+	# Fase 33D3: estes testes cobrem a MECÂNICA do Dragão (movimento, incursões, combate, save) com civs de uma
+	# cidade por economia de fixture; a regra "nunca mira civ de uma cidade" tem cobertura própria em
+	# test_phase33d3_events.gd.
+	DragonEvent.min_target_cities = 1
 
 func after_each():
+	DragonEvent.min_target_cities = DragonEvent.MIN_TARGET_CITIES
 	TurnManager.turn_number = _original_turn_number
 	for city in _created_cities:
 		if is_instance_valid(city):

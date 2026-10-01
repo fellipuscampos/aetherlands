@@ -83,16 +83,31 @@ func _append_world_event(result: Array[AttentionItem]) -> void:
 		if event == null or event.phase != WorldEvent.PHASE_PREPARATION or event.participants.has(human_index):
 			continue
 		var stable_id := str(event.event_id) if "event_id" in event else str(WorldEventManager.active_events.find(event))
-		var item := AttentionItem.create("world_event_decision:%s" % stable_id, AttentionItem.Priority.REQUIRED, "Decidir participação no evento", "Existe uma decisão de evento mundial pendente.")
+		# Fase 33D3: participação no Dragão é OPCIONAL — aviso, nunca bloqueio do fim de turno.
+		var item := AttentionItem.create("world_event_decision:%s" % stable_id, AttentionItem.Priority.WARNING, "Decidir participação no evento", "Existe uma decisão de evento mundial pendente.")
 		item.category = "world_event"
 		item.severity = UIEventData.Severity.IMPORTANT
 		item.primary_action = "world_event"
 		item.primary_action_label = "Decidir"
 		item.sort_key = SORT_WORLD_EVENT
 		result.append(item)
+	# Fase 33D3: recompensa do Relicário a escolher (mesmo caminho de decisão do painel de evento). Não bloqueia:
+	# sem escolha em ReliquaryEvent.REWARD_CHOICE_ROUNDS rodadas, vale o Ouro.
+	for event in WorldEventManager.active_events:
+		if event is ReliquaryEvent and (event as ReliquaryEvent).awaiting_choice_from(human_index):
+			var choice := AttentionItem.create("world_event_reward:%d" % event.event_id, AttentionItem.Priority.WARNING, "Escolher recompensa do Relicário", "Ouro ou Mana.")
+			choice.category = "world_event"
+			choice.severity = UIEventData.Severity.IMPORTANT
+			choice.primary_action = "world_event"
+			choice.primary_action_label = "Escolher"
+			choice.sort_key = SORT_WORLD_EVENT
+			result.append(choice)
 
 func _append_research(result: Array[AttentionItem]) -> void:
 	if _player.v2_research == null or _player.v2_research.active_id != "":
+		return
+	# V3 / Etapa 2: sem cidade não há o que escolher — nenhum REQUIRED antes da primeira cidade.
+	if not V2ResearchAccess.can_start(_player):
 		return
 	if _player.v2_research.get_completed_ids().size() >= V2ResearchDatabase.all_nodes().size():
 		return

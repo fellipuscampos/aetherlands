@@ -17,6 +17,8 @@ var _original_world_events: Array[WorldEvent]
 var _original_world_event_next_id: int
 
 func before_each():
+	# Fase 33D3: fixtures do rastreador/barra do Dragão usam civs de uma cidade (regra própria testada na D3).
+	DragonEvent.min_target_cities = 1
 	_original_state = GameManager.state
 	_original_human_player = GameManager.human_player
 	_original_debug_mode = GameManager.debug_mode
@@ -34,6 +36,7 @@ func before_each():
 	hud.legacy_context_enabled = true
 
 func after_each():
+	DragonEvent.min_target_cities = DragonEvent.MIN_TARGET_CITIES
 	GameManager.state = _original_state
 	GameManager.human_player = _original_human_player
 	GameManager.debug_mode = _original_debug_mode
@@ -838,43 +841,21 @@ func test_close_topmost_overlay_closes_the_dragon_announcement_panel():
 func test_dragon_resolution_panel_is_hidden_by_default():
 	assert_false(hud.dragon_resolution_panel.visible)
 
-func test_dragon_resolution_panel_shows_when_a_dragon_event_reaches_resolution():
-	var event := DragonEvent.new()
-	event.result = {"outcome": "defeated"}
-
-	hud._on_world_event_phase_changed(event, WorldEvent.PHASE_ACTIVE, WorldEvent.PHASE_RESOLUTION)
-
-	assert_true(hud.dragon_resolution_panel.visible)
-	assert_true(hud.overlay_backdrop.visible, "deveria ser um modal bloqueante, igual o anuncio de Announced")
-	assert_true(hud.dragon_resolution_title_label.text.length() > 0)
-	assert_true(hud.dragon_resolution_text_label.text.length() > 0)
+## Fase 33D3: o DESFECHO do Dragão não abre mais modal bloqueante — vai para o Event Center (UIEventService),
+## com ranking e recompensas; o painel antigo fica sempre escondido.
+func test_dragon_resolution_never_opens_a_blocking_modal():
+	for outcome in ["defeated", "devastated", "no_target"]:
+		var event := DragonEvent.new()
+		event.result = {"outcome": outcome}
+		hud._on_world_event_phase_changed(event, WorldEvent.PHASE_ACTIVE, WorldEvent.PHASE_RESOLUTION)
+		assert_false(hud.dragon_resolution_panel.visible, "sem modal de resultado (%s)" % outcome)
+		assert_false(hud.overlay_backdrop.visible, "nada bloqueia o turno (%s)" % outcome)
 
 func test_dragon_resolution_panel_does_not_show_for_other_phase_transitions():
 	var event := DragonEvent.new()
 
 	hud._on_world_event_phase_changed(event, WorldEvent.PHASE_PREPARATION, WorldEvent.PHASE_ACTIVE)
 
-	assert_false(hud.dragon_resolution_panel.visible)
-
-func test_dragon_resolution_continue_button_closes_the_modal():
-	var event := DragonEvent.new()
-	event.result = {"outcome": "devastated"}
-	hud._on_world_event_phase_changed(event, WorldEvent.PHASE_ACTIVE, WorldEvent.PHASE_RESOLUTION)
-	assert_true(hud.dragon_resolution_panel.visible, "pre-condicao")
-
-	hud._on_dragon_resolution_continue_pressed()
-
-	assert_false(hud.dragon_resolution_panel.visible)
-	assert_false(hud.overlay_backdrop.visible)
-
-func test_close_topmost_overlay_closes_the_dragon_resolution_panel():
-	var event := DragonEvent.new()
-	event.result = {"outcome": "no_target"}
-	hud._on_world_event_phase_changed(event, WorldEvent.PHASE_ACTIVE, WorldEvent.PHASE_RESOLUTION)
-
-	var closed = hud.close_topmost_overlay()
-
-	assert_true(closed)
 	assert_false(hud.dragon_resolution_panel.visible)
 
 ## --- format_dragon_resolution_title/text (puras) -------------------------
@@ -944,51 +925,25 @@ func test_format_dragon_damage_ranking_is_empty_when_no_civ_dealt_damage():
 	var players: Array[PlayerData] = [PlayerData.new(CivilizationData.new())]
 	assert_true(hud.format_dragon_damage_ranking({}, players).is_empty())
 
-## --- Modal de resolucao mostra o ranking de verdade -----------------------
+## --- Fase 33D3: o ranking de verdade vai para o Event Center -------------------
 
-func test_dragon_resolution_panel_shows_ranking_rows_and_header_when_there_is_damage():
+func test_dragon_resolution_ranking_goes_to_the_event_center():
 	var human = PlayerData.new(CivilizationData.new())
 	human.civ.civ_name = "Reino de Teste"
 	var _original_players: Array[PlayerData] = GameManager.players
 	GameManager.players = [human]
+	var published: Array = []
+	var capture := func(e: UIEventData): published.append(e)
+	UIEvents.event_published.connect(capture)
 	var event := DragonEvent.new()
 	event.result = {"outcome": "defeated"}
 	event.damage_by_civ = {0: 42.0}
-
-	hud._on_world_event_phase_changed(event, WorldEvent.PHASE_ACTIVE, WorldEvent.PHASE_RESOLUTION)
-
-	assert_true(hud.dragon_resolution_ranking_header_label.visible)
-	assert_eq(hud.dragon_resolution_ranking_box.get_child_count(), 1)
-	GameManager.players = _original_players
-
-func test_dragon_resolution_panel_hides_ranking_header_without_damage():
-	var _original_players: Array[PlayerData] = GameManager.players
-	GameManager.players = []
-	var event := DragonEvent.new()
-	event.result = {"outcome": "no_target"}
-
-	hud._on_world_event_phase_changed(event, WorldEvent.PHASE_ACTIVE, WorldEvent.PHASE_RESOLUTION)
-
-	assert_false(hud.dragon_resolution_ranking_header_label.visible)
-	assert_eq(hud.dragon_resolution_ranking_box.get_child_count(), 0)
-	GameManager.players = _original_players
-
-func test_dragon_resolution_panel_clears_old_ranking_rows_on_a_new_resolution():
-	var human = PlayerData.new(CivilizationData.new())
-	human.civ.civ_name = "Reino de Teste"
-	var _original_players: Array[PlayerData] = GameManager.players
-	GameManager.players = [human]
-	var first_event := DragonEvent.new()
-	first_event.result = {"outcome": "defeated"}
-	first_event.damage_by_civ = {0: 10.0}
-	hud._on_world_event_phase_changed(first_event, WorldEvent.PHASE_ACTIVE, WorldEvent.PHASE_RESOLUTION)
-	assert_eq(hud.dragon_resolution_ranking_box.get_child_count(), 1, "pre-condicao")
-
-	var second_event := DragonEvent.new()
-	second_event.result = {"outcome": "no_target"}
-	hud._on_world_event_phase_changed(second_event, WorldEvent.PHASE_ACTIVE, WorldEvent.PHASE_RESOLUTION)
-
-	assert_eq(hud.dragon_resolution_ranking_box.get_child_count(), 0, "linhas do evento ANTERIOR nao deveriam sobreviver pro proximo")
+	EventBus.world_event_phase_changed.emit(event, WorldEvent.PHASE_ACTIVE, WorldEvent.PHASE_RESOLUTION)
+	UIEvents.event_published.disconnect(capture)
+	var resolved := published.filter(func(e): return e.event_type == "dragon_resolved")
+	assert_eq(resolved.size(), 1)
+	assert_true(resolved[0].message.contains("Reino de Teste — 42 de dano"), "ranking no Event Center")
+	assert_false(hud.dragon_resolution_panel.visible)
 	GameManager.players = _original_players
 
 ## --- Event Tracker (format_world_event_tracker) -------------------------

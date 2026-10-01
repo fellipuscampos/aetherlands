@@ -63,6 +63,13 @@ func _connect_domain_signals() -> void:
 	_connect_once(EventBus.v2_transcendence_interrupted, _on_ritual_interrupted)
 	_connect_once(EventBus.victory_achieved, _on_victory)
 	_connect_once(EventBus.world_event_announced, _on_world_event_announced)
+	_connect_once(EventBus.world_phase_changed, _on_world_phase_changed)
+	_connect_once(EventBus.world_threat_discovered, _on_world_threat_discovered)
+	_connect_once(EventBus.regional_threat_awakened, _on_regional_threat_awakened)
+	_connect_once(EventBus.world_threat_resolved, _on_world_threat_resolved)
+	_connect_once(EventBus.guardian_site_spawned, _on_guardian_site_spawned)
+	_connect_once(EventBus.public_milestone_reached, _on_public_milestone_reached)
+	_connect_once(EventBus.world_event_phase_changed, _on_world_event_phase_changed_d3)
 
 func _connect_once(source: Signal, callable: Callable) -> void:
 	if not source.is_connected(callable):
@@ -197,7 +204,106 @@ func _on_victory(winner: PlayerData, victory_type: String) -> void:
 	publish(event)
 
 func _on_world_event_announced(event_source: WorldEvent) -> void:
-	var event := UIEventData.create("world_event_announced", UIEventData.Category.WORLD, UIEventData.Severity.IMPORTANT, "Evento mundial", event_source.get_class())
+	var event := UIEventData.create("world_event_announced", UIEventData.Category.WORLD, UIEventData.Severity.IMPORTANT, event_source.display_name(), event_source.public_summary())
 	event.target_entity = str(event_source.event_id) if "event_id" in event_source else "world_event"
 	event.dedup_key = "world:%s" % event.target_entity
+	# Fase 33D3: o local do Relicário é público por definição (é a finalidade do anúncio) — foco no tile.
+	if event_source is ReliquaryEvent:
+		event.with_target((event_source as ReliquaryEvent).site_coord, "reliquary")
+	publish(event)
+
+## Fase 33D3 — marco público: publicado para o jogador desta tela, de qualquer reino (fato público do mundo),
+## sem posição nem composição. WORLD/IMPORTANT; nunca Attention.
+func _on_public_milestone_reached(player: PlayerData, milestone: String) -> void:
+	var copy := PublicVictoryMilestones.message_for(player, milestone)
+	var event := UIEventData.create("public_milestone", UIEventData.Category.VICTORY, UIEventData.Severity.IMPORTANT, String(copy.title), String(copy.body))
+	event.source_player = _player_name(player)
+	event.dedup_key = "milestone:%d:%s" % [GameManager.players.find(player), milestone]
+	event.focus_action = "victory"
+	publish(event)
+
+## Fase 33D3 — desfechos de grandes eventos no Event Center (substitui o modal bloqueante do Dragão).
+func _on_world_event_phase_changed_d3(event_source: WorldEvent, _old_phase: String, new_phase: String) -> void:
+	if event_source is DragonEvent and new_phase == WorldEvent.PHASE_RESOLUTION:
+		var dragon := event_source as DragonEvent
+		var outcome := String(dragon.result.get("outcome", ""))
+		var lines: Array[String] = []
+		for line in DragonEvent.damage_ranking_lines(dragon.damage_by_civ, GameManager.players):
+			lines.append(line)
+		for index in dragon.result.get("rewards", {}):
+			var reward: Dictionary = dragon.result.rewards[index]
+			if int(index) < GameManager.players.size():
+				lines.append("%s: +%d ouro · +%d mana" % [_player_name(GameManager.players[int(index)]), int(reward.gold), int(reward.mana)])
+		var body := DragonEvent._outcome_message(outcome)
+		if not lines.is_empty():
+			body += "\n" + "\n".join(lines)
+		var event := UIEventData.create("dragon_resolved", UIEventData.Category.WORLD, UIEventData.Severity.IMPORTANT, "O Dragão foi derrotado" if outcome == "defeated" else "O Dragão partiu", body)
+		event.dedup_key = "dragon_resolved:%d" % dragon.event_id
+		publish(event)
+	elif event_source is ReliquaryEvent:
+		var reliquary := event_source as ReliquaryEvent
+		if new_phase == WorldEvent.PHASE_ACTIVE:
+			_publish_threat("reliquary_active", "Relicário Desperto", "Os guardiões do Relicário se ergueram. Derrote-os e mantenha o local por %d rodadas." % ReliquaryEvent.CONTROL_ROUNDS_REQUIRED, reliquary.site_coord, "reliquary:active:%d" % reliquary.event_id)
+		elif new_phase == WorldEvent.PHASE_RESOLUTION and reliquary.winner_index >= 0 and reliquary.winner_index < GameManager.players.size():
+			_publish_threat("reliquary_resolved", "Relicário Desperto", "O Relicário foi reivindicado por %s." % _player_name(GameManager.players[reliquary.winner_index]), reliquary.site_coord, "reliquary:resolved:%d" % reliquary.event_id)
+
+## Fase 33D1 — mudança de era do mundo: um evento WORLD/IMPORTANT (Toast + Event Center), nunca Attention.
+## A causa interna (PROGRESS/FALLBACK) não aparece: a apresentação é a mesma.
+const WORLD_PHASE_COPY := {
+	WorldPhaseRules.Phase.ASCENSION: "Os reinos deixaram de ser pequenos enclaves. Expanda seu território, desenvolva suas cidades e prepare forças capazes de disputar as ameaças e oportunidades do mundo.",
+	WorldPhaseRules.Phase.CONVERGENCE: "As grandes estratégias estão tomando forma. Observe os reinos rivais, converta seu poder em vantagem e prepare-se para disputar a vitória.",
+}
+
+## Fase 33D2 — ameaças do mundo. Só o que o jogador desta tela legitimamente sabe: a descoberta é dele, o
+## despertar só é anunciado ao DONO que já conhece o covil, e a resolução por outro reino não revela quem.
+## WORLD/IMPORTANT (Toast + Event Center) com foco no tile; nunca Attention nem alerta crítico.
+func _on_world_threat_discovered(player: PlayerData, lair_coord: Vector2i, role: String) -> void:
+	if not _is_human(player):
+		return
+	if role == HexGrid.LAIR_ROLE_REGIONAL:
+		var record := RegionalThreatSystem.record_for_lair(lair_coord)
+		if record.is_empty() or int(record.owner) != GameManager.players.find(player):
+			return
+		_publish_threat("regional_threat_discovered", "Ameaça regional", "Um covil hostil ameaça os arredores de seu reino.", lair_coord, "regional:discovered:%s" % lair_coord)
+	elif role == HexGrid.LAIR_ROLE_GUARDIAN:
+		var site := RegionalThreatSystem.guardian_for_lair(lair_coord)
+		var known_resource: bool = site.has("resource_coord") and player.explored_tiles.has(site.resource_coord)
+		var resource := ResourceDatabase.display_name(String(site.get("resource", ""))) if known_resource else ""
+		_publish_threat("guardian_discovered", "Guardião Troll", "Um Troll guarda %s. Derrotá-lo libera o recurso." % (resource if resource != "" else "um recurso valioso"), lair_coord, "guardian:discovered:%s" % lair_coord)
+
+func _on_regional_threat_awakened(owner_player: PlayerData, lair_coord: Vector2i, _kind: String) -> void:
+	if not _is_human(owner_player):
+		return
+	var record := RegionalThreatSystem.record_for_lair(lair_coord)
+	if record.is_empty() or GameManager.players.find(owner_player) not in record.discovered_by:
+		return
+	_publish_threat("regional_threat_awakened", "Ameaça regional", "Uma ameaça desperta perto de seu reino.", lair_coord, "regional:awake:%s" % lair_coord)
+
+func _on_world_threat_resolved(role: String, owner_player: PlayerData, lair_coord: Vector2i, resolver: PlayerData) -> void:
+	if role != HexGrid.LAIR_ROLE_REGIONAL or not _is_human(owner_player):
+		return
+	var record := RegionalThreatSystem.record_for_lair(lair_coord)
+	if record.is_empty() or GameManager.players.find(owner_player) not in record.discovered_by:
+		return
+	var message := "A ameaça regional foi eliminada." if resolver == owner_player else "A ameaça regional foi eliminada por outro reino."
+	_publish_threat("regional_threat_resolved", "Ameaça regional", message, lair_coord, "regional:resolved:%s" % lair_coord)
+
+func _on_guardian_site_spawned(lair_coord: Vector2i, resource_coord: Vector2i, resource: String) -> void:
+	var viewer := GameManager.human_player
+	if viewer == null or not viewer.explored_tiles.has(resource_coord):
+		return
+	var resource_name := ResourceDatabase.display_name(resource)
+	_publish_threat("guardian_site_spawned", "Guardião Troll", "Um Troll passou a guardar %s." % (resource_name if resource_name != "" else "um recurso valioso"), lair_coord, "guardian:spawned:%s" % lair_coord)
+
+func _publish_threat(type: String, title: String, message: String, coord: Vector2i, dedup: String) -> void:
+	var event := UIEventData.create(type, UIEventData.Category.WORLD, UIEventData.Severity.IMPORTANT, title, message)
+	event.with_target(coord, "world_threat")
+	event.dedup_key = dedup
+	publish(event)
+
+func _on_world_phase_changed(_old_phase: int, new_phase: int, turn: int, _cause: String) -> void:
+	var title := "A %s começou" % WorldPhaseRules.display_name(new_phase)
+	var event := UIEventData.create("world_phase_changed", UIEventData.Category.WORLD, UIEventData.Severity.IMPORTANT, title, String(WORLD_PHASE_COPY.get(new_phase, "")))
+	event.dedup_key = "world_phase:%d" % new_phase
+	event.target_entity = WorldPhaseRules.id_name(new_phase)
 	publish(event)

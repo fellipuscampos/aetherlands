@@ -11,7 +11,7 @@ const MAGIC_PRESSURE_ROLES := ["magical_damage", "undead_summoning", "environmen
 const OBSERVED_TRAITS := ["mounted", "siege", "caster", "legendary", "grand_manifestation", "undead", "retinue", "flying"]
 
 static func is_enabled_for(player: PlayerData) -> bool:
-	return player != null and player != GameManager.human_player and player in GameManager.rival_players
+	return player != null and player in GameManager.ai_controlled_players()
 
 static func initialize_player(player: PlayerData, rival_index: int, world_seed: int, rival_count: int) -> void:
 	if player == null:
@@ -148,6 +148,9 @@ static func _tree_progress(player: PlayerData, tree_type: int) -> float:
 	return result
 
 static func _choose_research(player: PlayerData) -> void:
+	# V3 / Etapa 2: civilização sem cidade não escolhe pesquisa (V2ResearchAccess — mesma regra do humano).
+	if not V2ResearchAccess.can_start(player):
+		return
 	var available: Array[V2ResearchNode] = []
 	for node in V2ResearchDatabase.all_nodes():
 		if player.v2_research.is_available(node.id):
@@ -375,9 +378,14 @@ static func _production_score(player: PlayerData, city: City, id: String, view: 
 	var role := V2UnitLine.role_of(id)
 	var desired_role := _desired_role_count(player, role)
 	var current := player.units.filter(func(u): return V2UnitLine.role_of(u.unit_data.visual_kind) == role).size() + int(queued_roles.get(role, 0))
-	if role == "" or current >= desired_role:
+	if role == "":
 		return -10.0
-	return 18.0 + (desired_role - current) * 14.0 + data.attack * 0.15
+	# Fase 33D2: covil regional CONHECIDO sem força local suficiente → urgência de uma unidade de linha
+	# (resposta mínima; o planner real continua escolhendo — nada é forçado).
+	var lair_bonus := lair_response_production_bonus(player, view)
+	if current >= desired_role:
+		return -10.0 if lair_bonus <= 0.0 else 18.0 + data.attack * 0.15 + lair_bonus
+	return 18.0 + (desired_role - current) * 14.0 + data.attack * 0.15 + lair_bonus
 
 static func _desired_role_count(player: PlayerData, role: String) -> int:
 	if role == "":
@@ -488,16 +496,12 @@ static func strategic_target_coord(player: PlayerData, view: V2AIWorldView) -> V
 	if not view.own_lost_cities.is_empty():
 		return view.own_lost_cities[0].coord
 	if player.v2_ai_strategy.victory_focus == V2AIStrategyState.VictoryFocus.MILITARY_SUPREMACY:
-		var pending_ids: Dictionary = {}
-		for rival in V2VictoryConditions.military_supremacy_status(player).rivals:
-			if rival.reason == V2VictoryConditions.REASON_PENDING:
-				pending_ids[int(rival.player_id)] = true
-		for city in view.known_enemy_cities:
-			# City level is not public through fog. A known-but-currently-hidden
-			# city remains a normal campaign target, but never a specialized
-			# Supremacy target based on secret development.
-			if bool(city.visible) and bool(city.get("developed", false)) and pending_ids.has(int(city.owner_id)) and bool(city.at_war):
-				return city.coord
+		# Fase 33D3: alvo de Supremacia = cidade CONHECIDA do rival pendente com o maior nível OBSERVADO
+		# (capital conhecida no empate) — V2VictoryConditions.known_supremacy_targets. Nunca a lista real:
+		# uma cidade escondida mais desenvolvida não existe para a IA.
+		var supremacy_target = supremacy_target_coord(player, view)
+		if supremacy_target != null:
+			return supremacy_target
 	# A campanha V1 continua sendo a memória territorial oficial durante a
 	# transição. Só lemos o alvo público já escolhido; se não houver campanha,
 	# uma cidade previamente conhecida e em guerra é um objetivo legítimo para
@@ -514,6 +518,24 @@ static func strategic_target_coord(player: PlayerData, view: V2AIWorldView) -> V
 			var db := HexMetrics.axial_distance(anchor, b.coord)
 			return da < db if da != db else _coord_less(a.coord, b.coord))
 		return known_war_cities[0].coord
+	# Fase 33D3: Relicário público que o plano julgou viável — voo, Portais e conjuradores usam as capacidades
+	# existentes (V2AITacticalAI) para chegar; nenhum atalho novo.
+	var reliquary := reliquary_plan(player, view)
+	if String(reliquary.mode) == "go":
+		return reliquary.site
+	return null
+
+## Fase 33D3 — alvo de Supremacia contra o primeiro rival PENDENTE em guerra com alvo conhecido.
+static func supremacy_target_coord(player: PlayerData, view: V2AIWorldView) -> Variant:
+	for rival in V2VictoryConditions.military_supremacy_status(player).rivals:
+		if String(rival.reason) != V2VictoryConditions.REASON_PENDING:
+			continue
+		var other: PlayerData = V2VictoryConditions.major_players()[int(rival.player_id)]
+		if not player.is_at_war_with(other):
+			continue
+		var targets := V2VictoryConditions.known_supremacy_targets(player, other, view.grid)
+		if not targets.is_empty():
+			return targets[0].coord
 	return null
 
 ## Sede do Ritual Final público mais urgente de um rival (menos rodadas restantes; empate pela
@@ -569,3 +591,208 @@ static func debug_snapshot(player: PlayerData) -> Dictionary:
 
 static func _coord_less(a: Vector2i, b: Vector2i) -> bool:
 	return a.x < b.x if a.x != b.x else a.y < b.y
+
+# ---------------------------------------------------------------------------
+# Fase 33D2 — resposta a covis/ameaças CONHECIDOS (contexto, não QuestAI)
+# ---------------------------------------------------------------------------
+
+## Covil Goblin/Esqueleto conhecido a até esta distância de uma cidade própria é problema regional.
+const LAIR_RESPONSE_RADIUS := 10
+## Guardião Troll conhecido a até esta distância de uma cidade própria entra como oportunidade (só ataque).
+const GUARDIAN_INTEREST_RADIUS := 12
+## Unidades próprias até esta distância do covil somam na força local mobilizável.
+const LAIR_FORCE_RADIUS := 10
+## Resposta mínima: enquanto a força local não cobre o covil, unidade de linha ganha este bônus de
+## produção — só até o exército relevante (fila inclusa) chegar a LAIR_RESPONSE_MAX_UNITS (escolta inicial
+## + 2). Depois do teto de tokens (target/hard cap intocados): nunca muda o tamanho global do exército.
+const LAIR_RESPONSE_MAX_UNITS := 3
+const LAIR_RESPONSE_PRODUCTION_BONUS := 30.0
+const LAIR_RESPONSE_KINDS := ["goblin", "skeleton"]
+
+## Plano de resposta ao covil mais relevante que a civilização CONHECE (V2AIWorldView.known_lairs — nunca a
+## lista global nem a população escondida). mode:
+## - "none": nada conhecido/relevante, ou pressão estratégica mais grave (guerra perto, Ritual rival);
+## - "gather": covil regional conhecido, força local < OVERMATCH × defesa conhecida → produzir/reunir;
+## - "attack": força local ≥ CityDefense.OVERMATCH × defesa conhecida → unidades próximas avançam e atacam.
+static func lair_response_plan(player: PlayerData, view: V2AIWorldView) -> Dictionary:
+	var plan := {"mode": "none", "target": HexGrid.NO_LAIR, "role": "", "kind": "", "defense": 0.0, "required": 0.0, "force": 0.0, "reason": ""}
+	if player == null or view == null or view.grid == null or player.cities.is_empty():
+		plan.reason = "no_city"
+		return plan
+	if under_severe_pressure(player, view):
+		plan.reason = "pressure"
+		return plan
+	var best: Dictionary = {}
+	var best_key: Array = []
+	for record in view.known_lairs:
+		if not view.grid.lairs_by_coord.has(record.coord):
+			continue
+		var role := String(record.get("role", HexGrid.LAIR_ROLE_WILD))
+		var distance := _nearest_own_city_distance(player, record.coord)
+		var guardian := role == HexGrid.LAIR_ROLE_GUARDIAN
+		if guardian:
+			if distance > GUARDIAN_INTEREST_RADIUS or not player.enemies.is_empty():
+				continue
+		elif String(record.kind) not in LAIR_RESPONSE_KINDS or distance > LAIR_RESPONSE_RADIUS:
+			continue
+		var key := [1 if guardian else 0, distance, record.coord.x, record.coord.y]
+		if best.is_empty() or _array_less(key, best_key):
+			best = record
+			best_key = key
+	if best.is_empty():
+		plan.reason = "no_known_threat"
+		return plan
+	var coord: Vector2i = best.coord
+	plan.target = coord
+	plan.role = String(best.get("role", HexGrid.LAIR_ROLE_WILD))
+	plan.kind = String(best.kind)
+	plan.defense = view.known_lair_defense(coord)
+	plan.required = plan.defense * CityDefense.OVERMATCH
+	plan.force = local_lair_force(player, coord)
+	if plan.force > 0.0 and plan.force >= plan.required:
+		plan.mode = "attack"
+	elif plan.role != HexGrid.LAIR_ROLE_GUARDIAN:
+		plan.mode = "gather"
+	else:
+		plan.reason = "guardian_insufficient_force"
+	return plan
+
+## Poder (CityDefense.unit_power) das unidades de combate próprias aptas perto do covil.
+static func local_lair_force(player: PlayerData, lair_coord: Vector2i) -> float:
+	var force := 0.0
+	for unit in player.units:
+		if is_lair_responder(unit) and HexMetrics.axial_distance(unit.coord, lair_coord) <= LAIR_FORCE_RADIUS:
+			force += CityDefense.unit_power(unit)
+	return force
+
+static func is_lair_responder(unit: Unit) -> bool:
+	if unit == null or not is_instance_valid(unit) or unit.hp <= 0.0:
+		return false
+	if unit.unit_data.attack <= 0.0 or not unit.unit_data.can_basic_attack or unit.unit_data.can_found_city or V2ConstructorRuntime.is_builder_unit(unit):
+		return false
+	return unit.hp >= unit.unit_data.max_hp * RivalAI.RETREAT_HP_FRACTION
+
+## Guerra com inimigo visível perto das cidades, campanha ativa ou Ritual Final público de rival: a
+## ameaça regional fica secundária (nunca "covil sempre prioridade máxima").
+static func under_severe_pressure(player: PlayerData, view: V2AIWorldView) -> bool:
+	if not view.public_enemy_rituals().is_empty():
+		return true
+	for unit in view.visible_enemy_units:
+		if unit.owner_player != null and player.is_at_war_with(unit.owner_player) and _nearest_own_city_distance(player, unit.coord) <= V2AITuning.LOCAL_THREAT_RADIUS:
+			return true
+	for opponent in player.war_campaigns:
+		if String(player.war_campaigns[opponent].get("status", "")) == "active" and player.is_at_war_with(opponent):
+			return true
+	return false
+
+## Bônus de produção da resposta mínima (ver LAIR_RESPONSE_*).
+static func lair_response_production_bonus(player: PlayerData, view: V2AIWorldView) -> float:
+	if relevant_unit_count(player) + queued_relevant_count(player) >= LAIR_RESPONSE_MAX_UNITS:
+		return 0.0
+	return LAIR_RESPONSE_PRODUCTION_BONUS if String(lair_response_plan(player, view).mode) == "gather" else 0.0
+
+static func _nearest_own_city_distance(player: PlayerData, coord: Vector2i) -> int:
+	var best := 999999
+	for city in player.cities:
+		best = mini(best, HexMetrics.axial_distance(city.coord, coord))
+	return best
+
+static func _array_less(a: Array, b: Array) -> bool:
+	for i in a.size():
+		if a[i] != b[i]:
+			return a[i] < b[i]
+	return false
+
+# ---------------------------------------------------------------------------
+# Fase 33D3 — grandes eventos do mundo (Dragão, Relicário): decisão só com informação PÚBLICA/observada
+# ---------------------------------------------------------------------------
+
+## Participação no Dragão (não-alvo): recusa em guerra severa, sem força móvel mínima ou longe demais da região
+## anunciada para chegar na janela; senão aceita. O alvo sempre defende.
+const DRAGON_PARTICIPATION_MAX_DISTANCE := 20
+const DRAGON_PARTICIPATION_MIN_RESPONDERS := 2
+
+static func dragon_participation(player: PlayerData, civ_index: int, event: DragonEvent, view: V2AIWorldView) -> Dictionary:
+	if civ_index == event.target_civ_index:
+		return {"join": true, "reason": "target"}
+	if player.cities.is_empty():
+		return {"join": false, "reason": "no_city"}
+	if defensive_war_pressure(player, view):
+		return {"join": false, "reason": "war_pressure"}
+	var responders := 0
+	for unit in player.units:
+		if is_lair_responder(unit) and not StrategicAI._is_needed_garrison(unit, player):
+			responders += 1
+	if responders < DRAGON_PARTICIPATION_MIN_RESPONDERS:
+		return {"join": false, "reason": "no_mobile_force"}
+	if _nearest_own_city_distance(player, event.origin_region) > DRAGON_PARTICIPATION_MAX_DISTANCE:
+		return {"join": false, "reason": "too_far"}
+	return {"join": true, "reason": "free_force_nearby"}
+
+## Guerra DEFENSIVA severa ou perdendo guerra relevante: inimigo em guerra visível perto das próprias cidades,
+## ou uma cidade própria hoje nas mãos de um rival (V2AIWorldView.own_lost_cities, fato público ao ex-dono).
+## Campanha ofensiva sozinha não conta.
+static func defensive_war_pressure(player: PlayerData, view: V2AIWorldView) -> bool:
+	if not view.own_lost_cities.is_empty() and not player.enemies.is_empty():
+		return true
+	for unit in view.visible_enemy_units:
+		if unit.owner_player != null and player.is_at_war_with(unit.owner_player) and _nearest_own_city_distance(player, unit.coord) <= V2AITuning.LOCAL_THREAT_RADIUS:
+			return true
+	return false
+
+## Relicário: vale ir? Evento público aberto, sem pressão grave, local a ≤ RELIQUARY_INTEREST_RADIUS de uma
+## cidade própria, ≥ 2 unidades aptas perto e força das RELIQUARY_MAX_RESPONDERS mais próximas ≥ OVERMATCH ×
+## defesa conhecida dos guardiões (visíveis; se o local não está à vista, os guardiões do catálogo).
+## Nunca "Relicário ativo = sempre ir". {mode: none|go, site, units: [Unit]}
+const RELIQUARY_INTEREST_RADIUS := 18
+const RELIQUARY_FORCE_RADIUS := 16
+const RELIQUARY_MAX_RESPONDERS := 3
+
+static func reliquary_plan(player: PlayerData, view: V2AIWorldView) -> Dictionary:
+	var plan := {"mode": "none", "site": ReliquaryEvent.NO_COORD, "units": [], "reason": ""}
+	var record: Dictionary = {}
+	for entry in view.public_world_events:
+		if String(entry.type) == ReliquaryEvent.EVENT_TYPE:
+			record = entry
+	if record.is_empty() or player.cities.is_empty():
+		plan.reason = "no_event"
+		return plan
+	var site: Vector2i = record.coord
+	plan.site = site
+	if under_severe_pressure(player, view):
+		plan.reason = "pressure"
+		return plan
+	if _nearest_own_city_distance(player, site) > RELIQUARY_INTEREST_RADIUS:
+		plan.reason = "too_far"
+		return plan
+	var candidates: Array[Unit] = []
+	for unit in player.units:
+		if is_lair_responder(unit) and HexMetrics.axial_distance(unit.coord, site) <= RELIQUARY_FORCE_RADIUS and not StrategicAI._is_needed_garrison(unit, player):
+			candidates.append(unit)
+	candidates.sort_custom(func(a: Unit, b: Unit) -> bool:
+		var da := HexMetrics.axial_distance(a.coord, site)
+		var db := HexMetrics.axial_distance(b.coord, site)
+		return da < db if da != db else a.serial_id < b.serial_id)
+	var chosen := candidates.slice(0, RELIQUARY_MAX_RESPONDERS)
+	if chosen.size() < 2:
+		plan.reason = "no_mobile_force"
+		return plan
+	var force := 0.0
+	for unit in chosen:
+		force += CityDefense.unit_power(unit)
+	if force < reliquary_known_defense(view, site, String(record.phase)) * CityDefense.OVERMATCH:
+		plan.reason = "insufficient_force"
+		return plan
+	plan.mode = "go"
+	plan.units = chosen
+	return plan
+
+static func reliquary_known_defense(view: V2AIWorldView, site: Vector2i, phase: String) -> float:
+	var observed := 0.0
+	for unit in view.visible_enemy_units:
+		if unit.owner_player == null and HexMetrics.axial_distance(unit.coord, site) <= 1:
+			observed += CityDefense.unit_power(unit)
+	if view.is_visible(site) and phase == WorldEvent.PHASE_ACTIVE:
+		return observed
+	var catalog := CityDefense.unit_data_power(MonsterDatabase.create_monster(ReliquaryEvent.GUARDIAN_KIND)) * float(ReliquaryEvent.GUARDIAN_COUNT)
+	return maxf(observed, catalog)

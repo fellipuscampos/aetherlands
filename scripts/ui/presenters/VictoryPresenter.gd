@@ -42,7 +42,7 @@ static func domination_card(player: PlayerData) -> Dictionary:
 		"state": "Concluída" if remaining == 0 and not rivals.is_empty() else "Em andamento",
 		"progress_text": "%d / %d rivais eliminados" % [eliminated, rivals.size()],
 		"segments": segments,
-		"next": "Elimine %d civilização(ões) restante(s)." % remaining if remaining > 0 else "Nenhum rival restante.",
+		"next": String(StrategicImperatives.domination(player).next), # Fase 33D3: imperativo = fonte única
 		"threat": "",
 		"ratio": VictoryConditions.dominance_progress(player, V2VictoryConditions.major_players()),
 	}
@@ -72,17 +72,7 @@ static func supremacy_card(player: PlayerData) -> Dictionary:
 		segments.append({"filled": status.access and rival.satisfied, "color": UIThemeTokens.COLOR_SUCCESS, "tooltip": "%s — %s" % [rival.name, _supremacy_reason_label(String(rival.reason))]})
 	var capstone := _supremacy_capstone()
 	var doctrines := V2ResearchDatabase.capstone_progress(capstone.id, player.v2_research.completed_ids) if capstone != null else Vector2i.ZERO
-	var next := ""
-	var pending: Array[String] = []
-	for rival in status.rivals:
-		if not rival.satisfied:
-			pending.append(String(rival.name))
-	if not status.access:
-		next = "Pesquise Exército Supremo (Doutrinas completas: %d / %d)." % [doctrines.x, doctrines.y]
-	elif pending.is_empty():
-		next = "Todas as condições cumpridas."
-	else:
-		next = "Conquiste e mantenha uma Cidade III+ de: %s." % ", ".join(pending)
+	var next := String(StrategicImperatives.supremacy(player).next) # Fase 33D3: imperativo = fonte única
 	return {
 		"key": SUPREMACY,
 		"title": "Supremacia Militar",
@@ -97,9 +87,9 @@ static func supremacy_card(player: PlayerData) -> Dictionary:
 static func _supremacy_reason_label(reason: String) -> String:
 	match reason:
 		V2VictoryConditions.REASON_CAPTURED:
-			return "Cidade desenvolvida conquistada e mantida"
+			return "Satisfeito — cidade de maior nível conquistada e mantida"
 		V2VictoryConditions.REASON_ELIMINATED:
-			return "Eliminada"
+			return "Eliminado — satisfeito"
 	return "Pendente"
 
 static func supremacy_detail(player: PlayerData) -> Dictionary:
@@ -118,7 +108,7 @@ static func supremacy_detail(player: PlayerData) -> Dictionary:
 		"title": "Supremacia Militar",
 		"checklist": checklist,
 		"sections": [{"title": "Cada rival", "rows": rivals}],
-		"how_to": ["Requer a pesquisa Exército Supremo (duas Doutrinas completas).", "Para cada rival: conquiste e mantenha uma Cidade III+ dele, ou elimine-o.", "Perder a cidade conquistada desfaz a condição daquele rival."],
+		"how_to": ["Requer a pesquisa Exército Supremo (duas Doutrinas completas).", "Para cada rival: conquiste e mantenha uma cidade dele do MAIOR nível que ele possui no momento da captura (empate: qualquer uma delas), ou elimine-o.", "Perder a cidade conquistada desfaz a condição daquele rival.", String(StrategicImperatives.supremacy(player).next)],
 	}
 
 # --- Transcendência ------------------------------------------------------------------
@@ -149,17 +139,7 @@ static func transcendence_card(player: PlayerData) -> Dictionary:
 	var done_rounds := required - int(status.remaining_rounds) if status.active else 0
 	for index in required:
 		segments.append({"filled": index < done_rounds, "color": UIThemeTokens.COLOR_TARGETING, "tooltip": "Rodada %d do Ritual" % (index + 1)})
-	var next := ""
-	if not status.access:
-		next = "Pesquise Transcendência (Escolas completas: %d / %d)." % [schools.x, schools.y]
-	elif status.active:
-		next = "Mantenha o Ritual por mais %d rodada(s)." % int(status.remaining_rounds)
-	elif int(status.manifestation_count) < int(status.manifestation_required):
-		next = "Grandes Manifestações ativas: %d / %d." % [mini(status.manifestation_count, status.manifestation_required), status.manifestation_required]
-	elif _ritual_ready_cities(player).is_empty():
-		next = "Construa uma Estrutura Ritual pesquisada numa cidade."
-	else:
-		next = "Inicie o Ritual numa cidade com Estrutura Ritual (%d Mana)." % int(V2TranscendenceSystem.MANA_COST)
+	var next := String(StrategicImperatives.transcendence(player).next) # Fase 33D3: imperativo = fonte única
 	var threat := ""
 	var rivals := rival_public_rituals(player)
 	if not rivals.is_empty():

@@ -52,6 +52,14 @@ var result: Dictionary = {}
 func is_completed() -> bool:
 	return phase == PHASE_COMPLETED
 
+## Fase 33D1 — nome e resumo PLAYER-FACING (Event Center, alertas). Nunca o nome da classe/script nem o
+## event_type interno; cada evento concreto sobrescreve.
+func display_name() -> String:
+	return "Evento mundial"
+
+func public_summary() -> String:
+	return "Algo está mudando no mundo."
+
 ## Avalia e aplica a evolucao DESTE evento neste turno (ver contrato,
 ## secao 1) -- chamado exatamente uma vez por turno real, so de dentro de
 ## WorldEventManager.advance_turn(). Base nao faz nada; todo evento

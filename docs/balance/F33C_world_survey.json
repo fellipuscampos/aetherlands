@@ -1,0 +1,4068 @@
+[
+	{
+		"dragon_trigger_turns": [
+			170
+		],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 2,
+			"skeleton": 3,
+			"troll": 4,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 12,
+		"match_id": "F33B-001",
+		"seats": [
+			{
+				"capital": [
+					1,
+					9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 21,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 23,
+				"race": "human",
+				"seat": 0
+			},
+			{
+				"capital": [
+					44,
+					-10
+				],
+				"lairs_within": {
+					"10": 3,
+					"15": 3,
+					"6": 2
+				},
+				"nearest_lair": 1,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 43,
+				"race": "elf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-22,
+					19
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 1
+				},
+				"nearest_lair": 3,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 23,
+				"race": "dwarf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-16,
+					-18
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 8,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 37,
+				"race": "orc",
+				"seat": 3
+			}
+		],
+		"seed": 33102
+	},
+	{
+		"dragon_trigger_turns": [
+			83,
+			185,
+			204,
+			219
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 4,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 12,
+		"lairs_total": 14,
+		"match_id": "F33B-002",
+		"seats": [
+			{
+				"capital": [
+					-8,
+					9
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 3,
+					"6": 1
+				},
+				"nearest_lair": 5,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 7,
+				"race": "elf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					26,
+					7
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 11,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 34,
+				"race": "dwarf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-15,
+					12
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 12,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 7,
+				"race": "orc",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-13,
+					-18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 11,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 30,
+				"race": "human",
+				"seat": 3
+			}
+		],
+		"seed": 33109
+	},
+	{
+		"dragon_trigger_turns": [
+			31,
+			106,
+			142,
+			212,
+			235
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 4,
+			"troll": 5,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 14,
+		"lairs_total": 16,
+		"match_id": "F33B-003",
+		"seats": [
+			{
+				"capital": [
+					10,
+					-11
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 7,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 29,
+				"race": "dwarf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					38,
+					-10
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 14,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 29,
+				"race": "orc",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-16,
+					18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 11,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 29,
+				"race": "human",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-24,
+					-15
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 38,
+				"race": "elf",
+				"seat": 3
+			}
+		],
+		"seed": 33116
+	},
+	{
+		"dragon_trigger_turns": [
+			58,
+			73,
+			77,
+			86,
+			149,
+			206,
+			225
+		],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 12,
+		"match_id": "F33B-004",
+		"seats": [
+			{
+				"capital": [
+					-8,
+					8
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 20,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 1,
+				"race": "orc",
+				"seat": 0
+			},
+			{
+				"capital": [
+					25,
+					9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 16,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 33,
+				"race": "human",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-8,
+					9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 20,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 1,
+				"race": "elf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-18,
+					-12
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 30,
+				"race": "dwarf",
+				"seat": 3
+			}
+		],
+		"seed": 33123
+	},
+	{
+		"dragon_trigger_turns": [
+			56,
+			93,
+			155,
+			221,
+			225,
+			239
+		],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 5,
+			"skeleton": 1,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 8,
+		"lairs_total": 11,
+		"match_id": "F33B-005",
+		"seats": [
+			{
+				"capital": [
+					0,
+					-9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 22,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 22,
+				"race": "human",
+				"seat": 0
+			},
+			{
+				"capital": [
+					44,
+					-10
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 20,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 44,
+				"race": "elf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					13
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 5,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 22,
+				"race": "dwarf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-23,
+					-15
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 39,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 29,
+				"race": "orc",
+				"seat": 3
+			}
+		],
+		"seed": 33130
+	},
+	{
+		"dragon_trigger_turns": [
+			63,
+			107,
+			128,
+			150,
+			178
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 4,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 12,
+		"lairs_total": 14,
+		"match_id": "F33B-006",
+		"seats": [
+			{
+				"capital": [
+					4,
+					-9
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 3,
+					"6": 1
+				},
+				"nearest_lair": 2,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 21,
+				"race": "elf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					34,
+					-8
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 7,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 31,
+				"race": "dwarf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-11,
+					12
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 13,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 21,
+				"race": "orc",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-30,
+					-13
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 16,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 38,
+				"race": "human",
+				"seat": 3
+			}
+		],
+		"seed": 33137
+	},
+	{
+		"dragon_trigger_turns": [
+			135,
+			182,
+			189,
+			228
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 10,
+		"lairs_total": 12,
+		"match_id": "F33B-007",
+		"seats": [
+			{
+				"capital": [
+					0,
+					9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 17,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 5,
+				"race": "dwarf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					33,
+					-10
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 33,
+				"race": "orc",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-5,
+					12
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 15,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 5,
+				"race": "human",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-17,
+					-13
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 3,
+					"6": 1
+				},
+				"nearest_lair": 1,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 37,
+				"race": "elf",
+				"seat": 3
+			}
+		],
+		"seed": 33144
+	},
+	{
+		"dragon_trigger_turns": [
+			50,
+			171
+		],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 4,
+			"skeleton": 3,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 12,
+		"match_id": "F33B-008",
+		"seats": [
+			{
+				"capital": [
+					13,
+					-13
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 17,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 31,
+				"race": "orc",
+				"seat": 0
+			},
+			{
+				"capital": [
+					26,
+					9
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 7,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 35,
+				"race": "human",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-16,
+					18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 17,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 31,
+				"race": "elf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-18,
+					-16
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 14,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 34,
+				"race": "dwarf",
+				"seat": 3
+			}
+		],
+		"seed": 33151
+	},
+	{
+		"dragon_trigger_turns": [
+			30,
+			49,
+			51,
+			169,
+			194,
+			214,
+			228
+		],
+		"lair_kinds": {
+			"goblin": 3,
+			"troll": 5,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 8,
+		"lairs_total": 10,
+		"match_id": "F33B-009",
+		"seats": [
+			{
+				"capital": [
+					-8,
+					9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 26,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 9,
+				"race": "human",
+				"seat": 0
+			},
+			{
+				"capital": [
+					19,
+					11
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 4,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 29,
+				"race": "elf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					17
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 33,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 9,
+				"race": "dwarf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-4,
+					-18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 12,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 27,
+				"race": "orc",
+				"seat": 3
+			}
+		],
+		"seed": 33158
+	},
+	{
+		"dragon_trigger_turns": [
+			32,
+			57,
+			132,
+			234
+		],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 12,
+		"match_id": "F33B-010",
+		"seats": [
+			{
+				"capital": [
+					8,
+					-9
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 25,
+				"race": "elf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					30,
+					8
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 14,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 39,
+				"race": "dwarf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					15
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 13,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 25,
+				"race": "orc",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-19,
+					-18
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 2
+				},
+				"nearest_lair": 3,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 35,
+				"race": "human",
+				"seat": 3
+			}
+		],
+		"seed": 33165
+	},
+	{
+		"dragon_trigger_turns": [
+			34,
+			98,
+			128,
+			145,
+			234
+		],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 5,
+			"skeleton": 3,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 10,
+		"lairs_total": 13,
+		"match_id": "F33B-011",
+		"seats": [
+			{
+				"capital": [
+					0,
+					-9
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 16,
+				"race": "dwarf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					26,
+					8
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 24,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 43,
+				"race": "orc",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					14
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 1
+				},
+				"nearest_lair": 3,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 23,
+				"race": "human",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-7,
+					-18
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 5,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 16,
+				"race": "elf",
+				"seat": 3
+			}
+		],
+		"seed": 33172
+	},
+	{
+		"dragon_trigger_turns": [
+			39,
+			59,
+			92,
+			136,
+			173
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 11,
+		"match_id": "F33B-012",
+		"seats": [
+			{
+				"capital": [
+					0,
+					7
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 5,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 17,
+				"race": "orc",
+				"seat": 0
+			},
+			{
+				"capital": [
+					29,
+					8
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 5,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 30,
+				"race": "human",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					17
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 3,
+					"6": 1
+				},
+				"nearest_lair": 3,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 17,
+				"race": "elf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-17,
+					-17
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 16,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 34,
+				"race": "dwarf",
+				"seat": 3
+			}
+		],
+		"seed": 33179
+	},
+	{
+		"dragon_trigger_turns": [
+			137,
+			141,
+			155,
+			177
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 4,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 12,
+		"lairs_total": 14,
+		"match_id": "F33B-013",
+		"seats": [
+			{
+				"capital": [
+					9,
+					-9
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 3,
+					"6": 1
+				},
+				"nearest_lair": 5,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 27,
+				"race": "human",
+				"seat": 0
+			},
+			{
+				"capital": [
+					26,
+					9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 21,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 35,
+				"race": "elf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					18
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 27,
+				"race": "dwarf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-20,
+					-18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 12,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 38,
+				"race": "orc",
+				"seat": 3
+			}
+		],
+		"seed": 33185
+	},
+	{
+		"dragon_trigger_turns": [
+			118,
+			142,
+			182,
+			226
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 11,
+		"match_id": "F33B-014",
+		"seats": [
+			{
+				"capital": [
+					8,
+					-10
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 14,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 25,
+				"race": "elf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					30,
+					9
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 1
+				},
+				"nearest_lair": 2,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 41,
+				"race": "dwarf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-16,
+					17
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 16,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 27,
+				"race": "orc",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-13,
+					-14
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 11,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 25,
+				"race": "human",
+				"seat": 3
+			}
+		],
+		"seed": 33192
+	},
+	{
+		"dragon_trigger_turns": [
+			145,
+			181,
+			203,
+			220
+		],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 5,
+			"skeleton": 3,
+			"troll": 4,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 12,
+		"lairs_total": 15,
+		"match_id": "F33B-015",
+		"seats": [
+			{
+				"capital": [
+					0,
+					-9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 11,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 27,
+				"race": "dwarf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					34,
+					8
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 8,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 51,
+				"race": "orc",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 16,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 27,
+				"race": "human",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-23,
+					-16
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 12,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 30,
+				"race": "elf",
+				"seat": 3
+			}
+		],
+		"seed": 33199
+	},
+	{
+		"dragon_trigger_turns": [],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 12,
+		"match_id": "F33B-016",
+		"seats": [
+			{
+				"capital": [
+					0,
+					-7
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 16,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 26,
+				"race": "orc",
+				"seat": 0
+			},
+			{
+				"capital": [
+					26,
+					9
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 4,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 42,
+				"race": "human",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					19
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 13,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 26,
+				"race": "elf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-20,
+					-18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 19,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 31,
+				"race": "dwarf",
+				"seat": 3
+			}
+		],
+		"seed": 33206
+	},
+	{
+		"dragon_trigger_turns": [
+			40,
+			50,
+			72,
+			99,
+			170,
+			178,
+			208,
+			223
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 1,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 8,
+		"lairs_total": 10,
+		"match_id": "F33B-017",
+		"seats": [
+			{
+				"capital": [
+					11,
+					-11
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 19,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 28,
+				"race": "human",
+				"seat": 0
+			},
+			{
+				"capital": [
+					29,
+					10
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 14,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 39,
+				"race": "elf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-15,
+					17
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 16,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 28,
+				"race": "dwarf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-21,
+					-13
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 14,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 34,
+				"race": "orc",
+				"seat": 3
+			}
+		],
+		"seed": 33213
+	},
+	{
+		"dragon_trigger_turns": [
+			39,
+			78,
+			97,
+			99,
+			148,
+			238
+		],
+		"lair_kinds": {
+			"goblin": 4,
+			"skeleton": 3,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 10,
+		"lairs_total": 12,
+		"match_id": "F33B-018",
+		"seats": [
+			{
+				"capital": [
+					0,
+					-9
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 2
+				},
+				"nearest_lair": 3,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 19,
+				"race": "elf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					44,
+					-10
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 26,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 44,
+				"race": "dwarf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-16,
+					18
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 27,
+				"race": "orc",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-12,
+					-16
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 13,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 19,
+				"race": "human",
+				"seat": 3
+			}
+		],
+		"seed": 33220
+	},
+	{
+		"dragon_trigger_turns": [
+			40,
+			65,
+			73,
+			103,
+			132,
+			197,
+			235
+		],
+		"lair_kinds": {
+			"goblin": 4,
+			"skeleton": 3,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 11,
+		"match_id": "F33B-019",
+		"seats": [
+			{
+				"capital": [
+					0,
+					-8
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 4,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 24,
+				"race": "dwarf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					41,
+					-9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 27,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 41,
+				"race": "orc",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					16
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 6,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 24,
+				"race": "human",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-17,
+					-15
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 6,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 24,
+				"race": "elf",
+				"seat": 3
+			}
+		],
+		"seed": 33227
+	},
+	{
+		"dragon_trigger_turns": [
+			46,
+			105
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 4,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 12,
+		"lairs_total": 14,
+		"match_id": "F33B-020",
+		"seats": [
+			{
+				"capital": [
+					0,
+					-9
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 5,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 23,
+				"race": "orc",
+				"seat": 0
+			},
+			{
+				"capital": [
+					41,
+					-9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 14,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 41,
+				"race": "human",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-18,
+					16
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 23,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 25,
+				"race": "elf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-17,
+					-15
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 4,
+					"6": 0
+				},
+				"nearest_lair": 11,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 23,
+				"race": "dwarf",
+				"seat": 3
+			}
+		],
+		"seed": 33234
+	},
+	{
+		"dragon_trigger_turns": [
+			61,
+			70,
+			94,
+			144,
+			229
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"troll": 5,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 10,
+		"lairs_total": 12,
+		"match_id": "F33B-021",
+		"seats": [
+			{
+				"capital": [
+					12,
+					-9
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 7,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 29,
+				"race": "human",
+				"seat": 0
+			},
+			{
+				"capital": [
+					41,
+					-9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 22,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 29,
+				"race": "elf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					12
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 5,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 29,
+				"race": "dwarf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-20,
+					-18
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 3,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 33,
+				"race": "orc",
+				"seat": 3
+			}
+		],
+		"seed": 33241
+	},
+	{
+		"dragon_trigger_turns": [
+			46,
+			65,
+			127,
+			232
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 1,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 8,
+		"lairs_total": 10,
+		"match_id": "F33B-022",
+		"seats": [
+			{
+				"capital": [
+					5,
+					-8
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 19,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 24,
+				"race": "elf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					26,
+					11
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 16,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 40,
+				"race": "dwarf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-14,
+					16
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 15,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 24,
+				"race": "orc",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-16,
+					-15
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 28,
+				"race": "human",
+				"seat": 3
+			}
+		],
+		"seed": 33248
+	},
+	{
+		"dragon_trigger_turns": [
+			82,
+			149,
+			170,
+			240
+		],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 1,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 8,
+		"lairs_total": 11,
+		"match_id": "F33B-023",
+		"seats": [
+			{
+				"capital": [
+					-4,
+					10
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 20,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 13,
+				"race": "dwarf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					43,
+					-10
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 1
+				},
+				"nearest_lair": 2,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 47,
+				"race": "orc",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					11
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 7,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 13,
+				"race": "human",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-17,
+					-14
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 1
+				},
+				"nearest_lair": 6,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 25,
+				"race": "elf",
+				"seat": 3
+			}
+		],
+		"seed": 33255
+	},
+	{
+		"dragon_trigger_turns": [
+			92,
+			97,
+			116,
+			117,
+			176
+		],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 5,
+			"skeleton": 3,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 11,
+		"lairs_total": 14,
+		"match_id": "F33B-024",
+		"seats": [
+			{
+				"capital": [
+					0,
+					-8
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 13,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 25,
+				"race": "orc",
+				"seat": 0
+			},
+			{
+				"capital": [
+					33,
+					10
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 51,
+				"race": "human",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-22,
+					18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 20,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 26,
+				"race": "elf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-16,
+					-17
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 12,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 25,
+				"race": "dwarf",
+				"seat": 3
+			}
+		],
+		"seed": 33262
+	},
+	{
+		"dragon_trigger_turns": [
+			39,
+			110,
+			123,
+			130,
+			207
+		],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 4,
+			"skeleton": 3,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 10,
+		"lairs_total": 13,
+		"match_id": "F33B-025",
+		"seats": [
+			{
+				"capital": [
+					8,
+					-8
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 28,
+				"race": "human",
+				"seat": 0
+			},
+			{
+				"capital": [
+					35,
+					8
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 13,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 43,
+				"race": "elf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-20,
+					19
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 17,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 28,
+				"race": "dwarf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-14,
+					-18
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 4,
+					"6": 2
+				},
+				"nearest_lair": 1,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 32,
+				"race": "orc",
+				"seat": 3
+			}
+		],
+		"seed": 33268
+	},
+	{
+		"dragon_trigger_turns": [
+			60,
+			79,
+			147
+		],
+		"lair_kinds": {
+			"goblin": 4,
+			"skeleton": 4,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 10,
+		"lairs_total": 12,
+		"match_id": "F33B-026",
+		"seats": [
+			{
+				"capital": [
+					-8,
+					8
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 17,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 10,
+				"race": "elf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					24,
+					10
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 16,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 33,
+				"race": "dwarf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-9,
+					18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 19,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 10,
+				"race": "orc",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-20,
+					-16
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 16,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 36,
+				"race": "human",
+				"seat": 3
+			}
+		],
+		"seed": 33275
+	},
+	{
+		"dragon_trigger_turns": [
+			45,
+			65,
+			90,
+			112,
+			114,
+			230
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 3,
+			"troll": 1,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 11,
+		"match_id": "F33B-027",
+		"seats": [
+			{
+				"capital": [
+					10,
+					-10
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 7,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 27,
+				"race": "dwarf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					27,
+					9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 21,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 36,
+				"race": "orc",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					16
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 1
+				},
+				"nearest_lair": 6,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 27,
+				"race": "human",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-18,
+					-15
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 14,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 32,
+				"race": "elf",
+				"seat": 3
+			}
+		],
+		"seed": 33282
+	},
+	{
+		"dragon_trigger_turns": [
+			149,
+			223
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 4,
+			"troll": 1,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 10,
+		"lairs_total": 12,
+		"match_id": "F33B-028",
+		"seats": [
+			{
+				"capital": [
+					-9,
+					9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 18,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 8,
+				"race": "orc",
+				"seat": 0
+			},
+			{
+				"capital": [
+					29,
+					8
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 1
+				},
+				"nearest_lair": 3,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 38,
+				"race": "human",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					17
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 22,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 8,
+				"race": "elf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-17,
+					-18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 14,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 35,
+				"race": "dwarf",
+				"seat": 3
+			}
+		],
+		"seed": 33289
+	},
+	{
+		"dragon_trigger_turns": [
+			39,
+			93,
+			115,
+			124,
+			175
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 8,
+		"lairs_total": 10,
+		"match_id": "F33B-029",
+		"seats": [
+			{
+				"capital": [
+					-7,
+					9
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 8,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 10,
+				"race": "human",
+				"seat": 0
+			},
+			{
+				"capital": [
+					24,
+					10
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 14,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 32,
+				"race": "elf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 15,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 10,
+				"race": "dwarf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-17,
+					-18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 19,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 27,
+				"race": "orc",
+				"seat": 3
+			}
+		],
+		"seed": 33296
+	},
+	{
+		"dragon_trigger_turns": [
+			77,
+			81,
+			130,
+			230
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 3,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 11,
+		"lairs_total": 13,
+		"match_id": "F33B-030",
+		"seats": [
+			{
+				"capital": [
+					-5,
+					10
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 11,
+				"race": "elf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					31,
+					11
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 12,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 37,
+				"race": "dwarf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-16,
+					17
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 11,
+				"race": "orc",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-14,
+					-19
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 36,
+				"race": "human",
+				"seat": 3
+			}
+		],
+		"seed": 33303
+	},
+	{
+		"dragon_trigger_turns": [
+			38,
+			92,
+			116,
+			164
+		],
+		"lair_kinds": {
+			"goblin": 3,
+			"skeleton": 2,
+			"troll": 4,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 11,
+		"match_id": "F33B-031",
+		"seats": [
+			{
+				"capital": [
+					5,
+					-9
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 1
+				},
+				"nearest_lair": 3,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 22,
+				"race": "dwarf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					32,
+					10
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 46,
+				"race": "orc",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					12
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 11,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 22,
+				"race": "human",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-19,
+					-16
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 30,
+				"race": "elf",
+				"seat": 3
+			}
+		],
+		"seed": 33310
+	},
+	{
+		"dragon_trigger_turns": [
+			156,
+			170,
+			237
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 4,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 13,
+		"lairs_total": 14,
+		"match_id": "F33B-032",
+		"seats": [
+			{
+				"capital": [
+					2,
+					-10
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 3,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 24,
+				"race": "orc",
+				"seat": 0
+			},
+			{
+				"capital": [
+					34,
+					-10
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 25,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 32,
+				"race": "human",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					14
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 8,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 24,
+				"race": "elf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-20,
+					-18
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 30,
+				"race": "dwarf",
+				"seat": 3
+			}
+		],
+		"seed": 33317
+	},
+	{
+		"dragon_trigger_turns": [
+			71,
+			95,
+			117,
+			139,
+			166
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 4,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 12,
+		"lairs_total": 14,
+		"match_id": "F33B-033",
+		"seats": [
+			{
+				"capital": [
+					1,
+					8
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 18,
+				"race": "human",
+				"seat": 0
+			},
+			{
+				"capital": [
+					43,
+					-9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 22,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 42,
+				"race": "elf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					18
+				],
+				"lairs_within": {
+					"10": 3,
+					"15": 4,
+					"6": 2
+				},
+				"nearest_lair": 2,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 18,
+				"race": "dwarf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-18,
+					-17
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 15,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 36,
+				"race": "orc",
+				"seat": 3
+			}
+		],
+		"seed": 33324
+	},
+	{
+		"dragon_trigger_turns": [
+			74,
+			104,
+			111,
+			118,
+			119
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 3,
+			"troll": 5,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 13,
+		"lairs_total": 15,
+		"match_id": "F33B-034",
+		"seats": [
+			{
+				"capital": [
+					-4,
+					-10
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 1
+				},
+				"nearest_lair": 6,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 16,
+				"race": "elf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					32,
+					11
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 8,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 51,
+				"race": "dwarf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-19,
+					16
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 9,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 26,
+				"race": "orc",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-10,
+					-20
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 16,
+				"race": "human",
+				"seat": 3
+			}
+		],
+		"seed": 33331
+	},
+	{
+		"dragon_trigger_turns": [
+			98,
+			138,
+			175,
+			196,
+			203,
+			224
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 10,
+		"lairs_total": 12,
+		"match_id": "F33B-035",
+		"seats": [
+			{
+				"capital": [
+					-4,
+					8
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 4,
+					"6": 2
+				},
+				"nearest_lair": 1,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 10,
+				"race": "dwarf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					25,
+					9
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 2
+				},
+				"nearest_lair": 4,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 30,
+				"race": "orc",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-14,
+					16
+				],
+				"lairs_within": {
+					"10": 3,
+					"15": 3,
+					"6": 1
+				},
+				"nearest_lair": 5,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 10,
+				"race": "human",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-17,
+					-18
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 7,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 37,
+				"race": "elf",
+				"seat": 3
+			}
+		],
+		"seed": 33338
+	},
+	{
+		"dragon_trigger_turns": [
+			61,
+			108,
+			153,
+			202,
+			212,
+			229
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 11,
+		"match_id": "F33B-036",
+		"seats": [
+			{
+				"capital": [
+					-6,
+					8
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 5,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 11,
+				"race": "orc",
+				"seat": 0
+			},
+			{
+				"capital": [
+					24,
+					14
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 2,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 36,
+				"race": "human",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 12,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 11,
+				"race": "elf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-18,
+					-17
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 14,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 36,
+				"race": "dwarf",
+				"seat": 3
+			}
+		],
+		"seed": 33345
+	},
+	{
+		"dragon_trigger_turns": [
+			54,
+			92,
+			219,
+			220,
+			224
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"troll": 5,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 10,
+		"lairs_total": 12,
+		"match_id": "F33B-037",
+		"seats": [
+			{
+				"capital": [
+					5,
+					-9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 12,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 23,
+				"race": "human",
+				"seat": 0
+			},
+			{
+				"capital": [
+					34,
+					-9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 17,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 29,
+				"race": "elf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-18,
+					10
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 3,
+					"6": 2
+				},
+				"nearest_lair": 2,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 23,
+				"race": "dwarf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-19,
+					-18
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 8,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 29,
+				"race": "orc",
+				"seat": 3
+			}
+		],
+		"seed": 33351
+	},
+	{
+		"dragon_trigger_turns": [
+			81,
+			145,
+			193,
+			202,
+			235
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 4,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 11,
+		"lairs_total": 13,
+		"match_id": "F33B-038",
+		"seats": [
+			{
+				"capital": [
+					-5,
+					13
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 12,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 10,
+				"race": "elf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					32,
+					-8
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 15,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 37,
+				"race": "dwarf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-15,
+					16
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 12,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 10,
+				"race": "orc",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-10,
+					-16
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 2
+				},
+				"nearest_lair": 2,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 32,
+				"race": "human",
+				"seat": 3
+			}
+		],
+		"seed": 33358
+	},
+	{
+		"dragon_trigger_turns": [
+			70,
+			100,
+			160,
+			165,
+			199,
+			208
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 1,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 8,
+		"lairs_total": 10,
+		"match_id": "F33B-039",
+		"seats": [
+			{
+				"capital": [
+					1,
+					-9
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 8,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 25,
+				"race": "dwarf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					40,
+					-8
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 27,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 40,
+				"race": "orc",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-13,
+					16
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 1
+				},
+				"nearest_lair": 3,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 25,
+				"race": "human",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-16,
+					-19
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 7,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 27,
+				"race": "elf",
+				"seat": 3
+			}
+		],
+		"seed": 33365
+	},
+	{
+		"dragon_trigger_turns": [
+			187,
+			229
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 11,
+		"match_id": "F33B-040",
+		"seats": [
+			{
+				"capital": [
+					3,
+					-8
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 21,
+				"race": "orc",
+				"seat": 0
+			},
+			{
+				"capital": [
+					24,
+					10
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 13,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 39,
+				"race": "human",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					13
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 21,
+				"race": "elf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-17,
+					-15
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 4,
+					"6": 1
+				},
+				"nearest_lair": 6,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 27,
+				"race": "dwarf",
+				"seat": 3
+			}
+		],
+		"seed": 33372
+	},
+	{
+		"dragon_trigger_turns": [
+			52,
+			153,
+			167,
+			200,
+			212,
+			229
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 3,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 10,
+		"lairs_total": 12,
+		"match_id": "F33B-041",
+		"seats": [
+			{
+				"capital": [
+					-8,
+					7
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 21,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 8,
+				"race": "human",
+				"seat": 0
+			},
+			{
+				"capital": [
+					33,
+					8
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 42,
+				"race": "elf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-16,
+					13
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 27,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 8,
+				"race": "dwarf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-21,
+					-13
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 31,
+				"race": "orc",
+				"seat": 3
+			}
+		],
+		"seed": 33379
+	},
+	{
+		"dragon_trigger_turns": [
+			66,
+			103,
+			186,
+			195,
+			235
+		],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 10,
+		"lairs_total": 13,
+		"match_id": "F33B-042",
+		"seats": [
+			{
+				"capital": [
+					-2,
+					9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 13,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 15,
+				"race": "elf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					27,
+					8
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 8,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 29,
+				"race": "dwarf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					17
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 15,
+				"race": "orc",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-10,
+					-16
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 12,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 33,
+				"race": "human",
+				"seat": 3
+			}
+		],
+		"seed": 33386
+	},
+	{
+		"dragon_trigger_turns": [
+			49,
+			186,
+			188,
+			201
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 5,
+		"lairs_total": 7,
+		"match_id": "F33B-043",
+		"seats": [
+			{
+				"capital": [
+					7,
+					-7
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 15,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 24,
+				"race": "dwarf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					28,
+					10
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 18,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 38,
+				"race": "orc",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					13
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 18,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 24,
+				"race": "human",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-21,
+					-18
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 3,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 35,
+				"race": "elf",
+				"seat": 3
+			}
+		],
+		"seed": 33393
+	},
+	{
+		"dragon_trigger_turns": [
+			60,
+			229,
+			236
+		],
+		"lair_kinds": {
+			"dragon": 1,
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 4,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 11,
+		"lairs_total": 14,
+		"match_id": "F33B-044",
+		"seats": [
+			{
+				"capital": [
+					5,
+					-9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 14,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 21,
+				"race": "orc",
+				"seat": 0
+			},
+			{
+				"capital": [
+					35,
+					8
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 8,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 47,
+				"race": "human",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					18
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 12,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 27,
+				"race": "elf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-7,
+					-18
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 3,
+					"6": 1
+				},
+				"nearest_lair": 6,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 21,
+				"race": "dwarf",
+				"seat": 3
+			}
+		],
+		"seed": 33400
+	},
+	{
+		"dragon_trigger_turns": [
+			38,
+			40,
+			49,
+			103,
+			177,
+			205
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 3,
+			"troll": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 11,
+		"lairs_total": 13,
+		"match_id": "F33B-045",
+		"seats": [
+			{
+				"capital": [
+					0,
+					-16
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 11,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 18,
+				"race": "human",
+				"seat": 0
+			},
+			{
+				"capital": [
+					34,
+					8
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 2,
+					"6": 1
+				},
+				"nearest_lair": 5,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 53,
+				"race": "elf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-19,
+					15
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 8,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 31,
+				"race": "dwarf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-15,
+					-19
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 18,
+				"race": "orc",
+				"seat": 3
+			}
+		],
+		"seed": 33407
+	},
+	{
+		"dragon_trigger_turns": [
+			87,
+			102,
+			111,
+			138,
+			149,
+			188
+		],
+		"lair_kinds": {
+			"goblin": 2,
+			"skeleton": 5,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 11,
+		"match_id": "F33B-046",
+		"seats": [
+			{
+				"capital": [
+					-9,
+					9
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 13,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 8,
+				"race": "elf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					31,
+					9
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 1
+				},
+				"nearest_lair": 2,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 40,
+				"race": "dwarf",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					15
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 11,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 8,
+				"race": "orc",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-18,
+					-16
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 15,
+				"nearest_lair_kind": "troll",
+				"nearest_rival": 32,
+				"race": "human",
+				"seat": 3
+			}
+		],
+		"seed": 33414
+	},
+	{
+		"dragon_trigger_turns": [
+			115,
+			138,
+			144,
+			151,
+			173
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 3,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 8,
+		"lairs_total": 10,
+		"match_id": "F33B-047",
+		"seats": [
+			{
+				"capital": [
+					11,
+					-10
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 20,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 26,
+				"race": "dwarf",
+				"seat": 0
+			},
+			{
+				"capital": [
+					26,
+					8
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 3,
+					"6": 0
+				},
+				"nearest_lair": 11,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 33,
+				"race": "orc",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-17,
+					17
+				],
+				"lairs_within": {
+					"10": 0,
+					"15": 0,
+					"6": 0
+				},
+				"nearest_lair": 20,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 28,
+				"race": "human",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-10,
+					-15
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 1
+				},
+				"nearest_lair": 6,
+				"nearest_lair_kind": "skeleton",
+				"nearest_rival": 26,
+				"race": "elf",
+				"seat": 3
+			}
+		],
+		"seed": 33421
+	},
+	{
+		"dragon_trigger_turns": [
+			114,
+			115,
+			139,
+			154,
+			179,
+			210
+		],
+		"lair_kinds": {
+			"goblin": 5,
+			"skeleton": 2,
+			"troll": 2,
+			"wyvern": 2
+		},
+		"lairs_main_zone": 9,
+		"lairs_total": 11,
+		"match_id": "F33B-048",
+		"seats": [
+			{
+				"capital": [
+					-8,
+					11
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 8,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 7,
+				"race": "orc",
+				"seat": 0
+			},
+			{
+				"capital": [
+					34,
+					-9
+				],
+				"lairs_within": {
+					"10": 2,
+					"15": 3,
+					"6": 1
+				},
+				"nearest_lair": 6,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 42,
+				"race": "human",
+				"seat": 1
+			},
+			{
+				"capital": [
+					-14,
+					18
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 1,
+					"6": 0
+				},
+				"nearest_lair": 8,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 7,
+				"race": "elf",
+				"seat": 2
+			},
+			{
+				"capital": [
+					-13,
+					-18
+				],
+				"lairs_within": {
+					"10": 1,
+					"15": 2,
+					"6": 0
+				},
+				"nearest_lair": 10,
+				"nearest_lair_kind": "goblin",
+				"nearest_rival": 34,
+				"race": "dwarf",
+				"seat": 3
+			}
+		],
+		"seed": 33428
+	}
+]

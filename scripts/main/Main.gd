@@ -37,6 +37,10 @@ func _ready() -> void:
 	hud.game_over_main_menu_requested.connect(_on_pause_main_menu_requested)
 	hud.visible = false
 	game_setup_screen.visible = false
+	# Fase 33B: medição local de tempo humano para a F33D — DEV-ONLY e desligada por padrão
+	# (HumanTimingTelemetry.is_enabled); sem a flag, nenhum nó/arquivo é criado.
+	if HumanTimingTelemetry.is_enabled():
+		add_child(HumanTimingTelemetry.new())
 
 func _on_new_game_setup_requested() -> void:
 	title_screen.visible = false

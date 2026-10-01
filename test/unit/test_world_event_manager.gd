@@ -235,13 +235,30 @@ func test_maybe_spawn_dragon_creates_a_dragon_event_once_the_trigger_fires():
 		turn += 1
 		assert_lt(turn, WorldEventTrigger.DRAGON_TRIGGER_MIN_TURN + 5000, "nenhum turno disparou o trigger num intervalo razoavel -- provavel bug na condicao ou na semente de teste")
 
+	# Fase 33D3: o gatilho só vale na Ascensão, a partir de +10, com alguma civ elegível como alvo (2+ cidades).
+	var saved_world := WorldEventManager.to_save_dict()
+	var saved_players := GameManager.players
+	var civ := CivilizationData.new()
+	civ.civ_name = "Alvo"
+	var target := PlayerData.new(civ)
+	GameManager.players = [target] as Array[PlayerData]
+	DragonEvent.min_target_cities = 0
+	WorldEventManager.world_phase = WorldPhaseRules.Phase.ASCENSION
+	WorldEventManager.phase_history = [{"phase": WorldPhaseRules.Phase.ASCENSION, "turn": turn - WorldEventManager.DRAGON_ELIGIBLE_AFTER, "cause": "PROGRESS"}]
+	WorldEventManager.dragon_schedule = {}
+	WorldEventManager.completed_event_types = {}
 	WorldEventManager.maybe_spawn_dragon(grid, turn)
+	DragonEvent.min_target_cities = DragonEvent.MIN_TARGET_CITIES
+	GameManager.players = saved_players
+	target.release_relations()
 
 	assert_eq(WorldEventManager.active_events.size(), 1)
 	var event: WorldEvent = WorldEventManager.active_events[0]
 	assert_true(event is DragonEvent)
 	assert_true(grid.tiles.has((event as DragonEvent).origin_region), "regiao de origem deveria ser um tile real do mapa")
 	assert_eq((event as DragonEvent).spawn_coord, DragonEvent.NO_COORD, "tile exato nao deveria existir antes da transicao pra Active")
+	WorldEventManager.active_events.clear()
+	WorldEventManager.from_save_dict(saved_world)
 	grid.queue_free()
 
 ## Guarda minima de v1 (decisao de implementacao, nao do contrato): nunca

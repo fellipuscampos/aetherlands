@@ -72,10 +72,11 @@ func test_dragon_rewards_are_proportional_and_not_repeated_after_loading():
 	event.participants = {0: {"decision": true}, 1: {"decision": true}}
 	event.damage_by_civ = {0: 75.0, 1: 25.0}
 	event.award_contribution_rewards([player, enemy])
-	assert_eq(player.gold, 250.0)
-	assert_eq(enemy.gold, 100.0)
+	# Fase 33D3: pool de 175 Ouro, piso 15 por participante, resto (145) proporcional ao dano, maiores restos.
+	assert_eq(player.gold, 124.0)
+	assert_eq(enemy.gold, 51.0)
 	var loaded := DragonEvent.new()
 	loaded.from_save_dict(JSON.parse_string(JSON.stringify(event.to_save_dict())))
 	loaded.award_contribution_rewards([player, enemy])
-	assert_eq(player.gold, 250.0)
-	assert_eq(enemy.gold, 100.0)
+	assert_eq(player.gold, 124.0)
+	assert_eq(enemy.gold, 51.0)

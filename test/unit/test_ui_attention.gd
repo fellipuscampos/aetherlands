@@ -41,6 +41,14 @@ func after_each():
 	GameManager.rival_players.assign(_original_rivals)
 	GameManager.state = _original_state
 
+## V3 / Etapa 2: pesquisa só depois da primeira cidade — os casos de Attention de pesquisa começam com uma cidade que
+## já está produzindo (para não somar o Attention de cidade ociosa).
+func _research_ready() -> City:
+	var city := _city_without_settler("Capital", Vector2i(40, 40))
+	city.production_item = "warrior"
+	service.refresh()
+	return city
+
 func _player(name: String) -> PlayerData:
 	var result := PlayerData.new(CivilizationData.new())
 	result.civ.civ_name = name
@@ -69,6 +77,7 @@ func _ids(items: Array[AttentionItem]) -> Array[String]:
 	return result
 
 func test_research_idle_is_required_and_primary():
+	_research_ready()
 	service.refresh()
 	assert_eq(service.next_required().id, "research_idle")
 	assert_true(service.next_required().blocking_end_turn)
@@ -188,6 +197,7 @@ func test_service_has_no_save_contract_or_node_references():
 		assert_eq(typeof(item.target_id), TYPE_STRING)
 
 func test_turn_controller_routes_required_instead_of_ending_turn():
+	_research_ready()
 	var manager := ModalManager.new()
 	manager.add_child(ColorRect.new())
 	manager.get_child(0).name = "Dimmer"
@@ -220,6 +230,7 @@ func test_turn_controller_ends_normally_when_only_warnings_exist():
 	assert_false(controller.override_button.visible)
 
 func test_rebinding_same_player_is_idempotent_and_does_not_duplicate_callbacks():
+	_research_ready()
 	var changes := [0]
 	service.items_changed.connect(func(_items): changes[0] += 1)
 	service.bind_player(human)
@@ -230,6 +241,10 @@ func test_rebinding_same_player_is_idempotent_and_does_not_duplicate_callbacks()
 
 func test_rebinding_replaces_old_player_research_connections():
 	var replacement := _player("Substituto")
+	var replacement_city := City.new()
+	replacement_city.owner_player = replacement
+	replacement_city.production_item = "warrior"
+	replacement.cities.append(replacement_city)
 	GameManager.human_player = replacement
 	GameManager.players = [replacement]
 	service.bind_player(replacement)
@@ -241,6 +256,7 @@ func test_rebinding_replaces_old_player_research_connections():
 	assert_eq(changes[0], 1)
 
 func test_turn_controller_override_confirms_once_without_resolving_attention():
+	_research_ready()
 	var manager := ModalManager.new()
 	var dimmer := ColorRect.new()
 	dimmer.name = "Dimmer"
@@ -284,11 +300,15 @@ func test_processing_turn_controller_never_routes_or_ends():
 	assert_true(controller.primary_button.disabled)
 
 func test_research_widget_shows_idle_active_eta_and_zero_income():
+	var capital := _research_ready()
 	var widget := ResearchStatusWidget.new()
 	add_child_autofree(widget)
 	widget.bind_player(human)
 	assert_true(widget.name_label.text.contains("Escolher"))
 	assert_true(human.v2_research.select_research("v2_doctrine_guardian_1"))
+	# Renda zero: sem cidade a pesquisa já ativa continua (só não progride) — V3 / Etapa 2.
+	human.cities.erase(capital)
+	capital.free()
 	widget.refresh()
 	assert_true(widget.progress.visible)
 	assert_true(widget.detail_label.text.contains("Sem progresso"))

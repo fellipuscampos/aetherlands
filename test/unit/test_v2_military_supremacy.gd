@@ -104,9 +104,12 @@ func test_without_the_capstone_conquests_never_win():
 
 # --- Qualificação no instante da captura ----------------------------------------------------------------
 
+## Fase 33D3: a Cidade II só não conta quando o rival possui cidade de nível MAIOR no instante da captura
+## (regra nova: qualifica a cidade do maior nível do rival; ver test_phase33d3_objectives.gd).
 func test_capturing_a_city_ii_does_not_count():
 	_grant_access(human)
 	_keep_alive(a)
+	_city_of(a, 3)
 	var small := _city_of(a, 2)
 	grid.capture_city(small, human)
 	assert_eq(small.v2_supremacy_captured_from, -1)
@@ -115,6 +118,7 @@ func test_capturing_a_city_ii_does_not_count():
 func test_developing_a_captured_small_city_afterwards_still_does_not_count():
 	_grant_access(human)
 	_keep_alive(a)
+	_city_of(a, 3)
 	var small := _city_of(a, 2)
 	grid.capture_city(small, human)
 	small.apply_city_level(4)
@@ -134,6 +138,7 @@ func test_capturing_city_iii_or_iv_counts():
 
 func test_capturing_a_small_city_resets_a_stale_credit_field():
 	_keep_alive(a)
+	_city_of(a, 3)
 	var city := _city_of(a, 2)
 	city.v2_supremacy_captured_from = 2 # resto antigo
 	grid.capture_city(city, human)

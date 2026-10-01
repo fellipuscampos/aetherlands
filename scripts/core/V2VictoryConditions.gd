@@ -30,7 +30,67 @@ static func stable_id(player: PlayerData) -> int:
 static func is_eliminated(player: PlayerData) -> bool:
 	return player.units.is_empty() and player.cities.is_empty()
 
-## `player` mantém agora alguma cidade conquistada QUALIFICADA (Cidade III+ no momento da captura)
+## Fase 33D3 — REGRA TERRITORIAL DA SUPREMACIA (fonte canônica). Uma captura de cidade de `owner` qualifica
+## quando, NO INSTANTE DA CAPTURA, o City Level dela é igual ao MAIOR City Level que `owner` possui (a própria
+## cidade incluída). Empate: todas as empatadas qualificam; a capital nunca é a única válida. Um rival só de
+## Cidades I é satisfeito capturando qualquer uma delas. O crédito é gravado na cidade
+## (City.v2_supremacy_captured_from, em HexGrid.capture_city) e nunca reavaliado depois: o rival desenvolver
+## outra cidade mais tarde não invalida uma captura já feita.
+## Semântica de posse PRESERVADA da Fase 16: o rival conta como satisfeito enquanto o jogador MANTÉM uma
+## cidade com o crédito; perdê-la (inclusive recaptura) remove o crédito — a cidade recapturada recebe o
+## crédito do novo captor só se ela qualificar pela mesma regra naquele instante; eliminação satisfaz.
+static func max_city_level(player: PlayerData, including: City = null) -> int:
+	var best := 0
+	if player != null:
+		for city in player.cities:
+			best = maxi(best, int(city.city_level))
+	if including != null:
+		best = maxi(best, int(including.city_level))
+	return best
+
+static func is_supremacy_qualifying_city(city: City, owner: PlayerData) -> bool:
+	if city == null or owner == null or stable_id(owner) < 0:
+		return false
+	return int(city.city_level) >= max_city_level(owner, city)
+
+## Capital pública de uma civilização: a primeira cidade que ela mesma fundou e ainda possui.
+static func capital_of(player: PlayerData) -> City:
+	if player == null:
+		return null
+	var index := stable_id(player)
+	for city in player.cities:
+		if city.original_owner_index == index:
+			return city
+	return null
+
+## Alvos de Supremacia SUGERIDOS a `player` contra `rival` — só cidades que `player` CONHECE, com o nível
+## que ele OBSERVOU (PlayerData.known_enemy_city_levels). Nunca a lista real do rival: uma cidade escondida
+## mais desenvolvida não aparece. Ordem: maior nível conhecido, capital conhecida, mais perto do núcleo do
+## jogador, coordenada. {coord, name, level, capital}.
+static func known_supremacy_targets(player: PlayerData, rival: PlayerData, grid: HexGrid = null) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	grid = GameManager.hex_grid if grid == null else grid
+	if player == null or rival == null or grid == null:
+		return result
+	var capital := capital_of(rival)
+	var home := capital_of(player)
+	var anchor: Vector2i = home.coord if home != null else (player.cities[0].coord if not player.cities.is_empty() else Vector2i.ZERO)
+	for coord in player.known_enemy_cities:
+		var city: City = grid.get_city_at(coord)
+		if city == null or city.owner_player != rival:
+			continue
+		result.append({"coord": coord, "name": city.city_name, "level": int(player.known_enemy_city_levels.get(coord, 0)), "capital": city == capital, "distance": HexMetrics.axial_distance(anchor, coord)})
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.level) != int(b.level):
+			return int(a.level) > int(b.level)
+		if bool(a.capital) != bool(b.capital):
+			return bool(a.capital)
+		if int(a.distance) != int(b.distance):
+			return int(a.distance) < int(b.distance)
+		return a.coord.x < b.coord.x if a.coord.x != b.coord.x else a.coord.y < b.coord.y)
+	return result
+
+## `player` mantém agora alguma cidade conquistada QUALIFICADA (regra acima, no momento da captura)
 ## de `rival`?
 static func rival_satisfied_by_conquest(player: PlayerData, rival: PlayerData) -> bool:
 	var rival_id := stable_id(rival)

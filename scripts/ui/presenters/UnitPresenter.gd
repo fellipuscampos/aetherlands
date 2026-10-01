@@ -252,6 +252,11 @@ static func commands_for(unit: Unit, grid: HexGrid) -> Array[UnitAbilityViewData
 		move.cost_text = "Ordem futura"
 		move.details.append("Sem movimento neste turno: a ordem continua nos próximos turnos.")
 	result.append(move)
+	# V3 / Etapa 2: o Colonizador tem só DUAS ações essenciais — Mover e Fundar Cidade. Fortificar/Explorar
+	# (herdadas das tropas) saem da faixa dele; as APIs continuam valendo para as demais unidades.
+	if data.can_found_city:
+		_append_found_city(result, unit, grid, locked_reason)
+		return result
 	var fortify := UnitAbilityViewData.create("fortify", "Fortificar", UnitAbilityViewData.Category.COMMAND)
 	fortify.glyph = "▣"
 	fortify.action_kind = "fortify"
@@ -278,16 +283,6 @@ static func commands_for(unit: Unit, grid: HexGrid) -> Array[UnitAbilityViewData
 		explore.state = UnitAbilityViewData.State.BLOCKED
 		explore.blocked_reason = locked_reason
 	result.append(explore)
-	if data.can_found_city and not unit.embarked:
-		var found := UnitAbilityViewData.create("found_city", "Fundar Cidade", UnitAbilityViewData.Category.COMMAND)
-		found.glyph = "⌂"
-		found.action_kind = "found_city"
-		found.description = "Consome o Colonizador e funda uma cidade neste tile."
-		var reason := CitySite.rejection_reason(grid, unit.coord, unit.owner_player) if grid != null else ""
-		if reason != "" or not locked_reason.is_empty():
-			found.state = UnitAbilityViewData.State.BLOCKED
-			found.blocked_reason = CitySite.reason_text(reason) if reason != "" else locked_reason
-		result.append(found)
 	if V2ConstructorRuntime.is_builder_unit(unit):
 		var tile := grid.get_tile(unit.coord) if grid != null else null
 		var resource_id := tile.resource if tile != null else ""
@@ -319,6 +314,29 @@ static func commands_for(unit: Unit, grid: HexGrid) -> Array[UnitAbilityViewData
 			portal.blocked_reason = reason
 		result.append(portal)
 	return result
+
+## V3 / Etapa 2: Fundar Cidade SEMPRE visível para o Colonizador — desabilitada com o motivo real quando o tile
+## (ou o estado da unidade) não permite; ação primária (PrimaryButton) quando permite. Atalho: F.
+static func _append_found_city(result: Array[UnitAbilityViewData], unit: Unit, grid: HexGrid, locked_reason: String) -> void:
+	var found := UnitAbilityViewData.create("found_city", "Fundar Cidade", UnitAbilityViewData.Category.COMMAND)
+	found.glyph = "⌂"
+	found.action_kind = "found_city"
+	found.hotkey = "F"
+	found.description = "Consome o Colonizador e funda uma cidade neste tile."
+	var reason := ""
+	if unit.embarked:
+		reason = "Desembarque para fundar uma cidade."
+	elif grid != null:
+		var rejection := CitySite.rejection_reason(grid, unit.coord, unit.owner_player)
+		reason = CitySite.reason_text(rejection) if rejection != "" else ""
+	if reason == "" and not locked_reason.is_empty():
+		reason = locked_reason
+	if reason != "":
+		found.state = UnitAbilityViewData.State.BLOCKED
+		found.blocked_reason = reason
+	else:
+		found.is_primary = true
+	result.append(found)
 
 # --- Habilidades ---------------------------------------------------------------
 

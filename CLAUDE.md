@@ -48,3 +48,10 @@ redescubra os mesmos gargalos.
   `git status --porcelain`.
 - Outros docs vivos: `docs/DRAGON_EVENT_DESIGN.md`,
   `docs/WORLD_EVENT_CONTRACT.md`.
+- V3 (Combat Ecology e etapas seguintes): visão em
+  `docs/# Aetherlands V3 — Visão e Direção.md`, implementação em
+  `docs/AETHERLANDS_V3_IMPLEMENTATION.md` (monstros neutros: leia antes de
+  mexer em MonsterAI/covis/spawn).
+- Antes de qualquer tuning/balanceamento: leia
+  `docs/AETHERLANDS_RELEASE_BALANCE_BASELINE.md` (baseline F33B, laboratório
+  4-IA em `tools/balance/`, comandos e gargalos medidos).

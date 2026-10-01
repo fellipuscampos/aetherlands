@@ -503,6 +503,9 @@ func press_action() -> void:
 		return
 	match _state.node_state(_selected_id):
 		NodeState.AVAILABLE, NodeState.PARTIAL:
+			# V3 / Etapa 2: sem cidade, nenhuma pesquisa começa (V2ResearchAccess — mesma regra da IA).
+			if V2ResearchAccess.state_blocked_reason(_state) != "":
+				return
 			_state.select_research(_selected_id)
 		NodeState.RESEARCHING:
 			_state.cancel_active_research()
@@ -950,8 +953,14 @@ func _node_card(node: V2ResearchNode) -> Control:
 		box.add_child(_card_label("%s / %s" % [V2ResearchState.format_amount(_state.get_progress(node.id)), V2ResearchState.format_amount(node.cost)], m.meta_font, TEXT_PRIMARY, false))
 	else:
 		box.add_child(_card_label("Custo %s" % V2ResearchState.format_amount(node.cost), m.meta_font, TEXT_MUTED, false))
-	box.add_child(_card_label(V2ResearchDatabase.state_label(state), m.meta_font, _state_accent(state), false))
+	box.add_child(_card_label(_card_state_label(state), m.meta_font, _state_accent(state), false))
 	return parts[0]
+
+## V3 / Etapa 2: antes da primeira cidade, nó pesquisável mostra "Requer uma cidade" (a árvore continua visível).
+func _card_state_label(state: int) -> String:
+	if state in [NodeState.AVAILABLE, NodeState.PARTIAL] and V2ResearchAccess.state_blocked_reason(_state) != "":
+		return V2ResearchAccess.STATE_LABEL_REQUIRES_CITY
+	return V2ResearchDatabase.state_label(state)
 
 func _capstone_card(node: V2ResearchNode) -> Control:
 	var state := _state.node_state(node.id)
@@ -1048,7 +1057,10 @@ func _refresh_chrome() -> void:
 		return
 	var parts: Array[String] = []
 	var active := V2ResearchDatabase.get_node(_state.active_id)
-	if active != null:
+	var city_gate := V2ResearchAccess.state_blocked_reason(_state)
+	if active == null and city_gate != "":
+		parts.append("Pesquisa indisponível — %s" % city_gate)
+	elif active != null:
 		parts.append("Pesquisando: %s — %s / %s (%d%%)" % [active.display_name, V2ResearchState.format_amount(_state.get_progress(active.id)), V2ResearchState.format_amount(active.cost), int(round(_state.get_progress_ratio(active.id) * 100.0))])
 	else:
 		parts.append("Nenhum projeto ativo")
@@ -1111,6 +1123,15 @@ func _refresh_footer() -> void:
 		_:
 			_action_button.text = "Bloqueado"
 	_action_button.disabled = state == NodeState.COMPLETED or state == NodeState.LOCKED
+	# V3 / Etapa 2: estado semântico próprio antes da primeira cidade (não finge que é pré-requisito).
+	var city_gate := V2ResearchAccess.state_blocked_reason(_state)
+	if city_gate != "" and state in [NodeState.AVAILABLE, NodeState.PARTIAL]:
+		_action_button.text = V2ResearchAccess.STATE_LABEL_REQUIRES_CITY
+		_action_button.disabled = true
+		_action_button.tooltip_text = city_gate
+		_footer_detail.text += "\n%s" % city_gate
+	else:
+		_action_button.tooltip_text = ""
 
 ## Mesmo estilo "chip" dos botões das árvores V1 (HUD._style_doutrina_chip_button).
 func _style_chip(button: Button, accent: Color) -> void:

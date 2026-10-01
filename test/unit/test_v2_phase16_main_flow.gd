@@ -382,7 +382,9 @@ func test_128_military_supremacy_flow_to_victory():
 	assert_eq(V2VictoryConditions.military_supremacy_status(human).rival_count, 2, "1-2")
 	# 3. Sem o Exército Supremo: sem acesso.
 	assert_false(V2VictoryConditions.military_supremacy_status(human).access, "3")
-	# 4. Capturar uma Cidade II de A NÃO vale.
+	# 4. Capturar uma Cidade II de A NÃO vale enquanto A possui uma Cidade III (F33D3: qualifica a cidade do
+	# MAIOR nível do rival no instante da captura).
+	var center_a := _rival_city(grid, rival_a, 3)
 	var small := _rival_city(grid, rival_a, 2)
 	small.city_name = "Vila de A" # nome distinto do centro desenvolvido de A (usado depois do load)
 	var knight := _spawn(grid, "warrior", human, small.coord + Vector2i(1, 0))
@@ -394,8 +396,7 @@ func test_128_military_supremacy_flow_to_victory():
 	# 5. Desenvolvê-la depois continua não valendo.
 	small.apply_city_level(3)
 	assert_false(V2VictoryConditions.rival_satisfied_by_conquest(human, rival_a), "5")
-	# 6. Capturar uma Cidade III de A vale (toast) — mesmo sem acesso, o progresso existe.
-	var center_a := _rival_city(grid, rival_a, 3)
+	# 6. Capturar a Cidade III de A vale (toast) — mesmo sem acesso, o progresso existe.
 	_place(grid, knight, center_a.coord + Vector2i(1, 0))
 	_capture_with(grid, knight, center_a)
 	assert_eq(center_a.v2_supremacy_captured_from, GameManager.players.find(rival_a), "6. id estável")

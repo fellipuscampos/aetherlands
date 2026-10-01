@@ -290,8 +290,37 @@ var _combat_streak: int = 0
 ## funcao), so' o raid do Dragao usa isto.
 const DRAGON_RAID_DAMAGE_FRACTION := 0.35
 
+## Fase 33D3 — recompensa por POOL (substitui 25 + 300×fração Ouro / 10 + 150×fração Mana, que fazia snowball):
+## só civs com dano > 0; piso por participante; o resto proporcional ao dano, arredondamento determinístico
+## (maiores restos, desempate pelo índice); a soma nunca passa do pool. PROVISÓRIO — F33E calibra.
+const REWARD_POOL_GOLD := 175
+const REWARD_POOL_MANA := 80
+const REWARD_FLOOR_GOLD := 15
+const REWARD_FLOOR_MANA := 5
+## Fase 33D3 — civilização com uma única cidade ativa nunca é alvo (nem o primeiro, nem das incursões).
+const MIN_TARGET_CITIES := 2
+## `static var` só para fixtures de MECÂNICA de combate/movimento com mapas mínimos (mesmo padrão de
+## CitySite.min_city_distance); o jogo sempre usa MIN_TARGET_CITIES.
+static var min_target_cities := MIN_TARGET_CITIES
+
 func _init() -> void:
 	event_type = EVENT_TYPE
+
+static func is_eligible_target(player: PlayerData) -> bool:
+	return player != null and player.cities.size() >= min_target_cities
+
+static func eligible_target_indices(players: Array[PlayerData]) -> Array[int]:
+	var result: Array[int] = []
+	for i in range(players.size()):
+		if is_eligible_target(players[i]):
+			result.append(i)
+	return result
+
+func display_name() -> String:
+	return "O Dragão desperta"
+
+func public_summary() -> String:
+	return "Uma criatura de poder incomum foi avistada. Um reino será o primeiro alvo; qualquer civilização pode se juntar à expedição."
 
 ## Announced/Preparation (5B.2), nascimento fisico (5B.3-A) e agora
 ## movimento/combate/raid (5B.3-B) tem comportamento real. Resolution
@@ -305,6 +334,8 @@ func advance_turn(hex_grid: HexGrid, players: Array[PlayerData]) -> void:
 		WorldEvent.PHASE_ANNOUNCED:
 			# Alvo travado AQUI, nunca depois (Blocker #3) -- formula
 			# provisoria: civ com a cidade mais proxima da regiao.
+			# Fase 33D3: só civs elegíveis (2+ cidades); o agendador só inicia o Dragão com uma delas existindo, e a
+			# fase ativa continua resolvendo "no_target" se nenhuma cidade válida sobrar.
 			target_civ_index = _find_nearest_civ_index(players)
 			turn_deadline = TurnManager.turn_number + PREPARATION_DURATION_TURNS
 			phase = WorldEvent.PHASE_PREPARATION
@@ -342,25 +373,44 @@ func award_contribution_rewards(players: Array[PlayerData]) -> void:
 	result["rewards"] = {}
 	if result.get("outcome", "") != "defeated":
 		return
+	var damage := {}
+	for index in damage_by_civ:
+		var civ := int(index)
+		if civ >= 0 and civ < players.size() and float(damage_by_civ[index]) > 0.0:
+			damage[civ] = float(damage_by_civ[index])
+	var gold := split_pool(damage, REWARD_POOL_GOLD, REWARD_FLOOR_GOLD)
+	var mana := split_pool(damage, REWARD_POOL_MANA, REWARD_FLOOR_MANA)
+	for civ in gold:
+		players[civ].gold += float(gold[civ])
+		players[civ].mana += float(mana.get(civ, 0))
+		result.rewards[str(civ)] = {"gold": float(gold[civ]), "mana": float(mana.get(civ, 0)), "damage": float(damage[civ])}
+
+## Divide `pool` (inteiro) entre as civs de `damage` (índice → dano > 0): piso para cada uma (limitado ao pool),
+## resto proporcional ao dano pelos maiores restos; desempate pelo índice. Soma == pool (nunca maior).
+static func split_pool(damage: Dictionary, pool: int, floor_amount: int) -> Dictionary:
+	var shares := {}
+	var civs: Array = damage.keys()
+	civs.sort()
+	if civs.is_empty():
+		return shares
+	var base := mini(floor_amount, pool / civs.size())
+	var remaining := pool - base * civs.size()
 	var total := 0.0
-	for index in damage_by_civ:
-		if index >= 0 and index < players.size() and participants.get(index, {}).get("decision", false):
-			total += maxf(0, float(damage_by_civ[index]))
-	if total <= 0:
-		return
-	for index in damage_by_civ:
-		if index < 0 or index >= players.size() or not participants.get(index, {}).get("decision", false):
-			continue
-		var damage := float(damage_by_civ[index])
-		if damage <= 0:
-			continue
-		var gold := 25.0 + floorf(300.0 * damage / total)
-		var mana := 10.0 + floorf(150.0 * damage / total)
-		players[index].gold += gold
-		players[index].mana += mana
-		result.rewards[str(index)] = {"gold": gold, "mana": mana, "damage": damage}
-		if players[index] == GameManager.human_player:
-			EventBus.notify.emit("A Guilda reconhece sua contribuição contra o Dragão: +%d ouro e +%d mana." % [int(gold), int(mana)], "confirm")
+	for civ in civs:
+		total += float(damage[civ])
+	var fractions: Array = []
+	var distributed := 0
+	for civ in civs:
+		var exact := float(remaining) * float(damage[civ]) / total
+		var whole := int(floor(exact))
+		shares[civ] = base + whole
+		distributed += whole
+		fractions.append([exact - float(whole), civ])
+	fractions.sort_custom(func(a: Array, b: Array) -> bool: return a[0] > b[0] if not is_equal_approx(a[0], b[0]) else int(a[1]) < int(b[1]))
+	for i in range(remaining - distributed):
+		var civ = fractions[i % fractions.size()][1]
+		shares[civ] = int(shares[civ]) + 1
+	return shares
 
 ## Um "turno" do Dragao: luta se tiver inimigo em alcance (com dano em
 ## area ao redor do alvo primario, ver CombatResolver.resolve_with_splash);
@@ -605,6 +655,25 @@ func _play_dragon_death_effects() -> void:
 ## _show_overlay ja usado pro anuncio de Announced), exigindo confirmacao
 ## do jogador. _outcome_message() continua existindo, usada pelo Event
 ## Tracker/label curto -- so' nao vai mais pro canal de toast.
+## Ranking de dano por civ (maior primeiro, medalhas nos três primeiros) — texto do desfecho no Event Center.
+static func damage_ranking_lines(damage_by_civ: Dictionary, players: Array[PlayerData]) -> Array[String]:
+	var entries: Array = []
+	for civ_index in damage_by_civ:
+		var damage: float = damage_by_civ[civ_index]
+		if damage <= 0.0:
+			continue
+		var index: int = civ_index
+		if index < 0 or index >= players.size():
+			continue
+		entries.append({"name": players[index].civ.civ_name, "damage": damage})
+	entries.sort_custom(func(a, b): return a.damage > b.damage)
+	var medals := ["🥇", "🥈", "🥉"]
+	var lines: Array[String] = []
+	for i in range(entries.size()):
+		var rank_label: String = medals[i] if i < medals.size() else "%dº" % (i + 1)
+		lines.append("%s %s — %d de dano" % [rank_label, entries[i].name, int(round(entries[i].damage))])
+	return lines
+
 func _resolve_with_outcome(outcome: String) -> void:
 	result = {"outcome": outcome}
 	phase = WorldEvent.PHASE_RESOLUTION
@@ -712,12 +781,9 @@ func _civ_index_of_city(city: City, players: Array[PlayerData]) -> int:
 
 ## Indices de civs ainda VIVAS (com pelo menos 1 cidade) -- civ eliminada
 ## nunca conta pra cobertura continental (nao ha mais o que raidar nela).
+## Fase 33D3: alvos de incursão = civs com pelo menos MIN_TARGET_CITIES cidades (nunca executa quem só tem uma).
 func _living_civ_indices(players: Array[PlayerData]) -> Array[int]:
-	var indices: Array[int] = []
-	for i in range(players.size()):
-		if not players[i].cities.is_empty():
-			indices.append(i)
-	return indices
+	return eligible_target_indices(players)
 
 ## True quando TODA civ viva ja recebeu pelo menos CIV_VISIT_TARGET raids
 ## bem-sucedidos -- condicao de termino "devastated" da 5B.3-G (substitui
@@ -776,6 +842,10 @@ func is_civ_threatened(player_index: int, players: Array[PlayerData]) -> bool:
 func _choose_target_city(players: Array[PlayerData]) -> City:
 	if current_target_city_coord != NO_COORD:
 		for player in players:
+			# Fase 33D-R: a perseguição só continua se o dono AINDA é alvo elegível (perdeu a segunda cidade no
+			# meio do caminho = escolhe de novo entre os elegíveis; nenhum elegível = "no_target").
+			if not is_eligible_target(player):
+				continue
 			for city in player.cities:
 				if city.coord == current_target_city_coord:
 					return city
@@ -813,7 +883,7 @@ func _city_in_attack_range(hex_grid: HexGrid, city: City) -> bool:
 func _find_nearest_civ_index(players: Array[PlayerData]) -> int:
 	var best_index := -1
 	var best_distance := INF
-	for i in range(players.size()):
+	for i in eligible_target_indices(players):
 		for city in players[i].cities:
 			var distance: float = HexMetrics.axial_distance(origin_region, city.coord)
 			if distance < best_distance:

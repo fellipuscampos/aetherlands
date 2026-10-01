@@ -3,6 +3,8 @@ extends PanelContainer
 
 signal navigation_requested(destination: StringName)
 signal city_summary_requested
+## Fase 33D2: chip estratégico com alvo no mapa (objetivo do mundo).
+signal location_requested(coord: Vector2i)
 signal event_center_requested
 
 const RESOURCE_GLYPHS := {
@@ -40,6 +42,11 @@ func _ready() -> void:
 		TurnManager.turn_changed.connect(_on_turn_changed)
 	if not EventBus.fog_updated.is_connected(_on_world_changed):
 		EventBus.fog_updated.connect(_on_world_changed)
+	if not EventBus.world_phase_changed.is_connected(_on_world_phase_changed):
+		EventBus.world_phase_changed.connect(_on_world_phase_changed)
+	# V3 / Etapa 2: a primeira cidade libera a pesquisa — o widget atualiza na hora.
+	if not EventBus.city_founded.is_connected(_on_city_founded):
+		EventBus.city_founded.connect(_on_city_founded)
 	if not EventBus.notify.is_connected(_on_legacy_changed):
 		EventBus.notify.connect(_on_legacy_changed)
 	if UIEvents != null and not UIEvents.event_published.is_connected(_on_structured_event):
@@ -70,6 +77,7 @@ func _build() -> void:
 	turn_label.name = "TurnLabel"
 	turn_label.theme_type_variation = &"CaptionLabel"
 	turn_label.add_theme_color_override("font_color", UIThemeTokens.COLOR_ACCENT)
+	turn_label.mouse_filter = Control.MOUSE_FILTER_PASS # tooltip com o nome completo da era
 	turn_region.add_child(turn_label)
 	_labels.turn = turn_label
 	row.add_child(_separator())
@@ -91,6 +99,7 @@ func _build() -> void:
 	strategic_alerts = StrategicAlertPresenter.new()
 	strategic_alerts.name = "StrategicAlerts"
 	strategic_alerts.destination_requested.connect(_on_strategic_destination)
+	strategic_alerts.location_requested.connect(func(coord: Vector2i): location_requested.emit(coord))
 	row.add_child(strategic_alerts)
 	row.add_child(_separator())
 
@@ -177,9 +186,10 @@ func _add_nav(node_name: String, full_label: String, compact_label: String, dest
 
 func build_snapshot(player: PlayerData = GameManager.human_player) -> Dictionary:
 	if player == null:
-		return {"turn": TurnManager.turn_number, "gold": 0, "gold_net": 0, "supply_used": 0, "supply_capacity": 0, "mana": 0, "mana_income": 0, "knowledge_income": 0, "cities": 0, "units": 0}
+		return {"turn": TurnManager.turn_number, "world_phase": WorldEventManager.world_phase, "gold": 0, "gold_net": 0, "supply_used": 0, "supply_capacity": 0, "mana": 0, "mana_income": 0, "knowledge_income": 0, "cities": 0, "units": 0}
 	return {
 		"turn": TurnManager.turn_number,
+		"world_phase": WorldEventManager.world_phase,
 		"gold": int(player.gold),
 		"gold_net": int(V2EconomyRuntime.player_gold_net_income(player)),
 		"supply_used": V2LogisticsRuntime.player_supply_used(player),
@@ -196,7 +206,9 @@ func refresh(player: PlayerData = GameManager.human_player) -> void:
 		_build()
 	_last_snapshot = build_snapshot(player)
 	var s := _last_snapshot
-	(_labels.turn as Label).text = "T%d" % s.turn
+	# Fase 33D1: turno + era do mundo, no mesmo rótulo (prioridade: o número do turno).
+	(_labels.turn as Label).text = turn_text(int(s.turn), int(s.world_phase))
+	(_labels.turn as Label).tooltip_text = "Turno %d · %s" % [s.turn, WorldPhaseRules.display_name(int(s.world_phase))]
 	(_labels.gold as Label).text = "%d  %s" % [s.gold, UIFormat.delta(s.gold_net)]
 	(_labels.supply as Label).text = "%d/%d" % [s.supply_used, s.supply_capacity]
 	(_labels.mana as Label).text = "%d  %s" % [s.mana, UIFormat.delta(s.mana_income)]
@@ -219,6 +231,15 @@ func set_compact(value: bool) -> void:
 	for child in navigation_row.get_children():
 		if child is Button and child.has_meta("full_label"):
 			child.text = String(child.get_meta("compact_label" if value else "full_label"))
+	refresh()
+
+static func turn_text(turn: int, phase: int) -> String:
+	return "T%d · %s" % [turn, WorldPhaseRules.short_name(phase)]
+
+func _on_world_phase_changed(_old_phase: int, _new_phase: int, _turn: int, _cause: String) -> void:
+	refresh()
+
+func _on_city_founded(_player: PlayerData, _city_name: String, _coord: Vector2i) -> void:
 	refresh()
 
 func last_snapshot() -> Dictionary:

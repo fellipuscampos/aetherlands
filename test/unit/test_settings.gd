@@ -115,7 +115,7 @@ func test_frontend_settings_round_trip_without_touching_save_schema():
 	assert_eq(Settings.window_resolution, Vector2i(1920, 1080))
 	assert_eq(Settings.ui_scale_percent, 125)
 	assert_true(Settings.reduced_motion)
-	assert_eq(SaveManager.SAVE_VERSION, 21)
+	assert_eq(SaveManager.SAVE_VERSION, 26) # F33D1: 22 (era/eventos); F33D2: 23 (ameaças regionais/Guardiões); F33D3: 24 (grandes eventos/marcos); V3 Etapa 1: 25 (Combat Ecology); V3 Etapa 2: 26 (habilidades); settings e raça nunca mexem no schema
 
 func test_motion_duration_is_zero_only_in_reduced_motion():
 	Settings.reduced_motion = false

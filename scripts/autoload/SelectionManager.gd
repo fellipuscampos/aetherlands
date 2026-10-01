@@ -470,7 +470,7 @@ func _select_unit(unit: Unit) -> void:
 			# area, ver HexGrid._count_live_monsters_near_lair) -- enquanto
 			# defendida, occ_unit acima ja cobre o guardiao/reforco de verdade,
 			# nunca a propria estrutura.
-			elif occ_unit == null and occ_city == null and hex_grid.lairs_by_coord.has(n) and hex_grid._count_live_monsters_near_lair(n) == 0:
+			elif occ_unit == null and occ_city == null and CombatResolver.can_attack_lair(unit, n, hex_grid): # Fase 33D2: regra compartilhada com a IA
 				attackable.append(n)
 	hex_grid.set_highlight(reachable.keys(), attackable)
 	EventBus.unit_selected.emit(unit)

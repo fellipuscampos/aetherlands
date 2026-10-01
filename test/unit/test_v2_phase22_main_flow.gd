@@ -44,9 +44,17 @@ func before_each():
 	grid = HexGrid.new()
 	grid._ready()
 	grid.generate_map(31, 31, 22022)
+	# Fase 33D2: fluxo de CONTEÚDO V2 que depende do layout exato do mapa gerado — sem ameaças regionais (cobertas
+	# por test_phase33d2_*). Restaurado em after_each.
+	GameManager.regional_threats_on_new_match = false
+	# V3 / Etapa 2: fluxo de CONTEÚDO com layout fixo (sem fundar/jogando turnos) — sem a população ecológica, coberta
+	# por test_v3_*. Restaurado em after_each.
+	GameManager.combat_ecology_on_new_match = false
 	GameManager.start_new_game(grid)
 
 func after_each():
+	GameManager.combat_ecology_on_new_match = true
+	GameManager.regional_threats_on_new_match = true
 	SelectionManager.reset()
 	SaveManager.delete_save(SAVE_PATH)
 	for player in GameManager.players:
@@ -202,7 +210,7 @@ func test_elementalism_n1_to_n9_environmental_rounds_six_manifestations_and_save
 	_learn(human, SCHOOL, 7)
 	_prepare_cast(elementalista, CATACLYSM)
 	var area_center := _free_coord(elementalista.coord, 2, 2)
-	assert_true(V2MagicRuntime.cast(elementalista, CATACLYSM, area_center, grid))
+	assert_true(V2MagicRuntime.cast(elementalista, CATACLYSM, area_center, grid), "%s / %s" % [V2MagicRuntime.unavailable_reason(elementalista, CATACLYSM, grid), V2MagicRuntime.tile_reason(elementalista, V2SpellDatabase.get_spell(CATACLYSM), area_center, grid)])
 	var cataclysm_cells := 0
 	for coord in grid.v2_environmental_zones:
 		if String(grid.v2_environmental_zones[coord].zone_id) == "v2_zone_elemental_cataclysm":

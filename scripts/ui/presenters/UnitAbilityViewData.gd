@@ -27,6 +27,9 @@ var is_passive := false
 var is_toggle := false
 var toggled := false
 var action_kind := ""
+## V3 / Etapa 2: ação primária semântica da unidade (ex.: Fundar Cidade num tile válido) — o botão usa o
+## estilo PrimaryButton do design system.
+var is_primary := false
 var action_arg := ""
 var details: Array[String] = []
 

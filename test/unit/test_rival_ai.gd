@@ -1145,12 +1145,14 @@ func test_site_score_ignores_lair_with_dead_defender():
 ## eventos mundiais -------------------------------------------------------
 
 func test_decide_world_event_participation_participates_during_preparation():
+	# Fase 33D3: a civ-alvo sempre defende (as demais decidem — ver test_phase33d3_events.gd).
 	var event := DragonEvent.new()
 	event.phase = WorldEvent.PHASE_PREPARATION
+	event.target_civ_index = 1
 
 	RivalAI.decide_world_event_participation(rival, 1, event)
 
-	assert_eq(event.participants.get(1), {"decision": true})
+	assert_eq(event.participants.get(1), {"decision": true, "reason": "target"})
 
 func test_decide_world_event_participation_does_nothing_outside_preparation():
 	for phase in [WorldEvent.PHASE_DORMANT, WorldEvent.PHASE_ANNOUNCED, WorldEvent.PHASE_ACTIVE, WorldEvent.PHASE_RESOLUTION, WorldEvent.PHASE_COMPLETED]:

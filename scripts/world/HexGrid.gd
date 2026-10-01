@@ -162,6 +162,23 @@ var lairs_by_coord: Dictionary = {}
 ## _deserialize_neutral_units ja usam pra unidades.
 var cleared_lair_coords: Array[Vector2i] = []
 
+## Fase 33D2 — PAPEL de cada covil ativo: ausente = selvagem (LAIR_ROLE_WILD, o covil de sempre);
+## REGIONAL = a ameaça regional garantida de uma civilização (RegionalThreatSystem, população própria
+## por covil, dormente → desperto); GUARDIAN = Guardião Troll de recurso (Ascensão, sem reforço).
+const LAIR_ROLE_WILD := "wild"
+const LAIR_ROLE_REGIONAL := "regional"
+const LAIR_ROLE_GUARDIAN := "guardian"
+## V3 / Combat Ecology — covil da seed adotado como sítio ecológico (MonsterEcologySystem): sem reforço
+## legado nem promoção a Invasor; a população/atividade é da ecologia.
+const LAIR_ROLE_ECOLOGY := "ecology"
+var lair_roles: Dictionary = {} # Vector2i -> String
+## Covis criados em runtime (planner regional, realocação, guardiões) -> kind. Não vêm da seed: o load
+## os recria (sem chefe — os monstros vêm de neutral_units) antes de reaplicar cleared_lair_coords.
+var added_lairs: Dictionary = {} # Vector2i -> String
+## Covis da seed removidos/realocados pelo planner regional (NÃO destruídos por jogador: sem recompensa,
+## fora de cleared_lair_coords). O load os remove de novo depois de generate_map().
+var removed_seed_lairs: Array[Vector2i] = []
+
 var _hex_mesh: ArrayMesh
 var _tree_mesh: ArrayMesh
 var _ice_floe_mesh: ArrayMesh # pedaco de gelo baixo/chato flutuando no Mar Gelado, ver _build_ice_floe_mesh
@@ -230,6 +247,7 @@ var _biome_fog_bytes := PackedByteArray()
 var _last_fog_visibility: Dictionary = {}
 var _land_components: Dictionary = {}
 var _land_component_tile_count := -1
+var _land_component_sizes: Dictionary = {} # Fase 33D2: id de componente -> nº de tiles (preguiçoso)
 ## Ver compute_path/_destination_walled_in: nos expandidos pelo A* antes de
 ## checar de novo se o destino esta emparedado, e tamanho maximo da regiao que
 ## ainda conta como "bolso" (medido: 1 a 59 tiles).
@@ -696,6 +714,15 @@ func _clear_entities() -> void:
 	if _transcendence_root:
 		for child in _transcendence_root.get_children():
 			child.queue_free()
+	# V3 / Etapa 2: marcadores de perigo da Combat Ecology (raízes, infecção, telegraph).
+	var hazards := get_node_or_null("MonsterHazards")
+	if hazards != null:
+		for child in hazards.get_children():
+			child.queue_free()
+	# Fase 33D-R: marcadores visuais de eventos mundiais (Relicário) são filhos diretos do grid.
+	for child in get_children():
+		if child.is_in_group(WORLD_EVENT_MARKER_GROUP):
+			child.queue_free()
 	units_by_coord.clear()
 	cities_by_coord.clear()
 	buildings_by_coord.clear()
@@ -712,6 +739,9 @@ func _clear_entities() -> void:
 	# units() pra unidades.
 	lairs_by_coord.clear()
 	cleared_lair_coords.clear()
+	lair_roles.clear()
+	added_lairs.clear()
+	removed_seed_lairs.clear()
 	_pillaged_tiles.clear()
 	terrain_changes.clear()
 	v2_terrain_modifications.clear()
@@ -733,6 +763,8 @@ func _clear_entities() -> void:
 ## proxima partida/load, ver linha ~358) -- reusa o MESMO teardown que ja
 ## roda no inicio de toda geracao de mapa, agora exposto publico pra poder
 ## ser chamado sem gerar um mapa novo em seguida.
+const WORLD_EVENT_MARKER_GROUP := "world_event_marker"
+
 func reset_to_empty() -> void:
 	_clear_entities()
 
@@ -897,7 +929,7 @@ func compute_reachable(start: Vector2i, movement_points: float, owner: PlayerDat
 			var terrain: HexTileData = get_tile(n)
 			if not flies and terrain.blocks_land_units() and not (embarked and terrain.can_be_embarked_on()):
 				continue
-			var step_cost = 1.0 if (flies or flat_cost) else terrain_step_cost(n, terrain) # flat_cost (Fase 9): cada passo custa 1, o resto das regras é o mesmo
+			var step_cost = 1.0 if (flies or flat_cost) else terrain_step_cost(n, terrain, owner != null) # flat_cost (Fase 9): cada passo custa 1, o resto das regras é o mesmo
 			var new_cost = cost_so_far[current] + step_cost
 			# Fase 20 — REGRA DO PRIMEIRO PASSO: um passo mais caro que o movimento que resta só vale como o PRIMEIRO
 			# passo do movimento e consome tudo. Assim um terreno caro (modificação V2) nunca vira muro para quem tem
@@ -1179,10 +1211,13 @@ func clear_v2_transcendence_markers() -> void:
 ## (V2TerrainRuntime). Todo movimento terrestre que paga custo de terreno (alcance, A*, marcha, explorar, IA) lê daqui;
 ## quem ignora o custo do terreno (voo V1/tático, custo plano da Retirada/Passo Sombrio) ignora a modificação também.
 ## Caminho rápido: sem nenhuma modificação no mapa, é o custo-base puro.
-func terrain_step_cost(coord: Vector2i, terrain: HexTileData = null) -> float:
+func terrain_step_cost(coord: Vector2i, terrain: HexTileData = null, civilization: bool = true) -> float:
 	if terrain == null:
 		terrain = tiles.get(coord, null)
 	var base := float(terrain.movement_cost) if terrain != null else 1.0
+	# V3 / Etapa 2: Raízes do Mundo (Ancião Arbóreo) custam +2 só para unidades de civilização (temporário).
+	if civilization:
+		base += MonsterHazardSystem.root_cost(coord)
 	if v2_terrain_modifications.is_empty():
 		return base
 	return base + float(V2TerrainRuntime.movement_cost_delta(self, coord))
@@ -1385,7 +1420,9 @@ func compute_path(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool
 			var terrain: HexTileData = get_tile(n)
 			if not flies and terrain.blocks_land_units() and not (embarked and terrain.can_be_embarked_on()):
 				continue
-			var step_cost = 1.0 if flies else terrain_step_cost(n, terrain)
+			var step_cost = 1.0 if flies else terrain_step_cost(n, terrain, owner != null)
+			# V3 / Etapa 2: infecção micótica CONHECIDA pesa só na escolha de rota (nunca vira muro nem custo real).
+			step_cost += MonsterHazardSystem.path_penalty(n, owner)
 			var new_cost = current_cost + step_cost
 			if not cost_so_far.has(n) or new_cost < cost_so_far[n]:
 				cost_so_far[n] = new_cost
@@ -1453,6 +1490,16 @@ func _ensure_land_components() -> void:
 					_land_components[neighbor] = component
 					frontier.append(neighbor)
 	_land_component_tile_count = tiles.size()
+	_land_component_sizes.clear()
+
+## Fase 33D2 — tamanho (tiles) da massa de terra contínua de `coord` (0 = água/fora do mapa).
+func land_component_size(coord: Vector2i) -> int:
+	_ensure_land_components()
+	if _land_component_sizes.is_empty():
+		for tile_coord in _land_components:
+			var id: int = _land_components[tile_coord]
+			_land_component_sizes[id] = int(_land_component_sizes.get(id, 0)) + 1
+	return int(_land_component_sizes.get(_land_components.get(coord, -1), 0))
 
 func _land_route_possible(start: Vector2i, end: Vector2i) -> bool:
 	_ensure_land_components()
@@ -1556,6 +1603,7 @@ func move_unit(unit: Unit, dest: Vector2i, cost: float) -> void:
 	else:
 		unit.position = world_surface_for_coord(dest)
 	units_by_coord[dest] = unit
+	MonsterHazardSystem.on_unit_entered(unit, self) # V3 / Etapa 2: entrar em infecção micótica
 	# COVIS DE MONSTROS -- DESTRUICAO (rodada seguinte): "andar em cima do
 	# covil pra destrui-lo de graca" (o antigo gatilho aqui, via dest in
 	# lair_coords) foi SUBSTITUIDO por um ataque de verdade contra a
@@ -1622,6 +1670,7 @@ func teleport_unit(unit: Unit, dest: Vector2i) -> void:
 	unit.coord = dest
 	unit.position = world_surface_for_coord(dest)
 	units_by_coord[dest] = unit
+	MonsterHazardSystem.on_unit_entered(unit, self) # V3 / Etapa 2: empurrão/teleporte para dentro da infecção
 
 ## Consome um pedido de "mover ate" pendente (Unit.move_order_target) o
 ## quanto o movimento ATUAL da unidade permitir — chamado tanto na hora
@@ -1773,6 +1822,7 @@ func destroy_lair(coord: Vector2i) -> void:
 		return
 	lair_coords.erase(coord)
 	lair_kind_by_coord.erase(coord)
+	lair_roles.erase(coord) # Fase 33D2: o papel morre com o covil (o registro regional guarda a história)
 	lair_alert_until_turn.erase(coord) # ver alert_lair_near -- covil destruido nao fica "alertado" pra sempre
 	if lairs_by_coord.has(coord):
 		lairs_by_coord[coord].queue_free()
@@ -1801,12 +1851,17 @@ func destroy_lair(coord: Vector2i) -> void:
 ## desta tarefa).
 func _grant_lair_clear_reward(unit: Unit, coord: Vector2i) -> void:
 	var kind = lair_kind_by_coord.get(coord, "")
-	var reward = MonsterDatabase.lair_clear_reward(kind)
-	var mana_reward = MonsterDatabase.lair_clear_mana_reward(kind)
+	var role := lair_role(coord)
+	# Fase 33D2: covil REGIONAL/GUARDIÃO paga a recompensa do PAPEL no lugar da do tipo (nunca as duas).
+	var rewards := lair_clear_rewards(coord)
+	var reward: float = rewards.gold
+	var mana_reward: float = rewards.mana
 	destroy_lair(coord)
 	unit.owner_player.gold += reward
 	unit.owner_player.mana += mana_reward
 	unit.register_kill()
+	EventBus.lair_cleared.emit(unit.owner_player, coord, String(kind)) # Fase 33D1: observabilidade
+	RegionalThreatSystem.on_lair_destroyed(coord, role, unit.owner_player)
 	if unit.owner_player == GameManager.human_player:
 		var message = "Voce destruiu um covil abandonado e saqueou %d ouro" % int(reward)
 		if mana_reward > 0.0:
@@ -1823,6 +1878,7 @@ func remove_unit(unit: Unit) -> void:
 		V2RetinueSystem.notify_roster_changed(unit, former_owner) # Fase 19: morte/dissolução re-deriva o comando (no-op p/ o resto)
 		if was_manifestation: # Fase 23: todas as fontes de morte convergem aqui.
 			V2TranscendenceSystem.validate_active_ritual(former_owner)
+	EventBus.unit_removed.emit(former_owner, unit) # Fase 33B: observabilidade do balance lab
 	unit.queue_free()
 
 ## silent=true evita o toast "Cidade fundada" — usado por SaveManager ao
@@ -1847,6 +1903,7 @@ func found_city(coord: Vector2i, player: PlayerData, city_name: String, silent: 
 		EventBus.notify.emit("Cidade fundada: %s" % city_name, "city")
 	if not silent:
 		EventBus.city_founded.emit(player, city_name, coord)
+		RegionalThreatSystem.on_city_founded(self, player, city) # Fase 33D2: primeira capital → ameaça regional
 	return city
 
 ## Saque de Invasor (MonsterAI._maybe_pillage_tile): a melhoria de recurso em `coord` fica sem
@@ -1864,6 +1921,8 @@ func is_tile_pillaged(coord: Vector2i, turn: int) -> bool:
 func capture_city(city: City, new_owner: PlayerData) -> void:
 	var old_owner = city.owner_player
 	var city_display_name = city.city_name
+	# Fase 33D3: qualificação de Supremacia avaliada ANTES de a cidade sair do rival (maior nível dele agora).
+	var qualified: bool = old_owner != null and V2VictoryConditions.is_supremacy_qualifying_city(city, old_owner)
 	# O Ritual pertence à civilização antiga, nunca ao prédio/cidade capturada.
 	if old_owner:
 		V2TranscendenceSystem.interrupt_if_site(old_owner, city.coord)
@@ -1882,13 +1941,15 @@ func capture_city(city: City, new_owner: PlayerData) -> void:
 	city.shield = clampf(city.shield, 0.0, city.max_shield())
 	# Sem disparo gratuito do Ataque da Cidade no mesmo turno da troca de dono (§53).
 	city.last_city_attack_turn = TurnManager.turn_number
-	# Crédito de Supremacia Militar V2 (§70-81): só se a cidade JÁ era Cidade III+ no instante da
-	# captura; sempre reescrito (uma captura não qualificada zera o crédito de um dono anterior).
-	var qualified := old_owner != null and city.is_developed_v2()
+	# Crédito de Supremacia Militar V2 (§70-81; regra F33D3 em V2VictoryConditions.is_supremacy_qualifying_
+	# city): sempre reescrito (uma captura não qualificada zera o crédito de um dono anterior).
 	var already_satisfied := qualified and V2VictoryConditions.rival_satisfied_by_conquest(new_owner, old_owner)
 	city.v2_supremacy_captured_from = GameManager.players.find(old_owner) if qualified else -1
 	city.change_owner(new_owner)
 	new_owner.cities.append(city)
+	# Fase 33D1: a fila herdada só continua se for legítima para o NOVO dono (pesquisa, prédio, slots);
+	# senão a cidade fica ociosa sem transferir os PP acumulados.
+	city.revalidate_production_for_owner()
 	for building_coord in city.building_coords.values():
 		var building := get_building_at(building_coord)
 		if building and building.owner_player != new_owner:
@@ -1991,6 +2052,13 @@ func recompute_fog(player: PlayerData) -> void:
 			visibility[coord] = Visibility.VISIBLE
 	else:
 		var visible_now := compute_visible_tiles(player)
+		# Fase 33D2: o conhecimento individual (PlayerData.explored_tiles) vale para QUALQUER assento — o da
+		# névoa renderizada também, senão descoberta de covil/ameaça dependeria de quem é humano.
+		player.explored_tiles.merge(visible_now, true)
+		# Fase 33D3: cidades estrangeiras vistas agora entram na memória (com nível observado) de QUALQUER assento.
+		for foreign_city in cities_by_coord.values():
+			if foreign_city.owner_player != player and visible_now.has(foreign_city.coord):
+				player.remember_enemy_city(foreign_city)
 		for coord in tiles.keys():
 			if visible_now.has(coord):
 				visibility[coord] = Visibility.VISIBLE
@@ -2002,6 +2070,7 @@ func recompute_fog(player: PlayerData) -> void:
 	last_fog_changed = changed
 	_apply_fog_colors(changed)
 	_apply_fog_to_entities(player)
+	RegionalThreatSystem.note_observation(self, player)
 	EventBus.fog_updated.emit()
 
 ## Unidades/cidades/predios do proprio jogador sempre aparecem; os de
@@ -2047,6 +2116,7 @@ func _apply_fog_to_entities(player: PlayerData) -> void:
 		var environmental_marker: Node3D = _v2_environmental_zone_markers[coord]
 		if is_instance_valid(environmental_marker):
 			environmental_marker.visible = visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
+	MonsterHazardSystem.apply_fog(self) # V3 / Etapa 2: raízes, infecção e Rastro Subterrâneo seguem a visão atual
 	for coord in _construction_markers.keys():
 		var marker: Node3D = _construction_markers[coord]
 		var owner = marker.get_meta("owner_player", null)
@@ -2326,13 +2396,22 @@ func is_under_rival_pressure(coord: Vector2i, player: PlayerData) -> bool:
 ## pelo attack do Dragao (16.0, o mais forte hoje) pra caber em 0..1.
 const LAIR_DANGER_RADIUS := 4
 
-func get_lair_danger_at(coord: Vector2i) -> float:
+##
+## Fase 33D1 — `known` (Dictionary de tiles conhecidos por uma civilização, ex. PlayerData.explored_tiles)
+## limita a consulta ao que ela descobriu: só covis em tiles conhecidos contam, e a população ao redor
+## (que pode estar escondida) não é lida — o covil conhecido pesa pelo tipo. `known == null` mantém o
+## comportamento antigo (conhecimento total), só para chamadores que não decidem por uma IA.
+func get_lair_danger_at(coord: Vector2i, known: Variant = null) -> float:
 	var max_danger := 0.0
 	var strongest_attack: float = MonsterDatabase.KIND_DATA["dragon"].attack
+	var knowledge_limited := typeof(known) == TYPE_DICTIONARY
 	for lair_coord in lair_coords:
 		if HexMetrics.axial_distance(coord, lair_coord) > LAIR_DANGER_RADIUS:
 			continue
-		if _count_live_monsters_near_lair(lair_coord) == 0:
+		if knowledge_limited:
+			if not (known as Dictionary).has(lair_coord):
+				continue
+		elif _count_live_monsters_near_lair(lair_coord) == 0:
 			continue
 		var kind: String = lair_kind_by_coord.get(lair_coord, "")
 		var info: Dictionary = MonsterDatabase.KIND_DATA.get(kind, {})
@@ -4324,12 +4403,17 @@ func _spawn_monster_lairs() -> void:
 		# `true` (camp boss): o ocupante ORIGINAL do covil e um "chefao"
 		# reforcado (HP/ataque multiplicados, nunca se move) — ver
 		# MonsterDatabase.create_monster/CAMP_BOSS_*_MULTIPLIER.
-		spawn_monster_at(boss_coord, kind, true) # ja limpa decoracao do tile, ver _clear_tile_decor_at
-		var structure := LairStructure.new()
-		_lairs_root.add_child(structure)
-		structure.position = world_for_coord(coord)
-		structure.build(kind, self)
-		lairs_by_coord[coord] = structure
+		var boss := spawn_monster_at(boss_coord, kind, true) # ja limpa decoracao do tile, ver _clear_tile_decor_at
+		boss.source_lair_coord = coord # Fase 33D2: população por covil
+		_build_lair_structure(coord, kind)
+
+## Fase 33D2 — o prop 3D de um covil (seed, planner regional ou guardião): mesma construção de sempre.
+func _build_lair_structure(coord: Vector2i, kind: String) -> void:
+	var structure := LairStructure.new()
+	_lairs_root.add_child(structure)
+	structure.position = world_for_coord(coord)
+	structure.build(kind, self)
+	lairs_by_coord[coord] = structure
 
 ## Distancia ate a origem de jogador (humano ou rival) mais proxima — usada
 ## por _spawn_monster_lairs pra decidir o tipo de covil (pedido do usuario:
@@ -4446,10 +4530,23 @@ var monster_turn_rng := RandomNumberGenerator.new()
 ## existentes tem uma chance de patrulhar em vez de ficar parados (ver
 ## _maybe_roam_lair).
 func process_monster_lairs(turn: int = 0) -> void:
-	for lair_coord in lair_coords:
+	# Fase 33D2: o despertar das ameaças regionais acontece no MESMO tick de covil (antes do reforço), então
+	# o turno de despertar já pode reforçar.
+	RegionalThreatSystem.process_turn(self, turn)
+	# V3 / Combat Ecology: esvaziamento de sítios + reposição ponderada pela Era (uma vez por rodada).
+	MonsterEcologySystem.process_round(self, turn)
+	for lair_coord in lair_coords.duplicate():
 		var kind = lair_kind_by_coord.get(lair_coord, "")
 		if kind == "":
 			continue
+		match lair_role(lair_coord):
+			LAIR_ROLE_GUARDIAN:
+				continue # Guardião: população fixa (o Troll original), nunca reforça nem patrulha
+			LAIR_ROLE_REGIONAL:
+				_process_regional_lair(lair_coord, kind, turn)
+				continue
+			LAIR_ROLE_ECOLOGY:
+				continue # V3: a ecologia repõe por sítio (MonsterEcologySystem), nunca o reforço legado do covil
 		if _count_live_monsters_near_lair(lair_coord) >= _lair_cap_for(kind) or _count_alive_of_kind(kind) >= _global_cap_for(kind):
 			_maybe_roam_lair(lair_coord)
 			continue
@@ -4457,6 +4554,21 @@ func process_monster_lairs(turn: int = 0) -> void:
 			continue
 		if not _reinforce_lair(lair_coord, kind):
 			_maybe_roam_lair(lair_coord)
+
+## Fase 33D2 — covil REGIONAL: dormente não reforça nem patrulha (reforço 0); desperto usa a MESMA cadência
+## (roll de _reinforce_chance, batch do tipo) até a população PRÓPRIA do covil (REGIONAL_POPULATION_CAP,
+## contada por source_lair_coord) — nunca o teto global dos selvagens.
+func _process_regional_lair(lair_coord: Vector2i, kind: String, turn: int) -> void:
+	if not RegionalThreatSystem.is_regional_lair_awake(lair_coord):
+		return
+	var room := RegionalThreatSystem.REGIONAL_POPULATION_CAP - lair_population(lair_coord)
+	if room <= 0:
+		_maybe_roam_lair(lair_coord)
+		return
+	if monster_turn_rng.randf() > _reinforce_chance(turn):
+		return
+	if not _reinforce_lair(lair_coord, kind, room):
+		_maybe_roam_lair(lair_coord)
 
 ## No hit do roll de reforco (ver process_monster_lairs): spawna ate
 ## MonsterDatabase.KIND_DATA[kind].batch_spawn monstros de uma vez,
@@ -4470,17 +4582,20 @@ func process_monster_lairs(turn: int = 0) -> void:
 ## (ex: Esqueleto com so 1 vaga global restante nasce so 1, nao os 3 do
 ## batch inteiro). Devolve false se nao conseguiu spawnar ninguem (area
 ## cheia/sem tile livre) — sinal pro chamador tentar patrulha em vez disso.
-func _reinforce_lair(lair_coord: Vector2i, kind: String) -> bool:
+func _reinforce_lair(lair_coord: Vector2i, kind: String, room_override: int = -1) -> bool:
 	var batch_spawn: int = MonsterDatabase.KIND_DATA.get(kind, {}).get("batch_spawn", 1)
-	var room_left = _lair_cap_for(kind) - _count_live_monsters_near_lair(lair_coord)
-	room_left = min(room_left, _global_cap_for(kind) - _count_alive_of_kind(kind))
+	var room_left = room_override
+	if room_left < 0:
+		room_left = _lair_cap_for(kind) - _count_live_monsters_near_lair(lair_coord)
+		room_left = min(room_left, _global_cap_for(kind) - _count_alive_of_kind(kind))
 	var flies: bool = MonsterDatabase.KIND_DATA.get(kind, {}).get("flies", false)
 	var spawned_any := false
 	for i in range(min(batch_spawn, room_left)):
 		var target = _find_free_tile_for_lair_spawn(lair_coord, flies)
 		if target == null:
 			break
-		spawn_monster_at(target, kind)
+		var spawned := spawn_monster_at(target, kind)
+		spawned.source_lair_coord = lair_coord # Fase 33D2: população por covil
 		spawned_any = true
 	return spawned_any
 
@@ -4572,9 +4687,111 @@ func _is_lair_structure_at(coord: Vector2i) -> bool:
 func _count_alive_of_kind(kind: String) -> int:
 	var count := 0
 	for unit in units_by_coord.values():
-		if unit.owner_player == null and unit.unit_data.visual_kind == kind:
+		if unit.owner_player == null and unit.unit_data.visual_kind == kind and not is_bound_to_role_lair(unit):
 			count += 1
 	return count
+
+# ---------------------------------------------------------------------------
+# Fase 33D2 — papéis de covil (selvagem / regional / guardião)
+# ---------------------------------------------------------------------------
+
+func lair_role(coord: Vector2i) -> String:
+	return String(lair_roles.get(coord, LAIR_ROLE_WILD))
+
+## Monstro gerado por um covil REGIONAL/GUARDIÃO ainda ativo: conta na população PRÓPRIA daquele covil e
+## fica fora do teto global por tipo (que continua valendo para os selvagens). Depois que o covil é
+## destruído o papel some e os sobreviventes voltam a contar como selvagens.
+func is_bound_to_role_lair(unit: Unit) -> bool:
+	# Fase 33D3: guardião de evento mundial (Relicário) também fica fora do teto dos selvagens.
+	# V3: monstro de sítio ecológico conta na população da ecologia, nunca no teto global dos selvagens.
+	return unit.source_event_id >= 0 or unit.ecology_site_id >= 0 or (unit.source_lair_coord != NO_LAIR and lair_roles.has(unit.source_lair_coord))
+
+## Monstros vivos gerados por `lair_coord` (chefe original + reforços), onde quer que estejam.
+func lair_population(lair_coord: Vector2i) -> int:
+	var count := 0
+	for unit in units_by_coord.values():
+		if unit.owner_player == null and unit.source_lair_coord == lair_coord:
+			count += 1
+	return count
+
+func lair_members(lair_coord: Vector2i) -> Array[Unit]:
+	var result: Array[Unit] = []
+	for unit in units_by_coord.values():
+		if unit.owner_player == null and unit.source_lair_coord == lair_coord:
+			result.append(unit)
+	result.sort_custom(func(a: Unit, b: Unit) -> bool: return a.serial_id < b.serial_id)
+	return result
+
+## Recompensa de destruir a estrutura em `coord`: a do PAPEL (regional/guardião, RegionalThreatSystem)
+## quando houver, senão a do tipo (MonsterDatabase) — nunca as duas somadas.
+func lair_clear_rewards(coord: Vector2i) -> Dictionary:
+	var kind := String(lair_kind_by_coord.get(coord, ""))
+	var role_reward := RegionalThreatSystem.role_clear_reward(lair_role(coord), kind)
+	if not role_reward.is_empty():
+		return role_reward
+	return {"gold": MonsterDatabase.lair_clear_reward(kind), "mana": MonsterDatabase.lair_clear_mana_reward(kind)}
+
+## Cria um covil em runtime (planner regional, realocação, guardião): estrutura + papel + registro em
+## added_lairs (o load o recria). `boss_coord` escolhido pelo chamador (RNG dele, nunca monster_turn_rng);
+## NO_LAIR = sem chefe (load: os monstros vêm do save).
+func create_lair(coord: Vector2i, kind: String, role: String, boss_coord: Vector2i = NO_LAIR) -> Unit:
+	if lairs_by_coord.has(coord) or coord in lair_coords:
+		return null
+	lair_coords.append(coord)
+	lair_kind_by_coord[coord] = kind
+	added_lairs[coord] = kind
+	if role != LAIR_ROLE_WILD:
+		lair_roles[coord] = role
+	_clear_tile_decor_at(coord)
+	_build_lair_structure(coord, kind)
+	if boss_coord == NO_LAIR:
+		return null
+	var boss := spawn_monster_at(boss_coord, kind, true)
+	boss.source_lair_coord = coord
+	return boss
+
+func set_lair_role(coord: Vector2i, role: String) -> void:
+	if not coord in lair_coords:
+		return
+	if role == LAIR_ROLE_WILD:
+		lair_roles.erase(coord)
+	else:
+		lair_roles[coord] = role
+
+## Remove um covil SEM recompensa e sem entrar em cleared_lair_coords (realocação/remoção do planner
+## regional). `remove_members` também tira os monstros dele (os que nasceram dele ou, sem origem
+## registrada, os que estão na área). O load chama com remove_members=false (monstros vêm do save).
+func remove_lair_silently(coord: Vector2i, remove_members: bool = true) -> void:
+	if not coord in lair_coords:
+		return
+	if remove_members:
+		for area_coord in _lair_area(coord):
+			var occupant: Unit = get_unit_at(area_coord)
+			if occupant != null and occupant.owner_player == null and not occupant.world_event_managed and (occupant.source_lair_coord == coord or occupant.source_lair_coord == NO_LAIR):
+				remove_unit(occupant)
+		for member in lair_members(coord):
+			remove_unit(member)
+	lair_coords.erase(coord)
+	lair_kind_by_coord.erase(coord)
+	lair_roles.erase(coord)
+	lair_alert_until_turn.erase(coord)
+	if lairs_by_coord.has(coord):
+		lairs_by_coord[coord].queue_free()
+		lairs_by_coord.erase(coord)
+	if added_lairs.has(coord):
+		added_lairs.erase(coord)
+	elif not coord in removed_seed_lairs:
+		removed_seed_lairs.append(coord)
+
+## Reaplica, num mapa recém-gerado pela seed, as alterações de covil do planner (load). Ordem: remove os
+## da seed, recria os adicionados (sem chefe) e reaplica papéis.
+func apply_saved_lair_state(removed: Array, added: Array, roles: Array) -> void:
+	for coord in removed:
+		remove_lair_silently(coord, false)
+	for entry in added:
+		create_lair(entry.coord, String(entry.kind), LAIR_ROLE_WILD)
+	for entry in roles:
+		set_lair_role(entry.coord, String(entry.role))
 
 ## Tile livre (sem unidade, sem bloquear terrestre — a MENOS que `flies`
 ## seja verdadeiro, ver abaixo) na area do covil, escolhido aleatoriamente
@@ -4636,7 +4853,8 @@ func _maybe_roam_lair(lair_coord: Vector2i) -> void:
 		# dentro da area do covil -- reposicionamento silencioso, invisivel
 		# ao proprio DragonEvent (que so' sabe onde a Unit esta lendo
 		# dragon_unit.coord DEPOIS do fato).
-		if unit != null and unit.owner_player == null and not unit.world_event_managed:
+		# V3: monstro da ecologia de passagem pela área nunca é teleportado pela patrulha legada do covil.
+		if unit != null and unit.owner_player == null and not unit.world_event_managed and unit.ecology_site_id < 0:
 			occupants.append(unit)
 			continue
 		if unit != null or get_city_at(coord) != null:
@@ -4682,6 +4900,16 @@ func spawn_monster_at(coord: Vector2i, kind: String, is_camp_boss: bool = false)
 	unit.position = world_surface_for_coord(coord)
 	units_by_coord[coord] = unit
 	_clear_tile_decor_at(coord) # ver MAGIAS, SPAWNS E ARVORES -- mesma politica de spawn_unit acima
+	return unit
+
+## V3 / Etapa 2 — cria um monstro FORA de units_by_coord (Verme Colossal subterrâneo restaurado do save): não
+## ocupa tile nem pode ser alvo até MonsterAbilitySystem o fazer emergir.
+func spawn_monster_detached(coord: Vector2i, kind: String) -> Unit:
+	var unit := Unit.new()
+	_units_root.add_child(unit)
+	unit.setup(MonsterDatabase.create_monster(kind), null, coord)
+	unit.position = world_surface_for_coord(coord)
+	unit.visible = false
 	return unit
 
 ## Todo monstro neutro (owner_player == null) vivo no mapa agora — guardiao

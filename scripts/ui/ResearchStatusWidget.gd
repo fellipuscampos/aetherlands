@@ -42,6 +42,15 @@ func refresh() -> void:
 		attention_badge.visible = false
 		return
 	var state := _player.v2_research
+	# V3 / Etapa 2: antes da primeira cidade a pesquisa está INDISPONÍVEL (não "ociosa" por erro do jogador).
+	var city_gate := V2ResearchAccess.start_blocked_reason(_player)
+	if state.active_id == "" and city_gate != "":
+		name_label.text = "Pesquisa indisponível"
+		detail_label.text = "Funde sua primeira cidade."
+		progress.visible = false
+		attention_badge.visible = false
+		tooltip_text = city_gate
+		return
 	if state.active_id == "":
 		var complete := state.get_completed_ids().size() >= V2ResearchDatabase.all_nodes().size()
 		name_label.text = "Pesquisas concluídas" if complete else "Escolher Pesquisa"

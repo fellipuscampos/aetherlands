@@ -132,8 +132,26 @@ static func begin_turn(hex_grid: HexGrid) -> void:
 ## cobre Announced/Preparation/Active/Resolution (existe na lista ate'
 ## Completed remover), nao so' o Dragao fisicamente presente.
 static func act_for_unit(unit: Unit, hex_grid: HexGrid, turn: int) -> void:
-	if _is_dragon_event_active():
+	# V3 / Etapa 2: o Dragão NÃO pausa o ecossistema — só o selvagem LEGADO (covil da seed sem papel, fora da
+	# ecologia) mantém a regra antiga de recolher; ecologia, ameaça regional, Guardião e guardiões de evento seguem.
+	if _is_dragon_event_active() and _recalled_by_dragon(unit, hex_grid):
 		_take_recalled_turn(unit, hex_grid)
+		return
+	# Fase 33D3: guardião de evento mundial (Relicário) guarda o próprio local; nunca vira invasor.
+	if unit.source_event_id >= 0:
+		var event := WorldEventManager.event_by_id(unit.source_event_id)
+		if event is ReliquaryEvent:
+			_take_anchored_guard_turn(unit, hex_grid, (event as ReliquaryEvent).site_coord, GUARD_RADIUS)
+			return
+	# V3 / Combat Ecology: monstro de sítio ecológico segue o perfil de atividade da Era (tier × era).
+	var ecology := MonsterEcologySystem.monster_directive(unit)
+	if not ecology.is_empty():
+		_take_ecology_turn(unit, hex_grid, turn, ecology)
+		return
+	# Fase 33D2: monstro de covil com PAPEL (ameaça regional / Guardião Troll) segue a diretiva do papel.
+	var directive := RegionalThreatSystem.monster_directive(unit, hex_grid)
+	if not directive.is_empty():
+		_take_directed_turn(unit, hex_grid, turn, directive)
 		return
 	var behavior = _effective_behavior(unit)
 	match behavior:
@@ -145,6 +163,9 @@ static func act_for_unit(unit: Unit, hex_grid: HexGrid, turn: int) -> void:
 			_take_raider_turn(unit, hex_grid, turn)
 		_:
 			_take_guardian_turn(unit, hex_grid, turn)
+
+static func _recalled_by_dragon(unit: Unit, hex_grid: HexGrid) -> bool:
+	return unit.ecology_site_id < 0 and unit.source_event_id < 0 and not hex_grid.is_bound_to_role_lair(unit)
 
 static func _is_dragon_event_active() -> bool:
 	for event in WorldEventManager.active_events:
@@ -214,13 +235,18 @@ static func _promote_idle_groups_to_invaders(hex_grid: HexGrid) -> void:
 		var kind = hex_grid.lair_kind_by_coord.get(lair_coord, "")
 		if kind == "":
 			continue
+		# Fase 33D2: ameaça regional não vira invasão de mapa no Despertar; Guardião nunca.
+		if RegionalThreatSystem.blocks_invader_promotion(hex_grid, lair_coord):
+			continue
+		if hex_grid.lair_role(lair_coord) == HexGrid.LAIR_ROLE_ECOLOGY:
+			continue # V3: covil adotado pela ecologia nunca vira invasão legada de mapa inteiro
 		var info: Dictionary = MonsterDatabase.KIND_DATA.get(kind, {})
 		if not info.get("invader_promotable", false):
 			continue
 		var idle: Array[Unit] = []
 		for coord in hex_grid._lair_area(lair_coord):
 			var unit = hex_grid.get_unit_at(coord)
-			if unit != null and unit.owner_player == null and not unit.is_camp_boss and unit.monster_behavior_state == "":
+			if unit != null and unit.owner_player == null and not unit.is_camp_boss and unit.monster_behavior_state == "" and unit.ecology_site_id < 0:
 				idle.append(unit)
 		if idle.size() >= INVADER_GROUP_THRESHOLD:
 			for unit in idle:
@@ -256,7 +282,11 @@ static func _guard_radius_for(unit: Unit, hex_grid: HexGrid, turn: int) -> int:
 static func _take_guardian_turn(unit: Unit, hex_grid: HexGrid, turn: int) -> void:
 	var home = hex_grid.home_lair_for(unit.coord)
 	var anchor = home if home != HexGrid.NO_LAIR else unit.coord
-	var radius = _guard_radius_for(unit, hex_grid, turn)
+	_take_anchored_guard_turn(unit, hex_grid, anchor, _guard_radius_for(unit, hex_grid, turn))
+
+## Guardião com âncora/raio explícitos (Fase 33D2: covil com papel ancora no PRÓPRIO covil de origem, não
+## no covil do tile atual).
+static func _take_anchored_guard_turn(unit: Unit, hex_grid: HexGrid, anchor: Vector2i, radius: int) -> void:
 	var target_coord = _nearest_threat_within(anchor, radius, hex_grid)
 	if target_coord == null:
 		return
@@ -289,19 +319,21 @@ static func _take_invader_turn(unit: Unit, hex_grid: HexGrid, turn: int) -> void
 ## verdade aqui, sem checar `kind`. Um tile ja pilhado nao "acumula" perda
 ## de ouro todo turno que o Invasor fica parado nele (is_tile_pillaged
 ## guarda), so quando a pilhagem anterior ja expirou.
-static func _maybe_pillage_tile(unit: Unit, hex_grid: HexGrid, turn: int) -> void:
+static func _maybe_pillage_tile(unit: Unit, hex_grid: HexGrid, turn: int) -> bool:
 	if hex_grid.is_tile_pillaged(unit.coord, turn):
-		return
+		return false
 	# Fase 25: o alvo é uma melhoria de recurso V2 (a única fonte de rendimento POR TILE da economia
 	# V2 — os tiles trabalhados V1 não existem mais). Tile de território sem melhoria não é saqueado.
 	var city: City = hex_grid.city_owning_tile(unit.coord)
 	if city == null or city.owner_player == null or not city.resource_improvements.has(unit.coord):
-		return
+		return false
 	hex_grid.pillage_tile(unit.coord, turn, PILLAGE_DURATION_TURNS)
 	city.owner_player.gold = max(0.0, city.owner_player.gold - PILLAGE_GOLD_LOSS)
+	EventBus.tile_pillaged.emit(city.owner_player, unit.coord) # Fase 33D1: observabilidade
 	if city.owner_player == GameManager.human_player:
 		var improvement_name := V2ResourceImprovementData.display_name_for_resource(V2ResourceImprovementData.resource_for_improvement(String(city.resource_improvements[unit.coord])))
 		EventBus.notify.emit("Invasores saquearam %s de %s!" % [improvement_name, city.city_name], "combat")
+	return true
 
 ## Saqueador (Goblin por padrao, ver COMPORTAMENTO DOS MONSTROS no topo do
 ## arquivo): BUSCA ATIVAMENTE presa fraca/isolada (mesmo criterio do
@@ -329,7 +361,10 @@ static func _raider_radius_for(unit: Unit, hex_grid: HexGrid, turn: int) -> int:
 static func _take_raider_turn(unit: Unit, hex_grid: HexGrid, turn: int) -> void:
 	var home = hex_grid.home_lair_for(unit.coord)
 	var anchor = home if home != HexGrid.NO_LAIR else unit.coord
-	var radius = _raider_radius_for(unit, hex_grid, turn)
+	_take_anchored_raider_turn(unit, hex_grid, turn, anchor, _raider_radius_for(unit, hex_grid, turn))
+
+## Saqueador com âncora/raio explícitos (Fase 33D2: teatro regional).
+static func _take_anchored_raider_turn(unit: Unit, hex_grid: HexGrid, turn: int, anchor: Vector2i, radius: int) -> void:
 	var target_coord = _find_weak_or_isolated_target_within(anchor, radius)
 	if target_coord != null:
 		if target_coord in hex_grid.tiles_in_range(unit.coord, unit.unit_data.attack_range):
@@ -345,6 +380,35 @@ static func _take_raider_turn(unit: Unit, hex_grid: HexGrid, turn: int) -> void:
 		if settlement_coord != null:
 			_move_toward_within_radius(unit, hex_grid, settlement_coord, anchor, radius)
 	_maybe_pillage_tile(unit, hex_grid, turn)
+
+## Fase 33D2 — diretiva de covil com papel (RegionalThreatSystem.monster_directive):
+## - dormant: guarda a porta do próprio covil (raio de Guardião), nunca saqueia nem invade;
+## - regional (desperto, Era do Despertar): Goblin = Saqueador preso ao teatro regional (âncora no covil,
+##   raio até os arredores da capital); Esqueleto = pressão numérica no MESMO teatro (briga com quem estiver
+##   ao alcance, avança sobre cidade/construção do teatro e saqueia), nunca a marcha de mapa inteiro;
+## - guardian: Guardião Troll ancorado no próprio covil (raio do tipo).
+static func _take_directed_turn(unit: Unit, hex_grid: HexGrid, turn: int, directive: Dictionary) -> void:
+	var anchor: Vector2i = directive.anchor
+	var radius := int(directive.radius)
+	match String(directive.mode):
+		"dormant", "guardian":
+			_take_anchored_guard_turn(unit, hex_grid, anchor, radius)
+		"regional":
+			if _effective_behavior(unit) == MonsterDatabase.BEHAVIOR_INVADER:
+				_take_theater_invader_turn(unit, hex_grid, turn, anchor, radius)
+			else:
+				_take_anchored_raider_turn(unit, hex_grid, turn, anchor, radius)
+
+static func _take_theater_invader_turn(unit: Unit, hex_grid: HexGrid, turn: int, anchor: Vector2i, radius: int) -> void:
+	var immediate = _hostile_in_attack_range(unit, hex_grid)
+	if immediate != null:
+		CombatResolver.resolve(unit, immediate, hex_grid)
+	else:
+		var target_coord = _nearest_threat_within(anchor, radius, hex_grid)
+		if target_coord != null:
+			_move_toward_within_radius(unit, hex_grid, target_coord, anchor, radius)
+	if is_instance_valid(unit) and unit.hp > 0.0:
+		_maybe_pillage_tile(unit, hex_grid, turn)
 
 ## Cacador: patrulha livre (sem restricao de territorio, ao contrario do
 ## Guardiao) atras de presa isolada/fraca, mas so ataca se
@@ -512,3 +576,339 @@ static func _is_isolated_or_weak(target: Unit, target_player: PlayerData) -> boo
 		if HexMetrics.axial_distance(ally.coord, target.coord) <= HUNTER_ISOLATION_RADIUS:
 			return false
 	return true
+
+# ---------------------------------------------------------------------------
+# V3 / Combat Ecology — atividade por Era (MonsterActivityProfile via MonsterEcologySystem.monster_directive)
+# Etapa 2: TIER define a intensidade (perfil da era); ESPÉCIE define a identidade (MonsterEcologyData.behavior +
+# MonsterAbilityData via MonsterAbilitySystem). Uma única IA genérica — nenhum planner por monstro.
+# ---------------------------------------------------------------------------
+
+## Fração máxima do HP ATUAL de uma cidade que UM golpe de monstro da ecologia tira (mesmo mecanismo do raid
+## do Dragão em CombatResolver.resolve_city_attack; atacante neutro nunca captura — a cidade fica em >= 1 HP).
+## V3 COMBAT ECOLOGY PLACEHOLDER — TUNE LATER.
+const ECOLOGY_CITY_RAID_FRACTION := 0.25
+
+## Um turno de monstro da ecologia. Uma ação por turno (ou move, ou ataca/usa habilidade), em ordem:
+## 0. passivas de início de turno (Regeneração Monstruosa); Verme subterrâneo/recém-emergido não age;
+## 1. habilidade ativa da espécie, se pronta e com alvo legítimo dentro da zona da era;
+## 2. unidade de civilização ao alcance de ataque → ataca (a melhor; BASIC nunca inicia luta claramente perdida —
+##    o Esqueleto, sem chance, recua para o bando);
+## 3. presa dentro do território (raio de patrulha; presas especiais — grupo/conjurador — até o raio de interesse
+##    da era) → persegue sem sair da zona; o Worg caça o isolado com +1 Movimento e golpeia no mesmo turno;
+## 4. raide de cidade só para espécies city_hunt, na era em que o tier caça cidades (Goblin no máximo 2 por cidade;
+##    Esqueleto só sai com o bando de 3+); um golpe por raide e depois descanso;
+## 5. melhoria (só espécies improvement_hunt);
+## 6. fora do território → volta; ocioso → ronda (RNG da ecologia).
+## Alvos por distância/estado com desempate por coordenada — nunca por ordem de jogador/identidade humana.
+static func _take_ecology_turn(unit: Unit, hex_grid: HexGrid, turn: int, directive: Dictionary) -> void:
+	if MonsterAbilitySystem.skips_turn(unit, turn):
+		return
+	MonsterAbilitySystem.on_turn_start(unit, hex_grid)
+	var anchor: Vector2i = directive.anchor
+	var profile: Dictionary = directive.profile
+	var kind := unit.unit_data.visual_kind
+	var behavior := MonsterEcologyData.behavior(kind)
+	var patrol := int(profile.patrol_radius)
+	var chase := maxi(int(profile.chase_radius) + int(behavior.chase_bonus), patrol)
+	if int(behavior.chase_bonus) > 0:
+		patrol += int(behavior.chase_bonus)
+		chase = maxi(chase, patrol)
+	var interest := int(profile.city_radius)
+	var prey_mode := String(behavior.prey)
+	var zone := chase
+	var search := patrol
+	if prey_mode in ["group", "caster"] and interest > 0:
+		zone = maxi(zone, interest)
+		search = maxi(search, interest)
+	if MonsterAbilitySystem.try_active(unit, hex_grid, anchor, zone):
+		return
+	var attack := _ecology_attack_choice(unit, hex_grid, behavior)
+	if attack.has("target"):
+		_ecology_attack(unit, hex_grid, attack.target, turn, behavior)
+		return
+	if bool(attack.get("regroup", false)) and bool(behavior.get("group_raid", false)):
+		_ecology_regroup(unit, hex_grid, anchor, zone)
+		return
+	var raiding := unit.ecology_rest_until <= turn
+	if not raiding:
+		unit.ability_state.erase("raid_target")
+	# Raide primeiro para quem tem o raide como identidade (Goblin, Esqueleto, Wyvern) quando a era do tier caça
+	# cidades: a caça a unidades no território vem depois. Um golpe por raide e depois descanso.
+	var city_radius := int(profile.city_radius)
+	if raiding and bool(behavior.city_hunt) and city_radius > 0 and turn >= int(profile.get("city_from_turn", 0)):
+		var city := _ecology_raid_target(unit, anchor, city_radius, behavior, hex_grid)
+		if city != null:
+			if _ecology_press_city(unit, hex_grid, city, anchor, city_radius + 1):
+				unit.ecology_rest_until = turn + int(profile.get("raid_rest_turns", 0))
+				unit.ability_state.erase("raid_target")
+			return
+	var prey = _ecology_select_prey(unit, anchor, search, prey_mode, hex_grid, behavior)
+	if prey != null:
+		_ecology_hunt(unit, hex_grid, prey, anchor, zone, behavior, turn)
+		return
+	var improvement_radius := int(profile.improvement_radius) if raiding and bool(behavior.improvement_hunt) else 0
+	if improvement_radius > 0:
+		var improvement = _ecology_improvement_target(unit, anchor, improvement_radius, hex_grid, turn)
+		if improvement != null:
+			if unit.coord != improvement:
+				_ecology_move(unit, hex_grid, improvement, anchor, improvement_radius, "improvement")
+			if _ecology_pillage(unit, hex_grid, turn):
+				unit.ecology_rest_until = turn + int(profile.get("raid_rest_turns", 0))
+			return
+	# Espécie de bando (Esqueleto) ociosa fica junta na âncora — a horda se reúne em vez de se espalhar rondando.
+	# Depois de um raide (descanso) o monstro RECUA para a âncora, em vez de ficar rondando perto da cidade atingida.
+	var home_radius := 1 if bool(behavior.get("group_raid", false)) or not raiding else patrol
+	if HexMetrics.axial_distance(unit.coord, anchor) > home_radius:
+		_ecology_move(unit, hex_grid, anchor, anchor, HexMetrics.axial_distance(unit.coord, anchor), "return")
+	elif home_radius == patrol and float(profile.roam_chance) > 0.0 and MonsterEcologySystem.rng.randf() < float(profile.roam_chance):
+		_ecology_roam(unit, hex_grid, anchor, patrol)
+	if improvement_radius > 0 and _ecology_pillage(unit, hex_grid, turn):
+		unit.ecology_rest_until = turn + int(profile.get("raid_rest_turns", 0))
+
+## Luta claramente perdida: o atacante morreria e o alvo sobreviveria (estimador existente, CombatResolver.predict).
+static func _ecology_clearly_bad(unit: Unit, target: Unit, hex_grid: HexGrid, strike: float = 1.0) -> bool:
+	var prediction := CombatResolver.predict(unit, target, hex_grid, strike)
+	return bool(prediction.attacker_dies) and not bool(prediction.defender_dies)
+
+static func _ecology_isolated(target: Unit, hex_grid: HexGrid) -> bool:
+	for neighbor in hex_grid.get_neighbors(target.coord):
+		var other := hex_grid.get_unit_at(neighbor)
+		if other != null and other != target and other.owner_player == target.owner_player:
+			return false
+	return true
+
+static func _ecology_wounded(target: Unit) -> bool:
+	return target.hp < target.unit_data.max_hp * float(MonsterAbilityData.param(MonsterAbilityData.BLOOD_SCENT, "wounded_fraction", 0.5))
+
+## Melhor alvo AO ALCANCE agora: {target} | {regroup: true} (só havia luta perdida e o monstro evita) | {}.
+static func _ecology_attack_choice(unit: Unit, hex_grid: HexGrid, behavior: Dictionary) -> Dictionary:
+	var best: Unit = null
+	var best_key: Array = []
+	var saw_bad := false
+	for coord in MonsterEcologyPlanner.sorted_coords(hex_grid.tiles_in_range(unit.coord, unit.unit_data.attack_range)):
+		var other := hex_grid.get_unit_at(coord)
+		if other == null or other.owner_player == null or other.hp <= 0.0:
+			continue
+		var strike := _ecology_strike(unit, other, hex_grid, behavior)
+		if bool(behavior.avoid_bad_fights) and _ecology_clearly_bad(unit, other, hex_grid, strike):
+			saw_bad = true
+			continue
+		var prediction := CombatResolver.predict(unit, other, hex_grid, strike)
+		var priority := 0
+		if String(behavior.prey) == "isolated" and (_ecology_isolated(other, hex_grid) or _ecology_wounded(other)):
+			priority = 1
+		var key := [priority, 1 if bool(prediction.defender_dies) else 0, -other.hp]
+		if best == null or _key_greater(key, best_key):
+			best = other
+			best_key = key
+	if best != null:
+		return {"target": best}
+	return {"regroup": true} if saw_bad else {}
+
+static func _key_greater(a: Array, b: Array) -> bool:
+	for i in a.size():
+		if a[i] != b[i]:
+			return a[i] > b[i]
+	return false
+
+## Faro de Sangue (Worg): +25% no primeiro golpe do turno contra alvo isolado. Nunca contra cidade.
+static func _ecology_strike(unit: Unit, target: Unit, hex_grid: HexGrid, behavior: Dictionary) -> float:
+	if MonsterAbilitySystem.has(unit, MonsterAbilityData.BLOOD_SCENT) and _ecology_isolated(target, hex_grid) and int(unit.ability_state.get("hunt_strike_turn", -1)) != TurnManager.turn_number:
+		return 1.0 + float(MonsterAbilityData.param(MonsterAbilityData.BLOOD_SCENT, "attack_bonus", 0.25))
+	return 1.0
+
+static func _ecology_attack(unit: Unit, hex_grid: HexGrid, target: Unit, turn: int, behavior: Dictionary) -> void:
+	var target_index := GameManager.players.find(target.owner_player)
+	var strike := _ecology_strike(unit, target, hex_grid, behavior)
+	if strike > 1.0:
+		unit.ability_state["hunt_strike_turn"] = turn
+		MonsterEcologySystem.emit_unit_event("ability", unit, {"ability": MonsterAbilityData.BLOOD_SCENT, "hits": 1, "hunt_bonus_attack": 1, "target": target_index})
+	var hp_before := target.hp
+	CombatResolver.resolve(unit, target, hex_grid, strike)
+	MonsterEcologySystem.emit_unit_event("attack", unit, {"target": target_index})
+	if is_instance_valid(unit) and unit.hp > 0.0:
+		MonsterAbilitySystem.after_attack(unit, target, hp_before)
+
+## Esqueleto (ou BASIC) diante de luta perdida: recua para perto do bando/âncora em vez de se jogar.
+static func _ecology_regroup(unit: Unit, hex_grid: HexGrid, anchor: Vector2i, zone: int) -> void:
+	var rally := anchor
+	var best := 999999
+	for other in hex_grid.neutral_units():
+		if other != unit and other.ecology_site_id >= 0 and other.unit_data.visual_kind == unit.unit_data.visual_kind:
+			var d := HexMetrics.axial_distance(unit.coord, other.coord)
+			if d > 1 and d < best and HexMetrics.axial_distance(anchor, other.coord) <= zone:
+				best = d
+				rally = other.coord
+	_ecology_move(unit, hex_grid, rally, anchor, maxi(zone, HexMetrics.axial_distance(unit.coord, anchor)), "regroup")
+
+## Presa no território: unidade de civilização a ≤ `radius` da âncora, escolhida pelo modo da espécie:
+## any (mais perto da âncora), isolated (isolada/ferida primeiro), group (mais aliados colados), caster (conjurador
+## primeiro). Desempate por coordenada. Nunca fora do raio legítimo da era.
+static func _ecology_select_prey(unit: Unit, anchor: Vector2i, radius: int, mode: String, hex_grid: HexGrid, behavior: Dictionary = {}) -> Unit:
+	var best: Unit = null
+	var best_key: Array = []
+	for player in GameManager.players:
+		for other in player.units:
+			if not is_instance_valid(other) or other.hp <= 0.0:
+				continue
+			var d := HexMetrics.axial_distance(anchor, other.coord)
+			if d > radius:
+				continue
+			var special := 0
+			match mode:
+				"isolated":
+					special = 1 if _ecology_isolated(other, hex_grid) or _ecology_wounded(other) else 0
+				"group":
+					special = MonsterAbilitySystem._civ_units_near(hex_grid, other.coord, 1).size()
+				"caster":
+					special = 1 if MonsterAbilitySystem._is_caster(other) else 0
+			if mode in ["group", "caster"] and special == 0 and d > int(MonsterEcologySystem.monster_directive(unit).profile.patrol_radius):
+				continue # presa comum além da patrulha: o raio de interesse vale só para a presa especial
+			if bool(behavior.get("avoid_bad_fights", false)) and _ecology_clearly_bad(unit, other, hex_grid, _ecology_strike(unit, other, hex_grid, behavior)):
+				continue # BASIC não persegue presa que claramente o mataria
+			var key := [special, -d, -other.coord.x, -other.coord.y]
+			if best == null or _key_greater(key, best_key):
+				best = other
+				best_key = key
+	return best
+
+static func _ecology_hunt(unit: Unit, hex_grid: HexGrid, prey: Unit, anchor: Vector2i, zone: int, behavior: Dictionary, turn: int) -> void:
+	var worg_hunt := MonsterAbilitySystem.has(unit, MonsterAbilityData.BLOOD_SCENT) and _ecology_isolated(prey, hex_grid)
+	if worg_hunt and int(unit.ability_state.get("hunt_move_turn", -1)) != turn:
+		unit.ability_state["hunt_move_turn"] = turn
+		unit.movement_left += float(MonsterAbilityData.param(MonsterAbilityData.BLOOD_SCENT, "movement_bonus", 1.0))
+		MonsterEcologySystem.emit_unit_event("ability", unit, {"ability": MonsterAbilityData.BLOOD_SCENT, "hits": 1, "isolated_hunted": 1, "target": GameManager.players.find(prey.owner_player)})
+	_ecology_move(unit, hex_grid, prey.coord, anchor, zone, "chase")
+	# O caçador fecha a distância e golpeia no mesmo turno quando alcança o isolado.
+	if worg_hunt and is_instance_valid(prey) and is_instance_valid(unit) and HexMetrics.axial_distance(unit.coord, prey.coord) <= unit.unit_data.attack_range:
+		if not (bool(behavior.avoid_bad_fights) and _ecology_clearly_bad(unit, prey, hex_grid, _ecology_strike(unit, prey, hex_grid, behavior))):
+			_ecology_attack(unit, hex_grid, prey, turn, behavior)
+
+## Cidade alvo de raide: a já combinada (raid_target) ou a mais próxima da âncora no raio; o Goblin respeita o teto
+## de 2 por cidade e o Esqueleto só parte com o bando (3+ Esqueletos da ecologia a ≤ 2 dele).
+static func _ecology_raid_target(unit: Unit, anchor: Vector2i, radius: int, behavior: Dictionary, hex_grid: HexGrid) -> City:
+	var committed := MonsterAbilitySystem._coord(unit.ability_state.get("raid_target"))
+	if committed != HexGrid.NO_LAIR:
+		var existing := hex_grid.get_city_at(committed)
+		if existing != null and existing.owner_player != null and HexMetrics.axial_distance(anchor, committed) <= radius:
+			return existing
+		unit.ability_state.erase("raid_target")
+	var city := _ecology_city_target(anchor, radius)
+	if city == null:
+		return null
+	if MonsterAbilitySystem.has(unit, MonsterAbilityData.QUICK_PLUNDER):
+		var raiders := 0
+		for other in hex_grid.neutral_units():
+			if other != unit and MonsterAbilitySystem._coord(other.ability_state.get("raid_target")) == city.coord:
+				raiders += 1
+		if raiders >= int(MonsterAbilityData.param(MonsterAbilityData.QUICK_PLUNDER, "max_raiders", 2)):
+			return null
+	if bool(behavior.get("group_raid", false)):
+		var band := 0
+		var group_radius := int(MonsterAbilityData.param(MonsterAbilityData.RISING_HORDE, "group_radius", 2))
+		for other in hex_grid.neutral_units():
+			if other.ecology_site_id >= 0 and other.unit_data.visual_kind == unit.unit_data.visual_kind and HexMetrics.axial_distance(unit.coord, other.coord) <= group_radius:
+				band += 1
+		if band < int(MonsterAbilityData.param(MonsterAbilityData.RISING_HORDE, "group_min", 3)):
+			return null
+	unit.ability_state["raid_target"] = [city.coord.x, city.coord.y]
+	return city
+
+static func _ecology_move(unit: Unit, hex_grid: HexGrid, target: Vector2i, anchor: Vector2i, radius: int, reason: String) -> void:
+	var before := unit.coord
+	_move_toward_within_radius(unit, hex_grid, target, anchor, radius)
+	if is_instance_valid(unit) and unit.coord != before:
+		MonsterEcologySystem.emit_unit_event("move", unit, {"reason": reason})
+
+## true = golpeou (cidade ou guarnição) neste turno; false = só se aproximou.
+static func _ecology_press_city(unit: Unit, hex_grid: HexGrid, city: City, anchor: Vector2i, radius: int) -> bool:
+	var target_index := GameManager.players.find(city.owner_player)
+	if HexMetrics.axial_distance(unit.coord, city.coord) <= unit.unit_data.attack_range:
+		var garrison := hex_grid.get_unit_at(city.coord)
+		if garrison != null and garrison.owner_player != null:
+			CombatResolver.resolve(unit, garrison, hex_grid)
+			MonsterEcologySystem.emit_unit_event("city_attack", unit, {"target": target_index, "garrison": true})
+		else:
+			CombatResolver.resolve_city_attack(unit, city, hex_grid, ECOLOGY_CITY_RAID_FRACTION)
+			MonsterEcologySystem.emit_unit_event("city_attack", unit, {"target": target_index, "garrison": false, "city_hp": city.hp})
+			MonsterAbilitySystem.on_city_hit(unit, city) # Saque Rápido (Goblin)
+		return true
+	_ecology_move(unit, hex_grid, city.coord, anchor, radius, "city")
+	return false
+
+static func _ecology_pillage(unit: Unit, hex_grid: HexGrid, turn: int) -> bool:
+	if not is_instance_valid(unit) or unit.hp <= 0.0:
+		return false
+	var city: City = hex_grid.city_owning_tile(unit.coord)
+	var owner_index := GameManager.players.find(city.owner_player) if city != null else -1
+	if not _maybe_pillage_tile(unit, hex_grid, turn):
+		return false
+	MonsterEcologySystem.emit_unit_event("pillage", unit, {"target": owner_index})
+	return true
+
+## Ronda: um tile alcançável do próprio território (patrol_radius da âncora), sorteado pelo RNG da ecologia
+## sobre as chaves ORDENADAS (determinismo independente da ordem interna do dicionário).
+static func _ecology_roam(unit: Unit, hex_grid: HexGrid, anchor: Vector2i, patrol: int) -> void:
+	var reachable := hex_grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies)
+	var options: Array[Vector2i] = []
+	for coord in reachable.keys():
+		if coord != unit.coord and HexMetrics.axial_distance(anchor, coord) <= patrol:
+			options.append(coord)
+	if options.is_empty():
+		return
+	options = MonsterEcologyPlanner.sorted_coords(options)
+	var dest: Vector2i = options[MonsterEcologySystem.rng.randi_range(0, options.size() - 1)]
+	hex_grid.move_unit(unit, dest, reachable[dest])
+	MonsterEcologySystem.emit_unit_event("move", unit, {"reason": "roam"})
+
+static func _coord_before(a: Vector2i, b: Vector2i) -> bool:
+	return a.x < b.x if a.x != b.x else a.y < b.y
+
+## Unidade de QUALQUER civilização mais próxima da âncora dentro do raio (desempate por coordenada).
+static func _ecology_nearest_civ_unit(anchor: Vector2i, radius: int):
+	var best = null
+	var best_dist := radius + 1
+	for player in GameManager.players:
+		for other in player.units:
+			if not is_instance_valid(other):
+				continue
+			var d := HexMetrics.axial_distance(anchor, other.coord)
+			if d > radius:
+				continue
+			if d < best_dist or (d == best_dist and _coord_before(other.coord, best)):
+				best_dist = d
+				best = other.coord
+	return best
+
+## Cidade de QUALQUER civilização ativa mais próxima da âncora dentro do raio (desempate por coordenada).
+static func _ecology_city_target(anchor: Vector2i, radius: int) -> City:
+	var best: City = null
+	var best_dist := radius + 1
+	for player in GameManager.players:
+		for city in player.cities:
+			var d := HexMetrics.axial_distance(anchor, city.coord)
+			if d > radius:
+				continue
+			if d < best_dist or (d == best_dist and _coord_before(city.coord, best.coord)):
+				best_dist = d
+				best = city
+	return best
+
+## Melhoria de recurso (de qualquer civilização) não saqueada, livre ou já ocupada pelo próprio monstro, dentro
+## do raio da âncora — a mais próxima do MONSTRO (desempate por coordenada).
+static func _ecology_improvement_target(unit: Unit, anchor: Vector2i, radius: int, hex_grid: HexGrid, turn: int):
+	var best = null
+	var best_dist := 999999
+	for player in GameManager.players:
+		for city in player.cities:
+			for coord in city.resource_improvements:
+				if HexMetrics.axial_distance(anchor, coord) > radius or hex_grid.is_tile_pillaged(coord, turn):
+					continue
+				var occupant := hex_grid.get_unit_at(coord)
+				if occupant != null and occupant != unit:
+					continue
+				var d := HexMetrics.axial_distance(unit.coord, coord)
+				if d < best_dist or (d == best_dist and _coord_before(coord, best)):
+					best_dist = d
+					best = coord
+	return best

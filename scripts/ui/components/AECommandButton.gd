@@ -37,6 +37,18 @@ func configure_view(value: UnitAbilityViewData) -> void:
 	add_theme_stylebox_override("hover_pressed", lit)
 	add_theme_color_override("font_color", UIThemeTokens.COLOR_TEXT)
 	add_theme_color_override("font_pressed_color", UIThemeTokens.COLOR_TEXT)
+	# V3 / Etapa 2: ação primária semântica (Fundar Cidade válida) usa a variação PrimaryButton do tema — sem
+	# os overrides de superfície, para o acento do design system aparecer.
+	if value.is_primary and not disabled:
+		theme_type_variation = &"PrimaryButton"
+		for style in ["normal", "pressed", "hover_pressed"]:
+			remove_theme_stylebox_override(style)
+		remove_theme_color_override("font_color")
+		remove_theme_color_override("font_pressed_color")
+	else:
+		theme_type_variation = &"GhostButton"
+	if value.hotkey != "":
+		text = "%s  %s  [%s]" % [value.glyph, value.display_name, value.hotkey]
 
 func _make_custom_tooltip(for_text: String) -> Object:
 	return AETooltip.make_card(for_text)

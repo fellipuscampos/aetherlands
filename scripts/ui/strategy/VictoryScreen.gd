@@ -129,7 +129,7 @@ func _summary_card(data: Dictionary) -> Control:
 	var progress := ContextUI.label(String(data.progress_text), UIThemeTokens.FONT_BODY_SMALL, UIThemeTokens.COLOR_TEXT)
 	progress.name = "ProgressText"
 	box.add_child(progress)
-	var next := ContextUI.label(String(data.next), UIThemeTokens.FONT_CAPTION, UIThemeTokens.COLOR_TEXT_MUTED)
+	var next := ContextUI.label("Próximo passo: %s" % String(data.next), UIThemeTokens.FONT_CAPTION, UIThemeTokens.COLOR_TEXT_MUTED)
 	next.name = "NextRequirement"
 	box.add_child(next)
 	if threat:

@@ -79,7 +79,7 @@ static func predict(attacker: Unit, defender: Unit, hex_grid: HexGrid, strike_mu
 	# V2TerrainRuntime (Fase 20, modificação física de terreno sem dono): UM fator na Defesa física, pela MESMA regra do
 	# bônus do terreno-base (quem ignora o terreno — o Mago V1 — ignora também); 1.0 sem modificação no tile.
 	var terrain_modification = 1.0 if ignore_fortification else V2TerrainRuntime.defense_multiplier_at(hex_grid, defender.coord)
-	var def = defender.unit_data.defense * defense_multiplier * terrain_modification * defender.veterancy_multiplier() * UnitAbilities.command_multiplier(defender) * V2TechniqueRuntime.defense_multiplier(defender, hex_grid) * V2UnitAuras.defense_multiplier(defender) * V2MagicRuntime.defense_multiplier(defender) * V2LogisticsRuntime.combat_multiplier(defender)
+	var def = defender.unit_data.defense * defense_multiplier * terrain_modification * defender.veterancy_multiplier() * UnitAbilities.command_multiplier(defender) * V2TechniqueRuntime.defense_multiplier(defender, hex_grid) * V2UnitAuras.defense_multiplier(defender) * V2MagicRuntime.defense_multiplier(defender) * V2LogisticsRuntime.combat_multiplier(defender) * UnitStatusEffects.defense_multiplier(defender) # V3: Abalado/Petrificação
 	# Penetração de Defesa (Fase 10): só a contribuição da Defesa NESTE golpe é reduzida — o revide (abaixo) e qualquer outra resolução seguem com a
 	# Defesa `def` inteira, nunca com `effective_def`.
 	var effective_def = def * (1.0 - clampf(defense_penetration, 0.0, 1.0))
@@ -170,6 +170,7 @@ static func apply_direct_unit_damage(source: Unit, target: Unit, damage: float, 
 	if target.hp > 0.0:
 		return false
 	source.register_kill()
+	MonsterEcologySystem.note_civ_unit_killed(source, target.owner_player) # V3: telemetria (no-op se a fonte não é monstro)
 	var is_monster_lair := target.owner_player == null
 	var loot := target.unit_data.gold_reward if is_monster_lair else 0.0
 	hex_grid.remove_unit(target)
@@ -214,6 +215,7 @@ static func resolve(attacker: Unit, defender: Unit, hex_grid: HexGrid, strike_mu
 	# Fase 19: idem para retinue sem comando (não inicia ataque; o revide dela é resolvido do lado do defensor).
 	if not attacker.unit_data.can_basic_attack or not attacker.can_receive_orders():
 		return
+	EventBus.combat_engagement.emit(attacker.owner_player, defender.owner_player, "unit", defender.coord) # Fase 33B: observabilidade
 	if attacker.unit_data.visual_kind == "catapult":
 		resolve_with_splash(attacker, defender, hex_grid, 1, 0.3)
 	else:
@@ -262,6 +264,7 @@ static func _resolve_primary(attacker: Unit, defender: Unit, hex_grid: HexGrid, 
 
 	if result.attacker_dies:
 		defender.register_kill()
+		MonsterEcologySystem.note_civ_unit_killed(defender, attacker.owner_player) # V3: revide de monstro (telemetria)
 		hex_grid.remove_unit(attacker)
 		if defender_is_human:
 			EventBus.notify.emit("Seu %s destruiu o %s atacante!" % [defender_name, attacker_name], "combat")
@@ -335,6 +338,7 @@ static func resolve_with_splash(attacker: Unit, primary_defender: Unit, hex_grid
 static func resolve_city_attack(attacker: Unit, city: City, hex_grid: HexGrid, max_damage_fraction_of_current_hp: float = 1.0, strike_multiplier: float = 1.0) -> void:
 	if not attacker.unit_data.can_basic_attack or not attacker.can_receive_orders(): # Fase 17: sem ataque básico, sem ataque a cidade; Fase 19: sem comando, idem
 		return
+	EventBus.combat_engagement.emit(attacker.owner_player, city.owner_player, "city", city.coord) # Fase 33B: observabilidade
 	var attacker_name = attacker.unit_data.unit_name
 	var attacker_is_human = attacker.owner_player == GameManager.human_player
 	var defender_is_human = city.owner_player == GameManager.human_player
@@ -402,17 +406,32 @@ static func resolve_city_attack(attacker: Unit, city: City, hex_grid: HexGrid, m
 ## KIND_DATA) -- "a tenda de Goblin ainda cai facil, a caverna de Troll
 ## resiste mais", sem precisar de uma tabela de defesa separada pra
 ## estrutura.
+## Fase 33D2 — regra CANÔNICA de "esta unidade pode atacar a estrutura deste covil agora", compartilhada
+## pelo humano (SelectionManager: destaque de alvo) e pela IA (StrategicAI.respond_to_lair): unidade de
+## jogador que aceita ordem, com ataque básico, movimento restante e fora de embarque; estrutura de pé,
+## tile sem unidade (além do próprio atacante) nem cidade, dentro do alcance de ataque real (sem
+## teleporte) e covil genuinamente indefeso (nenhum monstro vivo na área, HexGrid._count_live_monsters_
+## near_lair — o mesmo critério do bloqueio de movimento).
+static func can_attack_lair(attacker: Unit, lair_coord: Vector2i, hex_grid: HexGrid) -> bool:
+	if attacker == null or hex_grid == null or not is_instance_valid(attacker) or attacker.owner_player == null:
+		return false
+	if not attacker.can_receive_orders() or not attacker.unit_data.can_basic_attack or attacker.unit_data.attack <= 0.0:
+		return false
+	if attacker.movement_left <= 0.0 or attacker.embarked or not hex_grid.lairs_by_coord.has(lair_coord):
+		return false
+	var occupant := hex_grid.get_unit_at(lair_coord)
+	if (occupant != null and occupant != attacker) or hex_grid.get_city_at(lair_coord) != null:
+		return false
+	if HexMetrics.axial_distance(attacker.coord, lair_coord) > attacker.unit_data.attack_range:
+		return false
+	return hex_grid._count_live_monsters_near_lair(lair_coord) == 0
+
 static func resolve_lair_attack(attacker: Unit, lair_coord: Vector2i, hex_grid: HexGrid) -> void:
-	if not attacker.can_receive_orders() or not hex_grid.lairs_by_coord.has(lair_coord):
+	# Defesa em profundidade: a mesma regra canônica que decide o destaque do humano e a ação da IA —
+	# nenhum caminho, direto ou indireto, ataca a estrutura fora dela (inclusive com guardião vivo).
+	if not can_attack_lair(attacker, lair_coord, hex_grid):
 		return
-	# Defesa em profundidade: SelectionManager._select_unit ja so' marca a
-	# estrutura como atacavel quando genuinamente indefesa, mas confere de
-	# novo aqui tambem -- nenhum caminho, direto ou indireto, deveria
-	# conseguir "pular a fila" e atacar a estrutura enquanto o guardiao/
-	# reforco ainda estiver vivo na area (ver HexGrid._count_live_monsters_
-	# near_lair, mesmo criterio usado pelo bloqueio de movimento).
-	if hex_grid._count_live_monsters_near_lair(lair_coord) > 0:
-		return
+	EventBus.combat_engagement.emit(attacker.owner_player, null, "lair", lair_coord) # Fase 33D1: observabilidade
 	var structure: LairStructure = hex_grid.lairs_by_coord[lair_coord]
 	var info: Dictionary = MonsterDatabase.KIND_DATA.get(structure.kind, {})
 	var defense: float = info.get("defense", 0.0)

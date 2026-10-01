@@ -323,7 +323,7 @@ func test_save_source_has_no_derived_racial_state_and_version_is_unchanged():
 	var source := FileAccess.get_file_as_string("res://scripts/autoload/SaveManager.gd")
 	for forbidden in ["gold_bonus", "production_bonus", "race_modifiers", "racial_effects"]:
 		assert_false(source.contains(forbidden), forbidden)
-	assert_eq(SaveManager.SAVE_VERSION, 21)
+	assert_eq(SaveManager.SAVE_VERSION, 26) # F33D1: 22 (era/eventos); F33D2: 23 (ameaças regionais/Guardiões); F33D3: 24 (grandes eventos/marcos); V3 Etapa 1: 25 (Combat Ecology); V3 Etapa 2: 26 (habilidades); settings e raça nunca mexem no schema
 
 
 func test_consumers_have_no_concrete_race_branches():

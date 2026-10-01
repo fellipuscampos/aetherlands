@@ -741,12 +741,14 @@ func test_finish_turn_collects_rival_participation_during_preparation():
 	var setup = _setup_minimal_hex_grid_with_one_rival()
 	var event := DragonEvent.new()
 	event.phase = WorldEvent.PHASE_PREPARATION
+	# Fase 33D3: a civ-alvo sempre defende; as outras DECIDEM (a decisão e o motivo ficam registrados).
+	event.target_civ_index = GameManager.players.find(setup.rival)
 	WorldEventManager.register_event(event)
 
 	GameManager._on_turn_changed(0, 0)
 
 	var rival_index: int = GameManager.players.find(setup.rival)
-	assert_eq(event.participants.get(rival_index), {"decision": true})
+	assert_eq(event.participants.get(rival_index), {"decision": true, "reason": "target"})
 	setup.hex_grid.queue_free()
 
 ## Blocker #1 do contrato comportamental do Dragao (docs/DRAGON_EVENT_
@@ -762,11 +764,17 @@ func test_finish_turn_spawns_a_dragon_event_once_the_trigger_condition_is_met():
 		turn += 1
 		assert_lt(turn, WorldEventTrigger.DRAGON_TRIGGER_MIN_TURN + 5000, "nenhum turno disparou o trigger num intervalo razoavel")
 	TurnManager.turn_number = turn
+	# Fase 33D3: o gatilho só vale na Ascensão (a partir de +10) e com alguma civ elegível como alvo.
+	WorldEventManager.world_phase = WorldPhaseRules.Phase.ASCENSION
+	WorldEventManager.phase_history = [{"phase": WorldPhaseRules.Phase.ASCENSION, "turn": turn - WorldEventManager.DRAGON_ELIGIBLE_AFTER, "cause": "PROGRESS"}]
+	DragonEvent.min_target_cities = 1
 
 	GameManager._on_turn_changed(0, 0)
+	DragonEvent.min_target_cities = DragonEvent.MIN_TARGET_CITIES
 
 	assert_eq(WorldEventManager.active_events.size(), 1, "_finish_turn() deveria ter consultado o trigger e criado o Dragao-evento")
 	assert_true(WorldEventManager.active_events[0] is DragonEvent)
+	WorldEventManager.reset_for_new_match()
 
 	setup.hex_grid.queue_free()
 

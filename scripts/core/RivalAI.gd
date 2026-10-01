@@ -710,7 +710,33 @@ static func decide_world_event_participation(player: PlayerData, civ_index: int,
 		return
 	if event.participants.has(civ_index):
 		return
+	# Fase 33D3: a civ-alvo do Dragão sempre entra em defesa; as outras DECIDEM (V2StrategicAI.dragon_participation).
+	if event is DragonEvent:
+		var view := V2AITacticalAI.view_for(player, GameManager.hex_grid)
+		var decision := V2StrategicAI.dragon_participation(player, civ_index, event as DragonEvent, view)
+		event.participants[civ_index] = {"decision": bool(decision.join), "reason": String(decision.reason)}
+		return
 	event.participants[civ_index] = {"decision": true}
+
+## Fase 33D3 — civ participante (não-alvo) com o Dragão ativo: até DRAGON_HUNT_MAX_UNITS unidades aptas mais
+## próximas dele (dentro de DRAGON_HUNT_RADIUS) vão caçá-lo por movimento normal; guarnição em guerra fica.
+const DRAGON_HUNT_MAX_UNITS := 3
+const DRAGON_HUNT_RADIUS := 16
+
+static func join_dragon_hunt(player: PlayerData, hex_grid: HexGrid, dragon_unit: Unit) -> void:
+	if dragon_unit == null or not is_instance_valid(dragon_unit):
+		return
+	var hunters: Array[Unit] = []
+	for unit in player.units:
+		if V2StrategicAI.is_lair_responder(unit) and HexMetrics.axial_distance(unit.coord, dragon_unit.coord) <= DRAGON_HUNT_RADIUS and not StrategicAI._is_needed_garrison(unit, player):
+			hunters.append(unit)
+	hunters.sort_custom(func(a: Unit, b: Unit) -> bool:
+		var da := HexMetrics.axial_distance(a.coord, dragon_unit.coord)
+		var db := HexMetrics.axial_distance(b.coord, dragon_unit.coord)
+		return da < db if da != db else a.serial_id < b.serial_id)
+	for unit in hunters.slice(0, DRAGON_HUNT_MAX_UNITS):
+		if is_instance_valid(unit) and is_instance_valid(dragon_unit) and dragon_unit.hp > 0.0:
+			react_to_dragon(unit, hex_grid, dragon_unit)
 
 ## Roadmap "Fase Macro" 5B.3-G, "interceptacao real" -- Unit -> CombatResolver
 ## -> Dragon Unit, reusando move_unit_toward/is_favorable_attack EXATAMENTE
@@ -819,6 +845,9 @@ static func begin_turn(player: PlayerData, hex_grid: HexGrid, opponent: PlayerDa
 static func act_for_unit(unit: Unit, hex_grid: HexGrid, player: PlayerData, opponent: PlayerData, visible: Dictionary) -> void:
 	if unit.movement_left <= 0.0 or unit.hp <= 0.0:
 		return
+	# V3 / Etapa 2: perigo de criatura CONHECIDO (infecção/raiz explorada, Rastro Subterrâneo visível) — sai antes de agir.
+	if MonsterHazardSystem.ai_evade(unit, hex_grid, visible):
+		return
 	# Técnicas, feitiços, Portais, Construtor e movimento especial (V2AITacticalAI) antes da ação comum.
 	if V2AITacticalAI.take_special_action(unit, player, hex_grid):
 		return
@@ -832,6 +861,12 @@ static func act_for_unit(unit: Unit, hex_grid: HexGrid, player: PlayerData, oppo
 		# Task 21 -- monstro ameacando uma cidade propria: guarnicao sai ao
 		# encontro / reforco proporcional (ver CityDefense.defend_turn).
 		if CityDefense.defend_turn(unit, player, hex_grid, visible):
+			return
+		# Fase 33D2 — covil conhecido perto do reino (ameaça regional/Guardião) com força local suficiente.
+		if StrategicAI.respond_to_lair(unit, player, hex_grid):
+			return
+		# Fase 33D3 — Relicário público: vai quem tem força livre e perto (V2StrategicAI.reliquary_plan).
+		if StrategicAI.respond_to_reliquary(unit, player, hex_grid):
 			return
 		opponent = StrategicAI.choose_opponent(player, hex_grid, opponent)
 		_handle_attacker(unit, hex_grid, player, opponent, visible)
@@ -853,7 +888,7 @@ static func take_turn(player: PlayerData, hex_grid: HexGrid, opponent: PlayerDat
 static func _scout_enemy_cities(player: PlayerData, opponent: PlayerData, visible: Dictionary) -> void:
 	for city in opponent.cities:
 		if visible.has(city.coord):
-			player.known_enemy_cities[city.coord] = true
+			player.remember_enemy_city(city)
 
 ## Roadmap "Parte C" C4 — uma campanha ATIVA (ver _campaign_attack_target)
 ## vira a prioridade tatica: tenta o alvo estrategico primeiro, so cai pro
@@ -993,7 +1028,7 @@ static func move_unit_toward(unit: Unit, hex_grid: HexGrid, target_coord: Vector
 		var first_step := true
 		for step in path:
 			# Fase 20: custo central do terreno (base + modificação V2) e a mesma regra do primeiro passo do HexGrid.
-			var cost := HexGrid.affordable_step_cost(1.0 if unit.unit_data.flies else hex_grid.terrain_step_cost(step), unit.movement_left, first_step)
+			var cost := HexGrid.affordable_step_cost(1.0 if unit.unit_data.flies else hex_grid.terrain_step_cost(step, null, unit.owner_player != null), unit.movement_left, first_step)
 			if cost < 0.0:
 				break
 			first_step = false
@@ -1055,4 +1090,8 @@ static func _handle_settler(unit: Unit, hex_grid: HexGrid, player: PlayerData) -
 	if site.coord != unit.coord:
 		move_unit_toward(unit, hex_grid, site.coord)
 	if unit.coord == site.coord:
-		WorldSetup.found_city_from_settler(hex_grid, unit)
+		# Fase 33D2 (Bug #6): o local veio só do que a IA conhece; a regra real decide. Recusa = o tile sai
+		# da busca deste Colonizador (sem revelar o motivo) e ele replaneja no próximo turno.
+		if WorldSetup.found_city_from_settler(hex_grid, unit) == null:
+			unit.settle_rejected_sites[site.coord] = true
+			unit.settle_target = Unit.NO_SETTLE_TARGET

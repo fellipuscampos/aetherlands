@@ -71,7 +71,7 @@ static func apply_area(caster: Unit, zone_id: String, primary: Vector2i, radius:
 	return result
 
 static func _visible_to_owner(caster: Unit, coord: Vector2i, grid: HexGrid) -> bool:
-	if caster.owner_player != GameManager.human_player or grid.visibility.is_empty():
+	if not GameManager.is_human_controlled(caster.owner_player) or grid.visibility.is_empty():
 		return true
 	return grid.visibility.get(coord, HexGrid.Visibility.UNSEEN) == HexGrid.Visibility.VISIBLE
 
