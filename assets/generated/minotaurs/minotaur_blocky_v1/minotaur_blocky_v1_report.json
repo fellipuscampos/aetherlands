@@ -1,0 +1,169 @@
+{
+  "name": "Minotaur_Blocky_V1",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/minotaur_blocky_*.py)",
+  "height_m": 2.7903330326080322,
+  "head_top_m": 2.4200000762939453,
+  "triangles": 744,
+  "editable_parts": 55,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "filter": "NEAREST",
+    "unique_uv_islands": 368,
+    "density_px_per_meter": 64,
+    "measured_min": 63.99942878629893,
+    "measured_max": 64.00063705111627,
+    "padding": 2
+  },
+  "rig": true,
+  "animations": {
+    "Minotaur_Idle": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Heavy breathing, shoulders rise, slow head snort, tail and labrys sway; hooves planted.",
+      "duration_seconds": 2.0
+    },
+    "Minotaur_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 61,
+      "description": "28-frame heavy hunched stomp in place; 60% stance, opposite arm swing, axe arm damped.",
+      "suggested_translation_mps": 0.4857142857142857,
+      "duration_seconds": 1.1666666666666667
+    },
+    "Minotaur_Attack": {
+      "start": 1,
+      "end": 37,
+      "loop": false,
+      "nla_start": 101,
+      "description": "Overhead labrys chop with roar: wind-up 1-13, impact 19, follow-through 23, recovery 37.",
+      "impact_frame": 19,
+      "duration_seconds": 1.5
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "notes": "Static editable model; no animations requested. Same metric texel density as approved Troll and Goblin V3.",
+  "user_edits": "Final model edited by the user in Blender: Hump, Elbow_l/r, Knee_l/r and AnkleBand_l/r removed; Abdomen/Pelvis/Belt widened (scale applied, UV/paint rebuilt at 64 px/m).",
+  "bone_count": 24,
+  "bones": [
+    "root",
+    "pelvis",
+    "spine",
+    "chest",
+    "head",
+    "jaw",
+    "shoulder_l",
+    "upper_arm_l",
+    "forearm_l",
+    "hand_l",
+    "shoulder_r",
+    "upper_arm_r",
+    "forearm_r",
+    "hand_r",
+    "weapon",
+    "loin_front",
+    "loin_back",
+    "tail",
+    "thigh_l",
+    "shin_l",
+    "foot_l",
+    "thigh_r",
+    "shin_r",
+    "foot_r"
+  ],
+  "skinning": "Rigid block skinning (one bone per part); hooves planted with a baked analytic two-bone solve; FK only at runtime",
+  "animation_validation": {
+    "clips": {
+      "Minotaur_Idle": {
+        "frames": 49,
+        "loop": true,
+        "endpoints_max_vertex_delta_m": 0.0,
+        "minimum_vertex_z_m": -2.4051183800111176e-07,
+        "foot_target_error_m": 1.9967695002641374e-07,
+        "weapon_vs_hand_matrix_error": 2.4028122425079346e-07
+      },
+      "Minotaur_Walk": {
+        "frames": 29,
+        "loop": true,
+        "endpoints_max_vertex_delta_m": 0.0,
+        "minimum_vertex_z_m": -4.2549592649265833e-07,
+        "foot_target_error_m": 4.65765583756202e-07,
+        "weapon_vs_hand_matrix_error": 2.4493783712387085e-07
+      },
+      "Minotaur_Attack": {
+        "frames": 37,
+        "loop": false,
+        "endpoints_max_vertex_delta_m": 0.0,
+        "minimum_vertex_z_m": -4.1171284692609333e-07,
+        "foot_target_error_m": 3.2816403427042423e-07,
+        "weapon_vs_hand_matrix_error": 4.76837158203125e-07
+      }
+    },
+    "all_vertices_normalized_weights": true,
+    "root_drift_m": 0,
+    "rest_pose_contacts_excluded": [],
+    "new_surface_crossings": 0,
+    "problems": []
+  },
+  "glb": {
+    "file": "minotaur_blocky_v1.glb",
+    "meshes": [
+      "Body",
+      "Labrys"
+    ],
+    "check": {
+      "armatures": 1,
+      "bones": 24,
+      "skinned_meshes": [
+        "Minotaur_Blocky_V1_Body",
+        "Minotaur_Blocky_V1_Labrys"
+      ],
+      "mesh_has_armature_modifier": true,
+      "actions": [
+        "Minotaur_Attack",
+        "Minotaur_Idle",
+        "Minotaur_Walk"
+      ],
+      "action_frame_ranges": {
+        "Minotaur_Attack": [
+          0.0,
+          36.0
+        ],
+        "Minotaur_Idle": [
+          0.0,
+          48.0
+        ],
+        "Minotaur_Walk": [
+          0.0,
+          28.0
+        ]
+      },
+      "rest_height_m": 2.7903330052946878,
+      "rest_min_z": 2.7313344475032864e-08
+    },
+    "exported_from": "C:\\Users\\felipe campos\\Documents\\jogo\\assets\\generated\\minotaurs\\minotaur_blocky_v1\\minotaur_blocky_v1.blend"
+  },
+  "status": "Complete: rigged editable Minotaur with Idle, Walk and Attack; MP4/GIF reviews.",
+  "source_validation": {
+    "scenes": [
+      "Minotaur_Blocky_V1"
+    ],
+    "actions": [
+      "Minotaur_Walk",
+      "Minotaur_Idle",
+      "Minotaur_Attack"
+    ],
+    "armatures": [
+      "Minotaur_Blocky_V1_Skeleton"
+    ],
+    "packed_texture": true
+  }
+}

@@ -105,6 +105,58 @@ static func is_valid_new_anchor(grid: HexGrid, coord: Vector2i, tier: String, gr
 		return false
 	return group_tiles(grid, coord, group, tier, anchors).size() >= group
 
+# ---------------------------------------------------------------------------
+# V3 / Etapa 4 — habitat (MonsterHabitatProfile)
+# ---------------------------------------------------------------------------
+
+## Cache de sinais estáticos de habitat de um mapa (setup/reposição): Nódulos Arcanos + sinais por coordenada.
+static func new_habitat_cache(grid: HexGrid) -> Dictionary:
+	return {"mana": MonsterHabitatProfile.mana_coords(grid), "features": {}}
+
+## Sinais estáticos de `coord` (calculados uma vez por mapa e guardados no cache).
+static func habitat_features(grid: HexGrid, coord: Vector2i, cache: Dictionary) -> Dictionary:
+	var features: Dictionary = cache.features
+	if not features.has(coord):
+		features[coord] = MonsterHabitatProfile.features(grid, coord, cache.mana)
+	return features[coord]
+
+static func habitat_score(grid: HexGrid, kind: String, coord: Vector2i, anchors: Array[Vector2i], cache: Dictionary) -> float:
+	if not MonsterEcologySystem.habitat_enabled:
+		return MonsterHabitatProfile.GOOD_SCORE # A/B de laboratório: peso igual para todos (sorteio uniforme)
+	return MonsterHabitatProfile.score(kind, habitat_features(grid, coord, cache), MonsterHabitatProfile.remote_value(coord, anchors))
+
+## Âncora de SETUP com habitat: percorre os candidatos embaralhados do tier (podando de vez os inválidos — dentro de um
+## tier a validade só piora, porque sítios e unidades só são acrescentados), junta uma janela de WINDOW âncoras válidas
+## e sorteia uma com peso pelo score da espécie. Sem nenhuma boa (>= GOOD_SCORE), a janela dobra até WINDOW_MAX
+## (fallback progressivo). Todas as regras de colocação (legalidade, zona das capitais, espaçamento, folga de covil,
+## grupo) continuam as de is_valid_new_anchor. {} = não há âncora válida.
+static func habitat_anchor(grid: HexGrid, kind: String, tier: String, group: int, anchors: Array[Vector2i], sites: Array, candidates: Array[Vector2i], cache: Dictionary, rng: RandomNumberGenerator) -> Dictionary:
+	var window: Array[Vector2i] = []
+	var scores: Array = []
+	var limit := MonsterHabitatProfile.WINDOW
+	var index := 0
+	var best := 0.0
+	while true:
+		while index < candidates.size() and window.size() < limit:
+			var coord: Vector2i = candidates[index]
+			if not is_valid_new_anchor(grid, coord, tier, group, anchors, sites):
+				candidates.remove_at(index)
+				continue
+			var value := habitat_score(grid, kind, coord, anchors, cache)
+			window.append(coord)
+			scores.append(value)
+			best = maxf(best, value)
+			index += 1
+		if best >= MonsterHabitatProfile.GOOD_SCORE or limit >= MonsterHabitatProfile.WINDOW_MAX or index >= candidates.size():
+			break
+		limit = mini(limit * 2, MonsterHabitatProfile.WINDOW_MAX)
+	if window.is_empty():
+		return {}
+	var chosen := MonsterHabitatProfile.roulette(scores, rng)
+	var anchor: Vector2i = window[chosen]
+	candidates.erase(anchor)
+	return {"anchor": anchor, "score": float(scores[chosen]), "fallback": float(scores[chosen]) < MonsterHabitatProfile.FALLBACK_SCORE, "window": window.size()}
+
 ## Tiles bloqueados para REPOSIÇÃO: visíveis agora para qualquer civilização ativa ou a menos de
 ## REFILL_MIN_CIV_DISTANCE de qualquer unidade/cidade de civilização. Calculado uma vez por tentativa.
 static func refill_blocked_tiles(grid: HexGrid, players: Array) -> Dictionary:
@@ -128,9 +180,24 @@ static func refill_blocked_tiles(grid: HexGrid, players: Array) -> Dictionary:
 ## Uma âncora de REPOSIÇÃO por amostragem aleatória da terra elegível (sem varrer o mapa): fora de toda
 ## visão de civilização, nunca adjacente a unidade/cidade, fora da memória de esvaziamento recente e com
 ## as mesmas regras de colocação do setup. NO_LAIR se nenhuma amostra servir (tenta de novo na próxima rodada).
-static func find_refill_anchor(grid: HexGrid, eligible: Array[Vector2i], tier: String, group: int, anchors: Array[Vector2i], sites: Array, depleted: Array, blocked: Dictionary, turn: int, rng: RandomNumberGenerator) -> Vector2i:
+## Etapa 4: com `kind` + `cache`, junta até REFILL_HABITAT_SAMPLES âncoras válidas e sorteia pelo habitat da espécie.
+static func find_refill_anchor(grid: HexGrid, eligible: Array[Vector2i], tier: String, group: int, anchors: Array[Vector2i], sites: Array, depleted: Array, blocked: Dictionary, turn: int, rng: RandomNumberGenerator, kind: String = "", cache: Dictionary = {}) -> Vector2i:
 	if eligible.is_empty():
 		return HexGrid.NO_LAIR
+	if kind != "" and not cache.is_empty():
+		var found: Array[Vector2i] = []
+		var scores: Array = []
+		for attempt in MonsterEcologyData.REFILL_SAMPLE_ATTEMPTS:
+			if found.size() >= REFILL_HABITAT_SAMPLES:
+				break
+			var coord: Vector2i = eligible[rng.randi_range(0, eligible.size() - 1)]
+			if coord in found or not _refill_ok(grid, coord, tier, group, anchors, sites, depleted, blocked, turn):
+				continue
+			found.append(coord)
+			scores.append(habitat_score(grid, kind, coord, anchors, cache))
+		if found.is_empty():
+			return HexGrid.NO_LAIR
+		return found[MonsterHabitatProfile.roulette(scores, rng)]
 	for attempt in MonsterEcologyData.REFILL_SAMPLE_ATTEMPTS:
 		var coord: Vector2i = eligible[rng.randi_range(0, eligible.size() - 1)]
 		if blocked.has(coord) or not depletion_ok(coord, depleted, turn):
@@ -146,6 +213,19 @@ static func find_refill_anchor(grid: HexGrid, eligible: Array[Vector2i], tier: S
 		if clear:
 			return coord
 	return HexGrid.NO_LAIR
+
+## Âncoras válidas juntadas por tentativa de reposição antes do sorteio por habitat (Etapa 4).
+const REFILL_HABITAT_SAMPLES := 12
+
+static func _refill_ok(grid: HexGrid, coord: Vector2i, tier: String, group: int, anchors: Array[Vector2i], sites: Array, depleted: Array, blocked: Dictionary, turn: int) -> bool:
+	if blocked.has(coord) or not depletion_ok(coord, depleted, turn):
+		return false
+	if not is_valid_new_anchor(grid, coord, tier, group, anchors, sites):
+		return false
+	for member in group_tiles(grid, coord, group, tier, anchors):
+		if blocked.has(member):
+			return false
+	return true
 
 ## Cotas por espécie dentro do tier (aproximadamente uniforme): o resto da divisão vai para espécies a
 ## partir de uma rotação sorteada, para nenhuma espécie ser sempre a favorecida.

@@ -1,0 +1,26 @@
+{
+  "ShockCavalier_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "ShockCavalier_Idle.mp4",
+    "gif": "ShockCavalier_Idle.gif"
+  },
+  "ShockCavalier_Walk": {
+    "frames": 18,
+    "fps": 24,
+    "mp4": "ShockCavalier_Walk.mp4",
+    "gif": "ShockCavalier_Walk.gif"
+  },
+  "ShockCavalier_Attack": {
+    "frames": 33,
+    "fps": 24,
+    "mp4": "ShockCavalier_Attack.mp4",
+    "gif": "ShockCavalier_Attack.gif"
+  },
+  "ShockCavalier_Charge": {
+    "frames": 37,
+    "fps": 24,
+    "mp4": "ShockCavalier_Charge.mp4",
+    "gif": "ShockCavalier_Charge.gif"
+  }
+}

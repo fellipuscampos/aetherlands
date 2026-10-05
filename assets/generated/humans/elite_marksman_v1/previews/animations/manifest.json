@@ -1,0 +1,32 @@
+{
+  "EliteMarksman_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "EliteMarksman_Idle.mp4",
+    "gif": "EliteMarksman_Idle.gif"
+  },
+  "EliteMarksman_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "EliteMarksman_Walk.mp4",
+    "gif": "EliteMarksman_Walk.gif"
+  },
+  "EliteMarksman_Attack": {
+    "frames": 49,
+    "fps": 24,
+    "mp4": "EliteMarksman_Attack.mp4",
+    "gif": "EliteMarksman_Attack.gif"
+  },
+  "EliteMarksman_PreciseShot": {
+    "frames": 57,
+    "fps": 24,
+    "mp4": "EliteMarksman_PreciseShot.mp4",
+    "gif": "EliteMarksman_PreciseShot.gif"
+  },
+  "EliteMarksman_Volley": {
+    "frames": 70,
+    "fps": 24,
+    "mp4": "EliteMarksman_Volley.mp4",
+    "gif": "EliteMarksman_Volley.gif"
+  }
+}

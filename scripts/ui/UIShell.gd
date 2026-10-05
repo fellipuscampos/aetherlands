@@ -249,16 +249,7 @@ func apply_viewport_size(viewport_size: Vector2) -> void:
 	var drawer_width := 420.0 if viewport_size.x >= UIThemeTokens.BREAKPOINT_LARGE else clampf(viewport_size.x * 0.32, 340.0, 400.0)
 	for drawer in [city_summary, event_center]:
 		_layout_drawer(drawer, drawer_width)
-	if viewport_size.x <= UIThemeTokens.BREAKPOINT_MEDIUM:
-		minimap_host.offset_left = UIThemeTokens.HUD_EDGE_MARGIN
-		minimap_host.offset_right = 212.0
-		minimap_host.offset_top = -142.0
-		minimap_host.offset_bottom = -UIThemeTokens.HUD_EDGE_MARGIN
-	else:
-		minimap_host.offset_left = UIThemeTokens.HUD_EDGE_MARGIN
-		minimap_host.offset_right = 240.0
-		minimap_host.offset_top = -160.0
-		minimap_host.offset_bottom = -UIThemeTokens.HUD_EDGE_MARGIN
+	_layout_minimap(viewport_size)
 	turn_controller_host.offset_right = -UIThemeTokens.HUD_EDGE_MARGIN
 	turn_controller_host.offset_bottom = -UIThemeTokens.HUD_EDGE_MARGIN
 	turn_controller_host.offset_top = -UIThemeTokens.HUD_EDGE_MARGIN - 56.0
@@ -271,6 +262,33 @@ func apply_viewport_size(viewport_size: Vector2) -> void:
 			(screen as StrategyScreen).top_reserved = top_reserved()
 			(screen as StrategyScreen).call_deferred("_layout")
 	_place_toasts(navigation_manager.is_overlay_open())
+
+## V3 / Etapa 4 — tamanho do minimapa. Compacto: o maior que cabe à esquerda da faixa de atenção (centro − 400 px)
+## sem tocar nela; ampliado (botão no próprio minimapa): ~2,2× para ler os hexágonos, limitado à área entre a barra
+## global e o painel de contexto. O minimapa só recalcula o enquadramento quando este tamanho muda de verdade.
+var minimap_expanded := false
+
+static func minimap_size_for(viewport_size: Vector2, expanded: bool, context_width_px: float) -> Vector2:
+	# Proporção ~2:1 do mundo padrão (144×76, terra + calotas) — sem faixas vazias grandes no letterbox.
+	var compact := Vector2(216.0, 116.0) if viewport_size.x <= UIThemeTokens.BREAKPOINT_MEDIUM else Vector2(368.0, 186.0)
+	if not expanded:
+		return compact
+	var max_size := Vector2(viewport_size.x - context_width_px - UIThemeTokens.HUD_EDGE_MARGIN * 3.0, viewport_size.y - float(UIThemeTokens.GLOBAL_BAR_HEIGHT) - 96.0)
+	return Vector2(minf(compact.x * 2.2, max_size.x), minf(compact.y * 2.2, max_size.y)).max(compact)
+
+func _layout_minimap(viewport_size: Vector2) -> void:
+	var minimap_size := minimap_size_for(viewport_size, minimap_expanded, context_width)
+	minimap_host.offset_left = UIThemeTokens.HUD_EDGE_MARGIN
+	minimap_host.offset_right = UIThemeTokens.HUD_EDGE_MARGIN + minimap_size.x
+	minimap_host.offset_top = -UIThemeTokens.HUD_EDGE_MARGIN - minimap_size.y
+	minimap_host.offset_bottom = -UIThemeTokens.HUD_EDGE_MARGIN
+
+func set_minimap_expanded(value: bool) -> void:
+	minimap_expanded = value
+	_layout_minimap(_viewport_size)
+
+func toggle_minimap_expanded() -> void:
+	set_minimap_expanded(not minimap_expanded)
 
 ## Toast é confirmação curta: com tela estratégica aberta ele desce para a base
 ## da tela, para nunca cobrir abas e títulos da tela.

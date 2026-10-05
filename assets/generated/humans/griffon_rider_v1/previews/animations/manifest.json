@@ -1,0 +1,26 @@
+{
+  "GriffonRider_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "GriffonRider_Idle.mp4",
+    "gif": "GriffonRider_Idle.gif"
+  },
+  "GriffonRider_Walk": {
+    "frames": 18,
+    "fps": 24,
+    "mp4": "GriffonRider_Walk.mp4",
+    "gif": "GriffonRider_Walk.gif"
+  },
+  "GriffonRider_Attack": {
+    "frames": 33,
+    "fps": 24,
+    "mp4": "GriffonRider_Attack.mp4",
+    "gif": "GriffonRider_Attack.gif"
+  },
+  "GriffonRider_Charge": {
+    "frames": 37,
+    "fps": 24,
+    "mp4": "GriffonRider_Charge.mp4",
+    "gif": "GriffonRider_Charge.gif"
+  }
+}

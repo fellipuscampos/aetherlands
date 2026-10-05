@@ -83,12 +83,16 @@ func test_it_is_registered_as_a_trainable_kind_once():
 	assert_eq(UnitDatabase.PLAYER_TRAINABLE_KINDS.count(GUARDIAN), 1)
 	assert_eq(UnitDatabase.PLAYER_TRAINABLE_KINDS.count("v2_unit_sentinel"), 1, "Sentinela (N7) também é treinável")
 
-func test_it_belongs_to_the_guardian_line_and_the_provisional_model_exists():
+## 2026-10-04: modelos próprios da linha (assets/generated/humans) — a evolução se distingue pelo MODELO (malha e
+## sobreveste sobre o Escudeiro), não mais pela escala do KayKit provisório; todos 1:1.
+func test_it_belongs_to_the_guardian_line_and_has_its_own_model():
 	assert_eq(V2UnitLine.branch_of(GUARDIAN), "guardian")
 	var data := UnitDatabase.create_unit(GUARDIAN)
 	assert_true(ResourceLoader.exists(data.model_scene_path), data.model_scene_path)
 	assert_true(ResourceLoader.exists(data.animation_scene_path), data.animation_scene_path)
-	assert_gt(data.model_scale_multiplier, UnitDatabase.create_unit(SHIELD).model_scale_multiplier, "provisório: maior que o Escudeiro pra distinguir")
+	assert_ne(data.model_scene_path, UnitDatabase.create_unit(SHIELD).model_scene_path, "modelo próprio, distinto do Escudeiro")
+	assert_eq(data.model_scale_multiplier, 1.0, "a altura já está no modelo")
+	assert_eq(data.shield_wall_hold_animation_override, "Guardian_ShieldWallHold", "herda a postura da Muralha de Escudos")
 
 func test_race_theme_and_the_v1_units_are_untouched():
 	for race in ["human", "elf", "dwarf", "orc"]:

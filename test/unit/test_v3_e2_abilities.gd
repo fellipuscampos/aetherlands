@@ -109,7 +109,7 @@ func test_every_species_declares_player_facing_abilities_with_full_metadata():
 		for id in MonsterAbilityData.for_species(kind):
 			assert_false(all_ids.has(id), "habilidade %s é de uma espécie só" % id)
 			all_ids[id] = kind
-	assert_eq(all_ids.size(), 13)
+	assert_eq(all_ids.size(), 13, "a Contaminação Micótica saiu com a Colmeia; o Bloqueio com Escudo entrou com o Herói")
 
 # --- Goblin --------------------------------------------------------------------------------------
 
@@ -124,8 +124,9 @@ func test_goblin_raids_steals_gold_retreats_and_rests():
 			struck = turn
 			break
 	assert_gt(struck, 0, "Goblin chega e golpeia a cidade")
-	assert_eq(human.gold, 0.0, "rouba até 8, nunca deixa Ouro negativo")
-	assert_eq(float(_ability_events(MonsterAbilityData.QUICK_PLUNDER)[0][1].gold_stolen), 5.0)
+	assert_eq(human.gold, 3.0, "Etapa 4: rouba até 2 por golpe")
+	assert_eq(float(_ability_events(MonsterAbilityData.QUICK_PLUNDER)[0][1].gold_stolen), 2.0)
+	assert_gt(HexMetrics.axial_distance(goblin.coord, city.coord), 1, "Etapa 4: recua no mesmo turno do golpe")
 	assert_eq(city.owner_player, human, "não captura")
 	assert_eq(goblin.ecology_rest_until, struck + 8, "descanso de 8 rodadas")
 	_events.clear()
@@ -147,7 +148,7 @@ func test_goblin_plunder_and_pillage_never_pay_twice():
 	human.gold = 100.0
 	var goblin := _monster("goblin", Vector2i(1, 0))
 	MonsterAbilitySystem.on_city_hit(goblin, city)
-	assert_eq(human.gold, 92.0, "um golpe = um Saque Rápido")
+	assert_eq(human.gold, 98.0, "um golpe = um Saque Rápido (até 2 Ouro)")
 	assert_eq(_ability_events(MonsterAbilityData.QUICK_PLUNDER).size(), 1)
 
 # --- Esqueleto -----------------------------------------------------------------------------------
@@ -378,49 +379,67 @@ func test_basilisk_gaze_partially_petrifies_without_stacking():
 
 # --- Verme Colossal ------------------------------------------------------------------------------
 
-func test_worm_burrows_telegraphs_and_emerges_where_it_said_without_retargeting():
+func _wounded_worm(coord: Vector2i) -> Unit:
+	var worm := _monster("colossal_worm", coord)
+	worm.set_hp_silent(worm.unit_data.max_hp * 0.3)
+	return worm
+
+## Etapa 3: Escavar virou FUGA defensiva — só ferido (≤ 35%) e com inimigo perto; destino 2–3 tiles longe do inimigo.
+func test_worm_burrows_only_when_wounded_and_escapes_away_from_the_enemy():
 	var worm := _monster("colossal_worm", Vector2i(0, 0))
-	var target := _soldier(Vector2i(4, 0))
+	_soldier(Vector2i(1, 0))
 	TurnManager.turn_number = 30
-	assert_true(MonsterAbilitySystem.try_active(worm, grid, Vector2i(0, 0), 9))
+	assert_false(MonsterAbilitySystem.try_active(worm, grid, Vector2i(0, 0), 9), "Vida cheia: luta, não foge")
+	assert_false(MonsterAbilitySystem.is_burrowed(worm))
+	worm.set_hp_silent(worm.unit_data.max_hp * 0.3)
+	assert_true(MonsterAbilitySystem.try_active(worm, grid, Vector2i(0, 0), 9), "ferido e ameaçado: mergulha")
 	assert_true(MonsterAbilitySystem.is_burrowed(worm))
 	assert_null(grid.get_unit_at(Vector2i(0, 0)), "não bloqueia o tile de superfície")
 	assert_false(worm in grid.neutral_units(), "não é alvo")
-	assert_eq(MonsterAbilitySystem.telegraph_coords(), [Vector2i(4, 0)] as Array[Vector2i], "Rastro Subterrâneo no destino")
+	var dest: Vector2i = MonsterAbilitySystem.telegraph_coords()[0]
+	var hop := HexMetrics.axial_distance(Vector2i(0, 0), dest)
+	assert_between(hop, 2, 3, "destino a 2–3 tiles")
+	assert_gt(HexMetrics.axial_distance(Vector2i(1, 0), dest), 1, "para longe do inimigo")
+	assert_eq(MonsterAbilitySystem.telegraph_origin(dest), Vector2i(0, 0), "trilha origem → destino")
 	assert_eq(MonsterEcologySystem.site_population(grid, worm.ecology_site_id), 1, "continua vivo para o sítio")
+
+func test_worm_alone_never_burrows_even_when_wounded():
+	var worm := _wounded_worm(Vector2i(0, 0))
+	TurnManager.turn_number = 30
+	assert_false(MonsterAbilitySystem.try_active(worm, grid, Vector2i(0, 0), 9), "sem inimigo a até 3 tiles não foge")
+
+func test_worm_emerges_at_the_recorded_destination_without_any_damage():
+	var worm := _wounded_worm(Vector2i(0, 0))
+	var near := _soldier(Vector2i(1, 0))
+	TurnManager.turn_number = 30
+	assert_true(MonsterAbilitySystem.try_active(worm, grid, Vector2i(0, 0), 9))
+	var dest: Vector2i = MonsterAbilitySystem.telegraph_coords()[0]
+	var bystander: Unit = null
+	for coord in MonsterEcologyPlanner.sorted_coords(grid.get_neighbors(dest)):
+		if grid.get_unit_at(coord) == null and coord != Vector2i(0, 0):
+			bystander = _soldier(coord)
+			break
 	MonsterAbilitySystem.process_round(grid, 30)
 	assert_true(MonsterAbilitySystem.is_burrowed(worm), "fica 1 turno inteiro sob a terra")
-	grid.teleport_unit(target, Vector2i(8, 0)) # o jogador sai da área
 	TurnManager.turn_number = 31
 	MonsterAbilitySystem.process_round(grid, 31)
 	assert_false(MonsterAbilitySystem.is_burrowed(worm))
-	assert_eq(worm.coord, Vector2i(4, 0), "emerge no destino gravado — sem perseguir o alvo")
-	assert_eq(target.hp, target.unit_data.max_hp, "quem saiu escapou")
+	assert_eq(worm.coord, dest, "emerge no destino anunciado")
+	assert_eq(near.hp, near.unit_data.max_hp, "sem dano em quem ficou na origem")
+	assert_eq(bystander.hp, bystander.unit_data.max_hp, "emergir não causa dano em área")
 	assert_true(MonsterAbilitySystem.skips_turn(worm, 31), "emergir é a ação do turno")
 	assert_eq(MonsterAbilitySystem.cooldown_remaining(worm, MonsterAbilityData.BURROW), 4)
-
-func test_worm_emergence_hits_the_impact_tile_and_neighbours():
-	var worm := _monster("colossal_worm", Vector2i(0, 0))
-	var target := _soldier(Vector2i(4, 0))
-	var neighbour := _soldier(Vector2i(4, 1))
-	for unit in [target, neighbour]:
-		unit.unit_data.max_hp = 200.0
-		unit.hp = 200.0
-	TurnManager.turn_number = 30
-	MonsterAbilitySystem.try_active(worm, grid, Vector2i(0, 0), 9)
-	TurnManager.turn_number = 31
-	MonsterAbilitySystem.process_round(grid, 31)
-	assert_ne(worm.coord, Vector2i(4, 0), "destino ocupado: emerge colado")
-	assert_lt(target.hp, 200.0, "impacto")
 	var emerge := _ability_events(MonsterAbilityData.BURROW).filter(func(e): return String(e[1].get("stage", "")) == "emerge")
 	assert_eq(emerge.size(), 1)
-	assert_gte(int(emerge[0][1].hits), 1)
+	assert_eq(int(emerge[0][1].hits), 0, "nenhum alvo atingido")
+	assert_almost_eq(float(emerge[0][1].damage), 0.0, 0.001)
 
 func test_worm_mid_burrow_survives_save_and_load_without_emerging_or_duplicating():
-	var worm := _monster("colossal_worm", Vector2i(0, 0))
-	_soldier(Vector2i(4, 0))
+	var worm := _wounded_worm(Vector2i(0, 0))
+	_soldier(Vector2i(1, 0))
 	TurnManager.turn_number = 30
 	MonsterAbilitySystem.try_active(worm, grid, Vector2i(0, 0), 9)
+	var dest: Vector2i = MonsterAbilitySystem.telegraph_coords()[0]
 	var saved := MonsterAbilitySystem.to_save_array()
 	assert_eq(saved.size(), 1)
 	var serialized: Variant = JSON.parse_string(JSON.stringify(saved))
@@ -429,7 +448,8 @@ func test_worm_mid_burrow_survives_save_and_load_without_emerging_or_duplicating
 	assert_eq(MonsterAbilitySystem.burrowed.size(), 1, "sem duplicar")
 	var loaded: Unit = MonsterAbilitySystem.burrowed[0]
 	assert_true(MonsterAbilitySystem.is_burrowed(loaded), "o load nunca faz emergir")
-	assert_eq(MonsterAbilitySystem.telegraph_coords(), [Vector2i(4, 0)] as Array[Vector2i], "telegraph restaurado")
+	assert_eq(MonsterAbilitySystem.telegraph_coords(), [dest] as Array[Vector2i], "telegraph restaurado")
+	assert_eq(MonsterAbilitySystem.telegraph_origin(dest), Vector2i(0, 0), "origem restaurada")
 	assert_null(grid.get_unit_at(Vector2i(0, 0)))
 	assert_eq(int(loaded.magic_cooldowns.get(MonsterAbilityData.BURROW, 0)), int(worm.magic_cooldowns.get(MonsterAbilityData.BURROW, 0)))
 
@@ -458,7 +478,7 @@ func test_ancient_roots_up_to_four_tiles_for_three_rounds_and_roots_occupants():
 
 func test_root_and_infection_state_round_trips():
 	MonsterHazardSystem.add_roots(grid, [Vector2i(1, 1), Vector2i(2, 2)] as Array[Vector2i], 3)
-	var hive := _monster("mycotic_hive", Vector2i(-5, 0))
+	var hive := _monster("corrupted_hero", Vector2i(-5, 0))
 	MonsterHazardSystem.process_round(grid, 21, {hive.ecology_site_id: Vector2i(-5, 0)})
 	var saved: Variant = JSON.parse_string(JSON.stringify(MonsterHazardSystem.to_save_dict()))
 	var roots_before := MonsterHazardSystem.roots.duplicate()
@@ -510,7 +530,7 @@ func test_aether_rupture_silences_casters_only():
 # --- Colmeia Micótica ----------------------------------------------------------------------------
 
 func test_hive_infection_grows_one_tile_per_round_to_radius_two_and_twelve_tiles():
-	var hive := _monster("mycotic_hive", Vector2i(0, 0))
+	var hive := _monster("corrupted_hero", Vector2i(0, 0))
 	var sites := {hive.ecology_site_id: Vector2i(0, 0)}
 	MonsterHazardSystem.process_round(grid, 21, sites)
 	assert_eq(MonsterHazardSystem.infected_count(), 7, "âncora + raio 1")
@@ -523,7 +543,7 @@ func test_hive_infection_grows_one_tile_per_round_to_radius_two_and_twelve_tiles
 		assert_lte(HexMetrics.axial_distance(Vector2i(0, 0), coord), 2, "raio máximo 2")
 
 func test_infection_damages_once_per_turn_halves_healing_and_skips_cities():
-	var hive := _monster("mycotic_hive", Vector2i(0, 0))
+	var hive := _monster("corrupted_hero", Vector2i(0, 0))
 	var city := grid.found_city(Vector2i(0, 1), human, "Vizinha", true)
 	MonsterHazardSystem.process_round(grid, 21, {hive.ecology_site_id: Vector2i(0, 0)})
 	assert_false(MonsterHazardSystem.is_infected(Vector2i(0, 1)), "cidade nunca é infectada")
@@ -532,19 +552,21 @@ func test_infection_damages_once_per_turn_halves_healing_and_skips_cities():
 	unit.hp = 100.0
 	TurnManager.turn_number = 30
 	grid.move_unit(unit, Vector2i(1, -1), 0.0)
-	assert_eq(unit.hp, 97.0, "3% ao entrar (máx. 3)")
-	grid.move_unit(unit, Vector2i(1, 0), 0.0)
-	assert_eq(unit.hp, 97.0, "uma vez por turno")
-	MonsterHazardSystem.process_turn_start(GameManager.players, grid)
-	assert_eq(unit.hp, 97.0, "mesmo turno")
+	assert_eq(unit.hp, 100.0, "Etapa 3: entrar NÃO machuca")
+	assert_eq(_events.filter(func(e): return e[0] == "infection_entered").size(), 1, "só o aviso de Área Micótica")
 	TurnManager.turn_number = 31
 	MonsterHazardSystem.process_turn_start(GameManager.players, grid)
-	assert_eq(unit.hp, 94.0, "começar o turno ali também machuca")
+	assert_eq(unit.hp, 97.0, "começar o turno ali machuca 3% (máx. 3)")
+	MonsterHazardSystem.process_turn_start(GameManager.players, grid)
+	assert_eq(unit.hp, 97.0, "uma vez por turno")
+	TurnManager.turn_number = 32
+	MonsterHazardSystem.process_turn_start(GameManager.players, grid)
+	assert_eq(unit.hp, 94.0, "de novo no turno seguinte")
 	assert_eq(MonsterHazardSystem.heal_multiplier(unit), 0.5, "cura pela metade")
 	assert_eq(city.hp, city.max_hp(), "sem DoT em cidade")
 
 func test_hive_death_decays_infection_in_two_rounds():
-	var hive := _monster("mycotic_hive", Vector2i(0, 0))
+	var hive := _monster("corrupted_hero", Vector2i(0, 0))
 	var sites := {hive.ecology_site_id: Vector2i(0, 0)}
 	for turn in range(21, 30):
 		MonsterHazardSystem.process_round(grid, turn, sites)
@@ -557,7 +579,7 @@ func test_hive_death_decays_infection_in_two_rounds():
 # --- Era / Dragão / IA ---------------------------------------------------------------------------
 
 func test_species_city_hunt_rules():
-	for kind in ["worg", "giant_spider", "troll", "minotaur", "basilisk", "colossal_worm", "arboreal_ancient", "mana_devourer", "mycotic_hive"]:
+	for kind in ["worg", "giant_spider", "troll", "minotaur", "basilisk", "colossal_worm", "arboreal_ancient", "mana_devourer", "corrupted_hero"]:
 		assert_false(bool(MonsterEcologyData.behavior(kind).city_hunt), "%s não caça cidade" % kind)
 	for kind in ["goblin", "skeleton", "wyvern"]:
 		assert_true(bool(MonsterEcologyData.behavior(kind).city_hunt), "%s faz raide" % kind)
@@ -575,21 +597,33 @@ func test_dragon_event_does_not_pause_the_ecology():
 	WorldEventManager.active_events.erase(dragon)
 	assert_false(_events.filter(func(e): return e[0] in ["move", "attack", "ability"]).is_empty(), "segue caçando durante o Dragão")
 
-func test_ai_evades_a_visible_worm_impact_and_known_infection():
-	var worm := _monster("colossal_worm", Vector2i(0, 0))
-	var soldier := _soldier(Vector2i(4, 0), rival)
+func test_ai_evades_known_infection_but_not_the_harmless_worm_trail():
+	var worm := _wounded_worm(Vector2i(-6, 0))
+	_soldier(Vector2i(-5, 0), rival)
 	TurnManager.turn_number = 30
-	MonsterAbilitySystem.try_active(worm, grid, Vector2i(0, 0), 9)
+	MonsterAbilitySystem.try_active(worm, grid, Vector2i(-6, 0), 9)
+	var dest: Vector2i = MonsterAbilitySystem.telegraph_coords()[0]
 	var visible := grid.compute_visible_tiles(rival)
-	assert_true(MonsterHazardSystem.known_danger(Vector2i(4, 0), rival, visible))
+	assert_false(MonsterHazardSystem.known_danger(dest, rival, visible), "Etapa 3: o Rastro Subterrâneo não causa dano — não é perigo")
+	var hive := _monster("corrupted_hero", Vector2i(6, 0))
+	for round in range(21, 40):
+		MonsterHazardSystem.process_round(grid, round, {hive.ecology_site_id: Vector2i(6, 0)})
+	var spot := HexGrid.NO_LAIR
+	for coord in MonsterEcologyPlanner.sorted_coords(HexMetrics.coords_within(Vector2i(6, 0), 2)):
+		if HexMetrics.axial_distance(Vector2i(6, 0), coord) == 2 and MonsterHazardSystem.is_infected(coord):
+			spot = coord
+			break
+	assert_ne(spot, HexGrid.NO_LAIR)
+	var soldier := _soldier(spot, rival)
+	rival.explored_tiles[spot] = true
+	assert_true(MonsterHazardSystem.known_danger(spot, rival, visible))
 	soldier.reset_movement()
-	assert_true(MonsterHazardSystem.ai_evade(soldier, grid, visible), "sai do impacto previsto")
-	assert_ne(soldier.coord, Vector2i(4, 0))
-	var hidden := MonsterHazardSystem.known_danger(Vector2i(4, 0), human, {})
-	assert_false(hidden, "telegraph não visto não é conhecido")
+	assert_true(MonsterHazardSystem.ai_evade(soldier, grid, visible), "sai da infecção conhecida")
+	assert_ne(soldier.coord, spot)
+	assert_false(MonsterHazardSystem.known_danger(spot, human, {}), "infecção não explorada não é conhecida")
 
 func test_known_infection_costs_more_on_paths_but_never_blocks():
-	var hive := _monster("mycotic_hive", Vector2i(0, 0))
+	var hive := _monster("corrupted_hero", Vector2i(0, 0))
 	MonsterHazardSystem.process_round(grid, 21, {hive.ecology_site_id: Vector2i(0, 0)})
 	assert_eq(MonsterHazardSystem.path_penalty(Vector2i(1, 0), human), 0.0, "desconhecida não pesa (sem onisciência)")
 	human.explored_tiles[Vector2i(1, 0)] = true
@@ -608,3 +642,48 @@ func test_inspector_lists_signature_abilities_and_statuses():
 	var basilisk := _monster("basilisk", Vector2i(-4, 0))
 	basilisk.magic_cooldowns[MonsterAbilityData.PETRIFYING_GAZE] = TurnManager.turn_number + 2
 	assert_true("\n".join(TileInspector._monster_entry(basilisk, grid).lines).contains("recarga 2"))
+
+# --- Herói Corrompido: Bloqueio com Escudo ---------------------------------------------------------
+
+## Primeiro turno (a partir de `start`) em que a rolagem determinística bloqueia / não bloqueia este par.
+func _turn_where_block_is(hero: Unit, attacker: Unit, blocks: bool, start: int = 30) -> int:
+	var chance := float(MonsterAbilityData.param(MonsterAbilityData.SHIELD_BLOCK, "chance", 0.2))
+	for turn in range(start, start + 400):
+		TurnManager.turn_number = turn
+		if (MonsterAbilitySystem.block_roll(hero, attacker) < chance) == blocks:
+			return turn
+	return -1
+
+func test_shield_block_negates_all_damage_of_a_basic_attack_and_still_counterattacks():
+	var hero := _monster("corrupted_hero", Vector2i(0, 0))
+	var soldier := _soldier(Vector2i(1, 0))
+	soldier.unit_data.max_hp = 100.0
+	soldier.hp = 100.0
+	assert_gt(_turn_where_block_is(hero, soldier, true), 0)
+	var hp_before := hero.hp
+	CombatResolver.resolve(soldier, hero, grid)
+	assert_eq(hero.hp, hp_before, "bloqueado: nenhum dano")
+	assert_lt(soldier.hp, 100.0, "o revide do Herói continua normal")
+	assert_eq(_ability_events(MonsterAbilityData.SHIELD_BLOCK).size(), 1, "evento de bloqueio (rótulo/animação)")
+
+func test_shield_block_fails_on_the_other_rolls_and_damage_lands():
+	var hero := _monster("corrupted_hero", Vector2i(0, 0))
+	var soldier := _soldier(Vector2i(1, 0))
+	assert_gt(_turn_where_block_is(hero, soldier, false), 0)
+	var hp_before := hero.hp
+	CombatResolver.resolve(soldier, hero, grid)
+	assert_lt(hero.hp, hp_before, "sem bloqueio o dano entra")
+	assert_eq(_ability_events(MonsterAbilityData.SHIELD_BLOCK).size(), 0)
+
+func test_shield_block_chance_is_about_one_in_five_and_only_the_hero_blocks():
+	var hero := _monster("corrupted_hero", Vector2i(0, 0))
+	var soldier := _soldier(Vector2i(1, 0))
+	var blocked := 0
+	for turn in range(1, 2001):
+		TurnManager.turn_number = turn
+		if MonsterAbilitySystem.block_roll(hero, soldier) < 0.2:
+			blocked += 1
+	assert_between(blocked, 340, 460, "≈20% de 2000 rolagens")
+	var troll := _monster("troll", Vector2i(-4, 0))
+	assert_false(MonsterAbilitySystem.try_shield_block(troll, soldier), "só quem tem a habilidade bloqueia")
+	assert_false(MonsterAbilitySystem.try_shield_block(soldier, hero), "unidade de civilização nunca bloqueia por aqui")

@@ -1,0 +1,20 @@
+{
+  "Troll_Idle": {
+    "frames": 48,
+    "fps": 24,
+    "mp4": "Troll_Idle.mp4",
+    "gif": "Troll_Idle.gif"
+  },
+  "Troll_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "Troll_Walk.mp4",
+    "gif": "Troll_Walk.gif"
+  },
+  "Troll_Attack": {
+    "frames": 37,
+    "fps": 24,
+    "mp4": "Troll_Attack.mp4",
+    "gif": "Troll_Attack.gif"
+  }
+}

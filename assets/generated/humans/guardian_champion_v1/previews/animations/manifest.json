@@ -1,0 +1,32 @@
+{
+  "Champion_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "Champion_Idle.mp4",
+    "gif": "Champion_Idle.gif"
+  },
+  "Champion_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "Champion_Walk.mp4",
+    "gif": "Champion_Walk.gif"
+  },
+  "Champion_Attack": {
+    "frames": 31,
+    "fps": 24,
+    "mp4": "Champion_Attack.mp4",
+    "gif": "Champion_Attack.gif"
+  },
+  "Champion_ShieldWall": {
+    "frames": 25,
+    "fps": 24,
+    "mp4": "Champion_ShieldWall.mp4",
+    "gif": "Champion_ShieldWall.gif"
+  },
+  "Champion_ShieldWallHold": {
+    "frames": 48,
+    "fps": 24,
+    "mp4": "Champion_ShieldWallHold.mp4",
+    "gif": "Champion_ShieldWallHold.gif"
+  }
+}

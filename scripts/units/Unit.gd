@@ -43,7 +43,7 @@ const MONSTER_KIND_COLORS := {
 	"colossal_worm": Color(0.7, 0.55, 0.42),
 	"arboreal_ancient": Color(0.28, 0.4, 0.16),
 	"mana_devourer": Color(0.3, 0.2, 0.75),
-	"mycotic_hive": Color(0.7, 0.4, 0.55),
+	"corrupted_hero": Color(0.55, 0.58, 0.66),
 }
 
 ## Veterania: unidade que vence combate (mata ou sobrevive matando quem a
@@ -235,6 +235,8 @@ var hp: float = 10.0:
 				var absorbed := minf(arcane_barrier, hp - value)
 				arcane_barrier -= absorbed
 				value += absorbed
+				if arcane_barrier <= 0.0 and is_inside_tree():
+					refresh_status_overlay() # a casca some quando a barreira acaba
 			if value < hp:
 				took_damage_since_regen = true # V3: interrompe a Regeneração Monstruosa do Troll neste ciclo
 				_play_hit_reaction()
@@ -296,6 +298,7 @@ func apply_form(new_data: UnitData) -> void:
 	_hp_bar_bg = null
 	_anim_player = null
 	_formation_players.clear()
+	_braced = false # novo modelo: a postura da Muralha recomeça (refresh_technique_marker abaixo reaplica se ativa)
 	idle_animation = DEFAULT_ANIMATION
 	moving_animation = WALK_ANIMATION
 	attack_animation = ""
@@ -311,7 +314,8 @@ const TECHNIQUE_MARKER_COLOR := Color(0.55, 0.95, 1.0, 0.95)
 ## Anel azul na base enquanto a unidade tem uma Técnica Militar de Doutrina ATIVA
 ## (V2TechniqueRuntime) — feedback mínimo no mapa, sem asset novo. Idempotente: chame
 ## depois de ativar/expirar, de restaurar um save e de trocar de forma.
-func refresh_technique_marker() -> void:
+func refresh_technique_marker(animate_brace: bool = true) -> void:
+	_refresh_brace_visual(animate_brace)
 	var existing := get_node_or_null(TECHNIQUE_MARKER_NAME)
 	# Fase 17: o MESMO anel marca um estado de feitiço V2 ativo (Égide Sagrada) — sem asset novo.
 	var active := V2TechniqueRuntime.active_technique_name(self) != "" or V2MagicRuntime.active_status_name(self) != ""
@@ -332,6 +336,103 @@ func refresh_technique_marker() -> void:
 	elif not active and existing != null:
 		remove_child(existing)
 		existing.queue_free()
+
+## Linha do Guardião — Muralha de Escudos ativa (V2TechniqueRuntime): a unidade ERGUE o escudo (clipe de ativação, que
+## emenda no loop da postura) e fica na POSTURA no lugar do Idle até o efeito expirar; aí volta ao Idle com o crossfade
+## normal. `animate_brace` = false (load de save) entra direto na postura, sem repetir o "erguer". Só visual.
+var _braced := false
+
+func _refresh_brace_visual(animate_brace: bool = true) -> void:
+	var hold := unit_data.shield_wall_hold_animation_override if unit_data != null else ""
+	if hold == "" or _anim_player == null or not _anim_player.has_animation(hold):
+		return
+	var braced := V2TechniqueRuntime.is_active(self, V2DoctrineTechniqueDatabase.SHIELD_WALL)
+	if braced == _braced:
+		return
+	_braced = braced
+	if braced:
+		var enter := unit_data.shield_wall_animation_override
+		_anim_player.play(enter if animate_brace and _anim_player.has_animation(enter) else hold)
+	else:
+		_anim_player.play(idle_animation)
+
+## O clipe de "parado" agora: a postura da Muralha enquanto ela durar, senão o Idle.
+func _rest_animation() -> String:
+	return unit_data.shield_wall_hold_animation_override if _braced else idle_animation
+
+const STATUS_MARKER_NAME := "V3StatusMarker"
+const BARRIER_MARKER_NAME := "V3BarrierMarker"
+## V3 / Etapa 3 — estados da Combat Ecology por prioridade de leitura (um só é mostrado no anel; o rótulo lista
+## o principal). Cores próprias, distintas do ciano de Técnica/Égide e do cinza de "sem comando".
+const STATUS_MARKER_ORDER := [
+	[UnitStatusEffects.PETRIFIED, Color(0.72, 0.72, 0.76), "Petrificado"],
+	[UnitStatusEffects.ROOTED, Color(0.55, 0.38, 0.16), "Enraizado"],
+	[UnitStatusEffects.SILENCED, Color(0.68, 0.38, 1.0), "Silenciado"],
+	[UnitStatusEffects.BURNING, Color(1.0, 0.5, 0.12), "Em Chamas"],
+	[UnitStatusEffects.POISON, Color(0.45, 0.95, 0.3), "Envenenado"],
+	[UnitStatusEffects.STAGGERED, Color(1.0, 0.82, 0.25), "Abalado"],
+]
+
+## V3 / Etapa 3 — indicador de estado temporário (render-only, idempotente): anel colorido + rótulo curto do
+## estado mais importante, e uma casca translúcida enquanto houver Barreira Arcana. Nós próprios (não usa
+## material_overlay, que o flash de dano limpa). Chamado ao aplicar/expirar estado, ao ganhar barreira e no load —
+## e avisa EventBus.unit_status_changed (Etapa 4) para o card atualizar os chips.
+func refresh_status_overlay() -> void:
+	var chosen: Array = []
+	for entry in STATUS_MARKER_ORDER:
+		if magic_status.has(entry[0]):
+			chosen = entry
+			break
+	var existing := get_node_or_null(STATUS_MARKER_NAME)
+	if existing != null and (chosen.is_empty() or existing.get_meta("status", "") != chosen[0]):
+		remove_child(existing)
+		existing.queue_free()
+		existing = null
+	if not chosen.is_empty() and existing == null:
+		var marker := Node3D.new()
+		marker.name = STATUS_MARKER_NAME
+		marker.set_meta("status", chosen[0])
+		var ring := MeshInstance3D.new()
+		var mesh := TorusMesh.new()
+		mesh.inner_radius = 0.3
+		mesh.outer_radius = 0.4
+		ring.mesh = mesh
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(chosen[1].r, chosen[1].g, chosen[1].b, 0.9)
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		ring.material_override = mat
+		ring.position.y = 0.14
+		marker.add_child(ring)
+		var label := Label3D.new()
+		label.text = String(chosen[2])
+		label.font_size = 26
+		label.outline_size = 8
+		label.modulate = chosen[1]
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.position.y = _marker_height + 0.22
+		marker.add_child(label)
+		add_child(marker)
+	var barrier := get_node_or_null(BARRIER_MARKER_NAME)
+	if arcane_barrier > 0.0 and barrier == null:
+		var shell := MeshInstance3D.new()
+		shell.name = BARRIER_MARKER_NAME
+		var sphere := SphereMesh.new()
+		sphere.radius = 0.55
+		sphere.height = 1.1
+		shell.mesh = sphere
+		var shell_mat := StandardMaterial3D.new()
+		shell_mat.albedo_color = Color(0.68, 0.38, 1.0, 0.18)
+		shell_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		shell_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		shell_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		shell.material_override = shell_mat
+		shell.position.y = 0.5
+		add_child(shell)
+	elif arcane_barrier <= 0.0 and barrier != null:
+		remove_child(barrier)
+		barrier.queue_free()
+	EventBus.unit_status_changed.emit(self) # V3 / Etapa 4: chips do card da unidade (event-driven)
 
 const COMMAND_MARKER_NAME := "V2UncommandedMarker"
 ## Cinza neutro de propósito: não confunde com o ciano de Técnica/Égide nem com vermelho/verde de mira.
@@ -470,7 +571,7 @@ func walk_path(waypoints: Array[Vector3]) -> void:
 func _advance_walk_queue() -> void:
 	if _walk_queue.is_empty():
 		_walking = false
-		_play_animation(idle_animation)
+		_play_animation(_rest_animation())
 		return
 	var target_pos: Vector3 = _walk_queue.pop_front()
 	var direction = target_pos - position
@@ -859,7 +960,33 @@ func _build_animation_player(model: Node) -> AnimationPlayer:
 	var player := AnimationPlayer.new()
 	model.add_child(player)
 	player.add_animation_library("", library)
+	if unit_data.animation_blend_time > 0.0:
+		player.playback_default_blend_time = unit_data.animation_blend_time
+		player.animation_finished.connect(_on_blended_animation_finished.bind(player))
 	return player
+
+## So pra unidades com UnitData.animation_blend_time > 0: o Ataque (LOOP_
+## NONE) termina e volta, com crossfade, pro ciclo que faz sentido agora --
+## Andar se ainda houver trecho na fila de walk_path(), senao Idle.
+func _on_blended_animation_finished(anim_name: StringName, player: AnimationPlayer) -> void:
+	if not is_instance_valid(player):
+		return
+	# Muralha de Escudos: o clipe de erguer emenda no loop da postura (sem crossfade de volta ao Idle).
+	if unit_data.shield_wall_animation_override != "" and anim_name == StringName(unit_data.shield_wall_animation_override):
+		if _braced and player.has_animation(unit_data.shield_wall_hold_animation_override):
+			player.play(unit_data.shield_wall_hold_animation_override)
+		return
+	var one_shot := anim_name == StringName(attack_animation) \
+		or unit_data.technique_animation_overrides.values().has(String(anim_name)) \
+		or (unit_data.emerge_animation_override != "" and anim_name == StringName(unit_data.emerge_animation_override)) \
+		or (unit_data.block_animation_override != "" and anim_name == StringName(unit_data.block_animation_override))
+	if not one_shot:
+		return
+	var next_anim := moving_animation if _walking else _rest_animation()
+	if not player.has_animation(next_anim):
+		next_anim = idle_animation # sem Walk (Verme): anda no Idle em vez de congelar no fim do Ataque
+	if player.has_animation(next_anim):
+		player.play(next_anim)
 
 func _copy_animations_into(library: AnimationLibrary, scene_path: String) -> void:
 	var anim_scene: PackedScene = load(scene_path)
@@ -872,6 +999,83 @@ func _copy_animations_into(library: AnimationLibrary, scene_path: String) -> voi
 				if not library.has_animation(anim_name):
 					library.add_animation(anim_name, source_lib.get_animation(anim_name))
 	anim_source.free()
+
+## Verme Colossal (Escavar) -- so visual, nunca muda regra. A logica esconde a
+## Unit NA HORA do mergulho (sai de units_by_coord, visible = false); isto deixa
+## no mesmo lugar uma COPIA do modelo tocando o clipe de entrar na terra, que se
+## apaga sozinha no fim (o clipe termina com o corpo todo em escala ~0). So se
+## o jogador estava vendo o Verme (visible = neblina) e o modelo tem o clipe.
+func play_burrow_visual() -> void:
+	var clip := unit_data.burrow_animation_override
+	if clip == "" or not visible or _anim_player == null or not _anim_player.has_animation(clip) or get_parent() == null:
+		return
+	var ghost := Node3D.new()
+	ghost.name = "BurrowGhost"
+	get_parent().add_child(ghost)
+	ghost.global_transform = global_transform
+	var model: Node3D = (load(unit_data.model_scene_path) as PackedScene).instantiate()
+	model.transform = (_anim_player.get_parent() as Node3D).transform
+	ghost.add_child(model)
+	var player := AnimationPlayer.new()
+	model.add_child(player)
+	player.add_animation_library("", _anim_player.get_animation_library(""))
+	player.animation_finished.connect(func(_finished: StringName) -> void: ghost.queue_free())
+	player.play(clip)
+
+## Verme Colossal (Escavar): ao reaparecer no destino, toca o clipe de sair da
+## terra SEM crossfade (o primeiro frame ja e o corpo escondido -- misturar com o
+## Idle mostraria o Verme inteiro encolhendo). No fim volta pro Idle com o
+## crossfade normal (_on_blended_animation_finished).
+func play_emerge_visual() -> void:
+	var clip := unit_data.emerge_animation_override
+	if clip == "" or _anim_player == null or not _anim_player.has_animation(clip):
+		return
+	_anim_player.play(clip, 0.0)
+
+## Técnica de ATAQUE em curso (V2TechniqueRuntime.perform_strike): o clipe próprio dela (UnitData.technique_animation_
+## overrides) e se ele já tocou neste uso. Um golpe com vários alvos (Ataque em Arco, Saraivada) resolve um combate por
+## alvo; o clipe toca UMA vez, virado para o primeiro alvo, em vez de reiniciar a cada um.
+var _technique_clip: String = ""
+var _technique_clip_started := false
+
+func begin_technique_animation(technique_id: String) -> void:
+	_technique_clip = String(unit_data.technique_animation_overrides.get(technique_id, ""))
+	_technique_clip_started = false
+
+func end_technique_animation() -> void:
+	_technique_clip = ""
+	_technique_clip_started = false
+
+## Visual do ataque (CombatResolver): vira para o defensor e toca o Attack — ou, durante uma técnica com clipe próprio,
+## o clipe dela (uma vez por uso). Unidade sem attack_animation segue sem animação de combate (no-op, como sempre foi).
+func play_attack_visual(defender: Unit) -> void:
+	if attack_animation == "":
+		return
+	var clip := attack_animation
+	if _technique_clip != "" and _anim_player != null and _anim_player.has_animation(_technique_clip):
+		if _technique_clip_started:
+			return
+		clip = _technique_clip
+		_technique_clip_started = true
+	if defender != null and is_instance_valid(defender):
+		var direction: Vector3 = defender.position - position
+		direction.y = 0.0
+		if direction.length() > 0.05:
+			rotation.y = atan2(direction.x, direction.z)
+	_play_animation(clip)
+
+## Herói Corrompido (Bloqueio com Escudo): vira para quem atacou e toca o clipe do escudo (com o crossfade normal);
+## no fim volta pro Idle (_on_blended_animation_finished). Só visual: o dano já foi negado pelo CombatResolver.
+func play_block_visual(attacker: Unit) -> void:
+	var clip := unit_data.block_animation_override
+	if clip == "" or _anim_player == null or not _anim_player.has_animation(clip):
+		return
+	if attacker != null and is_instance_valid(attacker):
+		var direction: Vector3 = attacker.position - position
+		direction.y = 0.0
+		if direction.length() > 0.05:
+			rotation.y = atan2(direction.x, direction.z)
+	_anim_player.play(clip)
 
 ## Troca pro clipe `anim_name` so se a unidade tiver AnimationPlayer, o
 ## clipe existir, e nao for o que ja esta tocando (evita reiniciar o ciclo

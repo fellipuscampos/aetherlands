@@ -29,6 +29,13 @@ var status_ticks: Dictionary = {} # status -> {ticks, damage, kills}
 var infection := {"damage": 0.0, "ticks": 0, "kills": 0, "peak_tiles": 0}
 var max_site_population: Dictionary = {} # espécie -> maior população viva de um sítio
 var ai_evades := 0
+## V3 / Etapa 3 — aggro/leash: aquisições de alvo, desistências por leash, retornos completos e distância da âncora
+## nos passos de perseguição (soma/amostras/máximo), por tier.
+var aggro: Dictionary = {}
+## V3 / Etapa 4 — raide do Goblin: golpes em cidade (Saque Rápido), Ouro roubado, golpes com tesouro vazio, recuos no
+## mesmo turno, raides abandonados (posição de ataque inalcançável) e Goblins da ecologia que TERMINARAM a rodada colados
+## (≤ 1) numa cidade — o gate do bug "Goblin parado na cidade".
+var goblin_raids := _goblin_counters()
 var _connections: Array = []
 
 func start(grid: HexGrid) -> void:
@@ -36,6 +43,8 @@ func start(grid: HexGrid) -> void:
 		by_species[kind] = _counters()
 	for tier in MonsterEcologyData.TIERS:
 		by_tier[tier] = _counters()
+	for tier in MonsterEcologyData.TIERS:
+		aggro[tier] = _aggro_counters()
 	for phase_key in ["FOUNDATION", "ASCENSION", "CONVERGENCE"]:
 		by_phase[phase_key] = {}
 		for tier in MonsterEcologyData.TIERS:
@@ -58,6 +67,11 @@ func on_turn_end(grid: HexGrid, turn: int) -> void:
 		population_at[str(turn)] = _population(grid)
 	infection.peak_tiles = maxi(int(infection.peak_tiles), MonsterHazardSystem.infected_count())
 	if grid != null:
+		for unit in grid.neutral_units():
+			if unit.ecology_site_id >= 0 and unit.unit_data.visual_kind == "goblin" and _adjacent_to_city(grid, unit.coord):
+				goblin_raids.ended_adjacent_to_city += 1
+				if unit.ability_state.get("raid_target") != null:
+					goblin_raids.ended_adjacent_raiding += 1
 		var alive := MonsterEcologySystem._alive_by_site(grid)
 		for site in MonsterEcologySystem.sites:
 			var kind := String(site.species)
@@ -75,8 +89,23 @@ func finish(grid: HexGrid) -> Dictionary:
 		"first_contact_turn": first_contact_turn, "first_monster_death_turn": first_monster_death_turn,
 		"first_civ_unit_killed_turn": first_civ_unit_killed_turn, "cities_left_at_1hp": cities_left_at_1hp,
 		"abilities_by_species": abilities_by_species, "abilities": abilities, "status_ticks": status_ticks,
-		"infection": infection, "max_site_population": max_site_population, "ai_evades": ai_evades,
+		"infection": infection, "max_site_population": max_site_population, "ai_evades": ai_evades, "aggro": aggro,
+		"goblin_raids": goblin_raids,
 	}
+
+static func _goblin_counters() -> Dictionary:
+	return {"city_hits": 0, "gold_stolen": 0, "hits_with_no_gold": 0, "retreats": 0, "abandoned": 0, "ended_adjacent_to_city": 0, "ended_adjacent_raiding": 0}
+
+static func _adjacent_to_city(grid: HexGrid, coord: Vector2i) -> bool:
+	if grid.get_city_at(coord) != null:
+		return true
+	for neighbor in grid.get_neighbors(coord):
+		if grid.get_city_at(neighbor) != null:
+			return true
+	return false
+
+static func _aggro_counters() -> Dictionary:
+	return {"acquisitions": 0, "leash_disengages": 0, "return_home": 0, "pursuit_steps": 0, "pursuit_distance_sum": 0, "pursuit_distance_max": 0, "beyond_leash": 0}
 
 func connected_signal_count() -> int:
 	return _connections.size()
@@ -119,8 +148,28 @@ func _on_ecology_event(action: String, info: Dictionary) -> void:
 	match action:
 		"move":
 			_bump(kind, tier, phase_key, "moves")
+			if String(info.get("reason", "")) == "raid_retreat":
+				goblin_raids.retreats += 1
 			if String(info.get("reason", "")) == "chase":
 				_bump(kind, tier, phase_key, "chases")
+				if aggro.has(tier) and info.has("anchor_distance"):
+					var distance := int(info.anchor_distance)
+					aggro[tier].pursuit_steps += 1
+					aggro[tier].pursuit_distance_sum += distance
+					aggro[tier].pursuit_distance_max = maxi(int(aggro[tier].pursuit_distance_max), distance)
+					# Gate de leash: passo de perseguição além da zona da espécie na era (+1 de folga do alvo).
+					var ranges := MonsterAI.ecology_ranges(kind, MonsterActivityProfile.for_species(kind, WorldEventManager.world_phase))
+					if distance > int(ranges.zone) + 1:
+						aggro[tier].beyond_leash += 1
+		"aggro_acquire":
+			if aggro.has(tier):
+				aggro[tier].acquisitions += 1
+		"leash_disengage":
+			if aggro.has(tier):
+				aggro[tier].leash_disengages += 1
+		"return_home":
+			if aggro.has(tier):
+				aggro[tier].return_home += 1
 		"attack":
 			_bump(kind, tier, phase_key, "attacks")
 			_bump_seat("attacks_by_seat", seat)
@@ -163,6 +212,9 @@ func _on_ecology_event(action: String, info: Dictionary) -> void:
 			infection.peak_tiles = maxi(int(infection.peak_tiles), MonsterHazardSystem.infected_count())
 		"ai_evade":
 			ai_evades += 1
+		"raid_abandoned":
+			if kind == "goblin":
+				goblin_raids.abandoned += 1
 	if action in ["attack", "city_attack"] and tier != "" and not first_contact_turn.has(tier):
 		first_contact_turn[tier] = turn
 
@@ -180,6 +232,10 @@ func _on_ability(kind: String, info: Dictionary) -> void:
 		abilities[id] = {"uses": 0}
 	var entry: Dictionary = abilities[id]
 	entry.uses = int(entry.uses) + 1
+	if id == MonsterAbilityData.QUICK_PLUNDER:
+		goblin_raids.city_hits += 1
+		goblin_raids.gold_stolen += int(round(float(info.get("gold_stolen", 0.0))))
+		goblin_raids.hits_with_no_gold += int(info.get("no_gold", 0))
 	for key in info:
 		if key in ["species", "tier", "phase", "ecology", "ability", "target"]:
 			continue
@@ -250,6 +306,10 @@ static func summarize(records: Array) -> Dictionary:
 	var max_site := {}
 	var research_gate := {"civs": 0, "violations": 0}
 	var evades := 0
+	var goblin_totals := _goblin_counters()
+	var aggro_totals := {}
+	for tier in MonsterEcologyData.TIERS:
+		aggro_totals[tier] = _aggro_counters()
 	for record in records:
 		var eco: Dictionary = record.get("combat_ecology", {})
 		if eco.is_empty():
@@ -303,6 +363,14 @@ static func summarize(records: Array) -> Dictionary:
 		for kind in eco.get("max_site_population", {}):
 			max_site[kind] = maxi(int(max_site.get(kind, 0)), int(eco.max_site_population[kind]))
 		evades += int(eco.get("ai_evades", 0))
+		_add_into(goblin_totals, eco.get("goblin_raids", {}))
+		var match_aggro: Dictionary = eco.get("aggro", {})
+		for tier in match_aggro:
+			if not aggro_totals.has(tier):
+				continue
+			for key in ["acquisitions", "leash_disengages", "return_home", "pursuit_steps", "pursuit_distance_sum", "beyond_leash"]:
+				aggro_totals[tier][key] = int(aggro_totals[tier][key]) + int(match_aggro[tier].get(key, 0))
+			aggro_totals[tier].pursuit_distance_max = maxi(int(aggro_totals[tier].pursuit_distance_max), int(match_aggro[tier].get("pursuit_distance_max", 0)))
 		for civ in record.get("civs", []):
 			var milestones: Dictionary = civ.get("milestones", {})
 			if milestones.has("first_research_selected"):
@@ -345,7 +413,17 @@ static func summarize(records: Array) -> Dictionary:
 		"eliminations": eliminations, "cities_at": cities_summary, "cities_left_at_1hp": one_hp, "combats": combats,
 		"abilities_by_species": abilities_by_species, "abilities": ability_totals, "status_ticks": status_totals,
 		"infection": infection_totals, "max_site_population": max_site, "ai_evades": evades, "research_gate": research_gate,
+		"aggro": _aggro_summary(aggro_totals), "goblin_raids": goblin_totals,
 	}
+
+static func _aggro_summary(totals: Dictionary) -> Dictionary:
+	var result := {}
+	for tier in totals:
+		var entry: Dictionary = (totals[tier] as Dictionary).duplicate()
+		var steps := int(entry.pursuit_steps)
+		entry.pursuit_distance_avg = snappedf(float(entry.pursuit_distance_sum) / float(steps), 0.01) if steps > 0 else 0.0
+		result[tier] = entry
+	return result
 
 static func _add_into(target: Dictionary, source: Dictionary) -> void:
 	for key in source:

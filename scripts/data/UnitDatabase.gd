@@ -93,6 +93,43 @@ const PLAYER_TRAINABLE_KINDS: Array[String] = [
 static func is_known_kind(kind: String) -> bool:
 	return kind == "warrior" or (kind != "" and create_unit(kind).visual_kind == kind)
 
+## Linha do Guardião humano (2026-10-04): modelos próprios feitos à mão no Blender (assets/generated/humans/<pasta>),
+## o MESMO personagem nas quatro formas — Escudeiro, Guardião, Sentinela (1,80 m) e Campeão Guardião (1,90 m) —
+## com as mesmas juntas e os mesmos clipes `<prefixo>_Idle/_Walk/_Attack/_ShieldWall/_ShieldWallHold`. Escala 1:1
+## (a altura já está no modelo; as escalas 1,2/1,4/1,5 do KayKit provisório saíram), frente em +Z (yaw 0) e crossfade
+## de 0,2 s entre os clipes (todos animam os mesmos 16 ossos). A Muralha de Escudos toca o clipe de erguer e mantém a
+## postura enquanto o efeito dura (Unit._refresh_brace_visual).
+const GUARDIAN_LINE_BLEND_TIME := 0.2
+
+static func _apply_guardian_line_model(data: UnitData, folder: String, prefix: String) -> void:
+	_apply_human_troop_model(data, folder, prefix)
+	data.shield_wall_animation_override = prefix + "_ShieldWall"
+	data.shield_wall_hold_animation_override = prefix + "_ShieldWallHold"
+
+## Modelos próprios das tropas humanas (Blender MCP, assets/generated/humans/<pasta>/<pasta>.glb): GLB com os próprios
+## clipes `<prefixo>_Idle/_Walk/_Attack`, crossfade de 0,2 s, escala 1:1 (a altura já está no modelo: 1,80 m as tropas,
+## 2,00 m as lendárias) e yaw 0. `techniques` (id da técnica -> sufixo do clipe) liga as técnicas de ATAQUE da linha aos
+## clipes próprios (UnitData.technique_animation_overrides); técnica fora do mapa toca o Attack comum.
+static func _apply_human_troop_model(data: UnitData, folder: String, prefix: String, techniques: Dictionary = {}) -> void:
+	var path := "res://assets/generated/humans/%s/%s.glb" % [folder, folder]
+	data.model_scene_path = path
+	data.animation_scene_path = path
+	data.merge_shared_walk_animation = false
+	data.idle_animation_override = prefix + "_Idle"
+	data.walk_animation_override = prefix + "_Walk"
+	data.attack_animation_override = prefix + "_Attack"
+	data.animation_blend_time = GUARDIAN_LINE_BLEND_TIME
+	data.model_scale_multiplier = 1.0
+	data.model_yaw_offset_degrees = 0.0
+	for technique_id in techniques:
+		data.technique_animation_overrides[technique_id] = prefix + String(techniques[technique_id])
+
+## Clipes de técnica por linha (as evoluções herdam as técnicas da linha; o Guerreiro e o Arqueiro só têm o clipe da 1ª).
+const WARRIOR_FIRST_CLIPS := {V2DoctrineTechniqueDatabase.POWER_STRIKE: "_PowerStrike"}
+const WARRIOR_LINE_CLIPS := {V2DoctrineTechniqueDatabase.POWER_STRIKE: "_PowerStrike", V2DoctrineTechniqueDatabase.CLEAVE: "_ArcAttack"}
+const RANGER_FIRST_CLIPS := {V2DoctrineTechniqueDatabase.PRECISE_SHOT: "_PreciseShot"}
+const RANGER_LINE_CLIPS := {V2DoctrineTechniqueDatabase.PRECISE_SHOT: "_PreciseShot", V2DoctrineTechniqueDatabase.VOLLEY: "_Volley"}
+
 static func create_unit(kind: String) -> UnitData:
 	var data := UnitData.new()
 	match kind:
@@ -454,7 +491,7 @@ static func create_unit(kind: String) -> UnitData:
 		# valores como referência de balanceamento — ver docs/BALANCE_REFERENCE.md.
 		# `visual_kind` == id do kind de propósito: é o que SaveManager grava e usa
 		# pra recriar a unidade no load (UnitDatabase.create_unit(kind)).
-		# Modelo PROVISÓRIO: o mesmo Knight do KayKit do Homem de Armas.
+		# Modelo próprio (2026-10-04): Escudeiro V1, ver _apply_guardian_line_model.
 		"v2_unit_shieldbearer":
 			data.unit_name = "Escudeiro"
 			data.movement_points = 2.0
@@ -466,8 +503,7 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_unit_shieldbearer"
 			data.supply_cost = 1
 			data.production_cost = 20.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Knight.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
+			_apply_guardian_line_model(data, "squire_v1", "Squire")
 		# AETHERLANDS V2, Fase 4 — Guardião, primeira evolução da linha do Guardião (nó
 		# v2_doctrine_guardian_5, tier `evolution_1`). É o Escudeiro evoluído: continua
 		# tank/frontline (não é DPS nem ganha mobilidade). Cidades com o Salão dos
@@ -477,8 +513,7 @@ static func create_unit(kind: String) -> UnitData:
 		# (18 / 3,0 / 4,5 / mov. 2 / 20 PP): mais vida (24), mais defesa (6,0), ataque só
 		# um pouco maior (4,0), MESMO movimento e custo 32 PP (upgrade = 2 x 12 = 24 Ouro).
 		# `visual_kind` == id (SaveManager recria a unidade por ele).
-		# Modelo PROVISÓRIO: o mesmo Knight do KayKit do Escudeiro, 20% maior pra dar pra
-		# distinguir a evolução no mapa. Sem arte V2.
+		# Modelo próprio (2026-10-04): Guardião V1 — o Escudeiro com malha e sobreveste.
 		"v2_unit_guardian":
 			data.unit_name = "Guardião"
 			data.movement_points = 2.0
@@ -490,9 +525,7 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_unit_guardian"
 			data.supply_cost = 2
 			data.production_cost = 32.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Knight.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.2
+			_apply_guardian_line_model(data, "guardian_v1", "Guardian")
 		# AETHERLANDS V2, Fase 5 — Sentinela, forma Elite CONVENCIONAL da linha do Guardião
 		# (nó v2_doctrine_guardian_7, tier `elite_form`; NÃO é Lendária). Continua tank/
 		# frontline: mais vida e defesa que o Guardião, ataque só moderadamente maior, mesmo
@@ -502,8 +535,7 @@ static func create_unit(kind: String) -> UnitData:
 		# Guardião (V2UnitUpgrade). Sem upkeep.
 		# BALANCE PLACEHOLDER: vida 32 / ataque 5,0 / defesa 8,0 / mov. 2 / 48 PP (upgrade
 		# Guardião -> Sentinela = 2 x (48 - 32) = 32 Ouro, pela fórmula genérica).
-		# Modelo PROVISÓRIO: o mesmo Knight do KayKit, 40% maior que o Escudeiro (o Guardião é
-		# 20% maior) pra distinguir as três formas no mapa. Sem arte V2.
+		# Modelo próprio (2026-10-04): Sentinela V1 — placas completas, elmo fechado.
 		"v2_unit_sentinel":
 			data.unit_name = "Sentinela"
 			data.movement_points = 2.0
@@ -515,9 +547,7 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_unit_sentinel"
 			data.supply_cost = 3
 			data.production_cost = 48.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Knight.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.4
+			_apply_guardian_line_model(data, "sentinel_v1", "Sentinel")
 		# AETHERLANDS V2, Fase 6 — Campeão Guardião, candidato a Unidade LENDÁRIA da linha do
 		# Guardião (nó v2_doctrine_guardian_9, tier `legendary_candidate`). NÃO é upgrade da Sentinela:
 		# unidade separada e excepcional, treinada no Bastião de Maestria; a Sentinela segue a forma
@@ -527,7 +557,7 @@ static func create_unit(kind: String) -> UnitData:
 		# Comando Defensivo (V2UnitAuras) — aliados em raio 2 recebem +20% de Defesa, nunca ele mesmo.
 		# O traço `legendary` é semeado no fim de create_unit (metadata do N9). Sem upkeep.
 		# BALANCE PLACEHOLDER: vida 44 / ataque 6,5 / defesa 10,0 / mov. 2 / 90 PP; aura raio 2, +20%.
-		# Modelo PROVISÓRIO: Barbarian do KayKit (silhueta diferente dos Knights das outras formas), 1,5x.
+		# Modelo próprio (2026-10-04): Campeão Guardião V1 — placas douradas, capa, penacho; 1,90 m.
 		"v2_legendary_guardian_champion":
 			data.unit_name = "Campeão Guardião"
 			data.movement_points = 2.0
@@ -539,9 +569,7 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_legendary_guardian_champion"
 			data.supply_cost = 5
 			data.production_cost = 90.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Barbarian.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.5
+			_apply_guardian_line_model(data, "guardian_champion_v1", "Champion")
 			data.aura_id = "defensive_command"
 			data.aura_name = "Comando Defensivo"
 			data.aura_radius = 2
@@ -551,7 +579,7 @@ static func create_unit(kind: String) -> UnitData:
 		# defesa (3,5), MUITO mais ataque (5,0) — o Guardião vence em resistência, o Guerreiro em dano.
 		# Mesmo movimento (2), visão 3, alcance corpo a corpo, 20 PP. Sem upkeep.
 		# BALANCE PLACEHOLDER: todos os números são provisórios. `visual_kind` == id (SaveManager recria por ele).
-		# Modelo PROVISÓRIO: o Barbarian do KayKit (escala 1,0). Sem arte V2.
+		# Modelo próprio (2026-10-04): Guerreiro V1 (machadinha; Golpe Poderoso com clipe próprio), ver _apply_human_troop_model.
 		"v2_unit_warrior":
 			data.unit_name = "Guerreiro"
 			data.movement_points = 2.0
@@ -563,12 +591,11 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_unit_warrior"
 			data.supply_cost = 1
 			data.production_cost = 20.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Barbarian.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
+			_apply_human_troop_model(data, "warrior_v1", "Warrior", WARRIOR_FIRST_CLIPS)
 		# Fase 7 — Espadachim, primeira evolução da linha do Guerreiro (nó v2_doctrine_warrior_5): mesma função
 		# (melee ofensivo), mais poder por tile. Treinado no lugar do Guerreiro depois do N5; um Guerreiro existente
 		# vira Espadachim por V2UnitUpgrade (2 x (32 - 20) = 24 Ouro, fórmula genérica). BALANCE PLACEHOLDER:
-		# 21 / 7,0 / 4,5 / mov. 2 / 32 PP. Modelo PROVISÓRIO: Barbarian 15% maior (distingue a forma no mapa).
+		# 21 / 7,0 / 4,5 / mov. 2 / 32 PP. Modelo próprio (2026-10-04): Espadachim V1 (espada; Golpe Poderoso + Ataque em Arco).
 		"v2_unit_swordsman":
 			data.unit_name = "Espadachim"
 			data.movement_points = 2.0
@@ -580,14 +607,12 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_unit_swordsman"
 			data.supply_cost = 2
 			data.production_cost = 32.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Barbarian.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.15
+			_apply_human_troop_model(data, "swordsman_v1", "Swordsman", WARRIOR_LINE_CLIPS)
 		# Fase 7 — Mestre de Armas, forma Elite CONVENCIONAL da linha do Guerreiro (nó v2_doctrine_warrior_7; NÃO é
 		# Lendária). Melee avançado: mais Ataque que a Sentinela (9,5 > 5,0) e menos Defesa (5,5 < 8,0) — dano
 		# substancial sem virar glass cannon. Herda Golpe Poderoso e Ataque em Arco por `branch == warrior`.
 		# Upgrade Espadachim -> Mestre = 2 x (48 - 32) = 32 Ouro. BALANCE PLACEHOLDER: 28 / 9,5 / 5,5 / mov. 2 / 48 PP.
-		# Modelo PROVISÓRIO: Barbarian 30% maior.
+		# Modelo próprio (2026-10-04): Mestre de Armas V1 (espada longa; sem dourado), ver _apply_human_troop_model.
 		"v2_unit_weapon_master":
 			data.unit_name = "Mestre de Armas"
 			data.movement_points = 2.0
@@ -599,17 +624,15 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_unit_weapon_master"
 			data.supply_cost = 3
 			data.production_cost = 48.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Barbarian.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.3
+			_apply_human_troop_model(data, "weapon_master_v1", "WeaponMaster", WARRIOR_LINE_CLIPS)
 		# Fase 7 — Herói da Lâmina, candidato a Unidade LENDÁRIA da linha do Guerreiro (nó v2_doctrine_warrior_9,
 		# `legendary_candidate`). NÃO é upgrade do Mestre de Armas: unidade separada, treinada na Arena dos Campeões,
 		# sob o MESMO slot global de V2LegendarySystem do Campeão Guardião (o traço `legendary` é semeado no fim de
 		# create_unit). Identidade oposta à do Campeão: 38 HP / 12,0 ataque / 7,0 defesa (Campeão: 44 / 6,5 / 10,0) —
 		# finalizador, não âncora. Herda as duas Técnicas da Doutrina pela linha (doctrine_branch_of == warrior).
 		# Passiva intrínseca EXECUÇÃO (dado `low_hp_attack_*`, sem `if` de id): +30% de Ataque contra unidades com 50%
-		# de HP ou menos. BALANCE PLACEHOLDER: mov. 2, visão 3, 90 PP. Modelo PROVISÓRIO: Barbarian 65% maior (o
-		# Campeão Guardião é o mesmo modelo a 1,5x — a distinção é só de escala e de painel).
+		# de HP ou menos. BALANCE PLACEHOLDER: mov. 2, visão 3, 90 PP. Modelo próprio (2026-10-04): Herói da Lâmina V1,
+		# 2,00 m de corpo (lendário, como o Campeão Guardião), frisos de ouro, ver _apply_human_troop_model.
 		"v2_legendary_blade_hero":
 			data.unit_name = "Herói da Lâmina"
 			data.movement_points = 2.0
@@ -621,9 +644,7 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_legendary_blade_hero"
 			data.supply_cost = 5
 			data.production_cost = 90.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Barbarian.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.65
+			_apply_human_troop_model(data, "blade_hero_v1", "BladeHero", WARRIOR_LINE_CLIPS)
 			data.low_hp_attack_name = "Execução"
 			data.low_hp_attack_threshold = 0.5
 			data.low_hp_attack_bonus = 0.3
@@ -631,7 +652,8 @@ static func create_unit(kind: String) -> UnitData:
 		# no Campo dos Patrulheiros. Ataque à distância pelo sistema V1 (`attack_range` 2: atira de fora do alcance de melee e não sofre revide).
 		# Frágil de propósito: menos HP e Defesa que o Guerreiro (16 / 3,5) e o Escudeiro (18 / 4,5). Sem upkeep.
 		# BALANCE PLACEHOLDER: 13 HP / 4,5 / 2,5 / mov. 2 / visão 3 / alcance 2 / 20 PP. `visual_kind` == id (SaveManager recria por ele).
-		# Modelo PROVISÓRIO: o Ranger do KayKit (o mesmo do Arqueiro V1) na escala 1,0. Sem arte V2.
+		# Modelo próprio (2026-10-04): Arqueiro V1 (arco com corda em duas metades e flecha com ossos próprios; Disparo
+		# Preciso com clipe próprio), ver _apply_human_troop_model.
 		"v2_unit_archer":
 			data.unit_name = "Arqueiro"
 			data.movement_points = 2.0
@@ -644,11 +666,10 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_unit_archer"
 			data.supply_cost = 1
 			data.production_cost = 20.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Ranger.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
+			_apply_human_troop_model(data, "archer_v1", "Archer", RANGER_FIRST_CLIPS)
 		# Fase 8 — Caçador, 1ª evolução do Arqueiro (nó v2_doctrine_ranger_5): mesma função, mais dano e sobrevivência, MESMO alcance (2).
 		# Upgrade Arqueiro -> Caçador = 2 x (32 - 20) = 24 Ouro (fórmula genérica). BALANCE PLACEHOLDER: 17 / 6,5 / 3,0 / mov. 2 / alcance 2 / 32 PP.
-		# Modelo PROVISÓRIO: Ranger 15% maior.
+		# Modelo próprio (2026-10-04): Caçador V1 (arco recurvo; Disparo Preciso + Saraivada), ver _apply_human_troop_model.
 		"v2_unit_hunter":
 			data.unit_name = "Caçador"
 			data.movement_points = 2.0
@@ -661,15 +682,13 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_unit_hunter"
 			data.supply_cost = 2
 			data.production_cost = 32.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Ranger.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.15
+			_apply_human_troop_model(data, "hunter_v1", "Hunter", RANGER_LINE_CLIPS)
 		# Fase 8 — Atirador de Elite, forma Elite CONVENCIONAL (nó v2_doctrine_ranger_7; NÃO é Lendária). A mudança estratégica do N7 é o ALCANCE
 		# BÁSICO 3 (domínio avançado de ranged) — sem mais movimento e sem Defesa que o proteja em melee. O Disparo Preciso (alcance básico + 1) chega
 		# a 4 tiles sem exceção nenhuma; a Saraivada usa o alcance básico (3). Upgrade Caçador -> Atirador = 2 x (48 - 32) = 32 Ouro.
 		# BALANCE PLACEHOLDER: 22 / 8,5 / 3,5 / mov. 2 / alcance 3 / 48 PP. VISÃO 4 (o pedido só fixa visão 3 pro Arqueiro): o Disparo Preciso do N7
 		# alcança 4 tiles e um alvo precisa estar VISÍVEL pro jogador humano — com visão 3 o alcance extra só valeria com observador de fora.
-		# Modelo PROVISÓRIO: Ranger 30% maior.
+		# Modelo próprio (2026-10-04): Atirador de Elite V1 (arco longo, malha + peitoral de ferro, sem dourado).
 		"v2_unit_elite_marksman":
 			data.unit_name = "Atirador de Elite"
 			data.movement_points = 2.0
@@ -682,15 +701,14 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_unit_elite_marksman"
 			data.supply_cost = 3
 			data.production_cost = 48.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Ranger.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.3
+			_apply_human_troop_model(data, "elite_marksman_v1", "EliteMarksman", RANGER_LINE_CLIPS)
 		# Fase 8 — Caçador de Lendas, candidato a Unidade LENDÁRIA da linha do Patrulheiro (nó v2_doctrine_ranger_9, `legendary_candidate`). NÃO é upgrade
 		# do Atirador de Elite: unidade separada, produzida na Torre dos Patrulheiros, sob o MESMO slot global de V2LegendarySystem (Campeão Guardião,
 		# Herói da Lâmina...; o traço `legendary` é semeado no fim de create_unit). Extremamente perigoso à distância e muito mais frágil que o Campeão
 		# Guardião (30 HP / 4,5 de Defesa contra 44 / 10,0). Herda Disparo Preciso e Saraivada pela linha (doctrine_branch_of == ranger).
 		# Passiva intrínseca CAÇADA LENDÁRIA (dado `trait_attack_*`, sem `if` de id): +40% de Ataque contra alvos com o TRAÇO `legendary`.
-		# BALANCE PLACEHOLDER: 30 / 11,0 / 4,5 / mov. 2 / alcance 3 / 90 PP. Modelo PROVISÓRIO: Ranger 50% maior (os outros dois Lendários são Barbarian).
+		# BALANCE PLACEHOLDER: 30 / 11,0 / 4,5 / mov. 2 / alcance 3 / 90 PP. Modelo próprio (2026-10-04): Caçador de Lendas V1, 2,00 m de corpo
+		# (lendário), pele branca de fera lendária e frisos de ouro, ver _apply_human_troop_model.
 		"v2_legendary_legend_hunter":
 			data.unit_name = "Caçador de Lendas"
 			data.movement_points = 2.0
@@ -703,9 +721,7 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_legendary_legend_hunter"
 			data.supply_cost = 5
 			data.production_cost = 90.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Ranger.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.5
+			_apply_human_troop_model(data, "legend_hunter_v1", "LegendHunter", RANGER_LINE_CLIPS)
 			data.trait_attack_name = "Caçada Lendária"
 			data.trait_attack_target_traits.append(UnitData.TRAIT_LEGENDARY)
 			data.trait_attack_bonus = 0.4
@@ -1505,16 +1521,17 @@ static func create_unit(kind: String) -> UnitData:
 			data.production_cost = 100.0
 	return _seed_traits(data, kind)
 
-## Fase 19 — visual PROVISÓRIO das Hostes: o esqueleto da Asset Factory (o mesmo do monstro "skeleton"), repetido
-## `count` vezes dentro da MESMA Unit (só malha: nenhuma lógica, HP, seleção ou caminho individual). Escala 1:1
-## (altura = o "height" do preset), como todo modelo da Asset Factory.
+## Fase 19 — visual PROVISÓRIO das Hostes: o esqueleto do monstro "skeleton" (MonsterDatabase.SKELETON_V1_MODEL,
+## feito à mão no Blender), repetido `count` vezes dentro da MESMA Unit (só malha: nenhuma lógica, HP, seleção ou
+## caminho individual). Escala 1:1, frente já em +Z (yaw 0), crossfade entre clipes como o monstro.
 static func _apply_skeleton_formation(data: UnitData, count: int) -> void:
-	data.model_scene_path = "res://assets/generated/skeletons/skeleton_blocky/skeleton_blocky.glb"
+	data.model_scene_path = MonsterDatabase.SKELETON_V1_MODEL
 	data.animation_scene_path = data.model_scene_path
 	data.merge_shared_walk_animation = false
-	data.idle_animation_override = "Idle"
-	data.walk_animation_override = "Walk"
-	data.attack_animation_override = "Attack"
+	data.idle_animation_override = "Skeleton_Idle"
+	data.walk_animation_override = "Skeleton_Walk"
+	data.attack_animation_override = "Skeleton_Attack"
+	data.animation_blend_time = MonsterDatabase.V3_ANIMATION_BLEND_TIME
 	data.model_scale_multiplier = 1.0
 	data.model_formation_count = count
 

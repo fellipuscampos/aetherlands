@@ -1,0 +1,20 @@
+{
+  "Golem_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "Golem_Idle.mp4",
+    "gif": "Golem_Idle.gif"
+  },
+  "Golem_Walk": {
+    "frames": 32,
+    "fps": 24,
+    "mp4": "Golem_Walk.mp4",
+    "gif": "Golem_Walk.gif"
+  },
+  "Golem_Attack": {
+    "frames": 41,
+    "fps": 24,
+    "mp4": "Golem_Attack.mp4",
+    "gif": "Golem_Attack.gif"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "clips": {
+    "Minotaur_Idle": {
+      "frames": 49,
+      "loop": true,
+      "endpoints_max_vertex_delta_m": 0.0,
+      "minimum_vertex_z_m": -2.4051183800111176e-07,
+      "foot_target_error_m": 1.9967695002641374e-07,
+      "weapon_vs_hand_matrix_error": 2.4028122425079346e-07
+    },
+    "Minotaur_Walk": {
+      "frames": 29,
+      "loop": true,
+      "endpoints_max_vertex_delta_m": 0.0,
+      "minimum_vertex_z_m": -4.2549592649265833e-07,
+      "foot_target_error_m": 4.65765583756202e-07,
+      "weapon_vs_hand_matrix_error": 2.4493783712387085e-07
+    },
+    "Minotaur_Attack": {
+      "frames": 37,
+      "loop": false,
+      "endpoints_max_vertex_delta_m": 0.0,
+      "minimum_vertex_z_m": -4.1171284692609333e-07,
+      "foot_target_error_m": 3.2816403427042423e-07,
+      "weapon_vs_hand_matrix_error": 4.76837158203125e-07
+    }
+  },
+  "all_vertices_normalized_weights": true,
+  "root_drift_m": 0,
+  "rest_pose_contacts_excluded": [],
+  "new_surface_crossings": 0,
+  "problems": []
+}

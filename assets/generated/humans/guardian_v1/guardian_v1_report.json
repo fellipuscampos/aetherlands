@@ -1,0 +1,211 @@
+{
+  "name": "Guardian_V1",
+  "kind": "v2_unit_guardian (Guardi\u00e3o)",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/guardian_*.py)",
+  "height_m": 1.7999999523162842,
+  "front_y_m": -0.5338609218597412,
+  "back_y_m": 0.15121950209140778,
+  "x_m": [
+    -0.35121950507164,
+    0.38816916942596436
+  ],
+  "triangles": 360,
+  "editable_parts": 30,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      256,
+      256
+    ],
+    "filter": "NEAREST",
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 1.6,
+    "unique_uv_islands": 180,
+    "density_px_per_meter": 64,
+    "measured_min": 63.99978065464876,
+    "measured_max": 64.00027512464756,
+    "padding": 2
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "head",
+      "upper_arm_l",
+      "forearm_l",
+      "hand_l",
+      "thigh_l",
+      "shin_l",
+      "foot_l",
+      "upper_arm_r",
+      "forearm_r",
+      "hand_r",
+      "thigh_r",
+      "shin_r",
+      "foot_r"
+    ],
+    "hierarchy": "flat: every bone is a child of root; legs baked from two-bone IK",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "Belly": "chest",
+      "Buckle": "hips",
+      "Chest": "chest",
+      "Foot_l": "foot_l",
+      "Foot_r": "foot_r",
+      "Forearm_l": "forearm_l",
+      "Forearm_r": "forearm_r",
+      "Hand_l": "hand_l",
+      "Hand_r": "hand_r",
+      "Head": "head",
+      "HelmBand": "head",
+      "HelmCap": "head",
+      "HelmDome": "head",
+      "Nasal": "head",
+      "Pelvis": "hips",
+      "ShieldBoss": "hand_l",
+      "ShieldGrip": "hand_l",
+      "ShieldMid": "hand_l",
+      "ShieldTall": "hand_l",
+      "ShieldWide": "hand_l",
+      "Shin_l": "shin_l",
+      "Shin_r": "shin_r",
+      "Shoulder_l": "chest",
+      "Shoulder_r": "chest",
+      "TabardBack": "hips",
+      "TabardFront": "hips",
+      "Thigh_l": "thigh_l",
+      "Thigh_r": "thigh_r",
+      "UpperArm_l": "upper_arm_l",
+      "UpperArm_r": "upper_arm_r"
+    }
+  },
+  "animations": {
+    "Guardian_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Alert guard behind the shield: breathing, weight shift leg to leg, head scanning, shield bobbing slightly.",
+      "seconds": 3
+    },
+    "Guardian_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 91,
+      "description": "Lighter, quicker step in place: shield kept up in front, hip bob, small trunk counter-twist.",
+      "speed_m_s": 0.2914285714285714,
+      "seconds": 1.1666666666666667
+    },
+    "Guardian_Attack": {
+      "start": 1,
+      "end": 31,
+      "loop": false,
+      "nla_start": 141,
+      "description": "Shield bash: pulls the shield and body back, steps in with the left foot and shoves the shield forward with both arms (impact 13), recovers to the guard.",
+      "impact_frame": 13,
+      "seconds": 1.25
+    },
+    "Guardian_ShieldWall": {
+      "start": 1,
+      "end": 25,
+      "loop": false,
+      "nla_start": 181,
+      "description": "Shield Wall activation: widens the stance, crouches and raises the shield to face height with both arms; the shield lands with an impact jolt (frame 12); ends braced (= first frame of Guardian_ShieldWallHold).",
+      "seconds": 1
+    },
+    "Guardian_ShieldWallHold": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 221,
+      "description": "Shield Wall held while the defence buff lasts: braced behind the raised shield, tense breathing, tiny shield tremble.",
+      "seconds": 2
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "origin": "between the feet, on the ground",
+  "rig_bone_map": {
+    "Belly": "chest",
+    "Buckle": "hips",
+    "Chest": "chest",
+    "Foot_l": "foot_l",
+    "Foot_r": "foot_r",
+    "Forearm_l": "forearm_l",
+    "Forearm_r": "forearm_r",
+    "Hand_l": "hand_l",
+    "Hand_r": "hand_r",
+    "Head": "head",
+    "HelmBand": "head",
+    "HelmCap": "head",
+    "HelmDome": "head",
+    "Nasal": "head",
+    "Pelvis": "hips",
+    "ShieldBoss": "hand_l",
+    "ShieldGrip": "hand_l",
+    "ShieldMid": "hand_l",
+    "ShieldTall": "hand_l",
+    "ShieldWide": "hand_l",
+    "Shin_l": "shin_l",
+    "Shin_r": "shin_r",
+    "Shoulder_l": "chest",
+    "Shoulder_r": "chest",
+    "TabardBack": "hips",
+    "TabardFront": "hips",
+    "Thigh_l": "thigh_l",
+    "Thigh_r": "thigh_r",
+    "UpperArm_l": "upper_arm_l",
+    "UpperArm_r": "upper_arm_r"
+  },
+  "notes": "Static Guardian V1 (Guardi\u00e3o), the Squire evolved; 1.80 m, one block per body part, same joints as the Squire. Shield + grip follow hand_l; helm follows head.",
+  "animation_validation": {
+    "problems": [],
+    "ik": {},
+    "min_z": {
+      "Guardian_Idle": 0.0,
+      "Guardian_Walk": 0.0,
+      "Guardian_Attack": 0.0,
+      "Guardian_ShieldWall": 0.0,
+      "Guardian_ShieldWallHold": 0.0
+    }
+  },
+  "glb": {
+    "file": "guardian_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 16,
+    "triangles": 360,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Guardian_Idle": 3,
+      "Guardian_Walk": 1.1666666666666667,
+      "Guardian_Attack": 1.25,
+      "Guardian_ShieldWall": 1,
+      "Guardian_ShieldWallHold": 2
+    },
+    "channels": "location, rotation on every bone"
+  },
+  "status": "Guardian V1 with Guardian_Idle, Guardian_Walk, Guardian_Attack, Guardian_ShieldWall, Guardian_ShieldWallHold; GLB and packed atlases validated",
+  "source_validation": {
+    "scenes": [
+      "Guardian_V1"
+    ],
+    "actions": [
+      "Guardian_Walk",
+      "Guardian_ShieldWallHold",
+      "Guardian_ShieldWall",
+      "Guardian_Idle",
+      "Guardian_Attack"
+    ],
+    "armatures": [
+      "Guardian_V1_Skeleton"
+    ]
+  }
+}

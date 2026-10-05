@@ -56,6 +56,7 @@ static func apply(unit: Unit, id: String, turns: int) -> bool:
 	elif float(def.get("movement_delta", 0.0)) != 0.0:
 		unit.movement_left = maxf(0.0, unit.movement_left + float(def.movement_delta))
 	unit.refresh_technique_marker()
+	unit.refresh_status_overlay() # Etapa 3: tinta temporária reconhecível (render-only)
 	return true
 
 static func is_active(unit: Unit, id: String) -> bool:
@@ -131,11 +132,49 @@ static func process_round(players: Array, grid: HexGrid, turn: int) -> void:
 					var damage := dot_amount(unit, id)
 					var owner: PlayerData = unit.owner_player
 					var killed := CombatResolver.apply_environmental_unit_damage(unit, damage, grid)
-					MonsterEcologySystem.emit_event("status_tick", String(DEFS[id].source_species), {"status": id, "damage": damage, "killed": killed, "target": GameManager.players.find(owner)})
+					MonsterEcologySystem.emit_event("status_tick", String(DEFS[id].source_species), {"status": id, "damage": damage, "killed": killed, "target": GameManager.players.find(owner), "target_coord": [unit.coord.x, unit.coord.y]})
 					if killed:
 						break
+					EventBus.unit_status_changed.emit(unit) # Etapa 4: chip do card atualiza no tick (Vida/turnos)
 				if is_instance_valid(unit) and expiry <= turn:
 					unit.magic_status.erase(id)
+					unit.refresh_status_overlay()
+
+## V3 / Etapa 4 — ordem de importância dos estados (mesma do anel no mundo, Unit.STATUS_MARKER_ORDER) para o chip.
+const PRIORITY: Array[String] = [PETRIFIED, ROOTED, SILENCED, BURNING, POISON, STAGGERED]
+
+## Estados ativos na ordem de importância (chips do card da unidade).
+static func active_ids_by_priority(unit: Unit) -> Array[String]:
+	var result: Array[String] = []
+	for id in PRIORITY:
+		if is_active(unit, id):
+			result.append(id)
+	return result
+
+## Efeito mecânico REAL de `id` em `unit`, montado dos campos de DEFS (a UI nunca repete número à mão).
+static func effect_text(unit: Unit, id: String) -> String:
+	var def: Dictionary = DEFS.get(id, {})
+	var parts: Array[String] = []
+	if def.has("dot_fraction"):
+		parts.append("Perde %s de Vida no início de cada turno (%d%% da Vida máxima, %d–%d)" % [_amount(dot_amount(unit, id)), roundi(float(def.dot_fraction) * 100.0), int(def.dot_min), int(def.dot_max)])
+	if bool(def.get("movement_zero", false)):
+		parts.append("Movimento 0")
+	elif float(def.get("movement_delta", 0.0)) != 0.0:
+		parts.append("%+d Movimento" % int(def.movement_delta))
+	if def.has("defense_multiplier"):
+		parts.append("Defesa −%d%%" % roundi((1.0 - float(def.defense_multiplier)) * 100.0))
+	if bool(def.get("silences_spells", false)):
+		parts.append("Não pode conjurar feitiços")
+	elif bool(def.get("movement_zero", false)):
+		parts.append("Ainda pode atacar")
+	return ". ".join(parts) + "." if not parts.is_empty() else String(def.get("description", ""))
+
+static func _amount(value: float) -> String:
+	return str(int(value)) if is_equal_approx(value, roundf(value)) else "%.1f" % value
+
+## Turnos restantes exibíveis (mínimo 1 enquanto ativo).
+static func display_turns(unit: Unit, id: String) -> int:
+	return maxi(turns_left(unit, id), 1)
 
 ## Linhas de UI (fato público: qualquer observador vê) com a duração em turnos da vítima.
 static func status_lines(unit: Unit) -> Array[String]:

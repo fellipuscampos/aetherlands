@@ -9,6 +9,8 @@ extends Node
 signal volume_changed
 signal video_changed
 signal accessibility_changed
+## V3 / Etapa 4: anti-aliasing / qualidade das sombras mudaram (Main reaplica no Viewport e no sol).
+signal graphics_changed
 
 const SETTINGS_PATH := "user://settings.cfg"
 const UI_SCALE_OPTIONS: Array[int] = [80, 90, 100, 110, 125, 150]
@@ -34,6 +36,9 @@ var window_mode: String = WINDOWED
 var window_resolution: Vector2i = Vector2i(1600, 900)
 var ui_scale_percent: int = 100
 var reduced_motion: bool = false
+## V3 / Etapa 4 — opções gráficas reais (GraphicsQuality): preferência do jogador, aplicada ao vivo.
+var anti_aliasing: String = GraphicsQuality.DEFAULT_ANTI_ALIASING
+var shadow_quality: String = GraphicsQuality.DEFAULT_SHADOW_QUALITY
 
 func _ready() -> void:
 	load_settings()
@@ -65,6 +70,23 @@ func set_window_resolution(value: Vector2i) -> void:
 	window_resolution = value if value in RESOLUTION_OPTIONS else Vector2i(1600, 900)
 	_apply_resolution()
 	video_changed.emit()
+	save_settings()
+
+func set_anti_aliasing(value: String) -> void:
+	anti_aliasing = GraphicsQuality.valid_anti_aliasing(value)
+	graphics_changed.emit()
+	save_settings()
+
+func set_shadow_quality(value: String) -> void:
+	shadow_quality = GraphicsQuality.valid_shadow_quality(value)
+	graphics_changed.emit()
+	save_settings()
+
+## "Restaurar padrões" da página Vídeo: só as opções gráficas (janela/resolução/V-Sync ficam como o jogador deixou).
+func reset_graphics_to_defaults() -> void:
+	anti_aliasing = GraphicsQuality.DEFAULT_ANTI_ALIASING
+	shadow_quality = GraphicsQuality.DEFAULT_SHADOW_QUALITY
+	graphics_changed.emit()
 	save_settings()
 
 func set_ui_scale_percent(value: int) -> void:
@@ -131,6 +153,8 @@ func save_settings(path: String = SETTINGS_PATH) -> void:
 	cfg.set_value("video", "window_mode", window_mode)
 	cfg.set_value("video", "resolution_width", window_resolution.x)
 	cfg.set_value("video", "resolution_height", window_resolution.y)
+	cfg.set_value("graphics", "anti_aliasing", anti_aliasing)
+	cfg.set_value("graphics", "shadow_quality", shadow_quality)
 	cfg.set_value("accessibility", "ui_scale_percent", ui_scale_percent)
 	cfg.set_value("accessibility", "reduced_motion", reduced_motion)
 	cfg.save(path)
@@ -153,3 +177,6 @@ func load_settings(path: String = SETTINGS_PATH) -> void:
 	var loaded_scale := int(cfg.get_value("accessibility", "ui_scale_percent", ui_scale_percent))
 	ui_scale_percent = loaded_scale if loaded_scale in UI_SCALE_OPTIONS else 100
 	reduced_motion = bool(cfg.get_value("accessibility", "reduced_motion", reduced_motion))
+	# Valor inválido/corrompido volta ao padrão (nunca uma opção inexistente).
+	anti_aliasing = GraphicsQuality.valid_anti_aliasing(str(cfg.get_value("graphics", "anti_aliasing", anti_aliasing)))
+	shadow_quality = GraphicsQuality.valid_shadow_quality(str(cfg.get_value("graphics", "shadow_quality", shadow_quality)))

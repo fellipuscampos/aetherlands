@@ -1,0 +1,26 @@
+{
+  "Hero_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "Hero_Idle.mp4",
+    "gif": "Hero_Idle.gif"
+  },
+  "Hero_Walk": {
+    "frames": 32,
+    "fps": 24,
+    "mp4": "Hero_Walk.mp4",
+    "gif": "Hero_Walk.gif"
+  },
+  "Hero_Attack": {
+    "frames": 41,
+    "fps": 24,
+    "mp4": "Hero_Attack.mp4",
+    "gif": "Hero_Attack.gif"
+  },
+  "Hero_Block": {
+    "frames": 19,
+    "fps": 24,
+    "mp4": "Hero_Block.mp4",
+    "gif": "Hero_Block.gif"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "LegendHunter_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "LegendHunter_Idle.mp4",
+    "gif": "LegendHunter_Idle.gif"
+  },
+  "LegendHunter_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "LegendHunter_Walk.mp4",
+    "gif": "LegendHunter_Walk.gif"
+  },
+  "LegendHunter_Attack": {
+    "frames": 49,
+    "fps": 24,
+    "mp4": "LegendHunter_Attack.mp4",
+    "gif": "LegendHunter_Attack.gif"
+  },
+  "LegendHunter_PreciseShot": {
+    "frames": 57,
+    "fps": 24,
+    "mp4": "LegendHunter_PreciseShot.mp4",
+    "gif": "LegendHunter_PreciseShot.gif"
+  },
+  "LegendHunter_Volley": {
+    "frames": 70,
+    "fps": 24,
+    "mp4": "LegendHunter_Volley.mp4",
+    "gif": "LegendHunter_Volley.gif"
+  }
+}

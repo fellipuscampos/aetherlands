@@ -1,0 +1,83 @@
+{
+  "clips": {
+    "Spider_Idle": {
+      "minimum_vertex_z_m": -6.253831088542938e-07,
+      "maximum_tip_error_m": 8.661780613205446e-07,
+      "seam_vertex_delta_m": 0.0,
+      "minimum_supporting_legs": 6
+    },
+    "Spider_Walk": {
+      "minimum_vertex_z_m": -7.171183824539185e-07,
+      "maximum_tip_error_m": 9.86915461906744e-07,
+      "seam_vertex_delta_m": 0.0,
+      "minimum_supporting_legs": 4
+    },
+    "Spider_Attack": {
+      "minimum_vertex_z_m": -6.034970283508301e-07,
+      "maximum_tip_error_m": 1.0328396744950698e-06,
+      "seam_vertex_delta_m": 0.0,
+      "minimum_supporting_legs": 6
+    }
+  },
+  "surface_crossings": [],
+  "baseline_contacts": [
+    [
+      "Leg1_Femur_l",
+      "Cephalothorax"
+    ],
+    [
+      "Leg1_Femur_l",
+      "Leg2_Femur_l"
+    ],
+    [
+      "Leg1_Femur_r",
+      "Cephalothorax"
+    ],
+    [
+      "Leg1_Femur_r",
+      "Leg2_Femur_r"
+    ],
+    [
+      "Leg2_Femur_l",
+      "Cephalothorax"
+    ],
+    [
+      "Leg2_Femur_l",
+      "Leg3_Femur_l"
+    ],
+    [
+      "Leg2_Femur_r",
+      "Cephalothorax"
+    ],
+    [
+      "Leg2_Femur_r",
+      "Leg3_Femur_r"
+    ],
+    [
+      "Leg3_Femur_l",
+      "Cephalothorax"
+    ],
+    [
+      "Leg3_Femur_l",
+      "Leg4_Femur_l"
+    ],
+    [
+      "Leg3_Femur_r",
+      "Cephalothorax"
+    ],
+    [
+      "Leg3_Femur_r",
+      "Leg4_Femur_r"
+    ],
+    [
+      "Leg4_Femur_l",
+      "Cephalothorax"
+    ],
+    [
+      "Leg4_Femur_r",
+      "Cephalothorax"
+    ]
+  ],
+  "geometry_uvs_unchanged": true,
+  "normalized_rigid_weights": true
+}

@@ -141,7 +141,7 @@ step = 0.05
 unique_name_in_owner = true
 layout_mode = 2
 visible = false
-theme_override_constants/separation = 16
+theme_override_constants/separation = 8
 [node name="Title" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
 layout_mode = 2
 theme_type_variation = &"SubheadingLabel"
@@ -162,6 +162,29 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 text = "Sincronização vertical (V-Sync)"
+[node name="AntiAliasingLabel" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
+layout_mode = 2
+text = "Anti-aliasing"
+[node name="AntiAliasingOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
+unique_name_in_owner = true
+layout_mode = 2
+[node name="ShadowQualityLabel" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
+layout_mode = 2
+text = "Qualidade das sombras"
+[node name="ShadowQualityOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
+unique_name_in_owner = true
+layout_mode = 2
+[node name="GraphicsHint" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+autowrap_mode = 3
+text = "Aplicado na hora, sem reiniciar. FXAA e MSAA não se combinam: escolher um desliga o outro."
+[node name="ResetGraphicsButton" type="Button" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Restaurar padrões gráficos"
 
 [node name="AccessibilityPage" type="VBoxContainer" parent="Margin/Layout/Body/PagePanel/Pages"]
 unique_name_in_owner = true

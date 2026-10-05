@@ -1,0 +1,32 @@
+{
+  "Swordsman_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "Swordsman_Idle.mp4",
+    "gif": "Swordsman_Idle.gif"
+  },
+  "Swordsman_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "Swordsman_Walk.mp4",
+    "gif": "Swordsman_Walk.gif"
+  },
+  "Swordsman_Attack": {
+    "frames": 33,
+    "fps": 24,
+    "mp4": "Swordsman_Attack.mp4",
+    "gif": "Swordsman_Attack.gif"
+  },
+  "Swordsman_PowerStrike": {
+    "frames": 49,
+    "fps": 24,
+    "mp4": "Swordsman_PowerStrike.mp4",
+    "gif": "Swordsman_PowerStrike.gif"
+  },
+  "Swordsman_ArcAttack": {
+    "frames": 41,
+    "fps": 24,
+    "mp4": "Swordsman_ArcAttack.mp4",
+    "gif": "Swordsman_ArcAttack.gif"
+  }
+}

@@ -123,13 +123,16 @@ func test_the_progression_of_the_three_forms_is_monotonic():
 	for form in forms:
 		assert_eq(form.movement_points, 2.0)
 
-func test_no_upkeep_it_is_not_legendary_and_the_provisional_model_is_distinct():
+## 2026-10-04: as três formas têm modelos próprios (couro -> malha -> placas); se distinguem pelo MODELO, todos 1:1.
+func test_no_upkeep_it_is_not_legendary_and_the_three_forms_have_distinct_models():
 	var data := UnitDatabase.create_unit(SENTINEL)
 	assert_true(ResourceLoader.exists(data.model_scene_path), data.model_scene_path)
 	assert_true(ResourceLoader.exists(data.animation_scene_path), data.animation_scene_path)
-	var scales := [SHIELD, GUARDIAN, SENTINEL].map(func(k): return UnitDatabase.create_unit(k).model_scale_multiplier)
-	assert_lt(scales[0], scales[1])
-	assert_lt(scales[1], scales[2], "as três formas se distinguem pela escala (provisório)")
+	var models := [SHIELD, GUARDIAN, SENTINEL].map(func(k): return UnitDatabase.create_unit(k).model_scene_path)
+	assert_ne(models[0], models[1])
+	assert_ne(models[1], models[2], "as três formas se distinguem pelo modelo")
+	for kind in [SHIELD, GUARDIAN, SENTINEL]:
+		assert_eq(UnitDatabase.create_unit(kind).model_scale_multiplier, 1.0, "%s: a altura já está no modelo" % kind)
 
 func test_it_is_registered_as_a_trainable_kind_once_and_named_for_every_race():
 	assert_eq(UnitDatabase.PLAYER_TRAINABLE_KINDS.count(SENTINEL), 1)

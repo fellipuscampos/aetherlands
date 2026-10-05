@@ -1,0 +1,29 @@
+{
+  "clips": {
+    "Warg_Idle": {
+      "frames": 49,
+      "loop": true,
+      "endpoints_max_vertex_delta_m": 0.0,
+      "minimum_vertex_z_m": -2.3350099809249514e-07,
+      "paw_target_error_m": 2.9950963321688443e-07
+    },
+    "Warg_Walk": {
+      "frames": 29,
+      "loop": true,
+      "endpoints_max_vertex_delta_m": 0.0,
+      "minimum_vertex_z_m": -1.7795672135889617e-07,
+      "paw_target_error_m": 2.494554078993679e-07
+    },
+    "Warg_Attack": {
+      "frames": 33,
+      "loop": false,
+      "endpoints_max_vertex_delta_m": 0.0,
+      "minimum_vertex_z_m": -1.382080654366291e-07,
+      "paw_target_error_m": 2.5636927089222153e-07
+    }
+  },
+  "all_vertices_normalized_weights": true,
+  "rest_pose_contacts_excluded": [],
+  "new_surface_crossings": 0,
+  "problems": []
+}

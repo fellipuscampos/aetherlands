@@ -1,0 +1,196 @@
+{
+  "name": "Corrupted_Hero_V1",
+  "kind": "corrupted_hero (replaces mycotic_hive)",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/corrupted_hero_*.py)",
+  "height_m": 2.671743392944336,
+  "front_y_m": -0.9390389323234558,
+  "back_y_m": 0.24639999866485596,
+  "x_m": [
+    -0.8925754427909851,
+    0.929463803768158
+  ],
+  "triangles": 336,
+  "editable_parts": 28,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "filter": "NEAREST",
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 1.6,
+    "unique_uv_islands": 168,
+    "density_px_per_meter": 64,
+    "measured_min": 63.99971622056736,
+    "measured_max": 64.00021778365712,
+    "padding": 2
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "head",
+      "upper_arm_l",
+      "forearm_l",
+      "hand_l",
+      "thigh_l",
+      "shin_l",
+      "foot_l",
+      "upper_arm_r",
+      "forearm_r",
+      "hand_r",
+      "thigh_r",
+      "shin_r",
+      "foot_r"
+    ],
+    "hierarchy": "flat: every bone is a child of root; legs baked from two-bone IK",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "Belly": "chest",
+      "Buckle": "hips",
+      "Chest": "chest",
+      "Foot_l": "foot_l",
+      "Foot_r": "foot_r",
+      "Forearm_l": "forearm_l",
+      "Forearm_r": "forearm_r",
+      "Hand_l": "hand_l",
+      "Hand_r": "hand_r",
+      "Head": "head",
+      "MaceGrip": "hand_r",
+      "MaceHaft": "hand_r",
+      "MaceHead": "hand_r",
+      "ShieldGrip": "hand_l",
+      "ShieldRidge": "hand_l",
+      "ShieldSlab": "hand_l",
+      "ShieldTop": "hand_l",
+      "Shin_l": "shin_l",
+      "Shin_r": "shin_r",
+      "Shoulder_l": "chest",
+      "Shoulder_r": "chest",
+      "TabardBack": "hips",
+      "TabardFront": "hips",
+      "Thigh_l": "thigh_l",
+      "Thigh_r": "thigh_r",
+      "UpperArm_l": "upper_arm_l",
+      "UpperArm_r": "upper_arm_r",
+      "Waist": "hips"
+    }
+  },
+  "animations": {
+    "Hero_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Heavy tired breathing, head hangs and sways, shield arm sags and lifts, mace resting on the ground.",
+      "seconds": 3
+    },
+    "Hero_Walk": {
+      "start": 1,
+      "end": 33,
+      "loop": true,
+      "nla_start": 91,
+      "description": "Heavy tired step in place: hip bob and roll, trunk counter-twist, head nods, mace dragging on the ground.",
+      "speed_m_s": 0.30000000000000004,
+      "seconds": 1.3333333333333333
+    },
+    "Hero_Attack": {
+      "start": 1,
+      "end": 41,
+      "loop": false,
+      "nla_start": 141,
+      "description": "Raises the mace over and behind the head twisting the trunk, smashes it down on the ground ahead (impact 22), recovers to the tired stance.",
+      "impact_frame": 22,
+      "seconds": 1.6666666666666667
+    },
+    "Hero_Block": {
+      "start": 1,
+      "end": 19,
+      "loop": false,
+      "nla_start": 201,
+      "description": "Shield Block: ducks behind the tower shield, shoves it forward/up, knees give and the body is pushed back by the impact (frame 6), recovers.",
+      "seconds": 0.75
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "origin": "between the feet, on the ground",
+  "rig_bone_map": {
+    "Belly": "chest",
+    "Buckle": "hips",
+    "Chest": "chest",
+    "Foot_l": "foot_l",
+    "Foot_r": "foot_r",
+    "Forearm_l": "forearm_l",
+    "Forearm_r": "forearm_r",
+    "Hand_l": "hand_l",
+    "Hand_r": "hand_r",
+    "Head": "head",
+    "MaceGrip": "hand_r",
+    "MaceHaft": "hand_r",
+    "MaceHead": "hand_r",
+    "ShieldGrip": "hand_l",
+    "ShieldRidge": "hand_l",
+    "ShieldSlab": "hand_l",
+    "ShieldTop": "hand_l",
+    "Shin_l": "shin_l",
+    "Shin_r": "shin_r",
+    "Shoulder_l": "chest",
+    "Shoulder_r": "chest",
+    "TabardBack": "hips",
+    "TabardFront": "hips",
+    "Thigh_l": "thigh_l",
+    "Thigh_r": "thigh_r",
+    "UpperArm_l": "upper_arm_l",
+    "UpperArm_r": "upper_arm_r",
+    "Waist": "hips"
+  },
+  "notes": "Static, approved composition: one block per body part (head, chest, belly, waist, thigh, shin, foot, shoulder, upper arm, forearm, hand). Club follows hand_r, tower shield follows forearm_l, tabard strips follow hips.",
+  "animation_validation": {
+    "problems": [],
+    "ik_and_guard": {},
+    "min_z": {
+      "Hero_Idle": 0.0,
+      "Hero_Walk": 0.0,
+      "Hero_Attack": 0.0,
+      "Hero_Block": 0.0
+    }
+  },
+  "glb": {
+    "file": "corrupted_hero_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 16,
+    "triangles": 336,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Hero_Idle": 3,
+      "Hero_Walk": 1.3333333333333333,
+      "Hero_Attack": 1.6666666666666667,
+      "Hero_Block": 0.75
+    },
+    "channels": "location, rotation on every bone"
+  },
+  "status": "Corrupted Hero V1 with Hero_Idle, Hero_Walk, Hero_Attack; GLB and packed atlases validated",
+  "source_validation": {
+    "scenes": [
+      "Corrupted_Hero_V1"
+    ],
+    "actions": [
+      "Hero_Walk",
+      "Hero_Idle",
+      "Hero_Block",
+      "Hero_Attack"
+    ],
+    "armatures": [
+      "Corrupted_Hero_V1_Skeleton"
+    ]
+  }
+}

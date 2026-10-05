@@ -14,6 +14,9 @@ const MODE_NONE := ""
 const MODE_TILE := "tile"
 const MODE_UNIT := "unit"
 const MODE_CITY := "city"
+## V3 / Etapa 3: unidade em tile com prédio/covil/melhoria/obra — o inspetor oferece "Estrutura" (painel do tile
+## com a estrutura opaca e a unidade semitransparente no mapa).
+const MODE_STRUCTURE := "structure"
 const NO_COORD := Vector2i(999999, 999999)
 
 var host: PanelContainer
@@ -89,6 +92,7 @@ func _signal_map() -> Array:
 		[EventBus.city_captured, _on_city_captured],
 		[EventBus.diplomacy_changed, _on_diplomacy_changed],
 		[TurnManager.turn_changed, _on_turn_changed],
+		[EventBus.unit_status_changed, _on_unit_status_changed],
 	]
 
 func _connect_signals() -> void:
@@ -117,7 +121,7 @@ func primary_panel() -> Control:
 			return unit_panel
 		MODE_CITY:
 			return city_panel
-		MODE_TILE:
+		MODE_TILE, MODE_STRUCTURE:
 			return tile_panel
 	return null
 
@@ -228,6 +232,11 @@ func _on_diplomacy_changed(_type: String, _source: PlayerData, _target: PlayerDa
 func _on_turn_changed(_turn: int, _index: int) -> void:
 	queue_refresh()
 
+## V3 / Etapa 4: estado da unidade em foco mudou (aplicado/renovado/tick/expirou) → chips atualizam já.
+func _on_unit_status_changed(unit: Unit) -> void:
+	if mode == MODE_UNIT and unit == _unit:
+		queue_refresh()
+
 var _layout_queued := false
 
 func _on_content_resized() -> void:
@@ -302,6 +311,8 @@ func _route_tile(target: Vector2i) -> void:
 		options.append(MODE_CITY)
 	if unit_visible:
 		options.append(MODE_UNIT)
+	if unit_visible and not city_visible and _has_structure(grid, target, state):
+		options.append(MODE_STRUCTURE)
 	options.append(MODE_TILE)
 	var own_selected := unit_visible and unit.owner_player == human and SelectionManager.selected_unit == unit
 	var wanted := _preferred_mode
@@ -317,6 +328,8 @@ func _route_tile(target: Vector2i) -> void:
 			_show_city(city, _pending_city_tab)
 		MODE_UNIT:
 			_show_unit(unit)
+		MODE_STRUCTURE:
+			_show_tile(target, MODE_STRUCTURE)
 		_:
 			_show_tile(target)
 	_pending_city_tab = ""
@@ -342,9 +355,9 @@ func _show_unit(unit: Unit) -> void:
 		return
 	layout_changed.emit()
 
-func _show_tile(target: Vector2i) -> void:
+func _show_tile(target: Vector2i, as_mode: String = MODE_TILE) -> void:
 	coord = target
-	_activate(MODE_TILE)
+	_activate(as_mode)
 	tile_panel.show_tile(target)
 	layout_changed.emit()
 
@@ -353,7 +366,8 @@ func _activate(new_mode: String) -> void:
 	mode = new_mode
 	unit_panel.visible = mode == MODE_UNIT
 	city_panel.visible = mode == MODE_CITY
-	tile_panel.visible = mode == MODE_TILE
+	tile_panel.visible = mode == MODE_TILE or mode == MODE_STRUCTURE
+	_sync_visual_focus()
 	if not host.visible and not _suppressed:
 		host.visible = true
 		host.modulate.a = 0.0
@@ -373,8 +387,36 @@ func _hide() -> void:
 		selector.visible = false
 	if host != null:
 		host.visible = false
+	_sync_visual_focus()
 	if was_open:
 		context_changed.emit(mode)
+
+## V3 / Etapa 3 — foco visual do tile inspecionado: Unidade (decoração/estrutura transparentes), Cidade/Estrutura
+## (estrutura opaca, unidade transparente), Terreno escolhido no seletor (tudo transparente para ler o chão).
+func _sync_visual_focus() -> void:
+	var grid := GameManager.hex_grid
+	if grid == null or not is_instance_valid(grid) or grid.visual_focus == null:
+		return
+	match mode:
+		MODE_UNIT:
+			grid.visual_focus.set_focus(coord, VisualFocusSystem.MODE_UNIT)
+		MODE_CITY, MODE_STRUCTURE:
+			grid.visual_focus.set_focus(coord, VisualFocusSystem.MODE_STRUCTURE)
+		MODE_TILE:
+			if options.size() > 1:
+				grid.visual_focus.set_focus(coord, VisualFocusSystem.MODE_TERRAIN)
+			else:
+				grid.visual_focus.clear_focus()
+		_:
+			grid.visual_focus.clear_focus()
+
+static func _has_structure(grid: HexGrid, target: Vector2i, state: String) -> bool:
+	if state == TileInspector.STATE_UNSEEN:
+		return false
+	var building: Building = grid.buildings_by_coord.get(target)
+	if building != null and (building.owner_player == GameManager.human_player or state == TileInspector.STATE_VISIBLE):
+		return true
+	return grid.lairs_by_coord.has(target) or grid.improvement_markers_by_coord.has(target) or (state == TileInspector.STATE_VISIBLE and grid._construction_markers.has(target))
 
 func _refresh_current() -> void:
 	match mode:
@@ -400,7 +442,7 @@ func _refresh_current() -> void:
 				_route_tile(coord)
 				return
 			city_panel.refresh()
-		MODE_TILE:
+		MODE_TILE, MODE_STRUCTURE:
 			if GameManager.hex_grid == null or not GameManager.hex_grid.tiles.has(coord):
 				_hide()
 				return
@@ -432,6 +474,9 @@ func _rebuild_selector(city: City, unit: Unit) -> void:
 			MODE_UNIT:
 				button.name = "Select_unit"
 				button.text = "Unidade · %s" % (unit.unit_data.unit_name if unit.owner_player == null else RaceTheme.unit_name(unit.unit_data.visual_kind, unit.owner_player.civ.race if unit.owner_player.civ != null else "human"))
+			MODE_STRUCTURE:
+				button.name = "Select_structure"
+				button.text = "Estrutura"
 			_:
 				button.name = "Select_tile"
 				button.text = "Terreno"

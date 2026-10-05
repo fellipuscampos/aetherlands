@@ -36,7 +36,7 @@ func set_status(title: String, value_tone: Tone = Tone.NEUTRAL, turns: int = -1,
 		parts.append(icon_text)
 	parts.append(title)
 	if turns >= 0:
-		parts.append("%dT" % turns)
+		parts.append("· %dt" % turns) # V3 / Etapa 4: "Envenenado · 2t" (sem duração, sem contador)
 	label.text = " ".join(parts)
 	_apply_tone()
 

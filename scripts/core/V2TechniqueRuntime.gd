@@ -273,12 +273,15 @@ static func perform_strike(unit: Unit, technique_id: String, target: Unit = null
 	unit.move_order_target = Unit.NO_MOVE_ORDER
 	if approach != NO_TILE:
 		grid.move_unit(unit, approach, approach_cost) # a unidade REALMENTE percorre a rota e termina adjacente ao alvo
+	unit.begin_technique_animation(technique.id) # clipe próprio da técnica (se houver), uma vez por uso
 	for victim in victims:
 		if unit.hp <= 0.0:
 			break # caiu no contra-ataque de um alvo anterior
 		if victim.hp <= 0.0:
 			continue
 		CombatResolver.resolve(unit, victim, grid, technique.strike_multiplier, technique.strike_defense_penetration, technique.strike_prevents_counterattack)
+	if is_instance_valid(unit):
+		unit.end_technique_animation()
 	unit.movement_left = 0.0
 	return true
 

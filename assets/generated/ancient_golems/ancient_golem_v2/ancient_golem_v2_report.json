@@ -1,0 +1,188 @@
+{
+  "name": "Ancient_Golem_V2",
+  "display_name": "Anci\u00e3o da Floresta (golem)",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/ancient_golem_*.py)",
+  "height_m": 2.33962082862854,
+  "length_m": 2.385650396347046,
+  "width_m": 2.7799999713897705,
+  "min_z": 0.0,
+  "triangles": 252,
+  "editable_parts": 21,
+  "parts_per_region": {
+    "stone": 15,
+    "glow": 2,
+    "stone_dark": 4
+  },
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 1.6,
+    "unique_uv_islands": 126,
+    "density_px_per_meter": 64,
+    "measured_min": 63.99973033600833,
+    "measured_max": 64.00007559702743,
+    "padding": 2
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "head",
+      "jaw",
+      "upper_arm_l",
+      "forearm_l",
+      "fist_l",
+      "upper_arm_r",
+      "forearm_r",
+      "fist_r",
+      "thigh_l",
+      "shin_l",
+      "foot_l",
+      "thigh_r",
+      "shin_r",
+      "foot_r"
+    ],
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "Brow": "head",
+      "Eye_L": "head",
+      "Eye_R": "head",
+      "Fist_L": "fist_l",
+      "Fist_R": "fist_r",
+      "Foot_L": "foot_l",
+      "Foot_R": "foot_r",
+      "Gauntlet_L": "forearm_l",
+      "Gauntlet_R": "forearm_r",
+      "Head": "head",
+      "Jaw": "jaw",
+      "Pauldron_L": "chest",
+      "Pauldron_R": "chest",
+      "Pelvis": "hips",
+      "Shin_L": "shin_l",
+      "Shin_R": "shin_r",
+      "Thigh_L": "thigh_l",
+      "Thigh_R": "thigh_r",
+      "Torso": "chest",
+      "UpperArm_L": "upper_arm_l",
+      "UpperArm_R": "upper_arm_r"
+    }
+  },
+  "animations": {
+    "Golem_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Heavy breathing through the chest, small sway, slow look around; fists and feet planted.",
+      "seconds": 3
+    },
+    "Golem_Walk": {
+      "start": 1,
+      "end": 33,
+      "loop": true,
+      "nla_start": 91,
+      "description": "Gorilla knuckle-walk in place: diagonal pairs, crouched body bob, chest yaw towards the reaching arm.",
+      "speed_m_s": 0.30000000000000004,
+      "seconds": 1.3333333333333333
+    },
+    "Golem_Attack": {
+      "start": 1,
+      "end": 41,
+      "loop": false,
+      "nla_start": 141,
+      "description": "Rears up with both fists overhead and roars, then lunges and hammers both fists into the ground ahead (impact 20), recovers.",
+      "impact_frame": 20,
+      "seconds": 1.6666666666666667
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "rig_bone_map": {
+    "Brow": "head",
+    "Eye_L": "head",
+    "Eye_R": "head",
+    "Fist_L": "fist_l",
+    "Fist_R": "fist_r",
+    "Foot_L": "foot_l",
+    "Foot_R": "foot_r",
+    "Gauntlet_L": "forearm_l",
+    "Gauntlet_R": "forearm_r",
+    "Head": "head",
+    "Jaw": "jaw",
+    "Pauldron_L": "chest",
+    "Pauldron_R": "chest",
+    "Pelvis": "hips",
+    "Shin_L": "shin_l",
+    "Shin_R": "shin_r",
+    "Thigh_L": "thigh_l",
+    "Thigh_R": "thigh_r",
+    "Torso": "chest",
+    "UpperArm_L": "upper_arm_l",
+    "UpperArm_R": "upper_arm_r"
+  },
+  "notes": "Ancient golem V2 after the user voxel-golem reference, nature version (no sword). Static model for review.",
+  "animation_validation": {
+    "problems": [],
+    "lowest_z": -5.674758085660869e-07,
+    "loop_error": {
+      "Golem_Idle": 0.0,
+      "Golem_Walk": 0.0,
+      "Golem_Attack": 0.0
+    },
+    "contacts": {
+      "Golem_Idle": {
+        "frames_with_both_fists": 73,
+        "frames_with_both_feet": 73,
+        "frames": 73
+      },
+      "Golem_Walk": {
+        "frames_with_both_fists": 11,
+        "frames_with_both_feet": 11,
+        "frames": 33
+      },
+      "Golem_Attack": {
+        "frames_with_both_fists": 23,
+        "frames_with_both_feet": 41,
+        "frames": 41
+      }
+    }
+  },
+  "glb": {
+    "file": "ancient_golem_v2.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 17,
+    "triangles": 252,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Golem_Idle": 3,
+      "Golem_Walk": 1.3333333333333333,
+      "Golem_Attack": 1.6666666666666667
+    }
+  },
+  "status": "Ancient Golem V2 with Golem_Idle, Golem_Walk, Golem_Attack; GLB and packed atlases validated",
+  "source_validation": {
+    "scenes": [
+      "Ancient_Golem_V2"
+    ],
+    "actions": [
+      "Golem_Walk",
+      "Golem_Idle",
+      "Golem_Attack"
+    ],
+    "armatures": [
+      "Ancient_Golem_V2_Skeleton"
+    ]
+  }
+}

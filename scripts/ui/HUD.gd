@@ -338,6 +338,7 @@ func _integrate_ui_shell() -> void:
 	# fisicamente de host para participar do novo shell.
 	minimap.reparent(ui_shell.minimap_host, false)
 	minimap.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	minimap.expand_toggled.connect(ui_shell.set_minimap_expanded) # V3 / Etapa 4: ampliar para ler os hexágonos
 	ui_shell.bind_player(GameManager.human_player)
 
 func _on_shell_destination_requested(destination: StringName) -> void:

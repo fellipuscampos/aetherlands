@@ -47,7 +47,8 @@ redescubra os mesmos gargalos.
   arquivos temporários da cena de teste logo depois e confirmar com
   `git status --porcelain`.
 - Outros docs vivos: `docs/DRAGON_EVENT_DESIGN.md`,
-  `docs/WORLD_EVENT_CONTRACT.md`.
+  `docs/WORLD_EVENT_CONTRACT.md`, `docs/GRAPHICS_SETTINGS.md` (AA/sombras/
+  iluminação padrão).
 - V3 (Combat Ecology e etapas seguintes): visão em
   `docs/# Aetherlands V3 — Visão e Direção.md`, implementação em
   `docs/AETHERLANDS_V3_IMPLEMENTATION.md` (monstros neutros: leia antes de

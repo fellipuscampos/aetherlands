@@ -215,6 +215,14 @@ var _ice_floe_coord_to_index: Dictionary = {}
 ## pedra/pico), entao ResourcePropsManager encapsula essa colecao inteira
 ## em vez de HexGrid crescer mais 4 pares de MultiMeshInstance3D/Dictionary.
 var _resource_props_manager: ResourcePropsManager
+var ability_feedback: MonsterAbilityFeedback
+var visual_focus: VisualFocusSystem
+
+## V3 / Etapa 3: algo mudou de lugar num tile (unidade, prédio, cidade, covil, melhoria, névoa) — o foco visual
+## recalcula no fim do frame (deferred, uma vez por lote).
+func mark_visual_focus_dirty() -> void:
+	if visual_focus != null:
+		visual_focus.mark_dirty()
 ## Icones 2D billboard (placa + silhueta) flutuando sobre tiles com
 ## recurso, estilo Civilization — ver ResourceIconManager. Separado de
 ## _resource_props_manager de proposito: um e o objeto 3D no chao, o
@@ -415,6 +423,11 @@ func _ready() -> void:
 	_ice_floe_mesh = _build_ice_floe_mesh()
 	_resource_props_manager = ResourcePropsManager.new(self)
 	_resource_icon_manager = ResourceIconManager.new(self)
+	# V3 / Etapa 3: camada de apresentação de habilidades/ecologia (só reage a eventos; nunca altera gameplay).
+	ability_feedback = MonsterAbilityFeedback.new(self)
+	add_child(ability_feedback)
+	visual_focus = VisualFocusSystem.new(self)
+	add_child(visual_focus)
 	_build_selection_marker()
 	_build_hover_label()
 
@@ -474,6 +487,8 @@ func _process(delta: float) -> void:
 func generate_map(width: int, height: int, seed_value: int = -1, progress_callback: Callable = Callable()) -> void:
 	map_width = width
 	map_height = height
+	# V3 / Etapa 3: o PERFIL de mundo sai das dimensões (WorldProfile) — padrão 1.0 = só o continente principal.
+	world_profile = WorldProfile.for_dimensions(width, height)
 	_clear_entities()
 	tiles.clear()
 	visibility.clear()
@@ -723,6 +738,8 @@ func _clear_entities() -> void:
 	for child in get_children():
 		if child.is_in_group(WORLD_EVENT_MARKER_GROUP):
 			child.queue_free()
+	if visual_focus != null:
+		visual_focus.reset()
 	units_by_coord.clear()
 	cities_by_coord.clear()
 	buildings_by_coord.clear()
@@ -790,6 +807,7 @@ func get_building_at(coord: Vector2i) -> Building:
 const IMPROVEMENT_MODEL_SCALE := 0.55
 
 func refresh_resource_improvement_marker(coord: Vector2i) -> void:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	if improvement_markers_by_coord.has(coord):
 		return
 	if get_tile(coord) == null:
@@ -830,6 +848,7 @@ func is_tile_building_site(coord: Vector2i) -> bool:
 ## — chamado por GameManager quando City.process_turn() reporta um predio
 ## concluido com coord valido.
 func place_building(coord: Vector2i, building_id: String, owner_player: PlayerData, clear_portal: bool = true) -> Building:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	var previous: Building = buildings_by_coord.get(coord)
 	if is_instance_valid(previous):
 		previous.queue_free()
@@ -1553,6 +1572,7 @@ func _heap_pop_min(heap: Array) -> Array:
 	return top
 
 func spawn_unit(coord: Vector2i, unit_data: UnitData, player: PlayerData) -> Unit:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	if units_by_coord.has(coord) or coord == WorldSetup.NO_SPAWN_COORD:
 		return null
 	var unit := Unit.new()
@@ -1571,6 +1591,7 @@ func spawn_unit(coord: Vector2i, unit_data: UnitData, player: PlayerData) -> Uni
 ## visual desliza suavemente ate la. Fog, combate e IA usam unit.coord, que
 ## ja esta correto mesmo enquanto a animacao ainda esta rolando.
 func move_unit(unit: Unit, dest: Vector2i, cost: float) -> void:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	# Fase 19 — GATE CENTRAL de movimento: retinue sem comando não se move, venha a ordem de onde vier (seleção,
 	# marcha, explorar, IA). Não mexe em movement_left: se o comando voltar no mesmo turno, o resto do movimento vale.
 	if not unit.can_receive_orders():
@@ -1666,6 +1687,7 @@ func _animation_waypoints(origin: Vector2i, dest: Vector2i, unit: Unit, embarked
 ## de covil, etc.) porque isso e uma ferramenta de posicionamento livre
 ## pra teste visual, nao um movimento de jogo de verdade.
 func teleport_unit(unit: Unit, dest: Vector2i) -> void:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	units_by_coord.erase(unit.coord)
 	unit.coord = dest
 	unit.position = world_surface_for_coord(dest)
@@ -1818,6 +1840,7 @@ func explore_step(unit: Unit) -> void:
 ## save (generate_map() acabou de respawnar todos do zero; isso desfaz
 ## esse respawn pros que nao deviam voltar).
 func destroy_lair(coord: Vector2i) -> void:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	if not coord in lair_coords:
 		return
 	lair_coords.erase(coord)
@@ -1870,6 +1893,7 @@ func _grant_lair_clear_reward(unit: Unit, coord: Vector2i) -> void:
 		EventBus.notify.emit(message, "combat")
 
 func remove_unit(unit: Unit) -> void:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	var former_owner := unit.owner_player
 	var was_manifestation := V2ManifestationSystem.is_manifestation_unit(unit)
 	units_by_coord.erase(unit.coord)
@@ -1884,6 +1908,7 @@ func remove_unit(unit: Unit) -> void:
 ## silent=true evita o toast "Cidade fundada" — usado por SaveManager ao
 ## reconstruir cidades de uma partida carregada (nao e um evento novo).
 func found_city(coord: Vector2i, player: PlayerData, city_name: String, silent: bool = false) -> City:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	var city := City.new()
 	_cities_root.add_child(city)
 	city.setup(player, coord, city_name, hex_size)
@@ -2077,6 +2102,7 @@ func recompute_fog(player: PlayerData) -> void:
 ## outros so aparecem em tiles ATUALMENTE visiveis (nao basta ja ter
 ## explorado).
 func _apply_fog_to_entities(player: PlayerData) -> void:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	for coord in units_by_coord.keys():
 		var unit: Unit = units_by_coord[coord]
 		if unit.owner_player == player or unit.always_visible:
@@ -2252,6 +2278,8 @@ func transform_tile_terrain(coord: Vector2i, new_terrain_type: int) -> void:
 ## a instancia (zera escala, mesma tecnica de _refresh_changed_terrain_
 ## visuals abaixo) -- nao mexe no `.resource` do tile nem em nada mais.
 func _clear_tree_props_at(coord: Vector2i) -> void:
+	if visual_focus != null:
+		visual_focus.release_props(coord) # devolve antes de limpar (senão o foco "ressuscitaria" a árvore)
 	if _props_tree_instance and _tree_coord_to_index.has(coord):
 		for index in _tree_coord_to_index[coord]:
 			_props_tree_instance.multimesh.set_instance_transform(index, Transform3D(Basis().scaled(Vector3.ZERO), Vector3.ZERO))
@@ -2289,6 +2317,7 @@ func _clear_tile_decor_at(coord: Vector2i) -> void:
 		_resource_props_manager.clear_prop_at(coord)
 	if _resource_icon_manager:
 		_resource_icon_manager.clear_icon_at(coord)
+	mark_visual_focus_dirty()
 
 func _refresh_changed_terrain_visuals() -> void:
 	# Atualiza só os hexágonos alterados, após restaurar os recursos da região.
@@ -2552,6 +2581,7 @@ func _build_city_tint_mesh(city: City) -> ArrayMesh:
 ## antes de sumir de vez — cancelamento (jogador trocou a producao antes de
 ## completar) continua removendo na hora, sem essa "volta de graca".
 func refresh_construction_markers(just_completed: Array[Vector2i] = []) -> void:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	var wanted := {} # coord -> City
 	for city in cities_by_coord.values():
 		if city.pending_building_coord != City.NO_PENDING_COORD:
@@ -3207,9 +3237,12 @@ func _zone_for(coord: Vector2i) -> int:
 		return _Zone.MAIN
 	if _in_zone_bounds(coord, MAIN_ZONE_CENTER, MAIN_ZONE_HALF_WIDTH, MAIN_ZONE_HALF_HEIGHT):
 		return _Zone.MAIN
-	if _in_zone_bounds(coord, VOLCANIC_ZONE_CENTER, VOLCANIC_ZONE_HALF_WIDTH, VOLCANIC_ZONE_HALF_HEIGHT):
+	# V3 / Etapa 3: os continentes especiais só existem quando o perfil do mundo os liga (desativados no padrão 1.0,
+	# preservados para conteúdo futuro — ver WorldProfile).
+	var profile := WorldProfile.for_dimensions(map_width, map_height)
+	if bool(profile.volcanic_continent) and _in_zone_bounds(coord, VOLCANIC_ZONE_CENTER, VOLCANIC_ZONE_HALF_WIDTH, VOLCANIC_ZONE_HALF_HEIGHT):
 		return _Zone.VOLCANIC
-	if _in_zone_bounds(coord, CRYSTAL_ZONE_CENTER, CRYSTAL_ZONE_HALF_WIDTH, CRYSTAL_ZONE_HALF_HEIGHT):
+	if bool(profile.crystal_continent) and _in_zone_bounds(coord, CRYSTAL_ZONE_CENTER, CRYSTAL_ZONE_HALF_WIDTH, CRYSTAL_ZONE_HALF_HEIGHT):
 		return _Zone.CRYSTAL
 	return _Zone.NONE
 
@@ -4303,9 +4336,14 @@ func _min_distance_from_center() -> float:
 ## usuario). Compara AREA total (largura x altura) em vez de um raio
 ## unico, ja que os tres tamanhos oficiais agora tem proporcoes W:H
 ## ligeiramente diferentes entre si.
+## V3 / Etapa 3: decidido pelo PERFIL de mundo (WorldProfile.fixed_main_frame) — verdadeiro para o padrão 1.0 e para
+## o perfil com continentes especiais (o continente principal usa a pegada histórica fixa nos dois); falso só para
+## mapas pequenos de teste. Lido das dimensões ATUAIS (fixtures ajustam map_width/height sem gerar mapa).
 func _is_large_map_or_bigger() -> bool:
-	var large: Dictionary = TitleScreen.MAP_SIZES.large
-	return map_width * map_height >= large.width * large.height
+	return bool(WorldProfile.for_dimensions(map_width, map_height).fixed_main_frame)
+
+## V3 / Etapa 3: perfil do mundo gerado (STANDARD_1_0 / SPECIAL_CONTINENTS / SMALL).
+var world_profile: Dictionary = WorldProfile.SMALL
 
 ## Espalha alguns Covis de Monstro (Unit neutra, owner_player == null — ver
 ## MonsterDatabase) em terra firme longe do centro do mapa, deterministico
@@ -4762,6 +4800,7 @@ func set_lair_role(coord: Vector2i, role: String) -> void:
 ## regional). `remove_members` também tira os monstros dele (os que nasceram dele ou, sem origem
 ## registrada, os que estão na área). O load chama com remove_members=false (monstros vêm do save).
 func remove_lair_silently(coord: Vector2i, remove_members: bool = true) -> void:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	if not coord in lair_coords:
 		return
 	if remove_members:
@@ -4894,6 +4933,7 @@ func _maybe_roam_lair(lair_coord: Vector2i) -> void:
 ## porque SaveManager tambem chama, pra restaurar cada monstro neutro salvo
 ## (ver SaveManager._deserialize_neutral_units).
 func spawn_monster_at(coord: Vector2i, kind: String, is_camp_boss: bool = false) -> Unit:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	var unit := Unit.new()
 	_units_root.add_child(unit)
 	unit.setup(MonsterDatabase.create_monster(kind, is_camp_boss), null, coord, is_camp_boss)
@@ -4905,6 +4945,7 @@ func spawn_monster_at(coord: Vector2i, kind: String, is_camp_boss: bool = false)
 ## V3 / Etapa 2 — cria um monstro FORA de units_by_coord (Verme Colossal subterrâneo restaurado do save): não
 ## ocupa tile nem pode ser alvo até MonsterAbilitySystem o fazer emergir.
 func spawn_monster_detached(coord: Vector2i, kind: String) -> Unit:
+	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	var unit := Unit.new()
 	_units_root.add_child(unit)
 	unit.setup(MonsterDatabase.create_monster(kind), null, coord)
@@ -5702,6 +5743,8 @@ func _build_hex_prism_mesh(size: float, depth_factor: float = 0.4) -> ArrayMesh:
 ## mapa. As instancias reaproveitam MultiMesh (como o terreno) e respeitam a
 ## mesma neblina de guerra via _apply_prop_fog().
 func _rebuild_props() -> void:
+	if visual_focus != null:
+		visual_focus.reset() # os MultiMesh de origem vão ser recriados
 	if _props_tree_instance:
 		_props_tree_instance.queue_free()
 		_props_tree_instance = null

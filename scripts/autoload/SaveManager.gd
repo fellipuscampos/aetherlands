@@ -833,6 +833,7 @@ func _deserialize_neutral_units(saved: Array, hex_grid: HexGrid) -> void:
 		if _is_number(u.get("arcane_barrier")):
 			unit.arcane_barrier = float(u.arcane_barrier)
 		unit.took_damage_since_regen = bool(u.get("regen_interrupted", false))
+		unit.refresh_status_overlay() # V3 / Etapa 3: casca da Barreira Arcana volta junto
 
 func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 	var units := []
@@ -966,7 +967,8 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 		hex_grid.next_unit_id = maxi(hex_grid.next_unit_id, unit.serial_id + 1)
 		unit.magic_cooldowns = _sanitize_magic_dict(u.get("magic_cooldowns", {}))
 		unit.magic_status = _sanitize_magic_dict(u.get("magic_status", {}))
-		unit.refresh_technique_marker() # V2 (Fase 4): o anel de uma Técnica ativa volta junto com o estado
+		unit.refresh_technique_marker(false) # V2 (Fase 4): o anel de uma Técnica ativa volta junto com o estado (Muralha: direto na postura)
+		unit.refresh_status_overlay() # V3 / Etapa 3: indicador de estado/Barreira Arcana volta junto
 		unit.set_hp_silent(float(u.hp)) # restauracao, nao um golpe -- nao deveria piscar/pular (ver Unit.hp)
 		unit.movement_left = float(u.movement_left)
 		unit.kills = int(u.get("kills", 0))

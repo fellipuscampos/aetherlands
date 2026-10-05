@@ -1,0 +1,23 @@
+{
+  "Spider_Idle": {
+    "frames": 60,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Spider_Idle.mp4",
+    "gif": "Spider_Idle.gif"
+  },
+  "Spider_Walk": {
+    "frames": 32,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Spider_Walk.mp4",
+    "gif": "Spider_Walk.gif"
+  },
+  "Spider_Attack": {
+    "frames": 37,
+    "fps": 24,
+    "loop": false,
+    "mp4": "Spider_Attack.mp4",
+    "gif": "Spider_Attack.gif"
+  }
+}

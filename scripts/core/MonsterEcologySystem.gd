@@ -42,6 +42,12 @@ static var initial_stats: Dictionary = {}
 
 static var _eligible_cache: Array[Vector2i] = []
 static var _eligible_key := ""
+## Etapa 4: sinais estáticos de habitat (Nódulos Arcanos + composição local por coordenada) do mapa atual.
+static var _habitat_cache: Dictionary = {}
+static var _habitat_key := ""
+## DEV/laboratório (A/B `--no-habitat`): false = habitat neutro (todo candidato com o mesmo peso, a seleção vira o
+## sorteio uniforme). Nunca salvo nem exposto na UI; o jogo sempre usa true.
+static var habitat_enabled := true
 
 static func reset() -> void:
 	enabled = false
@@ -56,6 +62,8 @@ static func reset() -> void:
 	initial_stats = {}
 	_eligible_cache = []
 	_eligible_key = ""
+	_habitat_cache = {}
+	_habitat_key = ""
 	MonsterHazardSystem.reset() # V3 / Etapa 2: raízes, infecção, marcadores
 	MonsterAbilitySystem.reset() # V3 / Etapa 2: Vermes subterrâneos
 
@@ -103,6 +111,14 @@ static func eligible(grid: HexGrid) -> Array[Vector2i]:
 		_eligible_key = key
 	return _eligible_cache
 
+## Cache de habitat do mapa atual (refeito após load ou em outro mapa; nunca por turno de monstro).
+static func habitat_cache(grid: HexGrid) -> Dictionary:
+	var key := "%d:%d:%d" % [grid.get_instance_id(), grid.tiles.size(), grid.map_seed]
+	if key != _habitat_key:
+		_habitat_cache = MonsterEcologyPlanner.new_habitat_cache(grid)
+		_habitat_key = key
+	return _habitat_cache
+
 # ---------------------------------------------------------------------------
 # População inicial (partida nova)
 # ---------------------------------------------------------------------------
@@ -121,7 +137,8 @@ static func populate_new_match(grid: HexGrid, on: bool) -> void:
 	var land := eligible(grid)
 	eligible_count = land.size()
 	targets = MonsterEcologyData.targets_for(eligible_count)
-	var stats := {"adopted": 0, "legacy_removed": 0, "shortfall": {}, "eligible": eligible_count, "targets": targets.duplicate()}
+	var stats := {"adopted": 0, "legacy_removed": 0, "shortfall": {}, "eligible": eligible_count, "targets": targets.duplicate(), "habitat": {}}
+	var habitat := habitat_cache(grid)
 	var count_by_tier := {}
 	for tier in MonsterEcologyData.TIERS:
 		count_by_tier[tier] = 0
@@ -138,20 +155,20 @@ static func populate_new_match(grid: HexGrid, on: bool) -> void:
 		if queue.size() > room:
 			queue = queue.slice(0, room)
 		var candidates := MonsterEcologyPlanner.shuffled(land, rng)
-		var pointer := 0
 		var placed := 0
 		for kind in queue:
 			var group := MonsterEcologyData.group_size(kind)
-			var anchor := HexGrid.NO_LAIR
-			while pointer < candidates.size():
-				var coord: Vector2i = candidates[pointer]
-				pointer += 1
-				if MonsterEcologyPlanner.is_valid_new_anchor(grid, coord, tier, group, anchors, sites):
-					anchor = coord
-					break
-			if anchor == HexGrid.NO_LAIR:
+			# Etapa 4: âncora sorteada pelo habitat da espécie entre candidatos válidos (fallback progressivo).
+			var pick := MonsterEcologyPlanner.habitat_anchor(grid, kind, tier, group, anchors, sites, candidates, habitat, rng)
+			if pick.is_empty():
 				break
+			var anchor: Vector2i = pick.anchor
 			_create_site(grid, kind, anchor, HexGrid.NO_LAIR, SOURCE_INITIAL, turn, MonsterEcologyPlanner.group_tiles(grid, anchor, group, tier, anchors))
+			if not stats.habitat.has(kind):
+				stats.habitat[kind] = {"sites": 0, "score_sum": 0.0, "fallback": 0}
+			stats.habitat[kind].sites += 1
+			stats.habitat[kind].score_sum += float(pick.score)
+			stats.habitat[kind].fallback += 1 if bool(pick.fallback) else 0
 			placed += 1
 		if placed < queue.size():
 			stats.shortfall[tier] = queue.size() - placed
@@ -171,6 +188,11 @@ static func _adopt_legacy_lairs(grid: HexGrid, anchors: Array[Vector2i], turn: i
 		var kind := String(grid.lair_kind_by_coord.get(lair_coord, ""))
 		var tier := MonsterEcologyData.tier_of(kind)
 		if tier == "":
+			# V3 / Etapa 3: o sorteio legado da seed pode cair no fallback "ignora bioma" e criar um covil de Dragão em
+			# terreno comum. Sem os continentes especiais (padrão 1.0) ele ficaria no continente principal, fora da
+			# ecologia e do evento mundial — sai no setup (partida nova, nada tocado). O Dragão Ancião é só o evento.
+			grid.remove_lair_silently(lair_coord)
+			stats.legacy_removed = int(stats.legacy_removed) + 1
 			continue
 		var adoptable := int(count_by_tier[tier]) < int(targets[tier]) \
 			and MonsterEcologyPlanner.capital_distance_ok(lair_coord, tier, anchors) \
@@ -240,7 +262,7 @@ static func process_round(grid: HexGrid, turn: int) -> void:
 	var group := MonsterEcologyData.group_size(kind)
 	var anchors := capital_anchors()
 	var blocked := MonsterEcologyPlanner.refill_blocked_tiles(grid, GameManager.players)
-	var anchor := MonsterEcologyPlanner.find_refill_anchor(grid, eligible(grid), tier, group, anchors, sites, depleted, blocked, turn, rng)
+	var anchor := MonsterEcologyPlanner.find_refill_anchor(grid, eligible(grid), tier, group, anchors, sites, depleted, blocked, turn, rng, kind, habitat_cache(grid))
 	if anchor == HexGrid.NO_LAIR:
 		next_refill_turn = turn + 1
 		return
@@ -257,7 +279,7 @@ static func _refresh_sites(grid: HexGrid, turn: int) -> void:
 			kept.append(site)
 			continue
 		depleted.append({"coord": site.anchor, "turn": turn})
-		emit_event("site_depleted", String(site.species), {"site": int(site.id)})
+		emit_event("site_depleted", String(site.species), {"site": int(site.id), "anchor": [site.anchor.x, site.anchor.y]})
 	sites = kept
 	var recent: Array[Dictionary] = []
 	for entry in depleted:
@@ -279,7 +301,8 @@ static func _alive_by_site(grid: HexGrid) -> Dictionary:
 static func site_population(grid: HexGrid, site_id: int) -> int:
 	return int(_alive_by_site(grid).get(site_id, 0))
 
-## Sítios de Colmeia Micótica com a Colmeia viva -> âncora (MonsterHazardSystem: infecção ativa).
+## Sítios com uma espécie viva que tenha Contaminação Micótica -> âncora (MonsterHazardSystem: infecção ativa).
+## DORMENTE desde 2026-10-04: a Colmeia saiu do jogo (virou o Herói Corrompido) e nenhuma espécie tem a habilidade.
 static func _live_hive_sites(grid: HexGrid) -> Dictionary:
 	var result := {}
 	for unit in grid.neutral_units():
@@ -451,10 +474,13 @@ static func load_save_dict(data: Variant, grid: HexGrid) -> void:
 			if saved_targets.has(tier):
 				targets[tier] = int(saved_targets[tier])
 	for entry in data.get("sites", []):
-		if typeof(entry) != TYPE_DICTIONARY or not MonsterEcologyData.is_ecology_species(String(entry.get("species", ""))):
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var species := MonsterDatabase.canonical_kind(String(entry.get("species", ""))) # Colmeia (save antigo) -> Herói
+		if not MonsterEcologyData.is_ecology_species(species):
 			continue
 		sites.append({
-			"id": int(entry.get("id", -1)), "species": String(entry.species), "anchor": _coord(entry.get("anchor")),
+			"id": int(entry.get("id", -1)), "species": species, "anchor": _coord(entry.get("anchor")),
 			"lair": _coord(entry.get("lair")), "created_turn": int(entry.get("created_turn", 0)), "source": String(entry.get("source", SOURCE_INITIAL)),
 			"raised_turn": int(entry.get("raised_turn", -1)),
 		})

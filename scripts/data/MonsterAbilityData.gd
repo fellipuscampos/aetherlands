@@ -21,18 +21,19 @@ const ROOTS_OF_THE_WORLD := "roots_of_the_world"
 const ARCANE_HUNGER := "arcane_hunger"
 const AETHER_RUPTURE := "aether_rupture"
 const MYCOTIC_CONTAMINATION := "mycotic_contamination"
+const SHIELD_BLOCK := "shield_block"
 
 ## Campos comuns: name, description, passive, cooldown (turnos próprios; 0 = sem recarga), min_range, max_range,
 ## targeting (unit/city/self/area/caster), ai (quando a IA usa). Os demais são parâmetros da própria habilidade.
 const ABILITIES := {
 	QUICK_PLUNDER: {
 		"name": "Saque Rápido", "passive": true, "cooldown": 0, "min_range": 1, "max_range": 1, "targeting": "city",
-		"description": "Ao golpear uma cidade num raide, rouba até 8 Ouro e recua. No máximo 2 Goblins por raide.",
-		"ai": "raide de cidade (só no Despertar), depois descanso", "gold": 8.0, "max_raiders": 2,
+		"description": "Cada golpe numa cidade num raide rouba até 2 Ouro e o Goblin recua no mesmo turno. No máximo 2 Goblins por raide.",
+		"ai": "raide de cidade (só no Despertar): aproxima e golpeia na mesma ação, rouba, recua; depois descanso", "gold": 2.0, "max_raiders": 2, "retreat_steps": 2,
 	},
 	RISING_HORDE: {
 		"name": "Horda Crescente", "passive": true, "cooldown": 0, "min_range": 1, "max_range": 1, "targeting": "self",
-		"description": "Ao matar uma unidade, ergue um novo Esqueleto ao lado (1 por covil por rodada, até 6 por covil). Ataca em grupo.",
+		"description": "Ao matar uma unidade, ergue um novo Esqueleto ao lado (1 por território por rodada, até 6 por território). Ataca em grupo.",
 		"ai": "agrupa 3+ antes de pressionar; evita luta claramente perdida", "per_round": 1, "site_cap": 6, "group_min": 3, "group_radius": 2,
 	},
 	BLOOD_SCENT: {
@@ -65,14 +66,21 @@ const ABILITIES := {
 		"description": "Petrificação Parcial até o fim do próximo turno do alvo: Movimento 0 e −20% Defesa (ainda ataca).",
 		"ai": "o alvo de maior Ataque ao alcance", "status": UnitStatusEffects.PETRIFIED, "turns": 1,
 	},
+	# Herói Corrompido (2026-10-04). 20% = 1 golpe em 5: aparece com frequência sem tornar o Herói imune — na média a
+	# Vida dele (34) rende como ~42 contra ataques comuns. Rolagem determinística (MonsterAbilitySystem.block_roll).
+	SHIELD_BLOCK: {
+		"name": "Bloqueio com Escudo", "passive": true, "cooldown": 0, "min_range": 0, "max_range": 1, "targeting": "self",
+		"description": "20% de chance de bloquear com o escudo TODO o dano de um ataque comum recebido (o revide continua normal). Não bloqueia feitiços, habilidades nem dano de ambiente.",
+		"ai": "automática ao receber um ataque comum", "chance": 0.2,
+	},
 	BURROW: {
-		"name": "Escavar", "passive": false, "cooldown": 4, "min_range": 1, "max_range": 6, "targeting": "area",
-		"description": "Mergulha sob a terra (intocável, deixa um Rastro Subterrâneo no destino) e emerge no turno seguinte: 120% no impacto, 80% ao redor.",
-		"ai": "grupo de unidades a até 6 tiles", "impact": 1.2, "splash": 0.8,
+		"name": "Escavar", "passive": false, "cooldown": 4, "min_range": 2, "max_range": 3, "targeting": "self",
+		"description": "Ferido, mergulha para fugir: fica sob a terra (intocável, sem atacar nem causar dano) e reaparece no turno seguinte no fim do Rastro Subterrâneo, 2–3 tiles longe do inimigo.",
+		"ai": "com ≤ 35% da Vida e inimigo a até 3 tiles", "hp_threshold": 0.35, "threat_radius": 3,
 	},
 	ROOTS_OF_THE_WORLD: {
 		"name": "Raízes do Mundo", "passive": false, "cooldown": 4, "min_range": 0, "max_range": 2, "targeting": "area",
-		"description": "Ergue até 4 tiles de raízes a até 2 tiles (3 rodadas): +2 custo de movimento; quem estiver em cima fica Enraizado.",
+		"description": "Ergue até 4 tiles de raízes a até 2 tiles (3 rodadas): +2 custo de movimento e quem estiver em cima fica Enraizado. Raízes não causam dano.",
 		"ai": "unidade a até 2 tiles", "zones": 4, "rounds": 3, "move_cost": 2.0, "status": UnitStatusEffects.ROOTED, "turns": 1,
 	},
 	ARCANE_HUNGER: {
@@ -87,7 +95,7 @@ const ABILITIES := {
 	},
 	MYCOTIC_CONTAMINATION: {
 		"name": "Contaminação Micótica", "passive": true, "cooldown": 0, "min_range": 0, "max_range": 2, "targeting": "area",
-		"description": "Infecta o entorno (até raio 2, máx. 12 tiles, +1 por rodada): quem entra ou começa o turno ali perde 3% da Vida (1–3) e recebe só metade da cura.",
+		"description": "Infecta o chão em volta (até raio 2, máx. 12 tiles, +1 por rodada): quem COMEÇA o turno num tile infectado perde 3% da Vida (1–3); ali a cura recebida cai pela metade.",
 		"ai": "automática enquanto a Colmeia vive", "max_radius": 2, "max_tiles": 12, "damage_fraction": 0.03, "damage_min": 1.0, "damage_max": 3.0, "heal_multiplier": 0.5,
 	},
 }

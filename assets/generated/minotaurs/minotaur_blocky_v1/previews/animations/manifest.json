@@ -1,0 +1,23 @@
+{
+  "Minotaur_Idle": {
+    "frames": 48,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Minotaur_Idle.mp4",
+    "gif": "Minotaur_Idle.gif"
+  },
+  "Minotaur_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Minotaur_Walk.mp4",
+    "gif": "Minotaur_Walk.gif"
+  },
+  "Minotaur_Attack": {
+    "frames": 37,
+    "fps": 24,
+    "loop": false,
+    "mp4": "Minotaur_Attack.mp4",
+    "gif": "Minotaur_Attack.gif"
+  }
+}

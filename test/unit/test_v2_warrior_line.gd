@@ -70,7 +70,7 @@ func test_the_weapon_master_is_an_advanced_melee_not_a_glass_cannon():
 	assert_gt(master.max_hp, UnitDatabase.create_unit(SWORDSMAN).max_hp)
 	assert_gt(master.max_hp * master.defense, 100.0, "resistência suficiente para o corpo a corpo")
 
-func test_the_forms_are_registered_once_and_carry_distinct_provisional_scales():
+func test_the_forms_are_registered_once_and_carry_their_own_models():
 	for kind in [WARRIOR, SWORDSMAN, MASTER, HERO]:
 		assert_eq(UnitDatabase.PLAYER_TRAINABLE_KINDS.count(kind), 1, kind)
 		var data := UnitDatabase.create_unit(kind)
@@ -78,8 +78,12 @@ func test_the_forms_are_registered_once_and_carry_distinct_provisional_scales():
 		assert_true(ResourceLoader.exists(data.animation_scene_path), data.animation_scene_path)
 		for race in ["human", "elf", "dwarf", "orc"]:
 			assert_eq(RaceTheme.unit_name(kind, race), data.unit_name, "%s (%s)" % [kind, race])
-	var scales := [WARRIOR, SWORDSMAN, MASTER, HERO].map(func(k): return UnitDatabase.create_unit(k).model_scale_multiplier)
-	assert_eq(scales, [1.0, 1.15, 1.3, 1.65], "as quatro formas se distinguem no mapa só pela escala (sem arte nova)")
+	var paths := [WARRIOR, SWORDSMAN, MASTER, HERO].map(func(k): return UnitDatabase.create_unit(k).model_scene_path)
+	assert_eq(paths.size(), 4)
+	for i in paths.size():
+		assert_eq(paths.count(paths[i]), 1, "cada forma tem o próprio modelo (2026-10-04), não mais o Barbarian escalado")
+	for kind in [WARRIOR, SWORDSMAN, MASTER, HERO]:
+		assert_eq(UnitDatabase.create_unit(kind).model_scale_multiplier, 1.0, "%s: a altura está no modelo" % kind)
 
 func test_v1_units_are_untouched():
 	assert_eq(UnitDatabase.create_unit("warrior").unit_name, "Guarda")

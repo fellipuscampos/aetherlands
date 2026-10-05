@@ -1,0 +1,20 @@
+{
+  "ManaDevourer_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "ManaDevourer_Idle.mp4",
+    "gif": "ManaDevourer_Idle.gif"
+  },
+  "ManaDevourer_Walk": {
+    "frames": 32,
+    "fps": 24,
+    "mp4": "ManaDevourer_Walk.mp4",
+    "gif": "ManaDevourer_Walk.gif"
+  },
+  "ManaDevourer_Attack": {
+    "frames": 37,
+    "fps": 24,
+    "mp4": "ManaDevourer_Attack.mp4",
+    "gif": "ManaDevourer_Attack.gif"
+  }
+}

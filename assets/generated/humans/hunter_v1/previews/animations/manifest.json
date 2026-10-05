@@ -1,0 +1,32 @@
+{
+  "Hunter_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "Hunter_Idle.mp4",
+    "gif": "Hunter_Idle.gif"
+  },
+  "Hunter_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "Hunter_Walk.mp4",
+    "gif": "Hunter_Walk.gif"
+  },
+  "Hunter_Attack": {
+    "frames": 49,
+    "fps": 24,
+    "mp4": "Hunter_Attack.mp4",
+    "gif": "Hunter_Attack.gif"
+  },
+  "Hunter_PreciseShot": {
+    "frames": 57,
+    "fps": 24,
+    "mp4": "Hunter_PreciseShot.mp4",
+    "gif": "Hunter_PreciseShot.gif"
+  },
+  "Hunter_Volley": {
+    "frames": 70,
+    "fps": 24,
+    "mp4": "Hunter_Volley.mp4",
+    "gif": "Hunter_Volley.gif"
+  }
+}

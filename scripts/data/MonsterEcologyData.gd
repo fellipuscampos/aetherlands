@@ -25,32 +25,35 @@ const TIER_DISPLAY := {
 ## - tier: TIER_* (explícito, obrigatório).
 ## - group_size: monstros por sítio ecológico (grupo inicial e de reposição).
 ## - patrol_radius_cap: teto opcional de TODOS os raios do perfil de atividade (-1 = sem teto) — a forma
-##   mínima de "quase imóvel com âncora" da Colmeia Micótica nesta etapa.
+##   mínima de "quase imóvel com âncora" (era da Colmeia Micótica, que saiu do jogo; nenhuma espécie usa hoje).
 ## - abilities: ids de MonsterAbilityData (Etapa 2).
 ## - behavior_profile (Etapa 2): city_hunt (pode fazer raide em cidade quando a era do tier permite),
 ##   improvement_hunt (procura melhoria para saquear), prey (any/isolated/group/caster — que presa prioriza),
 ##   avoid_bad_fights (não inicia luta claramente perdida), group_raid (só sai em raide com o bando),
-##   chase_bonus (ajuste do raio de perseguição do tier). TIER define a intensidade; a ESPÉCIE, a identidade.
-## - habitat_profile / activity_profile / population_profile: ganchos de etapas futuras, vazios de propósito.
+##   chase_bonus (ajuste do leash do tier), aggro_bonus/pursuit_bonus (Etapa 3: alcance de reação e de
+##   perseguição), local_raid (Etapa 3: raide só dentro do próprio leash — Wyvern). TIER define a intensidade; a
+##   ESPÉCIE, a identidade.
+## - habitat_profile (Etapa 4): id do perfil em MonsterHabitatProfile.PROFILES (pesos sobre sinais de terreno locais).
+## - activity_profile / population_profile: ganchos de etapas futuras, vazios de propósito.
 const SPECIES := {
-	"goblin": {"tier": TIER_BASIC, "group_size": 2, "patrol_radius_cap": -1, "abilities": ["quick_plunder"], "behavior_profile": {"city_hunt": true, "improvement_hunt": true, "prey": "any", "avoid_bad_fights": true}, "habitat_profile": "", "activity_profile": "", "population_profile": ""},
-	"skeleton": {"tier": TIER_BASIC, "group_size": 3, "patrol_radius_cap": -1, "abilities": ["rising_horde"], "behavior_profile": {"city_hunt": true, "improvement_hunt": true, "prey": "any", "avoid_bad_fights": true, "group_raid": true}, "habitat_profile": "", "activity_profile": "", "population_profile": ""},
-	"worg": {"tier": TIER_BASIC, "group_size": 2, "patrol_radius_cap": -1, "abilities": ["blood_scent"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "isolated", "avoid_bad_fights": true, "chase_bonus": 2}, "habitat_profile": "", "activity_profile": "", "population_profile": ""},
-	"giant_spider": {"tier": TIER_BASIC, "group_size": 2, "patrol_radius_cap": -1, "abilities": ["venomous_bite"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "any", "avoid_bad_fights": true}, "habitat_profile": "", "activity_profile": "", "population_profile": ""},
-	"troll": {"tier": TIER_INTERMEDIATE, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["monstrous_regeneration"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "any", "chase_bonus": -2}, "habitat_profile": "", "activity_profile": "", "population_profile": ""},
-	"wyvern": {"tier": TIER_INTERMEDIATE, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["flame_breath"], "behavior_profile": {"city_hunt": true, "improvement_hunt": true, "prey": "group"}, "habitat_profile": "", "activity_profile": "", "population_profile": ""},
-	"minotaur": {"tier": TIER_INTERMEDIATE, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["charge"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "any"}, "habitat_profile": "", "activity_profile": "", "population_profile": ""},
-	"basilisk": {"tier": TIER_INTERMEDIATE, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["petrifying_gaze"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "any"}, "habitat_profile": "", "activity_profile": "", "population_profile": ""},
-	"colossal_worm": {"tier": TIER_ADVANCED, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["burrow"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "group"}, "habitat_profile": "", "activity_profile": "", "population_profile": ""},
-	"arboreal_ancient": {"tier": TIER_ADVANCED, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["roots_of_the_world"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "any"}, "habitat_profile": "", "activity_profile": "", "population_profile": ""},
-	"mana_devourer": {"tier": TIER_ADVANCED, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["arcane_hunger", "aether_rupture"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "caster"}, "habitat_profile": "", "activity_profile": "", "population_profile": ""},
-	"mycotic_hive": {"tier": TIER_ADVANCED, "group_size": 1, "patrol_radius_cap": 1, "abilities": ["mycotic_contamination"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "any"}, "habitat_profile": "", "activity_profile": "", "population_profile": ""},
+	"goblin": {"tier": TIER_BASIC, "group_size": 2, "patrol_radius_cap": -1, "abilities": ["quick_plunder"], "behavior_profile": {"city_hunt": true, "improvement_hunt": true, "prey": "any", "avoid_bad_fights": true}, "habitat_profile": "goblin", "activity_profile": "", "population_profile": ""},
+	"skeleton": {"tier": TIER_BASIC, "group_size": 3, "patrol_radius_cap": -1, "abilities": ["rising_horde"], "behavior_profile": {"city_hunt": true, "improvement_hunt": true, "prey": "any", "avoid_bad_fights": true, "group_raid": true}, "habitat_profile": "skeleton", "activity_profile": "", "population_profile": ""},
+	"worg": {"tier": TIER_BASIC, "group_size": 2, "patrol_radius_cap": -1, "abilities": ["blood_scent"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "isolated", "avoid_bad_fights": true, "chase_bonus": 2, "aggro_bonus": 1, "pursuit_bonus": 2}, "habitat_profile": "worg", "activity_profile": "", "population_profile": ""},
+	"giant_spider": {"tier": TIER_BASIC, "group_size": 2, "patrol_radius_cap": -1, "abilities": ["venomous_bite"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "any", "avoid_bad_fights": true}, "habitat_profile": "giant_spider", "activity_profile": "", "population_profile": ""},
+	"troll": {"tier": TIER_INTERMEDIATE, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["monstrous_regeneration"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "any", "chase_bonus": -2, "pursuit_bonus": -1}, "habitat_profile": "troll", "activity_profile": "", "population_profile": ""},
+	"wyvern": {"tier": TIER_INTERMEDIATE, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["flame_breath"], "behavior_profile": {"city_hunt": true, "improvement_hunt": true, "prey": "group", "local_raid": true}, "habitat_profile": "wyvern", "activity_profile": "", "population_profile": ""},
+	"minotaur": {"tier": TIER_INTERMEDIATE, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["charge"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "any"}, "habitat_profile": "minotaur", "activity_profile": "", "population_profile": ""},
+	"basilisk": {"tier": TIER_INTERMEDIATE, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["petrifying_gaze"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "any"}, "habitat_profile": "basilisk", "activity_profile": "", "population_profile": ""},
+	"colossal_worm": {"tier": TIER_ADVANCED, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["burrow"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "group"}, "habitat_profile": "colossal_worm", "activity_profile": "", "population_profile": ""},
+	"arboreal_ancient": {"tier": TIER_ADVANCED, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["roots_of_the_world"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "any"}, "habitat_profile": "arboreal_ancient", "activity_profile": "", "population_profile": ""},
+	"mana_devourer": {"tier": TIER_ADVANCED, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["arcane_hunger", "aether_rupture"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "caster", "aggro_bonus": 1}, "habitat_profile": "mana_devourer", "activity_profile": "", "population_profile": ""},
+	"corrupted_hero": {"tier": TIER_ADVANCED, "group_size": 1, "patrol_radius_cap": -1, "abilities": ["shield_block"], "behavior_profile": {"city_hunt": false, "improvement_hunt": false, "prey": "any"}, "habitat_profile": "corrupted_hero", "activity_profile": "", "population_profile": ""},
 }
 ## Ordem canônica estável (relatórios, round-robin do planner, testes). Nunca SPECIES.keys().
 const SPECIES_ORDER: Array[String] = [
 	"goblin", "skeleton", "worg", "giant_spider",
 	"troll", "wyvern", "minotaur", "basilisk",
-	"colossal_worm", "arboreal_ancient", "mana_devourer", "mycotic_hive",
+	"colossal_worm", "arboreal_ancient", "mana_devourer", "corrupted_hero",
 ]
 
 # ---------------------------------------------------------------------------
@@ -143,7 +146,7 @@ static func targets_for(eligible_tiles: int) -> Dictionary:
 
 ## Perfil de comportamento da espécie (MonsterEcologyData.SPECIES.behavior_profile), com defaults neutros.
 static func behavior(kind: String) -> Dictionary:
-	var result := {"city_hunt": false, "improvement_hunt": false, "prey": "any", "avoid_bad_fights": false, "group_raid": false, "chase_bonus": 0}
+	var result := {"city_hunt": false, "improvement_hunt": false, "prey": "any", "avoid_bad_fights": false, "group_raid": false, "chase_bonus": 0, "aggro_bonus": 0, "pursuit_bonus": 0, "local_raid": false}
 	var profile: Variant = SPECIES.get(kind, {}).get("behavior_profile", {})
 	if typeof(profile) == TYPE_DICTIONARY:
 		result.merge(profile, true)

@@ -1,0 +1,23 @@
+{
+  "Warg_Idle": {
+    "frames": 48,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Warg_Idle.mp4",
+    "gif": "Warg_Idle.gif"
+  },
+  "Warg_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Warg_Walk.mp4",
+    "gif": "Warg_Walk.gif"
+  },
+  "Warg_Attack": {
+    "frames": 33,
+    "fps": 24,
+    "loop": false,
+    "mp4": "Warg_Attack.mp4",
+    "gif": "Warg_Attack.gif"
+  }
+}

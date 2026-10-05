@@ -1,0 +1,26 @@
+{
+  "Worm_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "Worm_Idle.mp4",
+    "gif": "Worm_Idle.gif"
+  },
+  "Worm_Attack": {
+    "frames": 37,
+    "fps": 24,
+    "mp4": "Worm_Attack.mp4",
+    "gif": "Worm_Attack.gif"
+  },
+  "Worm_Burrow": {
+    "frames": 49,
+    "fps": 24,
+    "mp4": "Worm_Burrow.mp4",
+    "gif": "Worm_Burrow.gif"
+  },
+  "Worm_Emerge": {
+    "frames": 49,
+    "fps": 24,
+    "mp4": "Worm_Emerge.mp4",
+    "gif": "Worm_Emerge.gif"
+  }
+}

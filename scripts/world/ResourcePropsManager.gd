@@ -65,6 +65,8 @@ func _init(hex_grid: HexGrid) -> void:
 ## mapa atual — chamado de HexGrid._rebuild_props(), mesma cadencia de
 ## arvores/pedras/picos (regeneracao de mapa inteira, nao por turno).
 func rebuild(tiles: Dictionary) -> void:
+	if _hex_grid != null and _hex_grid.visual_focus != null:
+		_hex_grid.visual_focus.reset() # V3 / Etapa 3: os MultiMesh de recurso vão ser recriados
 	for kind in _instances.keys():
 		var instance: MultiMeshInstance3D = _instances[kind]
 		if instance:

@@ -1,0 +1,23 @@
+{
+  "Wyvern_Idle": {
+    "frames": 48,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Wyvern_Idle.mp4",
+    "gif": "Wyvern_Idle.gif"
+  },
+  "Wyvern_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Wyvern_Walk.mp4",
+    "gif": "Wyvern_Walk.gif"
+  },
+  "Wyvern_Attack": {
+    "frames": 33,
+    "fps": 24,
+    "loop": false,
+    "mp4": "Wyvern_Attack.mp4",
+    "gif": "Wyvern_Attack.gif"
+  }
+}

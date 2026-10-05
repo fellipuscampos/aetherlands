@@ -1,0 +1,235 @@
+{
+  "name": "Hunter_V1",
+  "kind": "v2_unit_hunter (Ca\u00e7ador)",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/hunter_*.py)",
+  "height_m": 1.7999999523162842,
+  "front_y_m": -0.9501850605010986,
+  "back_y_m": 0.2117687314748764,
+  "x_m": [
+    -0.39404964447021484,
+    0.38512685894966125
+  ],
+  "triangles": 432,
+  "editable_parts": 36,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      256,
+      256
+    ],
+    "filter": "NEAREST",
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 1.6,
+    "unique_uv_islands": 216,
+    "density_px_per_meter": 64,
+    "measured_min": 63.99952777892988,
+    "measured_max": 64.00013481005908,
+    "padding": 2
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "head",
+      "upper_arm_l",
+      "forearm_l",
+      "hand_l",
+      "thigh_l",
+      "shin_l",
+      "foot_l",
+      "upper_arm_r",
+      "forearm_r",
+      "hand_r",
+      "thigh_r",
+      "shin_r",
+      "foot_r",
+      "string_u",
+      "string_d",
+      "arrow"
+    ],
+    "hierarchy": "flat: every bone is a child of root; legs baked from two-bone IK",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "ArrowFletch": "arrow",
+      "ArrowHead": "arrow",
+      "ArrowShaft": "arrow",
+      "Arrows": "chest",
+      "Belly": "chest",
+      "BowGrip": "hand_l",
+      "BowHorn_d": "hand_l",
+      "BowHorn_u": "hand_l",
+      "BowLimb_d1": "hand_l",
+      "BowLimb_d2": "hand_l",
+      "BowLimb_d3": "hand_l",
+      "BowLimb_u1": "hand_l",
+      "BowLimb_u2": "hand_l",
+      "BowLimb_u3": "hand_l",
+      "Buckle": "hips",
+      "Chest": "chest",
+      "Foot_l": "foot_l",
+      "Foot_r": "foot_r",
+      "Forearm_l": "forearm_l",
+      "Forearm_r": "forearm_r",
+      "Hand_l": "hand_l",
+      "Hand_r": "hand_r",
+      "Head": "head",
+      "Knife": "hips",
+      "Pelvis": "hips",
+      "Quiver": "chest",
+      "Shin_l": "shin_l",
+      "Shin_r": "shin_r",
+      "Shoulder_l": "chest",
+      "Shoulder_r": "chest",
+      "StringDown": "string_d",
+      "StringUp": "string_u",
+      "Thigh_l": "thigh_l",
+      "Thigh_r": "thigh_r",
+      "UpperArm_l": "upper_arm_l",
+      "UpperArm_r": "upper_arm_r"
+    }
+  },
+  "animations": {
+    "Hunter_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Ready, arrow nocked: weight shift leg to leg, the bow bobbing a little, head watching, breathing.",
+      "seconds": 3
+    },
+    "Hunter_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 91,
+      "description": "Light step in place: arms counter-swinging with the legs, hip bob, small trunk counter-twist.",
+      "speed_m_s": 0.30857142857142855,
+      "seconds": 1.1666666666666667
+    },
+    "Hunter_Attack": {
+      "start": 1,
+      "end": 49,
+      "loop": false,
+      "nla_start": 141,
+      "description": "Ranged shot: takes the string at the nock, the whole body pivots side-on, pushes the bow out and draws to the cheek (full draw 18), aims, looses (27: string snaps, arrow flies), takes a new arrow from the quiver, nocks it, settles back.",
+      "impact_frame": 27,
+      "seconds": 2
+    },
+    "Hunter_PreciseShot": {
+      "start": 1,
+      "end": 57,
+      "loop": false,
+      "nla_start": 201,
+      "description": "Disparo Preciso: lower stance leaning back, the bow raised aiming up (longer range), draws to the ear (full draw 22), long steadying aim, strong loose (35: big string vibration, arrow flies fast on a rising line, bow kicks, draw hand flies back), reloads from the quiver, settles back.",
+      "impact_frame": 35,
+      "seconds": 2.3333333333333335
+    },
+    "Hunter_Volley": {
+      "start": 1,
+      "end": 70,
+      "loop": false,
+      "nla_start": 271,
+      "description": "Saraivada: rapid triple shot aimed high so the arrows rain around the target \u2014 tight fan, looses left (15), reloads from the quiver, centre (34), reloads, right (53), final reload, settles back.",
+      "impact_frame": 15,
+      "release_frames": [
+        15,
+        34,
+        53
+      ],
+      "seconds": 2.875
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "origin": "between the feet, on the ground",
+  "rig_bone_map": {
+    "ArrowFletch": "arrow",
+    "ArrowHead": "arrow",
+    "ArrowShaft": "arrow",
+    "Arrows": "chest",
+    "Belly": "chest",
+    "BowGrip": "hand_l",
+    "BowHorn_d": "hand_l",
+    "BowHorn_u": "hand_l",
+    "BowLimb_d1": "hand_l",
+    "BowLimb_d2": "hand_l",
+    "BowLimb_d3": "hand_l",
+    "BowLimb_u1": "hand_l",
+    "BowLimb_u2": "hand_l",
+    "BowLimb_u3": "hand_l",
+    "Buckle": "hips",
+    "Chest": "chest",
+    "Foot_l": "foot_l",
+    "Foot_r": "foot_r",
+    "Forearm_l": "forearm_l",
+    "Forearm_r": "forearm_r",
+    "Hand_l": "hand_l",
+    "Hand_r": "hand_r",
+    "Head": "head",
+    "Knife": "hips",
+    "Pelvis": "hips",
+    "Quiver": "chest",
+    "Shin_l": "shin_l",
+    "Shin_r": "shin_r",
+    "Shoulder_l": "chest",
+    "Shoulder_r": "chest",
+    "StringDown": "string_d",
+    "StringUp": "string_u",
+    "Thigh_l": "thigh_l",
+    "Thigh_r": "thigh_r",
+    "UpperArm_l": "upper_arm_l",
+    "UpperArm_r": "upper_arm_r"
+  },
+  "notes": "Static Hunter V1 (Ca\u00e7ador), Archer copy, 1.80 m, one block per body part. Bow, horn caps follow hand_l; string halves string_u/string_d; nocked arrow on its own bone; quiver follows chest; knife follows hips; hood painted on the head.",
+  "animation_validation": {
+    "problems": [],
+    "ik": {
+      "arm_reach:Hunter_PreciseShot": 1
+    },
+    "min_z": {
+      "Hunter_Idle": 0.0,
+      "Hunter_Walk": 0.0,
+      "Hunter_Attack": -0.0,
+      "Hunter_PreciseShot": -0.0,
+      "Hunter_Volley": -0.0
+    }
+  },
+  "glb": {
+    "file": "hunter_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 19,
+    "triangles": 432,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Hunter_Idle": 3,
+      "Hunter_Walk": 1.1666666666666667,
+      "Hunter_Attack": 2,
+      "Hunter_PreciseShot": 2.3333333333333335,
+      "Hunter_Volley": 2.875
+    },
+    "channels": "location, rotation, scale on every bone (string stretch, hidden arrow)"
+  },
+  "status": "Hunter V1 with Hunter_Idle, Hunter_Walk, Hunter_Attack, Hunter_PreciseShot, Hunter_Volley; GLB and packed atlases validated",
+  "source_validation": {
+    "scenes": [
+      "Hunter_V1"
+    ],
+    "actions": [
+      "Hunter_Walk",
+      "Hunter_Volley",
+      "Hunter_PreciseShot",
+      "Hunter_Idle",
+      "Hunter_Attack"
+    ],
+    "armatures": [
+      "Hunter_V1_Skeleton"
+    ]
+  }
+}

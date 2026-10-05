@@ -67,6 +67,10 @@ static func build(hex_grid: HexGrid, coord: Vector2i, viewer: PlayerData) -> Dic
 				view.features.append(_feature(entry, "lair"))
 			TileInspector.KIND_BUILDING, TileInspector.KIND_SITE:
 				view.features.append(_feature(entry, "building"))
+			TileInspector.KIND_HAZARD:
+				view.features.append(_feature(entry, "hazard"))
+			TileInspector.KIND_TERRITORY:
+				view.features.append(_feature(entry, "territory"))
 	return view
 
 static func _feature(entry: Dictionary, kind: String) -> Dictionary:

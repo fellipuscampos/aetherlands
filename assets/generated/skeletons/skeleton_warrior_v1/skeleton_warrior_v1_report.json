@@ -1,0 +1,222 @@
+{
+  "name": "Skeleton_Warrior_V1",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/skeleton_warrior_*.py)",
+  "height_m": 1.8471523523330688,
+  "triangles": 508,
+  "editable_parts": 35,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      256,
+      256
+    ],
+    "filter": "NEAREST",
+    "unique_uv_islands": 249,
+    "density_px_per_meter": 64,
+    "measured_min": 63.99953203645503,
+    "measured_max": 64.00044970335,
+    "padding": 2
+  },
+  "rig": true,
+  "animations": {
+    "Skeleton_Idle": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Undead sway, head tilt, jaw chatter twice, dangling arms, sword carried; feet planted.",
+      "duration_seconds": 2.0
+    },
+    "Skeleton_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 61,
+      "description": "28-frame stiff undead walk in place; 60% stance, head bob, opposite arm swing, sword carried.",
+      "suggested_translation_mps": 0.3405912550893963,
+      "duration_seconds": 1.1666666666666667
+    },
+    "Skeleton_Attack": {
+      "start": 1,
+      "end": 29,
+      "loop": false,
+      "nla_start": 101,
+      "description": "Overhead sword chop: wind-up 1-9, impact 13, follow-through 16, recovery 29.",
+      "impact_frame": 13,
+      "duration_seconds": 1.1666666666666667
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "rig_bone_map": {
+    "Ribcage": "chest",
+    "Spine": "spine",
+    "Pelvis": "pelvis",
+    "Neck": "head",
+    "Clavicle_l": "chest",
+    "Clavicle_r": "chest",
+    "Skull": "head",
+    "Jaw": "jaw",
+    "Helmet_Cap": "head",
+    "Helmet_Rim": "head",
+    "Helmet_Comb": "head",
+    "Shoulder_l": "shoulder_l",
+    "UpperArm_l": "upper_arm_l",
+    "Forearm_l": "forearm_l",
+    "Hand_l": "hand_l",
+    "Thigh_l": "thigh_l",
+    "Shin_l": "shin_l",
+    "Foot_l": "foot_l",
+    "Shoulder_r": "shoulder_r",
+    "UpperArm_r": "upper_arm_r",
+    "Forearm_r": "forearm_r",
+    "Thigh_r": "thigh_r",
+    "Shin_r": "shin_r",
+    "Foot_r": "foot_r",
+    "Pauldron_Plate": "shoulder_l",
+    "Pauldron_Lame": "shoulder_l",
+    "Bracer_r": "forearm_r",
+    "Greave_l": "shin_l",
+    "Belt": "pelvis",
+    "Buckle": "pelvis",
+    "TabardFront": "tabard_front",
+    "TabardBack": "tabard_back",
+    "Hand_r": "hand_r",
+    "Sword_Pommel": "weapon",
+    "Sword_Grip": "weapon",
+    "Sword_Guard": "weapon",
+    "Sword_Blade": "weapon"
+  },
+  "notes": "Static editable model; no animations requested. Same metric texel density as Troll, Goblin and Minotaur.",
+  "visual_review": {
+    "views": [
+      "front",
+      "three_quarter",
+      "side",
+      "back",
+      "game_top"
+    ],
+    "identity": "Skull with dark sockets and cold glowing pupils, jaw with teeth, ribcage with sternum, clavicles, lumbar spine, pelvis",
+    "gear": "Askew rusty combed helmet, broken left pauldron, right bracer, left greave, torn faded tabard under belt, chipped rusty sword in a real grip channel",
+    "consistency": "Same cuboid construction, flat shading and 64 px/m metric pixel UV as Troll/Goblin/Minotaur; no knees, no back volume"
+  },
+  "glb": {
+    "file": "skeleton_warrior_v1.glb",
+    "meshes": [
+      "Body",
+      "Sword"
+    ],
+    "check": {
+      "armatures": 1,
+      "bones": 23,
+      "skinned_meshes": [
+        "Skeleton_Warrior_V1_Body",
+        "Skeleton_Warrior_V1_Sword"
+      ],
+      "mesh_has_armature_modifier": true,
+      "actions": [
+        "Skeleton_Attack",
+        "Skeleton_Idle",
+        "Skeleton_Walk"
+      ],
+      "action_frame_ranges": {
+        "Skeleton_Attack": [
+          0.0,
+          28.0
+        ],
+        "Skeleton_Idle": [
+          0.0,
+          48.0
+        ],
+        "Skeleton_Walk": [
+          0.0,
+          28.0
+        ]
+      },
+      "rest_height_m": 1.8471522309527906,
+      "rest_min_z": 2.1709887221277313e-09
+    }
+  },
+  "status": "Complete: rigged editable Skeleton Warrior with Idle, Walk and Attack; MP4/GIF reviews.",
+  "source_validation": {
+    "scenes": [
+      "Skeleton_Warrior_V1"
+    ],
+    "actions": [
+      "Skeleton_Walk",
+      "Skeleton_Idle",
+      "Skeleton_Attack"
+    ],
+    "armatures": [
+      "Skeleton_Warrior_V1_Skeleton"
+    ],
+    "packed_texture": true
+  },
+  "user_edits": "User widened the pelvis in Blender (object scale); scale applied and only the pelvis UV islands re-projected/painted at 64 px/m (skeleton_warrior_patch_uv.py). Static copy: skeleton_warrior_v1_static.blend.",
+  "bone_count": 23,
+  "bones": [
+    "root",
+    "pelvis",
+    "spine",
+    "chest",
+    "head",
+    "jaw",
+    "shoulder_l",
+    "upper_arm_l",
+    "forearm_l",
+    "hand_l",
+    "shoulder_r",
+    "upper_arm_r",
+    "forearm_r",
+    "hand_r",
+    "weapon",
+    "tabard_front",
+    "tabard_back",
+    "thigh_l",
+    "shin_l",
+    "foot_l",
+    "thigh_r",
+    "shin_r",
+    "foot_r"
+  ],
+  "skinning": "Rigid block skinning (one bone per part); feet planted with a baked analytic two-bone solve; FK only at runtime",
+  "animation_validation": {
+    "clips": {
+      "Skeleton_Idle": {
+        "frames": 49,
+        "loop": true,
+        "endpoints_max_vertex_delta_m": 0.0,
+        "minimum_vertex_z_m": -8.777026749839933e-08,
+        "foot_target_error_m": 1.2672233215507882e-07,
+        "weapon_vs_hand_matrix_error": 1.7881393432617188e-07
+      },
+      "Skeleton_Walk": {
+        "frames": 29,
+        "loop": true,
+        "endpoints_max_vertex_delta_m": 0.0,
+        "minimum_vertex_z_m": -3.584315777516167e-08,
+        "foot_target_error_m": 1.7943374184954607e-07,
+        "weapon_vs_hand_matrix_error": 1.4901161193847656e-07
+      },
+      "Skeleton_Attack": {
+        "frames": 29,
+        "loop": false,
+        "endpoints_max_vertex_delta_m": 0.0,
+        "minimum_vertex_z_m": -1.0001670602832746e-07,
+        "foot_target_error_m": 1.2799102109006093e-07,
+        "weapon_vs_hand_matrix_error": 2.384185791015625e-07
+      }
+    },
+    "all_vertices_normalized_weights": true,
+    "root_drift_m": 0,
+    "rest_pose_contacts_excluded": [
+      [
+        "Jaw",
+        "Ribcage"
+      ]
+    ],
+    "new_surface_crossings": 0,
+    "problems": []
+  }
+}

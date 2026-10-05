@@ -59,17 +59,17 @@ func test_the_ranger_forms_are_fragile_at_every_tier_compared_with_the_other_doc
 		assert_lt(r.max_hp, UnitDatabase.create_unit(warrior[i]).max_hp, "menos vida que o Guerreiro do mesmo nível")
 		assert_lt(r.defense, UnitDatabase.create_unit(warrior[i]).defense)
 
-func test_the_forms_are_registered_once_with_distinct_provisional_scales_and_the_v1_model():
+func test_the_forms_are_registered_once_with_their_own_models():
 	for kind in [ARCHER, HUNTER, MARKSMAN, LEGEND_HUNTER]:
 		assert_eq(UnitDatabase.PLAYER_TRAINABLE_KINDS.count(kind), 1, kind)
 		var data := UnitDatabase.create_unit(kind)
 		assert_true(ResourceLoader.exists(data.model_scene_path), data.model_scene_path)
 		assert_true(ResourceLoader.exists(data.animation_scene_path))
-		assert_eq(data.model_scene_path, UnitDatabase.create_unit("archer").model_scene_path, "reaproveita o Ranger do KayKit")
+		assert_ne(data.model_scene_path, UnitDatabase.create_unit("archer").model_scene_path, "modelo próprio (2026-10-04), não mais o Ranger do KayKit")
 		for race in ["human", "elf", "dwarf", "orc"]:
 			assert_eq(RaceTheme.unit_name(kind, race), data.unit_name, "%s (%s)" % [kind, race])
 	var scales := [ARCHER, HUNTER, MARKSMAN, LEGEND_HUNTER].map(func(k): return UnitDatabase.create_unit(k).model_scale_multiplier)
-	assert_eq(scales, [1.0, 1.15, 1.3, 1.5])
+	assert_eq(scales, [1.0, 1.0, 1.0, 1.0], "a altura está no modelo (1,80 m as tropas, 2,00 m o Caçador de Lendas)")
 
 func test_the_vision_covers_the_extra_reach_of_the_marksman_shot():
 	var precise := _technique(PRECISE)

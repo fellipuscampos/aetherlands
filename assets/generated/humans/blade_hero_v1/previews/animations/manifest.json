@@ -1,0 +1,32 @@
+{
+  "BladeHero_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "BladeHero_Idle.mp4",
+    "gif": "BladeHero_Idle.gif"
+  },
+  "BladeHero_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "BladeHero_Walk.mp4",
+    "gif": "BladeHero_Walk.gif"
+  },
+  "BladeHero_Attack": {
+    "frames": 33,
+    "fps": 24,
+    "mp4": "BladeHero_Attack.mp4",
+    "gif": "BladeHero_Attack.gif"
+  },
+  "BladeHero_PowerStrike": {
+    "frames": 49,
+    "fps": 24,
+    "mp4": "BladeHero_PowerStrike.mp4",
+    "gif": "BladeHero_PowerStrike.gif"
+  },
+  "BladeHero_ArcAttack": {
+    "frames": 41,
+    "fps": 24,
+    "mp4": "BladeHero_ArcAttack.mp4",
+    "gif": "BladeHero_ArcAttack.gif"
+  }
+}

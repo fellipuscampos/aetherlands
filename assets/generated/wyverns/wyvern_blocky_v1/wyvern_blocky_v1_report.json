@@ -1,0 +1,299 @@
+{
+  "name": "Wyvern_Blocky_V1",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/wyvern_*.py)",
+  "height_m": 2.069239616394043,
+  "length_m": 6.0390825271606445,
+  "wingspan_m": 2.5835633277893066,
+  "triangles": 1316,
+  "editable_parts": 111,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "unique_uv_islands": 662,
+    "density_px_per_meter": 64,
+    "measured_min": 63.99499036506722,
+    "measured_max": 64.00234754699758,
+    "padding": 2
+  },
+  "rig": true,
+  "animations": {
+    "Wyvern_Idle": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Low rest: breathing, head sway, snarl, wing fans flexing, tail swish; supports planted.",
+      "duration_seconds": 2.0
+    },
+    "Wyvern_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 61,
+      "description": "Low prowl in place on feet and wing knuckles; lateral sequence, 62% stance, tail wave.",
+      "suggested_translation_mps": 0.4423963133640553,
+      "duration_seconds": 1.1666666666666667
+    },
+    "Wyvern_Attack": {
+      "start": 1,
+      "end": 33,
+      "loop": false,
+      "nla_start": 101,
+      "description": "Coil and wing flare 1-10, lunge 10-13, jaws snap at impact 14, recovery to 33.",
+      "impact_frame": 14,
+      "duration_seconds": 1.3333333333333333
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "rig_bone_map": {
+    "Chest": "chest",
+    "Hips": "hips",
+    "Neck_1": "neck_01",
+    "Spike_Neck1_0": "neck_01",
+    "Spike_Neck1_1": "neck_01",
+    "Neck_2": "neck_02",
+    "Spike_Neck2_0": "neck_02",
+    "Spike_Neck2_1": "neck_02",
+    "Neck_3": "neck_03",
+    "Spike_Neck3_0": "neck_03",
+    "Skull": "head",
+    "Snout": "head",
+    "Jaw": "jaw",
+    "ToothUp0_l": "head",
+    "ToothUp1_l": "head",
+    "ToothUp2_l": "head",
+    "ToothUp3_l": "head",
+    "ToothLow0_l": "jaw",
+    "ToothLow1_l": "jaw",
+    "ToothLow2_l": "jaw",
+    "ToothLow3_l": "jaw",
+    "Eye_l": "head",
+    "Brow_l": "head",
+    "Horn_l": "head",
+    "HornLow_l": "head",
+    "UpperArm_l": "upper_arm_l",
+    "Forearm_l": "forearm_l",
+    "WristKnuckle_l": "hand_l",
+    "ThumbClaw0_l": "hand_l",
+    "ThumbClaw1_l": "hand_l",
+    "WingFinger1_l": "hand_l",
+    "WingTip1_l": "hand_l",
+    "WingFinger2_l": "hand_l",
+    "WingTip2_l": "hand_l",
+    "WingFinger3_l": "hand_l",
+    "WingTip3_l": "hand_l",
+    "WingFinger4_l": "hand_l",
+    "WingTip4_l": "hand_l",
+    "WingFinger5_l": "hand_l",
+    "WingTip5_l": "hand_l",
+    "Membrane1_l": "hand_l",
+    "Membrane2_l": "hand_l",
+    "Membrane3_l": "hand_l",
+    "Membrane4_l": "hand_l",
+    "Membrane5_l": "hand_l",
+    "MembraneElbow_l": "forearm_l",
+    "MembraneArm_l": "upper_arm_l",
+    "Thigh_l": "thigh_l",
+    "Shin_l": "shin_l",
+    "Foot_l": "foot_l",
+    "FootClaw0_l": "foot_l",
+    "FootClaw1_l": "foot_l",
+    "FootClaw2_l": "foot_l",
+    "ToothUp0_r": "head",
+    "ToothUp1_r": "head",
+    "ToothUp2_r": "head",
+    "ToothUp3_r": "head",
+    "ToothLow0_r": "jaw",
+    "ToothLow1_r": "jaw",
+    "ToothLow2_r": "jaw",
+    "ToothLow3_r": "jaw",
+    "Eye_r": "head",
+    "Brow_r": "head",
+    "Horn_r": "head",
+    "HornLow_r": "head",
+    "UpperArm_r": "upper_arm_r",
+    "Forearm_r": "forearm_r",
+    "WristKnuckle_r": "hand_r",
+    "ThumbClaw0_r": "hand_r",
+    "ThumbClaw1_r": "hand_r",
+    "WingFinger1_r": "hand_r",
+    "WingTip1_r": "hand_r",
+    "WingFinger2_r": "hand_r",
+    "WingTip2_r": "hand_r",
+    "WingFinger3_r": "hand_r",
+    "WingTip3_r": "hand_r",
+    "WingFinger4_r": "hand_r",
+    "WingTip4_r": "hand_r",
+    "WingFinger5_r": "hand_r",
+    "WingTip5_r": "hand_r",
+    "Membrane1_r": "hand_r",
+    "Membrane2_r": "hand_r",
+    "Membrane3_r": "hand_r",
+    "Membrane4_r": "hand_r",
+    "Membrane5_r": "hand_r",
+    "MembraneElbow_r": "forearm_r",
+    "MembraneArm_r": "upper_arm_r",
+    "Thigh_r": "thigh_r",
+    "Shin_r": "shin_r",
+    "Foot_r": "foot_r",
+    "FootClaw0_r": "foot_r",
+    "FootClaw1_r": "foot_r",
+    "FootClaw2_r": "foot_r",
+    "Spike_Back_0": "chest",
+    "Spike_Back_1": "chest",
+    "Spike_Back_2": "chest",
+    "Spike_Hips_0": "hips",
+    "Spike_Hips_1": "hips",
+    "Tail_1": "tail_01",
+    "Spike_Tail1_0": "tail_01",
+    "Spike_Tail1_1": "tail_01",
+    "Tail_2": "tail_02",
+    "Spike_Tail2_0": "tail_02",
+    "Spike_Tail2_1": "tail_02",
+    "Tail_3": "tail_03",
+    "Spike_Tail3_0": "tail_03",
+    "Spike_Tail3_1": "tail_03",
+    "Tail_4": "tail_04",
+    "Spike_Tail4_0": "tail_04",
+    "Tail_5": "tail_05",
+    "Spike_Tail5_0": "tail_05"
+  },
+  "notes": "Static editable wyvern; wings are the forelimbs. Membranes follow hand_* rigidly (a future flap rig would need per-finger weights).",
+  "visual_review": {
+    "views": [
+      "front",
+      "three_quarter",
+      "side",
+      "back",
+      "game_top"
+    ],
+    "anatomy": "V3: low body; two hind legs only; each forelimb IS the wing (thin wing-bone arm, wrist knuckle on the ground with two thumb claws, five fan fingers growing from that knuckle, membrane joining arm and body) - no separate front leg",
+    "identity": "Long low body, long three-segment neck, very long tail, row of pale dorsal spines from neck to tail tip, boxy head with wide-open mouth and white block teeth on both jaws, double swept horns, yellow slit eyes under one brow each",
+    "materials": "Vivid red 3-tone pixel-noise scales with darker dorsal, cream leathery belly/throat plates, mottled membrane with dark trailing edge, dark-red finger bones, pale bone horns/spines/claws, blood-red mouth",
+    "consistency": "Cuboid construction, flat shading, 64 px/m metric pixel UV like the rest of the bestiary; no hidden parts; 1024 atlas only because of membrane area"
+  },
+  "glb": {
+    "file": "wyvern_blocky_v1.glb",
+    "meshes": [
+      "Model"
+    ],
+    "check": {
+      "armatures": 1,
+      "bones": 25,
+      "skinned_meshes": [
+        "Wyvern_Blocky_V1_Model"
+      ],
+      "mesh_has_armature_modifier": true,
+      "actions": [
+        "Wyvern_Attack",
+        "Wyvern_Idle",
+        "Wyvern_Walk"
+      ],
+      "action_frame_ranges": {
+        "Wyvern_Attack": [
+          0.0,
+          32.0
+        ],
+        "Wyvern_Idle": [
+          0.0,
+          48.0
+        ],
+        "Wyvern_Walk": [
+          0.0,
+          28.0
+        ]
+      },
+      "rest_height_m": 2.0692400877557873,
+      "rest_min_z": -4.713617443030671e-07
+    }
+  },
+  "status": "Complete: rigged editable Wyvern with Idle, Walk and Attack; MP4/GIF reviews.",
+  "source_validation": {
+    "scenes": [
+      "Wyvern_Blocky_V1"
+    ],
+    "actions": [
+      "Wyvern_Walk",
+      "Wyvern_Idle",
+      "Wyvern_Attack"
+    ],
+    "armatures": [
+      "Wyvern_Blocky_V1_Skeleton"
+    ],
+    "packed_texture": true
+  },
+  "user_edits": "None: approved V2 static model rigged as delivered.",
+  "bone_count": 25,
+  "bones": [
+    "root",
+    "hips",
+    "chest",
+    "neck_01",
+    "neck_02",
+    "neck_03",
+    "head",
+    "jaw",
+    "upper_arm_l",
+    "forearm_l",
+    "hand_l",
+    "upper_arm_r",
+    "forearm_r",
+    "hand_r",
+    "tail_01",
+    "tail_02",
+    "tail_03",
+    "tail_04",
+    "tail_05",
+    "thigh_l",
+    "shin_l",
+    "foot_l",
+    "thigh_r",
+    "shin_r",
+    "foot_r"
+  ],
+  "skinning": "Rigid block skinning (one bone per part); feet and wing knuckles planted with a baked analytic two-bone solve; FK only at runtime",
+  "animation_validation": {
+    "clips": {
+      "Wyvern_Idle": {
+        "frames": 49,
+        "loop": true,
+        "endpoints_max_vertex_delta_m": 0.0,
+        "minimum_vertex_z_m": -4.8587374124053895e-08,
+        "foot_target_error_m": 3.018174931485816e-07
+      },
+      "Wyvern_Walk": {
+        "frames": 29,
+        "loop": true,
+        "endpoints_max_vertex_delta_m": 2.8411803311258453e-18,
+        "minimum_vertex_z_m": -1.787951759979478e-07,
+        "foot_target_error_m": 3.6378370570342845e-07
+      },
+      "Wyvern_Attack": {
+        "frames": 33,
+        "loop": false,
+        "endpoints_max_vertex_delta_m": 0.0,
+        "minimum_vertex_z_m": -2.5243828360999032e-08,
+        "foot_target_error_m": 3.5832567979130295e-07
+      }
+    },
+    "all_vertices_normalized_weights": true,
+    "rest_pose_contacts_excluded": [
+      [
+        "ToothUp0_l",
+        "ToothLow1_l"
+      ],
+      [
+        "ToothUp0_r",
+        "ToothLow1_r"
+      ]
+    ],
+    "new_surface_crossings": 0,
+    "problems": []
+  }
+}

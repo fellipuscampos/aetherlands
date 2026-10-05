@@ -1,0 +1,23 @@
+{
+  "Skeleton_Idle": {
+    "frames": 48,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Skeleton_Idle.mp4",
+    "gif": "Skeleton_Idle.gif"
+  },
+  "Skeleton_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Skeleton_Walk.mp4",
+    "gif": "Skeleton_Walk.gif"
+  },
+  "Skeleton_Attack": {
+    "frames": 29,
+    "fps": 24,
+    "loop": false,
+    "mp4": "Skeleton_Attack.mp4",
+    "gif": "Skeleton_Attack.gif"
+  }
+}

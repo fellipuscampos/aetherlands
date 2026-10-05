@@ -1,0 +1,26 @@
+{
+  "ArmoredCavalier_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "ArmoredCavalier_Idle.mp4",
+    "gif": "ArmoredCavalier_Idle.gif"
+  },
+  "ArmoredCavalier_Walk": {
+    "frames": 18,
+    "fps": 24,
+    "mp4": "ArmoredCavalier_Walk.mp4",
+    "gif": "ArmoredCavalier_Walk.gif"
+  },
+  "ArmoredCavalier_Attack": {
+    "frames": 33,
+    "fps": 24,
+    "mp4": "ArmoredCavalier_Attack.mp4",
+    "gif": "ArmoredCavalier_Attack.gif"
+  },
+  "ArmoredCavalier_Charge": {
+    "frames": 37,
+    "fps": 24,
+    "mp4": "ArmoredCavalier_Charge.mp4",
+    "gif": "ArmoredCavalier_Charge.gif"
+  }
+}

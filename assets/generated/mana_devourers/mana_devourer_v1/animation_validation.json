@@ -1,0 +1,25 @@
+{
+  "clips": {
+    "ManaDevourer_Idle": {
+      "seam_vertex_delta_m": 2.2043643920307877e-18,
+      "minimum_ground_clearance_m": 0.17866380512714386,
+      "rigid_edge_error_m": 4.875294819239873e-07,
+      "samples": 145
+    },
+    "ManaDevourer_Walk": {
+      "seam_vertex_delta_m": 0.0,
+      "minimum_ground_clearance_m": 0.24591851234436035,
+      "rigid_edge_error_m": 5.612439522573176e-07,
+      "samples": 65
+    },
+    "ManaDevourer_Attack": {
+      "seam_vertex_delta_m": 0.0,
+      "minimum_ground_clearance_m": 0.2181992530822754,
+      "rigid_edge_error_m": 5.370619106936925e-07,
+      "samples": 73
+    }
+  },
+  "surface_crossings": [],
+  "same_channels_all_clips": true,
+  "root_motion": false
+}

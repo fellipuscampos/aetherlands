@@ -1,0 +1,11 @@
+{
+  "atlas_width": 512,
+  "bones": 8,
+  "emission": true,
+  "ground_clearance_m": 0.241699382662773,
+  "height_m": 2.45120358467102,
+  "meshes": 1,
+  "nearest": true,
+  "skin": true,
+  "status": "PASS"
+}

@@ -1,0 +1,187 @@
+{
+  "name": "Warrior_V1",
+  "kind": "v2_unit_warrior (Guerreiro)",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/warrior_*.py)",
+  "height_m": 1.8000000715255737,
+  "front_y_m": -0.560524582862854,
+  "back_y_m": 0.145810067653656,
+  "x_m": [
+    -0.414061963558197,
+    0.37281540036201477
+  ],
+  "triangles": 276,
+  "editable_parts": 23,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      256,
+      256
+    ],
+    "filter": "NEAREST",
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 1.6,
+    "unique_uv_islands": 138,
+    "density_px_per_meter": 64,
+    "measured_min": 63.9998528576087,
+    "measured_max": 64.00015634267926,
+    "padding": 2
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "head",
+      "upper_arm_l",
+      "forearm_l",
+      "hand_l",
+      "thigh_l",
+      "shin_l",
+      "foot_l",
+      "upper_arm_r",
+      "forearm_r",
+      "hand_r",
+      "thigh_r",
+      "shin_r",
+      "foot_r"
+    ],
+    "hierarchy": "flat: every bone is a child of root; legs baked from two-bone IK",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "AxeBit": "hand_r",
+      "AxeHaft": "hand_r",
+      "AxeHead": "hand_r",
+      "Belly": "chest",
+      "Buckle": "hips",
+      "Cap": "head",
+      "Chest": "chest",
+      "Foot_l": "foot_l",
+      "Foot_r": "foot_r",
+      "Forearm_l": "forearm_l",
+      "Forearm_r": "forearm_r",
+      "Hand_l": "hand_l",
+      "Hand_r": "hand_r",
+      "Head": "head",
+      "Pelvis": "hips",
+      "Shin_l": "shin_l",
+      "Shin_r": "shin_r",
+      "Shoulder_l": "chest",
+      "Shoulder_r": "chest",
+      "Thigh_l": "thigh_l",
+      "Thigh_r": "thigh_r",
+      "UpperArm_l": "upper_arm_l",
+      "UpperArm_r": "upper_arm_r"
+    }
+  },
+  "animations": {
+    "Warrior_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Ready to fight: weight shift leg to leg, hatchet bobbing, left fist in guard, head watching, breathing.",
+      "seconds": 3
+    },
+    "Warrior_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 91,
+      "description": "Light step in place: arms counter-swinging with the legs, hip bob, small trunk counter-twist.",
+      "speed_m_s": 0.30857142857142855,
+      "seconds": 1.1666666666666667
+    },
+    "Warrior_Attack": {
+      "start": 1,
+      "end": 33,
+      "loop": false,
+      "nla_start": 141,
+      "description": "Overhead hatchet chop: raises the hatchet behind the head twisting the trunk, steps in with the left foot and chops down forward (impact 15), recovers.",
+      "impact_frame": 15,
+      "seconds": 1.3333333333333333
+    },
+    "Warrior_PowerStrike": {
+      "start": 1,
+      "end": 49,
+      "loop": false,
+      "nla_start": 181,
+      "description": "Golpe Poderoso: coils with the weapon loaded behind the back and the left arm pointing at the target, leaps into a full overhead arc and smashes it down low in front (impact 26, held), recovers. One-handed: shared by the line skins.",
+      "impact_frame": 26,
+      "seconds": 2
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "origin": "between the feet, on the ground",
+  "rig_bone_map": {
+    "AxeBit": "hand_r",
+    "AxeHaft": "hand_r",
+    "AxeHead": "hand_r",
+    "Belly": "chest",
+    "Buckle": "hips",
+    "Cap": "head",
+    "Chest": "chest",
+    "Foot_l": "foot_l",
+    "Foot_r": "foot_r",
+    "Forearm_l": "forearm_l",
+    "Forearm_r": "forearm_r",
+    "Hand_l": "hand_l",
+    "Hand_r": "hand_r",
+    "Head": "head",
+    "Pelvis": "hips",
+    "Shin_l": "shin_l",
+    "Shin_r": "shin_r",
+    "Shoulder_l": "chest",
+    "Shoulder_r": "chest",
+    "Thigh_l": "thigh_l",
+    "Thigh_r": "thigh_r",
+    "UpperArm_l": "upper_arm_l",
+    "UpperArm_r": "upper_arm_r"
+  },
+  "notes": "Static Warrior V1 (Guerreiro), Squire copy, 1.80 m, one block per body part. Hatchet follows hand_r; cap follows head.",
+  "animation_validation": {
+    "problems": [],
+    "ik": {},
+    "min_z": {
+      "Warrior_Idle": 0.0,
+      "Warrior_Walk": 0.0,
+      "Warrior_Attack": 0.0,
+      "Warrior_PowerStrike": 0.0
+    }
+  },
+  "glb": {
+    "file": "warrior_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 16,
+    "triangles": 276,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Warrior_Idle": 3,
+      "Warrior_Walk": 1.1666666666666667,
+      "Warrior_Attack": 1.3333333333333333,
+      "Warrior_PowerStrike": 2
+    },
+    "channels": "location, rotation on every bone"
+  },
+  "status": "Warrior V1 with Warrior_Idle, Warrior_Walk, Warrior_Attack, Warrior_PowerStrike; GLB and packed atlases validated",
+  "source_validation": {
+    "scenes": [
+      "Warrior_V1"
+    ],
+    "actions": [
+      "Warrior_Walk",
+      "Warrior_PowerStrike",
+      "Warrior_Idle",
+      "Warrior_Attack"
+    ],
+    "armatures": [
+      "Warrior_V1_Skeleton"
+    ]
+  }
+}

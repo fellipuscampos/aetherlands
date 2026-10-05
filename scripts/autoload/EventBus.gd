@@ -66,6 +66,9 @@ signal world_phase_changed(old_phase: int, new_phase: int, turn: int, cause: Str
 ## - combat_engagement: um ataque comum resolvido (target_kind "unit" ou "city", no tile target_coord).
 signal city_production_processed(player: PlayerData, city: City, item_id: String, result: Dictionary)
 signal unit_removed(former_owner: PlayerData, unit: Unit)
+## V3 / Etapa 4 — estado temporário/Barreira de `unit` mudou (aplicado, renovado, tick, expirou, carregado): o card da
+## unidade selecionada atualiza os chips sem polling.
+signal unit_status_changed(unit: Unit)
 signal combat_engagement(attacker_owner: PlayerData, defender_owner: PlayerData, target_kind: String, target_coord: Vector2i)
 ## Fase 33D1 (observabilidade pura, mesma regra acima): covil destruído por uma civilização e melhoria
 ## saqueada por monstro (dono do tile). target_kind de combat_engagement ganha "lair" (ataque à estrutura).

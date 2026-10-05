@@ -8,6 +8,12 @@ extends GutTest
 
 var hex_grid: HexGrid
 
+
+## V3 / Etapa 3 — o mundo padrão 1.0 (TitleScreen "large") é SÓ o continente principal; os continentes Vulcânico e
+## de Cristal continuam no código, ligados pelo perfil explícito WorldProfile.SPECIAL_CONTINENTS (dimensões antigas).
+## Os testes de gerador especial abaixo usam esse perfil — prova de que o código preservado ainda funciona.
+const SPECIAL_WORLD := WorldProfile.SPECIAL_CONTINENTS
+
 func before_each():
 	hex_grid = HexGrid.new()
 	hex_grid._ready()
@@ -308,7 +314,7 @@ func test_generate_map_at_large_radius_completes_quickly():
 	var t0 = Time.get_ticks_msec()
 	var grid := HexGrid.new()
 	grid._ready()
-	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 999)
+	grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, 999)
 	var elapsed_ms = Time.get_ticks_msec() - t0
 
 	assert_lt(elapsed_ms, 5000, "geracao do mapa Grande esta demorando demais: %dms" % elapsed_ms)
@@ -381,12 +387,12 @@ func test_material_kind_for_volcanic_ash_is_two():
 ## Reportado pelo usuario: biomas raros (Lava, Cristal, Mar Gelado, Gelo)
 ## as vezes nao apareciam nenhuma vez no mapa. "Acho que faz sentido todos
 ## os biomas sempre serem gerados pelo menos no grande" — no tamanho
-## Grande (`TitleScreen.MAP_SIZES.large`), TODO tipo de bioma precisa
+## Grande (`SPECIAL_WORLD`), TODO tipo de bioma precisa
 ## aparecer pelo menos uma vez.
 func test_generate_map_at_large_size_contains_every_biome_type():
 	var grid := HexGrid.new()
 	grid._ready()
-	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 555)
+	grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, 555)
 
 	var present := {}
 	for data in grid.tiles.values():
@@ -402,7 +408,7 @@ func test_generate_map_at_large_size_contains_every_biome_type():
 func test_generate_map_at_large_size_contains_every_biome_type_with_another_seed():
 	var grid := HexGrid.new()
 	grid._ready()
-	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 12321)
+	grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, 12321)
 
 	var present := {}
 	for data in grid.tiles.values():
@@ -434,11 +440,11 @@ func test_ensure_biome_variety_does_nothing_below_the_large_threshold():
 func test_generate_map_at_large_size_biome_variety_is_deterministic():
 	var grid_a := HexGrid.new()
 	grid_a._ready()
-	grid_a.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 777)
+	grid_a.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, 777)
 
 	var grid_b := HexGrid.new()
 	grid_b._ready()
-	grid_b.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 777)
+	grid_b.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, 777)
 
 	for coord in grid_a.tiles.keys():
 		assert_eq(
@@ -460,7 +466,7 @@ func test_generate_map_at_large_size_biome_variety_is_deterministic():
 func test_generate_map_lava_forms_a_clustered_region_not_isolated_tiles():
 	var grid := HexGrid.new()
 	grid._ready()
-	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 555)
+	grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, 555)
 
 	var lava_coords := []
 	for coord in grid.tiles.keys():
@@ -506,7 +512,7 @@ func test_generate_map_lava_rarely_occupies_mountain_elevation():
 	for s in seeds:
 		var grid := HexGrid.new()
 		grid._ready()
-		grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, s)
+		grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, s)
 
 		var lava_total := 0
 		var lava_on_mountain := 0
@@ -554,7 +560,7 @@ func test_generate_map_at_large_size_lava_always_forms_a_real_region():
 	for s in seeds:
 		var grid := HexGrid.new()
 		grid._ready()
-		grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, s)
+		grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, s)
 
 		var lava_coords := []
 		for coord in grid.tiles.keys():
@@ -610,7 +616,7 @@ func test_generate_map_at_large_size_lava_always_forms_a_real_region():
 func test_generate_map_never_has_isolated_single_tile_biomes():
 	var randgen = RandomNumberGenerator.new()
 	randgen.seed = 5555
-	var sizes = [TitleScreen.MAP_SIZES.large]
+	var sizes = [TitleScreen.MAP_SIZES.large, SPECIAL_WORLD]
 	for map_size in sizes:
 		for i in range(10):
 			var s = randgen.randi()
@@ -660,7 +666,7 @@ func test_generate_map_at_large_size_always_has_a_lava_sea_when_lava_present():
 	for s in seeds:
 		var grid := HexGrid.new()
 		grid._ready()
-		grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, s)
+		grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, s)
 
 		var has_lava := false
 		var sea_coords := []
@@ -746,7 +752,7 @@ func test_generate_map_desert_is_comparable_in_size_to_other_biomes():
 	for s in seeds:
 		var grid := HexGrid.new()
 		grid._ready()
-		grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, s)
+		grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, s)
 
 		var counts := {}
 		for coord in grid.tiles.keys():
@@ -788,7 +794,7 @@ func test_generate_map_desert_is_comparable_in_size_to_other_biomes():
 func test_generate_map_coastal_ocean_becomes_coast_end_to_end():
 	var grid := HexGrid.new()
 	grid._ready()
-	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 777)
+	grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, 777)
 
 	var coast_count := 0
 	for coord in grid.tiles.keys():
@@ -822,8 +828,9 @@ func test_generate_map_coastal_ocean_becomes_coast_end_to_end():
 func test_zone_for_classifies_main_volcanic_crystal_and_gap_correctly_on_large_map():
 	var grid := HexGrid.new()
 	grid._ready()
-	grid.map_width = TitleScreen.MAP_SIZES.large.width
-	grid.map_height = TitleScreen.MAP_SIZES.large.height
+	grid.map_width = SPECIAL_WORLD.width
+	grid.map_height = SPECIAL_WORLD.height
+	grid.world_profile = WorldProfile.for_dimensions(grid.map_width, grid.map_height)
 
 	assert_eq(grid._zone_for(Vector2i(0, 0)), grid._Zone.MAIN, "origem deveria estar na zona Principal")
 	assert_eq(grid._zone_for(grid.VOLCANIC_ZONE_CENTER), grid._Zone.VOLCANIC, "centro da zona Vulcanica deveria classificar como Vulcanica")
@@ -850,7 +857,7 @@ func test_zone_for_classifies_main_volcanic_crystal_and_gap_correctly_on_large_m
 func test_generate_map_at_large_size_special_continents_have_pure_composition():
 	var grid := HexGrid.new()
 	grid._ready()
-	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 2024)
+	grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, 2024)
 
 	var volcanic_types: Array = [
 		HexTileData.TerrainType.LAVA, HexTileData.TerrainType.LAVA_SEA,
@@ -896,7 +903,7 @@ func test_generate_map_at_large_size_special_continents_have_pure_composition():
 func test_generate_map_at_large_size_volcanic_continent_has_real_relief():
 	var grid := HexGrid.new()
 	grid._ready()
-	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 2024)
+	grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, 2024)
 
 	var counts := {}
 	for coord in grid.tiles.keys():
@@ -939,7 +946,7 @@ func test_generate_map_volcanic_peaks_are_always_isolated_from_each_other():
 	for s in seeds:
 		var grid := HexGrid.new()
 		grid._ready()
-		grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, s)
+		grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, s)
 
 		for coord in grid.tiles.keys():
 			if grid.tiles[coord].terrain_type != HexTileData.TerrainType.VOLCANIC_PEAKS:
@@ -962,7 +969,7 @@ func test_generate_map_has_at_least_three_isolated_volcanoes():
 	for s in seeds:
 		var grid := HexGrid.new()
 		grid._ready()
-		grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, s)
+		grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, s)
 
 		var peak_count := 0
 		for coord in grid.tiles.keys():
@@ -982,7 +989,7 @@ func test_generate_map_has_at_least_three_isolated_volcanoes():
 func test_generate_map_at_large_size_crystal_continent_has_real_relief():
 	var grid := HexGrid.new()
 	grid._ready()
-	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 2024)
+	grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, 2024)
 
 	var counts := {}
 	for coord in grid.tiles.keys():
@@ -1026,4 +1033,40 @@ func test_transform_tile_terrain_updates_the_tile_data():
 
 	assert_eq(grid.get_tile(land_coord).terrain_type, new_type, "dado do tile deveria ter mudado")
 
+	grid.queue_free()
+
+func test_standard_1_0_world_has_only_the_main_continent():
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 2024)
+	assert_eq(String(grid.world_profile.id), "standard_1_0")
+	assert_false(bool(grid.world_profile.volcanic_continent))
+	assert_false(bool(grid.world_profile.crystal_continent))
+	var special_zone := 0
+	var special_terrain := 0
+	var specials := [HexTileData.TerrainType.LAVA, HexTileData.TerrainType.VOLCANIC_PEAKS, HexTileData.TerrainType.CRYSTAL_PEAKS]
+	for coord in grid.tiles:
+		var zone = grid._zone_for(coord)
+		if zone == grid._Zone.VOLCANIC or zone == grid._Zone.CRYSTAL:
+			special_zone += 1
+		if grid.tiles[coord].terrain_type in specials:
+			special_terrain += 1
+	assert_eq(special_zone, 0, "padrão 1.0 não classifica nenhum tile como zona especial")
+	assert_eq(special_terrain, 0, "padrão 1.0 não gera Lava/Picos Vulcânicos/Picos de Cristal")
+	grid.queue_free()
+
+func test_special_continents_profile_still_generates_volcanic_and_crystal_land():
+	var grid := HexGrid.new()
+	grid._ready()
+	grid.generate_map(SPECIAL_WORLD.width, SPECIAL_WORLD.height, 2024)
+	assert_eq(String(grid.world_profile.id), "special_continents")
+	var volcanic := 0
+	var crystal := 0
+	for coord in grid.tiles:
+		if grid._zone_for(coord) == grid._Zone.VOLCANIC and not grid.tiles[coord].is_water():
+			volcanic += 1
+		elif grid._zone_for(coord) == grid._Zone.CRYSTAL and not grid.tiles[coord].is_water():
+			crystal += 1
+	assert_gt(volcanic, 0, "gerador Vulcânico preservado")
+	assert_gt(crystal, 0, "gerador de Cristal preservado")
 	grid.queue_free()

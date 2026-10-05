@@ -100,6 +100,30 @@ extends Resource
 @export var idle_animation_override: String = ""
 @export var walk_animation_override: String = ""
 @export var attack_animation_override: String = ""
+## Verme Colossal (Escavar): clipes de entrar/sair da terra. "" (padrao) = a
+## unidade so some/aparece, como antes. Ver Unit.play_burrow_visual()/
+## play_emerge_visual(), chamados por MonsterAbilitySystem.
+@export var burrow_animation_override: String = ""
+@export var emerge_animation_override: String = ""
+## Herói Corrompido (Bloqueio com Escudo): clipe tocado quando um ataque é bloqueado. "" = sem reação própria.
+@export var block_animation_override: String = ""
+## Linha do Guardião (técnica Muralha de Escudos): clipe de ERGUER o escudo ao ativar e o loop da POSTURA mantida
+## enquanto o efeito dura (no lugar do Idle). "" = a unidade não tem postura própria. Ver Unit._refresh_brace_visual().
+@export var shield_wall_animation_override: String = ""
+@export var shield_wall_hold_animation_override: String = ""
+## Técnicas de ATAQUE com clipe próprio (Golpe Poderoso, Ataque em Arco, Disparo Preciso, Saraivada): id da técnica ->
+## nome do clipe, tocado UMA vez por uso no lugar do Attack (Unit.play_attack_visual). Técnica sem entrada = o Attack comum.
+@export var technique_animation_overrides: Dictionary = {}
+
+## Crossfade (segundos) entre clipes: os ossos saem da pose do clipe atual
+## e chegam na do proximo suavemente (idle -> andar, idle -> atacar, ...),
+## em vez de saltar de pose no frame da troca. > 0 tambem faz o Ataque
+## voltar sozinho (com o mesmo crossfade) pro Idle/Andar quando termina,
+## em vez de congelar no ultimo frame. Exige que os clipes animem o MESMO
+## conjunto de ossos (senao o osso que falta num deles "puxa" pra pose de
+## repouso durante a mistura). 0.0 (padrao) = troca instantanea de sempre.
+## Ver Unit._build_animation_player().
+@export var animation_blend_time: float = 0.0
 
 ## Todo pacote KayKit reaproveitado ate hoje separa Idle (vem do proprio
 ## personagem, model_scene_path) de Andar (sempre este segundo arquivo

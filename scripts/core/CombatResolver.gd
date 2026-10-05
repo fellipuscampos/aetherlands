@@ -231,17 +231,9 @@ static func _resolve_primary(attacker: Unit, defender: Unit, hex_grid: HexGrid, 
 	# fica proxima da neutra de proposito (ver tools/asset_factory/
 	# animation/clips.py), entao so segurar no ultimo frame ate o proximo
 	# slide_to() ja e aceitavel visualmente sem precisar de timer.
-	if attacker.attack_animation != "":
-		# Sem isso o atacante fica olhando pra qualquer direcao que sobrou do
-		# ultimo slide_to() (ex: quem acabou de andar pro lado e ataca pra
-		# frente) e o swing da arma acontece apontando pro lugar errado --
-		# "ele nao usa a lanca" (usuario), a lanca balanca no ar em vez de
-		# ir na direcao do defensor. Mesma formula de slide_to().
-		var attack_direction: Vector3 = defender.position - attacker.position
-		attack_direction.y = 0.0
-		if attack_direction.length() > 0.05:
-			attacker.rotation.y = atan2(attack_direction.x, attack_direction.z)
-		attacker._play_animation(attacker.attack_animation)
+	# O atacante vira para o defensor (sem isso o golpe sai apontando pro lado que sobrou do ultimo slide_to() -- "ele nao
+	# usa a lanca", usuario) e toca o Attack -- ou o clipe proprio da tecnica em curso, uma vez por uso (Unit.play_attack_visual).
+	attacker.play_attack_visual(defender)
 
 	var attacker_name = attacker.unit_data.unit_name
 	var defender_name = defender.unit_data.unit_name
@@ -249,7 +241,11 @@ static func _resolve_primary(attacker: Unit, defender: Unit, hex_grid: HexGrid, 
 	var defender_is_human = defender.owner_player == GameManager.human_player
 
 	attacker.movement_left = 0.0
-	if apply_direct_unit_damage(attacker, defender, result.damage_to_defender, hex_grid):
+	var damage_to_defender: float = result.damage_to_defender
+	# V3: Bloqueio com Escudo (Herói Corrompido) nega TODO o dano deste ataque comum; o revide abaixo segue normal.
+	if damage_to_defender > 0.0 and MonsterAbilitySystem.try_shield_block(defender, attacker):
+		damage_to_defender = 0.0
+	if apply_direct_unit_damage(attacker, defender, damage_to_defender, hex_grid):
 		return
 
 	if not result.is_melee_range:

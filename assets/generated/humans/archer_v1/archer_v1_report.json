@@ -1,0 +1,210 @@
+{
+  "name": "Archer_V1",
+  "kind": "v2_unit_archer (Arqueiro)",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/archer_*.py)",
+  "height_m": 1.8000000715255737,
+  "front_y_m": -0.9691704511642456,
+  "back_y_m": 0.2160000205039978,
+  "x_m": [
+    -0.4019230306148529,
+    0.3928219676017761
+  ],
+  "triangles": 396,
+  "editable_parts": 33,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      256,
+      256
+    ],
+    "filter": "NEAREST",
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 1.6,
+    "unique_uv_islands": 198,
+    "density_px_per_meter": 64,
+    "measured_min": 63.99953578028523,
+    "measured_max": 64.00139263894162,
+    "padding": 2
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "head",
+      "upper_arm_l",
+      "forearm_l",
+      "hand_l",
+      "thigh_l",
+      "shin_l",
+      "foot_l",
+      "upper_arm_r",
+      "forearm_r",
+      "hand_r",
+      "thigh_r",
+      "shin_r",
+      "foot_r",
+      "string_u",
+      "string_d",
+      "arrow"
+    ],
+    "hierarchy": "flat: every bone is a child of root; legs baked from two-bone IK",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "ArrowFletch": "arrow",
+      "ArrowHead": "arrow",
+      "ArrowShaft": "arrow",
+      "Arrows": "chest",
+      "Belly": "chest",
+      "BowGrip": "hand_l",
+      "BowLimb_d1": "hand_l",
+      "BowLimb_d2": "hand_l",
+      "BowLimb_d3": "hand_l",
+      "BowLimb_u1": "hand_l",
+      "BowLimb_u2": "hand_l",
+      "BowLimb_u3": "hand_l",
+      "Buckle": "hips",
+      "Chest": "chest",
+      "Foot_l": "foot_l",
+      "Foot_r": "foot_r",
+      "Forearm_l": "forearm_l",
+      "Forearm_r": "forearm_r",
+      "Hand_l": "hand_l",
+      "Hand_r": "hand_r",
+      "Head": "head",
+      "Pelvis": "hips",
+      "Quiver": "chest",
+      "Shin_l": "shin_l",
+      "Shin_r": "shin_r",
+      "Shoulder_l": "chest",
+      "Shoulder_r": "chest",
+      "StringDown": "string_d",
+      "StringUp": "string_u",
+      "Thigh_l": "thigh_l",
+      "Thigh_r": "thigh_r",
+      "UpperArm_l": "upper_arm_l",
+      "UpperArm_r": "upper_arm_r"
+    }
+  },
+  "animations": {
+    "Archer_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Ready, arrow nocked: weight shift leg to leg, the bow bobbing a little, head watching, breathing.",
+      "seconds": 3
+    },
+    "Archer_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 91,
+      "description": "Light step in place: arms counter-swinging with the legs, hip bob, small trunk counter-twist.",
+      "speed_m_s": 0.30857142857142855,
+      "seconds": 1.1666666666666667
+    },
+    "Archer_Attack": {
+      "start": 1,
+      "end": 49,
+      "loop": false,
+      "nla_start": 141,
+      "description": "Ranged shot: takes the string at the nock, the whole body pivots side-on, pushes the bow out and draws to the cheek (full draw 18), aims, looses (27: string snaps, arrow flies), takes a new arrow from the quiver, nocks it, settles back.",
+      "impact_frame": 27,
+      "seconds": 2
+    },
+    "Archer_PreciseShot": {
+      "start": 1,
+      "end": 57,
+      "loop": false,
+      "nla_start": 201,
+      "description": "Disparo Preciso: lower stance leaning back, the bow raised aiming up (longer range), draws to the ear (full draw 22), long steadying aim, strong loose (35: big string vibration, arrow flies fast on a rising line, bow kicks, draw hand flies back), reloads from the quiver, settles back.",
+      "impact_frame": 35,
+      "seconds": 2.3333333333333335
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "origin": "between the feet, on the ground",
+  "rig_bone_map": {
+    "ArrowFletch": "arrow",
+    "ArrowHead": "arrow",
+    "ArrowShaft": "arrow",
+    "Arrows": "chest",
+    "Belly": "chest",
+    "BowGrip": "hand_l",
+    "BowLimb_d1": "hand_l",
+    "BowLimb_d2": "hand_l",
+    "BowLimb_d3": "hand_l",
+    "BowLimb_u1": "hand_l",
+    "BowLimb_u2": "hand_l",
+    "BowLimb_u3": "hand_l",
+    "Buckle": "hips",
+    "Chest": "chest",
+    "Foot_l": "foot_l",
+    "Foot_r": "foot_r",
+    "Forearm_l": "forearm_l",
+    "Forearm_r": "forearm_r",
+    "Hand_l": "hand_l",
+    "Hand_r": "hand_r",
+    "Head": "head",
+    "Pelvis": "hips",
+    "Quiver": "chest",
+    "Shin_l": "shin_l",
+    "Shin_r": "shin_r",
+    "Shoulder_l": "chest",
+    "Shoulder_r": "chest",
+    "StringDown": "string_d",
+    "StringUp": "string_u",
+    "Thigh_l": "thigh_l",
+    "Thigh_r": "thigh_r",
+    "UpperArm_l": "upper_arm_l",
+    "UpperArm_r": "upper_arm_r"
+  },
+  "notes": "Static Archer V1 (Arqueiro), Warrior copy, 1.80 m, one block per body part. Bow follows hand_l; string halves have their own bones (string_u/string_d) and the nocked arrow its own (arrow); quiver follows chest; hood painted on the head.",
+  "animation_validation": {
+    "problems": [],
+    "ik": {},
+    "min_z": {
+      "Archer_Idle": 0.0,
+      "Archer_Walk": 0.0,
+      "Archer_Attack": -0.0,
+      "Archer_PreciseShot": -0.0
+    }
+  },
+  "glb": {
+    "file": "archer_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 19,
+    "triangles": 396,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Archer_Idle": 3,
+      "Archer_Walk": 1.1666666666666667,
+      "Archer_Attack": 2,
+      "Archer_PreciseShot": 2.3333333333333335
+    },
+    "channels": "location, rotation, scale on every bone (string stretch, hidden arrow)"
+  },
+  "status": "Archer V1 with Archer_Idle, Archer_Walk, Archer_Attack, Archer_PreciseShot; GLB and packed atlases validated",
+  "source_validation": {
+    "scenes": [
+      "Archer_V1"
+    ],
+    "actions": [
+      "Archer_Walk",
+      "Archer_PreciseShot",
+      "Archer_Idle",
+      "Archer_Attack"
+    ],
+    "armatures": [
+      "Archer_V1_Skeleton"
+    ]
+  }
+}

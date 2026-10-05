@@ -11,6 +11,7 @@ extends Node
 ## Survey somente leitura do mundo inicial (covis por capital, gatilho do Dragão), Fase 33C:
 ##   godot --headless --path . res://tools/balance/BalanceLab.tscn -- --world-survey --matches=0-47
 ## V3 / Combat Ecology — A/B de custo sem a ecologia (dev): acrescente `--no-ecology` a qualquer comando.
+## V3 / Etapa 4 — A/B do habitat (dev): `--no-habitat` coloca os sítios com o sorteio uniforme anterior.
 ## Baseline numérica lida do código-fonte (custos/rendimentos/regras atuais):
 ##   godot --headless --path . res://tools/balance/BalanceLab.tscn -- --dump-baseline
 ##
@@ -27,6 +28,8 @@ func _main() -> void:
 	# V3 / Combat Ecology: `--no-ecology` (DEV/benchmark A/B) roda sem a população ecológica. Fixture de CLI,
 	# nunca salva nem exposta na UI; restaurada ao sair.
 	GameManager.combat_ecology_on_new_match = not args.has("no-ecology")
+	# V3 / Etapa 4: `--no-habitat` (DEV A/B) coloca os sítios sem habitat (sorteio uniforme da Etapa 3) — só medição.
+	MonsterEcologySystem.habitat_enabled = not args.has("no-habitat")
 	var run := String(args.get("run", DEFAULT_RUN))
 	var tag := String(args.get("tag", "baseline"))
 	var base_dir := "user://balance/%s" % run

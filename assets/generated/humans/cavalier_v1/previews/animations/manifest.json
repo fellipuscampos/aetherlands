@@ -1,0 +1,26 @@
+{
+  "Cavalier_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "Cavalier_Idle.mp4",
+    "gif": "Cavalier_Idle.gif"
+  },
+  "Cavalier_Walk": {
+    "frames": 18,
+    "fps": 24,
+    "mp4": "Cavalier_Walk.mp4",
+    "gif": "Cavalier_Walk.gif"
+  },
+  "Cavalier_Attack": {
+    "frames": 33,
+    "fps": 24,
+    "mp4": "Cavalier_Attack.mp4",
+    "gif": "Cavalier_Attack.gif"
+  },
+  "Cavalier_Charge": {
+    "frames": 37,
+    "fps": 24,
+    "mp4": "Cavalier_Charge.mp4",
+    "gif": "Cavalier_Charge.gif"
+  }
+}

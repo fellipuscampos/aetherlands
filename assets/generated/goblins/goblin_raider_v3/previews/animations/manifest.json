@@ -1,0 +1,23 @@
+{
+  "Goblin_Idle": {
+    "frames": 60,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Goblin_Idle.mp4",
+    "gif": "Goblin_Idle.gif"
+  },
+  "Goblin_Walk": {
+    "frames": 20,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Goblin_Walk.mp4",
+    "gif": "Goblin_Walk.gif"
+  },
+  "Goblin_Attack": {
+    "frames": 29,
+    "fps": 24,
+    "loop": false,
+    "mp4": "Goblin_Attack.mp4",
+    "gif": "Goblin_Attack.gif"
+  }
+}

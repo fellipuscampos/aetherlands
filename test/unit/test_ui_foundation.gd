@@ -41,7 +41,7 @@ func test_status_chip_has_semantic_tone_and_duration():
 	chip.set_status("Fortificado", AEStatusChip.Tone.POSITIVE, 2, "+")
 	assert_eq(chip.tone, AEStatusChip.Tone.POSITIVE)
 	assert_eq(chip.duration_turns, 2)
-	assert_true(chip.label.text.contains("2T"))
+	assert_true(chip.label.text.contains("· 2t"))
 
 func test_shell_has_definitive_hosts_and_strict_layer_order():
 	assert_not_null(shell.global_bar)

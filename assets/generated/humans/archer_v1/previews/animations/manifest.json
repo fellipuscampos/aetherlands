@@ -1,0 +1,26 @@
+{
+  "Archer_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "Archer_Idle.mp4",
+    "gif": "Archer_Idle.gif"
+  },
+  "Archer_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "Archer_Walk.mp4",
+    "gif": "Archer_Walk.gif"
+  },
+  "Archer_Attack": {
+    "frames": 49,
+    "fps": 24,
+    "mp4": "Archer_Attack.mp4",
+    "gif": "Archer_Attack.gif"
+  },
+  "Archer_PreciseShot": {
+    "frames": 57,
+    "fps": 24,
+    "mp4": "Archer_PreciseShot.mp4",
+    "gif": "Archer_PreciseShot.gif"
+  }
+}

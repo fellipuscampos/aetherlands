@@ -1,0 +1,32 @@
+{
+  "Squire_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "Squire_Idle.mp4",
+    "gif": "Squire_Idle.gif"
+  },
+  "Squire_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "Squire_Walk.mp4",
+    "gif": "Squire_Walk.gif"
+  },
+  "Squire_Attack": {
+    "frames": 31,
+    "fps": 24,
+    "mp4": "Squire_Attack.mp4",
+    "gif": "Squire_Attack.gif"
+  },
+  "Squire_ShieldWall": {
+    "frames": 25,
+    "fps": 24,
+    "mp4": "Squire_ShieldWall.mp4",
+    "gif": "Squire_ShieldWall.gif"
+  },
+  "Squire_ShieldWallHold": {
+    "frames": 48,
+    "fps": 24,
+    "mp4": "Squire_ShieldWallHold.mp4",
+    "gif": "Squire_ShieldWallHold.gif"
+  }
+}

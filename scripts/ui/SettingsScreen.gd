@@ -14,6 +14,9 @@ signal debug_requested # Compatibilidade para consumidores antigos; nunca emitid
 @onready var vsync_check_button: CheckButton = %VSyncCheckButton
 @onready var window_mode_option: OptionButton = %WindowModeOption
 @onready var resolution_option: OptionButton = %ResolutionOption
+@onready var anti_aliasing_option: OptionButton = %AntiAliasingOption
+@onready var shadow_quality_option: OptionButton = %ShadowQualityOption
+@onready var reset_graphics_button: Button = %ResetGraphicsButton
 @onready var ui_scale_option: OptionButton = %UIScaleOption
 @onready var reduced_motion_check: CheckButton = %ReducedMotionCheck
 @onready var controls_text: RichTextLabel = %ControlsText
@@ -38,6 +41,9 @@ func _ready() -> void:
 	vsync_check_button.toggled.connect(_on_vsync_toggled)
 	window_mode_option.item_selected.connect(_on_window_mode_selected)
 	resolution_option.item_selected.connect(_on_resolution_selected)
+	anti_aliasing_option.item_selected.connect(_on_anti_aliasing_selected)
+	shadow_quality_option.item_selected.connect(_on_shadow_quality_selected)
+	reset_graphics_button.pressed.connect(_on_reset_graphics_pressed)
 	ui_scale_option.item_selected.connect(_on_ui_scale_selected)
 	reduced_motion_check.toggled.connect(_on_reduced_motion_toggled)
 	back_button.pressed.connect(func(): back_requested.emit())
@@ -55,6 +61,8 @@ func refresh() -> void:
 	_select_by_metadata(resolution_option, Settings.window_resolution)
 	resolution_option.disabled = Settings.window_mode == Settings.FULLSCREEN
 	_select_by_metadata(ui_scale_option, Settings.ui_scale_percent)
+	_select_by_metadata(anti_aliasing_option, Settings.anti_aliasing)
+	_select_by_metadata(shadow_quality_option, Settings.shadow_quality)
 	_refreshing = false
 
 func _populate_options() -> void:
@@ -70,6 +78,14 @@ func _populate_options() -> void:
 	for size in Settings.RESOLUTION_OPTIONS:
 		resolution_option.add_item("%d x %d" % [size.x, size.y])
 		resolution_option.set_item_metadata(resolution_option.item_count - 1, size)
+	anti_aliasing_option.clear()
+	for id in GraphicsQuality.ANTI_ALIASING_OPTIONS:
+		anti_aliasing_option.add_item(String(GraphicsQuality.AA_LABELS[id]) + (" (padrão)" if id == GraphicsQuality.DEFAULT_ANTI_ALIASING else ""))
+		anti_aliasing_option.set_item_metadata(anti_aliasing_option.item_count - 1, id)
+	shadow_quality_option.clear()
+	for id in GraphicsQuality.SHADOW_QUALITY_OPTIONS:
+		shadow_quality_option.add_item(String(GraphicsQuality.SHADOW_LABELS[id]) + (" (padrão)" if id == GraphicsQuality.DEFAULT_SHADOW_QUALITY else ""))
+		shadow_quality_option.set_item_metadata(shadow_quality_option.item_count - 1, id)
 	ui_scale_option.clear()
 	for value in Settings.UI_SCALE_OPTIONS:
 		ui_scale_option.add_item("%d%%" % value)
@@ -149,6 +165,16 @@ func _on_window_mode_selected(index: int) -> void:
 
 func _on_resolution_selected(index: int) -> void:
 	if not _refreshing: Settings.set_window_resolution(resolution_option.get_item_metadata(index))
+
+func _on_anti_aliasing_selected(index: int) -> void:
+	if not _refreshing: Settings.set_anti_aliasing(String(anti_aliasing_option.get_item_metadata(index)))
+
+func _on_shadow_quality_selected(index: int) -> void:
+	if not _refreshing: Settings.set_shadow_quality(String(shadow_quality_option.get_item_metadata(index)))
+
+func _on_reset_graphics_pressed() -> void:
+	Settings.reset_graphics_to_defaults()
+	refresh()
 
 func _on_ui_scale_selected(index: int) -> void:
 	if not _refreshing: Settings.set_ui_scale_percent(int(ui_scale_option.get_item_metadata(index)))

@@ -1,0 +1,131 @@
+{
+  "status": "Reviewed animations saved in editable Blender source",
+  "parts": 31,
+  "triangles": 372,
+  "bones": 23,
+  "fps": 24,
+  "clips": {
+    "Spider_Idle": {
+      "start": 1,
+      "end": 61,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Subtle abdomen breathing, alert palps and suspended forelegs; six fixed supports."
+    },
+    "Spider_Walk": {
+      "start": 1,
+      "end": 33,
+      "loop": true,
+      "nla_start": 81,
+      "description": "Alternating tetrapods, 62% stance; eight legs step with planted support and lifted recovery.",
+      "suggested_translation_mps": 0.31451612903225806
+    },
+    "Spider_Attack": {
+      "start": 1,
+      "end": 37,
+      "loop": false,
+      "nla_start": 131,
+      "description": "Raise forelegs, recoil, quick forward bite at frame 15, follow-through and recovery.",
+      "impact_frame": 15
+    }
+  },
+  "validation": {
+    "clips": {
+      "Spider_Idle": {
+        "minimum_vertex_z_m": -6.253831088542938e-07,
+        "maximum_tip_error_m": 8.661780613205446e-07,
+        "seam_vertex_delta_m": 0.0,
+        "minimum_supporting_legs": 6
+      },
+      "Spider_Walk": {
+        "minimum_vertex_z_m": -7.171183824539185e-07,
+        "maximum_tip_error_m": 9.86915461906744e-07,
+        "seam_vertex_delta_m": 0.0,
+        "minimum_supporting_legs": 4
+      },
+      "Spider_Attack": {
+        "minimum_vertex_z_m": -6.034970283508301e-07,
+        "maximum_tip_error_m": 1.0328396744950698e-06,
+        "seam_vertex_delta_m": 0.0,
+        "minimum_supporting_legs": 6
+      }
+    },
+    "surface_crossings": [],
+    "baseline_contacts": [
+      [
+        "Leg1_Femur_l",
+        "Cephalothorax"
+      ],
+      [
+        "Leg1_Femur_l",
+        "Leg2_Femur_l"
+      ],
+      [
+        "Leg1_Femur_r",
+        "Cephalothorax"
+      ],
+      [
+        "Leg1_Femur_r",
+        "Leg2_Femur_r"
+      ],
+      [
+        "Leg2_Femur_l",
+        "Cephalothorax"
+      ],
+      [
+        "Leg2_Femur_l",
+        "Leg3_Femur_l"
+      ],
+      [
+        "Leg2_Femur_r",
+        "Cephalothorax"
+      ],
+      [
+        "Leg2_Femur_r",
+        "Leg3_Femur_r"
+      ],
+      [
+        "Leg3_Femur_l",
+        "Cephalothorax"
+      ],
+      [
+        "Leg3_Femur_l",
+        "Leg4_Femur_l"
+      ],
+      [
+        "Leg3_Femur_r",
+        "Cephalothorax"
+      ],
+      [
+        "Leg3_Femur_r",
+        "Leg4_Femur_r"
+      ],
+      [
+        "Leg4_Femur_l",
+        "Cephalothorax"
+      ],
+      [
+        "Leg4_Femur_r",
+        "Cephalothorax"
+      ]
+    ],
+    "geometry_uvs_unchanged": true,
+    "normalized_rigid_weights": true
+  },
+  "source_validation": {
+    "scenes": [
+      "Giant_Spider_V1"
+    ],
+    "actions": [
+      "Spider_Walk",
+      "Spider_Idle",
+      "Spider_Attack"
+    ],
+    "armatures": [
+      "Giant_Spider_V1_Skeleton.001"
+    ]
+  },
+  "texture": "Packed atlas matches PNG; no green texels; texture untouched by animation work",
+  "geometry": "User deletions preserved; 31 editable parts, original UVs",
+  "glb": "Previous static export; this delivery updates Blender and animation previews only."
+}

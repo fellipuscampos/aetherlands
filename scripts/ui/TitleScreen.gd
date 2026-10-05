@@ -36,8 +36,11 @@ signal load_game_requested(slot_id: String)
 ## Cristal + oceano de separacao, ver MAIN_ZONE_SIZE abaixo e
 ## HexGrid._zone_for) — pedido do usuario: "expandir o tamanho fixo do
 ## mapa pra acomodar dois novos continentes especiais".
+## V3 / Etapa 3: o tamanho da partida padrão é o do perfil WorldProfile.STANDARD_1_0 (só o continente principal +
+## oceano ao redor). O canvas 320x84 com os continentes Vulcânico/Cristalino é WorldProfile.SPECIAL_CONTINENTS,
+## preservado para conteúdo futuro.
 const MAP_SIZES := {
-	"large": {"width": 320, "height": 84},
+	"large": {"width": WorldProfile.STANDARD_1_0.width, "height": WorldProfile.STANDARD_1_0.height},
 }
 
 ## Pegada HISTORICA do continente principal — os 96x60 originais ("Grande

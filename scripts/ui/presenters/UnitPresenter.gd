@@ -504,6 +504,7 @@ static func _passive_prefix(unit: Unit) -> String:
 ## feitiço), fortificação e ambiente. Recarga nunca entra aqui (só no botão).
 static func _statuses(unit: Unit, own: bool, grid: HexGrid) -> Array:
 	var result: Array = []
+	result.append_array(ecology_status_chips(unit, own, grid))
 	for status_id in unit.magic_status.keys():
 		var id := String(status_id)
 		if not V2OwnerTurnEffect.is_active(unit.magic_status, id):
@@ -521,7 +522,7 @@ static func _statuses(unit: Unit, own: bool, grid: HexGrid) -> Array:
 		result.append({"title": spell.display_name, "tone": AEStatusChip.Tone.NEGATIVE if harmful else AEStatusChip.Tone.POSITIVE, "turns": turns, "tooltip": AETooltip.compose(spell.display_name, effect, ["Origem: %s" % V2MagicContent.school_title(spell.school_branch), "Até o início do próximo turno do dono."])})
 	if unit.fortified:
 		result.append({"title": "Fortificada", "tone": AEStatusChip.Tone.POSITIVE, "turns": -1, "tooltip": AETooltip.compose("Fortificada", "+%d%% defesa e cura passiva." % int(CombatResolver.FORTIFY_DEFENSE_BONUS * 100), ["Dura até a unidade receber outra ordem."])})
-	var environment := V2EnvironmentalZoneSystem.unit_lines(unit, grid) if grid != null and _coord_visible(unit, grid, own) else []
+	var environment: Array = V2EnvironmentalZoneSystem.unit_lines(unit, grid) if grid != null and _coord_visible(unit, grid, own) else [] # Etapa 4: tipado como Array (o ramo vazio quebrava Array[String])
 	if not environment.is_empty():
 		var zone := V2EnvironmentalZoneSystem.zone_at(unit.coord, grid)
 		var entry := V2EnvironmentalZoneSystem.zone_entry_at(unit.coord, grid)
@@ -530,6 +531,28 @@ static func _statuses(unit: Unit, own: bool, grid: HexGrid) -> Array:
 	if own and unit.unit_data.supply_cost > 0 and V2LogisticsRuntime.is_logistically_strained(unit.owner_player):
 		result.append({"title": "Tensão Logística", "tone": AEStatusChip.Tone.WARNING, "turns": -1, "tooltip": AETooltip.compose("Tensão Logística", "-15% Ataque e Defesa enquanto os Suprimentos excederem a capacidade.")})
 	return result
+
+## V3 / Etapa 4 — chips dos estados da Combat Ecology (fato público, como o anel no mundo): debuffs na ordem de
+## importância com a duração em turnos da vítima; Barreira Arcana (positivo, sem duração — dura até absorver); Área
+## Micótica sob a unidade (negativo, sem duração — vale enquanto ela estiver no tile). Textos e números saem dos dados
+## canônicos (UnitStatusEffects.DEFS / MonsterAbilityData), nunca escritos à mão aqui.
+static func ecology_status_chips(unit: Unit, own: bool, grid: HexGrid) -> Array:
+	var result: Array = []
+	for id in UnitStatusEffects.active_ids_by_priority(unit):
+		var def: Dictionary = UnitStatusEffects.DEFS[id]
+		var turns := UnitStatusEffects.display_turns(unit, id)
+		var title := String(def.name)
+		result.append({"title": title, "tone": AEStatusChip.Tone.NEGATIVE, "turns": turns, "status_id": id, "tooltip": AETooltip.compose(title, UnitStatusEffects.effect_text(unit, id), ["Restam %d turno%s da unidade." % [turns, "" if turns == 1 else "s"], "Origem: %s" % _species_name(String(def.get("source_species", "")))])})
+	if unit.arcane_barrier > 0.0:
+		var hunger := MonsterAbilityData.get_ability(MonsterAbilityData.ARCANE_HUNGER)
+		result.append({"title": "Barreira Arcana", "tone": AEStatusChip.Tone.POSITIVE, "turns": -1, "status_id": "arcane_barrier", "tooltip": AETooltip.compose("Barreira Arcana", "Absorve os próximos %d de dano antes da Vida." % ceili(unit.arcane_barrier), ["Origem: %s (%s)." % [String(hunger.get("name", "")), _species_name("mana_devourer")], "Dura até ser consumida."])})
+	if unit.owner_player != null and MonsterHazardSystem.is_infected(unit.coord) and (grid == null or _coord_visible(unit, grid, own)):
+		var params := MonsterAbilityData.get_ability(MonsterAbilityData.MYCOTIC_CONTAMINATION)
+		result.append({"title": "Área Micótica", "tone": AEStatusChip.Tone.NEGATIVE, "turns": -1, "status_id": "mycotic_area", "tooltip": AETooltip.compose("Área Micótica", "Perde %s de Vida no início do turno enquanto estiver neste tile (%d%% da Vida máxima, %d–%d). Cura recebida −%d%%." % [UnitStatusEffects._amount(MonsterHazardSystem.infection_damage(unit)), roundi(float(params.damage_fraction) * 100.0), int(params.damage_min), int(params.damage_max), roundi((1.0 - float(params.heal_multiplier)) * 100.0)], ["Entrar não causa dano.", "Origem: %s" % _species_name("mycotic_hive")])})
+	return result
+
+static func _species_name(kind: String) -> String:
+	return String(MonsterDatabase.KIND_DATA.get(kind, {}).get("unit_name", kind)) if kind != "" else "Criatura"
 
 static func _spell_status_effect(spell: V2SpellData) -> String:
 	var parts: Array[String] = []
@@ -548,7 +571,24 @@ static func _footer(unit: Unit, own: bool, viewer: PlayerData, grid: HexGrid) ->
 	var data := unit.unit_data
 	var result: Array = []
 	if unit.owner_player == null:
-		if not unit.is_camp_boss and not unit.world_event_managed:
+		# V3 / Etapa 3: criatura da Combat Ecology — tier, comportamento REAL da era, território (nunca "covil" para
+		# sítio sem estrutura), estado de aggro observável e habilidades.
+		if MonsterEcologySystem.is_ecology_unit(unit):
+			var kind := data.visual_kind
+			result.append({"caption": "Criatura", "text": MonsterEcologyData.tier_display(MonsterEcologyData.tier_of(kind))})
+			result.append({"caption": "Comportamento", "text": MonsterEcologySystem.behavior_label(unit)})
+			var site := MonsterEcologySystem.site_by_id(unit.ecology_site_id)
+			if not site.is_empty():
+				result.append({"caption": "Território", "text": MonsterAbilityFeedback.habitat_name(kind) if site.lair == HexGrid.NO_LAIR else "Covil (estrutura)"})
+			if bool(unit.ability_state.get("returning", false)):
+				result.append({"caption": "Estado", "text": "Retornando ao território"})
+			elif unit.ability_state.has("aggro_target"):
+				result.append({"caption": "Estado", "text": "Perseguindo um intruso"})
+			for ability_id in MonsterAbilityData.for_species(kind):
+				var ability := MonsterAbilityData.get_ability(ability_id)
+				var cooldown := MonsterAbilitySystem.cooldown_remaining(unit, ability_id)
+				result.append({"caption": String(ability.name), "text": String(ability.description) + (" (recarga %d)" % cooldown if cooldown > 0 else "")})
+		elif not unit.is_camp_boss and not unit.world_event_managed:
 			result.append({"caption": "Comportamento", "text": String(TileInspector.BEHAVIOR_LABELS.get(MonsterAI._effective_behavior(unit), "Desconhecido"))})
 		if data.gold_reward > 0.0:
 			result.append({"caption": "Recompensa", "text": "%d Ouro ao derrotar" % int(data.gold_reward)})

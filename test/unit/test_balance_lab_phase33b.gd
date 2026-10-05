@@ -101,8 +101,9 @@ func test_seed_set_is_explicit_versioned_and_reproducible():
 	assert_eq(first, BalanceSeedSet.match_config(7), "mesma partida => mesma configuração")
 	assert_eq(first.match_id, "F33B-008")
 	assert_eq(first.baseline_id, "RELEASE_BALANCE_BASELINE_PRE_TUNING")
-	assert_eq(first.map_width, 320)
-	assert_eq(first.map_height, 84)
+	# V3 / Etapa 3: o laboratório mede o mundo padrão 1.0 (só o continente principal; 320x84 = perfil especial).
+	assert_eq(first.map_width, WorldProfile.STANDARD_1_0.width)
+	assert_eq(first.map_height, WorldProfile.STANDARD_1_0.height)
 	assert_eq(first.turn_cap, 240)
 	for key in ["seed", "races", "orientations", "seed_set_version"]:
 		assert_true(first.has(key), "config registra %s" % key)

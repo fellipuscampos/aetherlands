@@ -1,0 +1,13 @@
+{
+  "scope": "Texture only; live user geometry and UVs preserved",
+  "green_texels_removed": 2172,
+  "restored_surface_texels": 1600,
+  "non_green_texels_unchanged": true,
+  "geometry_uvs_unchanged": true,
+  "packed_texture_matches_png": true,
+  "live_mesh_parts": 31,
+  "live_armatures": [],
+  "backup": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\giant_spider_v1\\before_remove_green_20261003_203445",
+  "source": "giant_spider_v1.blend",
+  "glb": "Existing GLB is from the previous revision; not re-exported during this texture-only edit."
+}

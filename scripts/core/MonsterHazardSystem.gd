@@ -2,7 +2,8 @@ class_name MonsterHazardSystem
 extends RefCounted
 
 ## V3 / Etapa 2 — perigos ESPACIAIS temporários criados por criaturas avançadas: Raízes do Mundo (Ancião
-## Arbóreo), Contaminação Micótica (Colmeia) e o Rastro Subterrâneo do Verme Colossal (telegraph).
+## Arbóreo), Contaminação Micótica (DORMENTE: a Colmeia saiu do jogo em 2026-10-04 e nenhuma espécie tem a
+## habilidade — o mecanismo e seus testes ficam para reuso) e o Rastro Subterrâneo do Verme Colossal (telegraph).
 ##
 ## Por que não reusa V2EnvironmentalZoneSystem/V2TerrainRuntime: zonas ambientais pertencem a um conjurador de
 ## civilização (dono, Escola, dano por rodada fixo) e modificações de terreno são físicas e PERMANENTES até um
@@ -165,9 +166,9 @@ static func _typed(values: Array) -> Array[Vector2i]:
 		result.append(value)
 	return result
 
-## Dano da infecção: 3% da Vida máxima (1–3), no máximo UMA vez por turno por unidade de civilização. Ao ENTRAR
-## (HexGrid.move_unit/teleport_unit) nunca mata na hora (fica com ≥ 1 Vida, o movimento em curso não é cortado);
-## no início do turno (GameManager._finish_turn) pode matar. Nunca afeta cidade nem melhoria.
+## Dano da infecção: 3% da Vida máxima (1–3), UMA vez por turno, só no INÍCIO do turno da unidade de civilização que
+## ainda está num tile infectado (GameManager._finish_turn) — Etapa 3: entrar não machuca na hora; o tile mostra
+## "Área Micótica" (o chão é que causa o dano). Nunca afeta cidade nem melhoria.
 static func damage_on(unit: Unit, grid: HexGrid, entering: bool) -> void:
 	if unit == null or not is_instance_valid(unit) or unit.owner_player == null or unit.hp <= 0.0 or not _infected.has(unit.coord):
 		return
@@ -175,20 +176,26 @@ static func damage_on(unit: Unit, grid: HexGrid, entering: bool) -> void:
 	if int(infection_ticks.get(unit.serial_id, -1)) == turn:
 		return
 	infection_ticks[unit.serial_id] = turn
-	var params := MonsterAbilityData.get_ability(MonsterAbilityData.MYCOTIC_CONTAMINATION)
-	var damage := clampf(unit.unit_data.max_hp * float(params.damage_fraction), float(params.damage_min), float(params.damage_max))
+	var damage := infection_damage(unit)
 	if entering:
 		damage = minf(damage, maxf(unit.hp - 1.0, 0.0))
 	if damage <= 0.0:
 		return
 	var owner_index := GameManager.players.find(unit.owner_player)
+	var at := unit.coord
 	var killed := CombatResolver.apply_environmental_unit_damage(unit, damage, grid)
-	MonsterEcologySystem.emit_event("infection_damage", "mycotic_hive", {"damage": damage, "killed": killed, "target": owner_index})
+	MonsterEcologySystem.emit_event("infection_damage", "mycotic_hive", {"damage": damage, "killed": killed, "target": owner_index, "target_coord": [at.x, at.y]})
 
+## Dano de um tick de infecção para `unit` (fonte única: lógica e chip de estado da UI).
+static func infection_damage(unit: Unit) -> float:
+	var params := MonsterAbilityData.get_ability(MonsterAbilityData.MYCOTIC_CONTAMINATION)
+	return clampf(unit.unit_data.max_hp * float(params.damage_fraction), float(params.damage_min), float(params.damage_max))
+
+## Etapa 3: entrar num tile infectado NÃO causa dano — só o aviso visual/contextual (o tick é no início do turno).
 static func on_unit_entered(unit: Unit, grid: HexGrid) -> void:
-	if _infected.is_empty():
+	if _infected.is_empty() or unit == null or unit.owner_player == null or not _infected.has(unit.coord):
 		return
-	damage_on(unit, grid, true)
+	MonsterEcologySystem.emit_event("infection_entered", "mycotic_hive", {"coord": [unit.coord.x, unit.coord.y], "target": GameManager.players.find(unit.owner_player)})
 
 ## Início do turno (GameManager._finish_turn): quem começa o turno num tile infectado.
 static func process_turn_start(players: Array, grid: HexGrid) -> void:
@@ -205,24 +212,20 @@ static func process_turn_start(players: Array, grid: HexGrid) -> void:
 # IA de civilização: só perigo VISÍVEL/CONHECIDO
 # ---------------------------------------------------------------------------
 
-## Tile perigoso para `player`: infecção/raiz conhecida (explorada) ou o impacto de um Rastro Subterrâneo VISÍVEL agora.
+## Tile perigoso para `player`: infecção/raiz conhecida (explorada).
 static func known_danger(coord: Vector2i, player: PlayerData, visible: Dictionary) -> bool:
 	if player == null:
 		return false
 	if (_infected.has(coord) or is_root(coord)) and player.explored_tiles.has(coord):
 		return true
-	# Rastro Subterrâneo visível: a IA sai do tile de IMPACTO previsto (os vizinhos ainda levam o golpe de 80% —
-	# reação deliberadamente imperfeita; a leitura completa da área fica para o jogador).
-	for dest in MonsterAbilitySystem.telegraph_coords():
-		if dest == coord and visible.has(dest):
-			return true
+	# Etapa 3: o Rastro Subterrâneo do Verme é só fuga (sem dano) — não é perigo para a IA evitar.
 	return false
 
 ## Uma unidade de IA parada em perigo conhecido (infecção/raiz conhecida ou área do telegraph visível) e sem
 ## inimigo colado sai para o tile alcançável seguro mais barato. true = gastou a ação saindo. Não exige
 ## perfeição: sem tile seguro, fica.
 static func ai_evade(unit: Unit, grid: HexGrid, visible: Dictionary) -> bool:
-	if unit == null or unit.movement_left <= 0.0 or (roots.is_empty() and _infected.is_empty() and MonsterAbilitySystem.telegraph_coords().is_empty()):
+	if unit == null or unit.movement_left <= 0.0 or (roots.is_empty() and _infected.is_empty()):
 		return false
 	if not known_danger(unit.coord, unit.owner_player, visible):
 		return false
@@ -257,7 +260,7 @@ static func _root_node(grid: HexGrid) -> Node3D:
 		grid.add_child(node)
 	return node
 
-static func _refresh_marker(grid: HexGrid, kind: String, coord: Vector2i, present: bool) -> void:
+static func _refresh_marker(grid: HexGrid, kind: String, coord: Vector2i, present: bool, origin: Vector2i = HexGrid.NO_LAIR) -> void:
 	if grid == null:
 		return
 	var key := "%s:%d:%d" % [kind, coord.x, coord.y]
@@ -299,6 +302,19 @@ static func _refresh_marker(grid: HexGrid, kind: String, coord: Vector2i, presen
 				log.position = Vector3(0, 0.05, 0)
 				log.rotation_degrees = Vector3(0, i * 60.0, 0)
 				marker.add_child(log)
+			# Etapa 3: cipós erguidos (lê como "raiz viva prendendo o chão", não como obstáculo de madeira).
+			var vine := StandardMaterial3D.new()
+			vine.albedo_color = Color(0.32, 0.45, 0.16)
+			for i in 4:
+				var stem := MeshInstance3D.new()
+				var stem_mesh := BoxMesh.new()
+				stem_mesh.size = Vector3(0.05, 0.32, 0.05)
+				stem.mesh = stem_mesh
+				stem.material_override = vine
+				var angle := TAU * float(i) / 4.0 + 0.4
+				stem.position = Vector3(cos(angle) * 0.28, 0.16, sin(angle) * 0.28)
+				stem.rotation_degrees = Vector3(18.0 * cos(angle), 0, -18.0 * sin(angle))
+				marker.add_child(stem)
 		"infection":
 			# Infecção: dois cogumelos rosados.
 			var cap := StandardMaterial3D.new()
@@ -339,13 +355,38 @@ static func _refresh_marker(grid: HexGrid, kind: String, coord: Vector2i, presen
 			mound.material_override = dirt
 			mound.position.y = 0.05
 			marker.add_child(mound)
+			# Etapa 3: trilha visível ORIGEM → DESTINO (buraco escuro na origem + montinhos de terra no caminho).
+			if origin != HexGrid.NO_LAIR and origin != coord and grid.tiles.has(origin):
+				var offset := grid.world_surface_for_coord(origin) - grid.world_surface_for_coord(coord)
+				var hole := MeshInstance3D.new()
+				var hole_mesh := CylinderMesh.new()
+				hole_mesh.top_radius = 0.26
+				hole_mesh.bottom_radius = 0.26
+				hole_mesh.height = 0.03
+				hole.mesh = hole_mesh
+				var dark := StandardMaterial3D.new()
+				dark.albedo_color = Color(0.12, 0.08, 0.05)
+				hole.material_override = dark
+				hole.position = Vector3(offset.x, 0.03, offset.z)
+				marker.add_child(hole)
+				var steps := 5
+				for i in range(1, steps):
+					var bump := MeshInstance3D.new()
+					var bump_mesh := SphereMesh.new()
+					bump_mesh.radius = 0.11
+					bump_mesh.height = 0.09
+					bump.mesh = bump_mesh
+					bump.material_override = dirt
+					var t := float(i) / float(steps)
+					bump.position = Vector3(offset.x * t, 0.03, offset.z * t)
+					marker.add_child(bump)
 	_root_node(grid).add_child(marker)
 	marker.position = grid.world_surface_for_coord(coord) + Vector3(0.0, 0.04, 0.0)
 	marker.visible = grid.visibility.is_empty() or grid.visibility.get(coord, HexGrid.Visibility.UNSEEN) == HexGrid.Visibility.VISIBLE
 	_markers[key] = marker
 
-static func set_telegraph(grid: HexGrid, coord: Vector2i, present: bool) -> void:
-	_refresh_marker(grid, "telegraph", coord, present)
+static func set_telegraph(grid: HexGrid, coord: Vector2i, present: bool, origin: Vector2i = HexGrid.NO_LAIR) -> void:
+	_refresh_marker(grid, "telegraph", coord, present, origin)
 
 ## Neblina do humano (HexGrid._apply_fog_to_entities): o marcador segue a visão ATUAL do tile.
 static func apply_fog(grid: HexGrid) -> void:
@@ -368,7 +409,7 @@ static func rebuild_markers(grid: HexGrid) -> void:
 	for coord in _infected:
 		_refresh_marker(grid, "infection", coord, true)
 	for coord in MonsterAbilitySystem.telegraph_coords():
-		_refresh_marker(grid, "telegraph", coord, true)
+		_refresh_marker(grid, "telegraph", coord, true, MonsterAbilitySystem.telegraph_origin(coord))
 
 # ---------------------------------------------------------------------------
 # Persistência

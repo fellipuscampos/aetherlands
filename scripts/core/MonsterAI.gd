@@ -519,8 +519,35 @@ static func _move_toward_within_radius(unit: Unit, hex_grid: HexGrid, target_coo
 		if d < best_dist:
 			best_dist = d
 			best_coord = coord
+	if best_coord == null and MonsterEcologySystem.is_ecology_unit(unit):
+		best_coord = _ecology_detour_step(unit, hex_grid, target_coord, anchor, radius, reachable)
 	if best_coord != null:
 		hex_grid.move_unit(unit, best_coord, reachable[best_coord])
+
+## V3 / Etapa 4 — desvio quando o passo guloso não acha tile mais perto (mínimo local: cidade, água ou montanha no meio
+## do caminho). Usa o A* do HexGrid até o destino (ou, ocupado, até o primeiro vizinho livre dele) e avança o máximo que
+## o Movimento do turno permite dentro do raio. Só roda nesse caso travado — antes o monstro ficava parado (ex.: Goblin
+## "voltando para casa" ao lado de uma cidade por 9 turnos). Só criaturas da ecologia.
+static func _ecology_detour_step(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i, anchor: Vector2i, radius: int, reachable: Dictionary):
+	var goals: Array[Vector2i] = [target_coord]
+	goals.append_array(MonsterEcologyPlanner.sorted_coords(hex_grid.get_neighbors(target_coord)))
+	for goal in goals.slice(0, DETOUR_GOALS):
+		if goal == unit.coord:
+			continue
+		var path := hex_grid.compute_path(unit.coord, goal, unit.owner_player, unit.unit_data.flies)
+		var step = null
+		for coord in path:
+			if not reachable.has(coord) or HexMetrics.axial_distance(anchor, coord) > radius:
+				break
+			step = coord
+		if step != null:
+			return step
+		if not path.is_empty():
+			return null # caminho existe, mas o primeiro passo sai do raio: fica
+	return null
+
+## Destinos tentados pelo desvio (o alvo e até 3 vizinhos dele) — limita o custo do A* no caso travado.
+const DETOUR_GOALS := 4
 
 static func _hostile_in_attack_range(unit: Unit, hex_grid: HexGrid) -> Unit:
 	for coord in hex_grid.tiles_in_range(unit.coord, unit.unit_data.attack_range):
@@ -608,19 +635,18 @@ static func _take_ecology_turn(unit: Unit, hex_grid: HexGrid, turn: int, directi
 	var profile: Dictionary = directive.profile
 	var kind := unit.unit_data.visual_kind
 	var behavior := MonsterEcologyData.behavior(kind)
-	var patrol := int(profile.patrol_radius)
-	var chase := maxi(int(profile.chase_radius) + int(behavior.chase_bonus), patrol)
-	if int(behavior.chase_bonus) > 0:
-		patrol += int(behavior.chase_bonus)
-		chase = maxi(chase, patrol)
-	var interest := int(profile.city_radius)
+	var ranges := ecology_ranges(kind, profile)
+	var patrol := int(ranges.patrol)
+	var chase := int(ranges.leash)
+	var interest := int(ranges.interest)
 	var prey_mode := String(behavior.prey)
-	var zone := chase
-	var search := patrol
-	if prey_mode in ["group", "caster"] and interest > 0:
-		zone = maxi(zone, interest)
-		search = maxi(search, interest)
-	if MonsterAbilitySystem.try_active(unit, hex_grid, anchor, zone):
+	var zone := int(ranges.zone)
+	var search := int(ranges.search)
+	# Etapa 3: habilidade ofensiva respeita o mesmo alcance de interesse do aggro (ou o alvo já perseguido).
+	MonsterAbilitySystem.engage_reach = maxi(int(profile.aggro_radius), interest if prey_mode in ["group", "caster"] and interest > 0 else 0)
+	var used_active := MonsterAbilitySystem.try_active(unit, hex_grid, anchor, zone)
+	MonsterAbilitySystem.engage_reach = -1
+	if used_active:
 		return
 	var attack := _ecology_attack_choice(unit, hex_grid, behavior)
 	if attack.has("target"):
@@ -629,12 +655,19 @@ static func _take_ecology_turn(unit: Unit, hex_grid: HexGrid, turn: int, directi
 	if bool(attack.get("regroup", false)) and bool(behavior.get("group_raid", false)):
 		_ecology_regroup(unit, hex_grid, anchor, zone)
 		return
+	# Etapa 3 — RETORNANDO: depois de desistir de um alvo, volta para a âncora sem readquirir alvo distante (só se
+	# defende de quem encostar, passo 2 acima); chegando perto de casa, o aggro normal volta.
+	if _ecology_returning_step(unit, hex_grid, anchor, chase):
+		return
 	var raiding := unit.ecology_rest_until <= turn
 	if not raiding:
 		unit.ability_state.erase("raid_target")
 	# Raide primeiro para quem tem o raide como identidade (Goblin, Esqueleto, Wyvern) quando a era do tier caça
 	# cidades: a caça a unidades no território vem depois. Um golpe por raide e depois descanso.
 	var city_radius := int(profile.city_radius)
+	# Etapa 3: a Wyvern só faz raide oportunista dentro do próprio leash (nunca cerco a partir de 12 tiles).
+	if bool(behavior.get("local_raid", false)) and city_radius > 0:
+		city_radius = mini(city_radius, chase)
 	if raiding and bool(behavior.city_hunt) and city_radius > 0 and turn >= int(profile.get("city_from_turn", 0)):
 		var city := _ecology_raid_target(unit, anchor, city_radius, behavior, hex_grid)
 		if city != null:
@@ -642,9 +675,16 @@ static func _take_ecology_turn(unit: Unit, hex_grid: HexGrid, turn: int, directi
 				unit.ecology_rest_until = turn + int(profile.get("raid_rest_turns", 0))
 				unit.ability_state.erase("raid_target")
 			return
-	var prey = _ecology_select_prey(unit, anchor, search, prey_mode, hex_grid, behavior)
+	# Etapa 3 — AGGRO / PERSEGUIÇÃO / LEASH: intruso a aggro_radius do monstro vira alvo; persegue enquanto ele estiver
+	# a pursuit_radius e dentro do leash (chase_radius da âncora); fora disso desiste e entra em RETORNO.
+	var aggro := int(profile.aggro_radius)
+	var interest_aggro := interest if prey_mode in ["group", "caster"] and interest > 0 else 0
+	var prey := _ecology_aggro_target(unit, hex_grid, anchor, aggro, interest_aggro, int(profile.pursuit_radius), chase, zone, prey_mode, behavior)
 	if prey != null:
 		_ecology_hunt(unit, hex_grid, prey, anchor, zone, behavior, turn)
+		return
+	if bool(unit.ability_state.get("returning", false)):
+		_ecology_returning_step(unit, hex_grid, anchor, chase)
 		return
 	var improvement_radius := int(profile.improvement_radius) if raiding and bool(behavior.improvement_hunt) else 0
 	if improvement_radius > 0:
@@ -660,10 +700,126 @@ static func _take_ecology_turn(unit: Unit, hex_grid: HexGrid, turn: int, directi
 	var home_radius := 1 if bool(behavior.get("group_raid", false)) or not raiding else patrol
 	if HexMetrics.axial_distance(unit.coord, anchor) > home_radius:
 		_ecology_move(unit, hex_grid, anchor, anchor, HexMetrics.axial_distance(unit.coord, anchor), "return")
+	elif home_radius == patrol and _next_to_city(hex_grid, unit.coord):
+		_ecology_roam(unit, hex_grid, anchor, patrol) # Etapa 4: ocioso colado numa cidade sempre sai dali (sem sorteio)
 	elif home_radius == patrol and float(profile.roam_chance) > 0.0 and MonsterEcologySystem.rng.randf() < float(profile.roam_chance):
 		_ecology_roam(unit, hex_grid, anchor, patrol)
 	if improvement_radius > 0 and _ecology_pillage(unit, hex_grid, turn):
 		unit.ecology_rest_until = turn + int(profile.get("raid_rest_turns", 0))
+
+## Raios efetivos de uma espécie no perfil da era: patrulha, LEASH (chase_radius + bônus da espécie), interesse
+## (city_radius), ZONA (leash, ou o interesse para quem caça presa especial — grupo/conjurador) e busca. Fonte única
+## para a IA e para a telemetria do gate de leash.
+static func ecology_ranges(kind: String, profile: Dictionary) -> Dictionary:
+	var behavior := MonsterEcologyData.behavior(kind)
+	var patrol := int(profile.patrol_radius)
+	var chase := maxi(int(profile.chase_radius) + int(behavior.chase_bonus), patrol)
+	if int(behavior.chase_bonus) > 0:
+		patrol += int(behavior.chase_bonus)
+		chase = maxi(chase, patrol)
+	var interest := int(profile.city_radius)
+	var zone := chase
+	var search := patrol
+	if String(behavior.prey) in ["group", "caster"] and interest > 0:
+		zone = maxi(zone, interest)
+		search = maxi(search, interest)
+	return {"patrol": patrol, "leash": chase, "interest": interest, "zone": zone, "search": search}
+
+## Etapa 3 — raio da âncora em que o monstro conta como "em casa" e volta a adquirir alvos normalmente.
+const RETURN_HOME_RADIUS := 1
+
+## Passo de RETORNO (estado salvo em ability_state.returning). true = o turno foi gasto voltando.
+static func _ecology_returning_step(unit: Unit, hex_grid: HexGrid, anchor: Vector2i, leash: int) -> bool:
+	if not bool(unit.ability_state.get("returning", false)):
+		return false
+	if HexMetrics.axial_distance(unit.coord, anchor) <= RETURN_HOME_RADIUS:
+		unit.ability_state.erase("returning")
+		MonsterEcologySystem.emit_unit_event("return_home", unit, {})
+		return false
+	_ecology_move(unit, hex_grid, anchor, anchor, maxi(leash, HexMetrics.axial_distance(unit.coord, anchor)), "return")
+	if is_instance_valid(unit) and HexMetrics.axial_distance(unit.coord, anchor) <= RETURN_HOME_RADIUS:
+		unit.ability_state.erase("returning")
+		MonsterEcologySystem.emit_unit_event("return_home", unit, {})
+	return true
+
+## Alvo de aggro do turno (estado salvo em ability_state: aggro_target = serial, aggro_coord = último tile visto):
+## mantém o alvo atual enquanto ele estiver a `pursuit` do monstro e dentro do leash da âncora; senão desiste
+## (leash_disengage → RETORNO). Sem alvo, adquire o intruso a `aggro` (ou presa especial — grupo/conjurador — a
+## `interest`) pela prioridade da espécie. Busca LIMITADA ao raio (tiles em volta do monstro), nunca o mapa todo.
+static func _ecology_aggro_target(unit: Unit, hex_grid: HexGrid, anchor: Vector2i, aggro: int, interest: int, pursuit: int, leash: int, zone: int, mode: String, behavior: Dictionary) -> Unit:
+	var state := unit.ability_state
+	if state.has("aggro_target"):
+		var current := _ecology_find_by_serial(hex_grid, int(state.aggro_target), MonsterAbilitySystem._coord(state.get("aggro_coord")), maxi(pursuit, interest) + 2)
+		var limit := maxi(pursuit, interest)
+		var limit_zone := maxi(leash, zone)
+		if current != null and _ecology_unpursuable(unit, current, hex_grid, behavior):
+			# Etapa 4: alvo entrou numa cidade (guarnição — cidade só se enfrenta em raide) ou virou luta claramente
+			# perdida para quem evita: perde o interesse e volta para casa, em vez de ficar parado colado na cidade.
+			state.erase("aggro_target")
+			state.erase("aggro_coord")
+			state.returning = true
+			MonsterEcologySystem.emit_unit_event("aggro_drop", unit, {"target": GameManager.players.find(current.owner_player)})
+			return null
+		if current != null and HexMetrics.axial_distance(unit.coord, current.coord) <= limit and HexMetrics.axial_distance(anchor, current.coord) <= limit_zone + 1:
+			state.aggro_coord = [current.coord.x, current.coord.y]
+			return current
+		state.erase("aggro_target")
+		state.erase("aggro_coord")
+		state.returning = true
+		MonsterEcologySystem.emit_unit_event("leash_disengage", unit, {"anchor_distance": HexMetrics.axial_distance(unit.coord, anchor)})
+		return null
+	var radius := maxi(aggro, interest)
+	var best: Unit = null
+	var best_key: Array = []
+	for coord in HexMetrics.coords_within(unit.coord, radius):
+		var other := hex_grid.get_unit_at(coord)
+		if other == null or other.owner_player == null or other.hp <= 0.0:
+			continue
+		var d := HexMetrics.axial_distance(unit.coord, coord)
+		if HexMetrics.axial_distance(anchor, coord) > maxi(leash, zone):
+			continue
+		var special := 0
+		match mode:
+			"isolated":
+				special = 1 if _ecology_isolated(other, hex_grid) or _ecology_wounded(other) else 0
+			"group":
+				special = MonsterAbilitySystem._civ_units_near(hex_grid, other.coord, 1).size()
+			"caster":
+				special = 1 if MonsterAbilitySystem._is_caster(other) else 0
+		var special_target := mode in ["group", "caster"] and (special >= (2 if mode == "group" else 1))
+		if d > aggro and not (special_target and d <= interest):
+			continue
+		if _ecology_unpursuable(unit, other, hex_grid, behavior):
+			continue
+		var key := [special, -d, -coord.x, -coord.y]
+		if best == null or _key_greater(key, best_key):
+			best = other
+			best_key = key
+	if best != null:
+		state.aggro_target = best.serial_id
+		state.aggro_coord = [best.coord.x, best.coord.y]
+		MonsterEcologySystem.emit_unit_event("aggro_acquire", unit, {"target": GameManager.players.find(best.owner_player), "distance": HexMetrics.axial_distance(unit.coord, best.coord), "target_coord": [best.coord.x, best.coord.y], "source": [unit.coord.x, unit.coord.y]})
+	return best
+
+## Etapa 4 — alvo que o aggro não persegue: unidade dentro de uma cidade (a guarnição só é enfrentada pelo raide; a
+## perseguição terminava com o monstro parado ao lado da cidade sem atacar — bug do playtest) ou, para quem evita lutas
+## perdidas (BASIC), luta claramente perdida. O ataque a quem já está ao alcance (_ecology_attack_choice) não muda.
+static func _ecology_unpursuable(unit: Unit, target: Unit, hex_grid: HexGrid, behavior: Dictionary) -> bool:
+	if hex_grid.get_city_at(target.coord) != null:
+		return true
+	return bool(behavior.get("avoid_bad_fights", false)) and _ecology_clearly_bad(unit, target, hex_grid, _ecology_strike(unit, target, hex_grid, behavior))
+
+static func _ecology_find_by_serial(hex_grid: HexGrid, serial: int, last: Vector2i, radius: int) -> Unit:
+	var at_last := hex_grid.get_unit_at(last) if last != HexGrid.NO_LAIR else null
+	if at_last != null and at_last.serial_id == serial:
+		return at_last
+	if last == HexGrid.NO_LAIR:
+		return null
+	for coord in HexMetrics.coords_within(last, radius):
+		var other := hex_grid.get_unit_at(coord)
+		if other != null and other.serial_id == serial:
+			return other
+	return null
 
 ## Luta claramente perdida: o atacante morreria e o alvo sobreviveria (estimador existente, CombatResolver.predict).
 static func _ecology_clearly_bad(unit: Unit, target: Unit, hex_grid: HexGrid, strike: float = 1.0) -> bool:
@@ -722,7 +878,7 @@ static func _ecology_attack(unit: Unit, hex_grid: HexGrid, target: Unit, turn: i
 	var strike := _ecology_strike(unit, target, hex_grid, behavior)
 	if strike > 1.0:
 		unit.ability_state["hunt_strike_turn"] = turn
-		MonsterEcologySystem.emit_unit_event("ability", unit, {"ability": MonsterAbilityData.BLOOD_SCENT, "hits": 1, "hunt_bonus_attack": 1, "target": target_index})
+		MonsterEcologySystem.emit_unit_event("ability", unit, {"ability": MonsterAbilityData.BLOOD_SCENT, "hits": 1, "hunt_bonus_attack": 1, "target": target_index, "source": [unit.coord.x, unit.coord.y], "target_coord": [target.coord.x, target.coord.y]})
 	var hp_before := target.hp
 	CombatResolver.resolve(unit, target, hex_grid, strike)
 	MonsterEcologySystem.emit_unit_event("attack", unit, {"target": target_index})
@@ -777,12 +933,32 @@ static func _ecology_hunt(unit: Unit, hex_grid: HexGrid, prey: Unit, anchor: Vec
 	if worg_hunt and int(unit.ability_state.get("hunt_move_turn", -1)) != turn:
 		unit.ability_state["hunt_move_turn"] = turn
 		unit.movement_left += float(MonsterAbilityData.param(MonsterAbilityData.BLOOD_SCENT, "movement_bonus", 1.0))
-		MonsterEcologySystem.emit_unit_event("ability", unit, {"ability": MonsterAbilityData.BLOOD_SCENT, "hits": 1, "isolated_hunted": 1, "target": GameManager.players.find(prey.owner_player)})
+		MonsterEcologySystem.emit_unit_event("ability", unit, {"ability": MonsterAbilityData.BLOOD_SCENT, "hits": 1, "isolated_hunted": 1, "target": GameManager.players.find(prey.owner_player), "source": [unit.coord.x, unit.coord.y], "target_coord": [prey.coord.x, prey.coord.y]})
+	var before := HexMetrics.axial_distance(unit.coord, prey.coord)
 	_ecology_move(unit, hex_grid, prey.coord, anchor, zone, "chase")
+	# Etapa 4: perseguição sem progresso (alvo inalcançável — atrás de uma cidade, água, bloqueio) por PURSUIT_STUCK_TURNS
+	# turnos seguidos → perde o interesse e volta para casa; nunca fica parado ao lado do alvo/da cidade indefinidamente.
+	if is_instance_valid(unit) and is_instance_valid(prey):
+		var after := HexMetrics.axial_distance(unit.coord, prey.coord)
+		if after >= before and after > unit.unit_data.attack_range:
+			var stuck := int(unit.ability_state.get("pursuit_stuck", 0)) + 1
+			unit.ability_state["pursuit_stuck"] = stuck
+			if stuck >= PURSUIT_STUCK_TURNS:
+				unit.ability_state.erase("pursuit_stuck")
+				unit.ability_state.erase("aggro_target")
+				unit.ability_state.erase("aggro_coord")
+				unit.ability_state.returning = true
+				MonsterEcologySystem.emit_unit_event("aggro_drop", unit, {"target": GameManager.players.find(prey.owner_player), "reason": "unreachable"})
+				return
+		else:
+			unit.ability_state.erase("pursuit_stuck")
 	# O caçador fecha a distância e golpeia no mesmo turno quando alcança o isolado.
 	if worg_hunt and is_instance_valid(prey) and is_instance_valid(unit) and HexMetrics.axial_distance(unit.coord, prey.coord) <= unit.unit_data.attack_range:
 		if not (bool(behavior.avoid_bad_fights) and _ecology_clearly_bad(unit, prey, hex_grid, _ecology_strike(unit, prey, hex_grid, behavior))):
 			_ecology_attack(unit, hex_grid, prey, turn, behavior)
+
+## Turnos seguidos de perseguição sem chegar mais perto até desistir do alvo (Etapa 4).
+const PURSUIT_STUCK_TURNS := 2
 
 ## Cidade alvo de raide: a já combinada (raid_target) ou a mais próxima da âncora no raio; o Goblin respeita o teto
 ## de 2 por cidade e o Esqueleto só parte com o bando (3+ Esqueletos da ecologia a ≤ 2 dele).
@@ -818,23 +994,81 @@ static func _ecology_move(unit: Unit, hex_grid: HexGrid, target: Vector2i, ancho
 	var before := unit.coord
 	_move_toward_within_radius(unit, hex_grid, target, anchor, radius)
 	if is_instance_valid(unit) and unit.coord != before:
-		MonsterEcologySystem.emit_unit_event("move", unit, {"reason": reason})
+		MonsterEcologySystem.emit_unit_event("move", unit, {"reason": reason, "anchor_distance": HexMetrics.axial_distance(unit.coord, anchor), "from": [before.x, before.y], "to": [unit.coord.x, unit.coord.y]})
 
-## true = golpeou (cidade ou guarnição) neste turno; false = só se aproximou.
+## true = o raide terminou neste turno (golpeou a cidade/guarnição ou, Goblin, desistiu sem conseguir se aproximar);
+## false = só se aproximou.
 static func _ecology_press_city(unit: Unit, hex_grid: HexGrid, city: City, anchor: Vector2i, radius: int) -> bool:
-	var target_index := GameManager.players.find(city.owner_player)
 	if HexMetrics.axial_distance(unit.coord, city.coord) <= unit.unit_data.attack_range:
-		var garrison := hex_grid.get_unit_at(city.coord)
-		if garrison != null and garrison.owner_player != null:
-			CombatResolver.resolve(unit, garrison, hex_grid)
-			MonsterEcologySystem.emit_unit_event("city_attack", unit, {"target": target_index, "garrison": true})
-		else:
-			CombatResolver.resolve_city_attack(unit, city, hex_grid, ECOLOGY_CITY_RAID_FRACTION)
-			MonsterEcologySystem.emit_unit_event("city_attack", unit, {"target": target_index, "garrison": false, "city_hp": city.hp})
-			MonsterAbilitySystem.on_city_hit(unit, city) # Saque Rápido (Goblin)
+		_ecology_strike_city(unit, hex_grid, city, anchor)
 		return true
+	var before := HexMetrics.axial_distance(unit.coord, city.coord)
 	_ecology_move(unit, hex_grid, city.coord, anchor, radius, "city")
+	if not is_instance_valid(unit) or not MonsterAbilitySystem.has(unit, MonsterAbilityData.QUICK_PLUNDER):
+		return false
+	# Etapa 4 — Goblin: chegou à posição de ataque → golpeia na MESMA ação. Antes ele terminava o turno colado na cidade
+	# (dentro do território) e só golpeava na fase dos monstros seguinte: o jogador via um Goblin parado na cidade.
+	if HexMetrics.axial_distance(unit.coord, city.coord) <= unit.unit_data.attack_range:
+		_ecology_strike_city(unit, hex_grid, city, anchor)
+		return true
+	# Posições de ataque ocupadas/inalcançáveis: sem progresso por RAID_STUCK_TURNS turnos, desiste e volta para casa.
+	if HexMetrics.axial_distance(unit.coord, city.coord) >= before:
+		var stuck := int(unit.ability_state.get("raid_stuck", 0)) + 1
+		if stuck >= RAID_STUCK_TURNS:
+			unit.ability_state.erase("raid_stuck")
+			MonsterEcologySystem.emit_unit_event("raid_abandoned", unit, {"target": GameManager.players.find(city.owner_player)})
+			return true
+		unit.ability_state["raid_stuck"] = stuck
+	else:
+		unit.ability_state.erase("raid_stuck")
 	return false
+
+## Turnos seguidos sem chegar mais perto da cidade alvo até o Goblin desistir do raide (nunca fica rondando colado).
+const RAID_STUCK_TURNS := 2
+
+## Um golpe de raide: na guarnição (combate normal) ou na própria cidade (dano limitado + Saque Rápido do Goblin).
+## Goblin recua no mesmo turno depois do golpe (bate-e-foge); Esqueleto/Wyvern ficam como antes.
+static func _ecology_strike_city(unit: Unit, hex_grid: HexGrid, city: City, anchor: Vector2i) -> void:
+	var target_index := GameManager.players.find(city.owner_player)
+	var garrison := hex_grid.get_unit_at(city.coord)
+	if garrison != null and garrison.owner_player != null:
+		CombatResolver.resolve(unit, garrison, hex_grid)
+		MonsterEcologySystem.emit_unit_event("city_attack", unit, {"target": target_index, "garrison": true})
+	else:
+		CombatResolver.resolve_city_attack(unit, city, hex_grid, ECOLOGY_CITY_RAID_FRACTION)
+		MonsterEcologySystem.emit_unit_event("city_attack", unit, {"target": target_index, "garrison": false, "city_hp": city.hp})
+		MonsterAbilitySystem.on_city_hit(unit, city) # Saque Rápido (Goblin)
+	if not is_instance_valid(unit):
+		return
+	unit.ability_state.erase("raid_stuck")
+	if unit.hp > 0.0 and MonsterAbilitySystem.has(unit, MonsterAbilityData.QUICK_PLUNDER):
+		_ecology_raid_retreat(unit, hex_grid, city.coord, anchor)
+
+## Etapa 4 — Saque Rápido "rouba e recua": depois do golpe o Goblin sai do entorno da cidade no MESMO turno — até
+## `retreat_steps` tiles com o Movimento base, sempre para mais longe da cidade e, no empate, mais perto de casa
+## (desempate por coordenada). Sem tile que afaste, fica onde está (o descanso o leva para a âncora no turno seguinte).
+static func _ecology_raid_retreat(unit: Unit, hex_grid: HexGrid, city_coord: Vector2i, anchor: Vector2i) -> void:
+	var steps := int(MonsterAbilityData.param(MonsterAbilityData.QUICK_PLUNDER, "retreat_steps", 2))
+	var reachable := hex_grid.compute_reachable(unit.coord, unit.unit_data.movement_points, unit.owner_player, unit.unit_data.flies)
+	var here := HexMetrics.axial_distance(unit.coord, city_coord)
+	var best = null
+	var best_key: Array = []
+	for coord in reachable.keys():
+		if HexMetrics.axial_distance(unit.coord, coord) > steps:
+			continue
+		var away := HexMetrics.axial_distance(coord, city_coord)
+		if away <= here:
+			continue
+		var key := [away, -HexMetrics.axial_distance(coord, anchor), -coord.x, -coord.y]
+		if best == null or _key_greater(key, best_key):
+			best = coord
+			best_key = key
+	if best != null:
+		var from := unit.coord
+		hex_grid.move_unit(unit, best, reachable[best])
+		MonsterEcologySystem.emit_unit_event("move", unit, {"reason": "raid_retreat", "from": [from.x, from.y], "to": [unit.coord.x, unit.coord.y]})
+	if is_instance_valid(unit):
+		unit.movement_left = 0.0
 
 static func _ecology_pillage(unit: Unit, hex_grid: HexGrid, turn: int) -> bool:
 	if not is_instance_valid(unit) or unit.hp <= 0.0:
@@ -852,7 +1086,7 @@ static func _ecology_roam(unit: Unit, hex_grid: HexGrid, anchor: Vector2i, patro
 	var reachable := hex_grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies)
 	var options: Array[Vector2i] = []
 	for coord in reachable.keys():
-		if coord != unit.coord and HexMetrics.axial_distance(anchor, coord) <= patrol:
+		if coord != unit.coord and HexMetrics.axial_distance(anchor, coord) <= patrol and not _next_to_city(hex_grid, coord):
 			options.append(coord)
 	if options.is_empty():
 		return
@@ -860,6 +1094,13 @@ static func _ecology_roam(unit: Unit, hex_grid: HexGrid, anchor: Vector2i, patro
 	var dest: Vector2i = options[MonsterEcologySystem.rng.randi_range(0, options.size() - 1)]
 	hex_grid.move_unit(unit, dest, reachable[dest])
 	MonsterEcologySystem.emit_unit_event("move", unit, {"reason": "roam"})
+
+## Etapa 4: a ronda ociosa nunca escolhe um tile colado numa cidade (lia como monstro parado "dentro" da cidade).
+static func _next_to_city(hex_grid: HexGrid, coord: Vector2i) -> bool:
+	for neighbor in hex_grid.get_neighbors(coord):
+		if hex_grid.get_city_at(neighbor) != null:
+			return true
+	return false
 
 static func _coord_before(a: Vector2i, b: Vector2i) -> bool:
 	return a.x < b.x if a.x != b.x else a.y < b.y

@@ -158,6 +158,10 @@ func _features_section() -> Control:
 				accent = UIThemeTokens.COLOR_SUCCESS
 			"lair":
 				accent = UIThemeTokens.COLOR_CRITICAL
+			"hazard":
+				accent = UIThemeTokens.COLOR_WARNING
+			"territory":
+				accent = UIThemeTokens.COLOR_INFO
 		var card := ContextUI.card(accent)
 		card.name = "Feature_" + String(feature.kind)
 		card.tooltip_text = String(feature.tooltip)

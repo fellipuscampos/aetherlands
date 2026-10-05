@@ -1,0 +1,225 @@
+{
+  "name": "Basilisk_Blocky_V1",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/basilisk_*.py)",
+  "height_m": 2.309999942779541,
+  "length_m": 3.1669821739196777,
+  "triangles": 920,
+  "editable_parts": 52,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "filter": "NEAREST",
+    "unique_uv_islands": 386,
+    "density_px_per_meter": 64,
+    "measured_min": 63.99924102066985,
+    "measured_max": 64.00062684440496,
+    "padding": 2
+  },
+  "rig": true,
+  "animations": {
+    "Basilisk_Idle": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Serpent neck sway, bird head tilts, tongue flicks, tail swish, wing ruffle; feet planted.",
+      "duration_seconds": 2.0
+    },
+    "Basilisk_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 61,
+      "description": "Rooster strut in place: head thrust on every step, serpent wave along the tail, 60% stance.",
+      "suggested_translation_mps": 0.4857142857142857,
+      "duration_seconds": 1.1666666666666667
+    },
+    "Basilisk_Attack": {
+      "start": 1,
+      "end": 33,
+      "loop": false,
+      "nla_start": 101,
+      "description": "Cobra strike: coil and wing flare 1-10, strike 10-13, bite at impact 14, recovery to 33.",
+      "impact_frame": 14,
+      "duration_seconds": 1.3333333333333333
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "rig_bone_map": {
+    "Body": "body",
+    "Breast": "body",
+    "BreastRuff": "body",
+    "Rump": "tail_01",
+    "Neck_Low": "neck_01",
+    "Neck_High": "neck_02",
+    "Hackle_Back": "neck_01",
+    "Head": "head",
+    "JawHinge": "head",
+    "Beak_Upper": "head",
+    "Beak_Hook": "head",
+    "Beak_Lower": "jaw",
+    "Tongue": "jaw",
+    "Comb": "head",
+    "Wattle": "jaw",
+    "Eye_l": "head",
+    "Brow_l": "head",
+    "Fang_l": "head",
+    "TongueFork_l": "jaw",
+    "Hackle_l": "neck_01",
+    "WingCoverts_l": "wing_l",
+    "WingSecondaries_l": "wing_l",
+    "WingPrimaries_l": "wing_l",
+    "Thigh_l": "thigh_l",
+    "Tarsus_l": "tarsus_l",
+    "Spur_l": "tarsus_l",
+    "Foot_l": "foot_l",
+    "ToeMid_l": "foot_l",
+    "ToeOut_l": "foot_l",
+    "ToeIn_l": "foot_l",
+    "Eye_r": "head",
+    "Brow_r": "head",
+    "Fang_r": "head",
+    "TongueFork_r": "jaw",
+    "Hackle_r": "neck_01",
+    "WingCoverts_r": "wing_r",
+    "WingSecondaries_r": "wing_r",
+    "WingPrimaries_r": "wing_r",
+    "Thigh_r": "thigh_r",
+    "Tarsus_r": "tarsus_r",
+    "Spur_r": "tarsus_r",
+    "Foot_r": "foot_r",
+    "ToeMid_r": "foot_r",
+    "ToeOut_r": "foot_r",
+    "ToeIn_r": "foot_r",
+    "Plume_A": "tail_01",
+    "Plume_B": "tail_01",
+    "Tail_1": "tail_02",
+    "Tail_2": "tail_03",
+    "Tail_3": "tail_04",
+    "Tail_4": "tail_05",
+    "Tail_5": "tail_06"
+  },
+  "notes": "Static editable rooster+serpent hybrid; no animations requested. Same metric texel density as the approved models.",
+  "visual_review": {
+    "views": [
+      "front",
+      "three_quarter",
+      "side",
+      "back",
+      "game_top"
+    ],
+    "identity": "V2 after review: viper skull (wide jaw hinges, cobra-hood front read) with rooster comb and wattle, forward-facing glowing venom eyes with one brow ridge directly above each, dark hooked horn beak, long fangs, forked tongue",
+    "materials": "Hard split: brown-black copper-sheen plumage (body, breast, thighs, layered wings, hackles, plumes) vs venom-green scales (head, upper neck, throat scutes, tail with bands and belly scutes, yellow scaly legs)",
+    "transition": "Tapered rump bridges body into tail; feathers end on it with a ragged line where the scales begin",
+    "consistency": "Same cuboid construction, flat shading and 64 px/m metric pixel UV as the approved models; no hidden parts; no coplanar overlaps"
+  },
+  "glb": {
+    "file": "basilisk_blocky_v1.glb",
+    "meshes": [
+      "Model"
+    ],
+    "check": {
+      "armatures": 1,
+      "bones": 20,
+      "skinned_meshes": [
+        "Basilisk_Blocky_V1_Model"
+      ],
+      "mesh_has_armature_modifier": true,
+      "actions": [
+        "Basilisk_Attack",
+        "Basilisk_Idle",
+        "Basilisk_Walk"
+      ],
+      "action_frame_ranges": {
+        "Basilisk_Attack": [
+          0.0,
+          32.0
+        ],
+        "Basilisk_Idle": [
+          0.0,
+          48.0
+        ],
+        "Basilisk_Walk": [
+          0.0,
+          28.0
+        ]
+      },
+      "rest_height_m": 2.310000285962417,
+      "rest_min_z": -5.816014549964166e-07
+    }
+  },
+  "status": "Complete: rigged editable Basilisk with Idle, Walk and Attack; MP4/GIF reviews.",
+  "source_validation": {
+    "scenes": [
+      "Basilisk_Blocky_V1"
+    ],
+    "actions": [
+      "Basilisk_Walk",
+      "Basilisk_Idle",
+      "Basilisk_Attack"
+    ],
+    "armatures": [
+      "Basilisk_Blocky_V1_Skeleton"
+    ],
+    "packed_texture": true
+  },
+  "user_edits": "None: approved V2 static model rigged as delivered.",
+  "bone_count": 20,
+  "bones": [
+    "root",
+    "body",
+    "neck_01",
+    "neck_02",
+    "head",
+    "jaw",
+    "tail_01",
+    "tail_02",
+    "tail_03",
+    "tail_04",
+    "tail_05",
+    "tail_06",
+    "wing_l",
+    "thigh_l",
+    "tarsus_l",
+    "foot_l",
+    "wing_r",
+    "thigh_r",
+    "tarsus_r",
+    "foot_r"
+  ],
+  "skinning": "Rigid block skinning (one bone per part); both feet planted with a baked analytic two-bone solve; FK only at runtime",
+  "animation_validation": {
+    "clips": {
+      "Basilisk_Idle": {
+        "frames": 49,
+        "loop": true,
+        "endpoints_max_vertex_delta_m": 2.9207834406444814e-18,
+        "minimum_vertex_z_m": -2.8978084287700767e-07,
+        "foot_target_error_m": 3.0692413336107104e-07
+      },
+      "Basilisk_Walk": {
+        "frames": 29,
+        "loop": true,
+        "endpoints_max_vertex_delta_m": 1.258392330830408e-17,
+        "minimum_vertex_z_m": -2.8398346785252215e-07,
+        "foot_target_error_m": 3.1407533449468003e-07
+      },
+      "Basilisk_Attack": {
+        "frames": 33,
+        "loop": false,
+        "endpoints_max_vertex_delta_m": 0.0,
+        "minimum_vertex_z_m": -3.328452180539898e-07,
+        "foot_target_error_m": 3.5301917017943067e-07
+      }
+    },
+    "all_vertices_normalized_weights": true,
+    "rest_pose_contacts_excluded": [],
+    "new_surface_crossings": 0,
+    "problems": []
+  }
+}

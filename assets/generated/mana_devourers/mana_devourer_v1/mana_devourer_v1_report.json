@@ -1,0 +1,142 @@
+{
+  "name": "Mana_Devourer_V1",
+  "display_name": "Devorador de Mana",
+  "pipeline": "Blender MCP localhost:9876",
+  "references": [
+    "troll_blocky_v3",
+    "goblin_raider_v3"
+  ],
+  "parts": 7,
+  "triangles": 252,
+  "modeling_vertices": 140,
+  "bounds_min": [
+    -1.2129030227661133,
+    -0.45500001311302185,
+    0.24169938266277313
+  ],
+  "bounds_max": [
+    1.207776665687561,
+    0.6861253380775452,
+    2.6929030418395996
+  ],
+  "size_m": [
+    2.4206796884536743,
+    1.141125351190567,
+    2.4512036591768265
+  ],
+  "ground_clearance_m": 0.24169938266277313,
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "maps": [
+      "albedo",
+      "emission"
+    ],
+    "density_px_m": 64,
+    "measured_min": 63.9998047762491,
+    "measured_max": 64.00014901140837,
+    "islands": 110,
+    "padding_px": 2,
+    "filter": "NEAREST"
+  },
+  "geometry": {
+    "closed": true,
+    "flat_shaded": true,
+    "part_surface_crossings": 0,
+    "transforms_applied": true,
+    "interior_blocks": 0
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "core",
+      "orbit_01",
+      "orbit_02",
+      "orbit_03",
+      "orbit_04",
+      "arc_upper",
+      "arc_lower"
+    ],
+    "skinning": "Rigid normalized weights",
+    "actions": [
+      "ManaDevourer_Idle",
+      "ManaDevourer_Walk",
+      "ManaDevourer_Attack"
+    ]
+  },
+  "glb": {
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 8,
+    "embedded_textures_match_png": true,
+    "emission_strength": 1.600000023841858
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "pivot": "Ground projection at origin; baked floating offset",
+  "integration": "Asset ready for import; no gameplay/database entry.",
+  "animations": {
+    "ManaDevourer_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Slow hovering, offset shard drift and restrained counter-rotation of broken arcs."
+    },
+    "ManaDevourer_Walk": {
+      "start": 1,
+      "end": 33,
+      "loop": true,
+      "nla_start": 91,
+      "description": "In-place magical glide: forward lean, quicker hovering and shards trailing the core."
+    },
+    "ManaDevourer_Attack": {
+      "start": 1,
+      "end": 37,
+      "loop": false,
+      "nla_start": 141,
+      "description": "Gather orbitals, hold charge, drive the core forward and expand fragments, then recover.",
+      "impact_frame": 16
+    }
+  },
+  "animation_validation": {
+    "clips": {
+      "ManaDevourer_Idle": {
+        "seam_vertex_delta_m": 2.2043643920307877e-18,
+        "minimum_ground_clearance_m": 0.17866380512714386,
+        "rigid_edge_error_m": 4.875294819239873e-07,
+        "samples": 145
+      },
+      "ManaDevourer_Walk": {
+        "seam_vertex_delta_m": 0.0,
+        "minimum_ground_clearance_m": 0.24591851234436035,
+        "rigid_edge_error_m": 5.612439522573176e-07,
+        "samples": 65
+      },
+      "ManaDevourer_Attack": {
+        "seam_vertex_delta_m": 0.0,
+        "minimum_ground_clearance_m": 0.2181992530822754,
+        "rigid_edge_error_m": 5.370619106936925e-07,
+        "samples": 73
+      }
+    },
+    "surface_crossings": [],
+    "same_channels_all_clips": true,
+    "root_motion": false
+  },
+  "source_validation": {
+    "scenes": [
+      "Mana_Devourer_V1"
+    ],
+    "actions": [
+      "ManaDevourer_Walk",
+      "ManaDevourer_Idle",
+      "ManaDevourer_Attack"
+    ],
+    "armatures": [
+      "Mana_Devourer_V1_Skeleton"
+    ]
+  }
+}

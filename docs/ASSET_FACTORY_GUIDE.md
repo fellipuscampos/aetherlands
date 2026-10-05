@@ -316,6 +316,54 @@ no histórico de commits/comentários dos arquivos citados.
   `thin_arms`, `belly_width_mult`, etc. — todos opt-in, default preserva o
   Guarda pixel-a-pixel).
 
+- **Modelos V3 feitos à mão no Blender (Goblin/Troll, 2026-10)**: não vêm
+  da Asset Factory — fontes em `art_source/<nome>/` (com `.gdignore`),
+  scripts em `tools/art_pipeline/`, GLB em `assets/generated/<cat>/<nome>_v3/`.
+  Diferenças que importam no cadastro: clipes com prefixo
+  (`Goblin_Idle`, `Troll_Walk`...), frente já em +Z no glTF →
+  `model_yaw_offset_degrees = 0.0` (não 180), e
+  `animation_blend_time` (crossfade entre clipes, ver `UnitData.gd`) —
+  só funciona limpo porque os 3 clipes animam o MESMO conjunto de ossos;
+  conferir isso antes de ligar em outro modelo. Goblin re-exportado com
+  `blender 5.2 -b art_source/goblin_raider_v3/goblin_raider_v3.blend
+  --python tools/art_pipeline/goblin_raider_export.py` (+ `--import`).
+  Mesma receita, já em jogo: Esqueleto (`skeleton_warrior_v1`, também nas
+  Hostes), Worg (`warg_v1`), Minotauro e Basilisco (`*_blocky_v1`) — espécies
+  novas entram em `MonsterDatabase.HANDMADE_MODELS` (kind → GLB + prefixo dos
+  clipes), sem bloco `elif` próprio. Depois: Wyvern, Aranha Gigante,
+  Devorador de Mana, Golem (Ancião Arbóreo), Colmeia e Verme de Areia (Verme
+  Colossal: sem Walk; `"burrow": true` liga `Worm_Burrow`/`Worm_Emerge` à
+  habilidade Escavar via `Unit.play_burrow_visual`/`play_emerge_visual`). **Antes de cadastrar, confira que o `.glb` tem os clipes**
+  (`.blend` mais novo que o `.glb` = export desatualizado): a Aranha chegou
+  com GLB estático e atlas antigo — re-exportada por
+  `tools/art_pipeline/spider_export.py`.
+- **Atlas embutido (packed) desatualizado ao repintar no Blender**: mudar os
+  pixels de uma imagem que JÁ está packed (`image.pixels.foreach_set`) e chamar
+  `image.pack()` de novo mantém os bytes ANTIGOS no pacote. A sessão renderiza
+  certo (usa o buffer em memória), mas `.blend` salvo e `.glb` exportado levam o
+  atlas velho, que não bate mais com as UVs (textura "embaralhada"). Fix: ao
+  repintar, remover a imagem e criar um datablock novo
+  (`minotaur_blocky_paint_save.py`); conferir atlas embutido == PNG em disco antes
+  de exportar (`minotaur_blocky_export.py`). Checagem de ossos/clipes no Godot não
+  pega isso; comparar a textura extraída pelo import com o PNG.
+- **Monstro feito à mão grande demais no tabuleiro (2026-10-04)**: a escala vai
+  no nó `<NOME>_ROOT` (pai do rig), nunca em `model_scale_multiplier` e nunca
+  aplicada na malha. Aplicar escala num armature não escala as keyframes de
+  location dos ossos, e a animação quebra. Com o ROOT, malha/UV/rig/clipes
+  ficam idênticos: grava-se `"scale"` no nó raiz do JSON do GLB (sem
+  re-export) e a mesma escala no `_ROOT` do `.blend`. Valores atuais: Aranha
+  0,60, Worg 0,65, Wyvern 0,50, Devorador 0,65, Golem 0,72, Colmeia 0,70.
+  Referências aprovadas em 1,0: Minotauro, Troll, Basilisco, Goblin, Esqueleto.
+  Hex = 1,73 m de lado a lado: monstro "de 1 tile" ≈ 1,7–1,9 m de pegada.
+  **Não exporte com o `_ROOT` escalado**: o exportador glTF do Blender embute a escala
+  do pai nos vértices skinned e nas matrizes de bind, e no Godot o modelo sai escalado DUAS
+  vezes (o Herói mediu 1,42 m em vez de 1,95 m). Exporte com o `_ROOT` em 1,0 e grave a
+  escala só no nó raiz do JSON do GLB, como faz `corrupted_hero_export.py`. Herói Corrompido:
+  0,73 → 1,95 m, menor que o Troll.
+- **`.blend` dentro de `res://` quebra o `--import` headless** ("Blender
+  path is invalid"), abortando o import de TUDO. O projeto só consome
+  `.glb`, então `project.godot` tem `filesystem/import/blender/enabled=false`.
+
 ---
 
 ## 7. Onde NÃO duplicar — referências vivas

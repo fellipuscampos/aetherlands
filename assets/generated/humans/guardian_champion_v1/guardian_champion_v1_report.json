@@ -1,0 +1,207 @@
+{
+  "name": "Guardian_Champion_V1",
+  "kind": "v2_legendary_guardian_champion (Campe\u00e3o Guardi\u00e3o)",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/guardian_champion_*.py)",
+  "height_m": 2.0,
+  "front_y_m": -0.5889931917190552,
+  "back_y_m": 0.18502673506736755,
+  "x_m": [
+    -0.427807480096817,
+    0.427807480096817
+  ],
+  "triangles": 336,
+  "editable_parts": 28,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "filter": "NEAREST",
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 1.6,
+    "unique_uv_islands": 168,
+    "density_px_per_meter": 64,
+    "measured_min": 63.99971774838524,
+    "measured_max": 64.00024767386846,
+    "padding": 2
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "head",
+      "upper_arm_l",
+      "forearm_l",
+      "hand_l",
+      "thigh_l",
+      "shin_l",
+      "foot_l",
+      "upper_arm_r",
+      "forearm_r",
+      "hand_r",
+      "thigh_r",
+      "shin_r",
+      "foot_r"
+    ],
+    "hierarchy": "flat: every bone is a child of root; legs baked from two-bone IK",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "Belly": "chest",
+      "Buckle": "hips",
+      "CapeLower": "chest",
+      "CapeUpper": "chest",
+      "Chest": "chest",
+      "Foot_l": "foot_l",
+      "Foot_r": "foot_r",
+      "Forearm_l": "forearm_l",
+      "Forearm_r": "forearm_r",
+      "Hand_l": "hand_l",
+      "Hand_r": "hand_r",
+      "Head": "head",
+      "HelmRidge": "head",
+      "Pelvis": "hips",
+      "Plume": "head",
+      "ShieldGrip": "hand_l",
+      "ShieldMid": "hand_l",
+      "ShieldStep1": "hand_l",
+      "ShieldStep2": "hand_l",
+      "Shin_l": "shin_l",
+      "Shin_r": "shin_r",
+      "Shoulder_l": "chest",
+      "Shoulder_r": "chest",
+      "TabardFront": "hips",
+      "Thigh_l": "thigh_l",
+      "Thigh_r": "thigh_r",
+      "UpperArm_l": "upper_arm_l",
+      "UpperArm_r": "upper_arm_r"
+    }
+  },
+  "animations": {
+    "Champion_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Alert guard behind the shield: breathing, weight shift leg to leg, head scanning, shield bobbing slightly.",
+      "seconds": 3
+    },
+    "Champion_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 91,
+      "description": "Lighter, quicker step in place: shield kept up in front, hip bob, small trunk counter-twist.",
+      "speed_m_s": 0.2914285714285714,
+      "seconds": 1.1666666666666667
+    },
+    "Champion_Attack": {
+      "start": 1,
+      "end": 31,
+      "loop": false,
+      "nla_start": 141,
+      "description": "Shield bash: pulls the shield and body back, steps in with the left foot and shoves the shield forward with both arms (impact 13), recovers to the guard.",
+      "impact_frame": 13,
+      "seconds": 1.25
+    },
+    "Champion_ShieldWall": {
+      "start": 1,
+      "end": 25,
+      "loop": false,
+      "nla_start": 181,
+      "description": "Shield Wall activation: widens the stance, crouches and raises the shield to face height with both arms; the shield lands with an impact jolt (frame 12); ends braced (= first frame of Champion_ShieldWallHold).",
+      "seconds": 1
+    },
+    "Champion_ShieldWallHold": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 221,
+      "description": "Shield Wall held while the defence buff lasts: braced behind the raised shield, tense breathing, tiny shield tremble.",
+      "seconds": 2
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "origin": "between the feet, on the ground",
+  "rig_bone_map": {
+    "Belly": "chest",
+    "Buckle": "hips",
+    "CapeLower": "chest",
+    "CapeUpper": "chest",
+    "Chest": "chest",
+    "Foot_l": "foot_l",
+    "Foot_r": "foot_r",
+    "Forearm_l": "forearm_l",
+    "Forearm_r": "forearm_r",
+    "Hand_l": "hand_l",
+    "Hand_r": "hand_r",
+    "Head": "head",
+    "HelmRidge": "head",
+    "Pelvis": "hips",
+    "Plume": "head",
+    "ShieldGrip": "hand_l",
+    "ShieldMid": "hand_l",
+    "ShieldStep1": "hand_l",
+    "ShieldStep2": "hand_l",
+    "Shin_l": "shin_l",
+    "Shin_r": "shin_r",
+    "Shoulder_l": "chest",
+    "Shoulder_r": "chest",
+    "TabardFront": "hips",
+    "Thigh_l": "thigh_l",
+    "Thigh_r": "thigh_r",
+    "UpperArm_l": "upper_arm_l",
+    "UpperArm_r": "upper_arm_r"
+  },
+  "notes": "Static Guardian Champion V1 (legendary): gilded plate, royal surcoat, cape, crest + plume, unique shield; 1.90 m, same joints as the line. Cape follows the chest; shield + grip follow hand_l; helm, crest and plume follow head.",
+  "animation_validation": {
+    "problems": [],
+    "ik": {},
+    "min_z": {
+      "Champion_Idle": 0.0,
+      "Champion_Walk": 0.0,
+      "Champion_Attack": 0.0,
+      "Champion_ShieldWall": 0.0,
+      "Champion_ShieldWallHold": 0.0
+    }
+  },
+  "glb": {
+    "file": "guardian_champion_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 16,
+    "triangles": 336,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Champion_Idle": 3,
+      "Champion_Walk": 1.1666666666666667,
+      "Champion_Attack": 1.25,
+      "Champion_ShieldWall": 1,
+      "Champion_ShieldWallHold": 2
+    },
+    "channels": "location, rotation on every bone"
+  },
+  "status": "Guardian Champion V1 with Champion_Idle, Champion_Walk, Champion_Attack, Champion_ShieldWall, Champion_ShieldWallHold; GLB and packed atlases validated",
+  "source_validation": {
+    "scenes": [
+      "Guardian_Champion_V1"
+    ],
+    "actions": [
+      "Champion_Walk",
+      "Champion_ShieldWallHold",
+      "Champion_ShieldWall",
+      "Champion_Idle",
+      "Champion_Attack"
+    ],
+    "armatures": [
+      "Guardian_Champion_V1_Skeleton"
+    ]
+  }
+}

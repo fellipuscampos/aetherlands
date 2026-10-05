@@ -1,0 +1,205 @@
+{
+  "name": "Squire_V1",
+  "kind": "v2_unit_shieldbearer (Escudeiro)",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/squire_*.py)",
+  "height_m": 1.8000000715255737,
+  "front_y_m": -0.5324180722236633,
+  "back_y_m": 0.18000000715255737,
+  "x_m": [
+    -0.3502703011035919,
+    0.3871200680732727
+  ],
+  "triangles": 324,
+  "editable_parts": 27,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      256,
+      256
+    ],
+    "filter": "NEAREST",
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 1.6,
+    "unique_uv_islands": 162,
+    "density_px_per_meter": 64,
+    "measured_min": 63.9998535256017,
+    "measured_max": 64.00027606052534,
+    "padding": 2
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "head",
+      "upper_arm_l",
+      "forearm_l",
+      "hand_l",
+      "thigh_l",
+      "shin_l",
+      "foot_l",
+      "upper_arm_r",
+      "forearm_r",
+      "hand_r",
+      "thigh_r",
+      "shin_r",
+      "foot_r"
+    ],
+    "hierarchy": "flat: every bone is a child of root; legs baked from two-bone IK",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "Belly": "chest",
+      "Buckle": "hips",
+      "Chest": "chest",
+      "Foot_l": "foot_l",
+      "Foot_r": "foot_r",
+      "Forearm_l": "forearm_l",
+      "Forearm_r": "forearm_r",
+      "Hand_l": "hand_l",
+      "Hand_r": "hand_r",
+      "HatBrim": "head",
+      "HatCap": "head",
+      "HatDome": "head",
+      "Head": "head",
+      "Pelvis": "hips",
+      "ShieldBoss": "hand_l",
+      "ShieldGrip": "hand_l",
+      "ShieldMid": "hand_l",
+      "ShieldTall": "hand_l",
+      "ShieldWide": "hand_l",
+      "Shin_l": "shin_l",
+      "Shin_r": "shin_r",
+      "Shoulder_l": "chest",
+      "Shoulder_r": "chest",
+      "Thigh_l": "thigh_l",
+      "Thigh_r": "thigh_r",
+      "UpperArm_l": "upper_arm_l",
+      "UpperArm_r": "upper_arm_r"
+    }
+  },
+  "animations": {
+    "Squire_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Alert guard behind the shield: breathing, weight shift leg to leg, head scanning, shield bobbing slightly.",
+      "seconds": 3
+    },
+    "Squire_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 91,
+      "description": "Lighter, quicker step in place: shield kept up in front, hip bob, small trunk counter-twist.",
+      "speed_m_s": 0.2914285714285714,
+      "seconds": 1.1666666666666667
+    },
+    "Squire_Attack": {
+      "start": 1,
+      "end": 31,
+      "loop": false,
+      "nla_start": 141,
+      "description": "Shield bash: pulls the shield and body back, steps in with the left foot and shoves the shield forward with both arms (impact 13), recovers to the guard.",
+      "impact_frame": 13,
+      "seconds": 1.25
+    },
+    "Squire_ShieldWall": {
+      "start": 1,
+      "end": 25,
+      "loop": false,
+      "nla_start": 181,
+      "description": "Shield Wall activation: widens the stance, crouches and raises the shield to face height with both arms; the shield lands with an impact jolt (frame 12); ends braced (= first frame of Squire_ShieldWallHold).",
+      "seconds": 1
+    },
+    "Squire_ShieldWallHold": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 221,
+      "description": "Shield Wall held while the defence buff lasts: braced behind the raised shield, tense breathing, tiny shield tremble.",
+      "seconds": 2
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "origin": "between the feet, on the ground",
+  "rig_bone_map": {
+    "Belly": "chest",
+    "Buckle": "hips",
+    "Chest": "chest",
+    "Foot_l": "foot_l",
+    "Foot_r": "foot_r",
+    "Forearm_l": "forearm_l",
+    "Forearm_r": "forearm_r",
+    "Hand_l": "hand_l",
+    "Hand_r": "hand_r",
+    "HatBrim": "head",
+    "HatCap": "head",
+    "HatDome": "head",
+    "Head": "head",
+    "Pelvis": "hips",
+    "ShieldBoss": "hand_l",
+    "ShieldGrip": "hand_l",
+    "ShieldMid": "hand_l",
+    "ShieldTall": "hand_l",
+    "ShieldWide": "hand_l",
+    "Shin_l": "shin_l",
+    "Shin_r": "shin_r",
+    "Shoulder_l": "chest",
+    "Shoulder_r": "chest",
+    "Thigh_l": "thigh_l",
+    "Thigh_r": "thigh_r",
+    "UpperArm_l": "upper_arm_l",
+    "UpperArm_r": "upper_arm_r"
+  },
+  "notes": "Static Squire V1 (Escudeiro), 1.80 m, one block per body part. Shield + grip follow hand_l; hat follows head.",
+  "animation_validation": {
+    "problems": [],
+    "ik": {},
+    "min_z": {
+      "Squire_Idle": 0.0,
+      "Squire_Walk": 0.0,
+      "Squire_Attack": 0.0,
+      "Squire_ShieldWall": 0.0,
+      "Squire_ShieldWallHold": 0.0
+    }
+  },
+  "glb": {
+    "file": "squire_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 16,
+    "triangles": 324,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Squire_Idle": 3,
+      "Squire_Walk": 1.1666666666666667,
+      "Squire_Attack": 1.25,
+      "Squire_ShieldWall": 1,
+      "Squire_ShieldWallHold": 2
+    },
+    "channels": "location, rotation on every bone"
+  },
+  "status": "Squire V1 with Squire_Idle, Squire_Walk, Squire_Attack, Squire_ShieldWall, Squire_ShieldWallHold; GLB and packed atlases validated",
+  "source_validation": {
+    "scenes": [
+      "Squire_V1"
+    ],
+    "actions": [
+      "Squire_Walk",
+      "Squire_ShieldWallHold",
+      "Squire_ShieldWall",
+      "Squire_Idle",
+      "Squire_Attack"
+    ],
+    "armatures": [
+      "Squire_V1_Skeleton"
+    ]
+  }
+}

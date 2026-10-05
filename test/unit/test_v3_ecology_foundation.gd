@@ -108,7 +108,7 @@ func test_roster_is_4_4_4_with_explicit_tiers_and_no_dragon():
 	var expected := {
 		MonsterEcologyData.TIER_BASIC: ["goblin", "skeleton", "worg", "giant_spider"],
 		MonsterEcologyData.TIER_INTERMEDIATE: ["troll", "wyvern", "minotaur", "basilisk"],
-		MonsterEcologyData.TIER_ADVANCED: ["colossal_worm", "arboreal_ancient", "mana_devourer", "mycotic_hive"],
+		MonsterEcologyData.TIER_ADVANCED: ["colossal_worm", "arboreal_ancient", "mana_devourer", "corrupted_hero"],
 	}
 	for tier in expected:
 		assert_eq(Array(MonsterEcologyData.species_of_tier(tier)), expected[tier], "tier %s" % tier)
@@ -119,7 +119,7 @@ func test_roster_is_4_4_4_with_explicit_tiers_and_no_dragon():
 	assert_eq(MonsterEcologyData.tier_of("dragon"), "", "Dragão fica fora da ecologia")
 	assert_false("dragon" in MonsterEcologyData.SPECIES_ORDER)
 	# Espécies novas nunca entram no sorteio legado dos covis da seed.
-	for kind in ["worg", "giant_spider", "minotaur", "basilisk", "colossal_worm", "arboreal_ancient", "mana_devourer", "mycotic_hive"]:
+	for kind in ["worg", "giant_spider", "minotaur", "basilisk", "colossal_worm", "arboreal_ancient", "mana_devourer", "corrupted_hero"]:
 		assert_false(kind in MonsterDatabase.KINDS, "%s fora de KINDS" % kind)
 	assert_eq(MonsterDatabase.KINDS, ["goblin", "troll", "wyvern", "skeleton", "dragon"])
 
@@ -345,7 +345,8 @@ func _era_scenario() -> Dictionary:
 	return {
 		"city": city,
 		"basic": _site("goblin", Vector2i(9, 0)), "basic_anchor": Vector2i(9, 0),
-		"intermediate": _site("wyvern", Vector2i(0, 11)), "intermediate_anchor": Vector2i(0, 11),
+		# Etapa 3: a Wyvern só faz raide dentro do próprio leash (9 na Ascensão) — fica a 8 da capital.
+		"intermediate": _site("wyvern", Vector2i(0, 8)), "intermediate_anchor": Vector2i(0, 8),
 		"advanced": _site("colossal_worm", Vector2i(-11, 0)), "advanced_anchor": Vector2i(-11, 0),
 	}
 
@@ -463,14 +464,33 @@ func test_era_never_removes_or_protects_a_creature():
 	assert_true(CombatResolver.is_hostile_unit_target(human, s.advanced, grid), "continua vulnerável")
 	assert_not_null(soldier)
 
-func test_mycotic_hive_stays_on_its_anchor():
-	_world(16)
-	var hive := _site("mycotic_hive", Vector2i(5, 5))
+## 2026-10-04: o Herói Corrompido substitui a Colmeia Micótica — ADVANCED padrão (sem o teto "quase imóvel" da
+## Colmeia nem a infecção), mesmo ataque, modelo próprio; save antigo com "mycotic_hive" vira o Herói.
+func test_corrupted_hero_replaces_the_hive_with_the_standard_advanced_profile():
+	assert_false(MonsterEcologyData.is_ecology_species("mycotic_hive"), "a Colmeia saiu do bestiário")
+	assert_eq(MonsterEcologyData.tier_of("corrupted_hero"), MonsterEcologyData.TIER_ADVANCED)
+	assert_eq(MonsterEcologyData.patrol_radius_cap("corrupted_hero"), -1, "sem o teto de raio da Colmeia")
+	assert_false(MonsterAbilityData.species_has("corrupted_hero", MonsterAbilityData.MYCOTIC_CONTAMINATION), "sem infecção")
+	assert_true(MonsterAbilityData.species_has("corrupted_hero", MonsterAbilityData.SHIELD_BLOCK), "habilidade própria: Bloqueio com Escudo")
 	for phase in [WorldPhaseRules.Phase.FOUNDATION, WorldPhaseRules.Phase.ASCENSION, WorldPhaseRules.Phase.CONVERGENCE]:
-		WorldEventManager.world_phase = phase
-		for turn in 20:
-			_act(hive, 100 + turn)
-			assert_lte(HexMetrics.axial_distance(hive.coord, Vector2i(5, 5)), 1)
+		assert_eq(MonsterActivityProfile.for_species("corrupted_hero", phase), MonsterActivityProfile.for_tier(MonsterEcologyData.TIER_ADVANCED, phase), "perfil ADVANCED padrão")
+	var data := MonsterDatabase.create_monster("corrupted_hero")
+	assert_eq(data.unit_name, "Herói Corrompido")
+	assert_eq(data.attack, 8.0, "mesmo ataque da Colmeia")
+	assert_eq(data.idle_animation_override, "Hero_Idle")
+	assert_eq(data.walk_animation_override, "Hero_Walk")
+	assert_eq(data.attack_animation_override, "Hero_Attack")
+	assert_eq(data.block_animation_override, "Hero_Block")
+	assert_true(ResourceLoader.exists(data.model_scene_path), data.model_scene_path)
+	assert_eq(MonsterDatabase.create_monster("mycotic_hive").visual_kind, "corrupted_hero", "save antigo carrega o Herói")
+
+func test_corrupted_hero_leaves_its_anchor_only_in_its_era():
+	_world(16)
+	var hero := _site("corrupted_hero", Vector2i(5, 5))
+	WorldEventManager.world_phase = WorldPhaseRules.Phase.FOUNDATION
+	for turn in 20:
+		_act(hero, 100 + turn)
+		assert_lte(HexMetrics.axial_distance(hero.coord, Vector2i(5, 5)), int(MonsterActivityProfile.for_species("corrupted_hero", WorldPhaseRules.Phase.FOUNDATION).chase_radius), "Despertar: fica na região")
 
 # --- Fairness -----------------------------------------------------------------------------------
 

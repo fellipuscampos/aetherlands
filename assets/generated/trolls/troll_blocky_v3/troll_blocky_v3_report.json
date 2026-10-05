@@ -1,0 +1,185 @@
+{
+  "name": "Troll_Blocky_V3_R2",
+  "revision": "specific fit corrections + metric UV + three gameplay clips",
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "filter": "NEAREST",
+    "materials": 1,
+    "islands": 340,
+    "target_px_per_meter": 64,
+    "measured_min": 63.99869924576665,
+    "measured_max": 64.00107904286999,
+    "max_relative_error": 2.032428489606719e-05,
+    "padding_pixels": 2,
+    "method": "orthonormal projection at exact scale; non-overlapping unique islands; face-sized painting"
+  },
+  "geometry_corrections": "Integrated ears; continuous mouth-rooted tusks; solid hands; flared hide; aligned physical grip channel; no neck geometry.",
+  "height_m": 2.5,
+  "status": "COMPLETE: refined geometry, metric UV, three animations, exports and Godot validation",
+  "bone_count": 24,
+  "bones": [
+    "root",
+    "pelvis",
+    "spine_01",
+    "chest",
+    "neck",
+    "head",
+    "jaw",
+    "shoulder_l",
+    "upper_arm_l",
+    "forearm_l",
+    "hand_l",
+    "thigh_l",
+    "shin_l",
+    "foot_l",
+    "shoulder_r",
+    "upper_arm_r",
+    "forearm_r",
+    "hand_r",
+    "thigh_r",
+    "shin_r",
+    "foot_r",
+    "weapon",
+    "loincloth_front",
+    "loincloth_back"
+  ],
+  "animations": {
+    "Troll_Idle": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Subtle breathing; planted feet; restrained arm and weapon motion"
+    },
+    "Troll_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 61,
+      "description": "28-frame heavy in-place gait, 60% stance, planted support foot, opposite arm swing",
+      "suggested_translation_mps": 0.4857142857142857
+    },
+    "Troll_Attack": {
+      "start": 1,
+      "end": 37,
+      "loop": false,
+      "nla_start": 101,
+      "description": "Wind-up 1-13, hold 13-17, impact frame 21, follow-through 24, recovery to 37",
+      "impact_frame": 21
+    }
+  },
+  "skinning": "Rigid block skinning; feet use baked analytic IK, runtime FK only",
+  "meshes": {
+    "Troll_Blocky_V3_R2_Body": {
+      "triangles": 644,
+      "vertices": 412,
+      "nonmanifold_edges": 0,
+      "bad_weights": 0
+    },
+    "Troll_Blocky_V3_R2_Club": {
+      "triangles": 72,
+      "vertices": 48,
+      "nonmanifold_edges": 0,
+      "bad_weights": 0
+    }
+  },
+  "triangles": 716,
+  "animation_validation": {
+    "Troll_Idle": {
+      "frames_tested": 49,
+      "loop_seam_max_m": 0.0,
+      "max_edge_length_error_m": 4.3130892712905933e-07,
+      "minimum_foot_height_m": -1.9563942998956918e-07,
+      "max_foot_target_error_m": 1.4416259779825048e-07,
+      "max_vertex_displacement_m": 0.03437841888544331,
+      "cloth_thigh_intersections": []
+    },
+    "Troll_Walk": {
+      "frames_tested": 29,
+      "loop_seam_max_m": 0.0,
+      "max_edge_length_error_m": 3.9807663777813307e-07,
+      "minimum_foot_height_m": -3.1859207183515537e-07,
+      "max_foot_target_error_m": 3.01357335092972e-07,
+      "max_vertex_displacement_m": 0.6798122390198756,
+      "cloth_thigh_intersections": []
+    },
+    "Troll_Attack": {
+      "frames_tested": 37,
+      "loop_seam_max_m": 0.0,
+      "max_edge_length_error_m": 3.977367291074785e-07,
+      "minimum_foot_height_m": -2.813092123687966e-07,
+      "max_foot_target_error_m": 2.2655653945304638e-07,
+      "max_vertex_displacement_m": 3.831295024364569,
+      "cloth_thigh_intersections": []
+    }
+  },
+  "source_validation": {
+    "scenes": [
+      "Troll_Blocky_V3_R2"
+    ],
+    "actions": [
+      "Troll_Walk",
+      "Troll_Idle",
+      "Troll_Attack"
+    ],
+    "images_packed": true
+  },
+  "formats": [
+    "blend",
+    "glb",
+    "fbx",
+    "png"
+  ],
+  "engine_validation": {
+    "engine": "Godot 4.7.1",
+    "status": "PASS",
+    "bones": 24,
+    "skinned_meshes": 2,
+    "height_m": 2.50000023841858,
+    "ground_y": 0.0,
+    "texture_size": [
+      512,
+      512
+    ],
+    "nearest_filter": true,
+    "frames_tested": 115,
+    "clips": {
+      "Troll_Idle": {
+        "seconds": 2.0,
+        "loop": true
+      },
+      "Troll_Walk": {
+        "seconds": 1.1666666666666667,
+        "loop": true
+      },
+      "Troll_Attack": {
+        "seconds": 1.5,
+        "loop": false
+      }
+    }
+  },
+  "fbx_validation": {
+    "version": 7400,
+    "animation_stacks": [
+      "Troll_Idle",
+      "Troll_Walk",
+      "Troll_Attack"
+    ]
+  },
+  "visual_review": {
+    "views": [
+      "front",
+      "three_quarter",
+      "side",
+      "back"
+    ],
+    "animation_keyframes_reviewed": true,
+    "previews": [
+      "MP4",
+      "GIF"
+    ]
+  }
+}

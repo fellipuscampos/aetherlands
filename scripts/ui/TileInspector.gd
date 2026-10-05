@@ -35,6 +35,10 @@ const KIND_BUILDING := "building"
 const KIND_SITE := "site"
 const KIND_MAGIC := "magic"
 const KIND_RESOURCE := "resource"
+const KIND_HAZARD := "hazard" # V3 / Etapa 3: Raízes do Mundo, Contaminação Micótica, Rastro Subterrâneo (temporários)
+const KIND_TERRITORY := "territory" # V3 / Etapa 3: território ecológico SEM estrutura (não é covil) / área limpa
+
+const REPOPULATION_HELP := "Criaturas podem repovoar regiões distantes ao longo da partida. Áreas recentemente limpas permanecem seguras por algum tempo."
 
 const STATE_UNSEEN := "unseen"
 const STATE_EXPLORED := "explored"
@@ -85,6 +89,7 @@ static func inspect(hex_grid: HexGrid, coord: Vector2i, viewer: PlayerData) -> D
 			entries.append(site)
 
 	entries.append_array(_magic_entries(coord, hex_grid, viewer, state))
+	entries.append_array(_ecology_entries(coord, hex_grid, viewer, state))
 
 	if tile != null and tile.resource != "" and state != STATE_UNSEEN:
 		entries.append(_resource_entry(tile, coord, hex_grid, viewer))
@@ -286,6 +291,8 @@ static func status_effect_lines(unit: Unit) -> Array[String]:
 	lines.append_array(UnitStatusEffects.status_lines(unit)) # V3 / Etapa 2: Veneno, Em Chamas, Abalado, Petrificação...
 	if unit.arcane_barrier > 0.0:
 		lines.append("Barreira Arcana — absorve %d de dano" % ceili(unit.arcane_barrier))
+	if unit.owner_player != null and MonsterHazardSystem.is_infected(unit.coord):
+		lines.append("Área Micótica — perde 3% da Vida no início do turno; cura pela metade")
 	return lines
 
 ## Acao e recarga do conjurador: so' o DONO ve (recarga de magia inimiga e' segredo).
@@ -354,6 +361,12 @@ static func _monster_entry(unit: Unit, hex_grid: HexGrid) -> Dictionary:
 	var ecology_label := MonsterEcologySystem.behavior_label(unit)
 	if ecology_label != "" and not unit.is_camp_boss:
 		lines.append("Comportamento: %s" % ecology_label)
+	# V3 / Etapa 3: estado de aggro observável (persegue um intruso / desistiu e volta ao território).
+	if MonsterEcologySystem.is_ecology_unit(unit):
+		if bool(unit.ability_state.get("returning", false)):
+			lines.append("Estado: retornando ao território")
+		elif unit.ability_state.has("aggro_target"):
+			lines.append("Estado: perseguindo um intruso (desiste longe do território)")
 	# V3 / Etapa 2: habilidade(s) assinatura da espécie (criatura da ecologia), descrição curta e recarga atual.
 	if MonsterEcologySystem.is_ecology_unit(unit):
 		for ability_id in MonsterAbilityData.for_species(data.visual_kind):
@@ -371,6 +384,47 @@ static func _monster_entry(unit: Unit, hex_grid: HexGrid) -> Dictionary:
 		lines.append("Recompensa por derrotar: %d ouro" % int(data.gold_reward))
 	var kind := KIND_BOSS if is_boss else KIND_MONSTER
 	return {"key": kind, "kind": kind, "tag": data.unit_name, "title": data.unit_name, "lines": lines}
+
+## V3 / Etapa 3 — perigos e territórios da Combat Ecology no tile. Perigos temporários (raízes, infecção, rastro)
+## só com o tile VISÍVEL agora (a névoa não revela perigo não observado); território/área limpa com o tile já
+## explorado (é geografia lembrada, igual ao marcador do mapa).
+static func _ecology_entries(coord: Vector2i, hex_grid: HexGrid, viewer: PlayerData, state: String) -> Array:
+	var entries: Array = []
+	if state == STATE_UNSEEN:
+		return entries
+	if state == STATE_VISIBLE:
+		if MonsterHazardSystem.is_root(coord):
+			var rounds_left := maxi(1, int(MonsterHazardSystem.roots[coord]) - TurnManager.turn_number)
+			entries.append({"key": "hazard:roots", "kind": KIND_HAZARD, "tag": "Raízes do Mundo", "title": "Raízes do Mundo", "lines": [
+				"Movimento +%d para atravessar (some em %d rodada%s)." % [int(MonsterAbilityData.param(MonsterAbilityData.ROOTS_OF_THE_WORLD, "move_cost", 2.0)), rounds_left, "" if rounds_left == 1 else "s"],
+				"Quem estava aqui quando brotaram ficou Enraizado.",
+				"Raízes não causam dano."]})
+		if MonsterHazardSystem.is_infected(coord):
+			entries.append({"key": "hazard:infection", "kind": KIND_HAZARD, "tag": "Contaminação Micótica", "title": "Contaminação Micótica", "lines": [
+				"Quem COMEÇA o turno aqui perde 3% da Vida (1–3).",
+				"Cura recebida aqui cai pela metade.",
+				"Entrar ou passar não causa dano.",
+				"Origem: Colmeia Micótica."]})
+		if coord in MonsterAbilitySystem.telegraph_coords():
+			entries.append({"key": "hazard:burrow", "kind": KIND_HAZARD, "tag": "Rastro Subterrâneo", "title": "Rastro Subterrâneo", "lines": [
+				"Um Verme Colossal ferido fugiu por baixo da terra e emerge aqui no próximo turno.",
+				"Emergir não causa dano — é só fuga."]})
+	for site in MonsterEcologySystem.sites:
+		if site.anchor == coord and site.lair == HexGrid.NO_LAIR:
+			var species := String(site.species)
+			var title := MonsterAbilityFeedback.habitat_name(species)
+			entries.append({"key": "territory", "kind": KIND_TERRITORY, "tag": title, "title": title, "lines": [
+				"Território de %s (criatura %s) — sem estrutura, não é um Covil." % [MonsterDatabase.KIND_DATA[species].unit_name if MonsterDatabase.KIND_DATA.has(species) else species, MonsterEcologyData.tier_display(MonsterEcologyData.tier_of(species))],
+				"Some quando as criaturas da região forem derrotadas; não dá recompensa própria.",
+				REPOPULATION_HELP]})
+			return entries
+	for entry in MonsterEcologySystem.depleted:
+		if entry.coord == coord and TurnManager.turn_number - int(entry.turn) < MonsterEcologyData.REFILL_DEPLETED_COOLDOWN:
+			entries.append({"key": "territory", "kind": KIND_TERRITORY, "tag": "Área limpa", "title": "Área limpa", "lines": [
+				"As criaturas desta região foram derrotadas.",
+				REPOPULATION_HELP]})
+			break
+	return entries
 
 static func _lair_kind_near(coord: Vector2i, hex_grid: HexGrid) -> String:
 	var lair_coord := hex_grid.home_lair_for(coord)

@@ -26,6 +26,9 @@ func _ready() -> void:
 	# antigo continuar valendo).
 	GameManager.stagger_ai_turns = true
 	GameManager.camera_rig = camera_rig # ver GameManager.gd — Minimap (HUD) usa isso pro indicador de viewport
+	# V3 / Etapa 4: anti-aliasing e sombras reais, aplicados já e a cada mudança nas Configurações (sem reiniciar).
+	_apply_graphics_settings()
+	Settings.graphics_changed.connect(_apply_graphics_settings)
 	EventBus.restart_requested.connect(_on_restart_requested)
 	title_screen.new_game_setup_requested.connect(_on_new_game_setup_requested)
 	title_screen.load_game_requested.connect(_on_title_load_requested)
@@ -41,6 +44,10 @@ func _ready() -> void:
 	# (HumanTimingTelemetry.is_enabled); sem a flag, nenhum nó/arquivo é criado.
 	if HumanTimingTelemetry.is_enabled():
 		add_child(HumanTimingTelemetry.new())
+
+func _apply_graphics_settings() -> void:
+	GraphicsQuality.apply_anti_aliasing(get_viewport(), Settings.anti_aliasing)
+	GraphicsQuality.apply_shadows(get_node_or_null("Sun") as DirectionalLight3D, Settings.shadow_quality)
 
 func _on_new_game_setup_requested() -> void:
 	title_screen.visible = false

@@ -1,0 +1,135 @@
+{
+  "name": "Goblin_Raider_V3",
+  "pipeline": "Blender MCP localhost:9876",
+  "height_m": 1.3000000715255737,
+  "triangles": 684,
+  "editable_parts": 49,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      256,
+      256
+    ],
+    "filter": "NEAREST",
+    "unique_uv_islands": 329,
+    "density_px_per_meter": 64,
+    "measured_min": 63.99905998394255,
+    "measured_max": 64.00051411079677,
+    "padding": 2
+  },
+  "rig": true,
+  "animations": {
+    "Goblin_Idle": {
+      "start": 1,
+      "end": 61,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Cautious breathing, small head/ear silhouette motion, planted feet.",
+      "duration_seconds": 2.5
+    },
+    "Goblin_Walk": {
+      "start": 1,
+      "end": 21,
+      "loop": true,
+      "nla_start": 81,
+      "description": "Quick crouched in-place walk; opposing arms, 58% stance and short foot lift.",
+      "suggested_translation_mps": 0.3103448275862069,
+      "duration_seconds": 0.8333333333333334
+    },
+    "Goblin_Attack": {
+      "start": 1,
+      "end": 29,
+      "loop": false,
+      "nla_start": 121,
+      "description": "Short dagger thrust: anticipation 1-8, strike 12, follow-through 15, recovery 29.",
+      "impact_frame": 12,
+      "duration_seconds": 1.1666666666666667
+    }
+  },
+  "notes": "49 editable meshes; rigid block skinning, weighted leather straps, baked foot planting, three actions at 24 fps.",
+  "visual_review": {
+    "views": [
+      "front",
+      "three_quarter",
+      "side",
+      "back"
+    ],
+    "identity": "Large pointed ears, projecting hooked nose, yellow eyes, small irregular teeth, skinny goblin silhouette",
+    "loot_pouch": "Moved forward for front and three-quarter readability",
+    "strap": "Continuous stepped strip follows the back without penetrating the chest",
+    "animation_views": "Three-quarter poses: anticipation, strike, recovery and opposing walk phases."
+  },
+  "status": "Complete: rigged editable Goblin with Idle, Walk and Attack; MP4/GIF reviews.",
+  "source_validation": {
+    "scenes": [
+      "Goblin_Raider_V3"
+    ],
+    "actions": [
+      "Goblin_Walk",
+      "Goblin_Idle",
+      "Goblin_Attack"
+    ],
+    "armatures": [
+      "Goblin_Raider_V3_Skeleton"
+    ],
+    "packed_texture": true
+  },
+  "bone_count": 22,
+  "bones": [
+    "root",
+    "pelvis",
+    "chest",
+    "head",
+    "shoulder_l",
+    "upper_arm_l",
+    "forearm_l",
+    "hand_l",
+    "shoulder_r",
+    "upper_arm_r",
+    "forearm_r",
+    "hand_r",
+    "weapon",
+    "rag_front",
+    "rag_back",
+    "loot",
+    "thigh_l",
+    "shin_l",
+    "foot_l",
+    "thigh_r",
+    "shin_r",
+    "foot_r"
+  ],
+  "animation_validation": {
+    "clips": {
+      "Goblin_Idle": {
+        "endpoints_max_vertex_delta_m": 0.0,
+        "minimum_vertex_z_m": 4.1694988794915844e-08,
+        "foot_target_error_m": 1.1397577264424366e-07,
+        "frames": 61,
+        "loop": true
+      },
+      "Goblin_Walk": {
+        "endpoints_max_vertex_delta_m": 0.0,
+        "minimum_vertex_z_m": 5.742413478060371e-08,
+        "foot_target_error_m": 1.509662115421305e-07,
+        "frames": 21,
+        "loop": true
+      },
+      "Goblin_Attack": {
+        "endpoints_max_vertex_delta_m": 0.0,
+        "minimum_vertex_z_m": 5.111968803817035e-08,
+        "foot_target_error_m": 1.280898693722054e-07,
+        "frames": 29,
+        "loop": false
+      }
+    },
+    "all_vertices_normalized_weights": true,
+    "dagger_follows_fist": true,
+    "minimum_vertex_z_m": 4.1694988794915844e-08,
+    "max_foot_target_error_m": 1.509662115421305e-07,
+    "root_drift_m": 0,
+    "tested_surface_crossings": 0
+  }
+}

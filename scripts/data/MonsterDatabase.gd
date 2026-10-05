@@ -207,14 +207,24 @@ const KIND_DATA := {
 		"movement_points": 2.0, "vision_range": 1, "gold_reward": 90.0, "clear_reward": 150.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "mana_devourer",
 	},
-	"mycotic_hive": {
+	# Herói Corrompido — substitui PROVISORIAMENTE a Colmeia Micótica (2026-10-04): mesmo ataque/defesa/vida da
+	# Colmeia; movimento 2 como os outros ADVANCED móveis (a Colmeia era estrutura quase imóvel). Sem habilidade
+	# própria por enquanto: comportamento ADVANCED padrão (MonsterActivityProfile). Saves antigos: LEGACY_KINDS.
+	"corrupted_hero": {
 		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
 		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
-		"unit_name": "Colmeia Micótica", "attack": 8.0, "defense": 6.0, "max_hp": 34.0,
-		"movement_points": 1.0, "vision_range": 1, "gold_reward": 80.0, "clear_reward": 150.0, "clear_reward_mana": 0.0,
-		"flies": false, "visual_kind": "mycotic_hive",
+		"unit_name": "Herói Corrompido", "attack": 8.0, "defense": 6.0, "max_hp": 34.0,
+		"movement_points": 2.0, "vision_range": 1, "gold_reward": 80.0, "clear_reward": 150.0, "clear_reward_mana": 0.0,
+		"flies": false, "visual_kind": "corrupted_hero",
 	},
 }
+
+## Espécies retiradas -> substituta (saves antigos e chamadas legadas). A Colmeia Micótica saiu do jogo e virou o
+## Herói Corrompido; um save com "mycotic_hive" carrega o Herói no lugar (nunca cai no fallback de Goblin).
+const LEGACY_KINDS := {"mycotic_hive": "corrupted_hero"}
+
+static func canonical_kind(kind: String) -> String:
+	return String(LEGACY_KINDS.get(kind, kind))
 const KINDS := ["goblin", "troll", "wyvern", "skeleton", "dragon"] # ordem fixa (nao KIND_DATA.keys(), ver nota abaixo), usada por WEIGHTS-like iteracao e testes que esperam ordem estavel
 
 ## O ocupante ORIGINAL de um covil (spawnado por HexGrid._spawn_monster_
@@ -233,7 +243,39 @@ const CAMP_BOSS_ATTACK_MULTIPLIER := 1.3
 ## CAMP_BOSS_ATTACK_MULTIPLIER). Um reforco comum usa movement_points de
 ## verdade da tabela — "ficar parado perto do covil" agora e uma ESCOLHA
 ## de IA (MonsterAI, comportamento Guardiao), nao mais uma trava de stat.
+## Crossfade (s) entre Idle/Walk/Attack dos monstros com modelo feito a
+## mao no Blender (Goblin/Troll V3 e os V1 de HANDMADE_MODELS/Esqueleto)
+## -- ver UnitData.animation_blend_time. Menor que
+## Unit.MOVE_DURATION (0.35s por tile) pra o passo ja estar "andando" antes
+## do fim do primeiro trecho.
+const V3_ANIMATION_BLEND_TIME := 0.2
+
+const SKELETON_V1_MODEL := "res://assets/generated/skeletons/skeleton_warrior_v1/skeleton_warrior_v1.glb"
+
+## Especies do bestiario ecologico com modelo final: kind -> GLB + prefixo
+## dos clipes (<prefix>_Idle/_Walk/_Attack). Ver o ramo HANDMADE_MODELS em
+## create_monster().
+const HANDMADE_MODELS := {
+	"worg": {"path": "res://assets/generated/wargs/warg_v1/warg_v1.glb", "prefix": "Warg"},
+	"minotaur": {"path": "res://assets/generated/minotaurs/minotaur_blocky_v1/minotaur_blocky_v1.glb", "prefix": "Minotaur"},
+	"basilisk": {"path": "res://assets/generated/basilisks/basilisk_blocky_v1/basilisk_blocky_v1.glb", "prefix": "Basilisk"},
+	# Wyvern: substitui a capsula+asas procedural de Unit._build_procedural_body (pousado; sem clipe de voo).
+	"wyvern": {"path": "res://assets/generated/wyverns/wyvern_blocky_v1/wyvern_blocky_v1.glb", "prefix": "Wyvern"},
+	# Aranha: GLB re-exportado do .blend animado por tools/art_pipeline/spider_export.py.
+	"giant_spider": {"path": "res://assets/generated/spiders/giant_spider_v1/giant_spider_v1.glb", "prefix": "Spider"},
+	# Devorador: flutua -- a altura de flutuacao ja esta na geometria (origem no chao).
+	"mana_devourer": {"path": "res://assets/generated/mana_devourers/mana_devourer_v1/mana_devourer_v1.glb", "prefix": "ManaDevourer"},
+	# Verme Colossal: verme-lacraia de areia, em pe (J) perto de 1 tile. Sem Walk (anda no Idle); Escavar toca
+	# Worm_Burrow/Worm_Emerge ("burrow": true, ver Unit.play_burrow_visual/play_emerge_visual).
+	"colossal_worm": {"path": "res://assets/generated/sand_worms/sand_worm_v1/sand_worm_v1.glb", "prefix": "Worm", "burrow": true},
+	# Anciao Arboreo: golem de pedra/raiz que anda como gorila (Ancient Golem V2).
+	"arboreal_ancient": {"path": "res://assets/generated/ancient_golems/ancient_golem_v2/ancient_golem_v2.glb", "prefix": "Golem"},
+	# Herói Corrompido: cavaleiro velho e cansado, maça de ferro + escudo-torre (substitui a Colmeia).
+	"corrupted_hero": {"path": "res://assets/generated/corrupted_heroes/corrupted_hero_v1/corrupted_hero_v1.glb", "prefix": "Hero", "block": true},
+}
+
 static func create_monster(kind: String, is_camp_boss: bool = false) -> UnitData:
+	kind = canonical_kind(kind)
 	var info: Dictionary = KIND_DATA.get(kind, KIND_DATA["goblin"])
 	var data := UnitData.new()
 	data.unit_name = info.unit_name
@@ -254,12 +296,18 @@ static func create_monster(kind: String, is_camp_boss: bool = false) -> UnitData
 	# era usado antes — Troll/Wyvern/Dragao continuam sem modelo
 	# procedural equivalente por ora. Preset: presets/skeleton_blocky.json.
 	if kind == "skeleton":
-		data.model_scene_path = "res://assets/generated/skeletons/skeleton_blocky/skeleton_blocky.glb"
-		data.animation_scene_path = "res://assets/generated/skeletons/skeleton_blocky/skeleton_blocky.glb"
+		# V1 feito a mao (2026-10): Esqueleto guerreiro do Blender (README em
+		# assets/generated/skeletons/skeleton_warrior_v1), 1.85m com elmo,
+		# rig proprio de 23 ossos. O skeleton_blocky antigo continua no disco,
+		# so nao e mais referenciado (nem pelas Hostes, ver UnitDatabase.
+		# _apply_skeleton_formation, que usa o MESMO modelo).
+		data.model_scene_path = SKELETON_V1_MODEL
+		data.animation_scene_path = SKELETON_V1_MODEL
 		data.merge_shared_walk_animation = false
-		data.idle_animation_override = "Idle"
-		data.walk_animation_override = "Walk"
-		data.attack_animation_override = "Attack"
+		data.idle_animation_override = "Skeleton_Idle"
+		data.walk_animation_override = "Skeleton_Walk"
+		data.attack_animation_override = "Skeleton_Attack"
+		data.animation_blend_time = V3_ANIMATION_BLEND_TIME
 		# Escala 1:1 direta agora (ver Unit.gd _build_model_body's
 		# ASSET_FACTORY_PATH_PREFIX check): modelos da 3D Asset Factory
 		# nao passam mais pela normalizacao MODEL_TARGET_HEIGHT/aabb.
@@ -280,7 +328,7 @@ static func create_monster(kind: String, is_camp_boss: bool = false) -> UnitData
 		# eliminar a normalizacao (nao so recalibrar o multiplicador em
 		# cima dela) e a correcao de verdade.
 		data.model_scale_multiplier = 1.0
-		data.model_yaw_offset_degrees = 180.0
+		data.model_yaw_offset_degrees = 0.0 # V1: frente ja em +Z, ver nota no goblin abaixo
 	elif kind == "goblin":
 		# Identidade visual: primeiro teste da 3D Asset Factory (tools/
 		# asset_factory) numa especie NAO-humana — mesmo esqueleto/rig de
@@ -290,12 +338,22 @@ static func create_monster(kind: String, is_camp_boss: bool = false) -> UnitData
 		# tools/asset_factory/style/palette.py) + orelhas pontudas (style.
 		# pointy_ears, ver body_blocky.build_head_parts) em vez de reusar a
 		# cor de pele humana fixa. Preset: presets/goblin_blocky.json.
-		data.model_scene_path = "res://assets/generated/goblins/goblin_blocky/goblin_blocky.glb"
-		data.animation_scene_path = "res://assets/generated/goblins/goblin_blocky/goblin_blocky.glb"
+		# V3 (2026-10): substituido pelo Goblin saqueador feito a mao no
+		# Blender (art_source/goblin_raider_v3, README em assets/generated/
+		# goblins/goblin_raider_v3) -- rig proprio de 22 ossos, clipes
+		# Goblin_Idle/Goblin_Walk/Goblin_Attack. GLB exportado por tools/
+		# art_pipeline/goblin_raider_export.py. O goblin_blocky antigo da
+		# Asset Factory continua no disco, so nao e mais referenciado.
+		data.model_scene_path = "res://assets/generated/goblins/goblin_raider_v3/goblin_raider_v3.glb"
+		data.animation_scene_path = "res://assets/generated/goblins/goblin_raider_v3/goblin_raider_v3.glb"
 		data.merge_shared_walk_animation = false
-		data.idle_animation_override = "Idle"
-		data.walk_animation_override = "Walk"
-		data.attack_animation_override = "Attack"
+		data.idle_animation_override = "Goblin_Idle"
+		data.walk_animation_override = "Goblin_Walk"
+		data.attack_animation_override = "Goblin_Attack"
+		# Pedido do usuario: "andar nao comeca instantaneamente, os ossos tem
+		# que ir de idle pra andando" -- os 3 clipes animam o mesmo conjunto
+		# de ossos (conferido no import), entao o crossfade e limpo.
+		data.animation_blend_time = V3_ANIMATION_BLEND_TIME
 		# NAO é a mesma escala do Guarda/Colonizador -- um goblin TEM que
 		# parecer mais baixo que um humano. Ver comentario do Colonizador
 		# acima sobre por que o multiplicador nao pode ser copiado entre
@@ -314,7 +372,9 @@ static func create_monster(kind: String, is_camp_boss: bool = false) -> UnitData
 		# no proprio preset (tools/asset_factory/presets/goblin_blocky.
 		# json "height"), nao aqui.
 		data.model_scale_multiplier = 1.0
-		data.model_yaw_offset_degrees = 180.0
+		# V3: frente ja sai em +Z no glTF (-Y no Blender), a mesma convencao
+		# de slide_to() -- sem o giro de 180 graus da Asset Factory antiga.
+		data.model_yaw_offset_degrees = 0.0
 	elif kind == "troll":
 		# Identidade visual: terceiro teste da 3D Asset Factory numa
 		# especie NAO-humana (depois do Goblin e do Esqueleto) -- mesmo
@@ -328,12 +388,18 @@ static func create_monster(kind: String, is_camp_boss: bool = false) -> UnitData
 		# build_troll_club_parts) -- pedido do usuario com imagem de
 		# referencia (um troll estilo Minecraft). Preset: presets/
 		# troll_blocky.json.
-		data.model_scene_path = "res://assets/generated/trolls/troll_blocky/troll_blocky.glb"
-		data.animation_scene_path = "res://assets/generated/trolls/troll_blocky/troll_blocky.glb"
+		# V3 (2026-10): substituido pelo Troll refinado no Blender (art_source/
+		# troll_blocky_v3, README em assets/generated/trolls/troll_blocky_v3)
+		# -- rig proprio de 24 ossos, clipes Troll_Idle/Troll_Walk/
+		# Troll_Attack, mesma altura de 2.5m. O troll_blocky antigo da Asset
+		# Factory continua no disco, so nao e mais referenciado.
+		data.model_scene_path = "res://assets/generated/trolls/troll_blocky_v3/troll_blocky_v3.glb"
+		data.animation_scene_path = "res://assets/generated/trolls/troll_blocky_v3/troll_blocky_v3.glb"
 		data.merge_shared_walk_animation = false
-		data.idle_animation_override = "Idle"
-		data.walk_animation_override = "Walk"
-		data.attack_animation_override = "Attack"
+		data.idle_animation_override = "Troll_Idle"
+		data.walk_animation_override = "Troll_Walk"
+		data.attack_animation_override = "Troll_Attack"
+		data.animation_blend_time = V3_ANIMATION_BLEND_TIME # ver nota no goblin acima
 		# "pode ter 2x o tamanho de uma pessoa" (usuario) -- o que fazia
 		# ele parecer MUITO maior que qualquer altura pedida nao era a
 		# altura em si: ombros largos (shoulder_width_ratio 0.34 -> 0.27),
@@ -347,7 +413,29 @@ static func create_monster(kind: String, is_camp_boss: bool = false) -> UnitData
 		# Guarda de 1.8m) -- ajustar altura agora e so no proprio preset
 		# (troll_blocky.json "height" + resalvar/reexportar), nao aqui.
 		data.model_scale_multiplier = 1.0
-		data.model_yaw_offset_degrees = 180.0
+		data.model_yaw_offset_degrees = 0.0 # V3: ver nota no goblin acima
+	elif HANDMADE_MODELS.has(kind):
+		# V1 feitos a mao no Blender (2026-10) -- substituem as silhuetas
+		# provisorias de MonsterPlaceholderVisuals (que segue valendo pras
+		# especies ainda sem modelo). Mesma receita do Goblin/Troll V3: escala
+		# 1:1, frente em +Z (yaw 0), clipes com prefixo e crossfade (os 3
+		# clipes de cada um animam o mesmo conjunto de ossos, conferido no
+		# import). READMEs em assets/generated/<especie>/<nome>_v1.
+		var model: Dictionary = HANDMADE_MODELS[kind]
+		data.model_scene_path = model.path
+		data.animation_scene_path = model.path
+		data.merge_shared_walk_animation = false
+		data.idle_animation_override = model.prefix + "_Idle"
+		data.walk_animation_override = model.prefix + "_Walk"
+		data.attack_animation_override = model.prefix + "_Attack"
+		if model.get("burrow", false):
+			data.burrow_animation_override = model.prefix + "_Burrow"
+			data.emerge_animation_override = model.prefix + "_Emerge"
+		if model.get("block", false):
+			data.block_animation_override = model.prefix + "_Block"
+		data.animation_blend_time = V3_ANIMATION_BLEND_TIME
+		data.model_scale_multiplier = 1.0
+		data.model_yaw_offset_degrees = 0.0
 	return data
 
 ## Ouro pago por destruir o covil ABANDONADO (ver HexGrid.destroy_lair/

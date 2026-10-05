@@ -1,0 +1,478 @@
+{
+  "name": "Sand_Worm_V1",
+  "kind": "colossal_worm",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/sand_worm_*.py)",
+  "height_m": 3.4063827297650278,
+  "front_y_m": -1.3105162382125854,
+  "back_y_m": 1.5637834072113037,
+  "width_m": 1.7826775908470154,
+  "triangles": 948,
+  "editable_parts": 79,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "unique_uv_islands": 474,
+    "density_px_per_meter": 64,
+    "measured_min": 63.998549442493605,
+    "measured_max": 64.00159953332418,
+    "padding": 2
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "head",
+      "jaw",
+      "claw_l",
+      "claw_r",
+      "antenna_l",
+      "antenna_r",
+      "seg_01",
+      "seg_02",
+      "seg_03",
+      "seg_04",
+      "seg_05",
+      "seg_06",
+      "seg_07",
+      "seg_08",
+      "seg_09",
+      "tail",
+      "leg_01_l",
+      "leg_01_r",
+      "leg_02_l",
+      "leg_02_r",
+      "leg_03_l",
+      "leg_03_r",
+      "leg_04_l",
+      "leg_04_r",
+      "leg_05_l",
+      "leg_05_r",
+      "leg_06_l",
+      "leg_06_r",
+      "leg_07_l",
+      "leg_07_r",
+      "leg_08_l",
+      "leg_08_r",
+      "leg_09_l",
+      "leg_09_r"
+    ],
+    "hierarchy": "flat: every bone is a child of root",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "AntennaTip_l": "antenna_l",
+      "AntennaTip_r": "antenna_r",
+      "Antenna_l": "antenna_l",
+      "Antenna_r": "antenna_r",
+      "Brow_l": "head",
+      "Brow_r": "head",
+      "Cercus_l": "tail",
+      "Cercus_r": "tail",
+      "ClawBase_l": "claw_l",
+      "ClawBase_r": "claw_r",
+      "Clypeus": "head",
+      "Eye_l": "head",
+      "Eye_r": "head",
+      "FangTip_l": "claw_l",
+      "FangTip_r": "claw_r",
+      "Fang_l": "claw_l",
+      "Fang_r": "claw_r",
+      "HeadPlate": "head",
+      "LegTip_01_l": "leg_01_l",
+      "LegTip_01_r": "leg_01_r",
+      "LegTip_02_l": "leg_02_l",
+      "LegTip_02_r": "leg_02_r",
+      "LegTip_03_l": "leg_03_l",
+      "LegTip_03_r": "leg_03_r",
+      "LegTip_04_l": "leg_04_l",
+      "LegTip_04_r": "leg_04_r",
+      "LegTip_05_l": "leg_05_l",
+      "LegTip_05_r": "leg_05_r",
+      "LegTip_06_l": "leg_06_l",
+      "LegTip_06_r": "leg_06_r",
+      "LegTip_07_l": "leg_07_l",
+      "LegTip_07_r": "leg_07_r",
+      "LegTip_08_l": "leg_08_l",
+      "LegTip_08_r": "leg_08_r",
+      "LegTip_09_l": "leg_09_l",
+      "LegTip_09_r": "leg_09_r",
+      "Leg_01_l": "leg_01_l",
+      "Leg_01_r": "leg_01_r",
+      "Leg_02_l": "leg_02_l",
+      "Leg_02_r": "leg_02_r",
+      "Leg_03_l": "leg_03_l",
+      "Leg_03_r": "leg_03_r",
+      "Leg_04_l": "leg_04_l",
+      "Leg_04_r": "leg_04_r",
+      "Leg_05_l": "leg_05_l",
+      "Leg_05_r": "leg_05_r",
+      "Leg_06_l": "leg_06_l",
+      "Leg_06_r": "leg_06_r",
+      "Leg_07_l": "leg_07_l",
+      "Leg_07_r": "leg_07_r",
+      "Leg_08_l": "leg_08_l",
+      "Leg_08_r": "leg_08_r",
+      "Leg_09_l": "leg_09_l",
+      "Leg_09_r": "leg_09_r",
+      "Mouth": "jaw",
+      "Segment_01": "seg_01",
+      "Segment_02": "seg_02",
+      "Segment_03": "seg_03",
+      "Segment_04": "seg_04",
+      "Segment_05": "seg_05",
+      "Segment_06": "seg_06",
+      "Segment_07": "seg_07",
+      "Segment_08": "seg_08",
+      "Segment_09": "seg_09",
+      "Skull": "head",
+      "TailTip": "tail",
+      "Tergite_01": "seg_01",
+      "Tergite_02": "seg_02",
+      "Tergite_03": "seg_03",
+      "Tergite_04": "seg_04",
+      "Tergite_05": "seg_05",
+      "Tergite_06": "seg_06",
+      "Tergite_07": "seg_07",
+      "Tergite_08": "seg_08",
+      "Tergite_09": "seg_09",
+      "Tooth_0": "jaw",
+      "Tooth_1": "jaw",
+      "Tooth_2": "jaw",
+      "Tooth_3": "jaw"
+    }
+  },
+  "animations": {
+    "Worm_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Cobra sway of the raised column, head looks around, antennae/claws/jaw twitch, leg wave on the raised segments; grounded legs planted.",
+      "seconds": 3
+    },
+    "Worm_Attack": {
+      "start": 1,
+      "end": 37,
+      "loop": false,
+      "nla_start": 101,
+      "description": "Rears back with jaw and claws wide, strikes forwards/down, claws snap shut on impact (frame 16), recovers.",
+      "impact_frame": 16,
+      "seconds": 1.5
+    },
+    "Worm_Burrow": {
+      "start": 1,
+      "end": 49,
+      "loop": false,
+      "nla_start": 161,
+      "description": "Column curls forward into an arch, the head plunges into the sand inside the tile and the body flows after it along the arch, tail last.",
+      "seconds": 2
+    },
+    "Worm_Emerge": {
+      "start": 1,
+      "end": 49,
+      "loop": false,
+      "nla_start": 231,
+      "description": "The head bursts up from a hole at the tile centre, the column rises and settles, the back of the body surfaces behind it, roar with claws wide.",
+      "seconds": 2
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "origin": "logical tile centre, under the rearing front",
+  "body_path": {
+    "points": [
+      [
+        0,
+        -0.2,
+        2.8
+      ],
+      [
+        0,
+        -0.08,
+        2.48
+      ],
+      [
+        0,
+        0.0,
+        2.06
+      ],
+      [
+        0,
+        0.04,
+        1.6
+      ],
+      [
+        0,
+        0.03,
+        1.16
+      ],
+      [
+        0,
+        0.04,
+        0.76
+      ],
+      [
+        0,
+        0.15,
+        0.46
+      ],
+      [
+        0.05,
+        0.47,
+        0.37
+      ],
+      [
+        0.2,
+        0.79,
+        0.34
+      ],
+      [
+        0.44,
+        1.03,
+        0.31
+      ]
+    ],
+    "length_m": 3.4366182265508103,
+    "segment_spacing_m": 0.35962424739453447,
+    "segments": [
+      {
+        "bone": "seg_01",
+        "s": 0.17981212369726723,
+        "center": [
+          0.0,
+          -0.13232222199440002,
+          2.6334195137023926
+        ],
+        "width": 0.78,
+        "height": 0.6,
+        "grounded": false
+      },
+      {
+        "bone": "seg_02",
+        "s": 0.5394363710918018,
+        "center": [
+          0.0,
+          -0.036647941917181015,
+          2.2874345779418945
+        ],
+        "width": 0.7475,
+        "height": 0.58,
+        "grounded": false
+      },
+      {
+        "bone": "seg_03",
+        "s": 0.8990606184863361,
+        "center": [
+          0.0,
+          0.01570580154657364,
+          1.9317317008972168
+        ],
+        "width": 0.7150000000000001,
+        "height": 0.5599999999999999,
+        "grounded": false
+      },
+      {
+        "bone": "seg_04",
+        "s": 1.2586848658808707,
+        "center": [
+          0.0,
+          0.04066729173064232,
+          1.5730807781219482
+        ],
+        "width": 0.6825,
+        "height": 0.54,
+        "grounded": false
+      },
+      {
+        "bone": "seg_05",
+        "s": 1.618309113275405,
+        "center": [
+          0.0,
+          0.030652491375803947,
+          1.2136468887329102
+        ],
+        "width": 0.65,
+        "height": 0.52,
+        "grounded": false
+      },
+      {
+        "bone": "seg_06",
+        "s": 1.9779333606699396,
+        "center": [
+          0.0,
+          0.029893269762396812,
+          0.8540878891944885
+        ],
+        "width": 0.6175,
+        "height": 0.5,
+        "grounded": false
+      },
+      {
+        "bone": "seg_07",
+        "s": 2.337557608064474,
+        "center": [
+          -0.0032498484943062067,
+          0.11191579699516296,
+          0.5066688060760498
+        ],
+        "width": 0.585,
+        "height": 0.48,
+        "grounded": false
+      },
+      {
+        "bone": "seg_08",
+        "s": 2.6971818554590086,
+        "center": [
+          0.039029207080602646,
+          0.4301777482032776,
+          0.37669020891189575
+        ],
+        "width": 0.5525,
+        "height": 0.45999999999999996,
+        "grounded": true
+      },
+      {
+        "bone": "seg_09",
+        "s": 3.056806102853543,
+        "center": [
+          0.17893734574317932,
+          0.758068323135376,
+          0.342984676361084
+        ],
+        "width": 0.52,
+        "height": 0.43999999999999995,
+        "grounded": true
+      }
+    ]
+  },
+  "rig_bone_map": {
+    "AntennaTip_l": "antenna_l",
+    "AntennaTip_r": "antenna_r",
+    "Antenna_l": "antenna_l",
+    "Antenna_r": "antenna_r",
+    "Brow_l": "head",
+    "Brow_r": "head",
+    "Cercus_l": "tail",
+    "Cercus_r": "tail",
+    "ClawBase_l": "claw_l",
+    "ClawBase_r": "claw_r",
+    "Clypeus": "head",
+    "Eye_l": "head",
+    "Eye_r": "head",
+    "FangTip_l": "claw_l",
+    "FangTip_r": "claw_r",
+    "Fang_l": "claw_l",
+    "Fang_r": "claw_r",
+    "HeadPlate": "head",
+    "LegTip_01_l": "leg_01_l",
+    "LegTip_01_r": "leg_01_r",
+    "LegTip_02_l": "leg_02_l",
+    "LegTip_02_r": "leg_02_r",
+    "LegTip_03_l": "leg_03_l",
+    "LegTip_03_r": "leg_03_r",
+    "LegTip_04_l": "leg_04_l",
+    "LegTip_04_r": "leg_04_r",
+    "LegTip_05_l": "leg_05_l",
+    "LegTip_05_r": "leg_05_r",
+    "LegTip_06_l": "leg_06_l",
+    "LegTip_06_r": "leg_06_r",
+    "LegTip_07_l": "leg_07_l",
+    "LegTip_07_r": "leg_07_r",
+    "LegTip_08_l": "leg_08_l",
+    "LegTip_08_r": "leg_08_r",
+    "LegTip_09_l": "leg_09_l",
+    "LegTip_09_r": "leg_09_r",
+    "Leg_01_l": "leg_01_l",
+    "Leg_01_r": "leg_01_r",
+    "Leg_02_l": "leg_02_l",
+    "Leg_02_r": "leg_02_r",
+    "Leg_03_l": "leg_03_l",
+    "Leg_03_r": "leg_03_r",
+    "Leg_04_l": "leg_04_l",
+    "Leg_04_r": "leg_04_r",
+    "Leg_05_l": "leg_05_l",
+    "Leg_05_r": "leg_05_r",
+    "Leg_06_l": "leg_06_l",
+    "Leg_06_r": "leg_06_r",
+    "Leg_07_l": "leg_07_l",
+    "Leg_07_r": "leg_07_r",
+    "Leg_08_l": "leg_08_l",
+    "Leg_08_r": "leg_08_r",
+    "Leg_09_l": "leg_09_l",
+    "Leg_09_r": "leg_09_r",
+    "Mouth": "jaw",
+    "Segment_01": "seg_01",
+    "Segment_02": "seg_02",
+    "Segment_03": "seg_03",
+    "Segment_04": "seg_04",
+    "Segment_05": "seg_05",
+    "Segment_06": "seg_06",
+    "Segment_07": "seg_07",
+    "Segment_08": "seg_08",
+    "Segment_09": "seg_09",
+    "Skull": "head",
+    "TailTip": "tail",
+    "Tergite_01": "seg_01",
+    "Tergite_02": "seg_02",
+    "Tergite_03": "seg_03",
+    "Tergite_04": "seg_04",
+    "Tergite_05": "seg_05",
+    "Tergite_06": "seg_06",
+    "Tergite_07": "seg_07",
+    "Tergite_08": "seg_08",
+    "Tergite_09": "seg_09",
+    "Tooth_0": "jaw",
+    "Tooth_1": "jaw",
+    "Tooth_2": "jaw",
+    "Tooth_3": "jaw"
+  },
+  "notes": "Static, fully above ground. Planned clips: Burrow (dive into the ground at the origin) and Emerge (reverse), no Walk. Each segment and leg is a separate part on its own future bone so the chain can slide along a path.",
+  "animation_validation": {
+    "problems": [],
+    "min_visible_z": {
+      "Worm_Idle": -0.0011,
+      "Worm_Attack": -0.0011,
+      "Worm_Burrow": -1.213,
+      "Worm_Emerge": -0.8323
+    },
+    "burrow": {
+      "q_hole": 6.000118482211972,
+      "q0_arch": 6.142779747188751,
+      "arch_head_joint_above_hole_m": 0.14266126497677867
+    }
+  },
+  "glb": {
+    "file": "sand_worm_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 35,
+    "triangles": 948,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Worm_Idle": 3,
+      "Worm_Attack": 1.5,
+      "Worm_Burrow": 2,
+      "Worm_Emerge": 2
+    },
+    "channels": "location, rotation, scale on every bone"
+  },
+  "status": "Sand Worm V1 with Worm_Idle, Worm_Attack, Worm_Burrow, Worm_Emerge; GLB and packed atlas validated",
+  "source_validation": {
+    "scenes": [
+      "Sand_Worm_V1"
+    ],
+    "actions": [
+      "Worm_Idle",
+      "Worm_Emerge",
+      "Worm_Burrow",
+      "Worm_Attack"
+    ],
+    "armatures": [
+      "Sand_Worm_V1_Skeleton"
+    ]
+  }
+}

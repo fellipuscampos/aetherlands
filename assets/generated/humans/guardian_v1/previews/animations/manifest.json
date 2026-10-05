@@ -1,0 +1,32 @@
+{
+  "Guardian_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "Guardian_Idle.mp4",
+    "gif": "Guardian_Idle.gif"
+  },
+  "Guardian_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "Guardian_Walk.mp4",
+    "gif": "Guardian_Walk.gif"
+  },
+  "Guardian_Attack": {
+    "frames": 31,
+    "fps": 24,
+    "mp4": "Guardian_Attack.mp4",
+    "gif": "Guardian_Attack.gif"
+  },
+  "Guardian_ShieldWall": {
+    "frames": 25,
+    "fps": 24,
+    "mp4": "Guardian_ShieldWall.mp4",
+    "gif": "Guardian_ShieldWall.gif"
+  },
+  "Guardian_ShieldWallHold": {
+    "frames": 48,
+    "fps": 24,
+    "mp4": "Guardian_ShieldWallHold.mp4",
+    "gif": "Guardian_ShieldWallHold.gif"
+  }
+}

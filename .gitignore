@@ -25,3 +25,10 @@ Thumbs.db
 # Build output local (export de teste) — builds de release de verdade vêm
 # do workflow de deploy, anexados às GitHub Releases, não deste diretório.
 /build/
+
+# Art pipeline (Blender MCP): rendered animation frames are intermediate (re-rendered by the
+# *_animation_previews.py scripts, ~2 GB) and Blender's .blend1 backups are noise. The animated GIF
+# previews duplicate the versioned MP4s at ~15x the size, so only the MP4s are tracked.
+art_source/
+*.blend1
+assets/generated/**/previews/animations/*.gif

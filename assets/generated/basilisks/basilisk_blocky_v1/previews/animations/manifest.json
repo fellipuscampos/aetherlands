@@ -1,0 +1,23 @@
+{
+  "Basilisk_Idle": {
+    "frames": 48,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Basilisk_Idle.mp4",
+    "gif": "Basilisk_Idle.gif"
+  },
+  "Basilisk_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "loop": true,
+    "mp4": "Basilisk_Walk.mp4",
+    "gif": "Basilisk_Walk.gif"
+  },
+  "Basilisk_Attack": {
+    "frames": 33,
+    "fps": 24,
+    "loop": false,
+    "mp4": "Basilisk_Attack.mp4",
+    "gif": "Basilisk_Attack.gif"
+  }
+}

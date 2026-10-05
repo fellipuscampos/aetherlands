@@ -1,0 +1,181 @@
+{
+  "name": "Giant_Spider_V1",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/spider_*.py)",
+  "height_m": 1.1675390489399433,
+  "length_m": 2.927504539489746,
+  "width_m": 3.1634247303009033,
+  "triangles": 396,
+  "editable_parts": 33,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "filter": "NEAREST",
+    "unique_uv_islands": 198,
+    "density_px_per_meter": 64,
+    "measured_min": 63.999313277778754,
+    "measured_max": 64.0003539785625,
+    "padding": 2
+  },
+  "rig": true,
+  "animations": [],
+  "front": "-Y in Blender / +Z in glTF",
+  "rig_bone_map": {
+    "Cephalothorax": "cephalothorax",
+    "Waist": "abdomen",
+    "Abdomen": "abdomen",
+    "AbdomenRear": "abdomen",
+    "Spinnerets": "abdomen",
+    "EyeBig_l": "cephalothorax",
+    "EyeSide_l": "cephalothorax",
+    "EyeTop_l": "cephalothorax",
+    "Chelicera_l": "chelicera_l",
+    "Fang_l": "chelicera_l",
+    "Palp_l": "palp_l",
+    "Leg1_Femur_l": "leg1_femur_l",
+    "Leg1_Tibia_l": "leg1_tibia_l",
+    "Leg2_Femur_l": "leg2_femur_l",
+    "Leg2_Tibia_l": "leg2_tibia_l",
+    "Leg3_Femur_l": "leg3_femur_l",
+    "Leg3_Tibia_l": "leg3_tibia_l",
+    "Leg4_Femur_l": "leg4_femur_l",
+    "Leg4_Tibia_l": "leg4_tibia_l",
+    "EyeBig_r": "cephalothorax",
+    "EyeSide_r": "cephalothorax",
+    "EyeTop_r": "cephalothorax",
+    "Chelicera_r": "chelicera_r",
+    "Fang_r": "chelicera_r",
+    "Palp_r": "palp_r",
+    "Leg1_Femur_r": "leg1_femur_r",
+    "Leg1_Tibia_r": "leg1_tibia_r",
+    "Leg2_Femur_r": "leg2_femur_r",
+    "Leg2_Tibia_r": "leg2_tibia_r",
+    "Leg3_Femur_r": "leg3_femur_r",
+    "Leg3_Tibia_r": "leg3_tibia_r",
+    "Leg4_Femur_r": "leg4_femur_r",
+    "Leg4_Tibia_r": "leg4_tibia_r"
+  },
+  "notes": "Giant spider; 8 two-segment legs. Same metric texel density as the approved models.",
+  "bone_count": 23,
+  "bones": [
+    "root",
+    "cephalothorax",
+    "abdomen",
+    "chelicera_l",
+    "palp_l",
+    "leg1_femur_l",
+    "leg1_tibia_l",
+    "leg2_femur_l",
+    "leg2_tibia_l",
+    "leg3_femur_l",
+    "leg3_tibia_l",
+    "leg4_femur_l",
+    "leg4_tibia_l",
+    "chelicera_r",
+    "palp_r",
+    "leg1_femur_r",
+    "leg1_tibia_r",
+    "leg2_femur_r",
+    "leg2_tibia_r",
+    "leg3_femur_r",
+    "leg3_tibia_r",
+    "leg4_femur_r",
+    "leg4_tibia_r"
+  ],
+  "skinning": "Rigid block skinning: every part follows one bone; two bones per leg (femur, tibia); chelicerae (with fangs) and palps have their own bones",
+  "pose_test": {
+    "image": "previews/pose_test.png",
+    "new_surface_crossings": 0,
+    "rest_contacts_excluded": [
+      [
+        "Leg1_Femur_l",
+        "Cephalothorax"
+      ],
+      [
+        "Leg1_Femur_l",
+        "Leg2_Femur_l"
+      ],
+      [
+        "Leg1_Femur_r",
+        "Cephalothorax"
+      ],
+      [
+        "Leg1_Femur_r",
+        "Leg2_Femur_r"
+      ],
+      [
+        "Leg2_Femur_l",
+        "Cephalothorax"
+      ],
+      [
+        "Leg2_Femur_l",
+        "Leg3_Femur_l"
+      ],
+      [
+        "Leg2_Femur_r",
+        "Cephalothorax"
+      ],
+      [
+        "Leg2_Femur_r",
+        "Leg3_Femur_r"
+      ],
+      [
+        "Leg3_Femur_l",
+        "Cephalothorax"
+      ],
+      [
+        "Leg3_Femur_l",
+        "Leg4_Femur_l"
+      ],
+      [
+        "Leg3_Femur_r",
+        "Cephalothorax"
+      ],
+      [
+        "Leg3_Femur_r",
+        "Leg4_Femur_r"
+      ],
+      [
+        "Leg4_Femur_l",
+        "Cephalothorax"
+      ],
+      [
+        "Leg4_Femur_r",
+        "Cephalothorax"
+      ]
+    ],
+    "pose": "front legs raised to strike, other legs stepping, abdomen tilted and swung, chelicerae spread, palps reaching"
+  },
+  "glb": {
+    "file": "giant_spider_v1.glb",
+    "meshes": [
+      "Model"
+    ],
+    "triangles": 396,
+    "check": {
+      "armatures": 1,
+      "bones": 23,
+      "skinned_meshes": [
+        "Giant_Spider_V1_Model"
+      ],
+      "height_m": 1.1675376421771944,
+      "min_z": 0.0015231841243803501,
+      "texture_matches_atlas": true
+    }
+  },
+  "source_validation": {
+    "scenes": [
+      "Giant_Spider_V1"
+    ],
+    "armatures": [
+      "Giant_Spider_V1_Skeleton"
+    ],
+    "actions": [],
+    "packed_texture": true
+  },
+  "status": "Complete: rigged Giant Spider (rest pose, no clips yet), pose-tested, GLB exported"
+}

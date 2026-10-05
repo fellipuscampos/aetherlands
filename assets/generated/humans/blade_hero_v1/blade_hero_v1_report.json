@@ -1,0 +1,219 @@
+{
+  "name": "BladeHero_V1",
+  "kind": "v2_legendary_blade_hero (Her\u00f3i da L\u00e2mina)",
+  "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/blade_hero_*.py)",
+  "height_m": 2.5070884227752686,
+  "front_y_m": -0.7901083827018738,
+  "back_y_m": 0.21169917285442352,
+  "x_m": [
+    -0.45878735184669495,
+    0.42339834570884705
+  ],
+  "triangles": 396,
+  "editable_parts": 33,
+  "nonmanifold_edges": 0,
+  "shade": "Flat",
+  "materials": 1,
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "filter": "NEAREST",
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 1.6,
+    "unique_uv_islands": 198,
+    "density_px_per_meter": 64,
+    "measured_min": 63.9997838519399,
+    "measured_max": 64.00048105597061,
+    "padding": 2
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "head",
+      "upper_arm_l",
+      "forearm_l",
+      "hand_l",
+      "thigh_l",
+      "shin_l",
+      "foot_l",
+      "upper_arm_r",
+      "forearm_r",
+      "hand_r",
+      "thigh_r",
+      "shin_r",
+      "foot_r"
+    ],
+    "hierarchy": "flat: every bone is a child of root; legs baked from two-bone IK",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "Belly": "chest",
+      "Buckle": "hips",
+      "Cape": "chest",
+      "Chest": "chest",
+      "Circlet": "head",
+      "Foot_l": "foot_l",
+      "Foot_r": "foot_r",
+      "Forearm_l": "forearm_l",
+      "Forearm_r": "forearm_r",
+      "Hair": "head",
+      "Hand_l": "hand_l",
+      "Hand_r": "hand_r",
+      "Head": "head",
+      "Pelvis": "hips",
+      "Ponytail": "head",
+      "Scabbard": "hips",
+      "Shin_l": "shin_l",
+      "Shin_r": "shin_r",
+      "Shoulder_l": "chest",
+      "Shoulder_r": "chest",
+      "SwordBlade": "hand_r",
+      "SwordGem": "hand_r",
+      "SwordGrip": "hand_r",
+      "SwordGuard": "hand_r",
+      "SwordPommel": "hand_r",
+      "SwordRicasso": "hand_r",
+      "SwordTip": "hand_r",
+      "SwordWing_b": "hand_r",
+      "SwordWing_f": "hand_r",
+      "Thigh_l": "thigh_l",
+      "Thigh_r": "thigh_r",
+      "UpperArm_l": "upper_arm_l",
+      "UpperArm_r": "upper_arm_r"
+    }
+  },
+  "animations": {
+    "BladeHero_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Ready to fight: weight shift leg to leg, hatchet bobbing, left fist in guard, head watching, breathing.",
+      "seconds": 3
+    },
+    "BladeHero_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 91,
+      "description": "Light step in place: arms counter-swinging with the legs, hip bob, small trunk counter-twist.",
+      "speed_m_s": 0.34285714285714286,
+      "seconds": 1.1666666666666667
+    },
+    "BladeHero_Attack": {
+      "start": 1,
+      "end": 33,
+      "loop": false,
+      "nla_start": 141,
+      "description": "Overhead hatchet chop: raises the hatchet behind the head twisting the trunk, steps in with the left foot and chops down forward (impact 15), recovers.",
+      "impact_frame": 15,
+      "seconds": 1.3333333333333333
+    },
+    "BladeHero_PowerStrike": {
+      "start": 1,
+      "end": 49,
+      "loop": false,
+      "nla_start": 181,
+      "description": "Golpe Poderoso: coils with the weapon loaded behind the back and the left arm pointing at the target, leaps into a full overhead arc and smashes it down low in front (impact 26, held), recovers. One-handed: shared by the line skins.",
+      "impact_frame": 26,
+      "seconds": 2
+    },
+    "BladeHero_ArcAttack": {
+      "start": 1,
+      "end": 41,
+      "loop": false,
+      "nla_start": 241,
+      "description": "Ataque em Arco: coils right with the sword level pointing back, turns the body and sweeps the blade ~250 deg flat around, right to left (front at 19), holds the follow-through, recovers. Shared by the line evolutions.",
+      "impact_frame": 19,
+      "seconds": 1.6666666666666667
+    }
+  },
+  "front": "-Y in Blender / +Z in glTF",
+  "origin": "between the feet, on the ground",
+  "rig_bone_map": {
+    "Belly": "chest",
+    "Buckle": "hips",
+    "Cape": "chest",
+    "Chest": "chest",
+    "Circlet": "head",
+    "Foot_l": "foot_l",
+    "Foot_r": "foot_r",
+    "Forearm_l": "forearm_l",
+    "Forearm_r": "forearm_r",
+    "Hair": "head",
+    "Hand_l": "hand_l",
+    "Hand_r": "hand_r",
+    "Head": "head",
+    "Pelvis": "hips",
+    "Ponytail": "head",
+    "Scabbard": "hips",
+    "Shin_l": "shin_l",
+    "Shin_r": "shin_r",
+    "Shoulder_l": "chest",
+    "Shoulder_r": "chest",
+    "SwordBlade": "hand_r",
+    "SwordGem": "hand_r",
+    "SwordGrip": "hand_r",
+    "SwordGuard": "hand_r",
+    "SwordPommel": "hand_r",
+    "SwordRicasso": "hand_r",
+    "SwordTip": "hand_r",
+    "SwordWing_b": "hand_r",
+    "SwordWing_f": "hand_r",
+    "Thigh_l": "thigh_l",
+    "Thigh_r": "thigh_r",
+    "UpperArm_l": "upper_arm_l",
+    "UpperArm_r": "upper_arm_r"
+  },
+  "notes": "Static BladeHero V1 (Her\u00f3i da L\u00e2mina, legendary), Weapon Master copy, 2.00 m body (sword rises above), one block per body part. Sword follows hand_r; scabbard follows hips; hair, circlet and ponytail follow head; cape follows chest.",
+  "animation_validation": {
+    "problems": [],
+    "ik": {},
+    "min_z": {
+      "BladeHero_Idle": 0.0,
+      "BladeHero_Walk": 0.0,
+      "BladeHero_Attack": 0.0,
+      "BladeHero_PowerStrike": 0.0,
+      "BladeHero_ArcAttack": 0.0
+    }
+  },
+  "glb": {
+    "file": "blade_hero_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 16,
+    "triangles": 396,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "BladeHero_Idle": 3,
+      "BladeHero_Walk": 1.1666666666666667,
+      "BladeHero_Attack": 1.3333333333333333,
+      "BladeHero_PowerStrike": 2,
+      "BladeHero_ArcAttack": 1.6666666666666667
+    },
+    "channels": "location, rotation on every bone"
+  },
+  "status": "BladeHero V1 with BladeHero_Idle, BladeHero_Walk, BladeHero_Attack, BladeHero_PowerStrike, BladeHero_ArcAttack; GLB and packed atlases validated",
+  "source_validation": {
+    "scenes": [
+      "BladeHero_V1"
+    ],
+    "actions": [
+      "BladeHero_Walk",
+      "BladeHero_PowerStrike",
+      "BladeHero_Idle",
+      "BladeHero_Attack",
+      "BladeHero_ArcAttack"
+    ],
+    "armatures": [
+      "BladeHero_V1_Skeleton"
+    ]
+  }
+}

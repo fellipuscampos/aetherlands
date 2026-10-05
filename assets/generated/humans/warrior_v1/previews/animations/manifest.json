@@ -1,0 +1,26 @@
+{
+  "Warrior_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "Warrior_Idle.mp4",
+    "gif": "Warrior_Idle.gif"
+  },
+  "Warrior_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "Warrior_Walk.mp4",
+    "gif": "Warrior_Walk.gif"
+  },
+  "Warrior_Attack": {
+    "frames": 33,
+    "fps": 24,
+    "mp4": "Warrior_Attack.mp4",
+    "gif": "Warrior_Attack.gif"
+  },
+  "Warrior_PowerStrike": {
+    "frames": 49,
+    "fps": 24,
+    "mp4": "Warrior_PowerStrike.mp4",
+    "gif": "Warrior_PowerStrike.gif"
+  }
+}

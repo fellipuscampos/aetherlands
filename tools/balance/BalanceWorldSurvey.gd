@@ -70,6 +70,7 @@ static func survey_match(host: Node, config: Dictionary) -> Dictionary:
 		"regional": regional,
 		"guardians": guardians,
 		"ecology": ecology,
+		"world": survey_world_profile(grid),
 	}
 	await BalanceMatchRunner.teardown_match(host, grid)
 	return result
@@ -207,7 +208,73 @@ static func survey_ecology(grid: HexGrid, capitals: Array) -> Dictionary:
 		"min_advanced_capital_distance": min_advanced,
 		"seats": seats,
 		"distribution": _ecology_distribution(grid, units),
+		"habitat": survey_habitat(grid, anchors),
 	}
+
+## V3 / Etapa 4 — habitat por espécie neste mundo: sítios, score médio, fallback do setup, terreno da âncora, fração
+## dos sítios na região do sinal preferido da espécie (sinal >= PREFERRED_MIN) contra a mesma fração na terra elegível
+## (lift > 1 = agrupamento ecológico), distância ao sítio mais próximo da mesma espécie, maior fatia num quadrante e
+## distância à capital mais próxima.
+const PREFERRED_MIN := 0.5
+
+static func preferred_signal(kind: String) -> String:
+	var best := ""
+	var best_weight := 0.0
+	for key in MonsterHabitatProfile.profile_for(kind):
+		var weight := float(MonsterHabitatProfile.profile_for(kind)[key])
+		if key != "remote" and weight > best_weight:
+			best_weight = weight
+			best = key
+	return best
+
+static func survey_habitat(grid: HexGrid, anchors: Array[Vector2i]) -> Dictionary:
+	var cache := MonsterEcologySystem.habitat_cache(grid)
+	var land := MonsterEcologySystem.eligible(grid)
+	var land_share := {}
+	for kind in MonsterEcologyData.SPECIES_ORDER:
+		var signal_key := preferred_signal(kind)
+		if land_share.has(signal_key):
+			continue
+		var hits := 0
+		for coord in land:
+			if float(MonsterEcologyPlanner.habitat_features(grid, coord, cache).get(signal_key, 0.0)) >= PREFERRED_MIN:
+				hits += 1
+		land_share[signal_key] = float(hits) / float(maxi(land.size(), 1))
+	var mid := Vector2.ZERO
+	for coord in land:
+		mid += RegionalThreatPlanner.cartesian(coord)
+	mid /= float(maxi(land.size(), 1))
+	var by_species := {}
+	var initial_habitat: Dictionary = MonsterEcologySystem.initial_stats.get("habitat", {})
+	for kind in MonsterEcologyData.SPECIES_ORDER:
+		var anchors_of: Array[Vector2i] = []
+		for site in MonsterEcologySystem.sites:
+			if String(site.species) == kind:
+				anchors_of.append(site.anchor)
+		var signal_key := preferred_signal(kind)
+		var entry := {"sites": anchors_of.size(), "score_sum": 0.0, "preferred_hits": 0, "terrain": {}, "nearest_same": [], "capital_distance": [], "quadrants": {"wn": 0, "en": 0, "ws": 0, "es": 0},
+			"fallback": int(initial_habitat.get(kind, {}).get("fallback", 0)), "signal": signal_key, "land_share": snappedf(float(land_share.get(signal_key, 0.0)), 0.001)}
+		for anchor in anchors_of:
+			var feats := MonsterEcologyPlanner.habitat_features(grid, anchor, cache)
+			entry.score_sum += MonsterHabitatProfile.score(kind, feats, MonsterHabitatProfile.remote_value(anchor, anchors)) # score real, mesmo no A/B
+			if float(feats.get(signal_key, 0.0)) >= PREFERRED_MIN:
+				entry.preferred_hits += 1
+			var terrain := String(grid.tiles[anchor].display_name)
+			entry.terrain[terrain] = int(entry.terrain.get(terrain, 0)) + 1
+			var nearest := 999999
+			for other in anchors_of:
+				if other != anchor:
+					nearest = mini(nearest, HexMetrics.axial_distance(anchor, other))
+			if nearest < 999999:
+				entry.nearest_same.append(nearest)
+			var capital := 999999
+			for a in anchors:
+				capital = mini(capital, HexMetrics.axial_distance(a, anchor))
+			entry.capital_distance.append(capital)
+			var point := RegionalThreatPlanner.cartesian(anchor)
+			entry.quadrants["%s%s" % ["w" if point.x < mid.x else "e", "n" if point.y < mid.y else "s"]] += 1
+		by_species[kind] = entry
+	return by_species
 
 static func _ecology_distribution(grid: HexGrid, units: Array[Unit]) -> Dictionary:
 	var land := MonsterEcologySystem.eligible(grid)
@@ -320,7 +387,61 @@ static func summarize_ecology(surveys: Array) -> Dictionary:
 		"capital_violations": violations, "invalid_spawns": invalid, "resource_tile_units": resource_units,
 		"max_half_share": max_half, "min_advanced_capital_distance": min_advanced,
 		"nearest_hostile_to_capital": _stats(nearest_hostile), "nearest_ecology_to_capital": _stats(nearest_ecology),
+		"habitat": summarize_habitat(surveys),
 	}
+
+## Etapa 4 — agregado de habitat dos N mundos, por espécie (ver survey_habitat).
+static func summarize_habitat(surveys: Array) -> Dictionary:
+	var result := {}
+	for kind in MonsterEcologyData.SPECIES_ORDER:
+		var sites := 0
+		var score_sum := 0.0
+		var hits := 0
+		var land_share_sum := 0.0
+		var fallback := 0
+		var worlds_with := 0
+		var worlds := 0
+		var terrain := {}
+		var nearest: Array = []
+		var capital: Array = []
+		var max_quadrant: Array = []
+		for survey in surveys:
+			var entry: Dictionary = survey.get("ecology", {}).get("habitat", {}).get(kind, {})
+			if entry.is_empty():
+				continue
+			worlds += 1
+			sites += int(entry.sites)
+			score_sum += float(entry.score_sum)
+			hits += int(entry.preferred_hits)
+			land_share_sum += float(entry.land_share)
+			fallback += int(entry.fallback)
+			worlds_with += 1 if int(entry.sites) > 0 else 0
+			for name in entry.terrain:
+				terrain[name] = int(terrain.get(name, 0)) + int(entry.terrain[name])
+			nearest.append_array(entry.nearest_same)
+			capital.append_array(entry.capital_distance)
+			if int(entry.sites) >= 3:
+				var top := 0
+				for key in entry.quadrants:
+					top = maxi(top, int(entry.quadrants[key]))
+				max_quadrant.append(snappedf(float(top) / float(entry.sites), 0.01))
+		var names := terrain.keys()
+		names.sort_custom(func(a, b): return int(terrain[a]) > int(terrain[b]))
+		var top_terrain := {}
+		for name in names.slice(0, 3):
+			top_terrain[name] = snappedf(float(terrain[name]) / float(maxi(sites, 1)), 0.01)
+		var preferred_share := float(hits) / float(maxi(sites, 1))
+		var land_share := land_share_sum / float(maxi(worlds, 1))
+		result[kind] = {
+			"sites": sites, "worlds_with_species": worlds_with, "worlds": worlds,
+			"score_mean": snappedf(score_sum / float(maxi(sites, 1)), 0.001),
+			"signal": preferred_signal(kind), "preferred_share": snappedf(preferred_share, 0.001), "land_share": snappedf(land_share, 0.001),
+			"lift": snappedf(preferred_share / land_share, 0.01) if land_share > 0.0 else 0.0,
+			"fallback": fallback, "fallback_share": snappedf(float(fallback) / float(maxi(sites, 1)), 0.001),
+			"top_terrain": top_terrain, "nearest_same": _stats(nearest), "capital_distance": _stats(capital),
+			"max_quadrant_share": _stats(max_quadrant),
+		}
+	return result
 
 static func _stats(values: Array) -> Dictionary:
 	if values.is_empty():
@@ -331,3 +452,30 @@ static func _stats(values: Array) -> Dictionary:
 	for value in sorted:
 		total += float(value)
 	return {"n": sorted.size(), "min": sorted[0], "mean": snappedf(total / sorted.size(), 0.01), "median": sorted[sorted.size() / 2], "max": sorted.back()}
+
+
+## V3 / Etapa 3 — perfil de mundo: tiles de bioma dos continentes especiais e terra fora da zona principal (gate do
+## padrão 1.0: 0 e 0).
+const SPECIAL_TERRAINS := [
+	HexTileData.TerrainType.LAVA, HexTileData.TerrainType.LAVA_SEA, HexTileData.TerrainType.CRYSTAL,
+	HexTileData.TerrainType.VOLCANIC_ROCK, HexTileData.TerrainType.VOLCANIC_HILLS, HexTileData.TerrainType.VOLCANIC_PEAKS,
+	HexTileData.TerrainType.VOLCANIC_ASH, HexTileData.TerrainType.CRYSTAL_PEAKS, HexTileData.TerrainType.MYSTIC_SOIL,
+	HexTileData.TerrainType.MYSTIC_SPRING,
+]
+
+static func survey_world_profile(grid: HexGrid) -> Dictionary:
+	var special := 0
+	var land_outside_main := 0
+	var zones := {"volcanic": 0, "crystal": 0}
+	for coord in grid.tiles:
+		var tile: HexTileData = grid.tiles[coord]
+		if tile.terrain_type in SPECIAL_TERRAINS:
+			special += 1
+		var zone := grid._zone_for(coord)
+		if zone == HexGrid._Zone.VOLCANIC:
+			zones.volcanic += 1
+		elif zone == HexGrid._Zone.CRYSTAL:
+			zones.crystal += 1
+		if not tile.is_water() and zone != HexGrid._Zone.MAIN:
+			land_outside_main += 1
+	return {"profile": String(grid.world_profile.get("id", "")), "width": grid.map_width, "height": grid.map_height, "tiles": grid.tiles.size(), "special_terrain_tiles": special, "volcanic_zone_tiles": zones.volcanic, "crystal_zone_tiles": zones.crystal, "land_outside_main": land_outside_main}

@@ -2,14 +2,14 @@ class_name MonsterPlaceholderVisuals
 extends RefCounted
 
 ## V3 / Combat Ecology — Etapa 1: silhuetas PROVISÓRIAS das espécies novas do bestiário (Worg, Aranha
-## Gigante, Minotauro, Basilisco, Verme Colossal, Ancião Arbóreo, Devorador de Mana, Colmeia Micótica).
+## Gigante, Minotauro, Basilisco, Verme Colossal, Ancião Arbóreo, Devorador de Mana, Herói Corrompido).
 ## Só primitivas (Box/Cylinder/Capsule/Sphere) + materiais simples, com escala crescente por tier
 ## (BASIC pequeno, INTERMEDIATE médio, ADVANCED grande) para cada espécie ser reconhecível à distância.
 ## Não é arte final: o Presentation Pass substitui isto por modelos de verdade. A ausência de modelo
 ## nunca bloqueia spawn/movimento/combate/save — Unit._build_procedural_body chama isto só no ramo
 ## padrão e cai na cápsula genérica se a espécie não estiver aqui.
 
-const KINDS: Array[String] = ["worg", "giant_spider", "minotaur", "basilisk", "colossal_worm", "arboreal_ancient", "mana_devourer", "mycotic_hive"]
+const KINDS: Array[String] = ["worg", "giant_spider", "minotaur", "basilisk", "colossal_worm", "arboreal_ancient", "mana_devourer", "corrupted_hero"]
 
 ## Constrói a silhueta de `kind` sob `root` (a própria Unit) usando `mat` (cor do corpo). false = sem
 ## placeholder para esse kind (o chamador segue com o fallback).
@@ -29,8 +29,8 @@ static func build(kind: String, root: Node3D, mat: StandardMaterial3D) -> bool:
 			_arboreal_ancient(root, mat)
 		"mana_devourer":
 			_mana_devourer(root, mat)
-		"mycotic_hive":
-			_mycotic_hive(root, mat)
+		"corrupted_hero":
+			_corrupted_hero(root, mat)
 		_:
 			return false
 	return true
@@ -147,6 +147,11 @@ static func _colossal_worm(root: Node3D, mat: StandardMaterial3D) -> void:
 	for i in 6:
 		var angle := TAU * float(i) / 6.0
 		_add(root, _cylinder(0.0, 0.03, 0.1), tooth, Vector3(cos(angle) * 0.16, 1.1 + sin(angle) * 0.05, 0.56 + sin(angle) * 0.14), Vector3(70, 0, 0))
+	# V3 / Etapa 3: corpo VISUAL longo — dorsos semienterrados atrás da cabeça, passando um pouco do hex (lê como
+	# criatura colossal). Lógica continua 1 hex: os dorsos não bloqueiam nem ocupam o tile vizinho.
+	var humps := [Vector3(0.05, 0.06, -0.78), Vector3(-0.06, 0.04, -1.04), Vector3(0.04, 0.02, -1.26)]
+	for i in humps.size():
+		_add(root, _sphere(0.24 - float(i) * 0.04, 0.3 - float(i) * 0.05), mat, humps[i])
 
 ## ADVANCED — tronco alto com copa larga e dois galhos-braços.
 static func _arboreal_ancient(root: Node3D, mat: StandardMaterial3D) -> void:
@@ -175,14 +180,8 @@ static func _mana_devourer(root: Node3D, mat: StandardMaterial3D) -> void:
 		var angle := TAU * float(i) / 3.0
 		_add(root, tendril, shell, Vector3(cos(angle) * 0.2, 0.36, sin(angle) * 0.2))
 
-## ADVANCED — cúpula larga e baixa coberta de cogumelos com pintas rosadas brilhantes.
-static func _mycotic_hive(root: Node3D, mat: StandardMaterial3D) -> void:
-	_add(root, _sphere(0.62, 0.7), mat, Vector3(0, 0.12, 0))
-	var stem := _material(Color(0.9, 0.85, 0.75))
-	var cap := _material(Color(0.8, 0.3, 0.5), 0.8)
-	var mushrooms := [Vector3(0.0, 0.46, 0.0), Vector3(-0.3, 0.34, 0.18), Vector3(0.28, 0.32, -0.2), Vector3(0.18, 0.3, 0.32)]
-	for i in mushrooms.size():
-		var base: Vector3 = mushrooms[i]
-		var scale := 1.0 - float(i) * 0.15
-		_add(root, _cylinder(0.05, 0.06, 0.3), stem, base + Vector3(0, 0.15 * scale, 0), Vector3.ZERO, Vector3.ONE * scale)
-		_add(root, _sphere(0.2, 0.16), cap, base + Vector3(0, 0.32 * scale, 0), Vector3.ZERO, Vector3.ONE * scale)
+## ADVANCED — cavaleiro alto e curvado (só se o GLB do Herói faltar): tronco, cabeça e escudo.
+static func _corrupted_hero(root: Node3D, mat: StandardMaterial3D) -> void:
+	_add(root, _cylinder(0.22, 0.26, 1.1), mat, Vector3(0, 0.75, 0))
+	_add(root, _sphere(0.2), _material(Color(0.6, 0.6, 0.62)), Vector3(0, 1.45, -0.05))
+	_add(root, _cylinder(0.25, 0.25, 0.05), _material(Color(0.5, 0.52, 0.56)), Vector3(0.35, 0.8, -0.2), Vector3(90, 0, 0))

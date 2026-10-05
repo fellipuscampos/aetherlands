@@ -1,0 +1,32 @@
+{
+  "WeaponMaster_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "WeaponMaster_Idle.mp4",
+    "gif": "WeaponMaster_Idle.gif"
+  },
+  "WeaponMaster_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "WeaponMaster_Walk.mp4",
+    "gif": "WeaponMaster_Walk.gif"
+  },
+  "WeaponMaster_Attack": {
+    "frames": 33,
+    "fps": 24,
+    "mp4": "WeaponMaster_Attack.mp4",
+    "gif": "WeaponMaster_Attack.gif"
+  },
+  "WeaponMaster_PowerStrike": {
+    "frames": 49,
+    "fps": 24,
+    "mp4": "WeaponMaster_PowerStrike.mp4",
+    "gif": "WeaponMaster_PowerStrike.gif"
+  },
+  "WeaponMaster_ArcAttack": {
+    "frames": 41,
+    "fps": 24,
+    "mp4": "WeaponMaster_ArcAttack.mp4",
+    "gif": "WeaponMaster_ArcAttack.gif"
+  }
+}

@@ -24,6 +24,7 @@ var command_buttons: Array[AECommandButton] = []
 var ability_buttons: Array[AEAbilityButton] = []
 var passive_chips: Array[AEStatusChip] = []
 var status_chips: Array[AEStatusChip] = []
+const MAX_STATUS_CHIPS := 6
 var render_count := 0
 ## Assinatura da última visão desenhada: sinais repetidos (névoa, turno, mira de
 ## outra unidade) que não mudam nada visível não remontam o painel.
@@ -227,10 +228,21 @@ func _statuses() -> Control:
 	box.name = "Statuses"
 	var flow := ContextUI.flow()
 	box.add_child(flow)
-	for status in view.statuses:
+	# V3 / Etapa 4: chips quebram linha (flow); acima de MAX_STATUS_CHIPS os demais viram um chip "+N" cujo tooltip
+	# lista os ocultos — o card nunca explode em resolução pequena.
+	var shown: Array = view.statuses if view.statuses.size() <= MAX_STATUS_CHIPS else view.statuses.slice(0, MAX_STATUS_CHIPS - 1)
+	for status in shown:
 		var chip := ContextUI.chip(status.title, status.tone, int(status.turns), status.tooltip)
 		flow.add_child(chip)
 		status_chips.append(chip)
+	if shown.size() < view.statuses.size():
+		var hidden: Array = view.statuses.slice(shown.size())
+		var names: Array[String] = []
+		for status in hidden:
+			names.append("%s%s" % [status.title, (" · %dt" % int(status.turns)) if int(status.turns) >= 0 else ""])
+		var more := ContextUI.chip("+%d" % hidden.size(), AEStatusChip.Tone.NEUTRAL, -1, AETooltip.compose("Outros efeitos", "", names))
+		more.name = "MoreStatuses"
+		flow.add_child(more)
 	return box
 
 func _footer() -> Control:

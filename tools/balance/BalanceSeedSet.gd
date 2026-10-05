@@ -13,8 +13,9 @@ const BASELINE_ID := "RELEASE_BALANCE_BASELINE_PRE_TUNING"
 const SEED_SET_VERSION := "phase33b-v2"
 
 ## Mapa real da partida normal (TitleScreen.MAP_SIZES.large) e 3 rivais — o setup máximo do jogo.
-const MAP_WIDTH := 320
-const MAP_HEIGHT := 84
+## V3 / Etapa 3: o padrão 1.0 (WorldProfile.STANDARD_1_0, só o continente principal; antes 320x84).
+const MAP_WIDTH := 144
+const MAP_HEIGHT := 76
 const RIVAL_COUNT := 3
 
 const TURN_CAP := 240

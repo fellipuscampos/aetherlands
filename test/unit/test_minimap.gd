@@ -55,10 +55,9 @@ func _land_coords(grid: HexGrid) -> Array:
 	return coords
 
 func _terrain_alpha_at(minimap: Control, grid: HexGrid, coord: Vector2i) -> float:
-	var extents: Vector2 = grid.get_world_half_extents()
-	var px: Vector2 = minimap._project(coord, grid.hex_size, extents.x, extents.y, minimap._content_rect())
-	# canto superior esquerdo do bloco 2x2 pintado por _paint_tiles
-	return minimap._terrain_image.get_pixelv(Vector2i(roundi(px.x - 1.2), roundi(px.y - 1.2))).a
+	var px: Vector2 = minimap._project(coord, grid.hex_size)
+	# pixel que contém o centro do hex (Etapa 4: raster hexagonal — pertence sempre a este tile)
+	return minimap._terrain_image.get_pixelv(Vector2i(floori(px.x), floori(px.y))).a
 
 func test_fog_update_paints_only_the_changed_tiles_into_the_terrain_image():
 	var original_grid: HexGrid = GameManager.hex_grid
@@ -126,7 +125,8 @@ func test_terrain_image_restarts_when_the_grid_restarts():
 	GameManager.hex_grid = original_grid
 	grid.queue_free()
 
-func test_adaptive_frame_starts_local_and_waits_two_turns_for_a_distant_scout():
+## V3 / Etapa 4: o enquadramento é FIXO (mundo jogável inteiro) — unidade distante, turnos e névoa nunca o mudam.
+func test_fixed_frame_covers_all_land_and_never_follows_units_or_turns():
 	var original_grid: HexGrid = GameManager.hex_grid
 	var original_human: PlayerData = GameManager.human_player
 	var grid := HexGrid.new()
@@ -136,51 +136,49 @@ func test_adaptive_frame_starts_local_and_waits_two_turns_for_a_distant_scout():
 	GameManager.hex_grid = grid
 	GameManager.human_player = player
 	var land := _land_coords(grid)
-	var start: Vector2i = land[0]
-	var far: Vector2i = land[land.size() - 1]
-	assert_not_null(grid.spawn_unit(start, UnitDatabase.create_unit("warrior"), player))
+	assert_not_null(grid.spawn_unit(land[0], UnitDatabase.create_unit("warrior"), player))
 	var minimap: Control = hud.minimap
 	minimap.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	minimap.size = Vector2(300, 120)
-	minimap._reset_adaptive_frame()
-	var local_frame: Rect2 = minimap.world_frame()
-	var world_extents := grid.get_world_half_extents()
-	assert_lt(local_frame.size.x, world_extents.x * 2.0)
-	assert_lt(local_frame.size.y, world_extents.y * 2.0)
-	var far_unit := grid.spawn_unit(far, UnitDatabase.create_unit("warrior"), player)
+	minimap._on_restart()
+	var bounds: Rect2 = minimap.world_bounds()
+	var rect: Rect2 = minimap.map_rect()
+	var layouts: int = minimap.layout_rebuilds
+	for coord in grid.tiles:
+		if not grid.tiles[coord].is_water():
+			var world := HexMetrics.axial_to_world(coord.x, coord.y, grid.hex_size)
+			assert_true(bounds.has_point(Vector2(world.x, world.z)), "toda a terra cabe no enquadramento")
+	var far_unit := grid.spawn_unit(land[land.size() - 1], UnitDatabase.create_unit("warrior"), player)
 	assert_not_null(far_unit)
-	var far_world3 := HexMetrics.axial_to_world(far.x, far.y, grid.hex_size)
-	var far_world := Vector2(far_world3.x, far_world3.z)
-	minimap._update_adaptive_frame(grid, false, true)
-	assert_false(minimap.world_frame().has_point(far_world), "um pico de um turno não faz o enquadramento saltar")
-	minimap._update_adaptive_frame(grid, false, true)
-	assert_true(minimap.world_frame().has_point(far_world), "exploração distante persistente expande o enquadramento")
+	grid.recompute_fog(player)
+	grid.recompute_fog(player)
+	assert_eq(minimap.world_bounds(), bounds, "limites fixos")
+	assert_eq(minimap.map_rect(), rect, "transformação fixa")
+	assert_eq(minimap.layout_rebuilds, layouts, "nenhum recálculo de enquadramento")
 	GameManager.human_player = original_human
 	GameManager.hex_grid = original_grid
 	grid.queue_free()
 
-func test_minimap_click_uses_the_current_adaptive_frame():
+func test_minimap_click_maps_through_the_fixed_transform():
 	var original_grid: HexGrid = GameManager.hex_grid
-	var original_human: PlayerData = GameManager.human_player
 	var grid := HexGrid.new()
 	grid._ready()
 	grid.generate_map(41, 41, 778)
-	var player := PlayerData.new(CivilizationData.new())
 	GameManager.hex_grid = grid
-	GameManager.human_player = player
-	assert_not_null(grid.spawn_unit(_land_coords(grid)[0], UnitDatabase.create_unit("warrior"), player))
 	var minimap: Control = hud.minimap
 	minimap.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	minimap.size = Vector2(300, 120)
-	minimap._reset_adaptive_frame()
+	minimap._on_restart()
 	var received: Array[Vector3] = []
 	var callback := func(world: Vector3): received.append(world)
 	EventBus.minimap_clicked.connect(callback)
-	minimap._pan_to(minimap._content_rect().get_center())
+	minimap._pan_to(minimap.map_rect().get_center())
+	minimap._pan_to(Vector2(-50, -50)) # fora do mapa: limitado à borda, nunca fora do mundo
 	EventBus.minimap_clicked.disconnect(callback)
-	assert_eq(received.size(), 1)
-	assert_almost_eq(received[0].x, minimap.world_frame().get_center().x, 0.01)
-	assert_almost_eq(received[0].z, minimap.world_frame().get_center().y, 0.01)
-	GameManager.human_player = original_human
+	assert_eq(received.size(), 2)
+	assert_almost_eq(received[0].x, minimap.world_bounds().get_center().x, 0.05)
+	assert_almost_eq(received[0].z, minimap.world_bounds().get_center().y, 0.05)
+	assert_almost_eq(received[1].x, minimap.world_bounds().position.x, 0.05)
+	assert_almost_eq(received[1].z, minimap.world_bounds().position.y, 0.05)
 	GameManager.hex_grid = original_grid
 	grid.queue_free()

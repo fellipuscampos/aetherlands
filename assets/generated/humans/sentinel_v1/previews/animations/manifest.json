@@ -1,0 +1,32 @@
+{
+  "Sentinel_Idle": {
+    "frames": 72,
+    "fps": 24,
+    "mp4": "Sentinel_Idle.mp4",
+    "gif": "Sentinel_Idle.gif"
+  },
+  "Sentinel_Walk": {
+    "frames": 28,
+    "fps": 24,
+    "mp4": "Sentinel_Walk.mp4",
+    "gif": "Sentinel_Walk.gif"
+  },
+  "Sentinel_Attack": {
+    "frames": 31,
+    "fps": 24,
+    "mp4": "Sentinel_Attack.mp4",
+    "gif": "Sentinel_Attack.gif"
+  },
+  "Sentinel_ShieldWall": {
+    "frames": 25,
+    "fps": 24,
+    "mp4": "Sentinel_ShieldWall.mp4",
+    "gif": "Sentinel_ShieldWall.gif"
+  },
+  "Sentinel_ShieldWallHold": {
+    "frames": 48,
+    "fps": 24,
+    "mp4": "Sentinel_ShieldWallHold.mp4",
+    "gif": "Sentinel_ShieldWallHold.gif"
+  }
+}
