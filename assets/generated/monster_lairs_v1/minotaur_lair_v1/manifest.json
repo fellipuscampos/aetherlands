@@ -1,0 +1,54 @@
+{
+  "kind": "minotaur",
+  "tier": "Intermediário",
+  "name": "Labirinto arruinado",
+  "concept": "Paredes baixas em meandro, porta com chifres e troféu de crânio bovino.",
+  "stem": "minotaur_lair_v1",
+  "method": "Live Blender MCP localhost:9876",
+  "editable_parts": 57,
+  "vertices": 476,
+  "triangles": 724,
+  "materials": 1,
+  "draw_calls": 1,
+  "atlas": [
+    1024,
+    1024
+  ],
+  "pixels_per_meter": 64,
+  "filter": "nearest",
+  "footprint_radius": 0.78,
+  "height": 0.8746843934059143,
+  "ground_min": 0.0,
+  "source_bounds_xyz": [
+    [
+      -0.6303656697273254,
+      -0.7194702625274658,
+      0.0
+    ],
+    [
+      0.7007619142532349,
+      0.6730658411979675,
+      0.8746843934059143
+    ]
+  ],
+  "scale_multiplier": 1.0,
+  "forward": "-Y Blender / +Z glTF",
+  "pivot": [
+    0,
+    0,
+    0
+  ],
+  "nonmanifold_edges": 0,
+  "degenerate_faces": 0,
+  "animations": [],
+  "collision": false,
+  "game_source_changed": false,
+  "art_scale": 0.3362747915328659,
+  "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+  "isolated_by_gdignore": true,
+  "previews": [
+    "three_quarter",
+    "game_top",
+    "back"
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "name": "Elf_Farm_Hex_V1",
+  "display_name": "Fazenda",
+  "gameplay_building_id": "v2_building_farm",
+  "trains": [],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1924,
+  "editable_parts": 153,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.0410000085830688
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.0410000085830688
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Escala nativa 1:1 do mapa; tile pointy-top de raio 1; multiplicador 1.0.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 940,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Pedra clara e madeira esbelta com apoios ramificados, pavilhões abertos, telhados verdes altos com cantos facetados e folhas douradas. Fazenda de infraestrutura, uma única versão sem evolução. Revisão: Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores. Junções ajustadas para eliminar faces coplanares expostas.",
+  "door_clearance_m": [
+    0.2,
+    0.32
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "infrastructure": {
+    "branch": "logistics",
+    "single_version": true,
+    "evolutions": [],
+    "blender_mcp_only": true,
+    "architecture": "Pedra clara e madeira esbelta com apoios ramificados, pavilhões abertos, telhados verdes altos com cantos facetados e folhas douradas.",
+    "recipe": "elf_farm"
+  },
+  "hex_tile": {
+    "circumradius": 1.0,
+    "source_base_radius": 0.92,
+    "max_half_plane_blender": 0.796743392944336,
+    "minimum_margin": 0.06928201084010255
+  },
+  "surface_overlap_review": {
+    "version": 1,
+    "mcp_only": true,
+    "exposed_coplanar_overlap_faces": 0,
+    "repaired_parts": {
+      "Raised_Garden_A_Side_-1": {
+        "reason": "butt_join_planter_walls",
+        "sha256": "8bd20e6b5cd6e86984aaeb9b1bc3c0b37cd210561913864d6c0556a0f44c0207"
+      },
+      "Raised_Garden_A_Side_1": {
+        "reason": "butt_join_planter_walls",
+        "sha256": "afa0118b5c7739f3a527a2fd06cb5e4fe3d486860761b44391262fbaf6384d24"
+      },
+      "Raised_Garden_B_Side_-1": {
+        "reason": "butt_join_planter_walls",
+        "sha256": "c20f7b4e3da9f56514f1c130ca19b3c9157bb4af7ca4a066c0c5ff39312d26a6"
+      },
+      "Raised_Garden_B_Side_1": {
+        "reason": "butt_join_planter_walls",
+        "sha256": "51292ac1783405b913069ed80bc0e11e5ee84f48b506025926535287d40810e2"
+      },
+      "Fruit_Tree_A_Canopy_1": {
+        "reason": "taper_canopy_depth",
+        "sha256": "5f0bb5bcee16815f2c551e68ad270a87cabc2fed8f4a9e4a0b07c206cd6590f3"
+      },
+      "Fruit_Tree_A_Canopy_2": {
+        "reason": "taper_canopy_depth",
+        "sha256": "1c1d759fe372190a0c329d753c4ba5fc40ecec6bcbe56cfdb7b96ffd401feafc"
+      },
+      "Fruit_Tree_B_Canopy_1": {
+        "reason": "taper_canopy_depth",
+        "sha256": "5e18756420ea220c4d5047c569f30560032037f9825c464067c46b65c9091a18"
+      },
+      "Fruit_Tree_B_Canopy_2": {
+        "reason": "taper_canopy_depth",
+        "sha256": "eb9ca9cb099dcaa6ca0b355d08dc58fba76c237e8c699695c48e913d2664f028"
+      }
+    },
+    "method": "Native Blender MCP; triangle clipping on matching outward planes, visible area checked against a BVH of all game meshes",
+    "before_overlap_faces": 14
+  },
+  "infrastructure_roof_review": {
+    "version": 1,
+    "mcp_only": true,
+    "roofs": [
+      {
+        "roof": "Leaf_Garden_Pavilion",
+        "shape": "straight_hip",
+        "courses": 6,
+        "base_height": 0.49600000000000005
+      }
+    ],
+    "support_contacts": [],
+    "note": "Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores.",
+    "before_backup": "art_source/infrastructure_before_roof_review"
+  },
+  "export": {
+    "file": "elf_farm_hex_v1.glb",
+    "bytes": 616588,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1924,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_farm_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "elf_farm_hex_v1_albedo",
+        "bytes": 454614,
+        "sha256": "8d80d46c6e8d934e8d7006f94c90b6510ef3afb13e2f13c109b9e20e2b35acff"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

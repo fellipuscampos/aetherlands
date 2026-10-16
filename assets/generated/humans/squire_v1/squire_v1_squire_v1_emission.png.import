@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://buny4nbjbk62g"
-path="res://.godot/imported/squire_v1_squire_v1_emission.png-ae90fad767c0ecfac8c815c03286e735.ctex"
+path.bptc="res://.godot/imported/squire_v1_squire_v1_emission.png-ae90fad767c0ecfac8c815c03286e735.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "149f84fd9b067ee6825c5637166a7fc3"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/humans/squire_v1/squire_v1_squire_v1_emission.png"
-dest_files=["res://.godot/imported/squire_v1_squire_v1_emission.png-ae90fad767c0ecfac8c815c03286e735.ctex"]
+dest_files=["res://.godot/imported/squire_v1_squire_v1_emission.png-ae90fad767c0ecfac8c815c03286e735.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

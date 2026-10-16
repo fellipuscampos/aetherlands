@@ -29,7 +29,15 @@
     "density_px_per_meter": 64,
     "measured_min": 63.99953578028523,
     "measured_max": 64.00030871528712,
-    "padding": 2
+    "padding": 2,
+    "cleanup": {
+      "version": "human_texture_cleanup_v1",
+      "changed_pixels": 17834,
+      "geometry_uv_skinning_animations_preserved": true,
+      "embedded_albedo_matches_png": true,
+      "editable_source_packed_albedo_matches_png": true,
+      "emission_unchanged": true
+    }
   },
   "rig": {
     "bones": [
@@ -135,7 +143,7 @@
       "end": 70,
       "loop": false,
       "nla_start": 271,
-      "description": "Saraivada: rapid triple shot aimed high so the arrows rain around the target \u2014 tight fan, looses left (15), reloads from the quiver, centre (34), reloads, right (53), final reload, settles back.",
+      "description": "Saraivada: rapid triple shot aimed high so the arrows rain around the target — tight fan, looses left (15), reloads from the quiver, centre (34), reloads, right (53), final reload, settles back.",
       "impact_frame": 15,
       "release_frames": [
         15,

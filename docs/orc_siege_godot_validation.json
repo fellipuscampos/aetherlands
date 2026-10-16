@@ -1,0 +1,421 @@
+{
+	"models": [
+		{
+			"bones": 8,
+			"clips": {
+				"Catapult_Attack": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 1.83419895172119,
+						"root": 0.0,
+						"weapon": 0.826994776725769,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0
+					},
+					"duration": 2.0,
+					"independent_recoil": 0.0,
+					"loop": false,
+					"minimum_y": 0.0,
+					"movement": 1.83419895172119,
+					"recovery_error": 0.000000238418579101563
+				},
+				"Catapult_DemolitionAmmo": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 1.98765122890472,
+						"root": 0.0,
+						"weapon": 0.970561742782593,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0
+					},
+					"duration": 3.0,
+					"independent_recoil": 0.0,
+					"loop": false,
+					"minimum_y": 0.0,
+					"movement": 1.98765122890472,
+					"recovery_error": 0.000000238418579101563
+				},
+				"Catapult_Idle": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 0.0,
+						"root": 0.0,
+						"weapon": 0.0,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0
+					},
+					"duration": 2.0,
+					"independent_recoil": 0.0,
+					"loop": true,
+					"minimum_y": 0.0,
+					"movement": 0.0,
+					"recovery_error": 0.0
+				},
+				"Catapult_Walk": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 0.0,
+						"root": 0.0,
+						"weapon": 0.0,
+						"wheel_l_back": 1.97537672519684,
+						"wheel_l_front": 1.97537672519684,
+						"wheel_r_back": 1.97537672519684,
+						"wheel_r_front": 1.97537672519684
+					},
+					"duration": 2.0,
+					"independent_recoil": 0.0,
+					"loop": true,
+					"minimum_y": -0.0000000596046447753906,
+					"movement": 1.97537672519684,
+					"recovery_error": 0.0
+				}
+			},
+			"dimensions": [
+				1.74559783935547,
+				1.79999983310699,
+				1.5715446472168
+			],
+			"ground_y": 0.0,
+			"stem": "orc_catapult_v1"
+		},
+		{
+			"bones": 10,
+			"clips": {
+				"Trebuchet_Attack": {
+					"bone_motion": {
+						"body": 0.0,
+						"counterweight": 0.262172281742096,
+						"loader": 1.83419895172119,
+						"root": 0.0,
+						"sling": 0.666625797748566,
+						"weapon": 0.826994776725769,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0
+					},
+					"duration": 2.0,
+					"independent_recoil": 0.0,
+					"loop": false,
+					"minimum_y": 0.0,
+					"movement": 1.83419895172119,
+					"recovery_error": 0.000000238418579101563
+				},
+				"Trebuchet_DemolitionAmmo": {
+					"bone_motion": {
+						"body": 0.0,
+						"counterweight": 0.30768558382988,
+						"loader": 1.98765122890472,
+						"root": 0.0,
+						"sling": 0.782352566719055,
+						"weapon": 0.970561742782593,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0
+					},
+					"duration": 3.0,
+					"independent_recoil": 0.0,
+					"loop": false,
+					"minimum_y": 0.0,
+					"movement": 1.98765122890472,
+					"recovery_error": 0.000000238418579101563
+				},
+				"Trebuchet_Idle": {
+					"bone_motion": {
+						"body": 0.0,
+						"counterweight": 0.0,
+						"loader": 0.0,
+						"root": 0.0,
+						"sling": 0.0,
+						"weapon": 0.0,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0
+					},
+					"duration": 2.0,
+					"independent_recoil": 0.0,
+					"loop": true,
+					"minimum_y": 0.0,
+					"movement": 0.0,
+					"recovery_error": 0.0
+				},
+				"Trebuchet_PreparedBombardment": {
+					"bone_motion": {
+						"body": 0.0,
+						"counterweight": 0.337746977806091,
+						"loader": 1.98751628398895,
+						"root": 0.0,
+						"sling": 0.858789682388306,
+						"weapon": 1.06538724899292,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0
+					},
+					"duration": 4.0,
+					"independent_recoil": 0.0,
+					"loop": false,
+					"minimum_y": 0.0,
+					"movement": 1.98751628398895,
+					"recovery_error": 0.000000238418579101563
+				},
+				"Trebuchet_Walk": {
+					"bone_motion": {
+						"body": 0.0,
+						"counterweight": 0.0,
+						"loader": 0.0,
+						"root": 0.0,
+						"sling": 0.0,
+						"weapon": 0.0,
+						"wheel_l_back": 1.97537672519684,
+						"wheel_l_front": 1.97537672519684,
+						"wheel_r_back": 1.97537672519684,
+						"wheel_r_front": 1.97537672519684
+					},
+					"duration": 2.0,
+					"independent_recoil": 0.0,
+					"loop": true,
+					"minimum_y": -0.000000119209289550781,
+					"movement": 1.97537672519684,
+					"recovery_error": 0.0
+				}
+			},
+			"dimensions": [
+				1.50642251968384,
+				1.80000019073486,
+				1.50466728210449
+			],
+			"ground_y": 0.0,
+			"stem": "orc_trebuchet_v1"
+		},
+		{
+			"bones": 8,
+			"clips": {
+				"Bombard_Attack": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 1.83419895172119,
+						"root": 0.0,
+						"weapon": 0.194371312856674,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0
+					},
+					"duration": 2.0,
+					"independent_recoil": 0.0,
+					"loop": false,
+					"minimum_y": 0.0000000316256851817798,
+					"movement": 1.83419895172119,
+					"recovery_error": 0.000000238418579101563
+				},
+				"Bombard_DemolitionAmmo": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 1.9875693321228,
+						"root": 0.0,
+						"weapon": 0.228865087032318,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0
+					},
+					"duration": 3.0,
+					"independent_recoil": 0.0,
+					"loop": false,
+					"minimum_y": 0.0000000316256851817798,
+					"movement": 1.9875693321228,
+					"recovery_error": 0.000000238418579101563
+				},
+				"Bombard_Idle": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 0.0,
+						"root": 0.0,
+						"weapon": 0.0,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0
+					},
+					"duration": 2.0,
+					"independent_recoil": 0.0,
+					"loop": true,
+					"minimum_y": 0.0000000316256851817798,
+					"movement": 0.0,
+					"recovery_error": 0.0
+				},
+				"Bombard_PreparedBombardment": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 1.98751091957092,
+						"root": 0.0,
+						"weapon": 0.252503752708435,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0
+					},
+					"duration": 4.0,
+					"independent_recoil": 0.0,
+					"loop": false,
+					"minimum_y": 0.0000000316256851817798,
+					"movement": 1.98751091957092,
+					"recovery_error": 0.000000238418579101563
+				},
+				"Bombard_Walk": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 0.0,
+						"root": 0.0,
+						"weapon": 0.0,
+						"wheel_l_back": 1.97537672519684,
+						"wheel_l_front": 1.97537672519684,
+						"wheel_r_back": 1.97537672519684,
+						"wheel_r_front": 1.97537672519684
+					},
+					"duration": 2.0,
+					"independent_recoil": 0.0,
+					"loop": true,
+					"minimum_y": 0.0,
+					"movement": 1.97537672519684,
+					"recovery_error": 0.0
+				}
+			},
+			"dimensions": [
+				2.15950536727905,
+				1.79999995231628,
+				2.15435719490051
+			],
+			"ground_y": 0.0000000316256851817798,
+			"stem": "orc_bombard_v1"
+		},
+		{
+			"bones": 11,
+			"clips": {
+				"SiegeColossus_Attack": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 1.83419895172119,
+						"root": 0.0,
+						"weapon_l": 0.230517208576202,
+						"weapon_r": 0.233943074941635,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_l_middle": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0,
+						"wheel_r_middle": 0.0
+					},
+					"duration": 2.0,
+					"independent_recoil": 0.233943074941635,
+					"loop": false,
+					"minimum_y": 0.0,
+					"movement": 1.83419895172119,
+					"recovery_error": 0.000000238418579101563
+				},
+				"SiegeColossus_DemolitionAmmo": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 1.9875693321228,
+						"root": 0.0,
+						"weapon_l": 0.267302066087723,
+						"weapon_r": 0.279249548912048,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_l_middle": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0,
+						"wheel_r_middle": 0.0
+					},
+					"duration": 3.0,
+					"independent_recoil": 0.279249548912048,
+					"loop": false,
+					"minimum_y": 0.0,
+					"movement": 1.9875693321228,
+					"recovery_error": 0.000000238418579101563
+				},
+				"SiegeColossus_Idle": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 0.0,
+						"root": 0.0,
+						"weapon_l": 0.0,
+						"weapon_r": 0.0,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_l_middle": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0,
+						"wheel_r_middle": 0.0
+					},
+					"duration": 2.0,
+					"independent_recoil": 0.0,
+					"loop": true,
+					"minimum_y": 0.0,
+					"movement": 0.0,
+					"recovery_error": 0.0
+				},
+				"SiegeColossus_PreparedBombardment": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 1.98751091957092,
+						"root": 0.0,
+						"weapon_l": 0.295090883970261,
+						"weapon_r": 0.310828626155853,
+						"wheel_l_back": 0.0,
+						"wheel_l_front": 0.0,
+						"wheel_l_middle": 0.0,
+						"wheel_r_back": 0.0,
+						"wheel_r_front": 0.0,
+						"wheel_r_middle": 0.0
+					},
+					"duration": 4.0,
+					"independent_recoil": 0.310828626155853,
+					"loop": false,
+					"minimum_y": 0.0,
+					"movement": 1.98751091957092,
+					"recovery_error": 0.000000238418579101563
+				},
+				"SiegeColossus_Walk": {
+					"bone_motion": {
+						"body": 0.0,
+						"loader": 0.0,
+						"root": 0.0,
+						"weapon_l": 0.0,
+						"weapon_r": 0.0,
+						"wheel_l_back": 1.97537672519684,
+						"wheel_l_front": 1.97537672519684,
+						"wheel_l_middle": 1.97537672519684,
+						"wheel_r_back": 1.97537672519684,
+						"wheel_r_front": 1.97537672519684,
+						"wheel_r_middle": 1.97537672519684
+					},
+					"duration": 2.0,
+					"independent_recoil": 0.0,
+					"loop": true,
+					"minimum_y": 0.0,
+					"movement": 1.97537672519684,
+					"recovery_error": 0.0
+				}
+			},
+			"dimensions": [
+				3.00611591339111,
+				2.0,
+				3.05931162834167
+			],
+			"ground_y": 0.0,
+			"stem": "orc_siege_colossus_v1"
+		}
+	],
+	"problems": [],
+	"status": "PASS"
+}

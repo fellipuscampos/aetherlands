@@ -1,0 +1,67 @@
+{
+  "status": "PASS",
+  "verified": 4,
+  "animations": 8,
+  "triangles_total": 3552,
+  "pixel_density": 64,
+  "meshes_per_glb": 1,
+  "surfaces_per_glb": 1,
+  "assets": [
+    {
+      "stem": "human_settler_v1",
+      "status": "PASS",
+      "triangles": 732,
+      "meshes": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "animations": 2,
+      "rigs": 1,
+      "ground_pivot": true,
+      "metric_uv_max_error": 0.001017245489947527,
+      "geometry_sha256": "f5b87e8124a0b86493555dc35f492542cfb865f7f43e2b9e534ec4e01648a62f",
+      "source_preserved": true
+    },
+    {
+      "stem": "elf_settler_v1",
+      "status": "PASS",
+      "triangles": 864,
+      "meshes": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "animations": 2,
+      "rigs": 1,
+      "ground_pivot": true,
+      "metric_uv_max_error": 0.0012975164723769694,
+      "geometry_sha256": "140d8d29e09447eead49ce78441ce413de1ac895243e52b73be8d4d3bb662f22",
+      "source_preserved": true
+    },
+    {
+      "stem": "dwarf_settler_v1",
+      "status": "PASS",
+      "triangles": 1068,
+      "meshes": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "animations": 2,
+      "rigs": 1,
+      "ground_pivot": true,
+      "metric_uv_max_error": 0.0008477158032746956,
+      "geometry_sha256": "dbaf680d8a57d9109e312ce396d6d262b751e72907639a6b54080d991bfa24d5",
+      "source_preserved": true
+    },
+    {
+      "stem": "orc_settler_v1",
+      "status": "PASS",
+      "triangles": 888,
+      "meshes": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "animations": 2,
+      "rigs": 1,
+      "ground_pivot": true,
+      "metric_uv_max_error": 0.0010132058827281298,
+      "geometry_sha256": "11fe6bc440e4a43ce07601dd5ba05423fb7bc51e40b1e5ce9fd954bb360a94e8",
+      "source_preserved": true
+    }
+  ]
+}

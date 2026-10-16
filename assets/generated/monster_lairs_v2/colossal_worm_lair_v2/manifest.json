@@ -1,0 +1,58 @@
+{
+  "kind": "colossal_worm",
+  "tier": "Avançado",
+  "name": "Poço de escavação",
+  "concept": "Funil profundo entre placas de areia rompida, túneis escuros e cascas segmentadas.",
+  "stem": "colossal_worm_lair_v2",
+  "method": "Live Blender MCP localhost:9876",
+  "editable_parts": 22,
+  "vertices": 220,
+  "triangles": 352,
+  "materials": 1,
+  "draw_calls": 1,
+  "atlas": [
+    1024,
+    1024
+  ],
+  "pixels_per_meter": 64,
+  "measured_uv_density_range": [
+    63.99954755386004,
+    64.00024892904686
+  ],
+  "filter": "nearest",
+  "footprint_radius": 0.78,
+  "height": 0.2414076328277588,
+  "ground_min": 0.0,
+  "source_bounds_xyz": [
+    [
+      -0.6401459574699402,
+      -0.639509379863739,
+      0.0
+    ],
+    [
+      0.6649136543273926,
+      0.7621794939041138,
+      0.2414076328277588
+    ]
+  ],
+  "scale_multiplier": 1.0,
+  "forward": "-Y Blender / +Z glTF",
+  "pivot": [
+    0,
+    0,
+    0
+  ],
+  "nonmanifold_edges": 0,
+  "degenerate_faces": 0,
+  "animations": [],
+  "collision": false,
+  "game_source_changed": false,
+  "art_scale": 0.37331154487296603,
+  "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+  "isolated_by_gdignore": true,
+  "previews": [
+    "three_quarter",
+    "game_top",
+    "back"
+  ]
+}

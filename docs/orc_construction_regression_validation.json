@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "suites": [
+    {
+      "script": "res://test/unit/test_human_construction_site.gd",
+      "passed": 6,
+      "total": 6
+    },
+    {
+      "script": "res://test/unit/test_hex_grid_movement.gd",
+      "passed": 70,
+      "total": 70
+    },
+    {
+      "script": "res://test/unit/test_hexgrid_fog.gd",
+      "passed": 15,
+      "total": 15
+    }
+  ],
+  "exit_code": 0
+}

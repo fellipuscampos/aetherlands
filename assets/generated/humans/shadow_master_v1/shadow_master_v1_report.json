@@ -1,0 +1,306 @@
+{
+  "name": "ShadowMaster_V1",
+  "kind": "v2_legendary_shadow_master",
+  "label": "Mestre das Sombras",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "height_m": 2.0,
+  "height_convention": "Body/rest geometry; animated equipment may exceed body height",
+  "triangles": 456,
+  "editable_parts": 38,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "density_px_per_meter": 64,
+    "filter": "NEAREST",
+    "padding": 2,
+    "cleanup": {
+      "version": "human_texture_cleanup_v1",
+      "changed_pixels": 17431,
+      "geometry_uv_skinning_animations_preserved": true,
+      "embedded_albedo_matches_png": true,
+      "editable_source_packed_albedo_matches_png": true,
+      "emission_unchanged": true
+    }
+  },
+  "derivation": {
+    "predecessor": "assassin_v1",
+    "source_blend_sha256": "55e48c20d4030012ad526bd533023d04010b2229d0b2c9adc3f1dfa04073d59e",
+    "copied_parts": [
+      "Pelvis",
+      "Buckle",
+      "Belly",
+      "Chest",
+      "Head",
+      "Shoulder_l",
+      "Shoulder_r",
+      "UpperArm_l",
+      "Forearm_l",
+      "Hand_l",
+      "UpperArm_r",
+      "Forearm_r",
+      "Hand_r",
+      "Foot_l",
+      "Shin_l",
+      "Thigh_l",
+      "Foot_r",
+      "Shin_r",
+      "Thigh_r",
+      "DaggerGrip_r",
+      "DaggerGuard_r",
+      "DaggerBlade_r",
+      "BeltPouch",
+      "ToolSatchel",
+      "Tool_0",
+      "Tool_1",
+      "Tool_2",
+      "ToolClasp",
+      "SatchelStrap",
+      "DaggerGrip_l",
+      "DaggerGuard_l",
+      "DaggerBlade_l",
+      "ShoulderPlate",
+      "ThrowingKnifeCase",
+      "SplitMantle_l",
+      "SplitMantle_r"
+    ],
+    "inherited_actions": [
+      "Idle",
+      "Walk",
+      "Attack",
+      "SneakAttack",
+      "Dismantle"
+    ]
+  },
+  "notes": "Approved Warrior body, hood painted on the single head block, blue human heraldry; rigid authored equipment.",
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "head",
+      "upper_arm_l",
+      "forearm_l",
+      "hand_l",
+      "thigh_l",
+      "shin_l",
+      "foot_l",
+      "upper_arm_r",
+      "forearm_r",
+      "hand_r",
+      "thigh_r",
+      "shin_r",
+      "foot_r"
+    ],
+    "hierarchy": "flat: every bone is a child of root; legs baked from two-bone IK",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "Pelvis": "hips",
+      "Buckle": "hips",
+      "Belly": "chest",
+      "Chest": "chest",
+      "Head": "head",
+      "Shoulder_l": "chest",
+      "Shoulder_r": "chest",
+      "UpperArm_l": "upper_arm_l",
+      "Forearm_l": "forearm_l",
+      "Hand_l": "hand_l",
+      "UpperArm_r": "upper_arm_r",
+      "Forearm_r": "forearm_r",
+      "Hand_r": "hand_r",
+      "Foot_l": "foot_l",
+      "Shin_l": "shin_l",
+      "Thigh_l": "thigh_l",
+      "Foot_r": "foot_r",
+      "Shin_r": "shin_r",
+      "Thigh_r": "thigh_r",
+      "BeltPouch": "hips",
+      "ToolSatchel": "hips",
+      "Tool_0": "hips",
+      "Tool_1": "hips",
+      "Tool_2": "hips",
+      "ToolClasp": "hips",
+      "SatchelStrap": "chest",
+      "ShoulderPlate": "chest",
+      "ThrowingKnifeCase": "hips",
+      "DaggerGrip_r": "hand_r",
+      "DaggerGuard_r": "hand_r",
+      "DaggerBlade_r": "hand_r",
+      "DaggerGrip_l": "hand_l",
+      "DaggerGuard_l": "hand_l",
+      "DaggerBlade_l": "hand_l",
+      "RoyalMantle_l": "chest",
+      "RoyalMantle_r": "chest",
+      "Gorget": "chest",
+      "BeltSeal": "hips"
+    }
+  },
+  "animations": {
+    "ShadowMaster_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Inherited without changing curves from assassin_v1",
+      "inherited_sha256": "a5eb188ef426a9ac1d6016a65a2cf01ef7c68567a53a1373307e95469f3e4a7f",
+      "seconds": 3
+    },
+    "ShadowMaster_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 82,
+      "description": "Inherited without changing curves from assassin_v1",
+      "inherited_sha256": "ce1a9b6c4f83fbaa5a40e47fe1e7eb5c8cd4ef15b3deff7f4f9eadb7aa22ea5a",
+      "seconds": 1.1666666666666667
+    },
+    "ShadowMaster_Attack": {
+      "start": 1,
+      "end": 33,
+      "loop": false,
+      "nla_start": 119,
+      "description": "Inherited without changing curves from assassin_v1",
+      "inherited_sha256": "f1cef0fdc839a05d268cb1bd060555ab8d4a446bb1fd2d0cfd2da00afe8dc543",
+      "seconds": 1.3333333333333333
+    },
+    "ShadowMaster_SneakAttack": {
+      "start": 1,
+      "end": 57,
+      "loop": false,
+      "nla_start": 160,
+      "description": "Inherited without changing curves from assassin_v1",
+      "inherited_sha256": "1cbe6f8dbe57948577844fffafb295f0d8e727fcf3bfbafd8acbd8a6a4ce8536",
+      "seconds": 2.3333333333333335
+    },
+    "ShadowMaster_Dismantle": {
+      "start": 1,
+      "end": 73,
+      "loop": false,
+      "nla_start": 225,
+      "description": "Inherited without changing curves from assassin_v1",
+      "inherited_sha256": "e259c8135838dca256ac8ab225bc04e9e4ad12295a2005fee83dbfc36b62fc58",
+      "seconds": 3
+    }
+  },
+  "animation_validation": {
+    "problems": [],
+    "samples": {
+      "ShadowMaster_Idle": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "a5eb188ef426a9ac1d6016a65a2cf01ef7c68567a53a1373307e95469f3e4a7f"
+      },
+      "ShadowMaster_Walk": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "ce1a9b6c4f83fbaa5a40e47fe1e7eb5c8cd4ef15b3deff7f4f9eadb7aa22ea5a"
+      },
+      "ShadowMaster_Attack": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "f1cef0fdc839a05d268cb1bd060555ab8d4a446bb1fd2d0cfd2da00afe8dc543"
+      },
+      "ShadowMaster_SneakAttack": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "1cbe6f8dbe57948577844fffafb295f0d8e727fcf3bfbafd8acbd8a6a4ce8536"
+      },
+      "ShadowMaster_Dismantle": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "e259c8135838dca256ac8ab225bc04e9e4ad12295a2005fee83dbfc36b62fc58"
+      }
+    }
+  },
+  "glb": {
+    "file": "shadow_master_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 16,
+    "triangles": 456,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "ShadowMaster_Idle": 3,
+      "ShadowMaster_Walk": 1.1666666666666667,
+      "ShadowMaster_Attack": 1.3333333333333333,
+      "ShadowMaster_SneakAttack": 2.3333333333333335,
+      "ShadowMaster_Dismantle": 3
+    },
+    "channels": "location, rotation on every bone"
+  },
+  "status": "Finished human Mestre das Sombras; rig, clips, nearest embedded textures and isolated editable source verified.",
+  "rig_bone_map": {
+    "Pelvis": "hips",
+    "Buckle": "hips",
+    "Belly": "chest",
+    "Chest": "chest",
+    "Head": "head",
+    "Shoulder_l": "chest",
+    "Shoulder_r": "chest",
+    "UpperArm_l": "upper_arm_l",
+    "Forearm_l": "forearm_l",
+    "Hand_l": "hand_l",
+    "UpperArm_r": "upper_arm_r",
+    "Forearm_r": "forearm_r",
+    "Hand_r": "hand_r",
+    "Foot_l": "foot_l",
+    "Shin_l": "shin_l",
+    "Thigh_l": "thigh_l",
+    "Foot_r": "foot_r",
+    "Shin_r": "shin_r",
+    "Thigh_r": "thigh_r",
+    "BeltPouch": "hips",
+    "ToolSatchel": "hips",
+    "Tool_0": "hips",
+    "Tool_1": "hips",
+    "Tool_2": "hips",
+    "ToolClasp": "hips",
+    "SatchelStrap": "chest",
+    "ShoulderPlate": "chest",
+    "ThrowingKnifeCase": "hips",
+    "DaggerGrip_r": "hand_r",
+    "DaggerGuard_r": "hand_r",
+    "DaggerBlade_r": "hand_r",
+    "DaggerGrip_l": "hand_l",
+    "DaggerGuard_l": "hand_l",
+    "DaggerBlade_l": "hand_l",
+    "RoyalMantle_l": "chest",
+    "RoyalMantle_r": "chest",
+    "Gorget": "chest",
+    "BeltSeal": "hips"
+  },
+  "source_validation": {
+    "scenes": [
+      "ShadowMaster_V1"
+    ],
+    "actions": [
+      "ShadowMaster_Walk",
+      "ShadowMaster_SneakAttack",
+      "ShadowMaster_Idle",
+      "ShadowMaster_Dismantle",
+      "ShadowMaster_Attack"
+    ],
+    "armatures": [
+      "ShadowMaster_V1_Skeleton"
+    ]
+  },
+  "geometry_validation": {
+    "asset": "shadow_master_v1",
+    "nonmanifold_edges": 0,
+    "unattached_parts_candidates": [],
+    "same_normal_coplanar_candidates": [],
+    "mast_weapon_collisions": [],
+    "intersecting_wheels": [],
+    "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+  }
+}

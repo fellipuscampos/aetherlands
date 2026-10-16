@@ -1,0 +1,156 @@
+{
+  "status": "PASS",
+  "model": "nature_avatar_blocky_v5_animated",
+  "source_model": "nature_avatar_blocky_v4",
+  "approved_textures_preserved": true,
+  "rigid_body_geometry_preserved": true,
+  "suspended_root_geometry_preserved": true,
+  "meshes": 1,
+  "materials": 1,
+  "triangles": 2060,
+  "bones": 18,
+  "root_motion": false,
+  "fps": 24,
+  "same_channels_all_clips": true,
+  "rest_crown_height_above_ground_m": 3.0,
+  "rest_height_m": 2.5801127851,
+  "clips": {
+    "Idle": {
+      "samples": 577,
+      "loop": true,
+      "duration_s": 12.0,
+      "description": "Flutuação suave, giro lento do núcleo e raízes suspensas balançando.",
+      "minimum_ground_clearance_m": 0.41977617144584656,
+      "bounds_min_m": [
+        -1.3927778005599976,
+        -0.8009462952613831,
+        0.41977617144584656
+      ],
+      "bounds_max_m": [
+        1.3919872045516968,
+        0.4922463893890381,
+        3.050078868865967
+      ],
+      "seam_vertex_delta_m": 7.450580596923828e-08,
+      "maximum_half_frame_vertex_step_m": 0.004308311306348724,
+      "maximum_joint_gap_m": 3.6286698764222625e-07,
+      "maximum_wrist_rotation_deg": 0.0,
+      "root_anchor_error_m": 2.385349660155493e-07,
+      "root_tip_motion_m": {
+        "hanging_root_L": 0.028749262329696056,
+        "hanging_root_R": 0.033562493277119854,
+        "floating_root_center": 0.03268031907216993,
+        "floating_root_left": 0.029956382480189777,
+        "floating_root_right": 0.024886405838787477,
+        "floating_root_rear": 0.0315876366593669,
+        "floating_root_inner": 0.027617944365598966
+      },
+      "core_collision_checks": 1506,
+      "core_clear_of_bark": true,
+      "body_and_limbs_rigid": true
+    },
+    "Walk": {
+      "samples": 289,
+      "loop": true,
+      "duration_s": 6.0,
+      "description": "Deslizamento pairando no lugar, corpo inclinado e raízes acompanhando o fluxo.",
+      "minimum_ground_clearance_m": 0.45106127858161926,
+      "bounds_min_m": [
+        -1.4560675621032715,
+        -0.9358411431312561,
+        0.45106127858161926
+      ],
+      "bounds_max_m": [
+        1.4540174007415771,
+        0.4693317115306854,
+        3.081648826599121
+      ],
+      "seam_vertex_delta_m": 6.664001874625056e-08,
+      "maximum_half_frame_vertex_step_m": 0.008573961724537997,
+      "maximum_joint_gap_m": 4.814712530792806e-07,
+      "maximum_wrist_rotation_deg": 0.0,
+      "root_anchor_error_m": 2.403894931808364e-07,
+      "root_tip_motion_m": {
+        "hanging_root_L": 0.038578566049960204,
+        "hanging_root_R": 0.04489054366269437,
+        "floating_root_center": 0.04364871977717931,
+        "floating_root_left": 0.04005370200904584,
+        "floating_root_right": 0.033002119017269106,
+        "floating_root_rear": 0.04214971822920087,
+        "floating_root_inner": 0.036814876813763275
+      },
+      "core_collision_checks": 667,
+      "core_clear_of_bark": true,
+      "body_and_limbs_rigid": true
+    },
+    "Attack": {
+      "samples": 97,
+      "loop": false,
+      "duration_s": 2.0,
+      "description": "Prepara o braço direito e libera um golpe frontal de energia, com recuperação.",
+      "minimum_ground_clearance_m": 0.41935524344444275,
+      "bounds_min_m": [
+        -1.4403985738754272,
+        -1.3690595626831055,
+        0.41935524344444275
+      ],
+      "bounds_max_m": [
+        1.5784039497375488,
+        0.5214008688926697,
+        3.055971384048462
+      ],
+      "seam_vertex_delta_m": 7.450580596923828e-08,
+      "maximum_half_frame_vertex_step_m": 0.07464411659868919,
+      "maximum_joint_gap_m": 4.806057638785284e-07,
+      "maximum_wrist_rotation_deg": 6.999900587867351,
+      "root_anchor_error_m": 1.228781230931777e-07,
+      "root_tip_motion_m": {
+        "hanging_root_L": 0.04243691876471671,
+        "hanging_root_R": 0.041227659338505765,
+        "floating_root_center": 0.031973472440025075,
+        "floating_root_left": 0.02626659206851376,
+        "floating_root_right": 0.02868256750089794,
+        "floating_root_rear": 0.04494264188709161,
+        "floating_root_inner": 0.04595074467575482
+      },
+      "core_collision_checks": 504,
+      "core_clear_of_bark": true,
+      "body_and_limbs_rigid": true
+    },
+    "Spell": {
+      "samples": 169,
+      "loop": false,
+      "duration_s": 3.5,
+      "description": "Ergue os dois braços, concentra energia no núcleo e projeta o poder em direção ao terreno.",
+      "minimum_ground_clearance_m": 0.41979193687438965,
+      "bounds_min_m": [
+        -1.4847562313079834,
+        -1.3879337310791016,
+        0.41979193687438965
+      ],
+      "bounds_max_m": [
+        1.4763481616973877,
+        0.5093197822570801,
+        3.177703619003296
+      ],
+      "seam_vertex_delta_m": 7.450580596923828e-08,
+      "maximum_half_frame_vertex_step_m": 0.07526828001154554,
+      "maximum_joint_gap_m": 5.283086866508674e-07,
+      "maximum_wrist_rotation_deg": 11.99991239524486,
+      "root_anchor_error_m": 2.385349660155493e-07,
+      "root_tip_motion_m": {
+        "hanging_root_L": 0.04993603634788478,
+        "hanging_root_R": 0.052395136311397236,
+        "floating_root_center": 0.04562118589284992,
+        "floating_root_left": 0.043624387126119046,
+        "floating_root_right": 0.0379833434954097,
+        "floating_root_rear": 0.05089087417727771,
+        "floating_root_inner": 0.04640687167081157
+      },
+      "core_collision_checks": 701,
+      "core_clear_of_bark": true,
+      "body_and_limbs_rigid": true
+    }
+  },
+  "protected_files": 23
+}

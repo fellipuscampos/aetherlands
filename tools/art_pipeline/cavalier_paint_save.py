@@ -251,9 +251,17 @@ def paint(item,index):
         raise RuntimeError('unpainted region '+reg)
     return t,e
 
+# Shared cleanup also applies when this painter is embedded by derived units.
+import sys
+_texture_style_path = str(OUT.parents[3] / 'tools/art_pipeline')
+if _texture_style_path not in sys.path: sys.path.insert(0, _texture_style_path)
+from human_texture_style import repair_surface
 pixels=([c/255 for c in GAMB[0]]+[1])*(SIZE*SIZE); energy=[0,0,0,1]*(SIZE*SIZE)
 for index,it in enumerate(islands):
-    t,e=paint(it,index); w,h=it['w'],it['h']; ox,oy=it['x'],it['y']
+    t,e=paint(it,index)
+    if globals().get('A', {}).get('family') != 'siege':
+        t=repair_surface(t,it['obj']['region'],globals())
+    w,h=it['w'],it['h']; ox,oy=it['x'],it['y']
     for y in range(-PAD,h+PAD):
         for x in range(-PAD,w+PAD):
             xx=max(0,min(w-1,x)); yy=h-1-max(0,min(h-1,y)); k=((oy+y)*SIZE+ox+x)*4

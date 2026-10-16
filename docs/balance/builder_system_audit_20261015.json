@@ -1,0 +1,113 @@
+{
+	"after_research_without_workshop": {
+		"category": "units",
+		"id": "v2_unit_builder",
+		"mana_cost": 0.0,
+		"meta": "16 PP · ≈4 turnos",
+		"name": "Construtor",
+		"pp": 16.0,
+		"reason": "Requer construir: Oficina",
+		"state": "blocked",
+		"subgroup": "Civis",
+		"supply": 0,
+		"tooltip": "Construtor\n· Custo: 16 PP\n· Tempo estimado: ≈4 turnos\n▲ Requer construir: Oficina",
+		"upkeep": 0.0
+	},
+	"before_research": {},
+	"can_basic_attack": true,
+	"city_center_eligibility_reason": "",
+	"city_production_breakdown": {
+		"base": 5.0,
+		"building_name": "Oficina",
+		"building_total": 2.0,
+		"copies": 1,
+		"deficit_discounted": false,
+		"difficulty_multiplier": 1.0,
+		"improvement_total": 2.0,
+		"per_copy": 2.0,
+		"pre_racial_total": 9.0,
+		"racial_bonus": 0.0,
+		"racial_multiplier": 1.0,
+		"total": 9.0
+	},
+	"improvement_action": {
+		"action_arg": "",
+		"action_kind": "improve_resource",
+		"blocked_reason": "",
+		"category": 6,
+		"cooldown_current": 0,
+		"cooldown_max": 0,
+		"cost_text": "1 carga",
+		"display_name": "Construir Mina de Ferro",
+		"id": "improve_resource",
+		"is_passive": false,
+		"range": 0,
+		"state": 0,
+		"target_type": ""
+	},
+	"improvement_model_children": 1,
+	"improvement_succeeded": true,
+	"initial_charges_human_tier_one": 2,
+	"lair_eligibility_reason": "",
+	"mode": "Headless read-only code audit with isolated synthetic game state; no production files changed",
+	"model_assets": {
+		"gems": {
+			"exists": false,
+			"path": "res://assets/models/kaykit/buildings/building_tower_A_blue.gltf"
+		},
+		"horses": {
+			"exists": false,
+			"path": "res://assets/models/kaykit/buildings/building_market_blue.gltf"
+		},
+		"iron": {
+			"exists": false,
+			"path": "res://assets/models/kaykit/buildings/building_blacksmith_blue.gltf"
+		},
+		"mana_node": {
+			"exists": false,
+			"path": "res://assets/models/kaykit/buildings/building_tower_B_blue.gltf"
+		},
+		"silk": {
+			"exists": false,
+			"path": "res://assets/models/kaykit/buildings/building_windmill_blue.gltf"
+		}
+	},
+	"pending_site_eligibility_reason": "",
+	"production_after": 9.0,
+	"production_before": 7.0,
+	"racial_builder_assets": {
+		"dwarf": {
+			"exists": true,
+			"path": "res://assets/generated/dwarves/dwarf_builder_v1/dwarf_builder_v1.glb"
+		},
+		"elf": {
+			"exists": true,
+			"path": "res://assets/generated/elves/elf_builder_v1/elf_builder_v1.glb"
+		},
+		"human": {
+			"exists": true,
+			"path": "res://assets/generated/humans/human_builder_v1/human_builder_v1.glb"
+		},
+		"orc": {
+			"exists": true,
+			"path": "res://assets/generated/orcs/orc_builder_v1/orc_builder_v1.glb"
+		}
+	},
+	"remaining_charges": 1,
+	"remaining_movement": 0.0,
+	"unit_model": "res://assets/generated/humans/human_builder_v1/human_builder_v1.glb",
+	"with_workshop": {
+		"category": "units",
+		"id": "v2_unit_builder",
+		"mana_cost": 0.0,
+		"meta": "16 PP · ≈3 turnos",
+		"name": "Construtor",
+		"pp": 16.0,
+		"reason": "",
+		"state": "available",
+		"subgroup": "Civis",
+		"supply": 0,
+		"tooltip": "Construtor\n· Custo: 16 PP\n· Tempo estimado: ≈3 turnos",
+		"upkeep": 0.0
+	}
+}

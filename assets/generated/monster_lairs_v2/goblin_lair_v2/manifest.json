@@ -1,0 +1,58 @@
+{
+  "kind": "goblin",
+  "tier": "Básico",
+  "name": "Acampamento de saqueadores",
+  "concept": "Tenda remendada, paliçada irregular, saque e fogueira apagada.",
+  "stem": "goblin_lair_v2",
+  "method": "Live Blender MCP localhost:9876",
+  "editable_parts": 74,
+  "vertices": 596,
+  "triangles": 896,
+  "materials": 1,
+  "draw_calls": 1,
+  "atlas": [
+    1024,
+    1024
+  ],
+  "pixels_per_meter": 64,
+  "measured_uv_density_range": [
+    63.998119735606366,
+    64.00157890115922
+  ],
+  "filter": "nearest",
+  "footprint_radius": 0.78,
+  "height": 0.650352418422699,
+  "ground_min": 0.0,
+  "source_bounds_xyz": [
+    [
+      -0.5999369025230408,
+      -0.6275432705879211,
+      0.0
+    ],
+    [
+      0.5482851266860962,
+      0.5938944220542908,
+      0.650352418422699
+    ]
+  ],
+  "scale_multiplier": 1.0,
+  "forward": "-Y Blender / +Z glTF",
+  "pivot": [
+    0,
+    0,
+    0
+  ],
+  "nonmanifold_edges": 0,
+  "degenerate_faces": 0,
+  "animations": [],
+  "collision": false,
+  "game_source_changed": false,
+  "art_scale": 0.29680922522975084,
+  "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+  "isolated_by_gdignore": true,
+  "previews": [
+    "three_quarter",
+    "game_top",
+    "back"
+  ]
+}

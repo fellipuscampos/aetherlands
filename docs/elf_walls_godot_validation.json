@@ -1,0 +1,34 @@
+{
+  "levels": [
+    {
+      "height": 0.237000003457069,
+      "level": 1,
+      "maximum_half_plane": 0.853035084099545,
+      "minimum_city_clearance": 0.0406024889534595,
+      "model": "res://assets/generated/elves/buildings/elf_walls_level_1_hex_v1/elf_walls_level_1_hex_v1.glb",
+      "tile_radius": 1.0,
+      "triangles": 1834
+    },
+    {
+      "height": 0.333000004291534,
+      "level": 2,
+      "maximum_half_plane": 0.853035084141791,
+      "minimum_city_clearance": 0.0406024889534595,
+      "model": "res://assets/generated/elves/buildings/elf_walls_level_2_hex_v1/elf_walls_level_2_hex_v1.glb",
+      "tile_radius": 1.0,
+      "triangles": 3924
+    },
+    {
+      "height": 0.393999993801117,
+      "level": 3,
+      "maximum_half_plane": 0.853035077940991,
+      "minimum_city_clearance": 0.0406024889534595,
+      "model": "res://assets/generated/elves/buildings/elf_walls_level_3_hex_v1/elf_walls_level_3_hex_v1.glb",
+      "tile_radius": 1.0,
+      "triangles": 5266
+    }
+  ],
+  "native_city_integration": true,
+  "race": "elf",
+  "status": "PASS"
+}

@@ -1,0 +1,148 @@
+{
+  "name": "Dwarf_Rogue_Guild_Hex_V1",
+  "display_name": "Guilda dos Ladinos dos Anões",
+  "gameplay_building_id": "v2_building_rogue_guild",
+  "trains": [
+    "v2_unit_rogue",
+    "v2_unit_saboteur",
+    "v2_unit_assassin"
+  ],
+  "excludes": [
+    "v2_legendary_shadow_master"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 3180,
+  "editable_parts": 231,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      0.8730959892272949
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    0.8730959892272949
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units; pointy-top tile radius 1, military foundation radius .92; placement scale tile_radius. Asset only, no integration.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1488,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Engenharia de granito com pilares engrossados, sapatas escalonadas e cintas de cobre; coberturas de ardósia escura com cantos chanfrados. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.204,
+    0.283
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "dwarf",
+  "unit_class": "rogue",
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "layout_source": "orc_rogue_guild_hex_v1",
+  "hex_tile": {
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "placement_scale": "tile_radius",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "faction_tint": "Clan cloth and shield/horse blanket accents isolated in Faction mesh; architecture keeps its civilization palette. No runtime integration.",
+  "export": {
+    "file": "dwarf_rogue_guild_hex_v1.glb",
+    "bytes": 1047644,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 3180,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "dwarf_rogue_guild_hex_v1_emission",
+        "bytes": 79233,
+        "sha256": "fc980333d86e6a3cb3114d25fbd90f9985fea08f2608955290bcec021c9e3011"
+      },
+      {
+        "image": "dwarf_rogue_guild_hex_v1_albedo",
+        "bytes": 744120,
+        "sha256": "27c0ec21c8c76786cd7bd6703c742600da28ccc5c64a183722412a194e0eefb8"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "dwarf",
+    "design": "Engenharia de granito com pilares engrossados, sapatas escalonadas e cintas de cobre; coberturas de ardósia escura com cantos chanfrados.",
+    "geometry_changes": [
+      "granite:Hall_Front_Stud_-0.426",
+      "granite:Hall_Front_Stud_0.025",
+      "granite:Entry_Lintel",
+      "granite:Heavy_Dark_Ridge",
+      "roof_geometry:Dark_Hide_Hood_Roof_0",
+      "roof_geometry:Dark_Hide_Hood_Roof_1",
+      "roof_geometry:Dark_Hide_Hood_Roof_2",
+      "roof_geometry:Dark_Hide_Hood_Roof_3",
+      "roof_geometry:Dark_Hide_Hood_Roof_4",
+      "roof_geometry:Dark_Hide_Hood_Roof_5",
+      "roof_geometry:Annex_Lean_Roof_0",
+      "roof_geometry:Annex_Lean_Roof_1",
+      "roof_geometry:Annex_Lean_Roof_2",
+      "roof_geometry:Annex_Lean_Roof_3",
+      "granite_pier:Hall_Corner_Post_0",
+      "granite_pier:Hall_Corner_Post_1",
+      "granite_pier:Hall_Corner_Post_2",
+      "granite_pier:Hall_Corner_Post_3",
+      "granite_pier:Hall_Corner_Post_4",
+      "granite_pier:Annex_Post_0",
+      "granite_pier:Annex_Post_1",
+      "granite_pier:Annex_Post_2",
+      "granite_pier:Annex_Post_3",
+      "granite_pier:Annex_Post_4",
+      "granite_pier:Awning_Post_0.181",
+      "granite_pier:Awning_Post_0.607",
+      "upper_structure_proportion:0.62",
+      "civilization_roof:Charcoal_Cloth_Awning_0",
+      "civilization_roof:Charcoal_Cloth_Awning_1",
+      "civilization_roof:Charcoal_Cloth_Awning_2"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

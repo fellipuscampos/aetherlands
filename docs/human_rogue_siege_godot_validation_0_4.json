@@ -1,0 +1,134 @@
+{
+	"assets": [
+		{
+			"asset": "rogue_v1",
+			"bones": 16,
+			"clips": {
+				"Rogue_Attack": {
+					"loop": false,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"Rogue_Idle": {
+					"loop": true,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Rogue_SneakAttack": {
+					"loop": false,
+					"samples": 57,
+					"seconds": 2.33333325386047
+				},
+				"Rogue_Walk": {
+					"loop": true,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"ground_y": 0.0,
+			"height_m": 1.79999995231628
+		},
+		{
+			"asset": "saboteur_v1",
+			"bones": 16,
+			"clips": {
+				"Saboteur_Attack": {
+					"loop": false,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"Saboteur_Dismantle": {
+					"loop": false,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Saboteur_Idle": {
+					"loop": true,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Saboteur_SneakAttack": {
+					"loop": false,
+					"samples": 57,
+					"seconds": 2.33333325386047
+				},
+				"Saboteur_Walk": {
+					"loop": true,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"ground_y": 0.0,
+			"height_m": 1.79999995231628
+		},
+		{
+			"asset": "assassin_v1",
+			"bones": 16,
+			"clips": {
+				"Assassin_Attack": {
+					"loop": false,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"Assassin_Dismantle": {
+					"loop": false,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Assassin_Idle": {
+					"loop": true,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Assassin_SneakAttack": {
+					"loop": false,
+					"samples": 57,
+					"seconds": 2.33333325386047
+				},
+				"Assassin_Walk": {
+					"loop": true,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"ground_y": 0.0,
+			"height_m": 1.79999995231628
+		},
+		{
+			"asset": "shadow_master_v1",
+			"bones": 16,
+			"clips": {
+				"ShadowMaster_Attack": {
+					"loop": false,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"ShadowMaster_Dismantle": {
+					"loop": false,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"ShadowMaster_Idle": {
+					"loop": true,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"ShadowMaster_SneakAttack": {
+					"loop": false,
+					"samples": 57,
+					"seconds": 2.33333325386047
+				},
+				"ShadowMaster_Walk": {
+					"loop": true,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"ground_y": 0.0,
+			"height_m": 2.0
+		}
+	],
+	"problems": [],
+	"status": "PASS",
+	"verified": 4
+}

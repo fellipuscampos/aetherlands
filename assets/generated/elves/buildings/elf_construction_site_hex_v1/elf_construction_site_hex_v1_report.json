@@ -1,0 +1,144 @@
+{
+  "stem": "elf_construction_site_hex_v1",
+  "race": "elf",
+  "revision": 3,
+  "style": "Generic blocky elven construction with loose building blocks, rough bark-covered timber, emerald roofing stock and gold leaf ornaments; woodwork loops, original elf faces and ears, no specific building or ground plate",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "workers": 3,
+  "jobs": [
+    "timber_mortise_mallet_and_chisel",
+    "timber_sawing",
+    "timber_hand_planing"
+  ],
+  "geometry": {
+    "editable_parts": 347,
+    "triangles": 4164,
+    "closed_solids": true,
+    "flat_shading": true,
+    "all_content_cuboids": true,
+    "hex_radius": 1.0,
+    "footprint_radius": 0.9,
+    "ground_plate": false,
+    "ground_workers_feet_z": 0.0,
+    "specific_architecture": false,
+    "hex_corner_angle_degrees": -30,
+    "hex_orientation": "pointy-top virtual footprint; matches HexMetrics.corner",
+    "max_hex_half_plane": 0.7406129596185461,
+    "max_content_half_plane": 0.7406129596185461,
+    "footprint_margin": 0.03880990378744864,
+    "limiting_part": "Scaffold_foot",
+    "minimum_ground_z": -5.595167662519884e-10
+  },
+  "building_materials": {
+    "reference": "tools/art_pipeline/elf_city_level_1_hex_v1_model.py",
+    "structure": "timber_and_loose_blocks",
+    "timber": [
+      113,
+      91,
+      55
+    ],
+    "raw_timber_logs": 3,
+    "stone": [
+      137,
+      158,
+      131
+    ],
+    "cutstone": [
+      209,
+      215,
+      183
+    ],
+    "loose_building_blocks": 6,
+    "gold": [
+      206,
+      181,
+      112
+    ],
+    "roof": [
+      48,
+      122,
+      88
+    ],
+    "roof_dark": [
+      30,
+      81,
+      66
+    ],
+    "loose_green_roof_slates": 10,
+    "loose_gold_leaf_ornaments": 3,
+    "raw_timber_continuous_bark": true
+  },
+  "elf_style": {
+    "reference": "assets/generated/elves/elf_settler_v1/elf_settler_v1.blend",
+    "head_original_geometry": true,
+    "head_scale": 0.24,
+    "head_max_vertex_error": 0.0,
+    "original_face_pixels": true,
+    "original_ear_parts_per_worker": 6,
+    "facial_detail_meshes": 0,
+    "fixed_body_original_proportions": true,
+    "static_shoulder_blocks": 0,
+    "animated_shoulder_height": 0.334,
+    "shoulder_sleeve_cap_extension": 0.012,
+    "forearm_lengths": {
+      "Joiner": {
+        "L": 0.08090872487439231,
+        "R": 0.08090872415496853
+      },
+      "Carpenter": {
+        "L": 0.07995129281707918,
+        "R": 0.07995129281707918
+      },
+      "Woodworker": {
+        "L": 0.07995129281707918,
+        "R": 0.07995129281707918
+      }
+    }
+  },
+  "animation": {
+    "clip": "construction",
+    "seconds": 6.0,
+    "fps": 30,
+    "frames": 181,
+    "loop_error": 0.0,
+    "max_joint_error": 1.1151007970493857e-07,
+    "feet_stationary": true,
+    "root_motion": false,
+    "stable_elbow_planes": true,
+    "axial_twist_error": 6.990986714809066e-07,
+    "min_elbow_bend_degrees": 38.52524146625546,
+    "max_elbow_bend_degrees": 111.12244447501264,
+    "max_arm_rotation_step_degrees": 1.6989950418886854,
+    "min_hand_center_gap": 0.08271925256063144
+  },
+  "export": {
+    "bytes": 519788,
+    "meshes": 2,
+    "materials": 1,
+    "skins": 1,
+    "bones": 25,
+    "embedded_images": 1,
+    "cameras": 0,
+    "lights": 0
+  },
+  "status": "PASS",
+  "contacts": {
+    "status": "PASS",
+    "pose_samples": 61,
+    "hammer_chisel_contact_error": 0.0,
+    "hammer_handle_min_timber_clearance": 0.07250002026557922,
+    "hammer_grip_min_side_clearance": 0.010223418474197388,
+    "hammer_head_vertical_arc": 0.1272895336151123,
+    "saw_handle_min_clearance": 0.023625999689102173,
+    "peg_tray_min_foot_clearance": 0.26712972670793533,
+    "handplane_contact_error": 0.0,
+    "saw_support_hand_contact_error": 0.0004999786615371704,
+    "generic_timberwork": true,
+    "loose_building_blocks": 6,
+    "raw_timber_logs": 3,
+    "no_built_masonry": true,
+    "original_ear_parts": 18,
+    "ground_workers_feet_z": 0.0,
+    "stable_elbow_planes": true
+  }
+}

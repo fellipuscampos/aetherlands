@@ -1,0 +1,26 @@
+{
+  "asset": "silk_mulberry_v1",
+  "resource": "silk",
+  "method": "live Blender MCP",
+  "vertices": 272,
+  "triangles": 464,
+  "cocoons": 7,
+  "foliage_clusters": 6,
+  "footprint_radius": 0.39596086859067897,
+  "height": 0.68,
+  "materials": 1,
+  "texture_size": [
+    256,
+    256
+  ],
+  "texture_filter": "nearest",
+  "style": "cuboid foliage and stepped silk capsules",
+  "closed_components": true,
+  "previous_scenes": [
+    "Arcane_Node_Resource_V1",
+    "Crystal_Resource_V1",
+    "Crystal_Resource_V1_Blocky",
+    "Iron_Resource_V1",
+    "Scene"
+  ]
+}

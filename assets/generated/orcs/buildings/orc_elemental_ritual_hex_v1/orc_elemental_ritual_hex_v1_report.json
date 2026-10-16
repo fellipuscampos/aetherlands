@@ -1,0 +1,129 @@
+{
+  "name": "Orc_Elemental_Ritual_Hex_V1",
+  "display_name": "Nexus dos Elementos — Orcs",
+  "gameplay_building_id": "v2_building_elemental_ritual",
+  "trains": [
+    "v2_manifestation_elemental_primordial"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1580,
+  "editable_parts": 123,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.3320597410202026
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.3320597410202026
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 789,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Estrutura de madeira grossa, postes cintados com ferro e contraventamentos diagonais; coberturas ferrugem, pedra escura na fundação e presas do clã. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "orc",
+  "magic_school": "elementalism",
+  "grand_magic": true,
+  "asset_only": true,
+  "requires_building": "v2_building_elemental_observatory",
+  "includes_perimeter_walls": false,
+  "school_building_separate": true,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "craft": {
+    "race_details": "Madeira pesada, ferro escuro, rebites, travamentos de clã e presas.",
+    "material_reference": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1",
+    "roof_rgb": [
+      130,
+      58,
+      39
+    ],
+    "physical_attachment_remaining": [],
+    "intentional_levitation": [
+      "Primordial_Core"
+    ],
+    "relic_source": null
+  },
+  "export": {
+    "file": "orc_elemental_ritual_hex_v1.glb",
+    "bytes": 655792,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1580,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "orc_elemental_ritual_hex_v1_emission",
+        "bytes": 22712,
+        "sha256": "7e27d56ffa4aeb297e19f696d3169d1040bc0b043ab60041e96d397b1f38d0e0"
+      },
+      {
+        "image": "orc_elemental_ritual_hex_v1_albedo",
+        "bytes": 514355,
+        "sha256": "276a878e8f9a4e2b41d060e3bc2dbfbd949cafe993135f509608120e3e545994"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "orc",
+    "design": "Estrutura de madeira grossa, postes cintados com ferro e contraventamentos diagonais; coberturas ferrugem, pedra escura na fundação e presas do clã.",
+    "geometry_changes": [
+      "upper_structure_proportion:0.86"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

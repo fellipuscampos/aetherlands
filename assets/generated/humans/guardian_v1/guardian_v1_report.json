@@ -1,6 +1,6 @@
 {
   "name": "Guardian_V1",
-  "kind": "v2_unit_guardian (Guardi\u00e3o)",
+  "kind": "v2_unit_guardian (Guardião)",
   "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/guardian_*.py)",
   "height_m": 1.7999999523162842,
   "front_y_m": -0.5338609218597412,
@@ -29,7 +29,15 @@
     "density_px_per_meter": 64,
     "measured_min": 63.99978065464876,
     "measured_max": 64.00027512464756,
-    "padding": 2
+    "padding": 2,
+    "cleanup": {
+      "version": "human_texture_cleanup_v1",
+      "changed_pixels": 22160,
+      "geometry_uv_skinning_animations_preserved": true,
+      "embedded_albedo_matches_png": true,
+      "editable_source_packed_albedo_matches_png": true,
+      "emission_unchanged": true
+    }
   },
   "rig": {
     "bones": [
@@ -163,7 +171,7 @@
     "UpperArm_l": "upper_arm_l",
     "UpperArm_r": "upper_arm_r"
   },
-  "notes": "Static Guardian V1 (Guardi\u00e3o), the Squire evolved; 1.80 m, one block per body part, same joints as the Squire. Shield + grip follow hand_l; helm follows head.",
+  "notes": "Static Guardian V1 (Guardião), the Squire evolved; 1.80 m, one block per body part, same joints as the Squire. Shield + grip follow hand_l; helm follows head.",
   "animation_validation": {
     "problems": [],
     "ik": {},

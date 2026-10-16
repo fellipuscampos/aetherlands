@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://assets/generated/nature/temperate_forest_v1/godot/tree_pine_young.res" id="1_e8xvg"]
+
+[node name="tree_pine_young" type="Node3D" unique_id=815503046]
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=210061930]
+mesh = ExtResource("1_e8xvg")

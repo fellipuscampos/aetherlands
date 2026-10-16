@@ -1,0 +1,173 @@
+{
+  "status": "PASS",
+  "verified": 20,
+  "unique_layouts_per_role": {
+    "market": 4,
+    "farm": 4,
+    "workshop": 4,
+    "university": 4,
+    "arcane_shrine": 4
+  },
+  "assets": [
+    {
+      "asset": "market_hex_v1",
+      "civilization": "human",
+      "role": "market",
+      "triangles": 1172,
+      "geometry_sha256": "57a51b7cc50afe09a9e79e7cf12ae2c52790aed52e5b5320b6f9056fde97d4ae",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "elf_market_hex_v1",
+      "civilization": "elf",
+      "role": "market",
+      "triangles": 1548,
+      "geometry_sha256": "cb8b4d138ff5797b2274ee185962f870f058d3a42c05dd00ce0679f9301ce36f",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "dwarf_market_hex_v1",
+      "civilization": "dwarf",
+      "role": "market",
+      "triangles": 1120,
+      "geometry_sha256": "f253fef1c57d0212b009a33828e408e42a140f30c923f8aef2088b34978edf7e",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "orc_market_hex_v1",
+      "civilization": "orc",
+      "role": "market",
+      "triangles": 1588,
+      "geometry_sha256": "85bc60a031403a71fa2809d25071851c5355f5296664937313d00964bc84eaed",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "farm_hex_v1",
+      "civilization": "human",
+      "role": "farm",
+      "triangles": 1760,
+      "geometry_sha256": "fe4ba766c10998b1a4ccbfb2d5f2389361145bc7f2341a8362f3188679a5181d",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "elf_farm_hex_v1",
+      "civilization": "elf",
+      "role": "farm",
+      "triangles": 1924,
+      "geometry_sha256": "702ddf9f1f63a5107b43e5f80b472c05555c6080099729e766506b1b38fdbba1",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "dwarf_farm_hex_v1",
+      "civilization": "dwarf",
+      "role": "farm",
+      "triangles": 2040,
+      "geometry_sha256": "33330dc6de5196d229b9cfcf0da5050c6934a5a09af418c81126dcfa569abd79",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "orc_farm_hex_v1",
+      "civilization": "orc",
+      "role": "farm",
+      "triangles": 1952,
+      "geometry_sha256": "8a593a4c69a399985e1ded245e005544fb999b4a2c9b2fd1852f9eb8d89153c6",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "workshop_hex_v1",
+      "civilization": "human",
+      "role": "workshop",
+      "triangles": 988,
+      "geometry_sha256": "f31c4d03de45d61acca8308042e8bbcd68b19b95c184cdab060f7064f25249d0",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "elf_workshop_hex_v1",
+      "civilization": "elf",
+      "role": "workshop",
+      "triangles": 928,
+      "geometry_sha256": "3c065e80989dee465b53aae5a9caf43dfab3f1ff353ba0a63c97a75fd8878334",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "dwarf_workshop_hex_v1",
+      "civilization": "dwarf",
+      "role": "workshop",
+      "triangles": 1268,
+      "geometry_sha256": "51a8a2e49447ebde12963e8b2f83d2a187765414baf4b3f81f34908954db70ad",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "orc_workshop_hex_v1",
+      "civilization": "orc",
+      "role": "workshop",
+      "triangles": 1032,
+      "geometry_sha256": "8cff3692d755b1be569c62cb965be900d315f93be24ea3f76ab1e5f6052b3d82",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "university_hex_v1",
+      "civilization": "human",
+      "role": "university",
+      "triangles": 1376,
+      "geometry_sha256": "42b6554286628f747deadaad80333fdad632d31816c1a6f035b8863b115257c2",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "elf_university_hex_v1",
+      "civilization": "elf",
+      "role": "university",
+      "triangles": 1480,
+      "geometry_sha256": "feebbaca4344583f633e01235170f2b45d70544df43fe5c264cd90a992d008a7",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "dwarf_university_hex_v1",
+      "civilization": "dwarf",
+      "role": "university",
+      "triangles": 1436,
+      "geometry_sha256": "faf7e747eb61fba50e679bd812a215b8056b7d1091249a4298693d644b5ad706",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "orc_university_hex_v1",
+      "civilization": "orc",
+      "role": "university",
+      "triangles": 1756,
+      "geometry_sha256": "e7ce61edaf024acd69f9f13932b64d43b73a2f4969a3a0e7686751653b97567b",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "arcane_shrine_hex_v1",
+      "civilization": "human",
+      "role": "arcane_shrine",
+      "triangles": 738,
+      "geometry_sha256": "86a74b0260c1a86fadddd85f7f6a103c60b6ee16e57e3e19025e67aaca57907e",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "elf_arcane_shrine_hex_v1",
+      "civilization": "elf",
+      "role": "arcane_shrine",
+      "triangles": 906,
+      "geometry_sha256": "89be00f619081ef4931607da03f8a3867ac230d07afaa635ce0214c8ce3b7bcd",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "dwarf_arcane_shrine_hex_v1",
+      "civilization": "dwarf",
+      "role": "arcane_shrine",
+      "triangles": 1170,
+      "geometry_sha256": "00dd24f7d7cfb5b3d1776fa26f19ce92c41ed64ac2e992383280692e297f72d0",
+      "tile_margin": 0.06928201084010255
+    },
+    {
+      "asset": "orc_arcane_shrine_hex_v1",
+      "civilization": "orc",
+      "role": "arcane_shrine",
+      "triangles": 1122,
+      "geometry_sha256": "566979319b2188b4b0e6e3775e5b5908bffbdf68243fb286df90fd9f7a18ae20",
+      "tile_margin": 0.06928201084010255
+    }
+  ]
+}

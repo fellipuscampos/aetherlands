@@ -1,0 +1,54 @@
+{
+  "status": "PASS",
+  "models": [
+    {
+      "stem": "orc_catapult_v1",
+      "approved_structure_preserved": true,
+      "dimensions_preserved": true,
+      "palette_preserved": true,
+      "horn_parts": [
+        "FrontHorn_-1",
+        "FrontHorn_1"
+      ],
+      "clips": 4
+    },
+    {
+      "stem": "orc_trebuchet_v1",
+      "approved_structure_preserved": true,
+      "dimensions_preserved": true,
+      "palette_preserved": true,
+      "horn_parts": [
+        "FrontHorn_-1",
+        "FrontHorn_1"
+      ],
+      "clips": 5
+    },
+    {
+      "stem": "orc_bombard_v1",
+      "approved_structure_preserved": true,
+      "dimensions_preserved": true,
+      "palette_preserved": true,
+      "horn_parts": [
+        "MuzzleGuardTusk_-1",
+        "MuzzleGuardTusk_1"
+      ],
+      "clips": 5
+    },
+    {
+      "stem": "orc_siege_colossus_v1",
+      "approved_structure_preserved": true,
+      "dimensions_preserved": true,
+      "palette_preserved": true,
+      "horn_parts": [
+        "SiegeHorn_-1",
+        "SiegeHorn_1"
+      ],
+      "clips": 5
+    }
+  ],
+  "colossus_design": "six_wheel_twin_heavy_bombard",
+  "skull_removed": true,
+  "bone_plates_removed": true,
+  "animated": true,
+  "clips": 19
+}

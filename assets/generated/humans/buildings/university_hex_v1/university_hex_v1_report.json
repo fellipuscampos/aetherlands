@@ -1,0 +1,155 @@
+{
+  "name": "Human_University_Hex_V1",
+  "display_name": "Universidade",
+  "gameplay_building_id": "v2_building_academy",
+  "trains": [],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1376,
+  "editable_parts": 108,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.2400000095367432
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.2400000095367432
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Escala nativa 1:1 do mapa; tile pointy-top de raio 1; multiplicador 1.0.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 668,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Alvenaria de blocos de pedra, cantaria nos pilares e bases, telhados de ardósia azul. Madeira nos móveis, portas e mecanismos. Universidade de infraestrutura, uma única versão sem evolução. Revisão: Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores. Junções ajustadas para eliminar faces coplanares expostas.",
+  "door_clearance_m": [
+    0.2,
+    0.32
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "human",
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "infrastructure": {
+    "branch": "academy",
+    "single_version": true,
+    "evolutions": [],
+    "blender_mcp_only": true,
+    "architecture": "Alvenaria de blocos de pedra, cantaria nos pilares e bases, telhados de ardósia azul. Madeira nos móveis, portas e mecanismos.",
+    "recipe": "human_university"
+  },
+  "hex_tile": {
+    "circumradius": 1.0,
+    "source_base_radius": 0.92,
+    "max_half_plane_blender": 0.796743392944336,
+    "minimum_margin": 0.06928201084010255
+  },
+  "surface_overlap_review": {
+    "version": 1,
+    "mcp_only": true,
+    "exposed_coplanar_overlap_faces": 0,
+    "repaired_parts": {
+      "Library_Window_-0.41_Edge_-1": {
+        "reason": "butt_join_window_rails",
+        "sha256": "004664f9db990f6194ee25449ecad7785afcbdec715446babd4879404261e3bd"
+      },
+      "Library_Window_-0.41_Edge_1": {
+        "reason": "butt_join_window_rails",
+        "sha256": "9dd2e0e9fb6c438979173374032209edd3bb28d67d769fd58cb4aa98c4ad6363"
+      },
+      "Library_Window_-0.03_Edge_-1": {
+        "reason": "butt_join_window_rails",
+        "sha256": "ddf3f9751b28376944680f76db7ad937022d03a19c167a70fbd133f5a64f4ad3"
+      },
+      "Library_Window_-0.03_Edge_1": {
+        "reason": "butt_join_window_rails",
+        "sha256": "35b4a18800fbf8dbc0585ba40be422cff010fec652fd71ddc38686a8ead7704e"
+      },
+      "Tower_Window_Edge_-1": {
+        "reason": "butt_join_window_rails",
+        "sha256": "2a63d7b71b81c7669e30644d0858e2211099447bd86fd737102c3638cdfc0d46"
+      },
+      "Tower_Window_Edge_1": {
+        "reason": "butt_join_window_rails",
+        "sha256": "6c8764c62ddf485a87564278a9093039ec2556cbb47997098e032a40ea766815"
+      },
+      "College_Bench_Back": {
+        "reason": "recess_bench_back_sides",
+        "sha256": "8031a6e5954facacc797d420595f772e79ca332def479a20731faaf0d77b33a4"
+      }
+    },
+    "method": "Native Blender MCP; triangle clipping on matching outward planes, visible area checked against a BVH of all game meshes",
+    "before_overlap_faces": 14
+  },
+  "infrastructure_roof_review": {
+    "version": 1,
+    "mcp_only": true,
+    "roofs": [
+      {
+        "roof": "Stone_Library",
+        "shape": "straight_gable",
+        "courses": 6,
+        "base_height": 0.6859999999999999
+      }
+    ],
+    "support_contacts": [],
+    "note": "Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores.",
+    "before_backup": "art_source/infrastructure_before_roof_review"
+  },
+  "export": {
+    "file": "university_hex_v1.glb",
+    "bytes": 642940,
+    "meshes": 7,
+    "primitives": 7,
+    "triangles": 1376,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "university_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "university_hex_v1_albedo",
+        "bytes": 520140,
+        "sha256": "8a2478c486db1774d9b6cc6a05b63c4b75db66adf09e80f24bd80c2abe38824b"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

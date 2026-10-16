@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "left_hand_empty": true,
+  "upright_hammer": true,
+  "striking_face_forward": true,
+  "settler_source_unchanged": true,
+  "shaft_tilt_degrees": 0.2007689357290851,
+  "striking_face_angle_degrees": 0.1988101655906956,
+  "copied_geometry_preserved": true,
+  "original_pixels_preserved": true,
+  "dwarf_face_beard_cap_preserved": true,
+  "hinged_arm_hierarchy": true
+}

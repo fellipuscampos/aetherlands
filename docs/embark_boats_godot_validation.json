@@ -1,0 +1,106 @@
+{
+  "assets": [
+    {
+      "clips": [
+        {
+          "clip": "idle",
+          "duration": 4.0,
+          "flat_water": true,
+          "heave_native": -0.0273147914558649,
+          "in_place": true,
+          "loop": true
+        },
+        {
+          "clip": "walk",
+          "duration": 2.0,
+          "flat_water": true,
+          "heave_native": -0.0692351683974266,
+          "in_place": true,
+          "loop": true
+        }
+      ],
+      "map_scale": 0.52,
+      "meshes": 4,
+      "nearest": true,
+      "race": "human",
+      "waterline": true
+    },
+    {
+      "clips": [
+        {
+          "clip": "idle",
+          "duration": 4.0,
+          "flat_water": true,
+          "heave_native": -0.030715636909008,
+          "in_place": true,
+          "loop": true
+        },
+        {
+          "clip": "walk",
+          "duration": 2.0,
+          "flat_water": true,
+          "heave_native": -0.0761586800217628,
+          "in_place": true,
+          "loop": true
+        }
+      ],
+      "map_scale": 0.52,
+      "meshes": 5,
+      "nearest": true,
+      "race": "orc",
+      "waterline": true
+    },
+    {
+      "clips": [
+        {
+          "clip": "idle",
+          "duration": 4.0,
+          "flat_water": true,
+          "heave_native": -0.0232175718992949,
+          "in_place": true,
+          "loop": true
+        },
+        {
+          "clip": "walk",
+          "duration": 2.0,
+          "flat_water": true,
+          "heave_native": -0.0588498897850513,
+          "in_place": true,
+          "loop": true
+        }
+      ],
+      "map_scale": 0.52,
+      "meshes": 4,
+      "nearest": true,
+      "race": "elf",
+      "waterline": true
+    },
+    {
+      "clips": [
+        {
+          "clip": "idle",
+          "duration": 4.0,
+          "flat_water": true,
+          "heave_native": -0.0133948186412454,
+          "in_place": true,
+          "loop": true
+        },
+        {
+          "clip": "walk",
+          "duration": 2.0,
+          "flat_water": true,
+          "heave_native": -0.0346175841987133,
+          "in_place": true,
+          "loop": true
+        }
+      ],
+      "map_scale": 0.52,
+      "meshes": 5,
+      "nearest": true,
+      "race": "dwarf",
+      "waterline": true
+    }
+  ],
+  "problems": [],
+  "status": "PASS"
+}

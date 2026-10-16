@@ -1,0 +1,251 @@
+{
+  "name": "Bombard_V1",
+  "kind": "v2_unit_bombard",
+  "label": "Bombarda",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "height_m": 1.8,
+  "height_convention": "Body/rest geometry; animated equipment may exceed body height",
+  "triangles": 756,
+  "editable_parts": 34,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "density_px_per_meter": 64,
+    "filter": "NEAREST",
+    "padding": 2
+  },
+  "derivation": {
+    "predecessor": "trebuchet_v1",
+    "source_blend_sha256": "de58e50f7fa3ad60c68c92670d85834824c26b33bee76d76f6b91f1c368c9cef",
+    "copied_parts": [
+      "Chassis",
+      "Wheel_l_front",
+      "Hub_l_front",
+      "Wheel_l_back",
+      "Hub_l_back",
+      "ChassisRail_l",
+      "Wheel_r_front",
+      "Hub_r_front",
+      "Wheel_r_back",
+      "Hub_r_back",
+      "ChassisRail_r",
+      "AxleFront",
+      "AxleBack"
+    ],
+    "inherited_actions": []
+  },
+  "notes": "Human timber/iron/blue heraldry, autonomous mechanical rig without visible crew. Chassis copied from predecessor; mechanisms upgraded.",
+  "rig": {
+    "bones": [
+      "root",
+      "body",
+      "weapon",
+      "loader",
+      "wheel_l_front",
+      "wheel_l_back",
+      "wheel_r_front",
+      "wheel_r_back"
+    ],
+    "hierarchy": "Flat rigid mechanical rig: body, wheels, weapon, loading mechanism; hanging counterweight in trebuchet",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "Chassis": "body",
+      "Wheel_l_front": "wheel_l_front",
+      "Hub_l_front": "wheel_l_front",
+      "Wheel_l_back": "wheel_l_back",
+      "Hub_l_back": "wheel_l_back",
+      "ChassisRail_l": "body",
+      "Wheel_r_front": "wheel_r_front",
+      "Hub_r_front": "wheel_r_front",
+      "Wheel_r_back": "wheel_r_back",
+      "Hub_r_back": "wheel_r_back",
+      "ChassisRail_r": "body",
+      "AxleFront": "body",
+      "AxleBack": "body",
+      "HumanPennant": "body",
+      "PennantCrossbar": "body",
+      "PennantBracket": "body",
+      "GunCheek_l": "body",
+      "GunCheek_r": "body",
+      "Trunnion": "body",
+      "CannonTube": "weapon",
+      "BreechBand": "weapon",
+      "MuzzleBand": "weapon",
+      "BreechCap": "weapon",
+      "ElevationScrew": "body",
+      "PowderChest": "body",
+      "RearMast": "body",
+      "Standard": "body",
+      "LoadingCrank": "loader",
+      "Bearing_Front_l": "body",
+      "Bearing_Front_r": "body",
+      "Bearing_Back_l": "body",
+      "Bearing_Back_r": "body",
+      "LoadingSpindle": "loader",
+      "ElevationBase": "body"
+    }
+  },
+  "animations": {
+    "Bombard_Idle": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Mechanism at rest, slight taut-rope/crank tension",
+      "seconds": 2
+    },
+    "Bombard_Walk": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 58,
+      "description": "Wheels turn in place; return by a full revolution",
+      "seconds": 2
+    },
+    "Bombard_Attack": {
+      "start": 1,
+      "end": 49,
+      "loop": false,
+      "nla_start": 115,
+      "description": "Launch/recoil, mechanical recovery and reload",
+      "impact_frame": 27,
+      "seconds": 2
+    },
+    "Bombard_DemolitionAmmo": {
+      "start": 1,
+      "end": 73,
+      "loop": false,
+      "nla_start": 172,
+      "description": "Load heavy ammunition; amplified shot and recovery",
+      "impact_frame": 41,
+      "seconds": 3
+    },
+    "Bombard_PreparedBombardment": {
+      "start": 1,
+      "end": 97,
+      "loop": false,
+      "nla_start": 253,
+      "description": "Set elevation, wind/lock mechanism, deliberate heavy shot, recovery",
+      "impact_frame": 54,
+      "seconds": 4
+    }
+  },
+  "animation_validation": {
+    "problems": [],
+    "samples": {
+      "Bombard_Idle": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "7620f63039cfab147df9ef7f3039da64c07bce43b556b5f6e18d81f541f4fd8d"
+      },
+      "Bombard_Walk": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "bc4fabe4a53fafc5675209d550161e5831d38a8a492d8c62662609c1fbacdbc1"
+      },
+      "Bombard_Attack": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "f7d49eeab2ba542021d6a21ff8afb7f73d88931a402cf070277a2535112c9cc2"
+      },
+      "Bombard_DemolitionAmmo": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "cc89872a0e83910ccebd23e37551126b90bf79a10da965146fbe3dfb7a128e39"
+      },
+      "Bombard_PreparedBombardment": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "81398764ab35ed3bae29d05bac1f133a3e7686c80f97721fd77a2e5e02249188"
+      }
+    }
+  },
+  "glb": {
+    "file": "bombard_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 8,
+    "triangles": 756,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Bombard_Idle": 2,
+      "Bombard_Walk": 2,
+      "Bombard_Attack": 2,
+      "Bombard_DemolitionAmmo": 3,
+      "Bombard_PreparedBombardment": 4
+    },
+    "channels": "location, rotation on every bone"
+  },
+  "status": "Finished human Bombarda; rig, clips, nearest embedded textures and isolated editable source verified.",
+  "rig_bone_map": {
+    "Chassis": "body",
+    "Wheel_l_front": "wheel_l_front",
+    "Hub_l_front": "wheel_l_front",
+    "Wheel_l_back": "wheel_l_back",
+    "Hub_l_back": "wheel_l_back",
+    "ChassisRail_l": "body",
+    "Wheel_r_front": "wheel_r_front",
+    "Hub_r_front": "wheel_r_front",
+    "Wheel_r_back": "wheel_r_back",
+    "Hub_r_back": "wheel_r_back",
+    "ChassisRail_r": "body",
+    "AxleFront": "body",
+    "AxleBack": "body",
+    "HumanPennant": "body",
+    "PennantCrossbar": "body",
+    "PennantBracket": "body",
+    "GunCheek_l": "body",
+    "GunCheek_r": "body",
+    "Trunnion": "body",
+    "CannonTube": "weapon",
+    "BreechBand": "weapon",
+    "MuzzleBand": "weapon",
+    "BreechCap": "weapon",
+    "ElevationScrew": "body",
+    "PowderChest": "body",
+    "RearMast": "body",
+    "Standard": "body",
+    "LoadingCrank": "loader",
+    "Bearing_Front_l": "body",
+    "Bearing_Front_r": "body",
+    "Bearing_Back_l": "body",
+    "Bearing_Back_r": "body",
+    "LoadingSpindle": "loader",
+    "ElevationBase": "body"
+  },
+  "source_validation": {
+    "scenes": [
+      "Bombard_V1"
+    ],
+    "actions": [
+      "Bombard_Walk",
+      "Bombard_PreparedBombardment",
+      "Bombard_Idle",
+      "Bombard_DemolitionAmmo",
+      "Bombard_Attack"
+    ],
+    "armatures": [
+      "Bombard_V1_Skeleton"
+    ]
+  },
+  "geometry_validation": {
+    "asset": "bombard_v1",
+    "nonmanifold_edges": 0,
+    "unattached_parts_candidates": [],
+    "same_normal_coplanar_candidates": [],
+    "mast_weapon_collisions": [],
+    "intersecting_wheels": [],
+    "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+  }
+}

@@ -1,0 +1,357 @@
+{
+  "stem": "orc_bombard_v1",
+  "source_stem": "bombard_v1",
+  "family": "siege",
+  "family_name": "Cerco",
+  "tier": 2,
+  "name": "Bombarda Orc",
+  "gameplay_id": "v2_unit_bombard",
+  "character_height_m": 1.8,
+  "path": "res://assets/generated/orcs/orc_bombard_v1/orc_bombard_v1.glb",
+  "design": "heavy_iron_short_bombard",
+  "prefix": "Bombard",
+  "animated": true,
+  "status": "PASS",
+  "pipeline": "Open Blender MCP localhost:9876",
+  "revision": "orc_siege_animated_v3",
+  "geometry": {
+    "parts": 140,
+    "triangles": 3300,
+    "bounds_min": [
+      -1.0797526836395264,
+      -1.1463838815689087,
+      3.162568518177977e-08
+    ],
+    "bounds_max": [
+      1.0797526836395264,
+      1.007973313331604,
+      1.7999999523162842
+    ],
+    "dimensions": [
+      2.1595053672790527,
+      2.1543571949005127,
+      1.7999999523162842
+    ],
+    "closed_meshes": true,
+    "uv_in_bounds": true
+  },
+  "texture": {
+    "size": 1024,
+    "density_px_per_m": 64,
+    "padding_px": 3,
+    "face_islands": 1418,
+    "paint_revision": 7,
+    "sha256": "4f3aea5d6dd2597a49f6ae99ada0a7fda177fb0ece77e60847e2e33c1e286c6f"
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "body",
+      "wheel_l_front",
+      "wheel_r_front",
+      "wheel_l_back",
+      "wheel_r_back",
+      "weapon",
+      "loader"
+    ],
+    "rigid_weights": true,
+    "part_bones": {
+      "BedRail_-1": "body",
+      "IronRailEdge_-1": "body",
+      "BedRail_1": "body",
+      "IronRailEdge_1": "body",
+      "Axle_front": "body",
+      "CrossBeam_front": "body",
+      "Bearing_lfront": "body",
+      "WheelTimber_wheel_l_front": "wheel_l_front",
+      "WheelTyre_wheel_l_front": "wheel_l_front",
+      "WheelSeam_wheel_l_front-2": "wheel_l_front",
+      "WheelSeam_wheel_l_front-1": "wheel_l_front",
+      "WheelSeam_wheel_l_front0": "wheel_l_front",
+      "WheelSeam_wheel_l_front1": "wheel_l_front",
+      "WheelSeam_wheel_l_front2": "wheel_l_front",
+      "WheelIronBrace_wheel_l_front0": "wheel_l_front",
+      "WheelRivet_wheel_l_front0": "wheel_l_front",
+      "WheelIronBrace_wheel_l_front1": "wheel_l_front",
+      "WheelRivet_wheel_l_front1": "wheel_l_front",
+      "WheelIronBrace_wheel_l_front2": "wheel_l_front",
+      "WheelRivet_wheel_l_front2": "wheel_l_front",
+      "WheelIronBrace_wheel_l_front3": "wheel_l_front",
+      "WheelRivet_wheel_l_front3": "wheel_l_front",
+      "WheelHub_wheel_l_front": "wheel_l_front",
+      "WheelHubCap_wheel_l_front": "wheel_l_front",
+      "Bearing_rfront": "body",
+      "WheelTimber_wheel_r_front": "wheel_r_front",
+      "WheelTyre_wheel_r_front": "wheel_r_front",
+      "WheelSeam_wheel_r_front-2": "wheel_r_front",
+      "WheelSeam_wheel_r_front-1": "wheel_r_front",
+      "WheelSeam_wheel_r_front0": "wheel_r_front",
+      "WheelSeam_wheel_r_front1": "wheel_r_front",
+      "WheelSeam_wheel_r_front2": "wheel_r_front",
+      "WheelIronBrace_wheel_r_front0": "wheel_r_front",
+      "WheelRivet_wheel_r_front0": "wheel_r_front",
+      "WheelIronBrace_wheel_r_front1": "wheel_r_front",
+      "WheelRivet_wheel_r_front1": "wheel_r_front",
+      "WheelIronBrace_wheel_r_front2": "wheel_r_front",
+      "WheelRivet_wheel_r_front2": "wheel_r_front",
+      "WheelIronBrace_wheel_r_front3": "wheel_r_front",
+      "WheelRivet_wheel_r_front3": "wheel_r_front",
+      "WheelHub_wheel_r_front": "wheel_r_front",
+      "WheelHubCap_wheel_r_front": "wheel_r_front",
+      "Axle_back": "body",
+      "CrossBeam_back": "body",
+      "Bearing_lback": "body",
+      "WheelTimber_wheel_l_back": "wheel_l_back",
+      "WheelTyre_wheel_l_back": "wheel_l_back",
+      "WheelSeam_wheel_l_back-2": "wheel_l_back",
+      "WheelSeam_wheel_l_back-1": "wheel_l_back",
+      "WheelSeam_wheel_l_back0": "wheel_l_back",
+      "WheelSeam_wheel_l_back1": "wheel_l_back",
+      "WheelSeam_wheel_l_back2": "wheel_l_back",
+      "WheelIronBrace_wheel_l_back0": "wheel_l_back",
+      "WheelRivet_wheel_l_back0": "wheel_l_back",
+      "WheelIronBrace_wheel_l_back1": "wheel_l_back",
+      "WheelRivet_wheel_l_back1": "wheel_l_back",
+      "WheelIronBrace_wheel_l_back2": "wheel_l_back",
+      "WheelRivet_wheel_l_back2": "wheel_l_back",
+      "WheelIronBrace_wheel_l_back3": "wheel_l_back",
+      "WheelRivet_wheel_l_back3": "wheel_l_back",
+      "WheelHub_wheel_l_back": "wheel_l_back",
+      "WheelHubCap_wheel_l_back": "wheel_l_back",
+      "Bearing_rback": "body",
+      "WheelTimber_wheel_r_back": "wheel_r_back",
+      "WheelTyre_wheel_r_back": "wheel_r_back",
+      "WheelSeam_wheel_r_back-2": "wheel_r_back",
+      "WheelSeam_wheel_r_back-1": "wheel_r_back",
+      "WheelSeam_wheel_r_back0": "wheel_r_back",
+      "WheelSeam_wheel_r_back1": "wheel_r_back",
+      "WheelSeam_wheel_r_back2": "wheel_r_back",
+      "WheelIronBrace_wheel_r_back0": "wheel_r_back",
+      "WheelRivet_wheel_r_back0": "wheel_r_back",
+      "WheelIronBrace_wheel_r_back1": "wheel_r_back",
+      "WheelRivet_wheel_r_back1": "wheel_r_back",
+      "WheelIronBrace_wheel_r_back2": "wheel_r_back",
+      "WheelRivet_wheel_r_back2": "wheel_r_back",
+      "WheelIronBrace_wheel_r_back3": "wheel_r_back",
+      "WheelRivet_wheel_r_back3": "wheel_r_back",
+      "WheelHub_wheel_r_back": "wheel_r_back",
+      "WheelHubCap_wheel_r_back": "wheel_r_back",
+      "DeckPlank_0": "body",
+      "DeckPlank_1": "body",
+      "DeckPlank_2": "body",
+      "DeckPlank_3": "body",
+      "DeckPlank_4": "body",
+      "DeckPlank_5": "body",
+      "DeckPlank_6": "body",
+      "DeckPlank_7": "body",
+      "BedStrap_(-1, -0.6265)": "body",
+      "BedRivet_(-1, -0.6265)": "body",
+      "BedStrap_(-1, 0.6265)": "body",
+      "BedRivet_(-1, 0.6265)": "body",
+      "TowShaft_-1": "body",
+      "BedStrap_(1, -0.6265)": "body",
+      "BedRivet_(1, -0.6265)": "body",
+      "BedStrap_(1, 0.6265)": "body",
+      "BedRivet_(1, 0.6265)": "body",
+      "TowShaft_1": "body",
+      "GunCheek_-1": "body",
+      "Trunnion_-1": "body",
+      "TrunnionCap_-1": "body",
+      "FlankIronGuard_-1": "body",
+      "GuardRivet_(-1, 0)": "body",
+      "GuardRivet_(-1, 1)": "body",
+      "GuardRivet_(-1, 2)": "body",
+      "GuardRivet_(-1, 3)": "body",
+      "GunCheek_1": "body",
+      "Trunnion_1": "body",
+      "TrunnionCap_1": "body",
+      "FlankIronGuard_1": "body",
+      "GuardRivet_(1, 0)": "body",
+      "GuardRivet_(1, 1)": "body",
+      "GuardRivet_(1, 2)": "body",
+      "GuardRivet_(1, 3)": "body",
+      "IronBombardBarrel": "weapon",
+      "BarrelIronBand_0": "weapon",
+      "BarrelIronBand_1": "weapon",
+      "BarrelIronBand_2": "weapon",
+      "BarrelIronBand_3": "weapon",
+      "Breech": "weapon",
+      "FusePan": "weapon",
+      "RecoilSlide": "body",
+      "RecoilShoe": "weapon",
+      "ElevationWedge": "body",
+      "Windlass_loader": "loader",
+      "WinchBearing_loader-1": "body",
+      "WinchEnd_loader-1": "loader",
+      "WinchBearing_loader1": "body",
+      "WinchEnd_loader1": "loader",
+      "Crank_loader": "loader",
+      "CrankGrip_loader": "loader",
+      "WoundCord_loader": "loader",
+      "PowderLocker": "body",
+      "PowderHideLid": "body",
+      "MuzzleGuardTusk_-1": "body",
+      "MuzzleGuardTusk_1": "body"
+    },
+    "cord_endpoints_skinned": true
+  },
+  "clips": {
+    "Bombard_Idle": 2,
+    "Bombard_Walk": 2,
+    "Bombard_Attack": 2,
+    "Bombard_DemolitionAmmo": 3,
+    "Bombard_PreparedBombardment": 4
+  },
+  "motion": {
+    "Bombard_Idle": {
+      "finite": true,
+      "minimum_z": 3.162568518177977e-08,
+      "recovery_error": 0.0,
+      "movement": 0.0,
+      "samples": 5
+    },
+    "Bombard_Walk": {
+      "finite": true,
+      "minimum_z": 3.162568518177977e-08,
+      "recovery_error": 0.0,
+      "movement": 1.9914451837539673,
+      "samples": 5
+    },
+    "Bombard_Attack": {
+      "finite": true,
+      "minimum_z": 3.162568518177977e-08,
+      "recovery_error": 2.384185791015625e-07,
+      "movement": 0.9999953508377075,
+      "samples": 6
+    },
+    "Bombard_DemolitionAmmo": {
+      "finite": true,
+      "minimum_z": 3.162568518177977e-08,
+      "recovery_error": 2.384185791015625e-07,
+      "movement": 1.8348631858825684,
+      "samples": 5
+    },
+    "Bombard_PreparedBombardment": {
+      "finite": true,
+      "minimum_z": 3.162568518177977e-08,
+      "recovery_error": 2.384185791015625e-07,
+      "movement": 1.7903254628181458,
+      "samples": 6
+    }
+  },
+  "clip_metadata": {
+    "Bombard_Idle": {
+      "start": 1,
+      "end": 49,
+      "seconds": 2.0,
+      "impact_frame": 24,
+      "loop": true,
+      "fire_frames": []
+    },
+    "Bombard_Walk": {
+      "start": 58,
+      "end": 49,
+      "seconds": 2.0,
+      "impact_frame": 24,
+      "loop": true,
+      "fire_frames": []
+    },
+    "Bombard_Attack": {
+      "start": 115,
+      "end": 49,
+      "seconds": 2.0,
+      "impact_frame": 20,
+      "loop": false,
+      "fire_frames": [
+        20
+      ]
+    },
+    "Bombard_DemolitionAmmo": {
+      "start": 172,
+      "end": 73,
+      "seconds": 3.0,
+      "impact_frame": 36,
+      "loop": false,
+      "fire_frames": [
+        36
+      ]
+    },
+    "Bombard_PreparedBombardment": {
+      "start": 253,
+      "end": 97,
+      "seconds": 4.0,
+      "impact_frame": 47,
+      "loop": false,
+      "fire_frames": [
+        47
+      ]
+    }
+  },
+  "actions_created": 5,
+  "ivory_parts": [
+    "MuzzleGuardTusk_-1",
+    "MuzzleGuardTusk_1"
+  ],
+  "material_palette": {
+    "wood": [
+      103,
+      69,
+      43
+    ],
+    "heartwood": [
+      67,
+      44,
+      31
+    ],
+    "bronze": [
+      127,
+      100,
+      63
+    ],
+    "gold": [
+      149,
+      120,
+      73
+    ],
+    "steel": [
+      106,
+      111,
+      101
+    ],
+    "iron": [
+      51,
+      57,
+      51
+    ],
+    "rope": [
+      161,
+      139,
+      99
+    ],
+    "leather": [
+      91,
+      52,
+      32
+    ],
+    "green": [
+      86,
+      96,
+      53
+    ],
+    "ivory": [
+      212,
+      205,
+      167
+    ],
+    "stone": [
+      112,
+      116,
+      101
+    ]
+  },
+  "materials": 8,
+  "real_material_properties": true,
+  "crew": false,
+  "height_convention": "Highest rest part: 1.80 m conventional / 2.00 m legendary",
+  "animation_contract": "Same 19 clips and durations as human/elven siege; rigid mechanism motion, loop/recovery checked. Projectiles and combat effects remain gameplay-owned."
+}

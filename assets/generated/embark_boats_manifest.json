@@ -1,0 +1,380 @@
+{
+  "version": 1,
+  "purpose": "One small boat per embarked unit, one design per faction.",
+  "waterline_origin": true,
+  "forward_godot": "-Z",
+  "recommended_map_scale": 0.52,
+  "assets": [
+    {
+      "race": "human",
+      "name": "Barco Humano",
+      "stem": "human_embark_boat_v1",
+      "scene": "Embark_Boats_V1_Human",
+      "glb": "assets/generated/humans/human_embark_boat_v1/human_embark_boat_v1.glb",
+      "editable_parts": 81,
+      "triangles": 1552,
+      "game_meshes": 4,
+      "materials": 1,
+      "embedded_textures": 2,
+      "texture_size": [
+        512,
+        512
+      ],
+      "filter": "nearest",
+      "closed_source_meshes": true,
+      "bounds_blender": {
+        "min": [
+          -0.8499999642372131,
+          -1.4819999933242798,
+          -0.3450000286102295
+        ],
+        "max": [
+          0.8499999642372131,
+          1.540000081062317,
+          2.8299999237060547
+        ]
+      },
+      "waterline": 0,
+      "forward_godot": "-Z",
+      "recommended_map_scale": 0.52,
+      "unit_representation": "1 unit = 1 boat",
+      "source_preservation": "Existing scenes and assets retained; only new IDs created.",
+      "glb_sha256": "c8019c36ea6f543792380fa1c1e26c43f05c6daab078accfa6146c56c6c4aa06",
+      "mast_behind_sail": true,
+      "sail_revision": 2,
+      "sail_symbols": false,
+      "sail_billow_direction": "Blender +Y / Godot -Z",
+      "removed_symbols": [
+        "Sun_-0.19_1.8199999999999998",
+        "Sun_0.19_1.8199999999999998",
+        "Sun_0_1.63",
+        "Sun_0_1.8199999999999998",
+        "Sun_0_2.01"
+      ],
+      "animations": {
+        "idle": {
+          "duration": 4.0,
+          "frames": 121,
+          "fps": 30,
+          "loop_error": 0.0,
+          "vertical_range_native": [
+            -0.02800000086426735,
+            0.0
+          ],
+          "vertical_range_map": [
+            -0.014560000449419023,
+            0.0
+          ],
+          "highest_keel_vertex": -0.2527284324169159,
+          "in_place": true,
+          "water_plane_static": true
+        },
+        "walk": {
+          "duration": 2.0,
+          "frames": 61,
+          "fps": 30,
+          "loop_error": 0.0,
+          "vertical_range_native": [
+            -0.07000000029802322,
+            0.0
+          ],
+          "vertical_range_map": [
+            -0.03640000015497208,
+            0.0
+          ],
+          "highest_keel_vertex": -0.250409871339798,
+          "in_place": true,
+          "water_plane_static": true
+        }
+      },
+      "exported_clips": [
+        "idle",
+        "walk"
+      ],
+      "morph_targets": 1,
+      "godot_scene": "assets/generated/humans/human_embark_boat_v1/human_embark_boat_v1.tscn"
+    },
+    {
+      "race": "orc",
+      "name": "Barco Orc",
+      "stem": "orc_embark_boat_v1",
+      "scene": "Embark_Boats_V1_Orc",
+      "glb": "assets/generated/orcs/orc_embark_boat_v1/orc_embark_boat_v1.glb",
+      "editable_parts": 91,
+      "triangles": 1400,
+      "game_meshes": 5,
+      "materials": 1,
+      "embedded_textures": 2,
+      "texture_size": [
+        512,
+        512
+      ],
+      "filter": "nearest",
+      "closed_source_meshes": true,
+      "bounds_blender": {
+        "min": [
+          -0.8999999761581421,
+          -1.506500005722046,
+          -0.3450000286102295
+        ],
+        "max": [
+          0.8999999761581421,
+          1.4956568479537964,
+          2.490000009536743
+        ]
+      },
+      "waterline": 0,
+      "forward_godot": "-Z",
+      "recommended_map_scale": 0.52,
+      "unit_representation": "1 unit = 1 boat",
+      "source_preservation": "Existing scenes and assets retained; only new IDs created.",
+      "glb_sha256": "ac7caf814c2214a7b1088923c3693f816b6ee9f728d5b982254ecca40d4cf6c8",
+      "mast_behind_sail": true,
+      "sail_revision": 2,
+      "sail_symbols": false,
+      "sail_billow_direction": "Blender +Y / Godot -Z",
+      "removed_symbols": [
+        "Bone_Sigil_-1_0",
+        "Bone_Sigil_-1_1",
+        "Bone_Sigil_-1_2",
+        "Bone_Sigil_-1_3",
+        "Bone_Sigil_-1_4",
+        "Bone_Sigil_-1_5",
+        "Bone_Sigil_-1_6",
+        "Bone_Sigil_1_0",
+        "Bone_Sigil_1_1",
+        "Bone_Sigil_1_2",
+        "Bone_Sigil_1_3",
+        "Bone_Sigil_1_4",
+        "Bone_Sigil_1_5",
+        "Bone_Sigil_1_6"
+      ],
+      "animations": {
+        "idle": {
+          "duration": 4.0,
+          "frames": 121,
+          "fps": 30,
+          "loop_error": 0.0,
+          "vertical_range_native": [
+            -0.030799999833106995,
+            0.0
+          ],
+          "vertical_range_map": [
+            -0.016015999913215638,
+            0.0
+          ],
+          "highest_keel_vertex": -0.25240758061408997,
+          "in_place": true,
+          "water_plane_static": true
+        },
+        "walk": {
+          "duration": 2.0,
+          "frames": 61,
+          "fps": 30,
+          "loop_error": 0.0,
+          "vertical_range_native": [
+            -0.07699999958276749,
+            0.0
+          ],
+          "vertical_range_map": [
+            -0.04003999978303909,
+            0.0
+          ],
+          "highest_keel_vertex": -0.24978098273277283,
+          "in_place": true,
+          "water_plane_static": true
+        }
+      },
+      "exported_clips": [
+        "idle",
+        "walk"
+      ],
+      "morph_targets": 1,
+      "godot_scene": "assets/generated/orcs/orc_embark_boat_v1/orc_embark_boat_v1.tscn"
+    },
+    {
+      "race": "elf",
+      "name": "Barco Elfo",
+      "stem": "elf_embark_boat_v1",
+      "scene": "Embark_Boats_V1_Elf",
+      "glb": "assets/generated/elves/elf_embark_boat_v1/elf_embark_boat_v1.glb",
+      "editable_parts": 77,
+      "triangles": 1100,
+      "game_meshes": 4,
+      "materials": 1,
+      "embedded_textures": 2,
+      "texture_size": [
+        512,
+        512
+      ],
+      "filter": "nearest",
+      "closed_source_meshes": true,
+      "bounds_blender": {
+        "min": [
+          -0.5224750638008118,
+          -1.5800000429153442,
+          -0.3450000286102295
+        ],
+        "max": [
+          0.863431990146637,
+          1.5359619855880737,
+          2.8299999237060547
+        ]
+      },
+      "waterline": 0,
+      "forward_godot": "-Z",
+      "recommended_map_scale": 0.52,
+      "unit_representation": "1 unit = 1 boat",
+      "source_preservation": "Existing scenes and assets retained; only new IDs created.",
+      "glb_sha256": "31b3e473b5d836b5c3061ed5a3c508259076f13e064b2d7345aee60da3b45937",
+      "sail_revision": 2,
+      "sail_symbols": false,
+      "sail_billow_direction": "Blender +Y / Godot -Z",
+      "removed_symbols": [
+        "Leaf_Vein",
+        "Leaf_Vein_Branch_0",
+        "Leaf_Vein_Branch_1",
+        "Leaf_Vein_Branch_2"
+      ],
+      "animations": {
+        "idle": {
+          "duration": 4.0,
+          "frames": 121,
+          "fps": 30,
+          "loop_error": 0.0,
+          "vertical_range_native": [
+            -0.023800000548362732,
+            0.0
+          ],
+          "vertical_range_map": [
+            -0.012376000285148622,
+            0.0
+          ],
+          "highest_keel_vertex": -0.25280269980430603,
+          "in_place": true,
+          "water_plane_static": true
+        },
+        "walk": {
+          "duration": 2.0,
+          "frames": 61,
+          "fps": 30,
+          "loop_error": 0.0,
+          "vertical_range_native": [
+            -0.05950000137090683,
+            0.0
+          ],
+          "vertical_range_map": [
+            -0.030940000712871552,
+            0.0
+          ],
+          "highest_keel_vertex": -0.25061267614364624,
+          "in_place": true,
+          "water_plane_static": true
+        }
+      },
+      "exported_clips": [
+        "idle",
+        "walk"
+      ],
+      "morph_targets": 1,
+      "godot_scene": "assets/generated/elves/elf_embark_boat_v1/elf_embark_boat_v1.tscn"
+    },
+    {
+      "race": "dwarf",
+      "name": "Barco Anão",
+      "stem": "dwarf_embark_boat_v1",
+      "scene": "Embark_Boats_V1_Dwarf",
+      "glb": "assets/generated/dwarves/dwarf_embark_boat_v1/dwarf_embark_boat_v1.glb",
+      "editable_parts": 108,
+      "triangles": 1876,
+      "game_meshes": 5,
+      "materials": 1,
+      "embedded_textures": 2,
+      "texture_size": [
+        512,
+        512
+      ],
+      "filter": "nearest",
+      "closed_source_meshes": true,
+      "bounds_blender": {
+        "min": [
+          -0.8299999833106995,
+          -1.3595000505447388,
+          -0.3450000286102295
+        ],
+        "max": [
+          0.8299999833106995,
+          1.303465723991394,
+          2.2799999713897705
+        ]
+      },
+      "waterline": 0,
+      "forward_godot": "-Z",
+      "recommended_map_scale": 0.52,
+      "unit_representation": "1 unit = 1 boat",
+      "source_preservation": "Existing scenes and assets retained; only new IDs created.",
+      "glb_sha256": "e6ea91ad183b0a2c52a3577ff412676a7c95da7477ca235a0a754fd6d13a1221",
+      "mast_behind_sail": true,
+      "sail_revision": 2,
+      "sail_symbols": false,
+      "sail_billow_direction": "Blender +Y / Godot -Z",
+      "removed_symbols": [
+        "Hammer_-0.141.7449999999999997",
+        "Hammer_0.141.7449999999999997",
+        "Hammer_01.4549999999999996",
+        "Hammer_01.6949999999999998"
+      ],
+      "animations": {
+        "idle": {
+          "duration": 4.0,
+          "frames": 121,
+          "fps": 30,
+          "loop_error": 0.0,
+          "vertical_range_native": [
+            -0.014000000432133675,
+            0.0
+          ],
+          "vertical_range_map": [
+            -0.007280000224709511,
+            0.0
+          ],
+          "highest_keel_vertex": -0.2540398836135864,
+          "in_place": true,
+          "water_plane_static": true
+        },
+        "walk": {
+          "duration": 2.0,
+          "frames": 61,
+          "fps": 30,
+          "loop_error": 0.0,
+          "vertical_range_native": [
+            -0.03500000014901161,
+            0.0
+          ],
+          "vertical_range_map": [
+            -0.01820000007748604,
+            0.0
+          ],
+          "highest_keel_vertex": -0.2530302405357361,
+          "in_place": true,
+          "water_plane_static": true
+        }
+      },
+      "exported_clips": [
+        "idle",
+        "walk"
+      ],
+      "morph_targets": 1,
+      "godot_scene": "assets/generated/dwarves/dwarf_embark_boat_v1/dwarf_embark_boat_v1.tscn"
+    }
+  ],
+  "source_scene_count_before": 525,
+  "original_scenes_retained": true,
+  "automatic_gameplay_integration": false,
+  "animations": [
+    "idle",
+    "walk"
+  ],
+  "flat_water_motion": true,
+  "sail_revision": 2
+}

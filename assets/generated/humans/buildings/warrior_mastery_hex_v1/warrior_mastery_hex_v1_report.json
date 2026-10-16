@@ -1,0 +1,447 @@
+{
+  "name": "Warrior_Mastery_Hex_V1",
+  "display_name": "Arena dos Campeões — Humanos",
+  "gameplay_building_id": "v2_building_warrior_mastery",
+  "trains": [
+    "v2_legendary_blade_hero"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1700,
+  "editable_parts": 139,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.1699999570846558
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.1699999570846558
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 842,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "human",
+  "military_role": "warrior",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_warrior_hall",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "human_warrior",
+  "material_reference": "assets/generated/humans/buildings/warrior_hall_hex_v1",
+  "roof_rgb": [
+    49,
+    79,
+    127
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "part": "Arena_Seat_Support_0_0",
+        "action": "archive",
+        "reason": "first-tier seat already is its filled stone footing"
+      },
+      {
+        "part": "Arena_Seat_Support_0_1",
+        "action": "archive",
+        "reason": "first-tier seat already is its filled stone footing"
+      },
+      {
+        "part": "Arena_Seat_Support_0_2",
+        "action": "archive",
+        "reason": "first-tier seat already is its filled stone footing"
+      },
+      {
+        "part": "Arena_Seat_Support_0_3",
+        "action": "archive",
+        "reason": "first-tier seat already is its filled stone footing"
+      },
+      {
+        "part": "Arena_Seat_Support_0_4",
+        "action": "archive",
+        "reason": "first-tier seat already is its filled stone footing"
+      },
+      {
+        "part": "Arena_Seat_Support_0_5",
+        "action": "archive",
+        "reason": "first-tier seat already is its filled stone footing"
+      },
+      {
+        "part": "Arena_Seat_Support_0_6",
+        "action": "archive",
+        "reason": "first-tier seat already is its filled stone footing"
+      },
+      {
+        "part": "Arena_Seat_Support_0_7",
+        "action": "archive",
+        "reason": "first-tier seat already is its filled stone footing"
+      },
+      {
+        "part": "Arena_Seat_Support_0_8",
+        "action": "archive",
+        "reason": "first-tier seat already is its filled stone footing"
+      },
+      {
+        "part": "Arena_Seat_Support_1_0",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.15199999105930329,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_1_1",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.15199999105930329,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_1_2",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.15199999105930329,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_1_3",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.15199999105930329,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_1_4",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.15199999105930329,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_1_5",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.15199999105930329,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_1_6",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.15199999105930329,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_1_7",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.15199999105930329,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_1_8",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.15199999105930329,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_2_0",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.22499998998641968,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_2_1",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.22499998998641968,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_2_2",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.22499998998641968,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_2_3",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.22499998998641968,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_2_4",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.22499998998641968,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_2_5",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.22499998998641968,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_2_6",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.22499998998641968,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_2_7",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.22499998998641968,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "part": "Arena_Seat_Support_2_8",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.22499998998641968,
+        "reason": "footing stops inside the seat instead of duplicating its surface"
+      },
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 206,
+        "iterations": 5
+      },
+      {
+        "parts": [
+          "Champion_Blades_Backing",
+          "Champion_Blades_Cloth",
+          "Champion_Blades_Blade_-1_Blade",
+          "Champion_Blades_Blade_-1_Tip",
+          "Champion_Blades_Blade_-1_Fuller",
+          "Champion_Blades_Blade_-1_Guard",
+          "Champion_Blades_Blade_-1_Grip",
+          "Champion_Blades_Blade_-1_Pommel",
+          "Champion_Blades_Blade_1_Blade",
+          "Champion_Blades_Blade_1_Tip",
+          "Champion_Blades_Blade_1_Fuller",
+          "Champion_Blades_Blade_1_Guard",
+          "Champion_Blades_Blade_1_Grip",
+          "Champion_Blades_Blade_1_Pommel"
+        ],
+        "action": "move",
+        "delta": [
+          0.0,
+          0.0,
+          0.33000001311302185
+        ],
+        "reason": "royal gallery entrance stays open below its heraldry"
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [],
+      "open_passages": [
+        {
+          "name": "Royal_Gallery",
+          "lo": [
+            -0.17599997997283934,
+            0.25,
+            0.3729999995231629
+          ],
+          "hi": [
+            0.17599997997283934,
+            0.455,
+            0.6669999718666076
+          ],
+          "blockers": []
+        },
+        {
+          "name": "Courtyard_Gate",
+          "lo": [
+            -0.1,
+            -0.61,
+            0.14
+          ],
+          "hi": [
+            0.1,
+            -0.25,
+            0.48
+          ],
+          "blockers": []
+        }
+      ]
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "warrior_mastery_hex_v1.glb",
+    "bytes": 676264,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1700,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "warrior_mastery_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "warrior_mastery_hex_v1_albedo",
+        "bytes": 528948,
+        "sha256": "48099cb0643f94e52e582607b5ed0ea4377d7eda141d89c859b0df8b182a4c38"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "human",
+    "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos.",
+    "geometry_changes": [
+      "masonry:Royal_Gallery_-1_-1_Shaft",
+      "masonry:Royal_Gallery_-1_1_Shaft",
+      "masonry:Royal_Gallery_1_-1_Shaft",
+      "masonry:Royal_Gallery_1_1_Shaft",
+      "masonry:Royal_Gallery_Front_Lintel",
+      "masonry:Royal_Gallery_Rear_Lintel",
+      "masonry:Royal_Gallery_Backwall",
+      "stone_pier:Royal_Gallery_-1_-1_Shaft",
+      "stone_pier:Royal_Gallery_-1_1_Shaft",
+      "stone_pier:Royal_Gallery_1_-1_Shaft",
+      "stone_pier:Royal_Gallery_1_1_Shaft"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "name": "Dwarf_Arcane_Conclave_Hex_V1",
+  "display_name": "Conclave Arcano — Anões",
+  "gameplay_building_id": "v2_building_arcane_conclave",
+  "trains": [
+    "v2_unit_arcanist"
+  ],
+  "excludes": [
+    "v2_building_arcane_ritual"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 2488,
+  "editable_parts": 190,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.055369257926941
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.055369257926941
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1207,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Engenharia de granito com pilares engrossados, sapatas escalonadas e cintas de cobre; coberturas de ardósia escura com cantos chanfrados. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.23,
+    0.35
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "dwarf",
+  "magic_school": "arcanism",
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "ritual_building_separate": true,
+  "excluded_buildings": [
+    "v2_building_arcane_ritual"
+  ],
+  "finish_pass": {
+    "revision": 1,
+    "original_structure_preserved": true,
+    "race_details": "Squared granite piers, engraved copper, stone furniture and mechanical bearings.",
+    "roof_rgb": [
+      67,
+      82,
+      89
+    ],
+    "physical_attachment_remaining": [],
+    "relic_source": null
+  },
+  "export": {
+    "file": "dwarf_arcane_conclave_hex_v1.glb",
+    "bytes": 963788,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2488,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "dwarf_arcane_conclave_hex_v1_emission",
+        "bytes": 79166,
+        "sha256": "5a22cdd01d75a4d31948b9f7182fe169b2761c27dc2f24b8c438e8513b0b77e3"
+      },
+      {
+        "image": "dwarf_arcane_conclave_hex_v1_albedo",
+        "bytes": 704582,
+        "sha256": "03ba80d208ebe3daca70406677b3ce62b581cca11a1875a99bb28901557c188f"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "dwarf",
+    "design": "Engenharia de granito com pilares engrossados, sapatas escalonadas e cintas de cobre; coberturas de ardósia escura com cantos chanfrados.",
+    "geometry_changes": [
+      "roof_geometry:Conclave_Hex_Roof_0",
+      "roof_geometry:Conclave_Hex_Roof_1",
+      "roof_geometry:Conclave_Hex_Roof_2",
+      "roof_geometry:Conclave_Hex_Roof_3",
+      "roof_geometry:Conclave_Hex_Roof_4",
+      "roof_geometry:Conclave_Hex_Roof_5",
+      "roof_geometry:Scroll_Library_Course_00",
+      "roof_geometry:Scroll_Library_Course_01",
+      "roof_geometry:Scroll_Library_Course_02",
+      "roof_geometry:Scroll_Library_Course_03",
+      "roof_geometry:Scroll_Library_Course_04",
+      "roof_geometry:Scroll_Library_Course_05",
+      "granite_pier:Arcane_Tower_Post_0",
+      "granite_pier:Arcane_Tower_Post_1",
+      "granite_pier:Arcane_Tower_Post_2",
+      "granite_pier:Arcane_Tower_Post_3",
+      "granite_pier:Arcane_Tower_Post_4",
+      "granite_pier:Arcane_Tower_Post_5",
+      "granite_pier:Scroll_Library_Post_-1_-1",
+      "granite_pier:Scroll_Library_Post_-1_1",
+      "granite_pier:Scroll_Library_Post_1_-1",
+      "granite_pier:Scroll_Library_Post_1_1",
+      "granite_pier:Attunement_Pillar_Column",
+      "upper_structure_proportion:0.62"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

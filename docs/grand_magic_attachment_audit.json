@@ -1,0 +1,199 @@
+{
+  "method": "AABB connectivity, 0.0015 tolerance, plus manual preview review",
+  "verified": 24,
+  "remaining_physical_adornments": 0,
+  "scenes": [
+    {
+      "scene": "Arcane_Ritual_Hex_V1",
+      "civilization": "human",
+      "school": "arcanism",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": [
+        "Veil_Core"
+      ]
+    },
+    {
+      "scene": "Druidic_Ritual_Hex_V1",
+      "civilization": "human",
+      "school": "druidism",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": []
+    },
+    {
+      "scene": "Dwarf_Arcane_Ritual_Hex_V1",
+      "civilization": "dwarf",
+      "school": "arcanism",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": [
+        "Veil_Core"
+      ]
+    },
+    {
+      "scene": "Dwarf_Druidic_Ritual_Hex_V1",
+      "civilization": "dwarf",
+      "school": "druidism",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": []
+    },
+    {
+      "scene": "Dwarf_Elemental_Ritual_Hex_V1",
+      "civilization": "dwarf",
+      "school": "elementalism",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": [
+        "Primordial_Core"
+      ]
+    },
+    {
+      "scene": "Dwarf_Infernal_Ritual_Hex_V1",
+      "civilization": "dwarf",
+      "school": "infernal",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": [
+        "Infernal_Rift_Core"
+      ]
+    },
+    {
+      "scene": "Dwarf_Necromancy_Ritual_Hex_V1",
+      "civilization": "dwarf",
+      "school": "necromancy",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": []
+    },
+    {
+      "scene": "Dwarf_Sacred_Ritual_Hex_V1",
+      "civilization": "dwarf",
+      "school": "sacred",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": []
+    },
+    {
+      "scene": "Elemental_Ritual_Hex_V1",
+      "civilization": "human",
+      "school": "elementalism",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": [
+        "Primordial_Core"
+      ]
+    },
+    {
+      "scene": "Elf_Arcane_Ritual_Hex_V1",
+      "civilization": "elf",
+      "school": "arcanism",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": [
+        "Veil_Core"
+      ]
+    },
+    {
+      "scene": "Elf_Druidic_Ritual_Hex_V1",
+      "civilization": "elf",
+      "school": "druidism",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": []
+    },
+    {
+      "scene": "Elf_Elemental_Ritual_Hex_V1",
+      "civilization": "elf",
+      "school": "elementalism",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": [
+        "Primordial_Core"
+      ]
+    },
+    {
+      "scene": "Elf_Infernal_Ritual_Hex_V1",
+      "civilization": "elf",
+      "school": "infernal",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": [
+        "Infernal_Rift_Core"
+      ]
+    },
+    {
+      "scene": "Elf_Necromancy_Ritual_Hex_V1",
+      "civilization": "elf",
+      "school": "necromancy",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": []
+    },
+    {
+      "scene": "Elf_Sacred_Ritual_Hex_V1",
+      "civilization": "elf",
+      "school": "sacred",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": []
+    },
+    {
+      "scene": "Infernal_Ritual_Hex_V1",
+      "civilization": "human",
+      "school": "infernal",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": [
+        "Infernal_Rift_Core"
+      ]
+    },
+    {
+      "scene": "Necromancy_Ritual_Hex_V1",
+      "civilization": "human",
+      "school": "necromancy",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": []
+    },
+    {
+      "scene": "Orc_Arcane_Ritual_Hex_V1",
+      "civilization": "orc",
+      "school": "arcanism",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": [
+        "Veil_Core"
+      ]
+    },
+    {
+      "scene": "Orc_Druidic_Ritual_Hex_V1",
+      "civilization": "orc",
+      "school": "druidism",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": []
+    },
+    {
+      "scene": "Orc_Elemental_Ritual_Hex_V1",
+      "civilization": "orc",
+      "school": "elementalism",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": [
+        "Primordial_Core"
+      ]
+    },
+    {
+      "scene": "Orc_Infernal_Ritual_Hex_V1",
+      "civilization": "orc",
+      "school": "infernal",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": [
+        "Infernal_Rift_Core"
+      ]
+    },
+    {
+      "scene": "Orc_Necromancy_Ritual_Hex_V1",
+      "civilization": "orc",
+      "school": "necromancy",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": []
+    },
+    {
+      "scene": "Orc_Sacred_Ritual_Hex_V1",
+      "civilization": "orc",
+      "school": "sacred",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": []
+    },
+    {
+      "scene": "Sacred_Ritual_Hex_V1",
+      "civilization": "human",
+      "school": "sacred",
+      "physical_attachment_remaining": [],
+      "intentional_levitation": []
+    }
+  ]
+}

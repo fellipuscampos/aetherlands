@@ -1,0 +1,131 @@
+{
+  "name": "Orc_Sacred_Ritual_Hex_V1",
+  "display_name": "Grande Catedral — Orcs",
+  "gameplay_building_id": "v2_building_sacred_ritual",
+  "trains": [
+    "v2_manifestation_seraph"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 2688,
+  "editable_parts": 217,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.354949951171875
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.354949951171875
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1323,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Estrutura de madeira grossa, postes cintados com ferro e contraventamentos diagonais; coberturas ferrugem, pedra escura na fundação e presas do clã. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "orc",
+  "magic_school": "sacred",
+  "grand_magic": true,
+  "asset_only": true,
+  "requires_building": "v2_building_sacred_temple",
+  "includes_perimeter_walls": false,
+  "school_building_separate": true,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "craft": {
+    "race_details": "Madeira pesada, ferro escuro, rebites, travamentos de clã e presas.",
+    "material_reference": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1",
+    "roof_rgb": [
+      130,
+      58,
+      39
+    ],
+    "physical_attachment_remaining": [],
+    "intentional_levitation": [],
+    "relic_source": null
+  },
+  "export": {
+    "file": "orc_sacred_ritual_hex_v1.glb",
+    "bytes": 1109268,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2688,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "orc_sacred_ritual_hex_v1_emission",
+        "bytes": 79438,
+        "sha256": "2645fb0efd41e94fec35069caa9289ef42a7552c211a0385e16d7227b3b2bf4f"
+      },
+      {
+        "image": "orc_sacred_ritual_hex_v1_albedo",
+        "bytes": 834892,
+        "sha256": "4134c7929f5918d02bc1ae030008f59b421d9c04dc2872d0bd37a26bfc7d2284"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "orc",
+    "design": "Estrutura de madeira grossa, postes cintados com ferro e contraventamentos diagonais; coberturas ferrugem, pedra escura na fundação e presas do clã.",
+    "geometry_changes": [
+      "timber:Cathedral_Tower_Buttress_-1",
+      "timber:Cathedral_Tower_Buttress_1",
+      "timber:Cathedral_Main_Portal_Jamb_-1",
+      "timber:Cathedral_Main_Portal_Jamb_1",
+      "upper_structure_proportion:0.86"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

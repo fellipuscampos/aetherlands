@@ -1,0 +1,688 @@
+{
+	"problems": [],
+	"status": "PASS",
+	"units": [
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Archer_Attack": {
+					"loop": 0,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"Archer_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Archer_PreciseShot": {
+					"loop": 0,
+					"samples": 57,
+					"seconds": 2.33333325386047
+				},
+				"Archer_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 19,
+			"nearest_filter": true,
+			"unit": "archer_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"ArmoredCavalier_Attack": {
+					"loop": 0,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"ArmoredCavalier_Charge": {
+					"loop": 0,
+					"samples": 37,
+					"seconds": 1.5
+				},
+				"ArmoredCavalier_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"ArmoredCavalier_Walk": {
+					"loop": 1,
+					"samples": 19,
+					"seconds": 0.75
+				}
+			},
+			"bones": 28,
+			"nearest_filter": true,
+			"unit": "armored_cavalier_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Assassin_Attack": {
+					"loop": 0,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"Assassin_Dismantle": {
+					"loop": 0,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Assassin_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Assassin_SneakAttack": {
+					"loop": 0,
+					"samples": 57,
+					"seconds": 2.33333325386047
+				},
+				"Assassin_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 16,
+			"nearest_filter": true,
+			"unit": "assassin_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"BladeHero_ArcAttack": {
+					"loop": 0,
+					"samples": 41,
+					"seconds": 1.66666662693024
+				},
+				"BladeHero_Attack": {
+					"loop": 0,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"BladeHero_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"BladeHero_PowerStrike": {
+					"loop": 0,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"BladeHero_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 16,
+			"nearest_filter": true,
+			"unit": "blade_hero_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Cavalier_Attack": {
+					"loop": 0,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"Cavalier_Charge": {
+					"loop": 0,
+					"samples": 37,
+					"seconds": 1.5
+				},
+				"Cavalier_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Cavalier_Walk": {
+					"loop": 1,
+					"samples": 19,
+					"seconds": 0.75
+				}
+			},
+			"bones": 28,
+			"nearest_filter": true,
+			"unit": "cavalier_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"EliteMarksman_Attack": {
+					"loop": 0,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"EliteMarksman_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"EliteMarksman_PreciseShot": {
+					"loop": 0,
+					"samples": 57,
+					"seconds": 2.33333325386047
+				},
+				"EliteMarksman_Volley": {
+					"loop": 0,
+					"samples": 70,
+					"seconds": 2.875
+				},
+				"EliteMarksman_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 19,
+			"nearest_filter": true,
+			"unit": "elite_marksman_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"GriffonRider_Attack": {
+					"loop": 0,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"GriffonRider_Charge": {
+					"loop": 0,
+					"samples": 37,
+					"seconds": 1.5
+				},
+				"GriffonRider_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"GriffonRider_Walk": {
+					"loop": 1,
+					"samples": 19,
+					"seconds": 0.75
+				}
+			},
+			"bones": 28,
+			"nearest_filter": true,
+			"unit": "griffon_rider_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Attack": {
+					"loop": 0,
+					"samples": 22,
+					"seconds": 0.866666674613953
+				},
+				"Death": {
+					"loop": 0,
+					"samples": 25,
+					"seconds": 1.0
+				},
+				"Idle": {
+					"loop": 0,
+					"samples": 54,
+					"seconds": 2.20000004768372
+				},
+				"Walk": {
+					"loop": 0,
+					"samples": 23,
+					"seconds": 0.933333337306976
+				}
+			},
+			"bones": 18,
+			"nearest_filter": true,
+			"unit": "guard_blocky"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Champion_Attack": {
+					"loop": 0,
+					"samples": 31,
+					"seconds": 1.25
+				},
+				"Champion_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Champion_ShieldWall": {
+					"loop": 0,
+					"samples": 25,
+					"seconds": 1.0
+				},
+				"Champion_ShieldWallHold": {
+					"loop": 1,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"Champion_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 16,
+			"nearest_filter": true,
+			"unit": "guardian_champion_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Guardian_Attack": {
+					"loop": 0,
+					"samples": 31,
+					"seconds": 1.25
+				},
+				"Guardian_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Guardian_ShieldWall": {
+					"loop": 0,
+					"samples": 25,
+					"seconds": 1.0
+				},
+				"Guardian_ShieldWallHold": {
+					"loop": 1,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"Guardian_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 16,
+			"nearest_filter": true,
+			"unit": "guardian_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Hunter_Attack": {
+					"loop": 0,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"Hunter_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Hunter_PreciseShot": {
+					"loop": 0,
+					"samples": 57,
+					"seconds": 2.33333325386047
+				},
+				"Hunter_Volley": {
+					"loop": 0,
+					"samples": 70,
+					"seconds": 2.875
+				},
+				"Hunter_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 19,
+			"nearest_filter": true,
+			"unit": "hunter_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"LegendHunter_Attack": {
+					"loop": 0,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"LegendHunter_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"LegendHunter_PreciseShot": {
+					"loop": 0,
+					"samples": 57,
+					"seconds": 2.33333325386047
+				},
+				"LegendHunter_Volley": {
+					"loop": 0,
+					"samples": 70,
+					"seconds": 2.875
+				},
+				"LegendHunter_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 19,
+			"nearest_filter": true,
+			"unit": "legend_hunter_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Rogue_Attack": {
+					"loop": 0,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"Rogue_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Rogue_SneakAttack": {
+					"loop": 0,
+					"samples": 57,
+					"seconds": 2.33333325386047
+				},
+				"Rogue_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 16,
+			"nearest_filter": true,
+			"unit": "rogue_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Saboteur_Attack": {
+					"loop": 0,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"Saboteur_Dismantle": {
+					"loop": 0,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Saboteur_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Saboteur_SneakAttack": {
+					"loop": 0,
+					"samples": 57,
+					"seconds": 2.33333325386047
+				},
+				"Saboteur_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 16,
+			"nearest_filter": true,
+			"unit": "saboteur_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Sentinel_Attack": {
+					"loop": 0,
+					"samples": 31,
+					"seconds": 1.25
+				},
+				"Sentinel_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Sentinel_ShieldWall": {
+					"loop": 0,
+					"samples": 25,
+					"seconds": 1.0
+				},
+				"Sentinel_ShieldWallHold": {
+					"loop": 1,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"Sentinel_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 16,
+			"nearest_filter": true,
+			"unit": "sentinel_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Attack": {
+					"loop": 0,
+					"samples": 22,
+					"seconds": 0.866666674613953
+				},
+				"Death": {
+					"loop": 0,
+					"samples": 25,
+					"seconds": 1.0
+				},
+				"Idle": {
+					"loop": 0,
+					"samples": 54,
+					"seconds": 2.20000004768372
+				},
+				"Walk": {
+					"loop": 0,
+					"samples": 23,
+					"seconds": 0.933333337306976
+				}
+			},
+			"bones": 18,
+			"nearest_filter": true,
+			"unit": "settler_blocky"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"ShadowMaster_Attack": {
+					"loop": 0,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"ShadowMaster_Dismantle": {
+					"loop": 0,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"ShadowMaster_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"ShadowMaster_SneakAttack": {
+					"loop": 0,
+					"samples": 57,
+					"seconds": 2.33333325386047
+				},
+				"ShadowMaster_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 16,
+			"nearest_filter": true,
+			"unit": "shadow_master_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"ShockCavalier_Attack": {
+					"loop": 0,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"ShockCavalier_Charge": {
+					"loop": 0,
+					"samples": 37,
+					"seconds": 1.5
+				},
+				"ShockCavalier_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"ShockCavalier_Walk": {
+					"loop": 1,
+					"samples": 19,
+					"seconds": 0.75
+				}
+			},
+			"bones": 28,
+			"nearest_filter": true,
+			"unit": "shock_cavalier_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Squire_Attack": {
+					"loop": 0,
+					"samples": 31,
+					"seconds": 1.25
+				},
+				"Squire_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Squire_ShieldWall": {
+					"loop": 0,
+					"samples": 25,
+					"seconds": 1.0
+				},
+				"Squire_ShieldWallHold": {
+					"loop": 1,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"Squire_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 16,
+			"nearest_filter": true,
+			"unit": "squire_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Swordsman_ArcAttack": {
+					"loop": 0,
+					"samples": 41,
+					"seconds": 1.66666662693024
+				},
+				"Swordsman_Attack": {
+					"loop": 0,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"Swordsman_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Swordsman_PowerStrike": {
+					"loop": 0,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"Swordsman_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 16,
+			"nearest_filter": true,
+			"unit": "swordsman_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"Warrior_Attack": {
+					"loop": 0,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"Warrior_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"Warrior_PowerStrike": {
+					"loop": 0,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"Warrior_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 16,
+			"nearest_filter": true,
+			"unit": "warrior_v1"
+		},
+		{
+			"albedo_pixels_match_png": true,
+			"animations": {
+				"WeaponMaster_ArcAttack": {
+					"loop": 0,
+					"samples": 41,
+					"seconds": 1.66666662693024
+				},
+				"WeaponMaster_Attack": {
+					"loop": 0,
+					"samples": 33,
+					"seconds": 1.33333337306976
+				},
+				"WeaponMaster_Idle": {
+					"loop": 1,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"WeaponMaster_PowerStrike": {
+					"loop": 0,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"WeaponMaster_Walk": {
+					"loop": 1,
+					"samples": 29,
+					"seconds": 1.16666662693024
+				}
+			},
+			"bones": 16,
+			"nearest_filter": true,
+			"unit": "weapon_master_v1"
+		}
+	],
+	"verified": 22
+}

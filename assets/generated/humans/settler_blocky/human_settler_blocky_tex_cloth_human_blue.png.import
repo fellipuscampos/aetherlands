@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://csqelfoicw6wf"
-path="res://.godot/imported/human_settler_blocky_tex_cloth_human_blue.png-c6fff02d40c5f7d1eb1eb0efdc42321c.ctex"
+path.bptc="res://.godot/imported/human_settler_blocky_tex_cloth_human_blue.png-c6fff02d40c5f7d1eb1eb0efdc42321c.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "a43a24fe3126f3cd0eaae902e4dc55fe"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/humans/settler_blocky/human_settler_blocky_tex_cloth_human_blue.png"
-dest_files=["res://.godot/imported/human_settler_blocky_tex_cloth_human_blue.png-c6fff02d40c5f7d1eb1eb0efdc42321c.ctex"]
+dest_files=["res://.godot/imported/human_settler_blocky_tex_cloth_human_blue.png-c6fff02d40c5f7d1eb1eb0efdc42321c.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

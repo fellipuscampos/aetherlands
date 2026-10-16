@@ -1,0 +1,90 @@
+{
+  "status": "PASS",
+  "verified": 10,
+  "method": "live Blender MCP",
+  "shared_materials": 1,
+  "shared_textures": 1,
+  "existing_scenes_preserved": 467,
+  "assets": [
+    {
+      "asset": "tree_oak_a",
+      "closed_mesh": true,
+      "positive_volume": 0.07961600294637682,
+      "packed_texture": true,
+      "isolated_source": true,
+      "footprint_radius": 0.34409301338397574
+    },
+    {
+      "asset": "tree_oak_b",
+      "closed_mesh": true,
+      "positive_volume": 0.06182399676036837,
+      "packed_texture": true,
+      "isolated_source": true,
+      "footprint_radius": 0.3224903091926374
+    },
+    {
+      "asset": "tree_beech_a",
+      "closed_mesh": true,
+      "positive_volume": 0.07142400403213492,
+      "packed_texture": true,
+      "isolated_source": true,
+      "footprint_radius": 0.2828427166893039
+    },
+    {
+      "asset": "tree_pine_a",
+      "closed_mesh": true,
+      "positive_volume": 0.06911999984741218,
+      "packed_texture": true,
+      "isolated_source": true,
+      "footprint_radius": 0.2561249695904008
+    },
+    {
+      "asset": "tree_oak_young",
+      "closed_mesh": true,
+      "positive_volume": 0.028287999891281074,
+      "packed_texture": true,
+      "isolated_source": true,
+      "footprint_radius": 0.19999999552965164
+    },
+    {
+      "asset": "tree_pine_young",
+      "closed_mesh": true,
+      "positive_volume": 0.027647997859954886,
+      "packed_texture": true,
+      "isolated_source": true,
+      "footprint_radius": 0.19999999552965164
+    },
+    {
+      "asset": "shrub_hazel",
+      "closed_mesh": true,
+      "positive_volume": 0.012671999448299413,
+      "packed_texture": true,
+      "isolated_source": true,
+      "footprint_radius": 0.19999999552965164
+    },
+    {
+      "asset": "shrub_bracken",
+      "closed_mesh": true,
+      "positive_volume": 0.007423999740600586,
+      "packed_texture": true,
+      "isolated_source": true,
+      "footprint_radius": 0.20396078329072806
+    },
+    {
+      "asset": "fallen_log",
+      "closed_mesh": true,
+      "positive_volume": 0.01452799909734728,
+      "packed_texture": true,
+      "isolated_source": true,
+      "footprint_radius": 0.3298484426767255
+    },
+    {
+      "asset": "rock_root_small",
+      "closed_mesh": true,
+      "positive_volume": 0.005823999716758732,
+      "packed_texture": true,
+      "isolated_source": true,
+      "footprint_radius": 0.17888543420158204
+    }
+  ]
+}

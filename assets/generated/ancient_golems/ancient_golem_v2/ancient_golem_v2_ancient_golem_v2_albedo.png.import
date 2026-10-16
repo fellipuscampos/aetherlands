@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://beus8s3fwt84n"
-path="res://.godot/imported/ancient_golem_v2_ancient_golem_v2_albedo.png-556a53f34a59b51fd8aae53eca6a2a7b.ctex"
+path.bptc="res://.godot/imported/ancient_golem_v2_ancient_golem_v2_albedo.png-556a53f34a59b51fd8aae53eca6a2a7b.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "67a88296378b60a71b03fdc9c9942c1f"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/ancient_golems/ancient_golem_v2/ancient_golem_v2_ancient_golem_v2_albedo.png"
-dest_files=["res://.godot/imported/ancient_golem_v2_ancient_golem_v2_albedo.png-556a53f34a59b51fd8aae53eca6a2a7b.ctex"]
+dest_files=["res://.godot/imported/ancient_golem_v2_ancient_golem_v2_albedo.png-556a53f34a59b51fd8aae53eca6a2a7b.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

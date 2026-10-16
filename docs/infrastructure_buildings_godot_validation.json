@@ -1,0 +1,107 @@
+{
+	"assets": [
+		{
+			"asset": "market_hex_v1",
+			"meshes": 6,
+			"triangles": 1172
+		},
+		{
+			"asset": "elf_market_hex_v1",
+			"meshes": 7,
+			"triangles": 1548
+		},
+		{
+			"asset": "dwarf_market_hex_v1",
+			"meshes": 8,
+			"triangles": 1120
+		},
+		{
+			"asset": "orc_market_hex_v1",
+			"meshes": 7,
+			"triangles": 1588
+		},
+		{
+			"asset": "farm_hex_v1",
+			"meshes": 7,
+			"triangles": 1760
+		},
+		{
+			"asset": "elf_farm_hex_v1",
+			"meshes": 8,
+			"triangles": 1924
+		},
+		{
+			"asset": "dwarf_farm_hex_v1",
+			"meshes": 8,
+			"triangles": 2040
+		},
+		{
+			"asset": "orc_farm_hex_v1",
+			"meshes": 8,
+			"triangles": 1952
+		},
+		{
+			"asset": "workshop_hex_v1",
+			"meshes": 7,
+			"triangles": 988
+		},
+		{
+			"asset": "elf_workshop_hex_v1",
+			"meshes": 6,
+			"triangles": 928
+		},
+		{
+			"asset": "dwarf_workshop_hex_v1",
+			"meshes": 7,
+			"triangles": 1268
+		},
+		{
+			"asset": "orc_workshop_hex_v1",
+			"meshes": 7,
+			"triangles": 1032
+		},
+		{
+			"asset": "university_hex_v1",
+			"meshes": 7,
+			"triangles": 1376
+		},
+		{
+			"asset": "elf_university_hex_v1",
+			"meshes": 7,
+			"triangles": 1480
+		},
+		{
+			"asset": "dwarf_university_hex_v1",
+			"meshes": 7,
+			"triangles": 1436
+		},
+		{
+			"asset": "orc_university_hex_v1",
+			"meshes": 6,
+			"triangles": 1756
+		},
+		{
+			"asset": "arcane_shrine_hex_v1",
+			"meshes": 8,
+			"triangles": 738
+		},
+		{
+			"asset": "elf_arcane_shrine_hex_v1",
+			"meshes": 7,
+			"triangles": 906
+		},
+		{
+			"asset": "dwarf_arcane_shrine_hex_v1",
+			"meshes": 7,
+			"triangles": 1170
+		},
+		{
+			"asset": "orc_arcane_shrine_hex_v1",
+			"meshes": 8,
+			"triangles": 1122
+		}
+	],
+	"problems": [],
+	"status": "PASS",
+	"verified": 20
+}

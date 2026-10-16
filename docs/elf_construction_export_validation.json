@@ -1,0 +1,61 @@
+{
+  "status": "PASS",
+  "race": "elf",
+  "revision": 3,
+  "bytes": 519788,
+  "triangles": 4164,
+  "meshes": 2,
+  "materials": 1,
+  "skins": 1,
+  "bones": 25,
+  "clip": "construction",
+  "seconds": 6,
+  "embedded_atlas_sha256": "89e355752adb1f85651d74f3c2bf7b7f41ee50d059613d762292b78959f4f1e2",
+  "nearest": true,
+  "studio_excluded": true,
+  "ground_plate": false,
+  "generic_timberwork": true,
+  "loose_building_blocks": 6,
+  "raw_timber_logs": 3,
+  "original_ear_parts": 18,
+  "building_materials": {
+    "reference": "tools/art_pipeline/elf_city_level_1_hex_v1_model.py",
+    "structure": "timber_and_loose_blocks",
+    "timber": [
+      113,
+      91,
+      55
+    ],
+    "raw_timber_logs": 3,
+    "stone": [
+      137,
+      158,
+      131
+    ],
+    "cutstone": [
+      209,
+      215,
+      183
+    ],
+    "loose_building_blocks": 6,
+    "gold": [
+      206,
+      181,
+      112
+    ],
+    "roof": [
+      48,
+      122,
+      88
+    ],
+    "roof_dark": [
+      30,
+      81,
+      66
+    ],
+    "loose_green_roof_slates": 10,
+    "loose_gold_leaf_ornaments": 3,
+    "raw_timber_continuous_bark": true
+  },
+  "footprint_margin": 0.03880990378744864
+}

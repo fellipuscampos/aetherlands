@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="28">
+<path fill="#70532d" d="M4 4H44V24H4Z"/>
+<path fill="#c6a365" d="M4 4H44V20H4Z"/>
+<path fill="#f6d395" d="M4 4H44V8H4Z"/>
+<path fill="#e6c083" d="M12 8H16V20H12ZM28 8H32V20H28Z" opacity=".3"/>
+</svg>

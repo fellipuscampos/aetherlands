@@ -1,0 +1,484 @@
+{
+  "status": "PASS",
+  "pipeline": "Open Blender MCP localhost:9876",
+  "verified": 20,
+  "clips_verified": 93,
+  "samples_per_clip": 6,
+  "assets": [
+    {
+      "stem": "elf_squire_v1",
+      "clips": [
+        "Squire_Idle",
+        "Squire_Walk",
+        "Squire_Attack",
+        "Squire_ShieldWall",
+        "Squire_ShieldWallHold"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "Squire_Idle": 0.16467326879501343,
+        "Squire_Walk": 0.48578640818595886,
+        "Squire_Attack": 0.3354676365852356,
+        "Squire_ShieldWall": 1.0764368772506714,
+        "Squire_ShieldWallHold": 0.036582693457603455
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_guardian_v1",
+      "clips": [
+        "Guardian_Idle",
+        "Guardian_Walk",
+        "Guardian_Attack",
+        "Guardian_ShieldWall",
+        "Guardian_ShieldWallHold"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "Guardian_Idle": 0.16467326879501343,
+        "Guardian_Walk": 0.4845525994896889,
+        "Guardian_Attack": 0.33592309057712555,
+        "Guardian_ShieldWall": 1.0764993727207184,
+        "Guardian_ShieldWallHold": 0.03658236563205719
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_sentinel_v1",
+      "clips": [
+        "Sentinel_Idle",
+        "Sentinel_Walk",
+        "Sentinel_Attack",
+        "Sentinel_ShieldWall",
+        "Sentinel_ShieldWallHold"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "Sentinel_Idle": 0.16467326879501343,
+        "Sentinel_Walk": 0.4759174585342407,
+        "Sentinel_Attack": 0.3391823321580887,
+        "Sentinel_ShieldWall": 1.07693812251091,
+        "Sentinel_ShieldWallHold": 0.036579713225364685
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_guardian_champion_v1",
+      "clips": [
+        "Champion_Idle",
+        "Champion_Walk",
+        "Champion_Attack",
+        "Champion_ShieldWall",
+        "Champion_ShieldWallHold"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "Champion_Idle": 0.16467326879501343,
+        "Champion_Walk": 0.44456716626882553,
+        "Champion_Attack": 0.35214655846357346,
+        "Champion_ShieldWall": 1.0785396099090576,
+        "Champion_ShieldWallHold": 0.03657114505767822
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_warrior_v1",
+      "clips": [
+        "Warrior_Idle",
+        "Warrior_Walk",
+        "Warrior_Attack",
+        "Warrior_PowerStrike"
+      ],
+      "clip_count": 4,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "Warrior_Idle": 0.18149684369564056,
+        "Warrior_Walk": 0.49965882301330566,
+        "Warrior_Attack": 1.6510974168777466,
+        "Warrior_PowerStrike": 1.7039635181427002
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_swordsman_v1",
+      "clips": [
+        "Swordsman_Idle",
+        "Swordsman_Walk",
+        "Swordsman_Attack",
+        "Swordsman_PowerStrike",
+        "Swordsman_ArcAttack"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "Swordsman_Idle": 0.18149684369564056,
+        "Swordsman_Walk": 0.5009680539369583,
+        "Swordsman_Attack": 1.651076853275299,
+        "Swordsman_PowerStrike": 1.6139026284217834,
+        "Swordsman_ArcAttack": 1.7787321209907532
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_weapon_master_v1",
+      "clips": [
+        "WeaponMaster_Idle",
+        "WeaponMaster_Walk",
+        "WeaponMaster_Attack",
+        "WeaponMaster_PowerStrike",
+        "WeaponMaster_ArcAttack"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "WeaponMaster_Idle": 0.18149684369564056,
+        "WeaponMaster_Walk": 0.5009680539369583,
+        "WeaponMaster_Attack": 1.651076853275299,
+        "WeaponMaster_PowerStrike": 1.5568639636039734,
+        "WeaponMaster_ArcAttack": 1.7787323594093323
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_blade_hero_v1",
+      "clips": [
+        "BladeHero_Idle",
+        "BladeHero_Walk",
+        "BladeHero_Attack",
+        "BladeHero_PowerStrike",
+        "BladeHero_ArcAttack"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "BladeHero_Idle": 0.18149684369564056,
+        "BladeHero_Walk": 0.5009675249457359,
+        "BladeHero_Attack": 1.6517770290374756,
+        "BladeHero_PowerStrike": 1.5568636655807495,
+        "BladeHero_ArcAttack": 1.778732419013977
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_archer_v1",
+      "clips": [
+        "Archer_Idle",
+        "Archer_Walk",
+        "Archer_Attack",
+        "Archer_PreciseShot"
+      ],
+      "clip_count": 4,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "Archer_Idle": 0.18149684369564056,
+        "Archer_Walk": 0.4891864210367203,
+        "Archer_Attack": 1.9839766025543213,
+        "Archer_PreciseShot": 1.8207616209983826
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_hunter_v1",
+      "clips": [
+        "Hunter_Idle",
+        "Hunter_Walk",
+        "Hunter_Attack",
+        "Hunter_PreciseShot",
+        "Hunter_Volley"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "Hunter_Idle": 0.18149684369564056,
+        "Hunter_Walk": 0.4983411803841591,
+        "Hunter_Attack": 1.984076976776123,
+        "Hunter_PreciseShot": 1.8415175676345825,
+        "Hunter_Volley": 1.9150466322898865
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_elite_marksman_v1",
+      "clips": [
+        "EliteMarksman_Idle",
+        "EliteMarksman_Walk",
+        "EliteMarksman_Attack",
+        "EliteMarksman_PreciseShot",
+        "EliteMarksman_Volley"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "EliteMarksman_Idle": 0.18149684369564056,
+        "EliteMarksman_Walk": 0.4891864210367203,
+        "EliteMarksman_Attack": 1.9839767217636108,
+        "EliteMarksman_PreciseShot": 1.8207616209983826,
+        "EliteMarksman_Volley": 1.9134736061096191
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_legend_hunter_v1",
+      "clips": [
+        "LegendHunter_Idle",
+        "LegendHunter_Walk",
+        "LegendHunter_Attack",
+        "LegendHunter_PreciseShot",
+        "LegendHunter_Volley"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "LegendHunter_Idle": 0.18149684369564056,
+        "LegendHunter_Walk": 0.4891863241791725,
+        "LegendHunter_Attack": 1.9838964939117432,
+        "LegendHunter_PreciseShot": 1.8237478733062744,
+        "LegendHunter_Volley": 1.9127768874168396
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_cavalier_v1",
+      "clips": [
+        "Cavalier_Idle",
+        "Cavalier_Walk",
+        "Cavalier_Attack",
+        "Cavalier_Charge"
+      ],
+      "clip_count": 4,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "Cavalier_Idle": 0.14865973591804504,
+        "Cavalier_Walk": 1.160391241312027,
+        "Cavalier_Attack": 1.2591420412063599,
+        "Cavalier_Charge": 1.3484967947006226
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_shock_cavalier_v1",
+      "clips": [
+        "ShockCavalier_Idle",
+        "ShockCavalier_Walk",
+        "ShockCavalier_Attack",
+        "ShockCavalier_Charge"
+      ],
+      "clip_count": 4,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "ShockCavalier_Idle": 0.14865973591804504,
+        "ShockCavalier_Walk": 1.160391241312027,
+        "ShockCavalier_Attack": 1.2591420412063599,
+        "ShockCavalier_Charge": 1.3484967947006226
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_armored_cavalier_v1",
+      "clips": [
+        "ArmoredCavalier_Idle",
+        "ArmoredCavalier_Walk",
+        "ArmoredCavalier_Attack",
+        "ArmoredCavalier_Charge"
+      ],
+      "clip_count": 4,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "ArmoredCavalier_Idle": 0.14865973591804504,
+        "ArmoredCavalier_Walk": 1.160391241312027,
+        "ArmoredCavalier_Attack": 1.2591420412063599,
+        "ArmoredCavalier_Charge": 1.3484967947006226
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_griffon_rider_v1",
+      "clips": [
+        "GriffonRider_Idle",
+        "GriffonRider_Walk",
+        "GriffonRider_Attack",
+        "GriffonRider_Charge"
+      ],
+      "clip_count": 4,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "GriffonRider_Idle": 0.14865973591804504,
+        "GriffonRider_Walk": 1.160391241312027,
+        "GriffonRider_Attack": 1.2591424882411957,
+        "GriffonRider_Charge": 1.3484967947006226
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_rogue_v1",
+      "clips": [
+        "Rogue_Idle",
+        "Rogue_Walk",
+        "Rogue_Attack",
+        "Rogue_SneakAttack"
+      ],
+      "clip_count": 4,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "Rogue_Idle": 0.18149684369564056,
+        "Rogue_Walk": 0.49965882301330566,
+        "Rogue_Attack": 0.7953395545482635,
+        "Rogue_SneakAttack": 0.9233002066612244
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_saboteur_v1",
+      "clips": [
+        "Saboteur_Idle",
+        "Saboteur_Walk",
+        "Saboteur_Attack",
+        "Saboteur_SneakAttack",
+        "Saboteur_Dismantle"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "Saboteur_Idle": 0.18149684369564056,
+        "Saboteur_Walk": 0.49965882301330566,
+        "Saboteur_Attack": 0.7953395545482635,
+        "Saboteur_SneakAttack": 0.9233002066612244,
+        "Saboteur_Dismantle": 0.6493036150932312
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_assassin_v1",
+      "clips": [
+        "Assassin_Idle",
+        "Assassin_Walk",
+        "Assassin_Attack",
+        "Assassin_SneakAttack",
+        "Assassin_Dismantle"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "Assassin_Idle": 0.18149684369564056,
+        "Assassin_Walk": 0.49965882301330566,
+        "Assassin_Attack": 0.7953395545482635,
+        "Assassin_SneakAttack": 0.9233002066612244,
+        "Assassin_Dismantle": 0.6493036150932312
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    },
+    {
+      "stem": "elf_shadow_master_v1",
+      "clips": [
+        "ShadowMaster_Idle",
+        "ShadowMaster_Walk",
+        "ShadowMaster_Attack",
+        "ShadowMaster_SneakAttack",
+        "ShadowMaster_Dismantle"
+      ],
+      "clip_count": 5,
+      "samples_per_clip": 6,
+      "maximum_bone_matrix_error": 0.0,
+      "movement": {
+        "ShadowMaster_Idle": 0.18149684369564056,
+        "ShadowMaster_Walk": 0.49965882301330566,
+        "ShadowMaster_Attack": 0.7953395545482635,
+        "ShadowMaster_SneakAttack": 0.9233002066612244,
+        "ShadowMaster_Dismantle": 0.6493036150932312
+      },
+      "saved_nla_enabled": true,
+      "all_saved_tracks_enabled": true
+    }
+  ],
+  "review": {
+    "path": "assets\\generated\\elves\\elf_troops_review.blend",
+    "models": 20,
+    "segments": [
+      [
+        "Idle",
+        1,
+        1
+      ],
+      [
+        "Walk",
+        91,
+        3
+      ],
+      [
+        "Attack",
+        201,
+        3
+      ]
+    ],
+    "preview_range": [
+      91,
+      118
+    ],
+    "timeline_end": 583,
+    "all_models_walk": true,
+    "walk_pose_movement": {
+      "Elf_Squire_V1_Rig.009": 0.21485590934753418,
+      "Elf_Guardian_V1_Rig.008": 0.21451568603515625,
+      "Elf_Sentinel_V1_Rig.009": 0.21210899949073792,
+      "Elf_Guardian_Champion_V1_Rig.009": 0.20293158292770386,
+      "Elf_Warrior_V1_Rig.009": 0.21131852269172668,
+      "Elf_Swordsman_V1_Rig.009": 0.21165981888771057,
+      "Elf_WeaponMaster_V1_Rig.008": 0.21165981888771057,
+      "Elf_BladeHero_V1_Rig.010": 0.21165964007377625,
+      "Elf_Archer_V1_Rig.010": 0.20854774117469788,
+      "Elf_Hunter_V1_Rig.009": 0.21097412705421448,
+      "Elf_EliteMarksman_V1_Rig.009": 0.2224305048584938,
+      "Elf_LegendHunter_V1_Rig.009": 0.24673810601234436,
+      "Elf_Cavalier_V1_Rig.008": 1.1816399693489075,
+      "Elf_ShockCavalier_V1_Rig.008": 1.1816399693489075,
+      "Elf_ArmoredCavalier_V1_Rig.008": 1.1816399693489075,
+      "Elf_GriffonRider_V1_Rig.008": 1.1816399693489075,
+      "Elf_Rogue_V1_Rig.009": 0.21131852269172668,
+      "Elf_Saboteur_V1_Rig.009": 0.21131852269172668,
+      "Elf_Assassin_V1_Rig.009": 0.21131852269172668,
+      "Elf_ShadowMaster_V1_Rig.010": 0.21131852269172668
+    }
+  }
+}

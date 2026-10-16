@@ -1,0 +1,189 @@
+{
+  "status": "PASS",
+  "verified": 4,
+  "clips": 19,
+  "protected_files": 455,
+  "assets": [
+    {
+      "stem": "elf_catapult_v1",
+      "status": "PASS",
+      "clips": 4,
+      "triangles": 2536,
+      "wheels": 4,
+      "height_m": 1.8,
+      "embedded_atlas_matches": true,
+      "motion_recovery": {
+        "Catapult_Idle": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 0.0,
+          "samples": 6
+        },
+        "Catapult_Walk": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 1.9914451837539673,
+          "samples": 6
+        },
+        "Catapult_Attack": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 0.7720459699630737,
+          "samples": 6
+        },
+        "Catapult_DemolitionAmmo": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 0.8630978465080261,
+          "samples": 6
+        }
+      },
+      "geometry_signature": "3b29a2241567b6bacd89f25309e214489d3310844bd9de1ca1bc8d679e91604b"
+    },
+    {
+      "stem": "elf_trebuchet_v1",
+      "status": "PASS",
+      "clips": 5,
+      "triangles": 2556,
+      "wheels": 4,
+      "height_m": 1.8,
+      "embedded_atlas_matches": true,
+      "motion_recovery": {
+        "Trebuchet_Idle": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 0.0,
+          "samples": 6
+        },
+        "Trebuchet_Walk": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 1.9914451837539673,
+          "samples": 6
+        },
+        "Trebuchet_Attack": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 0.7720459699630737,
+          "samples": 6
+        },
+        "Trebuchet_DemolitionAmmo": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 0.8630978465080261,
+          "samples": 6
+        },
+        "Trebuchet_PreparedBombardment": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 0.9195253252983093,
+          "samples": 6
+        }
+      },
+      "geometry_signature": "af3f9f8f80c04a39f594a19276e5df1bd0a8ae60ced54628532e63736d71cad5"
+    },
+    {
+      "stem": "elf_bombard_v1",
+      "status": "PASS",
+      "clips": 5,
+      "triangles": 3024,
+      "wheels": 4,
+      "height_m": 1.8,
+      "embedded_atlas_matches": true,
+      "motion_recovery": {
+        "Bombard_Idle": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 0.0,
+          "samples": 6
+        },
+        "Bombard_Walk": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 1.9914451837539673,
+          "samples": 6
+        },
+        "Bombard_Attack": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 0.48830437660217285,
+          "samples": 6
+        },
+        "Bombard_DemolitionAmmo": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 0.45070403814315796,
+          "samples": 6
+        },
+        "Bombard_PreparedBombardment": {
+          "finite": true,
+          "minimum_z": 0.0,
+          "recovery_error": 0.0,
+          "movement": 0.48830437660217285,
+          "samples": 6
+        }
+      },
+      "geometry_signature": "fed0a196cbd980cf852c49273ee497a5910111583d7b2ae586ddd41f95e089eb"
+    },
+    {
+      "stem": "elf_siege_colossus_v1",
+      "status": "PASS",
+      "clips": 5,
+      "triangles": 3900,
+      "wheels": 6,
+      "height_m": 2.0,
+      "embedded_atlas_matches": true,
+      "motion_recovery": {
+        "SiegeColossus_Idle": {
+          "finite": true,
+          "minimum_z": 3.041053275865124e-08,
+          "recovery_error": 0.0,
+          "movement": 0.0,
+          "samples": 6
+        },
+        "SiegeColossus_Walk": {
+          "finite": true,
+          "minimum_z": 3.041053275865124e-08,
+          "recovery_error": 0.0,
+          "movement": 1.9914451837539673,
+          "samples": 6
+        },
+        "SiegeColossus_Attack": {
+          "finite": true,
+          "minimum_z": 3.041053275865124e-08,
+          "recovery_error": 0.0,
+          "movement": 1.0605427026748657,
+          "samples": 6
+        },
+        "SiegeColossus_DemolitionAmmo": {
+          "finite": true,
+          "minimum_z": 3.041053275865124e-08,
+          "recovery_error": 0.0,
+          "movement": 1.2391310930252075,
+          "samples": 6
+        },
+        "SiegeColossus_PreparedBombardment": {
+          "finite": true,
+          "minimum_z": 3.041053275865124e-08,
+          "recovery_error": 0.0,
+          "movement": 1.3787055015563965,
+          "samples": 6
+        }
+      },
+      "geometry_signature": "44698151b944672b3bdc048bc14c5ce62eb58fa59e362cd414c7d333de21509f"
+    }
+  ]
+}

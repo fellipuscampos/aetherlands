@@ -1,0 +1,112 @@
+{
+  "name": "Dwarf_Warrior_Hall_Hex_V1",
+  "display_name": "Salão de Armas dos Anões",
+  "gameplay_building_id": "v2_building_warrior_hall",
+  "trains": [
+    "v2_unit_warrior",
+    "v2_unit_swordsman",
+    "v2_unit_weapon_master"
+  ],
+  "excludes": [
+    "v2_legendary_blade_hero"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 2520,
+  "editable_parts": 193,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.003999948501587
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.003999948501587
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units; pointy-top tile radius 1, military foundation radius .92; placement scale tile_radius. Asset only, no integration.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1209,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Original dwarf warrior hall: low broad granite barracks, transverse dark slate stepped roof and copper bindings, squat carved rune portal and prominent crossed double-headed axe/war hammer on blue clan cloth. Open right stone-post armory with slate lean-to and reserve axe/hammer; open wedge sparring court with two short slash-marked straw melee targets, stance markers, small repair anvil, bench and blue military standard. Palette matches dwarf city I and tank hall. Same shared warrior/swordsman/weapon-master line; supreme blade hero belongs to separate mastery building. No watchtower, shield-training equipment, surrounding wall ring or character-model dependency.",
+  "door_clearance_m": [
+    0.228,
+    0.26
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "dwarf",
+  "unit_class": "warrior",
+  "asset_only": true,
+  "hex_tile": {
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "placement_scale": "tile_radius",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "training_props": {
+    "melee_dummies": 2,
+    "reserve_axe": 1,
+    "reserve_hammer": 1,
+    "stance_markers": 2
+  },
+  "includes_perimeter_walls": false,
+  "faction_tint": "Blue crossed-weapons backing cloth and military standard isolated in Faction mesh for future owner tint; slate, granite, copper and steel retain their palette. No runtime integration.",
+  "export": {
+    "file": "dwarf_warrior_hall_hex_v1.glb",
+    "bytes": 1006448,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2520,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "dwarf_warrior_hall_hex_v1_emission",
+        "bytes": 79158,
+        "sha256": "9e6c376dcb752c6e1cb5350bc604a4f6f4a38ab8479f04efecda6fa075278f98"
+      },
+      {
+        "image": "dwarf_warrior_hall_hex_v1_albedo",
+        "bytes": 743634,
+        "sha256": "502b45f46068b8930627904396d1ab5a72d55bbd416fbef6a70d7f1272c35cf1"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

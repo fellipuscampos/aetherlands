@@ -1,0 +1,34 @@
+{
+  "levels": [
+    {
+      "height": 0.252000004053116,
+      "level": 1,
+      "maximum_half_plane": 0.853035094822837,
+      "minimum_city_clearance": 0.0406024846152147,
+      "model": "res://assets/generated/dwarves/buildings/dwarf_walls_level_1_hex_v1/dwarf_walls_level_1_hex_v1.glb",
+      "tile_radius": 1.0,
+      "triangles": 1750
+    },
+    {
+      "height": 0.33500000834465,
+      "level": 2,
+      "maximum_half_plane": 0.853035094822837,
+      "minimum_city_clearance": 0.0406024846152147,
+      "model": "res://assets/generated/dwarves/buildings/dwarf_walls_level_2_hex_v1/dwarf_walls_level_2_hex_v1.glb",
+      "tile_radius": 1.0,
+      "triangles": 4298
+    },
+    {
+      "height": 0.386000007390976,
+      "level": 3,
+      "maximum_half_plane": 0.853035095964753,
+      "minimum_city_clearance": 0.0406024932744723,
+      "model": "res://assets/generated/dwarves/buildings/dwarf_walls_level_3_hex_v1/dwarf_walls_level_3_hex_v1.glb",
+      "tile_radius": 1.0,
+      "triangles": 7332
+    }
+  ],
+  "native_city_integration": true,
+  "race": "dwarf",
+  "status": "PASS"
+}

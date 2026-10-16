@@ -3,23 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bth1pft1d6y1x"
-path="res://.godot/imported/elite_marksman_v1_elite_marksman_v1_albedo.png-e934dbb4b3455ecf9537d3564f2ac783.ctex"
+path.bptc="res://.godot/imported/elite_marksman_v1_elite_marksman_v1_albedo.png-e934dbb4b3455ecf9537d3564f2ac783.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "54d80b0bb97b15e02a22d3d47bfa1acf"
+"md5": "95e1c223199fd2a30da292c2aa519760"
 }
 
 [deps]
 
 source_file="res://assets/generated/humans/elite_marksman_v1/elite_marksman_v1_elite_marksman_v1_albedo.png"
-dest_files=["res://.godot/imported/elite_marksman_v1_elite_marksman_v1_albedo.png-e934dbb4b3455ecf9537d3564f2ac783.ctex"]
+dest_files=["res://.godot/imported/elite_marksman_v1_elite_marksman_v1_albedo.png-e934dbb4b3455ecf9537d3564f2ac783.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

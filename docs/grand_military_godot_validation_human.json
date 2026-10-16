@@ -1,0 +1,68 @@
+{
+  "status": "PASS",
+  "verified": 6,
+  "assets": [
+    {
+      "asset": "guardian_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.37699997425079,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1232
+    },
+    {
+      "asset": "warrior_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.16999983787537,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1652
+    },
+    {
+      "asset": "ranger_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.75999999046326,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1532
+    },
+    {
+      "asset": "cavalry_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.44249987602234,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 2208
+    },
+    {
+      "asset": "rogue_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.47699999809265,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1696
+    },
+    {
+      "asset": "grand_arsenal_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.41999983787537,
+        1.8400000333786
+      ],
+      "meshes": 7,
+      "triangles": 1956
+    }
+  ],
+  "problems": [],
+  "source": "grand_military_godot_validation.json"
+}

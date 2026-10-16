@@ -1,0 +1,176 @@
+{
+  "verified": 24,
+  "remaining_physical_adornments": 0,
+  "unique_geometries": 24,
+  "method": "AABB connectivity, 0.0015 tolerance, and manual preview review; geometry hashes exclude labels/materials",
+  "scenes": [
+    {
+      "scene": "Cavalry_Mastery_Hex_V1",
+      "civilization": "human",
+      "role": "cavalry",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "f722972c190c87ab06552a031508dc557cf98e68ed9fe78e039b7dc0160fb178"
+    },
+    {
+      "scene": "Dwarf_Cavalry_Mastery_Hex_V1",
+      "civilization": "dwarf",
+      "role": "cavalry",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "94f4a519c7ccae58a2682d22bf4cb87b9dd750b1898e8a7e871ffb2b7cbf9363"
+    },
+    {
+      "scene": "Dwarf_Grand_Arsenal_Hex_V1",
+      "civilization": "dwarf",
+      "role": "siege",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "a9d95610b5084d18d64858f75db7d17216feca52929d5a9e4237a6cbf4e4cece"
+    },
+    {
+      "scene": "Dwarf_Guardian_Mastery_Hex_V1",
+      "civilization": "dwarf",
+      "role": "guardian",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "f125d89619508ea125df5b27fa22b592ae07323166c39cca620fc7f42f90a410"
+    },
+    {
+      "scene": "Dwarf_Ranger_Mastery_Hex_V1",
+      "civilization": "dwarf",
+      "role": "ranger",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "0ffefb12bf86c451d74bd7a606476b990c4eb9ae94bc866477e37fa727760e36"
+    },
+    {
+      "scene": "Dwarf_Rogue_Mastery_Hex_V1",
+      "civilization": "dwarf",
+      "role": "rogue",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "5e647e736aa3d202fe47fd0737bcb0c3787736948b02157ff4087ae779dfa2f7"
+    },
+    {
+      "scene": "Dwarf_Warrior_Mastery_Hex_V1",
+      "civilization": "dwarf",
+      "role": "warrior",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "6a95d3963f87c238a55502575d96bbd9e9191bdf020d4a4aa7d8a2b46246bf51"
+    },
+    {
+      "scene": "Elf_Cavalry_Mastery_Hex_V1",
+      "civilization": "elf",
+      "role": "cavalry",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "3728110550210df207de04c79cd7a94914b0c1bb5589e1b1d87ebde4cea671d6"
+    },
+    {
+      "scene": "Elf_Grand_Arsenal_Hex_V1",
+      "civilization": "elf",
+      "role": "siege",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "87a7face06a9d7c46078f7988b227fe810f85272c62dadbd212e9ed9de0d38fd"
+    },
+    {
+      "scene": "Elf_Guardian_Mastery_Hex_V1",
+      "civilization": "elf",
+      "role": "guardian",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "d8a31fe8fd6e4cda31de5e1ba63261747de887abb728e00667d5fec3e6d70bcd"
+    },
+    {
+      "scene": "Elf_Ranger_Mastery_Hex_V1",
+      "civilization": "elf",
+      "role": "ranger",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "4388ca3cc584454d22b42d9caf7749b366b7a0d08bd624dcd4ab2885fa933a53"
+    },
+    {
+      "scene": "Elf_Rogue_Mastery_Hex_V1",
+      "civilization": "elf",
+      "role": "rogue",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "c234835397042a2ddc2f4482b68c1576639ceeb73417f453ae6314446251aa6d"
+    },
+    {
+      "scene": "Elf_Warrior_Mastery_Hex_V1",
+      "civilization": "elf",
+      "role": "warrior",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "6cd9e909b6de87b752e5ebf9a45344d8b3e047735e80a3594f03cf604a2c3a26"
+    },
+    {
+      "scene": "Grand_Arsenal_Hex_V1",
+      "civilization": "human",
+      "role": "siege",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "149c6f3cb274584a0b176ac36cdac1cfaf3f05cdd9574b1110921e08c7c8b220"
+    },
+    {
+      "scene": "Guardian_Mastery_Hex_V1",
+      "civilization": "human",
+      "role": "guardian",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "002d8222230a504774dab5e6a59c302276f4be39c7ae2fda74bfda83b5553b98"
+    },
+    {
+      "scene": "Orc_Cavalry_Mastery_Hex_V1",
+      "civilization": "orc",
+      "role": "cavalry",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "c3a6c7bd5660d214d8d66ab047f9359e6afef6c1a34b6388db62348555ee0dae"
+    },
+    {
+      "scene": "Orc_Grand_Arsenal_Hex_V1",
+      "civilization": "orc",
+      "role": "siege",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "1d8d98e6300192b6eb734641463cfa39f3665f6dfd1408baec86c863b4e9ce66"
+    },
+    {
+      "scene": "Orc_Guardian_Mastery_Hex_V1",
+      "civilization": "orc",
+      "role": "guardian",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "26f9323359b619be34391de82fff4f6c1336a917ff035a58426582e2e35eee65"
+    },
+    {
+      "scene": "Orc_Ranger_Mastery_Hex_V1",
+      "civilization": "orc",
+      "role": "ranger",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "954454478cdbc47945f4ade75fc9176a776485dcac9c227dce1efc5138ef7136"
+    },
+    {
+      "scene": "Orc_Rogue_Mastery_Hex_V1",
+      "civilization": "orc",
+      "role": "rogue",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "51fe599dac5d7d94fab282d7cea08807916efd93c385dccc6baf9f6ac64c4e9e"
+    },
+    {
+      "scene": "Orc_Warrior_Mastery_Hex_V1",
+      "civilization": "orc",
+      "role": "warrior",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "882fed56524fb27410dfac61cddc1e349c940e0d302def7d1950fbcfd7abe9da"
+    },
+    {
+      "scene": "Ranger_Mastery_Hex_V1",
+      "civilization": "human",
+      "role": "ranger",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "a46f5e236764a9bba163efd8cce27737d4ab022b9d586f52cd931520fced68b3"
+    },
+    {
+      "scene": "Rogue_Mastery_Hex_V1",
+      "civilization": "human",
+      "role": "rogue",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "483f467ed77a306d55509bef170ad42def921938392111db8e797201b773106f"
+    },
+    {
+      "scene": "Warrior_Mastery_Hex_V1",
+      "civilization": "human",
+      "role": "warrior",
+      "physical_attachment_remaining": [],
+      "geometry_sha256": "d1fdfebf5d01949c63abcdda3c2c381e1a5a508b219510bd7ce9c8f8e03eedba"
+    }
+  ]
+}

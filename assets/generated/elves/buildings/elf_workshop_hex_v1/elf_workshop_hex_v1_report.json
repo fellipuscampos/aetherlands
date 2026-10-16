@@ -1,0 +1,145 @@
+{
+  "name": "Elf_Workshop_Hex_V1",
+  "display_name": "Oficina",
+  "gameplay_building_id": "v2_building_workshop",
+  "trains": [
+    "v2_unit_builder"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 928,
+  "editable_parts": 72,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.090999960899353
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.090999960899353
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Escala nativa 1:1 do mapa; tile pointy-top de raio 1; multiplicador 1.0.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 448,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Pedra clara e madeira esbelta com apoios ramificados, pavilhões abertos, telhados verdes altos com cantos facetados e folhas douradas. Oficina de infraestrutura, uma única versão sem evolução. Revisão: Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores. Junções ajustadas para eliminar faces coplanares expostas.",
+  "door_clearance_m": [
+    0.2,
+    0.32
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "infrastructure": {
+    "branch": "industry",
+    "single_version": true,
+    "evolutions": [],
+    "blender_mcp_only": true,
+    "architecture": "Pedra clara e madeira esbelta com apoios ramificados, pavilhões abertos, telhados verdes altos com cantos facetados e folhas douradas.",
+    "recipe": "elf_workshop"
+  },
+  "hex_tile": {
+    "circumradius": 1.0,
+    "source_base_radius": 0.92,
+    "max_half_plane_blender": 0.796743392944336,
+    "minimum_margin": 0.06928201084010255
+  },
+  "surface_overlap_review": {
+    "version": 1,
+    "mcp_only": true,
+    "exposed_coplanar_overlap_faces": 0,
+    "repaired_parts": {
+      "Lathe_Bearing_-0.26_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "8c64e4781b7e4efb9d2a597774b2568654a401ecfcefa6a822245405688fb9a7"
+      },
+      "Lathe_Bearing_0.02_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "fca9d4850c0f1e0ade4297db9de8dae76d9d140903d68142fb0fc88bec95720d"
+      },
+      "Workshop_Living_Post_Canopy_1": {
+        "reason": "taper_canopy_depth",
+        "sha256": "23bee2131dac8e6b6f43a7183084efb39e82e67700dd6a40b21dce8b2eff56b5"
+      },
+      "Workshop_Living_Post_Canopy_2": {
+        "reason": "taper_canopy_depth",
+        "sha256": "b0294edb167499556df4c9874c35f49a59a36066d81e17b9e4e5415f57885336"
+      }
+    },
+    "method": "Native Blender MCP; triangle clipping on matching outward planes, visible area checked against a BVH of all game meshes",
+    "before_overlap_faces": 6
+  },
+  "infrastructure_roof_review": {
+    "version": 1,
+    "mcp_only": true,
+    "roofs": [
+      {
+        "roof": "Artisans_Leaf_Pavilion",
+        "shape": "straight_gable",
+        "courses": 6,
+        "base_height": 0.546
+      }
+    ],
+    "support_contacts": [],
+    "note": "Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores.",
+    "before_backup": "art_source/infrastructure_before_roof_review"
+  },
+  "export": {
+    "file": "elf_workshop_hex_v1.glb",
+    "bytes": 553520,
+    "meshes": 6,
+    "primitives": 6,
+    "triangles": 928,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_workshop_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "elf_workshop_hex_v1_albedo",
+        "bytes": 462516,
+        "sha256": "22752d48173a84de9fca7e3111cf940528dc8140ca571643e6592972e4cf830a"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

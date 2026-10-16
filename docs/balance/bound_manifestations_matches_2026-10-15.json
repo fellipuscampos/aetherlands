@@ -1,0 +1,382 @@
+{
+  "method": "Three full BalanceLab matches, 4 AI seats, large 128x72, ecology enabled, turn cap 240, existing seed indices 0-2. Smoke coverage, not a statistical balance verdict. Raw records remain in user://balance/bound_manifestations_20261015/smoke/.",
+  "matches": [
+    {
+      "config": {
+        "baseline_id": "RELEASE_BALANCE_BASELINE_PRE_TUNING",
+        "human_capital_founded": true,
+        "index": 0,
+        "map_height": 72,
+        "map_width": 128,
+        "match_id": "F33B-001",
+        "orientation_template": "MBAB",
+        "orientations": [
+          "MILITARY",
+          "BALANCED",
+          "ARCANE",
+          "BALANCED"
+        ],
+        "races": [
+          "human",
+          "elf",
+          "dwarf",
+          "orc"
+        ],
+        "rival_count": 3,
+        "seed": 33102,
+        "seed_set_version": "phase33b-v2",
+        "turn_cap": 240
+      },
+      "end": {
+        "end_reason": "TRANSCENDENCE",
+        "timeout": false,
+        "turn": 196,
+        "turn_cap": 240,
+        "victory_type_raw": "v2_transcendence"
+      },
+      "victory": {
+        "victory_turn": 196,
+        "victory_type": "v2_transcendence",
+        "winner_index": 2,
+        "winner_orientation": "ARCANE",
+        "winner_race": "dwarf"
+      },
+      "civilizations": [
+        {
+          "seat": 0,
+          "race": "human",
+          "orientation": "MILITARY",
+          "manifestations": {
+            "deaths": [],
+            "produced": [],
+            "schools_ever": []
+          },
+          "mana_at_first_manifestation": -1.0,
+          "waiting_mana_city_turns": 0,
+          "ritual_attempts": 0,
+          "ritual_interruptions": 0,
+          "final_mana": 786.0
+        },
+        {
+          "seat": 1,
+          "race": "elf",
+          "orientation": "BALANCED",
+          "manifestations": {
+            "deaths": [],
+            "produced": [],
+            "schools_ever": []
+          },
+          "mana_at_first_manifestation": -1.0,
+          "waiting_mana_city_turns": 0,
+          "ritual_attempts": 0,
+          "ritual_interruptions": 0,
+          "final_mana": 1042.5
+        },
+        {
+          "seat": 2,
+          "race": "dwarf",
+          "orientation": "ARCANE",
+          "manifestations": {
+            "deaths": [],
+            "produced": [
+              {
+                "mana_before_spawn": 561.0,
+                "school": "arcanism",
+                "turn": 134
+              },
+              {
+                "mana_before_spawn": 745.0,
+                "school": "infernal",
+                "turn": 191
+              }
+            ],
+            "schools_ever": [
+              "arcanism",
+              "infernal"
+            ]
+          },
+          "mana_at_first_manifestation": 561.0,
+          "waiting_mana_city_turns": 0,
+          "ritual_attempts": 1,
+          "ritual_interruptions": 0,
+          "final_mana": 467.0
+        },
+        {
+          "seat": 3,
+          "race": "orc",
+          "orientation": "BALANCED",
+          "manifestations": {
+            "deaths": [],
+            "produced": [],
+            "schools_ever": []
+          },
+          "mana_at_first_manifestation": -1.0,
+          "waiting_mana_city_turns": 0,
+          "ritual_attempts": 0,
+          "ritual_interruptions": 0,
+          "final_mana": 549.0
+        }
+      ]
+    },
+    {
+      "config": {
+        "baseline_id": "RELEASE_BALANCE_BASELINE_PRE_TUNING",
+        "human_capital_founded": true,
+        "index": 1,
+        "map_height": 72,
+        "map_width": 128,
+        "match_id": "F33B-002",
+        "orientation_template": "AMAB",
+        "orientations": [
+          "ARCANE",
+          "MILITARY",
+          "ARCANE",
+          "BALANCED"
+        ],
+        "races": [
+          "elf",
+          "dwarf",
+          "orc",
+          "human"
+        ],
+        "rival_count": 3,
+        "seed": 33109,
+        "seed_set_version": "phase33b-v2",
+        "turn_cap": 240
+      },
+      "end": {
+        "end_reason": "TRANSCENDENCE",
+        "timeout": false,
+        "turn": 157,
+        "turn_cap": 240,
+        "victory_type_raw": "v2_transcendence"
+      },
+      "victory": {
+        "victory_turn": 157,
+        "victory_type": "v2_transcendence",
+        "winner_index": 0,
+        "winner_orientation": "ARCANE",
+        "winner_race": "elf"
+      },
+      "civilizations": [
+        {
+          "seat": 0,
+          "race": "elf",
+          "orientation": "ARCANE",
+          "manifestations": {
+            "deaths": [],
+            "produced": [
+              {
+                "mana_before_spawn": 336.1,
+                "school": "infernal",
+                "turn": 106
+              },
+              {
+                "mana_before_spawn": 347.3,
+                "school": "sacred",
+                "turn": 152
+              }
+            ],
+            "schools_ever": [
+              "infernal",
+              "sacred"
+            ]
+          },
+          "mana_at_first_manifestation": 336.1,
+          "waiting_mana_city_turns": 0,
+          "ritual_attempts": 1,
+          "ritual_interruptions": 0,
+          "final_mana": 129.8
+        },
+        {
+          "seat": 1,
+          "race": "dwarf",
+          "orientation": "MILITARY",
+          "manifestations": {
+            "deaths": [],
+            "produced": [],
+            "schools_ever": []
+          },
+          "mana_at_first_manifestation": -1.0,
+          "waiting_mana_city_turns": 0,
+          "ritual_attempts": 0,
+          "ritual_interruptions": 0,
+          "final_mana": 156.0
+        },
+        {
+          "seat": 2,
+          "race": "orc",
+          "orientation": "ARCANE",
+          "manifestations": {
+            "deaths": [
+              {
+                "school": "arcanism",
+                "turn": 151
+              }
+            ],
+            "produced": [
+              {
+                "mana_before_spawn": 154.0,
+                "school": "arcanism",
+                "turn": 144
+              }
+            ],
+            "schools_ever": [
+              "arcanism"
+            ]
+          },
+          "mana_at_first_manifestation": 154.0,
+          "waiting_mana_city_turns": 0,
+          "ritual_attempts": 0,
+          "ritual_interruptions": 0,
+          "final_mana": 90.0
+        },
+        {
+          "seat": 3,
+          "race": "human",
+          "orientation": "BALANCED",
+          "manifestations": {
+            "deaths": [],
+            "produced": [],
+            "schools_ever": []
+          },
+          "mana_at_first_manifestation": -1.0,
+          "waiting_mana_city_turns": 0,
+          "ritual_attempts": 0,
+          "ritual_interruptions": 0,
+          "final_mana": 351.0
+        }
+      ]
+    },
+    {
+      "config": {
+        "baseline_id": "RELEASE_BALANCE_BASELINE_PRE_TUNING",
+        "human_capital_founded": true,
+        "index": 2,
+        "map_height": 72,
+        "map_width": 128,
+        "match_id": "F33B-003",
+        "orientation_template": "AAMB",
+        "orientations": [
+          "ARCANE",
+          "ARCANE",
+          "MILITARY",
+          "BALANCED"
+        ],
+        "races": [
+          "dwarf",
+          "orc",
+          "human",
+          "elf"
+        ],
+        "rival_count": 3,
+        "seed": 33116,
+        "seed_set_version": "phase33b-v2",
+        "turn_cap": 240
+      },
+      "end": {
+        "end_reason": "TRANSCENDENCE",
+        "timeout": false,
+        "turn": 151,
+        "turn_cap": 240,
+        "victory_type_raw": "v2_transcendence"
+      },
+      "victory": {
+        "victory_turn": 151,
+        "victory_type": "v2_transcendence",
+        "winner_index": 0,
+        "winner_orientation": "ARCANE",
+        "winner_race": "dwarf"
+      },
+      "civilizations": [
+        {
+          "seat": 0,
+          "race": "dwarf",
+          "orientation": "ARCANE",
+          "manifestations": {
+            "deaths": [],
+            "produced": [
+              {
+                "mana_before_spawn": 496.0,
+                "school": "infernal",
+                "turn": 126
+              },
+              {
+                "mana_before_spawn": 433.0,
+                "school": "sacred",
+                "turn": 146
+              }
+            ],
+            "schools_ever": [
+              "infernal",
+              "sacred"
+            ]
+          },
+          "mana_at_first_manifestation": 496.0,
+          "waiting_mana_city_turns": 0,
+          "ritual_attempts": 1,
+          "ritual_interruptions": 0,
+          "final_mana": 146.0
+        },
+        {
+          "seat": 1,
+          "race": "orc",
+          "orientation": "ARCANE",
+          "manifestations": {
+            "deaths": [
+              {
+                "school": "druidism",
+                "turn": 138
+              }
+            ],
+            "produced": [
+              {
+                "mana_before_spawn": 478.0,
+                "school": "druidism",
+                "turn": 124
+              }
+            ],
+            "schools_ever": [
+              "druidism"
+            ]
+          },
+          "mana_at_first_manifestation": 478.0,
+          "waiting_mana_city_turns": 0,
+          "ritual_attempts": 0,
+          "ritual_interruptions": 0,
+          "final_mana": 350.0
+        },
+        {
+          "seat": 2,
+          "race": "human",
+          "orientation": "MILITARY",
+          "manifestations": {
+            "deaths": [],
+            "produced": [],
+            "schools_ever": []
+          },
+          "mana_at_first_manifestation": -1.0,
+          "waiting_mana_city_turns": 0,
+          "ritual_attempts": 0,
+          "ritual_interruptions": 0,
+          "final_mana": 587.0
+        },
+        {
+          "seat": 3,
+          "race": "elf",
+          "orientation": "BALANCED",
+          "manifestations": {
+            "deaths": [],
+            "produced": [],
+            "schools_ever": []
+          },
+          "mana_at_first_manifestation": -1.0,
+          "waiting_mana_city_turns": 0,
+          "ritual_attempts": 0,
+          "ritual_interruptions": 0,
+          "final_mana": 273.5
+        }
+      ]
+    }
+  ]
+}

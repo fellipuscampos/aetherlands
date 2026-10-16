@@ -1,0 +1,195 @@
+{
+  "name": "Human_Farm_Hex_V1",
+  "display_name": "Fazenda",
+  "gameplay_building_id": "v2_building_farm",
+  "trains": [],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1760,
+  "editable_parts": 138,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      0.828000009059906
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    0.828000009059906
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Escala nativa 1:1 do mapa; tile pointy-top de raio 1; multiplicador 1.0.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 854,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Alvenaria de blocos de pedra, cantaria nos pilares e bases, telhados de ardósia azul. Madeira nos móveis, portas e mecanismos. Fazenda de infraestrutura, uma única versão sem evolução. Revisão: Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores. Junções ajustadas para eliminar faces coplanares expostas.",
+  "door_clearance_m": [
+    0.2,
+    0.32
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "human",
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "infrastructure": {
+    "branch": "logistics",
+    "single_version": true,
+    "evolutions": [],
+    "blender_mcp_only": true,
+    "architecture": "Alvenaria de blocos de pedra, cantaria nos pilares e bases, telhados de ardósia azul. Madeira nos móveis, portas e mecanismos.",
+    "recipe": "human_farm"
+  },
+  "hex_tile": {
+    "circumradius": 1.0,
+    "source_base_radius": 0.92,
+    "max_half_plane_blender": 0.796743392944336,
+    "minimum_margin": 0.06928201084010255
+  },
+  "surface_overlap_review": {
+    "version": 1,
+    "mcp_only": true,
+    "exposed_coplanar_overlap_faces": 0,
+    "repaired_parts": {
+      "Vegetable_Field_Crop_0_0": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "efffbea6ca66d208b72d5f955a5304ead0296a25464f2a4b20c1d9599e687a2f"
+      },
+      "Vegetable_Field_Crop_0_1": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "0be2c54c045118f10f82ab349f8a01fc6b166b0118961b279378d4dac0774913"
+      },
+      "Vegetable_Field_Crop_0_2": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "e1ad7e4dd7597e4d0b8f27ac768296c842ac4575a581a045303c3a80bcd2114b"
+      },
+      "Vegetable_Field_Crop_0_3": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "f176c29f294934b914dbc1c4f55e17c4655904b60584ae0c37743fb220c37847"
+      },
+      "Vegetable_Field_Crop_0_4": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "86f12c69b67858c823e5dd0bf49513335025eb6c8e577cea1c1bc99f1684f75b"
+      },
+      "Vegetable_Field_Crop_1_0": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "d4000c586b8344bb1c8fa5cb5900404234e42ab6e3d87c47eea72152e7e61e19"
+      },
+      "Vegetable_Field_Crop_1_1": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "0d41594eb0e25f30213ffe700df662e628b69a01ff909bd773700f052e958a95"
+      },
+      "Vegetable_Field_Crop_1_2": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "f95da16c6e59c81b58cd3bf39e4c12114c420f5b9cdb29255440558cfe2b3b7a"
+      },
+      "Vegetable_Field_Crop_1_3": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "84f4577ecf15f8d73b2ea1f4bbc9f2e0f9898e589f52fcc1ad709d58375e5ec4"
+      },
+      "Vegetable_Field_Crop_1_4": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "7423e4225017376a48d2e8e82a3f41dec5e2af5e6a50e768b0f76f7e1a99d77c"
+      },
+      "Vegetable_Field_Crop_2_0": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "b06d902321b908384808dc958a70ce903fca810c89180f25bca5c552e2dabacc"
+      },
+      "Vegetable_Field_Crop_2_1": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "1c6dda13879ad6464e3f8de76086e8ea0e29a5bdc1951f6303ca45b75cc8c520"
+      },
+      "Vegetable_Field_Crop_2_2": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "3904bb5ddabc289dc0c61b62f8a15aa9bf62454caa84d7f6933379ae14a6c7a6"
+      },
+      "Vegetable_Field_Crop_2_3": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "3818e53d86465fb9eda5872fc35212cb45797040365ab1daf1e3c0319e5b33c8"
+      },
+      "Vegetable_Field_Crop_2_4": {
+        "reason": "separate_adjacent_crops",
+        "sha256": "64ba438bddd367a8c31053f21f16d70ea39437f2075428eb64e5ec2f5f30b263"
+      },
+      "Farm_Window_Edge_-1": {
+        "reason": "butt_join_window_rails",
+        "sha256": "19521940246529d3b220cfaee546e7dd32250f2ca8dea03ae608977fc4d39c30"
+      },
+      "Farm_Window_Edge_1": {
+        "reason": "butt_join_window_rails",
+        "sha256": "597dbc0c6f2b2f11ce858e49f7890c0b3a1659d8f9c6dd0d9318ef80f60283c8"
+      }
+    },
+    "method": "Native Blender MCP; triangle clipping on matching outward planes, visible area checked against a BVH of all game meshes",
+    "before_overlap_faces": 25
+  },
+  "infrastructure_roof_review": {
+    "version": 1,
+    "mcp_only": true,
+    "roofs": [
+      {
+        "roof": "Stone_Farmhouse",
+        "shape": "straight_gable",
+        "courses": 6,
+        "base_height": 0.49600000000000005
+      }
+    ],
+    "support_contacts": [],
+    "note": "Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores.",
+    "before_backup": "art_source/infrastructure_before_roof_review"
+  },
+  "export": {
+    "file": "farm_hex_v1.glb",
+    "bytes": 622040,
+    "meshes": 7,
+    "primitives": 7,
+    "triangles": 1760,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "farm_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "farm_hex_v1_albedo",
+        "bytes": 472630,
+        "sha256": "56df2f61e8684d9248b69975c160ed5ded924f8cd15d6439427924c07b0b4f11"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

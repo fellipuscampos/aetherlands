@@ -1,0 +1,188 @@
+{
+  "name": "Elf_Rogue_Mastery_Hex_V1",
+  "display_name": "Refúgio das Sombras — Elfos",
+  "gameplay_building_id": "v2_building_rogue_mastery",
+  "trains": [
+    "v2_legendary_shadow_master"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 2448,
+  "editable_parts": 186,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.660599946975708
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.660599946975708
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1170,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Refúgio élfico de duas casas suspensas: árvores e estacas sustentam pods hexagonais em alturas distintas, unidos por ponte cercada; escadaria, alçapão e treino de facas no solo. A guilda evolui para uma rede escondida entre copas.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "military_role": "rogue",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_rogue_guild",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "elf_rogue",
+  "material_reference": "assets/generated/elves/buildings/elf_rogue_guild_hex_v1",
+  "roof_rgb": [
+    48,
+    122,
+    88
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "part": "Shadow_Left_Pod_Walls",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": -0.0674600020647049,
+        "reason": "flat facade behind existing portal"
+      },
+      {
+        "part": "Shadow_Left_Pod_Pier_5_Foot",
+        "action": "archive",
+        "reason": "front corner pillar blocked the portal; original jambs carry the lintel"
+      },
+      {
+        "part": "Shadow_Left_Pod_Pier_5_Shaft",
+        "action": "archive",
+        "reason": "front corner pillar blocked the portal; original jambs carry the lintel"
+      },
+      {
+        "part": "Shadow_Left_Pod_Pier_5_Capital",
+        "action": "archive",
+        "reason": "front corner pillar blocked the portal; original jambs carry the lintel"
+      },
+      {
+        "part": "Shadow_Left_Pod_Pier_5_Branch",
+        "action": "archive",
+        "reason": "front corner pillar blocked the portal; original jambs carry the lintel"
+      },
+      {
+        "part": "Shadow_Pod_Gate_Stair_0",
+        "action": "archive",
+        "reason": "ground-height decorative steps duplicated the elevated access"
+      },
+      {
+        "part": "Shadow_Pod_Gate_Stair_1",
+        "action": "archive",
+        "reason": "ground-height decorative steps duplicated the elevated access"
+      },
+      {
+        "part": "Shadow_Pod_Gate_Stair_2",
+        "action": "archive",
+        "reason": "ground-height decorative steps duplicated the elevated access"
+      },
+      {
+        "action": "fit_staircase",
+        "reason": "eight steps meet the elevated portal without entering its wall"
+      },
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 65,
+        "iterations": 8
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [
+        {
+          "prefix": "Shadow_Pod_Gate",
+          "x": -0.3099999949336052,
+          "front": 0.031460002064704895,
+          "bottom": 0.7400000095367432,
+          "top": 0.9980000257492065,
+          "width": 0.1614999920129776,
+          "blockers": []
+        }
+      ],
+      "open_passages": []
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "elf_rogue_mastery_hex_v1.glb",
+    "bytes": 824600,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2448,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_rogue_mastery_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "elf_rogue_mastery_hex_v1_albedo",
+        "bytes": 623416,
+        "sha256": "f2bbc7d786f8b7a0e69dfc6fedd2abd763c5fc93ceff7ff856e13a05f9cd9ee8"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

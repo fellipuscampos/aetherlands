@@ -1,0 +1,236 @@
+{
+  "name": "Rogue_V1",
+  "kind": "v2_unit_rogue",
+  "label": "Ladino",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "height_m": 1.8,
+  "height_convention": "Body/rest geometry; animated equipment may exceed body height",
+  "triangles": 288,
+  "editable_parts": 24,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "texture": {
+    "size": [
+      256,
+      256
+    ],
+    "density_px_per_meter": 64,
+    "filter": "NEAREST",
+    "padding": 2,
+    "cleanup": {
+      "version": "human_texture_cleanup_v1",
+      "changed_pixels": 15374,
+      "geometry_uv_skinning_animations_preserved": true,
+      "embedded_albedo_matches_png": true,
+      "editable_source_packed_albedo_matches_png": true,
+      "emission_unchanged": true
+    }
+  },
+  "derivation": {
+    "predecessor": "warrior_v1",
+    "source_blend_sha256": "c6d69768a493919831bae20d970ff77824007e0573734dd23321f07de1d58873",
+    "copied_parts": [
+      "Pelvis",
+      "Buckle",
+      "Belly",
+      "Chest",
+      "Head",
+      "Shoulder_l",
+      "Shoulder_r",
+      "UpperArm_l",
+      "Forearm_l",
+      "Hand_l",
+      "UpperArm_r",
+      "Forearm_r",
+      "Hand_r",
+      "Foot_l",
+      "Shin_l",
+      "Thigh_l",
+      "Foot_r",
+      "Shin_r",
+      "Thigh_r"
+    ],
+    "inherited_actions": []
+  },
+  "notes": "Approved Warrior body, hood painted on the single head block, blue human heraldry; rigid authored equipment.",
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "head",
+      "upper_arm_l",
+      "forearm_l",
+      "hand_l",
+      "thigh_l",
+      "shin_l",
+      "foot_l",
+      "upper_arm_r",
+      "forearm_r",
+      "hand_r",
+      "thigh_r",
+      "shin_r",
+      "foot_r"
+    ],
+    "hierarchy": "flat: every bone is a child of root; legs baked from two-bone IK",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "Pelvis": "hips",
+      "Buckle": "hips",
+      "Belly": "chest",
+      "Chest": "chest",
+      "Head": "head",
+      "Shoulder_l": "chest",
+      "Shoulder_r": "chest",
+      "UpperArm_l": "upper_arm_l",
+      "Forearm_l": "forearm_l",
+      "Hand_l": "hand_l",
+      "UpperArm_r": "upper_arm_r",
+      "Forearm_r": "forearm_r",
+      "Hand_r": "hand_r",
+      "Foot_l": "foot_l",
+      "Shin_l": "shin_l",
+      "Thigh_l": "thigh_l",
+      "Foot_r": "foot_r",
+      "Shin_r": "shin_r",
+      "Thigh_r": "thigh_r",
+      "DaggerGrip_r": "hand_r",
+      "DaggerGuard_r": "hand_r",
+      "DaggerBlade_r": "hand_r",
+      "ShortMantle": "chest",
+      "BeltPouch": "hips"
+    }
+  },
+  "animations": {
+    "Rogue_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Ready to fight: weight shift leg to leg, hatchet bobbing, left fist in guard, head watching, breathing.",
+      "seconds": 3
+    },
+    "Rogue_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 82,
+      "description": "Light step in place: arms counter-swinging with the legs, hip bob, small trunk counter-twist.",
+      "seconds": 1.1666666666666667
+    },
+    "Rogue_Attack": {
+      "start": 1,
+      "end": 33,
+      "loop": false,
+      "nla_start": 130,
+      "description": "Short knife slash and recovery",
+      "impact_frame": 16,
+      "seconds": 1.3333333333333333
+    },
+    "Rogue_SneakAttack": {
+      "start": 1,
+      "end": 57,
+      "loop": false,
+      "nla_start": 201,
+      "description": "Crouched silent approach, concealed stab, recovery",
+      "impact_frame": 28,
+      "seconds": 2.3333333333333335
+    }
+  },
+  "animation_validation": {
+    "problems": [],
+    "samples": {
+      "Rogue_Idle": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "a5eb188ef426a9ac1d6016a65a2cf01ef7c68567a53a1373307e95469f3e4a7f"
+      },
+      "Rogue_Walk": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "ce1a9b6c4f83fbaa5a40e47fe1e7eb5c8cd4ef15b3deff7f4f9eadb7aa22ea5a"
+      },
+      "Rogue_Attack": {
+        "min_z": 0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "f1cef0fdc839a05d268cb1bd060555ab8d4a446bb1fd2d0cfd2da00afe8dc543"
+      },
+      "Rogue_SneakAttack": {
+        "min_z": 0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "1cbe6f8dbe57948577844fffafb295f0d8e727fcf3bfbafd8acbd8a6a4ce8536"
+      }
+    }
+  },
+  "glb": {
+    "file": "rogue_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 16,
+    "triangles": 288,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Rogue_Idle": 3,
+      "Rogue_Walk": 1.1666666666666667,
+      "Rogue_Attack": 1.3333333333333333,
+      "Rogue_SneakAttack": 2.3333333333333335
+    },
+    "channels": "location, rotation on every bone"
+  },
+  "status": "Finished human Ladino; rig, clips, nearest embedded textures and isolated editable source verified.",
+  "rig_bone_map": {
+    "Pelvis": "hips",
+    "Buckle": "hips",
+    "Belly": "chest",
+    "Chest": "chest",
+    "Head": "head",
+    "Shoulder_l": "chest",
+    "Shoulder_r": "chest",
+    "UpperArm_l": "upper_arm_l",
+    "Forearm_l": "forearm_l",
+    "Hand_l": "hand_l",
+    "UpperArm_r": "upper_arm_r",
+    "Forearm_r": "forearm_r",
+    "Hand_r": "hand_r",
+    "Foot_l": "foot_l",
+    "Shin_l": "shin_l",
+    "Thigh_l": "thigh_l",
+    "Foot_r": "foot_r",
+    "Shin_r": "shin_r",
+    "Thigh_r": "thigh_r",
+    "DaggerGrip_r": "hand_r",
+    "DaggerGuard_r": "hand_r",
+    "DaggerBlade_r": "hand_r",
+    "ShortMantle": "chest",
+    "BeltPouch": "hips"
+  },
+  "source_validation": {
+    "scenes": [
+      "Rogue_V1"
+    ],
+    "actions": [
+      "Rogue_Walk",
+      "Rogue_SneakAttack",
+      "Rogue_Idle",
+      "Rogue_Attack"
+    ],
+    "armatures": [
+      "Rogue_V1_Skeleton"
+    ]
+  },
+  "geometry_validation": {
+    "asset": "rogue_v1",
+    "nonmanifold_edges": 0,
+    "unattached_parts_candidates": [],
+    "same_normal_coplanar_candidates": [],
+    "mast_weapon_collisions": [],
+    "intersecting_wheels": [],
+    "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+  }
+}

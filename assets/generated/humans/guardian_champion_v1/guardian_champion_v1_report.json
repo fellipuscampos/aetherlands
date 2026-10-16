@@ -1,6 +1,6 @@
 {
   "name": "Guardian_Champion_V1",
-  "kind": "v2_legendary_guardian_champion (Campe\u00e3o Guardi\u00e3o)",
+  "kind": "v2_legendary_guardian_champion (Campeão Guardião)",
   "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/guardian_champion_*.py)",
   "height_m": 2.0,
   "front_y_m": -0.5889931917190552,
@@ -29,7 +29,15 @@
     "density_px_per_meter": 64,
     "measured_min": 63.99971774838524,
     "measured_max": 64.00024767386846,
-    "padding": 2
+    "padding": 2,
+    "cleanup": {
+      "version": "human_texture_cleanup_v1",
+      "changed_pixels": 22526,
+      "geometry_uv_skinning_animations_preserved": true,
+      "embedded_albedo_matches_png": true,
+      "editable_source_packed_albedo_matches_png": true,
+      "emission_unchanged": true
+    }
   },
   "rig": {
     "bones": [

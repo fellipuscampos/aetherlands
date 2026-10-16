@@ -1,0 +1,207 @@
+{
+  "name": "Orc_Cavalry_Mastery_Hex_V1",
+  "display_name": "Ordem da Cavalaria — Orcs",
+  "gameplay_building_id": "v2_building_cavalry_mastery",
+  "trains": [
+    "v2_legendary_griffon_rider"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 2492,
+  "editable_parts": 197,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.375
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.375
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1214,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Ordem orc de montarias em planta L: salão comprido de duas baias, abrigo separado dos tratadores, paliçada baixa, lanças e poleiro com presas. Evolui o estábulo orc sem adotar a planta humana em U.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "orc",
+  "military_role": "cavalry",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_war_stable",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "orc_cavalry",
+  "material_reference": "assets/generated/orcs/buildings/orc_war_stable_hex_v1",
+  "roof_rgb": [
+    130,
+    58,
+    39
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "action": "rotate_paddock_rail",
+        "reason": "side rail leaves both stable approaches open"
+      },
+      {
+        "parts": [
+          "War_Lance_0_Foot",
+          "War_Lance_0_Shaft",
+          "War_Lance_0_Capital",
+          "War_Lance_Point_0",
+          "War_Lance_1_Foot",
+          "War_Lance_1_Shaft",
+          "War_Lance_1_Capital",
+          "War_Lance_Point_1",
+          "War_Lance_2_Foot",
+          "War_Lance_2_Shaft",
+          "War_Lance_2_Capital",
+          "War_Lance_Point_2",
+          "War_Lance_0_Belt_0.177",
+          "War_Lance_0_Belt_0.5700000000000001",
+          "War_Lance_1_Belt_0.177",
+          "War_Lance_1_Belt_0.5700000000000001",
+          "War_Lance_2_Belt_0.177",
+          "War_Lance_2_Belt_0.5700000000000001"
+        ],
+        "action": "move",
+        "delta": [
+          0.5199999809265137,
+          0.03999999910593033,
+          0.0
+        ],
+        "reason": "lances stored beside the handler court, clear of the stable gates"
+      },
+      {
+        "part": "Tusked_Aerial_Perch_Post_Shaft",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.7079997158050537,
+        "reason": "roost pole starts in a socket above the roof"
+      },
+      {
+        "part": "Tusked_Aerial_Perch_Post_Foot",
+        "action": "archive",
+        "reason": "replace ground roost footing by roof socket"
+      },
+      {
+        "part": "Tusked_Aerial_Perch_Post_Belt_0.177",
+        "action": "archive",
+        "reason": "replace ground roost footing by roof socket"
+      },
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 29,
+        "iterations": 2
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [
+        {
+          "prefix": "Handler_Entry",
+          "x": 0.4299999922513962,
+          "front": -0.014000000432133675,
+          "bottom": 0.14799998700618744,
+          "top": 0.35439997911453247,
+          "width": 0.11399999260902405,
+          "blockers": []
+        }
+      ],
+      "open_passages": [
+        {
+          "name": "War_Mount_Longhouse",
+          "lo": [
+            -0.13,
+            -0.13499999046325684,
+            0.16200000405311585
+          ],
+          "hi": [
+            -0.03,
+            0.07000000953674317,
+            0.5959999918937683
+          ],
+          "blockers": []
+        }
+      ]
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "orc_cavalry_mastery_hex_v1.glb",
+    "bytes": 755120,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2492,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "orc_cavalry_mastery_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "orc_cavalry_mastery_hex_v1_albedo",
+        "bytes": 549489,
+        "sha256": "32041527e678a89171c6befa4fc2275f3c9c04b3c1bf51500d2c1ea332ff2db4"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

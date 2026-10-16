@@ -1,0 +1,122 @@
+{
+  "status": "PASS",
+  "model": "veil_archon_blocky_v9_animated",
+  "source_model": "veil_archon_blocky_v8",
+  "approved_textures_preserved": true,
+  "rigid_body_geometry_preserved": true,
+  "retained_plates_lattice_and_core_preserved": true,
+  "external_purple_trails_removed": 6,
+  "meshes": 1,
+  "materials": 1,
+  "triangles": 1364,
+  "bones": 39,
+  "root_motion": false,
+  "fps": 24,
+  "same_channels_all_clips": true,
+  "impact_time_s": 0.875,
+  "cast_time_s": 2.0,
+  "retained_parts": 47,
+  "clips": {
+    "Idle": {
+      "samples": 1153,
+      "loop": true,
+      "duration_s": 24.0,
+      "description": "Giro lento da casca, núcleo girando em sentido contrário e pulsação suave das placas.",
+      "minimum_ground_clearance_m": 0.5193354487419128,
+      "bounds_min_m": [
+        -1.5797200202941895,
+        -1.581599235534668,
+        0.5193354487419128
+      ],
+      "bounds_max_m": [
+        1.5785843133926392,
+        1.581599235534668,
+        3.2697978019714355
+      ],
+      "seam_vertex_delta_m": 3.371747880871523e-07,
+      "maximum_half_frame_vertex_step_m": 0.008718341767000032,
+      "collision_poses_checked": 289,
+      "core_collision_checks": 2360,
+      "runic_plate_collision_checks": 4639,
+      "core_clear_of_plates_and_lattice": true,
+      "runic_plate_intersections": 0,
+      "rigid_parts": true
+    },
+    "Walk": {
+      "samples": 577,
+      "loop": true,
+      "duration_s": 12.0,
+      "description": "Desliza pairando, com leve inclinação frontal e giro contínuo das placas.",
+      "minimum_ground_clearance_m": 0.4512577950954437,
+      "bounds_min_m": [
+        -1.6309778690338135,
+        -1.6198029518127441,
+        0.4512577950954437
+      ],
+      "bounds_max_m": [
+        1.6164902448654175,
+        1.6173338890075684,
+        3.419672727584839
+      ],
+      "seam_vertex_delta_m": 3.371747880871523e-07,
+      "maximum_half_frame_vertex_step_m": 0.017831171285089906,
+      "collision_poses_checked": 145,
+      "core_collision_checks": 1154,
+      "runic_plate_collision_checks": 2030,
+      "core_clear_of_plates_and_lattice": true,
+      "runic_plate_intersections": 0,
+      "rigid_parts": true
+    },
+    "Attack": {
+      "samples": 109,
+      "loop": false,
+      "duration_s": 2.25,
+      "description": "Concentra o núcleo e abre as quatro placas frontais para liberar um pulso de mana.",
+      "minimum_ground_clearance_m": 0.3444381058216095,
+      "bounds_min_m": [
+        -1.5518873929977417,
+        -1.705169677734375,
+        0.3444381058216095
+      ],
+      "bounds_max_m": [
+        1.5474865436553955,
+        1.45772123336792,
+        3.5223045349121094
+      ],
+      "seam_vertex_delta_m": 1.3328003749250113e-07,
+      "maximum_half_frame_vertex_step_m": 0.07368166681410708,
+      "collision_poses_checked": 109,
+      "core_collision_checks": 932,
+      "runic_plate_collision_checks": 1293,
+      "core_clear_of_plates_and_lattice": true,
+      "runic_plate_intersections": 0,
+      "rigid_parts": true
+    },
+    "Spell": {
+      "samples": 193,
+      "loop": false,
+      "duration_s": 4.0,
+      "description": "Levanta e expande a casca rúnica, gira as camadas e revela o núcleo durante a conjuração.",
+      "minimum_ground_clearance_m": 0.5235486030578613,
+      "bounds_min_m": [
+        -1.9873989820480347,
+        -1.9938833713531494,
+        0.5235486030578613
+      ],
+      "bounds_max_m": [
+        1.99151611328125,
+        1.9888701438903809,
+        4.121634483337402
+      ],
+      "seam_vertex_delta_m": 2.6656007498500226e-07,
+      "maximum_half_frame_vertex_step_m": 0.08788318975112391,
+      "collision_poses_checked": 193,
+      "core_collision_checks": 1304,
+      "runic_plate_collision_checks": 1375,
+      "core_clear_of_plates_and_lattice": true,
+      "runic_plate_intersections": 0,
+      "rigid_parts": true
+    }
+  },
+  "protected_files": 40
+}

@@ -1,0 +1,43 @@
+{
+  "status": "PASS",
+  "bones": 53,
+  "unreachable_targets": [],
+  "clips": {
+    "Dragon_Idle_Ground": {
+      "samples": 73,
+      "minimum_geometry_z": 0.0020000165419099547,
+      "maximum_foot_target_error": 9.541398640621973e-08,
+      "loop_matrix_error": 3.847341519666321e-18
+    },
+    "Dragon_Idle_Flying": {
+      "samples": 49,
+      "minimum_geometry_z": 0.7652494571514261,
+      "maximum_foot_target_error": 0.0,
+      "loop_matrix_error": 1.3693745911785696e-17
+    },
+    "Dragon_Walk_Ground": {
+      "samples": 37,
+      "minimum_geometry_z": 0.002000055949113011,
+      "maximum_foot_target_error": 9.541398640621973e-08,
+      "loop_matrix_error": 6.00165360213157e-18
+    },
+    "Dragon_Walk_Flying": {
+      "samples": 37,
+      "minimum_geometry_z": 0.7289682273044085,
+      "maximum_foot_target_error": 0.0,
+      "loop_matrix_error": 8.869358918496746e-18
+    },
+    "Dragon_Attack_Ground": {
+      "samples": 73,
+      "minimum_geometry_z": -0.00019841789030994317,
+      "maximum_foot_target_error": 8.940696716308594e-08,
+      "loop_matrix_error": 3.847341519666321e-18
+    },
+    "Dragon_Attack_Flying": {
+      "samples": 73,
+      "minimum_geometry_z": 0.7531298872937645,
+      "maximum_foot_target_error": 0.0,
+      "loop_matrix_error": 1.4662314024900575e-17
+    }
+  }
+}

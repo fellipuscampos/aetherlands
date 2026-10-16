@@ -1,0 +1,23 @@
+{
+  "asset": "crystal_cluster_v1",
+  "resource": "gems",
+  "method": "live Blender MCP",
+  "vertices": 123,
+  "triangles": 202,
+  "crystal_spires": 7,
+  "footprint_radius": 0.4494440941887178,
+  "height": 0.76,
+  "materials": 1,
+  "texture_size": [
+    256,
+    256
+  ],
+  "texture_filter": "nearest",
+  "crystal_cross_section": "square",
+  "host_rock": "cuboid blocks",
+  "closed_components": true,
+  "previous_scenes": [
+    "Crystal_Resource_V1",
+    "Scene"
+  ]
+}

@@ -1,0 +1,469 @@
+{
+  "status": "PASS",
+  "verified": 66,
+  "assets": [
+    {
+      "asset": "war_stable_hex_v1",
+      "editable_parts": 182,
+      "triangles": 2348,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_war_stable_hex_v1",
+      "editable_parts": 214,
+      "triangles": 3072,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_war_stable_hex_v1",
+      "editable_parts": 198,
+      "triangles": 2680,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "orc_arcane_conclave_hex_v1",
+      "editable_parts": 205,
+      "triangles": 2640,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "warrior_hall_hex_v1",
+      "editable_parts": 190,
+      "triangles": 2404,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "ranger_camp_hex_v1",
+      "editable_parts": 186,
+      "triangles": 3220,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "rogue_guild_hex_v1",
+      "editable_parts": 192,
+      "triangles": 2728,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "siege_arsenal_hex_v1",
+      "editable_parts": 195,
+      "triangles": 3316,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "cavalry_mastery_hex_v1",
+      "editable_parts": 195,
+      "triangles": 2412,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "rogue_mastery_hex_v1",
+      "editable_parts": 145,
+      "triangles": 1888,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "grand_arsenal_hex_v1",
+      "editable_parts": 179,
+      "triangles": 2172,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "ranger_mastery_hex_v1",
+      "editable_parts": 110,
+      "triangles": 1532,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "warrior_mastery_hex_v1",
+      "editable_parts": 139,
+      "triangles": 1700,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "sacred_temple_hex_v1",
+      "editable_parts": 132,
+      "triangles": 1620,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "sacred_ritual_hex_v1",
+      "editable_parts": 173,
+      "triangles": 2100,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "infernal_sanctum_hex_v1",
+      "editable_parts": 122,
+      "triangles": 1540,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "infernal_ritual_hex_v1",
+      "editable_parts": 112,
+      "triangles": 1400,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "necromancy_ossuary_hex_v1",
+      "editable_parts": 162,
+      "triangles": 1992,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "necromancy_ritual_hex_v1",
+      "editable_parts": 139,
+      "triangles": 1740,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "arcane_conclave_hex_v1",
+      "editable_parts": 167,
+      "triangles": 2116,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "arcane_ritual_hex_v1",
+      "editable_parts": 122,
+      "triangles": 1492,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elemental_observatory_hex_v1",
+      "editable_parts": 147,
+      "triangles": 1868,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elemental_ritual_hex_v1",
+      "editable_parts": 111,
+      "triangles": 1392,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_guardian_hall_hex_v1",
+      "editable_parts": 162,
+      "triangles": 2948,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_warrior_hall_hex_v1",
+      "editable_parts": 193,
+      "triangles": 2776,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_ranger_camp_hex_v1",
+      "editable_parts": 206,
+      "triangles": 4088,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_rogue_guild_hex_v1",
+      "editable_parts": 215,
+      "triangles": 3268,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_siege_arsenal_hex_v1",
+      "editable_parts": 243,
+      "triangles": 4096,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_ranger_camp_hex_v1",
+      "editable_parts": 203,
+      "triangles": 3694,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_rogue_guild_hex_v1",
+      "editable_parts": 231,
+      "triangles": 3180,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_siege_arsenal_hex_v1",
+      "editable_parts": 251,
+      "triangles": 3872,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_sacred_temple_hex_v1",
+      "editable_parts": 154,
+      "triangles": 2448,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_sacred_ritual_hex_v1",
+      "editable_parts": 183,
+      "triangles": 3296,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_infernal_sanctum_hex_v1",
+      "editable_parts": 145,
+      "triangles": 2316,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_infernal_ritual_hex_v1",
+      "editable_parts": 113,
+      "triangles": 2056,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_necromancy_ossuary_hex_v1",
+      "editable_parts": 185,
+      "triangles": 2872,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_necromancy_ritual_hex_v1",
+      "editable_parts": 150,
+      "triangles": 2452,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_druidic_circle_hex_v1",
+      "editable_parts": 134,
+      "triangles": 2460,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_druidic_ritual_hex_v1",
+      "editable_parts": 97,
+      "triangles": 1732,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_arcane_conclave_hex_v1",
+      "editable_parts": 191,
+      "triangles": 2904,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_arcane_ritual_hex_v1",
+      "editable_parts": 135,
+      "triangles": 2356,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_elemental_observatory_hex_v1",
+      "editable_parts": 175,
+      "triangles": 2728,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "elf_elemental_ritual_hex_v1",
+      "editable_parts": 117,
+      "triangles": 1900,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_sacred_temple_hex_v1",
+      "editable_parts": 155,
+      "triangles": 2056,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_sacred_ritual_hex_v1",
+      "editable_parts": 195,
+      "triangles": 2716,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_infernal_sanctum_hex_v1",
+      "editable_parts": 141,
+      "triangles": 1864,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_infernal_ritual_hex_v1",
+      "editable_parts": 119,
+      "triangles": 1724,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_necromancy_ossuary_hex_v1",
+      "editable_parts": 172,
+      "triangles": 2272,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_necromancy_ritual_hex_v1",
+      "editable_parts": 149,
+      "triangles": 2116,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_druidic_circle_hex_v1",
+      "editable_parts": 113,
+      "triangles": 1444,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_druidic_ritual_hex_v1",
+      "editable_parts": 87,
+      "triangles": 1128,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_arcane_conclave_hex_v1",
+      "editable_parts": 190,
+      "triangles": 2488,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_arcane_ritual_hex_v1",
+      "editable_parts": 142,
+      "triangles": 1876,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_elemental_observatory_hex_v1",
+      "editable_parts": 178,
+      "triangles": 2240,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "dwarf_elemental_ritual_hex_v1",
+      "editable_parts": 137,
+      "triangles": 1896,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "orc_sacred_temple_hex_v1",
+      "editable_parts": 175,
+      "triangles": 2204,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "orc_sacred_ritual_hex_v1",
+      "editable_parts": 217,
+      "triangles": 2688,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "orc_infernal_sanctum_hex_v1",
+      "editable_parts": 155,
+      "triangles": 1988,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "orc_infernal_ritual_hex_v1",
+      "editable_parts": 117,
+      "triangles": 1512,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "orc_necromancy_ossuary_hex_v1",
+      "editable_parts": 184,
+      "triangles": 2324,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "orc_necromancy_ritual_hex_v1",
+      "editable_parts": 157,
+      "triangles": 2000,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "orc_druidic_circle_hex_v1",
+      "editable_parts": 115,
+      "triangles": 1536,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "orc_druidic_ritual_hex_v1",
+      "editable_parts": 91,
+      "triangles": 1236,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "orc_arcane_ritual_hex_v1",
+      "editable_parts": 156,
+      "triangles": 1928,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "orc_elemental_observatory_hex_v1",
+      "editable_parts": 170,
+      "triangles": 2212,
+      "packed_textures": true,
+      "isolated_scene": true
+    },
+    {
+      "asset": "orc_elemental_ritual_hex_v1",
+      "editable_parts": 123,
+      "triangles": 1580,
+      "packed_textures": true,
+      "isolated_scene": true
+    }
+  ],
+  "method": "live Blender MCP"
+}

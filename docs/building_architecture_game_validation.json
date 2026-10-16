@@ -1,0 +1,22 @@
+{
+  "status": "PARTIAL: missing external KayKit assets",
+  "completed_buildings": 66,
+  "game_import": "PASS",
+  "import_exit_code": 0,
+  "import_warnings": 0,
+  "import_errors": 0,
+  "tests_total": 8,
+  "tests_passed": 6,
+  "tests_failed": 2,
+  "assertions_passed": 879,
+  "assertions_total": 883,
+  "missing_assets": [
+    "assets/models/kaykit/nature/Tree_1_A_Color1.gltf",
+    "assets/models/kaykit/buildings/building_market_blue.gltf"
+  ],
+  "test": "test/unit/test_building_art_catalog.gd",
+  "logs": {
+    "import": "art_source\\building_architecture_review\\game_import.log",
+    "catalog": "art_source\\building_architecture_review\\game_catalog_test.log"
+  }
+}

@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/generated/humans/human_embark_boat_v1/human_embark_boat_v1.glb" id="1_model"]
+
+[node name="human_embark_boat_v1" type="Node3D"]
+metadata/race = "human"
+metadata/waterline = 0.0
+
+[node name="Visual" parent="." instance=ExtResource("1_model")]
+scale = Vector3(0.52, 0.52, 0.52)

@@ -1,0 +1,15 @@
+{
+  "embedded_atlas": true,
+  "fog_states": 3,
+  "glb_import": true,
+  "height": 0.550000011920929,
+  "icon_clearance": true,
+  "occupied_tile_cleared": true,
+  "one_surface": true,
+  "production_managers": true,
+  "rebuild": true,
+  "removed_resource_hidden": true,
+  "resource": "iron",
+  "status": "PASS",
+  "terrain_height_refresh": true
+}

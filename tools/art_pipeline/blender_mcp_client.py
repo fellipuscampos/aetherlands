@@ -27,5 +27,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("script", nargs="?")
     parser.add_argument("--code")
+    parser.add_argument("--timeout", type=float, default=600)
     args = parser.parse_args()
-    execute(args.code if args.code else Path(args.script).read_text(encoding="utf-8"))
+    execute(args.code if args.code else Path(args.script).read_text(encoding="utf-8"), timeout=args.timeout)

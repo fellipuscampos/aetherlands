@@ -1,0 +1,336 @@
+{
+  "asset": "gem_mine_v1",
+  "improvement": "v2_improvement_gem_mine",
+  "resource": "gems",
+  "method": "live Blender MCP localhost:9876",
+  "reuses_full_raw_resource_model": false,
+  "reuses_original_crystal_primitive": true,
+  "concept": "Amethyst seam, timber-shored mine entrance, rails and loaded mining cart",
+  "crystal_profile_source": "tools\\art_pipeline\\build_crystal_resource_mcp.py",
+  "crystal_cross_section": "square, no bevel",
+  "crystal_ring_fractions": [
+    0.2,
+    0.73
+  ],
+  "crystal_vertices_per_piece": 13,
+  "crystal_faces_per_piece": 13,
+  "liquid_elements": 0,
+  "materials": 1,
+  "meshes": 1,
+  "vertices": 567,
+  "triangles": 898,
+  "footprint_radius": 0.7951100601330373,
+  "height": 0.7583999633789062,
+  "ground_origin": true,
+  "closed_components": true,
+  "texture_size": [
+    512,
+    512
+  ],
+  "texture_filter": "nearest",
+  "animations": 0,
+  "lights": 0,
+  "shared_civilizations": [
+    "human",
+    "elf",
+    "orc",
+    "dwarf"
+  ],
+  "parts": [
+    {
+      "name": "Worked_quarry_ground",
+      "vertices": 16,
+      "faces": 10
+    },
+    {
+      "name": "Ore_face_rock_0",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Ore_face_rock_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Ore_face_rock_2",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Ore_face_rock_3",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Ore_face_rock_4",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Crown_profile",
+      "vertices": 13,
+      "faces": 13
+    },
+    {
+      "name": "Left_spire_profile",
+      "vertices": 13,
+      "faces": 13
+    },
+    {
+      "name": "Right_spire_profile",
+      "vertices": 13,
+      "faces": 13
+    },
+    {
+      "name": "Front_spire_profile",
+      "vertices": 13,
+      "faces": 13
+    },
+    {
+      "name": "Rear_spire_profile",
+      "vertices": 13,
+      "faces": 13
+    },
+    {
+      "name": "Emerging_shard_profile",
+      "vertices": 13,
+      "faces": 13
+    },
+    {
+      "name": "Tunnel_floor",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Tunnel_left_wall",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Tunnel_right_wall",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Tunnel_rock_lintel",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Tunnel_recess",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Entrance_post_-0.535",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Entrance_iron_band_-0.535",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Entrance_post_-0.065",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Entrance_iron_band_-0.065",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Entrance_crossbeam",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Entrance_left_brace",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Entrance_right_brace",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Rail_sleeper_0",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Rail_sleeper_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Rail_sleeper_2",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Rail_sleeper_3",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Rail_sleeper_4",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Iron_rail_-0.45",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Iron_rail_-0.15",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cart_axle_-0.375",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cart_wheel_(-0.45, -0.375)",
+      "vertices": 16,
+      "faces": 10
+    },
+    {
+      "name": "Cart_wheel_(-0.15, -0.375)",
+      "vertices": 16,
+      "faces": 10
+    },
+    {
+      "name": "Cart_axle_-0.195",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cart_wheel_(-0.45, -0.195)",
+      "vertices": 16,
+      "faces": 10
+    },
+    {
+      "name": "Cart_wheel_(-0.15, -0.195)",
+      "vertices": 16,
+      "faces": 10
+    },
+    {
+      "name": "Cart_bottom",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cart_side_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cart_end_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cart_side_band_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cart_side_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cart_end_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cart_side_band_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cart_load_tall",
+      "vertices": 13,
+      "faces": 13
+    },
+    {
+      "name": "Cart_load_small",
+      "vertices": 13,
+      "faces": 13
+    },
+    {
+      "name": "Cart_load_rear",
+      "vertices": 13,
+      "faces": 13
+    },
+    {
+      "name": "Sorting_tray_base",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorting_tray_side_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorting_tray_end_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorting_tray_side_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorting_tray_end_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorted_shard_a",
+      "vertices": 13,
+      "faces": 13
+    },
+    {
+      "name": "Sorted_shard_b",
+      "vertices": 13,
+      "faces": 13
+    },
+    {
+      "name": "Pick_handle",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Pick_head_left",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Pick_head_right",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loose_rock_front",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loose_rock_right",
+      "vertices": 8,
+      "faces": 6
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "bones": 25,
+  "clip": "construction",
+  "containment_pose_samples": 181,
+  "fixed_feet": true,
+  "footprint_margin": 0.0388062679041172,
+  "footprint_radius": 0.9,
+  "ground_plate": false,
+  "ground_workers_feet_y": {
+    "Mason_body": 0.0,
+    "Roofer_body": 0.0
+  },
+  "max_arm_rotation_step_degrees": 1.6846986021822,
+  "max_content_half_plane": 0.740616595501878,
+  "max_visual_worker_movement": 0.156892597675323,
+  "max_worker_movement": 0.021749883890152,
+  "meshes": 2,
+  "problems": [],
+  "seconds": 6.0,
+  "status": "PASS"
+}

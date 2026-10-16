@@ -1,0 +1,364 @@
+{
+  "status": "PASS",
+  "models": 24,
+  "new_clips": 43,
+  "total_clips": 115,
+  "protected_files": 841,
+  "assets": [
+    {
+      "stem": "dwarf_shieldbearer_v1",
+      "status": "PASS",
+      "new_clips": [
+        "shield_wall",
+        "shield_wall_hold"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_guardian_v1",
+      "status": "PASS",
+      "new_clips": [
+        "shield_wall",
+        "shield_wall_hold"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_sentinel_v1",
+      "status": "PASS",
+      "new_clips": [
+        "shield_wall",
+        "shield_wall_hold"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_guardian_champion_v1",
+      "status": "PASS",
+      "new_clips": [
+        "shield_wall",
+        "shield_wall_hold"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_warrior_v1",
+      "status": "PASS",
+      "new_clips": [
+        "power_strike"
+      ],
+      "clips": 4,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_swordsman_v1",
+      "status": "PASS",
+      "new_clips": [
+        "power_strike",
+        "arc_attack"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_weapon_master_v1",
+      "status": "PASS",
+      "new_clips": [
+        "power_strike",
+        "arc_attack"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_blade_hero_v1",
+      "status": "PASS",
+      "new_clips": [
+        "power_strike",
+        "arc_attack"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_archer_v1",
+      "status": "PASS",
+      "new_clips": [
+        "precise_shot"
+      ],
+      "clips": 4,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_hunter_v1",
+      "status": "PASS",
+      "new_clips": [
+        "precise_shot",
+        "volley"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_elite_marksman_v1",
+      "status": "PASS",
+      "new_clips": [
+        "precise_shot",
+        "volley"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_legend_hunter_v1",
+      "status": "PASS",
+      "new_clips": [
+        "precise_shot",
+        "volley"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_cavalier_v1",
+      "status": "PASS",
+      "new_clips": [
+        "charge"
+      ],
+      "clips": 4,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 31,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_shock_cavalier_v1",
+      "status": "PASS",
+      "new_clips": [
+        "charge",
+        "tactical_retreat"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 31,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_armored_cavalier_v1",
+      "status": "PASS",
+      "new_clips": [
+        "charge",
+        "tactical_retreat"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 31,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_ram_lord_v1",
+      "status": "PASS",
+      "new_clips": [
+        "charge",
+        "tactical_retreat"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 31,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_rogue_v1",
+      "status": "PASS",
+      "new_clips": [
+        "sneak_attack"
+      ],
+      "clips": 4,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_saboteur_v1",
+      "status": "PASS",
+      "new_clips": [
+        "sneak_attack",
+        "dismantle"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_assassin_v1",
+      "status": "PASS",
+      "new_clips": [
+        "sneak_attack",
+        "dismantle"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_shadow_master_v1",
+      "status": "PASS",
+      "new_clips": [
+        "sneak_attack",
+        "dismantle"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 16,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_catapult_v1",
+      "status": "PASS",
+      "new_clips": [
+        "demolition_ammo"
+      ],
+      "clips": 4,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 14,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_trebuchet_v1",
+      "status": "PASS",
+      "new_clips": [
+        "demolition_ammo",
+        "prepared_bombardment"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 14,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_bombard_v1",
+      "status": "PASS",
+      "new_clips": [
+        "demolition_ammo",
+        "prepared_bombardment"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 14,
+      "foreign_retargeting": false
+    },
+    {
+      "stem": "dwarf_siege_colossus_v1",
+      "status": "PASS",
+      "new_clips": [
+        "demolition_ammo",
+        "prepared_bombardment"
+      ],
+      "clips": 5,
+      "approved_geometry_preserved": true,
+      "original_basic_channels_preserved": true,
+      "original_bind_matrices_preserved": true,
+      "original_atlas_preserved": true,
+      "bones": 14,
+      "foreign_retargeting": false
+    }
+  ]
+}

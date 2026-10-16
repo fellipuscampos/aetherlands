@@ -1,0 +1,58 @@
+[
+  {
+    "stem": "orc_catapult_v1",
+    "source_stem": "catapult_v1",
+    "family": "siege",
+    "family_name": "Cerco",
+    "tier": 0,
+    "name": "Catapulta Orc",
+    "gameplay_id": "v2_unit_catapult",
+    "character_height_m": 1.8,
+    "path": "res://assets/generated/orcs/orc_catapult_v1/orc_catapult_v1.glb",
+    "design": "hide_bound_torsion_mangonel",
+    "prefix": "Catapult",
+    "animated": true
+  },
+  {
+    "stem": "orc_trebuchet_v1",
+    "source_stem": "trebuchet_v1",
+    "family": "siege",
+    "family_name": "Cerco",
+    "tier": 1,
+    "name": "Trebuchet Orc",
+    "gameplay_id": "v2_unit_trebuchet",
+    "character_height_m": 1.8,
+    "path": "res://assets/generated/orcs/orc_trebuchet_v1/orc_trebuchet_v1.glb",
+    "design": "iron_braced_counterweight_engine",
+    "prefix": "Trebuchet",
+    "animated": true
+  },
+  {
+    "stem": "orc_bombard_v1",
+    "source_stem": "bombard_v1",
+    "family": "siege",
+    "family_name": "Cerco",
+    "tier": 2,
+    "name": "Bombarda Orc",
+    "gameplay_id": "v2_unit_bombard",
+    "character_height_m": 1.8,
+    "path": "res://assets/generated/orcs/orc_bombard_v1/orc_bombard_v1.glb",
+    "design": "heavy_iron_short_bombard",
+    "prefix": "Bombard",
+    "animated": true
+  },
+  {
+    "stem": "orc_siege_colossus_v1",
+    "source_stem": "siege_colossus_v1",
+    "family": "siege",
+    "family_name": "Cerco",
+    "tier": 3,
+    "name": "Colosso Quebra-Muralhas",
+    "gameplay_id": "v2_legendary_siege_colossus",
+    "character_height_m": 2.0,
+    "path": "res://assets/generated/orcs/orc_siege_colossus_v1/orc_siege_colossus_v1.glb",
+    "design": "six_wheel_twin_heavy_bombard",
+    "prefix": "SiegeColossus",
+    "animated": true
+  }
+]

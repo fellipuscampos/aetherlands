@@ -1,0 +1,38 @@
+{
+  "human_sacred_cleric_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.020175635814666748,
+      -0.09181499481201161,
+      0.7400000095367435
+    ],
+    "release_seconds": 1.1
+  },
+  "elf_sacred_cleric_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.01910606026649475,
+      -0.06426161527633656,
+      0.7689999938011173
+    ],
+    "release_seconds": 1.1
+  },
+  "orc_sacred_cleric_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.02516794204711914,
+      -0.0503335346778232,
+      0.907270431518555
+    ],
+    "release_seconds": 1.1
+  },
+  "dwarf_sacred_cleric_v1": {
+    "bone": "hand_r",
+    "offset": [
+      0.03211778402328491,
+      -0.07708269357681258,
+      0.8061607281366984
+    ],
+    "release_seconds": 1.1
+  }
+}

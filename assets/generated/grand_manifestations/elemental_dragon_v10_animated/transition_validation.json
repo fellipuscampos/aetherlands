@@ -1,0 +1,22 @@
+{
+  "cases": 18,
+  "maximum_frame_displacement_m": 0.619278490543365,
+  "maximum_imported_pose_error_m": 0.000000514683620167489,
+  "maximum_instant_jump_m": 0.0,
+  "maximum_scale_error": 0.00000232458114624023,
+  "maximum_settled_pose_error_m": 0.0,
+  "samples": 882,
+  "status": "PASS",
+  "worst_frame": {
+    "bone": "whisker_1_2",
+    "clip": "attack",
+    "time": 0.700000000000001
+  },
+  "worst_imported": {
+    "actual": "(0.489825, 2.63525, 0.044447)",
+    "bone": "whisker_1_1",
+    "clip": "spell",
+    "expected": "(0.489825, 2.63525, 0.044447)",
+    "time": 2.96
+  }
+}

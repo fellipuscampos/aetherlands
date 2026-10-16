@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "via": "Blender MCP live",
+  "duration_s": 5,
+  "frames": 151,
+  "samples": 301,
+  "fps": 30,
+  "parts": 125,
+  "bones": 91,
+  "particles_included": false,
+  "root_motion": false,
+  "style": "core first; continuous serpent forms from head to tail",
+  "initial_maximum_piece_extent_m": 1.1739496270402415e-05,
+  "minimum_ground_clearance_m": 0.4461479187011719,
+  "core_only_at_0_6_seconds": true,
+  "continuous_body": true,
+  "bounds_min": [
+    -2.4122815132141113,
+    -2.2205958366394043,
+    0.4461479187011719
+  ],
+  "bounds_max": [
+    1.8693723678588867,
+    2.1485602855682373,
+    3.3474433422088623
+  ],
+  "final_to_idle_vertex_error_m": 1.3007612730738637e-06,
+  "maximum_half_frame_step_m": 0.2842108322094343,
+  "core_collision_checks": 75,
+  "core_intersections": 0,
+  "original_asset_files_unchanged": true,
+  "original_four_clips_preserved": true,
+  "serialized_original_clip_error": 2.1166789333478266e-06,
+  "serialized_summon_to_idle_error": 7.005054243336417e-07,
+  "embedded_textures_preserved": true
+}

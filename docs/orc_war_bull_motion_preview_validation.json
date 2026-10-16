@@ -1,0 +1,24 @@
+{
+  "assets": [
+    {
+      "stem": "orc_cavalier_v1",
+      "clips": [
+        "Cavalier_Idle",
+        "Cavalier_Walk",
+        "Cavalier_Attack",
+        "Cavalier_Charge"
+      ],
+      "saved_action_glb_matrix_error": 9.238719940185547e-07
+    },
+    {
+      "stem": "orc_griffon_rider_v1",
+      "clips": [
+        "GriffonRider_Idle",
+        "GriffonRider_Walk",
+        "GriffonRider_Attack",
+        "GriffonRider_Charge"
+      ],
+      "saved_action_glb_matrix_error": 8.642673492431641e-07
+    }
+  ]
+}

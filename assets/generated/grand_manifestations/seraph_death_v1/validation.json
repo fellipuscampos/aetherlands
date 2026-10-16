@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "via": "Blender MCP live",
+  "duration_s": 3.5,
+  "fps": 24,
+  "frames": 85,
+  "sampled_poses": 169,
+  "root_motion": false,
+  "initial_to_idle_vertex_delta_m": 0.0,
+  "bounds_min": [
+    -2.684098482131958,
+    -2.0882527828216553,
+    0.034479349851608276
+  ],
+  "bounds_max": [
+    2.6899449825286865,
+    2.2149851322174072,
+    3.270604133605957
+  ],
+  "new_wing_intersections_before_extinction": 0,
+  "maximum_half_frame_vertex_step_m": 0.15409492906282968,
+  "original_game_files_unchanged": true,
+  "export_clips": {
+    "Idle": 24,
+    "Walk": 8,
+    "Attack": 1.5,
+    "Spell": 3,
+    "Summon": 4,
+    "Death": 3.5
+  },
+  "particles_included": false,
+  "vfx_meshes": 0,
+  "serialized_death_to_idle_start_error": 0.0,
+  "existing_five_clips_unchanged": true
+}

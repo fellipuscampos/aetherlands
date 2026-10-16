@@ -1,0 +1,18 @@
+{
+	"clips": 72,
+	"failures": [],
+	"frames": {
+		"dwarf_idle_side": 72,
+		"dwarf_spell_side": 73,
+		"dwarf_walk_side": 36,
+		"idle": 72,
+		"spell": 73,
+		"walk": 36
+	},
+	"game_database_changed": false,
+	"native_session_count": 1,
+	"renderer": "forward_plus",
+	"screenshots": 2,
+	"status": "PASS",
+	"verified": 24
+}

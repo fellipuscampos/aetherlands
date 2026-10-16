@@ -1,0 +1,504 @@
+{
+  "verified": 24,
+  "preserved_source_files": 845,
+  "assets": [
+    {
+      "civilization": "human",
+      "school": "guardian",
+      "label": "Bastião de Maestria",
+      "folder": "assets/generated/humans/buildings/guardian_mastery_hex_v1",
+      "triangles": 1232,
+      "parts": 93,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "4f472c153cc6e1bb4a11646a5a1db21ab1360bc2ce55437c0ac0e424eba30534",
+      "role": "guardian",
+      "design": "Cidadela humana: grande torreão hexagonal de sete cursos azuis, três torres de ameias, portal fortificado e contrafortes; evolução do salão hexagonal dos guardiões.",
+      "material_reference": "assets/generated/humans/buildings/guardian_hall_hex_v2",
+      "architecture_key": "human_guardian",
+      "roof_rgb": [
+        49,
+        79,
+        127
+      ]
+    },
+    {
+      "civilization": "human",
+      "school": "warrior",
+      "label": "Arena dos Campeões",
+      "folder": "assets/generated/humans/buildings/warrior_mastery_hex_v1",
+      "triangles": 1652,
+      "parts": 135,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "5afcfca1922252e11d523bd97a3003ba760039a759c9d0af5235251d79b9fca8",
+      "role": "warrior",
+      "design": "Anfiteatro humano em ferradura: três arquibancadas de pedra, tribuna real coberta de azul, entrada entre duas pequenas torres e pátio de duelos. Mantém a alvenaria e a heráldica de espadas do salão de armas.",
+      "material_reference": "assets/generated/humans/buildings/warrior_hall_hex_v1",
+      "architecture_key": "human_warrior",
+      "roof_rgb": [
+        49,
+        79,
+        127
+      ]
+    },
+    {
+      "civilization": "human",
+      "school": "ranger",
+      "label": "Torre dos Patrulheiros",
+      "folder": "assets/generated/humans/buildings/ranger_mastery_hex_v1",
+      "triangles": 1532,
+      "parts": 110,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "e7a18f1916742095286d3027fffe4aa36a9a3d73e507af6f3dbaf20a51edc393",
+      "role": "ranger",
+      "design": "Torre humana de vigia com base de pedra, pavimento superior de madeira, varanda cercada, telhado azul e escadaria externa; cabana lateral e três alvos ampliam o campo dos patrulheiros.",
+      "material_reference": "assets/generated/humans/buildings/ranger_camp_hex_v1",
+      "architecture_key": "human_ranger",
+      "roof_rgb": [
+        49,
+        79,
+        127
+      ]
+    },
+    {
+      "civilization": "human",
+      "school": "cavalry",
+      "label": "Ordem da Cavalaria",
+      "folder": "assets/generated/humans/buildings/cavalry_mastery_hex_v1",
+      "triangles": 2208,
+      "parts": 178,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "61916f20cc2800fa79c53236516ec94b35823cc138dcb899532421f2583cd508",
+      "role": "cavalry",
+      "design": "Comando equestre humano de planta em U: corpo de oficiais ao fundo, duas alas de baias abertas, pátio central e poleiro elevado para treinamento de montarias aladas. Deriva do estábulo de madeira com brasão de ferradura.",
+      "material_reference": "assets/generated/humans/buildings/war_stable_hex_v1",
+      "architecture_key": "human_cavalry",
+      "roof_rgb": [
+        49,
+        79,
+        127
+      ]
+    },
+    {
+      "civilization": "human",
+      "school": "rogue",
+      "label": "Refúgio das Sombras",
+      "folder": "assets/generated/humans/buildings/rogue_mastery_hex_v1",
+      "triangles": 1696,
+      "parts": 129,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "f19397d869e82e0f8221ac033a74c5048433f74bb9b38f4aac8307caa8771ac2",
+      "role": "rogue",
+      "design": "Refúgio urbano humano de três alturas: casa de comando, torre hexagonal, arquivo baixo e varanda sustentada; alçapão, alvo de facas e bancada. A assimetria e o brasão de capuz evoluem a guilda dos ladinos.",
+      "material_reference": "assets/generated/humans/buildings/rogue_guild_hex_v1",
+      "architecture_key": "human_rogue",
+      "roof_rgb": [
+        49,
+        79,
+        127
+      ]
+    },
+    {
+      "civilization": "human",
+      "school": "siege",
+      "label": "Grande Arsenal",
+      "folder": "assets/generated/humans/buildings/grand_arsenal_hex_v1",
+      "triangles": 1956,
+      "parts": 161,
+      "meshes": 7,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "44d73afbb57b7fdc30cfe31f1273bd80d024b37e9d7591177867c9ef69837c59",
+      "role": "siege",
+      "design": "Grande oficina humana de duas naves azuis com baias abertas, chaminé de alvenaria, trebuchet de demonstração com contrapeso e guindaste alto; evolução do arsenal de montagem e catapulta.",
+      "material_reference": "assets/generated/humans/buildings/siege_arsenal_hex_v1",
+      "architecture_key": "human_siege",
+      "roof_rgb": [
+        49,
+        79,
+        127
+      ]
+    },
+    {
+      "civilization": "orc",
+      "school": "guardian",
+      "label": "Bastião de Maestria",
+      "folder": "assets/generated/orcs/buildings/orc_guardian_mastery_hex_v1",
+      "triangles": 1980,
+      "parts": 157,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "df2feb684b207c0b6d9d82ed98222e86de086d04fa56641db4c7878578cb9320",
+      "role": "guardian",
+      "design": "Bastião orc de clã: salão pentagonal de madeira pesada sobre basalto, grande cobertura longitudinal de couro vermelho e duas torres desiguais de ferro com mirantes cobertos. Preserva os pórticos com presas e escudos do salão orc.",
+      "material_reference": "assets/generated/orcs/buildings/orc_guardian_hall_hex_v1",
+      "architecture_key": "orc_guardian",
+      "roof_rgb": [
+        130,
+        58,
+        39
+      ]
+    },
+    {
+      "civilization": "orc",
+      "school": "warrior",
+      "label": "Arena dos Campeões",
+      "folder": "assets/generated/orcs/buildings/orc_warrior_mastery_hex_v1",
+      "triangles": 1416,
+      "parts": 110,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "61197ece0b1d67bc1d1097c124f8f8b24f987d0f6173ffe7dda61d33a3c99678",
+      "role": "warrior",
+      "design": "Arena orc aberta: fosso de areia, três arquibancadas pesadas separadas, tribuna do chefe e entrada baixa entre presas monumentais. Madeira, cintas de ferro e coberturas vermelhas evoluem o salão de armas do clã.",
+      "material_reference": "assets/generated/orcs/buildings/orc_warrior_hall_hex_v1",
+      "architecture_key": "orc_warrior",
+      "roof_rgb": [
+        130,
+        58,
+        39
+      ]
+    },
+    {
+      "civilization": "orc",
+      "school": "ranger",
+      "label": "Torre dos Patrulheiros",
+      "folder": "assets/generated/orcs/buildings/orc_ranger_mastery_hex_v1",
+      "triangles": 1884,
+      "parts": 138,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "d15171ba00ed4529da711ecc031855b4fda7f82bb86296ee172bb178e23c2bac",
+      "role": "ranger",
+      "design": "Torre orc de patrulha em andaime aberto: quatro grandes postes, duas plataformas com travamentos diagonais, escada de madeira em retorno e cobertura de couro vermelho. Os alvos e arco reforçado mantêm a linguagem do campo orc.",
+      "material_reference": "assets/generated/orcs/buildings/orc_ranger_camp_hex_v1",
+      "architecture_key": "orc_ranger",
+      "roof_rgb": [
+        130,
+        58,
+        39
+      ]
+    },
+    {
+      "civilization": "orc",
+      "school": "cavalry",
+      "label": "Ordem da Cavalaria",
+      "folder": "assets/generated/orcs/buildings/orc_cavalry_mastery_hex_v1",
+      "triangles": 2492,
+      "parts": 197,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "62b51f9689e380a42200872a9a4cdc85500d1fb7cd8d2d54e9de4dedcb2b1135",
+      "role": "cavalry",
+      "design": "Ordem orc de montarias em planta L: salão comprido de duas baias, abrigo separado dos tratadores, paliçada baixa, lanças e poleiro com presas. Evolui o estábulo orc sem adotar a planta humana em U.",
+      "material_reference": "assets/generated/orcs/buildings/orc_war_stable_hex_v1",
+      "architecture_key": "orc_cavalry",
+      "roof_rgb": [
+        130,
+        58,
+        39
+      ]
+    },
+    {
+      "civilization": "orc",
+      "school": "rogue",
+      "label": "Refúgio das Sombras",
+      "folder": "assets/generated/orcs/buildings/orc_rogue_mastery_hex_v1",
+      "triangles": 1948,
+      "parts": 150,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "22c6a25f2c63c25f2fad67b41ca1c3549069552487e11305a9302971e45aee8d",
+      "role": "rogue",
+      "design": "Refúgio orc baixo e largo de cinco lados, gaiola de observação recuada, abrigo de preparo e grande alçapão lateral; arbustos encobrem os flancos. A cabana e as coberturas de couro vermelho evoluem a guilda orc.",
+      "material_reference": "assets/generated/orcs/buildings/orc_rogue_guild_hex_v1",
+      "architecture_key": "orc_rogue",
+      "roof_rgb": [
+        130,
+        58,
+        39
+      ]
+    },
+    {
+      "civilization": "orc",
+      "school": "siege",
+      "label": "Grande Arsenal",
+      "folder": "assets/generated/orcs/buildings/orc_grand_arsenal_hex_v1",
+      "triangles": 2328,
+      "parts": 190,
+      "meshes": 7,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "dd2de37ec5ee1f841a1576fdb77dd086b003978c5c0770e08bbac078aad58c19",
+      "role": "siege",
+      "design": "Arsenal orc de aríetes: hangar de madeira ligado a uma forja de basalto com duas chaminés desiguais, aríete coberto e suspenso por correntes, guindaste de clã e bancada de ferro. Evolui as ferragens, presas e oficina aberta do arsenal básico.",
+      "material_reference": "assets/generated/orcs/buildings/orc_siege_arsenal_hex_v1",
+      "architecture_key": "orc_siege",
+      "roof_rgb": [
+        130,
+        58,
+        39
+      ]
+    },
+    {
+      "civilization": "dwarf",
+      "school": "guardian",
+      "label": "Bastião de Maestria",
+      "folder": "assets/generated/dwarves/buildings/dwarf_guardian_mastery_hex_v1",
+      "triangles": 1196,
+      "parts": 89,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "e0d24e7da548444ec1a1ab2a86acb4242eeeef02aa7111dae449f581b290d033",
+      "role": "guardian",
+      "design": "Fortaleza anã baixa e larga de seis lados: massa contínua de granito, abóbada de ardósia em terraços, dois bastiões de ombro e portal entre monólitos rúnicos. Amplia a monumentalidade do salão anão sem repetir as três torres humanas.",
+      "material_reference": "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1",
+      "architecture_key": "dwarf_guardian",
+      "roof_rgb": [
+        67,
+        82,
+        89
+      ]
+    },
+    {
+      "civilization": "dwarf",
+      "school": "warrior",
+      "label": "Arena dos Campeões",
+      "folder": "assets/generated/dwarves/buildings/dwarf_warrior_mastery_hex_v1",
+      "triangles": 1312,
+      "parts": 106,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "3732ca108d45a9b547c615a11d447443849fbc3682b319763bb6faaba2c967f0",
+      "role": "warrior",
+      "design": "Arena anã retangular: arquibancadas de granito e cobre em dois lados, casa da tribuna ao fundo, monólitos rúnicos na entrada e bigorna de preparação. Deriva do salão de armas baixo e da tradição de reparo de armas anã.",
+      "material_reference": "assets/generated/dwarves/buildings/dwarf_warrior_hall_hex_v1",
+      "architecture_key": "dwarf_warrior",
+      "roof_rgb": [
+        67,
+        82,
+        89
+      ]
+    },
+    {
+      "civilization": "dwarf",
+      "school": "ranger",
+      "label": "Torre dos Patrulheiros",
+      "folder": "assets/generated/dwarves/buildings/dwarf_ranger_mastery_hex_v1",
+      "triangles": 1952,
+      "parts": 139,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "cee2ef40bd7a26670ac66f8d7a38ce043f81b20747148911498eb10c59da2c2e",
+      "role": "ranger",
+      "design": "Torre anã de levantamento em granito hexagonal: galeria de observação com seis contrafortes e ameias de cobre, coroa curta de ardósia e acesso lateral em pedra. Alvos e bancada de virotes ampliam o campo de treino anão.",
+      "material_reference": "assets/generated/dwarves/buildings/dwarf_ranger_camp_hex_v1",
+      "architecture_key": "dwarf_ranger",
+      "roof_rgb": [
+        67,
+        82,
+        89
+      ]
+    },
+    {
+      "civilization": "dwarf",
+      "school": "cavalry",
+      "label": "Ordem da Cavalaria",
+      "folder": "assets/generated/dwarves/buildings/dwarf_cavalry_mastery_hex_v1",
+      "triangles": 1668,
+      "parts": 133,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "e079abd0e269521b55d7fdd5107b03327690cca3e62d6162e776fee046a920d4",
+      "role": "cavalry",
+      "design": "Ordem anã como grande cavalariça abobadada: três pilares de granito delimitam duas baias reais, lintel maciço, ardósia baixa e doca aérea central com cobre. Amplia os apoios minerais e as montarias do estábulo anão.",
+      "material_reference": "assets/generated/dwarves/buildings/dwarf_war_stable_hex_v1",
+      "architecture_key": "dwarf_cavalry",
+      "roof_rgb": [
+        67,
+        82,
+        89
+      ]
+    },
+    {
+      "civilization": "dwarf",
+      "school": "rogue",
+      "label": "Refúgio das Sombras",
+      "folder": "assets/generated/dwarves/buildings/dwarf_rogue_mastery_hex_v1",
+      "triangles": 1256,
+      "parts": 97,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "33fdd401f4c225cdcacda1e1562d462b615339236aab2898f279c3730ea129fb",
+      "role": "rogue",
+      "design": "Refúgio anão encaixado em três terraços de rocha: entrada recuada entre pilares, coberturas baixas de ardósia, ventilação fortificada e alçapão de metal. A guilda assimétrica evolui para uma sede protegida dentro da pedra.",
+      "material_reference": "assets/generated/dwarves/buildings/dwarf_rogue_guild_hex_v1",
+      "architecture_key": "dwarf_rogue",
+      "roof_rgb": [
+        67,
+        82,
+        89
+      ]
+    },
+    {
+      "civilization": "dwarf",
+      "school": "siege",
+      "label": "Grande Arsenal",
+      "folder": "assets/generated/dwarves/buildings/dwarf_grand_arsenal_hex_v1",
+      "triangles": 1908,
+      "parts": 157,
+      "meshes": 7,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "085011a832b37e72b4ae63a7433c7c6a7ca57a7a2aad272afce6b225d259dc2c",
+      "role": "siege",
+      "design": "Arsenal anão de máquinas: abóbada aberta de granito, duas torres de fundição cintadas de cobre, pórtico de montagem e chassi de cerco com caldeira e pistões. Evolui a oficina básica para engenharia pesada, com volumetria industrial própria.",
+      "material_reference": "assets/generated/dwarves/buildings/dwarf_siege_arsenal_hex_v1",
+      "architecture_key": "dwarf_siege",
+      "roof_rgb": [
+        67,
+        82,
+        89
+      ]
+    },
+    {
+      "civilization": "elf",
+      "school": "guardian",
+      "label": "Bastião de Maestria",
+      "folder": "assets/generated/elves/buildings/elf_guardian_mastery_hex_v1",
+      "triangles": 2312,
+      "parts": 173,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "d2e253b74b32be05ef6c9321cfa751f41d7468f73911e332b4bb20de21de96cb",
+      "role": "guardian",
+      "design": "Bastião élfico de três pavilhões: salão hexagonal de escudos, duas alas abertas, árvores sentinelas e arco de galhos na aproximação. Evolui o pavilhão e o mirante vivo do salão élfico; não usa torres de ameias.",
+      "material_reference": "assets/generated/elves/buildings/elf_guardian_hall_hex_v1",
+      "architecture_key": "elf_guardian",
+      "roof_rgb": [
+        48,
+        122,
+        88
+      ]
+    },
+    {
+      "civilization": "elf",
+      "school": "warrior",
+      "label": "Arena dos Campeões",
+      "folder": "assets/generated/elves/buildings/elf_warrior_mastery_hex_v1",
+      "triangles": 1852,
+      "parts": 137,
+      "meshes": 7,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "baca51def36c610fdc70e96781d5401cf01178f398dc4d18df515904858f1748",
+      "role": "warrior",
+      "design": "Arena élfica de duelo em pétalas: piso hexagonal claro, três terraços pequenos com árvores de sombra, tribuna leve e portal de galhos abertos. Mantém espadas finas, madeira e folhas do salão de armas élfico.",
+      "material_reference": "assets/generated/elves/buildings/elf_warrior_hall_hex_v1",
+      "architecture_key": "elf_warrior",
+      "roof_rgb": [
+        48,
+        122,
+        88
+      ]
+    },
+    {
+      "civilization": "elf",
+      "school": "ranger",
+      "label": "Torre dos Patrulheiros",
+      "folder": "assets/generated/elves/buildings/elf_ranger_mastery_hex_v1",
+      "triangles": 2112,
+      "parts": 153,
+      "meshes": 7,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "cf679623240479d2bdede42de48402e985178e8bc27292591998af4eb8ba90b4",
+      "role": "ranger",
+      "design": "Mirante élfico numa árvore viva: três plataformas apoiadas nos galhos, escada envolvente de madeira, guarda-corpos e pequeno abrigo elevado com telhado verde. O bosque e os arcos do campo básico tornam-se a própria estrutura da torre.",
+      "material_reference": "assets/generated/elves/buildings/elf_ranger_camp_hex_v1",
+      "architecture_key": "elf_ranger",
+      "roof_rgb": [
+        48,
+        122,
+        88
+      ]
+    },
+    {
+      "civilization": "elf",
+      "school": "cavalry",
+      "label": "Ordem da Cavalaria",
+      "folder": "assets/generated/elves/buildings/elf_cavalry_mastery_hex_v1",
+      "triangles": 2628,
+      "parts": 203,
+      "meshes": 7,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "a969718a6cd2262206c1c484fbd7331c17429a35f2b78e8730c7cf3545ee0637",
+      "role": "cavalry",
+      "design": "Ordem élfica em meia-lua: duas cavalariças leves em profundidades diferentes, árvore central com ninho aéreo e pórtico avançado de folhas. Evolui as baias abertas, madeira fina e vegetação do estábulo élfico.",
+      "material_reference": "assets/generated/elves/buildings/elf_war_stable_hex_v1",
+      "architecture_key": "elf_cavalry",
+      "roof_rgb": [
+        48,
+        122,
+        88
+      ]
+    },
+    {
+      "civilization": "elf",
+      "school": "rogue",
+      "label": "Refúgio das Sombras",
+      "folder": "assets/generated/elves/buildings/elf_rogue_mastery_hex_v1",
+      "triangles": 2448,
+      "parts": 186,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "b019ae2e3e989230ba84179ee4807f0dc1c6a805e07c7e89513137b5c0862693",
+      "role": "rogue",
+      "design": "Refúgio élfico de duas casas suspensas: árvores e estacas sustentam pods hexagonais em alturas distintas, unidos por ponte cercada; escadaria, alçapão e treino de facas no solo. A guilda evolui para uma rede escondida entre copas.",
+      "material_reference": "assets/generated/elves/buildings/elf_rogue_guild_hex_v1",
+      "architecture_key": "elf_rogue",
+      "roof_rgb": [
+        48,
+        122,
+        88
+      ]
+    },
+    {
+      "civilization": "elf",
+      "school": "siege",
+      "label": "Grande Arsenal",
+      "folder": "assets/generated/elves/buildings/elf_grand_arsenal_hex_v1",
+      "triangles": 2228,
+      "parts": 177,
+      "meshes": 6,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "cd8adbf4dcd72179f858e7de6fc364c2bfd17a44f6d8ac4a0738881c18477e05",
+      "role": "siege",
+      "design": "Arsenal élfico botânico: dois pavilhões abertos com coberturas em alas, árvore-guindaste de galho vivo, grande balista de madeira e área de projetos. Amplia a oficina básica sem usar chaminés ou massas de granito das outras civilizações.",
+      "material_reference": "assets/generated/elves/buildings/elf_siege_arsenal_hex_v1",
+      "architecture_key": "elf_siege",
+      "roof_rgb": [
+        48,
+        122,
+        88
+      ]
+    }
+  ],
+  "sheets": {
+    "human": {
+      "three_quarter": "assets/generated/humans/buildings/grand_military_three_quarter.jpg",
+      "game_top": "assets/generated/humans/buildings/grand_military_game_top.jpg"
+    },
+    "orc": {
+      "three_quarter": "assets/generated/orcs/buildings/grand_military_three_quarter.jpg",
+      "game_top": "assets/generated/orcs/buildings/grand_military_game_top.jpg"
+    },
+    "dwarf": {
+      "three_quarter": "assets/generated/dwarves/buildings/grand_military_three_quarter.jpg",
+      "game_top": "assets/generated/dwarves/buildings/grand_military_game_top.jpg"
+    },
+    "elf": {
+      "three_quarter": "assets/generated/elves/buildings/grand_military_three_quarter.jpg",
+      "game_top": "assets/generated/elves/buildings/grand_military_game_top.jpg"
+    }
+  }
+}

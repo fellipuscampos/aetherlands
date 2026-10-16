@@ -1,0 +1,135 @@
+{
+  "name": "Human_Arcane_Shrine_Hex_V1",
+  "display_name": "Santuário Arcano",
+  "gameplay_building_id": "v2_building_arcane_shrine",
+  "trains": [],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 738,
+  "editable_parts": 55,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      0.9240000247955322
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    0.9240000247955322
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Escala nativa 1:1 do mapa; tile pointy-top de raio 1; multiplicador 1.0.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 363,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Alvenaria de blocos de pedra, cantaria nos pilares e bases, telhados de ardósia azul. Madeira nos móveis, portas e mecanismos. Santuário Arcano de infraestrutura, uma única versão sem evolução. Revisão: Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores. Junções ajustadas para eliminar faces coplanares expostas.",
+  "door_clearance_m": [
+    0.2,
+    0.32
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "human",
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "infrastructure": {
+    "branch": "arcane",
+    "single_version": true,
+    "evolutions": [],
+    "blender_mcp_only": true,
+    "architecture": "Alvenaria de blocos de pedra, cantaria nos pilares e bases, telhados de ardósia azul. Madeira nos móveis, portas e mecanismos.",
+    "recipe": "human_arcane_shrine"
+  },
+  "hex_tile": {
+    "circumradius": 1.0,
+    "source_base_radius": 0.92,
+    "max_half_plane_blender": 0.796743392944336,
+    "minimum_margin": 0.06928201084010255
+  },
+  "surface_overlap_review": {
+    "version": 1,
+    "mcp_only": true,
+    "exposed_coplanar_overlap_faces": 0,
+    "repaired_parts": {
+      "Channel_Marker_-0.43_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "598293ae1e66c1cc98916d864156383a408a7a76abb930f6335fb46e0041c337"
+      },
+      "Channel_Marker_0.43_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "41f8fa7e6c1c022935ff74562884b0de068779605853d232acef8b1da38a21a4"
+      }
+    },
+    "method": "Native Blender MCP; triangle clipping on matching outward planes, visible area checked against a BVH of all game meshes",
+    "before_overlap_faces": 2
+  },
+  "infrastructure_roof_review": {
+    "version": 1,
+    "mcp_only": true,
+    "roofs": [
+      {
+        "roof": "Mana_Chapel",
+        "shape": "straight_hip",
+        "courses": 6,
+        "base_height": 0.626
+      }
+    ],
+    "support_contacts": [],
+    "note": "Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores.",
+    "before_backup": "art_source/infrastructure_before_roof_review"
+  },
+  "export": {
+    "file": "arcane_shrine_hex_v1.glb",
+    "bytes": 516480,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 738,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "arcane_shrine_hex_v1_emission",
+        "bytes": 22364,
+        "sha256": "19dd98a6c02a47a7829320cc7381bda943649ce53f78fd0d291cd9ff29e3edfb"
+      },
+      {
+        "image": "arcane_shrine_hex_v1_albedo",
+        "bytes": 434668,
+        "sha256": "0759a967cee388eb250e804deb2a0ff3a6a8563863ee430c7adc19d1ccce6bbd"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

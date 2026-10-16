@@ -26,3 +26,25 @@ sfx/victory.ogg, sfx/defeat.ogg
 	e so trocar o arquivo em assets/audio/sfx/victory.ogg ou defeat.ogg
 	por outro jingle da mesma pasta (ha 17 opcoes de cada categoria em
 	music-jingles) sem precisar mexer em codigo.
+
+sfx/rain_loop.ogg
+	Sintetizado pelo proprio projeto (sem licenca de terceiros):
+	tools/audio/generate_rain_loop.py — chuva caindo no CHAO: chiado rosa
+	de fundo + milhares de impactos curtos de ruido sem tom (o que separa
+	gota na terra/folha de gota na agua, que tem o "plic" tonal da bolha);
+	loop perfeito por construcao, 45 s.
+
+	Historico: a primeira versao usava "Rain (loopable)" de Ylmir
+	(OpenGameArt, CC0, https://opengameart.org/content/rain-loopable).
+	O usuario achou que soava como "agua caindo na agua"; substituido em
+	2026-10-10.
+
+sfx/snow_wind_loop.ogg
+	Sintetizado pelo proprio projeto (sem licenca de terceiros):
+	tools/audio/generate_wind_loop.py (ruido filtrado em 5 faixas com
+	rajadas periodicas; loop perfeito por construcao, 60 s).
+
+	Historico: a primeira versao usou "Winter Wind" (wipics, OpenGameArt,
+	CC0), que na verdade era uma MUSICA, nao vento (o usuario ouviu
+	"musica natalina"; a analise espectral confirmou picos tonais).
+	Substituido em 2026-10-10.

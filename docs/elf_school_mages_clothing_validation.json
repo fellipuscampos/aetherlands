@@ -1,0 +1,153 @@
+{
+  "status": "PASS",
+  "models": 6,
+  "backup": "art_source/elf_school_mages_review/before_clothing_cleanup",
+  "assets": [
+    {
+      "school": "sacred",
+      "status": "PASS",
+      "removed_parts": [
+        "Leaf_hem_-1",
+        "Leaf_hem_1",
+        "Leaf_belt_clasp",
+        "Leaf_chest_clasp",
+        "Ivory_leaf_stole_-1",
+        "Gold_stole_leaf_-1",
+        "Ivory_leaf_stole_1",
+        "Gold_stole_leaf_1"
+      ],
+      "triangles_before": 720,
+      "triangles_after": 624,
+      "surviving_geometry_and_uvs_unchanged": true,
+      "school_colors_preserved": true,
+      "atlas_hashes": {
+        "albedo": "a9ec77cb8c54fd040988b6bdcc147b155900b09be5e93920bf8754535cedb50f",
+        "emission": "9a334c89c9511a9c155910ad84763ff23c8b112f0211566c41a19673f0552c6c"
+      },
+      "heads_and_staves_preserved": true,
+      "green_details": "plain collars and belt weave"
+    },
+    {
+      "school": "infernal",
+      "status": "PASS",
+      "removed_parts": [
+        "Leaf_hem_-1",
+        "Leaf_hem_1",
+        "Leaf_belt_clasp",
+        "Leaf_chest_clasp",
+        "Emberwood_sash",
+        "Copper_ash_leaf_-1",
+        "Copper_ash_leaf_1"
+      ],
+      "triangles_before": 624,
+      "triangles_after": 540,
+      "surviving_geometry_and_uvs_unchanged": true,
+      "school_colors_preserved": true,
+      "atlas_hashes": {
+        "albedo": "8d8e1910a814eacd0b9702506dc7c6df91ddc446004f2bf048c4dcb95ea4f86a",
+        "emission": "3b517c38b159d97d586eadbb069c05a6f06acadfb6929ae30bc411ec5e509b61"
+      },
+      "heads_and_staves_preserved": true,
+      "green_details": "plain collars and belt weave"
+    },
+    {
+      "school": "necromancy",
+      "status": "PASS",
+      "removed_parts": [
+        "Leaf_hem_-1",
+        "Leaf_hem_1",
+        "Leaf_belt_clasp",
+        "Leaf_chest_clasp",
+        "Silver_funeral_chain_-1",
+        "Ash_leaf_talisman_-1",
+        "Silver_funeral_chain_1",
+        "Ash_leaf_talisman_1",
+        "Violet_memory_gem"
+      ],
+      "triangles_before": 648,
+      "triangles_after": 540,
+      "surviving_geometry_and_uvs_unchanged": true,
+      "school_colors_preserved": true,
+      "atlas_hashes": {
+        "albedo": "bf53b0115a4eedb3569e644a9398c696848c107bc3ecafe015275c88f7d508f8",
+        "emission": "7d9f70ea2f44732b5cc60f4a13f50e2eda28308ae4f72e0c1a817e3d303c9b63"
+      },
+      "heads_and_staves_preserved": true,
+      "green_details": "plain collars and belt weave"
+    },
+    {
+      "school": "druidism",
+      "status": "PASS",
+      "removed_parts": [
+        "Leaf_hem_-1",
+        "Leaf_hem_1",
+        "Leaf_belt_clasp",
+        "Leaf_chest_clasp",
+        "Leaf_shoulder_mantle_-1",
+        "Leaf_shoulder_mantle_1",
+        "Pouch_herb_0",
+        "Pouch_herb_1",
+        "Pouch_herb_2"
+      ],
+      "triangles_before": 720,
+      "triangles_after": 612,
+      "surviving_geometry_and_uvs_unchanged": true,
+      "school_colors_preserved": true,
+      "atlas_hashes": {
+        "albedo": "9d727a7b7426c3688dfae7bfe40530df2b98be87bdc78c3431a2d815696fc4d2",
+        "emission": "9a334c89c9511a9c155910ad84763ff23c8b112f0211566c41a19673f0552c6c"
+      },
+      "heads_and_staves_preserved": true,
+      "green_details": "plain collars and belt weave"
+    },
+    {
+      "school": "arcanism",
+      "status": "PASS",
+      "removed_parts": [
+        "Leaf_hem_-1",
+        "Leaf_hem_1",
+        "Leaf_belt_clasp",
+        "Leaf_chest_clasp",
+        "Silver_vine_stole_-1",
+        "Silver_vine_stole_1",
+        "Arcane_leaf_rune_0",
+        "Arcane_leaf_rune_1",
+        "Arcane_leaf_rune_2"
+      ],
+      "triangles_before": 728,
+      "triangles_after": 620,
+      "surviving_geometry_and_uvs_unchanged": true,
+      "school_colors_preserved": true,
+      "atlas_hashes": {
+        "albedo": "40827980be852bee73dc1026705f42c21fb8f983c134238b4488ce3cc3cd3d34",
+        "emission": "12f46a96b803673b5605273f2b412dde082c000d7a07de9c2bc9c8a22318bcac"
+      },
+      "heads_and_staves_preserved": true,
+      "green_details": "plain collars and belt weave"
+    },
+    {
+      "school": "elementalism",
+      "status": "PASS",
+      "removed_parts": [
+        "Leaf_hem_-1",
+        "Leaf_hem_1",
+        "Leaf_belt_clasp",
+        "Leaf_chest_clasp",
+        "Element_leaf_clasp_fire",
+        "Element_leaf_clasp_water",
+        "Element_leaf_clasp_stone",
+        "Element_leaf_clasp_wind"
+      ],
+      "triangles_before": 736,
+      "triangles_after": 640,
+      "surviving_geometry_and_uvs_unchanged": true,
+      "school_colors_preserved": true,
+      "atlas_hashes": {
+        "albedo": "bf5a4798b9a2f9a0d4db4d3b77414b0a0b13794ce796f91b132cc326276e7dd7",
+        "emission": "9bac07306edbe6730d5939533ea488c3496bfabdec8086e42e3e195bbbf4e519"
+      },
+      "heads_and_staves_preserved": true,
+      "green_details": "plain collars and belt weave"
+    }
+  ]
+}

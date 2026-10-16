@@ -1,0 +1,105 @@
+{
+  "status": "PASS",
+  "verified": 10,
+  "triangles_total": 1202,
+  "pixel_density": 128,
+  "atlas_size": [
+    512,
+    512
+  ],
+  "shared_atlas": true,
+  "coplanar_overlap_pairs": 0,
+  "no_tile_geometry": true,
+  "assets": [
+    {
+      "asset": "tree_oak_a",
+      "triangles": 156,
+      "surface_count": 1,
+      "atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+      "metric_uv_max_error": 0.0006437301779556037,
+      "coplanar_overlap_pairs": 0,
+      "geometry_sha256": "98e2fe63aca048b7ac1a5580e7d7e7858449845aafc4d0bf6cb5347bc610a172"
+    },
+    {
+      "asset": "tree_oak_b",
+      "triangles": 166,
+      "surface_count": 1,
+      "atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+      "metric_uv_max_error": 0.0006437301779556037,
+      "coplanar_overlap_pairs": 0,
+      "geometry_sha256": "eeda2a956e29c0042aa57d9a9b85be3d36c126481caf17ded42159175c1400c2"
+    },
+    {
+      "asset": "tree_beech_a",
+      "triangles": 116,
+      "surface_count": 1,
+      "atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+      "metric_uv_max_error": 0.0006437301779556037,
+      "coplanar_overlap_pairs": 0,
+      "geometry_sha256": "a09b6a6a13a07d9645c9eb2ad005a043070e1d9cb8b68d5afd433d14d06ab615"
+    },
+    {
+      "asset": "tree_pine_a",
+      "triangles": 220,
+      "surface_count": 1,
+      "atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+      "metric_uv_max_error": 0.0006437301779556037,
+      "coplanar_overlap_pairs": 0,
+      "geometry_sha256": "e18bdf69c78ee3dac865cfcac1a6d63d793df14d2c720848edc33af0a9713344"
+    },
+    {
+      "asset": "tree_oak_young",
+      "triangles": 114,
+      "surface_count": 1,
+      "atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+      "metric_uv_max_error": 0.0006437301779556037,
+      "coplanar_overlap_pairs": 0,
+      "geometry_sha256": "14104dab8ba3db5013e346da7689e65c22cdcd02be7abdde06ae8171c2d096cc"
+    },
+    {
+      "asset": "tree_pine_young",
+      "triangles": 136,
+      "surface_count": 1,
+      "atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+      "metric_uv_max_error": 0.0006437301779556037,
+      "coplanar_overlap_pairs": 0,
+      "geometry_sha256": "b070af66795c1eee49b857ea00c3bd7ab8ce61b4fb0dc422d21fa69c415b6b40"
+    },
+    {
+      "asset": "shrub_hazel",
+      "triangles": 54,
+      "surface_count": 1,
+      "atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+      "metric_uv_max_error": 0.0006437301779556037,
+      "coplanar_overlap_pairs": 0,
+      "geometry_sha256": "b7abb332624637812970f8c0abda9a0f48ec8a4ec8d533d0009d4687179a6608"
+    },
+    {
+      "asset": "shrub_bracken",
+      "triangles": 110,
+      "surface_count": 1,
+      "atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+      "metric_uv_max_error": 0.0006437301779556037,
+      "coplanar_overlap_pairs": 0,
+      "geometry_sha256": "4fe11763113e9154fcd2cd1b3055b0cb53c642a328fe6f6e4511a4bedf669ea5"
+    },
+    {
+      "asset": "fallen_log",
+      "triangles": 74,
+      "surface_count": 1,
+      "atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+      "metric_uv_max_error": 0.0006437301779556037,
+      "coplanar_overlap_pairs": 0,
+      "geometry_sha256": "cc8cc20ee2f73ace066ae5d096604d63461c30187e0b7fce8a21aa78cfefc90a"
+    },
+    {
+      "asset": "rock_root_small",
+      "triangles": 56,
+      "surface_count": 1,
+      "atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+      "metric_uv_max_error": 0.0006437301779556037,
+      "coplanar_overlap_pairs": 0,
+      "geometry_sha256": "12b56a74604a65138bc5768f30cc5dd9cb94e8b9f28bbefa9e7285f0ec901a5e"
+    }
+  ]
+}

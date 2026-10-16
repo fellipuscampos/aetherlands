@@ -1,0 +1,159 @@
+{
+  "status": "PASS",
+  "verified": 20,
+  "assets": [
+    {
+      "stem": "elf_squire_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [
+        "HatBrim",
+        "HatCap",
+        "HatDome"
+      ],
+      "standing_height_m": 1.8000000715255737
+    },
+    {
+      "stem": "elf_guardian_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [
+        "HelmBand",
+        "HelmCap",
+        "HelmDome",
+        "Nasal"
+      ],
+      "standing_height_m": 1.7999999523162842
+    },
+    {
+      "stem": "elf_sentinel_v1",
+      "head_blocks": 1,
+      "closed_helmet": true,
+      "external_head_parts": [],
+      "standing_height_m": 1.7999999523162842
+    },
+    {
+      "stem": "elf_guardian_champion_v1",
+      "head_blocks": 1,
+      "closed_helmet": true,
+      "external_head_parts": [],
+      "standing_height_m": 2.0
+    },
+    {
+      "stem": "elf_warrior_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [
+        "Cap"
+      ],
+      "standing_height_m": 1.8000000715255737
+    },
+    {
+      "stem": "elf_swordsman_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [],
+      "standing_height_m": 1.8000000715255737
+    },
+    {
+      "stem": "elf_weapon_master_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [
+        "Skullcap"
+      ],
+      "standing_height_m": 1.8000000715255737
+    },
+    {
+      "stem": "elf_blade_hero_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [],
+      "standing_height_m": 2.0
+    },
+    {
+      "stem": "elf_archer_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [],
+      "standing_height_m": 1.7999999523162842
+    },
+    {
+      "stem": "elf_hunter_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [],
+      "standing_height_m": 1.8000000715255737
+    },
+    {
+      "stem": "elf_elite_marksman_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [],
+      "standing_height_m": 1.7999999523162842
+    },
+    {
+      "stem": "elf_legend_hunter_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [],
+      "standing_height_m": 2.0
+    },
+    {
+      "stem": "elf_cavalier_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [],
+      "standing_height_m": 1.8
+    },
+    {
+      "stem": "elf_shock_cavalier_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [],
+      "standing_height_m": 1.8
+    },
+    {
+      "stem": "elf_armored_cavalier_v1",
+      "head_blocks": 1,
+      "closed_helmet": true,
+      "external_head_parts": [],
+      "standing_height_m": 1.8
+    },
+    {
+      "stem": "elf_griffon_rider_v1",
+      "head_blocks": 1,
+      "closed_helmet": true,
+      "external_head_parts": [],
+      "standing_height_m": 2.0
+    },
+    {
+      "stem": "elf_rogue_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [],
+      "standing_height_m": 1.7999999523162842
+    },
+    {
+      "stem": "elf_saboteur_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [],
+      "standing_height_m": 1.7999999523162842
+    },
+    {
+      "stem": "elf_assassin_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [],
+      "standing_height_m": 1.7999999523162842
+    },
+    {
+      "stem": "elf_shadow_master_v1",
+      "head_blocks": 1,
+      "closed_helmet": false,
+      "external_head_parts": [],
+      "standing_height_m": 2.0
+    }
+  ]
+}

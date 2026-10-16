@@ -1,0 +1,170 @@
+{
+  "name": "War_Stable_Hex_V1",
+  "display_name": "Estábulo de Guerra",
+  "gameplay_building_id": "v2_building_war_stable",
+  "trains": [
+    "v2_unit_cavalier",
+    "v2_unit_shock_cavalier",
+    "v2_unit_armored_cavalier"
+  ],
+  "excludes": [
+    "v2_legendary_griffon_rider"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 2348,
+  "editable_parts": 182,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.2615000009536743
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.2615000009536743
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1, placement multiplier 1.0. Symbolic architecture and miniature props.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1133,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.345,
+    0.415
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "hex_tile": {
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "model_scale_multiplier": 1.0,
+    "max_half_plane_blender": 0.796743392944336
+  },
+  "export": {
+    "file": "war_stable_hex_v1.glb",
+    "bytes": 1028236,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2348,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "war_stable_hex_v1_emission",
+        "bytes": 79079,
+        "sha256": "2b137a976ac4ac18857d639c70156faa6e22f6b7e997271fb8728b69d61f7dbc"
+      },
+      {
+        "image": "war_stable_hex_v1_albedo",
+        "bytes": 777511,
+        "sha256": "e117bc2d12d00ea3c6de7afbd3a4a678f8e373594f43bc4139eac1a3e79fdc88"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "validation": {
+    "godot_version": "4.7.1.stable",
+    "import": "PASS",
+    "final_geometry": {
+      "dimensions_godot": [
+        1.59348678588867,
+        1.26150000095367,
+        1.8400000333786
+      ],
+      "ground_y": 0.0199999995529652,
+      "meshes": 8,
+      "outside_hex_vertices": 0,
+      "problems": [],
+      "screenshot": "res://.godot/war_stable_hex_v1_ingame_review.png",
+      "status": "PASS",
+      "tile_ground_y": 0.0199999995529652,
+      "triangles": 2252
+    },
+    "visual_review": {
+      "status": "PASS",
+      "runs": 1,
+      "note": "Single visual review before rear roof coverage refinement; final previews inspected and final GLB geometry verified headlessly.",
+      "camera_pitch_degrees": 50,
+      "camera_zoom": 6,
+      "environment_source": "res://scenes/main/Main.tscn"
+    },
+    "tests": {
+      "status": "PASS",
+      "passed": 61,
+      "assertions": 554,
+      "scripts": [
+        "res://test/unit/test_buildings.gd",
+        "res://test/unit/test_v2_cavalry_hall.gd",
+        "res://test/unit/test_v2_cavalry_line.gd"
+      ]
+    }
+  },
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "human",
+    "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos.",
+    "geometry_changes": [
+      "masonry:Barn_BackWall_1",
+      "masonry:Barn_BackBeam_1",
+      "masonry:Barn_BackWall_2",
+      "masonry:Barn_BackBeam_2",
+      "masonry:Barn_BackWall_3",
+      "masonry:Barn_BackBeam_3",
+      "masonry:Barn_BackWall_4",
+      "masonry:Barn_BackBeam_4",
+      "masonry:Stall_Post_-0.6",
+      "masonry:Stall_Post_-0.2",
+      "masonry:Stall_Post_0.2",
+      "masonry:Stall_Post_0.6",
+      "masonry:Barn_FrontBeam",
+      "masonry:Stall_Divider_-0.2",
+      "masonry:Stall_Divider_0.2",
+      "masonry:Ventilator_Base",
+      "masonry:Ventilator_Body",
+      "stone_pier:Stall_Post_-0.6",
+      "stone_pier:Stall_Post_-0.2",
+      "stone_pier:Stall_Post_0.2",
+      "stone_pier:Stall_Post_0.6"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  },
+  "civilization": "human",
+  "integration_source": "scripts/data/BuildingArtCatalog.gd"
+}

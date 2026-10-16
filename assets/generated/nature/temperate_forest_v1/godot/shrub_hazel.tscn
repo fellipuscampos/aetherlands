@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://assets/generated/nature/temperate_forest_v1/godot/shrub_hazel.res" id="1_vc2dh"]
+
+[node name="shrub_hazel" type="Node3D" unique_id=1476116267]
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=312966867]
+mesh = ExtResource("1_vc2dh")

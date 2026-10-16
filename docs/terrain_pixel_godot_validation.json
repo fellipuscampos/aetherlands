@@ -1,0 +1,14 @@
+{
+	"array_layers": 14,
+	"failures": [],
+	"geometry_and_effects_preserved": true,
+	"inventory_types": 25,
+	"land_types_exercised": 21,
+	"native_screenshots": 4,
+	"pixel_density": 64,
+	"renderer": "forward_plus",
+	"source_pixels_preserved": true,
+	"status": "PASS",
+	"terraform_texture_update": true,
+	"terrain_instances": 189
+}

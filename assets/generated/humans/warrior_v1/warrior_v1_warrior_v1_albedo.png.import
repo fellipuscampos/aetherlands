@@ -3,23 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://piewuefu8my5"
-path="res://.godot/imported/warrior_v1_warrior_v1_albedo.png-8783eca3e152133cca1a7954fe6375c6.ctex"
+path.bptc="res://.godot/imported/warrior_v1_warrior_v1_albedo.png-8783eca3e152133cca1a7954fe6375c6.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "25ce8e1bad1048cd47cdc10af937670b"
+"md5": "3bb783dfe050eab0ea3a4d50931112f9"
 }
 
 [deps]
 
 source_file="res://assets/generated/humans/warrior_v1/warrior_v1_warrior_v1_albedo.png"
-dest_files=["res://.godot/imported/warrior_v1_warrior_v1_albedo.png-8783eca3e152133cca1a7954fe6375c6.ctex"]
+dest_files=["res://.godot/imported/warrior_v1_warrior_v1_albedo.png-8783eca3e152133cca1a7954fe6375c6.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

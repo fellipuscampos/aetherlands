@@ -1,0 +1,308 @@
+{
+  "name": "Cavalry_Mastery_Hex_V1",
+  "display_name": "Ordem da Cavalaria — Humanos",
+  "gameplay_building_id": "v2_building_cavalry_mastery",
+  "trains": [
+    "v2_legendary_griffon_rider"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 2412,
+  "editable_parts": 195,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.4424999952316284
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.4424999952316284
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1188,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "human",
+  "military_role": "cavalry",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_war_stable",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "human_cavalry",
+  "material_reference": "assets/generated/humans/buildings/war_stable_hex_v1",
+  "roof_rgb": [
+    49,
+    79,
+    127
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "parts": [
+          "Order_Trough",
+          "Order_Water"
+        ],
+        "action": "move",
+        "delta": [
+          0.1899999976158142,
+          0.019999999552965164,
+          0.0
+        ],
+        "reason": "move the trough beside the central approach to the officers doorway"
+      },
+      {
+        "part": "Griffon_Training_Perch_Post_Shaft",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -1.039999852180481,
+        "reason": "roost pole starts in a socket above the roof"
+      },
+      {
+        "part": "Griffon_Training_Perch_Post_Foot",
+        "action": "archive",
+        "reason": "replace ground roost footing by roof socket"
+      },
+      {
+        "parts": [
+          "Standard_Foot",
+          "Standard_Shaft",
+          "Standard_Capital",
+          "Standard_Crossbar",
+          "Standard_Cloth",
+          "Standard_Tie_-1",
+          "Standard_Tie_1",
+          "Standard_Badge"
+        ],
+        "action": "move",
+        "delta": [
+          0.020000040531158447,
+          0.01000000536441803,
+          0.0
+        ],
+        "reason": "flag pole and cloth clear all roof courses and entrances"
+      },
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 40,
+        "iterations": 3
+      },
+      {
+        "parts": [
+          "Paddock_-1_Post_0_Foot",
+          "Paddock_-1_Post_0_Shaft",
+          "Paddock_-1_Post_0_Capital",
+          "Paddock_-1_Post_1_Foot",
+          "Paddock_-1_Post_1_Shaft",
+          "Paddock_-1_Post_1_Capital",
+          "Paddock_-1_Bar_0.14450000000000002",
+          "Paddock_-1_Bar_0.207"
+        ],
+        "action": "move",
+        "delta": [
+          -0.03999999910593033,
+          0.0,
+          0.0
+        ],
+        "reason": "fence end posts are beside the stable entrances"
+      },
+      {
+        "parts": [
+          "Paddock_1_Post_0_Foot",
+          "Paddock_1_Post_0_Shaft",
+          "Paddock_1_Post_0_Capital",
+          "Paddock_1_Post_1_Foot",
+          "Paddock_1_Post_1_Shaft",
+          "Paddock_1_Post_1_Capital",
+          "Paddock_1_Bar_0.14450000000000002",
+          "Paddock_1_Bar_0.207"
+        ],
+        "action": "move",
+        "delta": [
+          0.03999999910593033,
+          0.0,
+          0.0
+        ],
+        "reason": "fence end posts are beside the stable entrances"
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [
+        {
+          "prefix": "Order_Entry",
+          "x": 0.0,
+          "front": 0.2160000056028366,
+          "bottom": 0.14800000190734863,
+          "top": 0.4747999906539917,
+          "width": 0.20899999141693115,
+          "blockers": []
+        }
+      ],
+      "open_passages": [
+        {
+          "name": "Stable_Wing_-1",
+          "lo": [
+            -0.5009999680519104,
+            -0.3799999952316284,
+            0.16200000405311585
+          ],
+          "hi": [
+            -0.37900002717971804,
+            -0.1749999952316284,
+            0.46600002646446226
+          ],
+          "blockers": []
+        },
+        {
+          "name": "Stable_Wing_1",
+          "lo": [
+            0.37900002717971804,
+            -0.3799999952316284,
+            0.16200000405311585
+          ],
+          "hi": [
+            0.5009999680519104,
+            -0.1749999952316284,
+            0.46600002646446226
+          ],
+          "blockers": []
+        },
+        {
+          "name": "Officers_Court_Approach",
+          "lo": [
+            -0.07,
+            -0.6,
+            0.135
+          ],
+          "hi": [
+            0.07,
+            0.2,
+            0.4
+          ],
+          "blockers": []
+        }
+      ]
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "cavalry_mastery_hex_v1.glb",
+    "bytes": 801740,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2412,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "cavalry_mastery_hex_v1_emission",
+        "bytes": 21712,
+        "sha256": "93fe955993f337f1bdf5a971d33952dd337497d0d31830365bd4d5c5a5594691"
+      },
+      {
+        "image": "cavalry_mastery_hex_v1_albedo",
+        "bytes": 604234,
+        "sha256": "d159f5c0e5f8132d9f9a0f8d75bfda8c91f95b8dce8c8bf54e4aef002f955f06"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "human",
+    "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos.",
+    "geometry_changes": [
+      "masonry:Stable_Wing_-1_-1_-1_Shaft",
+      "masonry:Stable_Wing_-1_-1_1_Shaft",
+      "masonry:Stable_Wing_-1_1_-1_Shaft",
+      "masonry:Stable_Wing_-1_1_1_Shaft",
+      "masonry:Stable_Wing_-1_Front_Lintel",
+      "masonry:Stable_Wing_-1_Rear_Lintel",
+      "masonry:Stable_Wing_-1_Backwall",
+      "masonry:Stable_Wing_1_-1_-1_Shaft",
+      "masonry:Stable_Wing_1_-1_1_Shaft",
+      "masonry:Stable_Wing_1_1_-1_Shaft",
+      "masonry:Stable_Wing_1_1_1_Shaft",
+      "masonry:Stable_Wing_1_Front_Lintel",
+      "masonry:Stable_Wing_1_Rear_Lintel",
+      "masonry:Stable_Wing_1_Backwall",
+      "masonry:Griffon_Training_Perch_Post_Shaft",
+      "masonry:Griffon_Training_Perch_Deck",
+      "masonry:Griffon_Training_Perch_Bracket_-1",
+      "masonry:Griffon_Training_Perch_Bracket_1",
+      "masonry:Griffon_Training_Perch_Perch",
+      "masonry:Griffon_Training_Perch_Perch_End_-1",
+      "masonry:Griffon_Training_Perch_Perch_End_1",
+      "stone_pier:Stable_Wing_-1_-1_-1_Shaft",
+      "stone_pier:Stable_Wing_-1_-1_1_Shaft",
+      "stone_pier:Stable_Wing_-1_1_-1_Shaft",
+      "stone_pier:Stable_Wing_-1_1_1_Shaft",
+      "stone_pier:Stable_Wing_1_-1_-1_Shaft",
+      "stone_pier:Stable_Wing_1_-1_1_Shaft",
+      "stone_pier:Stable_Wing_1_1_-1_Shaft",
+      "stone_pier:Stable_Wing_1_1_1_Shaft",
+      "stone_pier:Griffon_Training_Perch_Post_Shaft"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

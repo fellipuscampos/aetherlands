@@ -29,7 +29,15 @@
     "density_px_per_meter": 64,
     "measured_min": 63.9998528576087,
     "measured_max": 64.00015634267926,
-    "padding": 2
+    "padding": 2,
+    "cleanup": {
+      "version": "human_texture_cleanup_v1",
+      "changed_pixels": 17025,
+      "geometry_uv_skinning_animations_preserved": true,
+      "embedded_albedo_matches_png": true,
+      "editable_source_packed_albedo_matches_png": true,
+      "emission_unchanged": true
+    }
   },
   "rig": {
     "bones": [

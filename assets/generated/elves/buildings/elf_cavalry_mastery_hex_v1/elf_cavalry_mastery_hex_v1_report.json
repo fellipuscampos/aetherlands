@@ -1,0 +1,335 @@
+{
+  "name": "Elf_Cavalry_Mastery_Hex_V1",
+  "display_name": "Ordem da Cavalaria — Elfos",
+  "gameplay_building_id": "v2_building_cavalry_mastery",
+  "trains": [
+    "v2_legendary_griffon_rider"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 2628,
+  "editable_parts": 203,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.607100009918213
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.607100009918213
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1266,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Ordem élfica em meia-lua: duas cavalariças leves em profundidades diferentes, árvore central com ninho aéreo e pórtico avançado de folhas. Evolui as baias abertas, madeira fina e vegetação do estábulo élfico.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "military_role": "cavalry",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_war_stable",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "elf_cavalry",
+  "material_reference": "assets/generated/elves/buildings/elf_war_stable_hex_v1",
+  "roof_rgb": [
+    48,
+    122,
+    88
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "part": "Order_Leaf_Portal_Backwall",
+        "action": "archive",
+        "reason": "an approach portal needs an open passage through its rear"
+      },
+      {
+        "part": "Leaf_Nest_Post_Foot",
+        "action": "archive",
+        "reason": "living trunk already supports the nest; remove coincident second pole"
+      },
+      {
+        "part": "Leaf_Nest_Post_Shaft",
+        "action": "archive",
+        "reason": "living trunk already supports the nest; remove coincident second pole"
+      },
+      {
+        "part": "Leaf_Nest_Post_Capital",
+        "action": "archive",
+        "reason": "living trunk already supports the nest; remove coincident second pole"
+      },
+      {
+        "part": "Leaf_Nest_Post_Branch",
+        "action": "archive",
+        "reason": "living trunk already supports the nest; remove coincident second pole"
+      },
+      {
+        "part": "Leaf_Paddock_1_Post_0_Foot",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_1_Post_0_Shaft",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_1_Post_0_Capital",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_1_Post_0_Branch",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_1_Post_1_Foot",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_1_Post_1_Shaft",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_1_Post_1_Capital",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_1_Post_1_Branch",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_1_Bar_0.1355",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_1_Bar_0.18700000000000003",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_2_Post_0_Foot",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_2_Post_0_Shaft",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_2_Post_0_Capital",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_2_Post_0_Branch",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_2_Post_1_Foot",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_2_Post_1_Shaft",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_2_Post_1_Capital",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_2_Post_1_Branch",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_2_Bar_0.1355",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Paddock_2_Bar_0.18700000000000003",
+        "action": "archive",
+        "reason": "replace continuous approach fence with an open gate"
+      },
+      {
+        "part": "Leaf_Gate_Left_Post_0_Foot",
+        "action": "archive",
+        "reason": "duplicate mesh at the same coordinates as Leaf_Paddock_0_Post_1_Foot"
+      },
+      {
+        "part": "Leaf_Gate_Left_Post_0_Shaft",
+        "action": "archive",
+        "reason": "duplicate mesh at the same coordinates as Leaf_Paddock_0_Post_1_Shaft"
+      },
+      {
+        "part": "Leaf_Gate_Left_Post_0_Capital",
+        "action": "archive",
+        "reason": "duplicate mesh at the same coordinates as Leaf_Paddock_0_Post_1_Capital"
+      },
+      {
+        "part": "Leaf_Gate_Left_Post_0_Branch",
+        "action": "archive",
+        "reason": "duplicate mesh at the same coordinates as Leaf_Paddock_0_Post_1_Branch"
+      },
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 35,
+        "iterations": 3
+      },
+      {
+        "part": "Leaf_Gate_Left_Post_1_Branch",
+        "action": "reverse_gate_brace",
+        "reason": "brace points away from the walking opening"
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [],
+      "open_passages": [
+        {
+          "name": "Leaf_Stable_Left",
+          "lo": [
+            -0.4359999704360962,
+            -0.20499999821186066,
+            0.16200000405311585
+          ],
+          "hi": [
+            -0.3040000092983246,
+            1.7881393449270533e-09,
+            0.5259999990463257
+          ],
+          "blockers": []
+        },
+        {
+          "name": "Leaf_Stable_Right",
+          "lo": [
+            0.25250000178813936,
+            -0.015000000596046448,
+            0.16200000405311585
+          ],
+          "hi": [
+            0.42599997997283934,
+            0.18999999940395357,
+            0.4560000360012054
+          ],
+          "blockers": []
+        },
+        {
+          "name": "Order_Leaf_Portal",
+          "lo": [
+            -0.11750000298023223,
+            -0.26500000059604645,
+            0.16200000405311585
+          ],
+          "hi": [
+            0.057500000596046444,
+            -0.060000000596046446,
+            0.5059999585151672
+          ],
+          "blockers": []
+        },
+        {
+          "name": "Living_Order_Gate",
+          "lo": [
+            -0.1,
+            -0.58,
+            0.135
+          ],
+          "hi": [
+            0.04,
+            -0.05,
+            0.4
+          ],
+          "blockers": []
+        }
+      ]
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "elf_cavalry_mastery_hex_v1.glb",
+    "bytes": 798676,
+    "meshes": 7,
+    "primitives": 7,
+    "triangles": 2628,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_cavalry_mastery_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "elf_cavalry_mastery_hex_v1_albedo",
+        "bytes": 581825,
+        "sha256": "2c606d12ece9a85fb2793dcf7f718a1622d9b98bd4988bf10e0bb8e37cca2d67"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

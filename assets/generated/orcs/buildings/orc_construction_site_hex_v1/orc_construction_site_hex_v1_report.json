@@ -1,0 +1,154 @@
+{
+  "stem": "orc_construction_site_hex_v1",
+  "race": "orc",
+  "revision": 1,
+  "style": "Generic blocky orc construction: basalt blocks, rough heavy timber, rust-red hide roofing, dark iron straps and loose bone ornaments; stone dressing, sawing and riveting; original orc faces, ears, tusks and brows; no specific building or ground plate",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "workers": 3,
+  "jobs": [
+    "stone_dressing_hammer_and_chisel",
+    "timber_sawing",
+    "iron_strap_riveting"
+  ],
+  "geometry": {
+    "editable_parts": 363,
+    "triangles": 4356,
+    "closed_solids": true,
+    "flat_shading": true,
+    "all_content_cuboids": true,
+    "hex_radius": 1.0,
+    "footprint_radius": 0.9,
+    "ground_plate": false,
+    "ground_workers_feet_z": 0.0,
+    "specific_architecture": false,
+    "hex_corner_angle_degrees": -30,
+    "hex_orientation": "pointy-top virtual footprint; matches HexMetrics.corner",
+    "max_hex_half_plane": 0.7406129596185461,
+    "max_content_half_plane": 0.7406129596185461,
+    "footprint_margin": 0.03880990378744864,
+    "limiting_part": "Scaffold_foot",
+    "minimum_ground_z": -6.964293586264603e-10
+  },
+  "building_materials": {
+    "reference": "tools/art_pipeline/orc_city_level_1_hex_v1_model.py",
+    "structure": "basalt_heavy_timber_and_iron",
+    "timber": [
+      78,
+      53,
+      35
+    ],
+    "raw_timber_logs": 3,
+    "raw_timber_continuous_bark": true,
+    "stone": [
+      91,
+      101,
+      98
+    ],
+    "cutstone": [
+      145,
+      141,
+      121
+    ],
+    "loose_building_blocks": 6,
+    "bone": [
+      225,
+      215,
+      174
+    ],
+    "iron": [
+      53,
+      65,
+      65
+    ],
+    "roof": [
+      130,
+      58,
+      39
+    ],
+    "roof_dark": [
+      83,
+      40,
+      30
+    ],
+    "loose_rust_hide_roof_shingles": 10,
+    "loose_bone_ornaments": 3,
+    "loose_iron_roof_straps": 3
+  },
+  "orc_style": {
+    "reference": "assets/generated/orcs/orc_settler_v1/orc_settler_v1.blend",
+    "head_original_geometry": true,
+    "head_scale": 0.21,
+    "head_max_vertex_error": 0.0,
+    "original_face_pixels": true,
+    "original_ear_parts_per_worker": 6,
+    "original_tusk_parts_per_worker": 4,
+    "original_brow_parts_per_worker": 2,
+    "new_facial_detail_meshes": 0,
+    "fixed_body_original_proportions": true,
+    "static_shoulder_blocks": 0,
+    "animated_shoulder_height": 0.35,
+    "shoulder_sleeve_cap_extension": 0.012,
+    "forearm_lengths": {
+      "Joiner": {
+        "L": 0.08702965012707262,
+        "R": 0.08192490380001019
+      },
+      "Carpenter": {
+        "L": 0.08259061646823392,
+        "R": 0.08259061646823392
+      },
+      "Riveter": {
+        "L": 0.08702965012707262,
+        "R": 0.08192490380001019
+      }
+    }
+  },
+  "animation": {
+    "clip": "construction",
+    "seconds": 6.0,
+    "fps": 30,
+    "frames": 181,
+    "loop_error": 0.0,
+    "max_joint_error": 1.2310379476739693e-07,
+    "feet_stationary": true,
+    "root_motion": false,
+    "stable_elbow_planes": true,
+    "axial_twist_error": 1.2004094600436963e-06,
+    "min_elbow_bend_degrees": 55.7969457261418,
+    "max_elbow_bend_degrees": 118.6077648996455,
+    "max_arm_rotation_step_degrees": 1.6892928648943881,
+    "min_hand_center_gap": 0.13789851163404296
+  },
+  "export": {
+    "bytes": 545492,
+    "meshes": 2,
+    "materials": 1,
+    "skins": 1,
+    "bones": 25,
+    "embedded_images": 1,
+    "cameras": 0,
+    "lights": 0
+  },
+  "status": "PASS",
+  "contacts": {
+    "status": "PASS",
+    "pose_samples": 61,
+    "hammer_chisel_contact_error": 0.0,
+    "hammer_handle_min_stone_clearance": 0.07250002026557922,
+    "hammer_grip_min_side_clearance": 0.008750438690185547,
+    "hammer_head_vertical_arc": 0.12728947401046753,
+    "saw_handle_min_clearance": 0.023625999689102173,
+    "saw_support_hand_contact_error": 0.0004999786615371704,
+    "rivet_contact_error": 2.9802322387695312e-08,
+    "rivet_contact_samples": 8,
+    "rivet_hammer_vertical_arc": 0.12728950381278992,
+    "loose_building_blocks": 6,
+    "raw_timber_logs": 3,
+    "original_ear_parts": 18,
+    "original_tusk_parts": 12,
+    "original_brow_parts": 6,
+    "no_specific_building": true,
+    "ground_workers_feet_z": 0.0,
+    "stable_elbow_planes": true
+  }
+}

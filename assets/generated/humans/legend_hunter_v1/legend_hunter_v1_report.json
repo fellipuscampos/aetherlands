@@ -1,6 +1,6 @@
 {
   "name": "LegendHunter_V1",
-  "kind": "v2_legendary_legend_hunter (Ca\u00e7ador de Lendas)",
+  "kind": "v2_legendary_legend_hunter (Caçador de Lendas)",
   "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/legend_hunter_*.py)",
   "height_m": 2.1771042346954346,
   "front_y_m": -1.076856017112732,
@@ -29,7 +29,15 @@
     "density_px_per_meter": 64,
     "measured_min": 63.99944541980821,
     "measured_max": 64.00020889974267,
-    "padding": 2
+    "padding": 2,
+    "cleanup": {
+      "version": "human_texture_cleanup_v1",
+      "changed_pixels": 26408,
+      "geometry_uv_skinning_animations_preserved": true,
+      "embedded_albedo_matches_png": true,
+      "editable_source_packed_albedo_matches_png": true,
+      "emission_unchanged": true
+    }
   },
   "rig": {
     "bones": [
@@ -136,7 +144,7 @@
       "end": 70,
       "loop": false,
       "nla_start": 271,
-      "description": "Saraivada: rapid triple shot aimed high so the arrows rain around the target \u2014 tight fan, looses left (15), reloads from the quiver, centre (34), reloads, right (53), final reload, settles back.",
+      "description": "Saraivada: rapid triple shot aimed high so the arrows rain around the target — tight fan, looses left (15), reloads from the quiver, centre (34), reloads, right (53), final reload, settles back.",
       "impact_frame": 15,
       "release_frames": [
         15,
@@ -187,7 +195,7 @@
     "UpperArm_l": "upper_arm_l",
     "UpperArm_r": "upper_arm_r"
   },
-  "notes": "Static LegendHunter V1 (Ca\u00e7ador de Lendas, legendary), Elite Marksman copy, 2.00 m body (the longbow rises above), one block per body part. Bow and gold caps follow hand_l; string halves string_u/string_d; nocked arrow on its own bone; quiver and pelt cape follow chest; knife follows hips; pelt hood painted on the head. Gold trims, not magical.",
+  "notes": "Static LegendHunter V1 (Caçador de Lendas, legendary), Elite Marksman copy, 2.00 m body (the longbow rises above), one block per body part. Bow and gold caps follow hand_l; string halves string_u/string_d; nocked arrow on its own bone; quiver and pelt cape follow chest; knife follows hips; pelt hood painted on the head. Gold trims, not magical.",
   "animation_validation": {
     "problems": [],
     "ik": {},

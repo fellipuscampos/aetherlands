@@ -1,0 +1,2440 @@
+{
+  "status": "PASS",
+  "applied": true,
+  "repaired_models": 20,
+  "assets": [
+    {
+      "stem": "orc_arcanist_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_archer_v1",
+      "status": "PASS",
+      "changed_vertices": 510,
+      "inherited_vertices": 510,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "37e348d488be63d12d50ca82a7dca49a45138b6c8c56cc93a8e3172a4689fbf2",
+      "after_sha256": "aff931a6b308a5ef57262a156e3fc591b34ebe0b6d66708e43d2359dd4dcc4e9"
+    },
+    {
+      "stem": "orc_armored_cavalier_v1",
+      "status": "PASS",
+      "changed_vertices": 420,
+      "inherited_vertices": 420,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "d5cf4b8a4f855f78001011762fd67f19422639d8475fba7c29755e71c0ff0f18",
+      "after_sha256": "adbbc9f3e42066061933088808246f71e4675d6535f7a292113b957fe63e5672"
+    },
+    {
+      "stem": "orc_assassin_v1",
+      "status": "PASS",
+      "changed_vertices": 492,
+      "inherited_vertices": 492,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "92058b044b871767ca8379f51c776361fa67a7d88fa829a00b4ecda8ddb4c005",
+      "after_sha256": "52bd301f41925cf2e65c7644c7a498cc2b32220b8fa318e42615646b72352b5e"
+    },
+    {
+      "stem": "orc_blade_hero_v1",
+      "status": "PASS",
+      "changed_vertices": 528,
+      "inherited_vertices": 528,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "9ad436b178049bb699377746129846e2cf610f936a863bcc5757125359be48aa",
+      "after_sha256": "62fd7f303d3155081bab77313216b43a9a818df0cf43d6d1daf2b66a251ae199"
+    },
+    {
+      "stem": "orc_bombard_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_builder_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_catapult_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_cavalier_v1",
+      "status": "PASS",
+      "changed_vertices": 396,
+      "inherited_vertices": 396,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "5d65b2cef7a1acb0346c720fa42e06f4e329012ce0299c5dfc965c111215f2d9",
+      "after_sha256": "6c18594e3d934f80c98529aba9ee0e7e6f4094272dc880b049511bf38d6d8415"
+    },
+    {
+      "stem": "orc_druid_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_elementalist_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_elite_marksman_v1",
+      "status": "PASS",
+      "changed_vertices": 558,
+      "inherited_vertices": 558,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "accb853d4e7860c0ed3e086d5ff7e62742182bbd95578fc22357235d0476ad3a",
+      "after_sha256": "a3f9eca8416b59b269a0cd08980f4e1c018b36c14727fbd3cfb04d0a027816db"
+    },
+    {
+      "stem": "orc_embark_boat_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_griffon_rider_v1",
+      "status": "PASS",
+      "changed_vertices": 420,
+      "inherited_vertices": 420,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "7a51ab89a87653709e434711604b71c18099ba1fccd204a5ae23b30a1365c258",
+      "after_sha256": "be191018d9c20e2b1deebacba84d8fff5c47ab820749d9462e6b4b833d790f1e"
+    },
+    {
+      "stem": "orc_guardian_champion_v1",
+      "status": "PASS",
+      "changed_vertices": 240,
+      "inherited_vertices": 240,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "d5e12c6ccea0c06acb4a0533f937ff1f381d468676ee95b16e55ed1bc8011473",
+      "after_sha256": "6a67a8d55aa371a6be60a1e9d054bdb090531c280ea0e58dd31540c0534b9888"
+    },
+    {
+      "stem": "orc_guardian_v1",
+      "status": "PASS",
+      "changed_vertices": 288,
+      "inherited_vertices": 288,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "bb429a5848f33425d31cc01970ca86b4ad6185bcf889b40474f237b386d0d073",
+      "after_sha256": "ef3cd2b67bbe46b7ae6d8b547a7cde0fc62413c6dd563d8a86020511cdf3db12"
+    },
+    {
+      "stem": "orc_hunter_v1",
+      "status": "PASS",
+      "changed_vertices": 558,
+      "inherited_vertices": 558,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "18aee92e90033f994c07312a642803e48ea9082a38512f712286f896020553eb",
+      "after_sha256": "414fcb053291738c9cd5b40275d1cfe5677ee261de96e4628445f53385358cd0"
+    },
+    {
+      "stem": "orc_infernal_warlock_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_legend_hunter_v1",
+      "status": "PASS",
+      "changed_vertices": 558,
+      "inherited_vertices": 558,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "154b3beae7a6c809aae48a99d4d7acd76ec79f5ee9d7427a4bc304f360ca714a",
+      "after_sha256": "673ce29d6988307e9f9f2eb27b7fa78cf1203324736bb6e711f87ac4474ad468"
+    },
+    {
+      "stem": "orc_necromancer_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_rogue_v1",
+      "status": "PASS",
+      "changed_vertices": 390,
+      "inherited_vertices": 390,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "09e1afe7972fd9ebaeb502412eeedf731f10a4aaefad034e3d6ea54b7874e17b",
+      "after_sha256": "33b7fbe6cbdfc0b1afddb9d929058dd29660ed45d0a9630b11ccc26be24d71a1"
+    },
+    {
+      "stem": "orc_saboteur_v1",
+      "status": "PASS",
+      "changed_vertices": 390,
+      "inherited_vertices": 390,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "804a4b4a2bd33d27a61232fd88ee4fae3f2cb29c9a9c05255289d4c02f2e6cc2",
+      "after_sha256": "5573fe485246c39eb4b8c8e8d4c25169bb1e0b2068b0feb3951ddba49127e45a"
+    },
+    {
+      "stem": "orc_sacred_cleric_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_sentinel_v1",
+      "status": "PASS",
+      "changed_vertices": 240,
+      "inherited_vertices": 240,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "84813a0823589ac665cb53cf57224aac0cb802aef8aac29979f2d1b7f19b85f6",
+      "after_sha256": "f7e6d065eb9dd23ae8684a21f613c5e8573a4eebd7eebf2c35692727a87fab90"
+    },
+    {
+      "stem": "orc_settler_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_shadow_master_v1",
+      "status": "PASS",
+      "changed_vertices": 492,
+      "inherited_vertices": 492,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "295484826ae7bbacaa4110aab2bf36da76391c603a9061b0df3aab4bc61e3c0c",
+      "after_sha256": "8e6edf32a866668672f61ea1ee941a2eb39d7d012c083fd44722751fbd958e9f"
+    },
+    {
+      "stem": "orc_shock_cavalier_v1",
+      "status": "PASS",
+      "changed_vertices": 420,
+      "inherited_vertices": 420,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "ca483e38959c77e350a0323bc7abcb994b5549484a452b4063eeb02190ba2e65",
+      "after_sha256": "30d94f92db4a4de20f6a4c86d0b326444ad6eeefae17a947e8ac95cd47f58563"
+    },
+    {
+      "stem": "orc_siege_colossus_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_squire_v1",
+      "status": "PASS",
+      "changed_vertices": 288,
+      "inherited_vertices": 288,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "b9d1eb268a703fb7d04d54b7c162c36f4c17d06c04b4f70666662973a5731f55",
+      "after_sha256": "f1f4cb5642cbd6136061e59d829f9572a2073fbdd7a2a0a87c086e8709dc4dfa"
+    },
+    {
+      "stem": "orc_swordsman_v1",
+      "status": "PASS",
+      "changed_vertices": 456,
+      "inherited_vertices": 456,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "0bd73cdd3d146d4d03a5e52c4866375c0072899b15db474f7a3e70ad358026b0",
+      "after_sha256": "53e72385a23c5366cdb27fd711ed8b8ac927a18c498bee75b4c518601fb024b8"
+    },
+    {
+      "stem": "orc_trebuchet_v1",
+      "status": "UNCHANGED",
+      "reason": "single rendered UV layer"
+    },
+    {
+      "stem": "orc_warrior_v1",
+      "status": "PASS",
+      "changed_vertices": 438,
+      "inherited_vertices": 438,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "5d6bd04fe8ce53c1ceeba07556a6a6404371ae198eba92d24215a91c8c701c22",
+      "after_sha256": "f96be46f4b012998a49f4726bda8195dce8de18c3c97c72f298efadc99aacb7c"
+    },
+    {
+      "stem": "orc_weapon_master_v1",
+      "status": "PASS",
+      "changed_vertices": 528,
+      "inherited_vertices": 528,
+      "face": [
+        {
+          "part": "ElfEar_l_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "ElfEar_l_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_0",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.58333333333333,
+            111.58333333333333,
+            63.583333333333336
+          ]
+        },
+        {
+          "part": "ElfEar_r_1",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.5,
+            111.5,
+            63.5
+          ]
+        },
+        {
+          "part": "ElfEar_r_2",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            91.41666666666667,
+            111.41666666666667,
+            63.416666666666664
+          ]
+        },
+        {
+          "part": "Brow_l",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        },
+        {
+          "part": "Brow_r",
+          "vertices": 24,
+          "before_rgb": [
+            190.0,
+            172.0,
+            132.0
+          ],
+          "after_rgb": [
+            35.666666666666664,
+            35.5,
+            30.166666666666668
+          ]
+        }
+      ],
+      "only_uv0_bytes_changed": true,
+      "geometry_rig_animations_textures_identical": true,
+      "before_sha256": "243f12700c90c6e82478a92867298f8d9fae7974cba633b1ba6d79b3d370f1ad",
+      "after_sha256": "ccb189ec2df9a3871ceac5228a8ed60e6ec9105c92fc04aaa4c3902e61e4f427"
+    }
+  ]
+}

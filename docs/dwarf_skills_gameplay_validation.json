@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "tests": 14,
+  "actual_scene_runtime": true,
+  "progression": true,
+  "native_clips": true,
+  "charge_recovery": true,
+  "tactical_retreat_movement": true,
+  "shield_hold": true
+}

@@ -1,0 +1,97 @@
+{
+	"array_path": "res://assets/textures/terrain/pixel_v1/terrain_surfaces.res",
+	"assets": [
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "grass",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "dry_grass",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "forest_floor",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "tundra",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "dirt",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "snow",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "ice",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "sand",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "rock",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "basalt",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "ash",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "crystal",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "mystic_soil",
+			"width": 128
+		},
+		{
+			"height": 128,
+			"mipmaps": 7,
+			"stem": "magma",
+			"width": 128
+		}
+	],
+	"layers": 14,
+	"mipmaps": true,
+	"resolution": [
+		128,
+		128
+	],
+	"source_pixels_preserved": true,
+	"status": "PASS"
+}

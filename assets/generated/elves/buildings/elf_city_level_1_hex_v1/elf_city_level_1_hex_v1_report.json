@@ -1,0 +1,105 @@
+{
+  "name": "Elf_City_Level_1_Hex_V1",
+  "display_name": "Centro da Cidade Élfica — Nível I",
+  "gameplay_building_id": "city_center_level_1",
+  "trains": [],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 2028,
+  "editable_parts": 133,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7274613380432129,
+      -0.8399999737739563,
+      0.0
+    ],
+    "max": [
+      0.7274613380432129,
+      0.8399999737739563,
+      1.3125
+    ]
+  },
+  "dimensions_m": [
+    1.4549226760864258,
+    1.6799999475479126,
+    1.3125
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native map units; pointy-top hex tile radius 1, foundation radius .84. Fits the independent wall ring. Asset only, no runtime integration.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 906,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Elven city I of four: one ivory-and-timber council pavilion, slender posts and stepped branch braces, tall emerald hipped roof with gold leaf finial, pointed portal and leaf civic emblem. One square-canopy living tree, moonwell, bench, garden and short pennant. No perimeter walls; larger halls, towers and additional roofs reserved for levels II–IV.",
+  "door_clearance_m": [
+    0.194,
+    0.243
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "city_level": 1,
+  "remaining_levels": [
+    2,
+    3,
+    4
+  ],
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.84,
+    "orientation": "pointy-top",
+    "placement_scale": "tile_radius",
+    "max_half_plane_blender": 0.7274613380432129,
+    "fortification_inner_apothem": 0.7670638795573722
+  },
+  "faction_tint": "Mint civic cloth isolated in Faction mesh for future owner-color integration. Roof, gold, timber, foliage and water keep their own colors; no runtime changes.",
+  "export": {
+    "file": "elf_city_level_1_hex_v1.glb",
+    "bytes": 668176,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2028,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_city_level_1_hex_v1_emission",
+        "bytes": 22162,
+        "sha256": "97e3ec2cbf0234e74ce7d89a0789be3ed76abcaceffb0f3891b7b6d3e39abe30"
+      },
+      {
+        "image": "elf_city_level_1_hex_v1_albedo",
+        "bytes": 500898,
+        "sha256": "2aa71f5d04384f88c479b051d9137c1c2b87689228f1783117abd9396a9504e1"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "bones": 25,
+  "clip": "construction",
+  "containment_pose_samples": 181,
+  "fixed_feet": true,
+  "footprint_margin": 0.038806327508762,
+  "footprint_radius": 0.9,
+  "ground_plate": false,
+  "ground_workers_feet_y": {
+    "Carpenter_body": -5.59516766251988e-10,
+    "Mason_body": -5.59516766251988e-10
+  },
+  "max_arm_rotation_step_degrees": 1.69950239687797,
+  "max_content_half_plane": 0.740616535897233,
+  "max_visual_worker_movement": 0.156892642378807,
+  "max_worker_movement": 0.023998087272048,
+  "meshes": 2,
+  "problems": [],
+  "seconds": 6.0,
+  "status": "PASS"
+}

@@ -1,0 +1,48 @@
+{
+  "status": "PASS",
+  "files": [
+    {
+      "file": "human_settler_v1.blend",
+      "scenes": 1,
+      "armatures": 1,
+      "actions": 2,
+      "images": 1
+    },
+    {
+      "file": "elf_settler_v1.blend",
+      "scenes": 1,
+      "armatures": 1,
+      "actions": 2,
+      "images": 1
+    },
+    {
+      "file": "dwarf_settler_v1.blend",
+      "scenes": 1,
+      "armatures": 1,
+      "actions": 2,
+      "images": 1
+    },
+    {
+      "file": "orc_settler_v1.blend",
+      "scenes": 1,
+      "armatures": 1,
+      "actions": 2,
+      "images": 1
+    },
+    {
+      "file": "settlers_four_civilizations_review.blend",
+      "scenes": 1,
+      "armatures": 4,
+      "actions": 8,
+      "images": 4
+    }
+  ],
+  "active_scene": "Settlers_V1_Four_Civilizations_Review",
+  "left_to_right": [
+    "human",
+    "elf",
+    "dwarf",
+    "orc"
+  ],
+  "animations": 8
+}

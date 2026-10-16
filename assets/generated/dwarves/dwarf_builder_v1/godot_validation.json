@@ -1,0 +1,41 @@
+{
+	"assets": [
+		{
+			"asset": "dwarf_builder_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"minimum_floor": 0.0000000149011611938477,
+					"motion": 0.0231821648776531,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"minimum_floor": 0.0000000149011611938477,
+					"motion": 0.801862120628357,
+					"pose_samples": 25,
+					"seconds": 1.5
+				},
+				"work": {
+					"loop": false,
+					"loop_error": 0.0,
+					"minimum_floor": 0.0000000149011611938477,
+					"motion": 1.05889701843262,
+					"pose_samples": 25,
+					"seconds": 3.0
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		}
+	],
+	"clips": 3,
+	"failures": [],
+	"pose_samples": 75,
+	"status": "PASS",
+	"verified": 1
+}

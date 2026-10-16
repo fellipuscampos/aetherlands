@@ -1,0 +1,223 @@
+{
+	"assets": [
+		{
+			"dimensions": [
+				1.11904907226563,
+				1.42250001430511,
+				0.782132148742676
+			],
+			"meshes": 15,
+			"stem": "dwarf_shieldbearer_v1"
+		},
+		{
+			"dimensions": [
+				1.14004898071289,
+				1.42250001430511,
+				0.759632170200348
+			],
+			"meshes": 15,
+			"stem": "dwarf_guardian_v1"
+		},
+		{
+			"dimensions": [
+				1.16104900836945,
+				1.42250001430511,
+				0.759632170200348
+			],
+			"meshes": 15,
+			"stem": "dwarf_sentinel_v1"
+		},
+		{
+			"dimensions": [
+				1.182049036026,
+				1.42250001430511,
+				0.79963219165802
+			],
+			"meshes": 15,
+			"stem": "dwarf_guardian_champion_v1"
+		},
+		{
+			"dimensions": [
+				1.20541453361511,
+				1.37600004673004,
+				0.83842259645462
+			],
+			"meshes": 15,
+			"stem": "dwarf_warrior_v1"
+		},
+		{
+			"dimensions": [
+				1.2129145860672,
+				1.42250001430511,
+				0.854100942611694
+			],
+			"meshes": 15,
+			"stem": "dwarf_swordsman_v1"
+		},
+		{
+			"dimensions": [
+				1.22041463851929,
+				1.42250001430511,
+				0.867279231548309
+			],
+			"meshes": 15,
+			"stem": "dwarf_weapon_master_v1"
+		},
+		{
+			"dimensions": [
+				1.2262909412384,
+				1.42250001430511,
+				0.94726288318634
+			],
+			"meshes": 15,
+			"stem": "dwarf_blade_hero_v1"
+		},
+		{
+			"dimensions": [
+				1.30881547927856,
+				1.37600004673004,
+				1.15738010406494
+			],
+			"meshes": 15,
+			"stem": "dwarf_archer_v1"
+		},
+		{
+			"dimensions": [
+				1.33131551742554,
+				1.42250001430511,
+				1.17988014221191
+			],
+			"meshes": 15,
+			"stem": "dwarf_hunter_v1"
+		},
+		{
+			"dimensions": [
+				1.35381555557251,
+				1.42250001430511,
+				1.20238018035889
+			],
+			"meshes": 15,
+			"stem": "dwarf_elite_marksman_v1"
+		},
+		{
+			"dimensions": [
+				1.37631559371948,
+				1.42250001430511,
+				1.22488021850586
+			],
+			"meshes": 15,
+			"stem": "dwarf_legend_hunter_v1"
+		},
+		{
+			"dimensions": [
+				1.23069357872009,
+				2.1324999332428,
+				1.51352667808533
+			],
+			"meshes": 30,
+			"stem": "dwarf_cavalier_v1"
+		},
+		{
+			"dimensions": [
+				1.23069357872009,
+				2.1324999332428,
+				1.51798343658447
+			],
+			"meshes": 30,
+			"stem": "dwarf_shock_cavalier_v1"
+		},
+		{
+			"dimensions": [
+				1.23069357872009,
+				2.1324999332428,
+				1.57343530654907
+			],
+			"meshes": 30,
+			"stem": "dwarf_armored_cavalier_v1"
+		},
+		{
+			"dimensions": [
+				1.23069357872009,
+				2.39314579963684,
+				1.62888705730438
+			],
+			"meshes": 30,
+			"stem": "dwarf_ram_lord_v1"
+		},
+		{
+			"dimensions": [
+				1.16090655326843,
+				1.3860000371933,
+				0.550682365894318
+			],
+			"meshes": 15,
+			"stem": "dwarf_rogue_v1"
+		},
+		{
+			"dimensions": [
+				1.16090655326843,
+				1.3860000371933,
+				0.69818240404129
+			],
+			"meshes": 15,
+			"stem": "dwarf_saboteur_v1"
+		},
+		{
+			"dimensions": [
+				1.16090655326843,
+				1.3860000371933,
+				0.568182408809662
+			],
+			"meshes": 15,
+			"stem": "dwarf_assassin_v1"
+		},
+		{
+			"dimensions": [
+				1.16090655326843,
+				1.3860000371933,
+				0.568182408809662
+			],
+			"meshes": 15,
+			"stem": "dwarf_shadow_master_v1"
+		},
+		{
+			"dimensions": [
+				1.16500008106232,
+				1.36700010299683,
+				1.18793320655823
+			],
+			"meshes": 1,
+			"stem": "dwarf_catapult_v1"
+		},
+		{
+			"dimensions": [
+				1.3050000667572,
+				1.783358335495,
+				1.40077543258667
+			],
+			"meshes": 1,
+			"stem": "dwarf_trebuchet_v1"
+		},
+		{
+			"dimensions": [
+				1.39499998092651,
+				1.16512370109558,
+				1.38017749786377
+			],
+			"meshes": 1,
+			"stem": "dwarf_bombard_v1"
+		},
+		{
+			"dimensions": [
+				1.5550000667572,
+				1.71086168289185,
+				1.68400382995605
+			],
+			"meshes": 1,
+			"stem": "dwarf_siege_colossus_v1"
+		}
+	],
+	"problems": [],
+	"status": "PASS",
+	"verified": 24
+}

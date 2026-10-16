@@ -1,0 +1,109 @@
+{
+	"assets": [
+		{
+			"asset": "human_settler_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.0231821574270725,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.59108579158783,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "elf_settler_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"minimum_elbow_behind_wrist": 0.151220612227917,
+					"minimum_floor": -0.00000000233132002591674,
+					"minimum_wrist_forward": 0.155560141429305,
+					"motion": 0.0549170076847076,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"minimum_elbow_behind_wrist": 0.161154128611088,
+					"minimum_floor": -0.00000000233132002591674,
+					"minimum_wrist_forward": 0.113913001958281,
+					"motion": 0.637126445770264,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "dwarf_settler_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"minimum_floor": 0.0,
+					"motion": 0.0231821574270725,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"minimum_floor": 0.0,
+					"motion": 0.801862120628357,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "orc_settler_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.0231821574270725,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.587306439876556,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		}
+	],
+	"clips": 8,
+	"failures": [],
+	"pose_samples": 200,
+	"status": "PASS",
+	"verified": 4
+}

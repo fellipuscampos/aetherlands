@@ -1,0 +1,150 @@
+{
+  "stem": "dwarf_construction_site_hex_v1",
+  "race": "dwarf",
+  "revision": 1,
+  "style": "Generic blocky dwarf construction: granite blocks, copper sheets, ingots and roof bindings, dark blue-gray slate; stone dressing, slate filing and copper riveting; original squat dwarf anatomy, beard and workshop caps; no specific building or ground plate",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "workers": 3,
+  "jobs": [
+    "granite_dressing_hammer_and_chisel",
+    "roof_slate_filing",
+    "copper_plate_riveting_on_anvil"
+  ],
+  "geometry": {
+    "editable_parts": 386,
+    "triangles": 4632,
+    "closed_solids": true,
+    "flat_shading": true,
+    "all_content_cuboids": true,
+    "hex_radius": 1.0,
+    "footprint_radius": 0.9,
+    "ground_plate": false,
+    "ground_workers_feet_z": 0.0,
+    "specific_architecture": false,
+    "hex_corner_angle_degrees": -30,
+    "hex_orientation": "pointy-top virtual footprint; matches HexMetrics.corner",
+    "max_hex_half_plane": 0.7406129596185461,
+    "max_content_half_plane": 0.7406129596185461,
+    "footprint_margin": 0.03880990378744864,
+    "limiting_part": "Scaffold_foot",
+    "minimum_ground_z": 0.0
+  },
+  "building_materials": {
+    "reference": "tools/art_pipeline/dwarf_city_level_1_hex_v1_model.py",
+    "structure": "granite_copper_and_dark_slate",
+    "stone": [
+      117,
+      124,
+      123
+    ],
+    "cutstone": [
+      175,
+      172,
+      152
+    ],
+    "loose_building_blocks": 9,
+    "copper": [
+      191,
+      133,
+      71
+    ],
+    "copper_sheets": 3,
+    "copper_ingots": 6,
+    "loose_copper_brackets": 3,
+    "loose_copper_roof_bindings": 3,
+    "roof": [
+      67,
+      82,
+      89
+    ],
+    "roof_dark": [
+      43,
+      59,
+      64
+    ],
+    "loose_dark_slate_roof_tiles": 10,
+    "reference_previews": [
+      "assets/generated/dwarves/buildings/dwarf_city_level_1_hex_v1/previews/three_quarter.png",
+      "assets/generated/dwarves/buildings/dwarf_workshop_hex_v1/previews/three_quarter.png",
+      "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1/previews/three_quarter.png"
+    ]
+  },
+  "dwarf_style": {
+    "reference": "assets/generated/dwarves/dwarf_settler_v1/dwarf_settler_v1.blend",
+    "head_original_geometry": true,
+    "head_scale": 0.26,
+    "head_max_vertex_error": 0.0,
+    "original_face_pixels": true,
+    "original_beard_parts_per_worker": 18,
+    "original_head_attachments_per_worker": 30,
+    "new_facial_detail_meshes": 0,
+    "fixed_body_original_proportions": true,
+    "static_shoulder_blocks": 0,
+    "animated_shoulder_height": 0.263,
+    "shoulder_sleeve_cap_extension": 0.012,
+    "forearm_lengths": {
+      "Mason": {
+        "L": 0.0830666147950804,
+        "R": 0.07849077799152615
+      },
+      "Roofer": {
+        "L": 0.07907723942148122,
+        "R": 0.07907723942148122
+      },
+      "Coppersmith": {
+        "L": 0.0830666147950804,
+        "R": 0.07849077799152615
+      }
+    }
+  },
+  "animation": {
+    "clip": "construction",
+    "seconds": 6.0,
+    "fps": 30,
+    "frames": 181,
+    "loop_error": 0.0,
+    "max_joint_error": 1.228781230931777e-07,
+    "feet_stationary": true,
+    "root_motion": false,
+    "stable_elbow_planes": true,
+    "axial_twist_error": 2.2166021681991352e-06,
+    "min_elbow_bend_degrees": 79.40317574306765,
+    "max_elbow_bend_degrees": 128.35627533595127,
+    "max_arm_rotation_step_degrees": 1.6837235926781833,
+    "min_hand_center_gap": 0.1306508838081371
+  },
+  "export": {
+    "bytes": 609840,
+    "meshes": 2,
+    "materials": 1,
+    "skins": 1,
+    "bones": 25,
+    "embedded_images": 1,
+    "cameras": 0,
+    "lights": 0
+  },
+  "status": "PASS",
+  "contacts": {
+    "status": "PASS",
+    "pose_samples": 61,
+    "hammer_chisel_contact_error": 0.0,
+    "hammer_handle_min_stone_clearance": 0.07250002026557922,
+    "hammer_grip_min_side_clearance": 0.008750438690185547,
+    "hammer_head_vertical_arc": 0.12728950381278992,
+    "file_handle_min_clearance": 0.0100821852684021,
+    "file_support_hand_contact_error": 0.0,
+    "file_slate_contact_error": 0.0,
+    "rivet_contact_error": 2.9802322387695312e-08,
+    "rivet_contact_samples": 8,
+    "rivet_hammer_vertical_arc": 0.12728950381278992,
+    "plate_anvil_contact_error": 0.0,
+    "loose_building_blocks": 9,
+    "copper_sheets": 3,
+    "copper_ingots": 6,
+    "original_beard_parts": 54,
+    "original_head_attachments": 90,
+    "no_specific_building": true,
+    "ground_workers_feet_z": 0.0,
+    "stable_elbow_planes": true
+  }
+}

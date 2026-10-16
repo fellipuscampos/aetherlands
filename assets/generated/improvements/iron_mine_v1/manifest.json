@@ -1,0 +1,371 @@
+{
+  "asset": "iron_mine_v1",
+  "improvement": "v2_improvement_iron_mine",
+  "resource": "iron",
+  "method": "live Blender MCP localhost:9876",
+  "reuses_full_raw_resource_model": false,
+  "source_texture": "assets\\generated\\resources\\iron\\iron_outcrop_v1\\iron_outcrop_v1_albedo.png",
+  "source_texture_sha256": "74ad701337da3171482211ff54268425945f47cb926b96ecbbac44cc0c13a977",
+  "source_blend_sha256": "6c485d7f706b485bdd9527395e60fb28d2ead5e6a2c5b1482b14e7f7b05b35c1",
+  "source_ore_texels_preserved": true,
+  "host_rock": "cuboid blocks",
+  "concept": "Stepped iron quarry, timber extraction hoist, loaded bucket and ore sorting sled",
+  "materials": 1,
+  "meshes": 1,
+  "vertices": 544,
+  "triangles": 820,
+  "footprint_radius": 0.7165535436161186,
+  "height": 0.6800000071525574,
+  "ground_origin": true,
+  "closed_components": true,
+  "texture_size": [
+    512,
+    512
+  ],
+  "texture_filter": "nearest",
+  "animations": 0,
+  "lights": 0,
+  "shared_civilizations": [
+    "human",
+    "elf",
+    "orc",
+    "dwarf"
+  ],
+  "parts": [
+    {
+      "name": "Quarry_worked_ground",
+      "vertices": 16,
+      "faces": 10
+    },
+    {
+      "name": "High_ore_face",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Right_ore_step",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Front_ore_step",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Rear_ore_step",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Left_ore_ledge",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "High_silver_cap",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "High_silver_chip",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "High_front_iron",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "High_front_oxide",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "High_left_iron",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Right_silver_cap",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Right_oxide_cap",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Right_front_iron",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Front_silver_cap",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Front_oxide_cap",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Rear_silver_cap",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Ledge_silver_cap",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gantry_foot_-0.13",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gantry_post_-0.13",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gantry_iron_band_-0.13",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gantry_foot_0.34",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gantry_post_0.34",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gantry_iron_band_0.34",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gantry_long_beam",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gantry_reaching_arm",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gantry_side_brace",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gantry_arm_brace",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Pulley_block",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Hoist_rope",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Winch_axle",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Winch_hand_crank",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Winch_grip",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Hoist_rope_return",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Hoist_rope_corner",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Hoist_rope_to_winch",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_bottom",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_side_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_end_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_iron_band_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_handle_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_side_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_end_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_iron_band_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_handle_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_handle_crossbar",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_ore_a",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_ore_b",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bucket_iron_chip",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorting_sled_runner_0.2",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorting_sled_runner_0.45",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorting_sled_plank_0",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorting_sled_plank_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorting_sled_plank_2",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorting_sled_plank_3",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorting_sled_rim_0.17",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorting_sled_rim_0.48",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Harvested_ore_0",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Harvested_ore_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Harvested_ore_2",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorted_iron_cap_a",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Sorted_iron_cap_b",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Quarry_pick_handle",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Quarry_pick_left",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Quarry_pick_right",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loose_ore_front",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loose_ore_chip",
+      "vertices": 8,
+      "faces": 6
+    }
+  ]
+}

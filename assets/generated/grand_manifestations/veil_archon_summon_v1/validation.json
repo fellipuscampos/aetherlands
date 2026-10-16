@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "via": "Blender MCP live",
+  "duration_s": 5,
+  "frames": 121,
+  "samples": 241,
+  "fps": 24,
+  "parts": 47,
+  "bones": 39,
+  "particles_included": false,
+  "root_motion": false,
+  "style": "two runic crowns close around the luminous lattice and core",
+  "initial_maximum_piece_extent_m": 2.308838907706337e-05,
+  "minimum_ground_clearance_m": 0.29820138216018677,
+  "bounds_min": [
+    -1.7331587076187134,
+    -1.726352334022522,
+    0.29820138216018677
+  ],
+  "bounds_max": [
+    1.7236086130142212,
+    1.7275210618972778,
+    3.4159722328186035
+  ],
+  "final_to_idle_vertex_error_m": 0.0,
+  "maximum_half_frame_step_m": 0.14033533005870505,
+  "core_collision_checks": 347,
+  "core_intersections": 0,
+  "original_asset_files_unchanged": true,
+  "original_four_clips_preserved": true,
+  "serialized_original_clip_error": 0.0,
+  "serialized_summon_to_idle_error": 0.0,
+  "embedded_textures_preserved": true
+}

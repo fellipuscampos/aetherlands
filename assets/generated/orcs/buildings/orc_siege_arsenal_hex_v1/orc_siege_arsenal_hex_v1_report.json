@@ -1,0 +1,113 @@
+{
+  "name": "Orc_Siege_Arsenal_Hex_V1",
+  "display_name": "Arsenal de Guerra dos Orcs",
+  "gameplay_building_id": "v2_building_siege_arsenal",
+  "trains": [
+    "v2_unit_catapult",
+    "v2_unit_trebuchet",
+    "v2_unit_bombard"
+  ],
+  "excludes": [
+    "v2_legendary_siege_colossus"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 3576,
+  "editable_parts": 223,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.281000018119812
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.281000018119812
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units; pointy-top tile radius 1, military foundation radius .92; placement scale tile_radius. Asset only, no integration.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1563,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Original orc siege arsenal: low broad basalt-and-heavy-timber assembly shed with genuinely open front bay, hex-clipped rust-red stepped roof, transverse horned ridge, forge chimney and large silver cog with tusks on clan-red sign. Foreground static four-wheeled reinforced torsion catapult with loaded open spoon, iron nose and ivory tusks; angled timber crane with chain, open hook and suspended spare axle. Wheel and timber stocks, stone ammunition tray, anvil, hammer and parchment assembly plan. Same regular catapult/trebuchet/bombard line; legendary siege colossus belongs to separate mastery building. No unit dependencies, animation or perimeter wall ring.",
+  "door_clearance_m": [
+    0.69,
+    0.427
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "orc",
+  "unit_class": "siege",
+  "asset_only": true,
+  "hex_tile": {
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "placement_scale": "tile_radius",
+    "max_half_plane_blender": 0.7978273816244401,
+    "tile_apothem": 0.8660254037844386
+  },
+  "siege_props": {
+    "catapult_count": 1,
+    "catapult_static": true,
+    "crane": true,
+    "loaded_spoon": true,
+    "suspended_spare_axle": true,
+    "unit_models_defined": false
+  },
+  "faction_tint": "Cog backing cloth and miniature catapult nose plate isolated in Faction mesh for future owner tint. No runtime integration.",
+  "export": {
+    "file": "orc_siege_arsenal_hex_v1.glb",
+    "bytes": 1199452,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 3576,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "orc_siege_arsenal_hex_v1_emission",
+        "bytes": 79401,
+        "sha256": "c665faec17083ab24758373f5f71e8907609ee64a6e75c8a2ce090001fc8fdcf"
+      },
+      {
+        "image": "orc_siege_arsenal_hex_v1_albedo",
+        "bytes": 873656,
+        "sha256": "28039a8db1fc3d202790639566a87412f059ccb77508dbd03b5879edcbbcd318"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

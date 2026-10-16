@@ -1,0 +1,68 @@
+{
+  "status": "PASS",
+  "verified": 6,
+  "assets": [
+    {
+      "asset": "elf_guardian_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.36099994182587,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 2312
+    },
+    {
+      "asset": "elf_warrior_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.30750000476837,
+        1.8400000333786
+      ],
+      "meshes": 7,
+      "triangles": 1852
+    },
+    {
+      "asset": "elf_ranger_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        2.27670001983643,
+        1.8400000333786
+      ],
+      "meshes": 7,
+      "triangles": 2112
+    },
+    {
+      "asset": "elf_cavalry_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.60710000991821,
+        1.8400000333786
+      ],
+      "meshes": 7,
+      "triangles": 2628
+    },
+    {
+      "asset": "elf_rogue_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.66059994697571,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 2448
+    },
+    {
+      "asset": "elf_grand_arsenal_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.71410000324249,
+        1.8400000333786
+      ],
+      "meshes": 6,
+      "triangles": 2228
+    }
+  ],
+  "problems": [],
+  "source": "grand_military_godot_validation.json"
+}

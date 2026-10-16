@@ -1,0 +1,47 @@
+{
+  "asset": "shrub_bracken",
+  "name": "Temperate_Forest_V1_shrub_bracken",
+  "display_name": "Arbusto de sub-bosque",
+  "category": "shrub",
+  "species": "underbrush",
+  "triangles": 110,
+  "vertices": 57,
+  "polygons": 32,
+  "bounds_blender": {
+    "min": [
+      -0.20000000298023224,
+      -0.11999999731779099,
+      0.0
+    ],
+    "max": [
+      0.20000000298023224,
+      0.11999999731779099,
+      0.20000000298023224
+    ]
+  },
+  "dimensions": [
+    0.4000000059604645,
+    0.23999999463558197,
+    0.20000000298023224
+  ],
+  "pivot": "ground at base of trunk / center of prop",
+  "native_scale": 1,
+  "pixel_density_px_per_unit": 128,
+  "materials": 1,
+  "game_meshes": 1,
+  "atlas": "textures/forest_pixel_atlas.png",
+  "alpha_blending": false,
+  "voxel_cells": 116,
+  "surface_cells_removed": true,
+  "nonmanifold_edges": 0,
+  "mcp_only": true,
+  "export": {
+    "bytes": 135040,
+    "meshes": 1,
+    "surfaces": 1,
+    "materials": 1,
+    "triangles": 110,
+    "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+    "no_studio": true
+  }
+}

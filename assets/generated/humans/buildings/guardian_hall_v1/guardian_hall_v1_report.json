@@ -1,0 +1,101 @@
+{
+  "name": "Guardian_Hall_V1",
+  "display_name": "Salão dos Guardiões",
+  "gameplay_building_id": "v2_building_guardian_hall",
+  "trains": [
+    "v2_unit_shieldbearer",
+    "v2_unit_guardian",
+    "v2_unit_sentinel"
+  ],
+  "excludes": [
+    "v2_legendary_guardian_champion"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "superseded_by": "guardian_hall_hex_v2",
+  "placement": {
+    "building_id": "v2_building_guardian_hall",
+    "model_scale_multiplier": 0.14,
+    "dimensions_godot_m": [1.379, 0.9562, 1.3055],
+    "outside_hex_vertices": 0,
+    "validation": "PASS: HexGrid.place_building, ground at tile height, nearest textures, legacy KayKit scale preserved; 31 existing tests passed"
+  },
+  "triangles": 4672,
+  "editable_parts": 301,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -4.900000095367432,
+      -5.050000190734863,
+      0.0
+    ],
+    "max": [
+      4.949999809265137,
+      4.275000095367432,
+      6.829999923706055
+    ]
+  },
+  "dimensions_m": [
+    9.849999904632568,
+    9.325000286102295,
+    6.829999923706055
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "1 source unit = 1 meter; scale deliberately at placement for strategic map",
+  "texture": {
+    "size": [
+      4096,
+      4096
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 64,
+    "padding": 3,
+    "unique_uv_islands": 2256,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Fortified training hall, stepped blue roofs, squared watchtower, open gateway, sand yard, shield dummies and formation markers.",
+  "door_clearance_m": [
+    1.8,
+    2.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "export": {
+    "file": "guardian_hall_v1.glb",
+    "bytes": 6621136,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 4672,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "guardian_hall_v1_emission",
+        "bytes": 306360,
+        "sha256": "0cfce35793b07148a1810ffe0af21e35a4d18beb62ea728a39c9c7187e73322f"
+      },
+      {
+        "image": "guardian_hall_v1_albedo",
+        "bytes": 5988355,
+        "sha256": "c38a7a7349c0fff2a8a0195aecd6b3b112b325d115c234bafca31ec7fa151c0b"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

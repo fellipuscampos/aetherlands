@@ -1,0 +1,58 @@
+{
+  "kind": "giant_spider",
+  "tier": "Básico",
+  "name": "Ninho de seda",
+  "concept": "Troncos mortos sustentam teias poligonais, casulos e bolsas de ovos.",
+  "stem": "giant_spider_lair_v2",
+  "method": "Live Blender MCP localhost:9876",
+  "editable_parts": 80,
+  "vertices": 942,
+  "triangles": 1564,
+  "materials": 1,
+  "draw_calls": 1,
+  "atlas": [
+    1024,
+    1024
+  ],
+  "pixels_per_meter": 64,
+  "measured_uv_density_range": [
+    63.99524558385188,
+    64.00649830347767
+  ],
+  "filter": "nearest",
+  "footprint_radius": 0.78,
+  "height": 0.8266047239303589,
+  "ground_min": 0.0,
+  "source_bounds_xyz": [
+    [
+      -0.6553543210029602,
+      -0.7413082718849182,
+      0.0
+    ],
+    [
+      0.58053058385849,
+      0.6750761270523071,
+      0.8266047239303589
+    ]
+  ],
+  "scale_multiplier": 1.0,
+  "forward": "-Y Blender / +Z glTF",
+  "pivot": [
+    0,
+    0,
+    0
+  ],
+  "nonmanifold_edges": 0,
+  "degenerate_faces": 0,
+  "animations": [],
+  "collision": false,
+  "game_source_changed": false,
+  "art_scale": 0.3362747915328659,
+  "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+  "isolated_by_gdignore": true,
+  "previews": [
+    "three_quarter",
+    "game_top",
+    "back"
+  ]
+}

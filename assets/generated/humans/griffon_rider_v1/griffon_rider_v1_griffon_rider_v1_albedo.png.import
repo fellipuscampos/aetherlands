@@ -3,23 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bi6ftjcbqeip7"
-path="res://.godot/imported/griffon_rider_v1_griffon_rider_v1_albedo.png-e7492613264df0de3aff297bea4168ff.ctex"
+path.bptc="res://.godot/imported/griffon_rider_v1_griffon_rider_v1_albedo.png-e7492613264df0de3aff297bea4168ff.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "10ba723f1730de4da6cd88ea125a20ec"
+"md5": "bd12c6326a5f7f789f366230cf2155cb"
 }
 
 [deps]
 
 source_file="res://assets/generated/humans/griffon_rider_v1/griffon_rider_v1_griffon_rider_v1_albedo.png"
-dest_files=["res://.godot/imported/griffon_rider_v1_griffon_rider_v1_albedo.png-e7492613264df0de3aff297bea4168ff.ctex"]
+dest_files=["res://.godot/imported/griffon_rider_v1_griffon_rider_v1_albedo.png-e7492613264df0de3aff297bea4168ff.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

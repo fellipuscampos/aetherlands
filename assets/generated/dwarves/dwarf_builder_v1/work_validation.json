@@ -1,0 +1,9 @@
+{
+  "maximum_half_frame_rotation_degrees": 4.14737069186767,
+  "maximum_length_error": 0.0000000596046447753906,
+  "maximum_plane_error": 0.0,
+  "maximum_roll_error": 0.0,
+  "maximum_wrist_error": 0.000000127315573195119,
+  "pose_samples": 289,
+  "status": "PASS"
+}

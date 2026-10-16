@@ -1,0 +1,448 @@
+{
+  "stem": "dwarf_cavalier_v1",
+  "key": "cavalier",
+  "family": "cavalry",
+  "family_name": "Cavaleiro",
+  "tier": 0,
+  "tier_name": "Básica",
+  "name": "Cavaleiro de Carneiro",
+  "gameplay_id": "v2_unit_cavalier",
+  "status": "PASS",
+  "stage": "animated_troops",
+  "body_height_m": 1.35,
+  "anatomy": {
+    "body_belly": "1b281d82ce9c63459c5b143318d539453965b4479711405cb1affd1b4b721eac",
+    "body_chest": "c78b881b49d6bc372b5107fe16d50954ac934792ec86ac3b985341d2667eead7",
+    "body_foot_L": "c9b06769765e4482bb9bc38bbcbef54581a5bd62bafab193be220a797992d4a5",
+    "body_foot_R": "c9b06769765e4482bb9bc38bbcbef54581a5bd62bafab193be220a797992d4a5",
+    "body_forearm_L": "470dbeccca8b05bfdec2eef37cbb2b502cf6abbc4dc5faa4c944f167f3eeee91",
+    "body_forearm_R": "470dbeccca8b05bfdec2eef37cbb2b502cf6abbc4dc5faa4c944f167f3eeee91",
+    "body_hand_L": "cb78ae0bc057ebec335a111a4a583398bbf0ba5dc337865ff01fba37348ce3d6",
+    "body_hand_R": "cb78ae0bc057ebec335a111a4a583398bbf0ba5dc337865ff01fba37348ce3d6",
+    "body_head": "2cb8d362e52dd59c6fea0bf48f47b846f7c2f756a5dd3ca7807a0e1dd082d993",
+    "body_pelvis": "31f2365c98e2dc61260dd07a40ce6c2ee4dd845a8fb594ed1bc762316ff91b25",
+    "body_shin_L": "096c9ae3f1b685173c09d5ddbdbfb991d333ac64332931972dfebe74f85357dc",
+    "body_shin_R": "096c9ae3f1b685173c09d5ddbdbfb991d333ac64332931972dfebe74f85357dc",
+    "body_shoulder_L": "d8056e397a2097abaf79a343bc320d304513aa003fea254b92bacf5e7b8946c5",
+    "body_shoulder_R": "d8056e397a2097abaf79a343bc320d304513aa003fea254b92bacf5e7b8946c5",
+    "body_thigh_L": "7796157034e6a7046bcb0d840f29de37dea512bd9a8a378c60305ccb13881f26",
+    "body_thigh_R": "7796157034e6a7046bcb0d840f29de37dea512bd9a8a378c60305ccb13881f26",
+    "body_upper_arm_L": "6086967f8afc9181e047f9ff79231296d926c0c92eb9f99526a4bd8060ab8a20",
+    "body_upper_arm_R": "6086967f8afc9181e047f9ff79231296d926c0c92eb9f99526a4bd8060ab8a20"
+  },
+  "anatomical_parts": 18,
+  "neck": false,
+  "style_revision": 6,
+  "created_via": "live_blender_mcp",
+  "geometry": {
+    "parts": 106,
+    "triangles": 1288,
+    "bounds_min": [
+      -0.5170000195503235,
+      -0.8289999961853027,
+      0.0
+    ],
+    "bounds_max": [
+      0.7136936187744141,
+      0.6845266819000244,
+      2.132499933242798
+    ],
+    "dimensions": [
+      1.2306935787200928,
+      1.5135266780853271,
+      2.132499933242798
+    ],
+    "closed_meshes": true,
+    "uv_in_bounds": true
+  },
+  "atlas": {
+    "size": 512,
+    "density_px_per_m": 64,
+    "padding_px": 3,
+    "face_islands": 640,
+    "paint_revision": 7,
+    "sha256": "906f4166939c297c778c71b10cf9593aa97c6fce790c56ca2716f52f7fcabb25"
+  },
+  "export": {
+    "bytes": 381468,
+    "sha256": "f9fcbcd29a8ee46a88d3e2c0b684466d7e858f46975e8af58da3f19736b9df35",
+    "meshes": 1,
+    "skins": 1,
+    "animations": 4,
+    "embedded_png_matches": true,
+    "nearest_filter": true
+  },
+  "held_grips": [
+    {
+      "weapon": "forged_axe_R",
+      "hand": "body_hand_R",
+      "fist_center_inside_handle": true
+    }
+  ],
+  "design": "balanced_hips_large_feet_one_hand_role_equipment_forged_materials",
+  "material_emblems": false,
+  "mount_leg_segments": 8,
+  "body_part_dimensions": {
+    "body_pelvis": [
+      0.52,
+      0.3,
+      0.16
+    ],
+    "body_belly": [
+      0.43,
+      0.29,
+      0.17
+    ],
+    "body_chest": [
+      0.62,
+      0.33,
+      0.28
+    ],
+    "body_head": [
+      0.38,
+      0.34,
+      0.33
+    ],
+    "body_thigh_L": [
+      0.205,
+      0.23,
+      0.18
+    ],
+    "body_shin_L": [
+      0.235,
+      0.245,
+      0.18
+    ],
+    "body_foot_L": [
+      0.235,
+      0.405,
+      0.155
+    ],
+    "body_shoulder_L": [
+      0.23,
+      0.335,
+      0.205
+    ],
+    "body_upper_arm_L": [
+      0.19,
+      0.205,
+      0.245
+    ],
+    "body_forearm_L": [
+      0.225,
+      0.235,
+      0.215
+    ],
+    "body_hand_L": [
+      0.22,
+      0.235,
+      0.175
+    ],
+    "body_thigh_R": [
+      0.205,
+      0.23,
+      0.18
+    ],
+    "body_shin_R": [
+      0.235,
+      0.245,
+      0.18
+    ],
+    "body_foot_R": [
+      0.235,
+      0.405,
+      0.155
+    ],
+    "body_shoulder_R": [
+      0.23,
+      0.335,
+      0.205
+    ],
+    "body_upper_arm_R": [
+      0.19,
+      0.205,
+      0.245
+    ],
+    "body_forearm_R": [
+      0.225,
+      0.235,
+      0.215
+    ],
+    "body_hand_R": [
+      0.22,
+      0.235,
+      0.175
+    ]
+  },
+  "animation": {
+    "stem": "dwarf_cavalier_v1",
+    "status": "PASS",
+    "motion_revision": 2,
+    "approved_meshes_unchanged": true,
+    "shared_actions": {
+      "idle": "Dwarf_cavalry_idle",
+      "walk": "Dwarf_cavalry_walk",
+      "attack": "Dwarf_cavalry_attack"
+    },
+    "clips": {
+      "idle": {
+        "frames": 145,
+        "fps": 48,
+        "loop": true,
+        "loop_or_recovery_error": 0.0,
+        "min_ground_z": -1.7881393432617188e-07,
+        "max_grip_error": 0.0,
+        "max_arm_joint_error": 2.467706078541159e-07,
+        "max_motion": 0.16505593061447144,
+        "joint_angular_span_degrees": {
+          "root": 0.0,
+          "mount_body": 0.518886376316401,
+          "mount_neck": 2.9999652922065208,
+          "mount_head": 2.4945076014068936,
+          "mount_thigh_L_front": 4.105806002560377,
+          "mount_shin_L_front": 8.209877990845218,
+          "mount_hoof_L_front": 4.53645199105062,
+          "mount_thigh_R_front": 4.105806002560377,
+          "mount_shin_R_front": 8.209877990845218,
+          "mount_hoof_R_front": 4.53645199105062,
+          "mount_thigh_L_hind": 2.0174368171280745,
+          "mount_shin_L_hind": 3.4356555888422293,
+          "mount_hoof_L_hind": 1.8704722770871447,
+          "mount_thigh_R_hind": 2.0174368171280745,
+          "mount_shin_R_hind": 3.4356555888422293,
+          "mount_hoof_R_hind": 1.8704722770871447,
+          "pelvis": 0.518886376316401,
+          "chest": 2.208579874494293,
+          "head": 8.030154369441027,
+          "upper_arm_L": 3.8430494789636334,
+          "forearm_L": 5.275641530012434,
+          "hand_L": 0.8001478033654139,
+          "upper_arm_R": 2.6319271655261423,
+          "forearm_R": 2.8937133753739217,
+          "hand_R": 3.7828947222828613,
+          "thigh_L": 0.0,
+          "shin_L": 0.0,
+          "foot_L": 0.0,
+          "thigh_R": 0.0,
+          "shin_R": 0.0,
+          "foot_R": 0.0
+        },
+        "max_joint_step_degrees": {
+          "root": 0.0,
+          "mount_body": 0.03956468118525214,
+          "mount_neck": 0.1312212074681015,
+          "mount_head": 0.08846931922527276,
+          "mount_thigh_L_front": 0.15825873808122176,
+          "mount_shin_L_front": 0.2987068774475626,
+          "mount_hoof_L_front": 0.16312936999074168,
+          "mount_thigh_R_front": 0.15825873808122176,
+          "mount_shin_R_front": 0.2987068774475626,
+          "mount_hoof_R_front": 0.16312936999074168,
+          "mount_thigh_L_hind": 0.08846931922527276,
+          "mount_shin_L_hind": 0.11869405356091633,
+          "mount_hoof_L_hind": 0.06852804166478502,
+          "mount_thigh_R_hind": 0.08846931922527276,
+          "mount_shin_R_hind": 0.11869405356091633,
+          "mount_hoof_R_hind": 0.06852804166478502,
+          "pelvis": 0.03956468118525214,
+          "chest": 0.08846931922527276,
+          "head": 0.3494259412333732,
+          "upper_arm_L": 0.10467831195095843,
+          "forearm_L": 0.12511451142200766,
+          "hand_L": 0.0,
+          "upper_arm_R": 0.10467831195095843,
+          "forearm_R": 0.07912936237050427,
+          "hand_R": 0.10467831195095843,
+          "thigh_L": 0.0,
+          "shin_L": 0.0,
+          "foot_L": 0.0,
+          "thigh_R": 0.0,
+          "shin_R": 0.0,
+          "foot_R": 0.0
+        },
+        "impact_frame": null
+      },
+      "walk": {
+        "frames": 49,
+        "fps": 48,
+        "loop": true,
+        "loop_or_recovery_error": 0.0,
+        "min_ground_z": -1.1146069311962492e-07,
+        "max_grip_error": 0.0,
+        "max_arm_joint_error": 2.4685670666573205e-07,
+        "max_motion": 0.8444641828536987,
+        "joint_angular_span_degrees": {
+          "root": 0.0,
+          "mount_body": 3.8000316669104235,
+          "mount_neck": 2.2704432456846253,
+          "mount_head": 1.139852170934464,
+          "mount_thigh_L_front": 42.204363843817845,
+          "mount_shin_L_front": 50.89171218500833,
+          "mount_hoof_L_front": 55.52991265035098,
+          "mount_thigh_R_front": 46.290476703453784,
+          "mount_shin_R_front": 48.77245474971511,
+          "mount_hoof_R_front": 42.952088557921236,
+          "mount_thigh_L_hind": 42.357705005779216,
+          "mount_shin_L_hind": 31.393748746291347,
+          "mount_hoof_L_hind": 39.062951523759295,
+          "mount_thigh_R_hind": 55.638608280802565,
+          "mount_shin_R_hind": 50.959245680426825,
+          "mount_hoof_R_hind": 34.92722758508697,
+          "pelvis": 1.2000616758503015,
+          "chest": 4.884164541978099,
+          "head": 2.4988966382788615,
+          "upper_arm_L": 5.999922900450225,
+          "forearm_L": 5.367888784282156,
+          "hand_L": 0.49732074770317336,
+          "upper_arm_R": 6.61141650334995,
+          "forearm_R": 4.105424792627326,
+          "hand_R": 8.988801301529934,
+          "thigh_L": 0.0,
+          "shin_L": 0.0,
+          "foot_L": 0.0,
+          "thigh_R": 0.0,
+          "shin_R": 0.0,
+          "foot_R": 0.0
+        },
+        "max_joint_step_degrees": {
+          "root": 0.0,
+          "mount_body": 0.49574441474792846,
+          "mount_neck": 0.23406786145283956,
+          "mount_head": 0.14803749339042993,
+          "mount_thigh_L_front": 7.3766649215426545,
+          "mount_shin_L_front": 11.1358465076877,
+          "mount_hoof_L_front": 9.429272517141241,
+          "mount_thigh_R_front": 7.505291897765981,
+          "mount_shin_R_front": 11.178915973046509,
+          "mount_hoof_R_front": 9.623149144279346,
+          "mount_thigh_L_hind": 7.037726602377704,
+          "mount_shin_L_hind": 9.204985326497301,
+          "mount_hoof_L_hind": 8.267403551582358,
+          "mount_thigh_R_hind": 7.9087673937379135,
+          "mount_shin_R_hind": 9.420792837286669,
+          "mount_hoof_R_hind": 8.57037793655943,
+          "pelvis": 0.15323335969831878,
+          "chest": 0.5510727890064399,
+          "head": 0.2797646284450016,
+          "upper_arm_L": 0.7833422829951562,
+          "forearm_L": 0.5218944343155569,
+          "hand_L": 0.06852804166478502,
+          "upper_arm_R": 0.9082682038228348,
+          "forearm_R": 0.8327420530540965,
+          "hand_R": 1.4182801366949795,
+          "thigh_L": 0.0,
+          "shin_L": 0.0,
+          "foot_L": 0.0,
+          "thigh_R": 0.0,
+          "shin_R": 0.0,
+          "foot_R": 0.0
+        },
+        "impact_frame": null
+      },
+      "attack": {
+        "frames": 89,
+        "fps": 48,
+        "loop": false,
+        "loop_or_recovery_error": 0.0,
+        "min_ground_z": -1.7881393432617188e-07,
+        "max_grip_error": 0.0,
+        "max_arm_joint_error": 2.7161428531346e-07,
+        "max_motion": 2.5820536613464355,
+        "joint_angular_span_degrees": {
+          "root": 0.0,
+          "mount_body": 3.8000316669104235,
+          "mount_neck": 1.8999505197712734,
+          "mount_head": 0.9495550965299752,
+          "mount_thigh_L_front": 18.880008903749246,
+          "mount_shin_L_front": 32.81842375431846,
+          "mount_hoof_L_front": 17.738354736812664,
+          "mount_thigh_R_front": 18.880008903749246,
+          "mount_shin_R_front": 32.81842375431846,
+          "mount_hoof_R_front": 17.738354736812664,
+          "mount_thigh_L_hind": 10.930086205167422,
+          "mount_shin_L_hind": 15.724444431730431,
+          "mount_hoof_L_hind": 8.308047446012164,
+          "mount_thigh_R_hind": 10.930086205167422,
+          "mount_shin_R_hind": 15.724444431730431,
+          "mount_hoof_R_hind": 8.308047446012164,
+          "pelvis": 3.999955572784928,
+          "chest": 21.34058455224634,
+          "head": 15.791262464833373,
+          "upper_arm_L": 20.999998876830947,
+          "forearm_L": 9.999970680788948,
+          "hand_L": 1.999901587094536,
+          "upper_arm_R": 140.77865456815528,
+          "forearm_R": 67.51417964352828,
+          "hand_R": 107.7961491794056,
+          "thigh_L": 0.0,
+          "shin_L": 0.0,
+          "foot_L": 0.0,
+          "thigh_R": 0.0,
+          "shin_R": 0.0,
+          "foot_R": 0.0
+        },
+        "max_joint_step_degrees": {
+          "root": 0.0,
+          "mount_body": 0.7763165796601519,
+          "mount_neck": 0.38562901208348205,
+          "mount_head": 0.19382658799830615,
+          "mount_thigh_L_front": 2.4967030803382295,
+          "mount_shin_L_front": 4.064027869841525,
+          "mount_hoof_L_front": 2.2060977410612277,
+          "mount_thigh_R_front": 2.4967030803382295,
+          "mount_shin_R_front": 4.064027869841525,
+          "mount_hoof_R_front": 2.2060977410612277,
+          "mount_thigh_L_hind": 1.5761572913171797,
+          "mount_shin_L_hind": 1.5875378805783018,
+          "mount_hoof_L_hind": 0.7962254605128283,
+          "mount_thigh_R_hind": 1.5761572913171797,
+          "mount_shin_R_hind": 1.5875378805783018,
+          "mount_hoof_R_hind": 0.7962254605128283,
+          "pelvis": 0.605223969489329,
+          "chest": 3.602490216395784,
+          "head": 2.6161171985882667,
+          "upper_arm_L": 2.6134229024041082,
+          "forearm_L": 0.6608614098077835,
+          "hand_L": 0.2624424682970559,
+          "upper_arm_R": 18.97012129701652,
+          "forearm_R": 11.093882679200789,
+          "hand_R": 17.622086134118828,
+          "thigh_L": 0.0,
+          "shin_L": 0.0,
+          "foot_L": 0.0,
+          "thigh_R": 0.0,
+          "shin_R": 0.0,
+          "foot_R": 0.0
+        },
+        "impact_frame": 39
+      }
+    }
+  },
+  "skills": {
+    "status": "PASS",
+    "revision": 1,
+    "source": "native_dwarf_rig",
+    "fps": 48,
+    "foreign_actions_used": false,
+    "basic_actions_preserved": true,
+    "approved_geometry_preserved": true,
+    "technique_clips": {
+      "v2_technique_charge": "charge"
+    },
+    "clips": {
+      "charge": {
+        "seconds": 2.0,
+        "loop": false,
+        "frames": 97,
+        "min_ground_z": -7.688998815424952e-08,
+        "arm_joint_error": 4.356041697415752e-07,
+        "recovery_error": 0.0,
+        "movement": 1.144869089126587,
+        "max_frame_step": 0.7144961357116699,
+        "finite": true,
+        "action": "dwarf_cavalier_v1_charge.002",
+        "independently_authored_for": "dwarf_cavalier_v1"
+      }
+    }
+  }
+}

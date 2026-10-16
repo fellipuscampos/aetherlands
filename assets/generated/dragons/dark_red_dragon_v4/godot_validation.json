@@ -1,0 +1,11 @@
+{
+  "bones": 52,
+  "flight_clearance_m": 0.25,
+  "gameplay_changed": false,
+  "height_m": 3.0,
+  "issues": [],
+  "meshes": 1,
+  "model": "res://assets/generated/dragons/dark_red_dragon_v4/dark_red_dragon_v4.glb",
+  "status": "PASS",
+  "triangles": 1584
+}

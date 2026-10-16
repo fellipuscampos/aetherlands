@@ -1,0 +1,47 @@
+{
+  "asset": "rock_root_small",
+  "name": "Temperate_Forest_V1_rock_root_small",
+  "display_name": "Pedra com musgo e raiz",
+  "category": "decoration",
+  "species": "stone_root",
+  "triangles": 56,
+  "vertices": 30,
+  "polygons": 20,
+  "bounds_blender": {
+    "min": [
+      -0.1599999964237213,
+      -0.07999999821186066,
+      0.0
+    ],
+    "max": [
+      0.11999999731779099,
+      0.07999999821186066,
+      0.20000000298023224
+    ]
+  },
+  "dimensions": [
+    0.2799999937415123,
+    0.1599999964237213,
+    0.20000000298023224
+  ],
+  "pivot": "ground at base of trunk / center of prop",
+  "native_scale": 1,
+  "pixel_density_px_per_unit": 128,
+  "materials": 1,
+  "game_meshes": 1,
+  "atlas": "textures/forest_pixel_atlas.png",
+  "alpha_blending": false,
+  "voxel_cells": 91,
+  "surface_cells_removed": true,
+  "nonmanifold_edges": 0,
+  "mcp_only": true,
+  "export": {
+    "bytes": 132240,
+    "meshes": 1,
+    "surfaces": 1,
+    "materials": 1,
+    "triangles": 56,
+    "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+    "no_studio": true
+  }
+}

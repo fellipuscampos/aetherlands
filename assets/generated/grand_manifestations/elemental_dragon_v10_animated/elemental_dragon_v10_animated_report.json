@@ -1,0 +1,294 @@
+{
+  "name": "Primordial dos Elementos",
+  "gameplay_id": "v2_manifestation_elemental_primordial",
+  "stem": "elemental_dragon_v10_animated",
+  "pipeline": "live Blender MCP",
+  "concept": "Legless eastern elemental dragon floating in an asymmetric S, with a loose tail and a swept neck that projects its head forward beside the central cubic heart",
+  "height_m": 2.999999910593033,
+  "ground_clearance_m": 0.3499999940395355,
+  "size_m": [
+    3.1787465810775757,
+    2.3346514105796814,
+    2.999999910593033
+  ],
+  "parts": 125,
+  "triangles": 1738,
+  "meshes": 1,
+  "materials": 1,
+  "atlas_size": 1024,
+  "prepared_bones": [
+    "root",
+    "spine_00",
+    "spine_01",
+    "spine_02",
+    "spine_03",
+    "spine_04",
+    "spine_05",
+    "spine_06",
+    "spine_07",
+    "spine_08",
+    "spine_09",
+    "spine_10",
+    "spine_11",
+    "spine_12",
+    "spine_13",
+    "spine_14",
+    "spine_15",
+    "spine_16",
+    "spine_17",
+    "spine_18",
+    "spine_19",
+    "spine_20",
+    "spine_21",
+    "spine_22",
+    "spine_23",
+    "spine_24",
+    "spine_25",
+    "spine_26",
+    "spine_27",
+    "spine_28",
+    "spine_29",
+    "spine_30",
+    "spine_31",
+    "spine_32",
+    "spine_33",
+    "spine_34",
+    "spine_35",
+    "spine_36",
+    "spine_37",
+    "spine_38",
+    "head",
+    "jaw",
+    "antler_-1",
+    "whisker_-1_0",
+    "whisker_-1_1",
+    "whisker_-1_2",
+    "antler_1",
+    "whisker_1_0",
+    "whisker_1_1",
+    "whisker_1_2",
+    "core",
+    "ring_00",
+    "ring_01",
+    "ring_02",
+    "ring_03",
+    "ring_04",
+    "ring_05",
+    "ring_06",
+    "ring_07",
+    "ring_08",
+    "ring_09",
+    "ring_10",
+    "ring_11",
+    "ring_12",
+    "ring_13",
+    "ring_14",
+    "ring_15",
+    "ring_16",
+    "ring_17",
+    "ring_18",
+    "ring_19",
+    "ring_20",
+    "ring_21",
+    "ring_22",
+    "ring_23",
+    "ring_24",
+    "ring_25",
+    "ring_26",
+    "ring_27",
+    "ring_28",
+    "ring_29",
+    "ring_30",
+    "ring_31",
+    "ring_32",
+    "ring_33",
+    "ring_34",
+    "ring_35",
+    "ring_36",
+    "ring_37",
+    "ring_38",
+    "ring_39"
+  ],
+  "spine_bones": 39,
+  "animations": 4,
+  "flight_animation_ready": true,
+  "continuous_skinned_body": true,
+  "four_clawed_legs": false,
+  "body_spikes": false,
+  "head_spikes": false,
+  "body_surrounds_core": true,
+  "wings": false,
+  "antlers": true,
+  "articulated_whiskers": true,
+  "core_bone": "core",
+  "core_center_m": [
+    -0.3650772273540497,
+    -0.03842918202280998,
+    1.7334505319595337
+  ],
+  "pixel_filter": "NEAREST",
+  "source_front": "Blender -Y / Godot +Z",
+  "references": [
+    "assets\\generated\\grand_manifestations\\archdemon_blocky_v5_animated\\archdemon_blocky_v5_animated.glb",
+    "assets\\generated\\grand_manifestations\\elder_lich_blocky_v3_animated\\elder_lich_blocky_v3_animated.glb",
+    "assets\\generated\\grand_manifestations\\elemental_dragon_v1\\elemental_dragon_v1.glb",
+    "assets\\generated\\grand_manifestations\\elemental_dragon_v2\\elemental_dragon_v2.glb",
+    "assets\\generated\\grand_manifestations\\elemental_dragon_v3\\elemental_dragon_v3.glb",
+    "assets\\generated\\grand_manifestations\\nature_avatar_blocky_v5_animated\\nature_avatar_blocky_v5_animated.glb",
+    "assets\\generated\\grand_manifestations\\seraph_blocky_v4_animated\\seraph_blocky_v4_animated.glb",
+    "assets\\generated\\grand_manifestations\\veil_archon_blocky_v9_animated\\veil_archon_blocky_v9_animated.glb"
+  ],
+  "clips": [
+    "idle",
+    "walk",
+    "attack",
+    "spell"
+  ],
+  "source": "elemental_dragon_v5_animated",
+  "animation": {
+    "fps": 30,
+    "duration_s": 6,
+    "loop": true,
+    "source_samples": 361,
+    "minimum_rotating_core_clearance_m": 0.021892629347745163,
+    "minimum_ground_clearance_m": 0.3166472613811493,
+    "maximum_loop_seam_m": 1.0745380149674383e-07,
+    "maximum_spine_joint_error_m": 8.301966355552744e-07,
+    "maximum_scale_error": 1.7285346984863281e-06,
+    "body_edge_ratio_range": [
+      0.917437324297479,
+      1.0685829727613156
+    ],
+    "motion": "root float, traveling length-preserving spine wave, free tail sway, balanced head, delayed whiskers, independent rotating core",
+    "geometry_unchanged_except_removed_eyebrows": true
+  },
+  "eyebrows": false,
+  "face_revision": {
+    "removed_parts": [
+      "Brow_-1",
+      "Brow_1"
+    ],
+    "remaining_geometry_unchanged": true,
+    "idle_keyframes_unchanged": true,
+    "animation_fingerprint": "4819b04502531bb05d216b2942fee4726d4a898c5c54d747f8ad2b7e6e4fb0a0"
+  },
+  "geometry_unchanged": true,
+  "idle_keyframes_unchanged": false,
+  "skinning": "elemental_dragon_ring_skin.py.inc",
+  "core_pulse": true,
+  "serpentine_body_motion": true,
+  "axial_motion": false,
+  "path_following": false,
+  "animation_clips": {
+    "idle": {
+      "duration_s": 6.0,
+      "loop": true,
+      "start_frame": 1,
+      "samples": 361,
+      "minimum_rotating_core_clearance_m": 0.30500986608739866,
+      "minimum_ground_clearance_m": 0.42876166105270386,
+      "maximum_joint_error_m": 9.429032814238295e-07,
+      "maximum_scale_error": 3.337860107421875e-06,
+      "end_pose_difference_m": 5.383012255486382e-07,
+      "body_edge_ratio_range": [
+        0.6191083667682244,
+        1.8396689487640547
+      ],
+      "body_cross_section_ratio_range": [
+        0.9999982895958837,
+        1.0000017488421435
+      ],
+      "body_motion_beyond_root_m": 0.11697581488887215,
+      "core_scale_range": [
+        0.9500303864479065,
+        1.0499696731567383
+      ]
+    },
+    "walk": {
+      "duration_s": 4.0,
+      "loop": true,
+      "start_frame": 212,
+      "samples": 241,
+      "minimum_rotating_core_clearance_m": 0.18094542513085665,
+      "minimum_ground_clearance_m": 2.203049421310425,
+      "maximum_joint_error_m": 1.5266237824995157e-06,
+      "maximum_scale_error": 3.4570693969726562e-06,
+      "end_pose_difference_m": 9.902267292640298e-07,
+      "body_edge_ratio_range": [
+        0.34710232070074354,
+        3.3744199902301606
+      ],
+      "body_cross_section_ratio_range": [
+        0.9999954806838306,
+        1.000004331563664
+      ],
+      "body_motion_beyond_root_m": 1.7167744848675868,
+      "core_scale_range": [
+        0.9000000357627869,
+        1.1000001430511475
+      ]
+    },
+    "attack": {
+      "duration_s": 2.4,
+      "loop": false,
+      "start_frame": 363,
+      "samples": 145,
+      "minimum_rotating_core_clearance_m": 0.09201147191839154,
+      "minimum_ground_clearance_m": 0.47216352820396423,
+      "maximum_joint_error_m": 7.396741894478117e-07,
+      "maximum_scale_error": 3.2186508178710938e-06,
+      "end_pose_difference_m": 4.915124923727108e-07,
+      "body_edge_ratio_range": [
+        0.5176986469699413,
+        2.2769999815929713
+      ],
+      "body_cross_section_ratio_range": [
+        0.9999974059264943,
+        1.000002079646495
+      ],
+      "body_motion_beyond_root_m": 3.322029818554324,
+      "core_scale_range": [
+        0.8999998569488525,
+        1.1969038248062134
+      ]
+    },
+    "spell": {
+      "duration_s": 8.0,
+      "loop": false,
+      "start_frame": 466,
+      "samples": 481,
+      "minimum_rotating_core_clearance_m": 0.1464617605801639,
+      "minimum_ground_clearance_m": 0.4461478590965271,
+      "maximum_joint_error_m": 8.199701602576735e-07,
+      "maximum_scale_error": 3.3974647521972656e-06,
+      "end_pose_difference_m": 7.539457464619588e-07,
+      "body_edge_ratio_range": [
+        0.5227055746594705,
+        2.2773115145311293
+      ],
+      "body_cross_section_ratio_range": [
+        0.9999972361022764,
+        1.0000027405325733
+      ],
+      "body_motion_beyond_root_m": 3.333296290827605,
+      "core_scale_range": [
+        0.8700791597366333,
+        1.1299209594726562
+      ]
+    }
+  },
+  "approved_spell_motion": {
+    "source": "elemental_dragon_v9_animated/walk",
+    "checkpoints": 13,
+    "maximum_bone_matrix_difference": 2.682209014892578e-06,
+    "orbit_duration_s": 6.0,
+    "entry_s": 1.0,
+    "recovery_s": 1.0
+  },
+  "animation_layout": {
+    "idle": "upright_subtle_zigzag",
+    "walk": "open_serpent_wave",
+    "spell": "approved_v9_walk_with_entry_and_recovery",
+    "attack": "preserved_v9_attack"
+  }
+}

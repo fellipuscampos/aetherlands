@@ -1,0 +1,452 @@
+{
+	"models": [
+		{
+			"bones": 16,
+			"clips": {
+				"shield_wall": {
+					"loop": false,
+					"min_ground_y": -0.0000246763229370117,
+					"motion": 0.741939425468445,
+					"recovery_error": 0.741754472255707,
+					"seconds": 1.25
+				},
+				"shield_wall_hold": {
+					"loop": true,
+					"min_ground_y": -0.00130449852440506,
+					"motion": 0.013909537345171,
+					"recovery_error": 0.0,
+					"seconds": 1.5
+				}
+			},
+			"stem": "dwarf_shieldbearer_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"shield_wall": {
+					"loop": false,
+					"min_ground_y": -0.0000246763229370117,
+					"motion": 0.741939425468445,
+					"recovery_error": 0.741754472255707,
+					"seconds": 1.25
+				},
+				"shield_wall_hold": {
+					"loop": true,
+					"min_ground_y": -0.00130449852440506,
+					"motion": 0.013909537345171,
+					"recovery_error": 0.0,
+					"seconds": 1.5
+				}
+			},
+			"stem": "dwarf_guardian_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"shield_wall": {
+					"loop": false,
+					"min_ground_y": -0.0000246763229370117,
+					"motion": 0.741939425468445,
+					"recovery_error": 0.741754472255707,
+					"seconds": 1.25
+				},
+				"shield_wall_hold": {
+					"loop": true,
+					"min_ground_y": -0.00130449852440506,
+					"motion": 0.013909537345171,
+					"recovery_error": 0.0,
+					"seconds": 1.5
+				}
+			},
+			"stem": "dwarf_sentinel_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"shield_wall": {
+					"loop": false,
+					"min_ground_y": -0.0000246763229370117,
+					"motion": 0.741939425468445,
+					"recovery_error": 0.741754472255707,
+					"seconds": 1.25
+				},
+				"shield_wall_hold": {
+					"loop": true,
+					"min_ground_y": -0.00130449852440506,
+					"motion": 0.013909537345171,
+					"recovery_error": 0.0,
+					"seconds": 1.5
+				}
+			},
+			"stem": "dwarf_guardian_champion_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"power_strike": {
+					"loop": false,
+					"min_ground_y": -0.0000573299075767864,
+					"motion": 1.61068093776703,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				}
+			},
+			"stem": "dwarf_warrior_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"arc_attack": {
+					"loop": false,
+					"min_ground_y": -0.0000269284282694571,
+					"motion": 1.57616436481476,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				},
+				"power_strike": {
+					"loop": false,
+					"min_ground_y": -0.0000573299075767864,
+					"motion": 1.61068093776703,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				}
+			},
+			"stem": "dwarf_swordsman_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"arc_attack": {
+					"loop": false,
+					"min_ground_y": -0.0000269284282694571,
+					"motion": 1.57616436481476,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				},
+				"power_strike": {
+					"loop": false,
+					"min_ground_y": -0.0000573299075767864,
+					"motion": 1.61068093776703,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				}
+			},
+			"stem": "dwarf_weapon_master_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"arc_attack": {
+					"loop": false,
+					"min_ground_y": -0.0000269284282694571,
+					"motion": 1.57616293430328,
+					"recovery_error": 0.00000000000000177635683940025,
+					"seconds": 2.0
+				},
+				"power_strike": {
+					"loop": false,
+					"min_ground_y": -0.0000573299075767864,
+					"motion": 1.61068081855774,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				}
+			},
+			"stem": "dwarf_blade_hero_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"precise_shot": {
+					"loop": false,
+					"min_ground_y": -0.0000420092801505234,
+					"motion": 0.628215551376343,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				}
+			},
+			"stem": "dwarf_archer_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"precise_shot": {
+					"loop": false,
+					"min_ground_y": -0.0000420092801505234,
+					"motion": 0.628215551376343,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				},
+				"volley": {
+					"loop": false,
+					"min_ground_y": -0.0000994948131847195,
+					"motion": 0.675949931144714,
+					"recovery_error": 0.0,
+					"seconds": 2.5
+				}
+			},
+			"stem": "dwarf_hunter_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"precise_shot": {
+					"loop": false,
+					"min_ground_y": -0.0000420092801505234,
+					"motion": 0.628215551376343,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				},
+				"volley": {
+					"loop": false,
+					"min_ground_y": -0.0000994948131847195,
+					"motion": 0.675949931144714,
+					"recovery_error": 0.0,
+					"seconds": 2.5
+				}
+			},
+			"stem": "dwarf_elite_marksman_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"precise_shot": {
+					"loop": false,
+					"min_ground_y": -0.0000420092801505234,
+					"motion": 0.628215551376343,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				},
+				"volley": {
+					"loop": false,
+					"min_ground_y": -0.0000994948131847195,
+					"motion": 0.675949931144714,
+					"recovery_error": 0.0,
+					"seconds": 2.5
+				}
+			},
+			"stem": "dwarf_legend_hunter_v1"
+		},
+		{
+			"bones": 31,
+			"clips": {
+				"charge": {
+					"loop": false,
+					"min_ground_y": -0.0000626593828201294,
+					"motion": 1.49584138393402,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				}
+			},
+			"stem": "dwarf_cavalier_v1"
+		},
+		{
+			"bones": 31,
+			"clips": {
+				"charge": {
+					"loop": false,
+					"min_ground_y": -0.0000626593828201294,
+					"motion": 1.49584138393402,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				},
+				"tactical_retreat": {
+					"loop": false,
+					"min_ground_y": -0.00113262701779604,
+					"motion": 0.666552901268005,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				}
+			},
+			"stem": "dwarf_shock_cavalier_v1"
+		},
+		{
+			"bones": 31,
+			"clips": {
+				"charge": {
+					"loop": false,
+					"min_ground_y": -0.0000626593828201294,
+					"motion": 1.49584138393402,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				},
+				"tactical_retreat": {
+					"loop": false,
+					"min_ground_y": -0.00113262701779604,
+					"motion": 0.666552901268005,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				}
+			},
+			"stem": "dwarf_armored_cavalier_v1"
+		},
+		{
+			"bones": 31,
+			"clips": {
+				"charge": {
+					"loop": false,
+					"min_ground_y": -0.0000626593828201294,
+					"motion": 1.49584138393402,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				},
+				"tactical_retreat": {
+					"loop": false,
+					"min_ground_y": -0.00113262701779604,
+					"motion": 0.666552901268005,
+					"recovery_error": 0.0,
+					"seconds": 2.0
+				}
+			},
+			"stem": "dwarf_ram_lord_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"sneak_attack": {
+					"loop": false,
+					"min_ground_y": -0.000463693955680355,
+					"motion": 1.7752320766449,
+					"recovery_error": 0.0,
+					"seconds": 1.75
+				}
+			},
+			"stem": "dwarf_rogue_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"dismantle": {
+					"loop": false,
+					"min_ground_y": -0.0000675368719385006,
+					"motion": 1.78710973262787,
+					"recovery_error": 0.0,
+					"seconds": 2.25
+				},
+				"sneak_attack": {
+					"loop": false,
+					"min_ground_y": -0.000463693955680355,
+					"motion": 1.7752320766449,
+					"recovery_error": 0.0,
+					"seconds": 1.75
+				}
+			},
+			"stem": "dwarf_saboteur_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"dismantle": {
+					"loop": false,
+					"min_ground_y": -0.0000675368719385006,
+					"motion": 1.78710973262787,
+					"recovery_error": 0.0,
+					"seconds": 2.25
+				},
+				"sneak_attack": {
+					"loop": false,
+					"min_ground_y": -0.000463693955680355,
+					"motion": 1.7752320766449,
+					"recovery_error": 0.0,
+					"seconds": 1.75
+				}
+			},
+			"stem": "dwarf_assassin_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"dismantle": {
+					"loop": false,
+					"min_ground_y": -0.0000614300224697217,
+					"motion": 1.78710961341858,
+					"recovery_error": 0.0,
+					"seconds": 2.25
+				},
+				"sneak_attack": {
+					"loop": false,
+					"min_ground_y": -0.00040007708594203,
+					"motion": 1.7752320766449,
+					"recovery_error": 0.0,
+					"seconds": 1.75
+				}
+			},
+			"stem": "dwarf_shadow_master_v1"
+		},
+		{
+			"bones": 14,
+			"clips": {
+				"demolition_ammo": {
+					"loop": false,
+					"min_ground_y": -0.0000000020762909169747,
+					"motion": 1.11835491657257,
+					"recovery_error": 0.0,
+					"seconds": 3.0
+				}
+			},
+			"stem": "dwarf_catapult_v1"
+		},
+		{
+			"bones": 14,
+			"clips": {
+				"demolition_ammo": {
+					"loop": false,
+					"min_ground_y": -0.0000000020762909169747,
+					"motion": 0.999191582202911,
+					"recovery_error": 0.0,
+					"seconds": 3.0
+				},
+				"prepared_bombardment": {
+					"loop": false,
+					"min_ground_y": -0.0000000020762909169747,
+					"motion": 1.10257542133331,
+					"recovery_error": 0.0,
+					"seconds": 4.0
+				}
+			},
+			"stem": "dwarf_trebuchet_v1"
+		},
+		{
+			"bones": 14,
+			"clips": {
+				"demolition_ammo": {
+					"loop": false,
+					"min_ground_y": -0.0000000020762909169747,
+					"motion": 0.13924565911293,
+					"recovery_error": 0.0,
+					"seconds": 3.0
+				},
+				"prepared_bombardment": {
+					"loop": false,
+					"min_ground_y": -0.0000000020762909169747,
+					"motion": 0.201320484280586,
+					"recovery_error": 0.0,
+					"seconds": 4.0
+				}
+			},
+			"stem": "dwarf_bombard_v1"
+		},
+		{
+			"bones": 14,
+			"clips": {
+				"demolition_ammo": {
+					"loop": false,
+					"min_ground_y": -0.0000000020762909169747,
+					"motion": 0.134331911802292,
+					"recovery_error": 0.0,
+					"seconds": 3.0
+				},
+				"prepared_bombardment": {
+					"loop": false,
+					"min_ground_y": -0.0000000020762909169747,
+					"motion": 0.195810556411743,
+					"recovery_error": 0.0,
+					"seconds": 4.0
+				}
+			},
+			"stem": "dwarf_siege_colossus_v1"
+		}
+	],
+	"new_clips": 43,
+	"problems": [],
+	"status": "PASS"
+}

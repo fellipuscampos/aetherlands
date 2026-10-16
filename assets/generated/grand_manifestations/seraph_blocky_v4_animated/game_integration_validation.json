@@ -1,0 +1,37 @@
+{
+  "status": "PASS",
+  "godot_version": "4.7.1-stable",
+  "unit_kind": "v2_manifestation_seraph",
+  "races": ["human", "elf", "orc", "dwarf"],
+  "model_height_m": 3.0,
+  "native_scale": 1.0,
+  "animation_bindings": {
+    "idle": "Idle",
+    "movement": "Walk",
+    "attack": "Attack",
+    "cast": "Spell"
+  },
+  "blend_time_s": 0.2,
+  "imported_player_autoplay": "",
+  "active_animation_controllers": 1,
+  "basic_attack_enabled": false,
+  "native_animation_validation_samples": 880,
+  "gut_tests": 39,
+  "gut_passing_tests": 39,
+  "gut_assertions": 705,
+  "test_scripts": [
+    "res://test/unit/test_seraph_blocky_model.gd",
+    "res://test/unit/test_v2_seraph_manifestation.gd",
+    "res://test/unit/test_v2_sacred_integration.gd",
+    "res://test/unit/test_mage_models.gd",
+    "res://test/unit/test_v2_phase17_main_flow.gd"
+  ],
+  "verified": [
+    "Shared native model and pixel textures for all four races",
+    "Actual Unit movement selects Walk and returns to Idle",
+    "Casting faces its target and returns to Idle or Walk",
+    "Interrupted Spell resets the animated core scale after crossfade",
+    "Flying movement preserves the model over water",
+    "Existing production, sacred effects, AI and save/load tests pass"
+  ]
+}

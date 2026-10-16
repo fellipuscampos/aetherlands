@@ -1,0 +1,550 @@
+{
+  "stem": "dwarf_settler_v1",
+  "name": "Colonizador Anão",
+  "race": "dwarf",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "source": "assets/generated/dwarves/common/dwarf_base_v1.blend",
+  "source_sha256": "9c73a6445da342e3a6a798f984784cce4f84649ded50db36d4d6779491dd2867",
+  "source_body": [
+    {
+      "part": "Pelvis",
+      "source": "body_pelvis",
+      "dimensions": [
+        0.52,
+        0.3,
+        0.16
+      ]
+    },
+    {
+      "part": "Belly",
+      "source": "body_belly",
+      "dimensions": [
+        0.43,
+        0.29,
+        0.17
+      ]
+    },
+    {
+      "part": "Chest",
+      "source": "body_chest",
+      "dimensions": [
+        0.62,
+        0.33,
+        0.28
+      ]
+    },
+    {
+      "part": "Head",
+      "source": "body_head",
+      "dimensions": [
+        0.38,
+        0.34,
+        0.33
+      ]
+    },
+    {
+      "part": "hair_cap",
+      "source": "hair_cap",
+      "dimensions": [
+        0.386,
+        0.35,
+        0.026
+      ]
+    },
+    {
+      "part": "nose_bridge",
+      "source": "nose_bridge",
+      "dimensions": [
+        0.062,
+        0.062,
+        0.111
+      ]
+    },
+    {
+      "part": "nose_tip",
+      "source": "nose_tip",
+      "dimensions": [
+        0.092,
+        0.094,
+        0.075
+      ]
+    },
+    {
+      "part": "brow_-1",
+      "source": "brow_-1",
+      "dimensions": [
+        0.146,
+        0.051,
+        0.047
+      ]
+    },
+    {
+      "part": "moustache_-1",
+      "source": "moustache_-1",
+      "dimensions": [
+        0.148,
+        0.091,
+        0.067
+      ]
+    },
+    {
+      "part": "sideburn_-1",
+      "source": "sideburn_-1",
+      "dimensions": [
+        0.049,
+        0.14,
+        0.17
+      ]
+    },
+    {
+      "part": "brow_1",
+      "source": "brow_1",
+      "dimensions": [
+        0.146,
+        0.051,
+        0.047
+      ]
+    },
+    {
+      "part": "moustache_1",
+      "source": "moustache_1",
+      "dimensions": [
+        0.148,
+        0.091,
+        0.067
+      ]
+    },
+    {
+      "part": "sideburn_1",
+      "source": "sideburn_1",
+      "dimensions": [
+        0.049,
+        0.14,
+        0.17
+      ]
+    },
+    {
+      "part": "beard_lock_0_0",
+      "source": "beard_lock_0_0",
+      "dimensions": [
+        0.077,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_0_1",
+      "source": "beard_lock_0_1",
+      "dimensions": [
+        0.071,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_0_2",
+      "source": "beard_lock_0_2",
+      "dimensions": [
+        0.065,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_1_0",
+      "source": "beard_lock_1_0",
+      "dimensions": [
+        0.077,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_1_1",
+      "source": "beard_lock_1_1",
+      "dimensions": [
+        0.071,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_1_2",
+      "source": "beard_lock_1_2",
+      "dimensions": [
+        0.065,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_1_3",
+      "source": "beard_lock_1_3",
+      "dimensions": [
+        0.059,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_2_0",
+      "source": "beard_lock_2_0",
+      "dimensions": [
+        0.077,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_2_1",
+      "source": "beard_lock_2_1",
+      "dimensions": [
+        0.071,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_2_2",
+      "source": "beard_lock_2_2",
+      "dimensions": [
+        0.065,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_2_3",
+      "source": "beard_lock_2_3",
+      "dimensions": [
+        0.059,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_3_0",
+      "source": "beard_lock_3_0",
+      "dimensions": [
+        0.077,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_3_1",
+      "source": "beard_lock_3_1",
+      "dimensions": [
+        0.071,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_3_2",
+      "source": "beard_lock_3_2",
+      "dimensions": [
+        0.065,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_3_3",
+      "source": "beard_lock_3_3",
+      "dimensions": [
+        0.059,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_4_0",
+      "source": "beard_lock_4_0",
+      "dimensions": [
+        0.077,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_4_1",
+      "source": "beard_lock_4_1",
+      "dimensions": [
+        0.071,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_4_2",
+      "source": "beard_lock_4_2",
+      "dimensions": [
+        0.065,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "Thigh_l",
+      "source": "body_thigh_L",
+      "dimensions": [
+        0.205,
+        0.23,
+        0.18
+      ]
+    },
+    {
+      "part": "Shin_l",
+      "source": "body_shin_L",
+      "dimensions": [
+        0.235,
+        0.245,
+        0.18
+      ]
+    },
+    {
+      "part": "Foot_l",
+      "source": "body_foot_L",
+      "dimensions": [
+        0.235,
+        0.405,
+        0.155
+      ]
+    },
+    {
+      "part": "Shoulder_l",
+      "source": "body_shoulder_L",
+      "dimensions": [
+        0.23,
+        0.335,
+        0.205
+      ]
+    },
+    {
+      "part": "UpperArm_l",
+      "source": "body_upper_arm_L",
+      "dimensions": [
+        0.216191,
+        0.273442,
+        0.313075
+      ]
+    },
+    {
+      "part": "Forearm_l",
+      "source": "body_forearm_L",
+      "dimensions": [
+        0.284396,
+        0.34428,
+        0.319428
+      ]
+    },
+    {
+      "part": "Hand_l",
+      "source": "body_hand_L",
+      "dimensions": [
+        0.22,
+        0.235,
+        0.175
+      ]
+    },
+    {
+      "part": "Thigh_r",
+      "source": "body_thigh_R",
+      "dimensions": [
+        0.205,
+        0.23,
+        0.18
+      ]
+    },
+    {
+      "part": "Shin_r",
+      "source": "body_shin_R",
+      "dimensions": [
+        0.235,
+        0.245,
+        0.18
+      ]
+    },
+    {
+      "part": "Foot_r",
+      "source": "body_foot_R",
+      "dimensions": [
+        0.235,
+        0.405,
+        0.155
+      ]
+    },
+    {
+      "part": "Shoulder_r",
+      "source": "body_shoulder_R",
+      "dimensions": [
+        0.23,
+        0.335,
+        0.205
+      ]
+    },
+    {
+      "part": "UpperArm_r",
+      "source": "body_upper_arm_R",
+      "dimensions": [
+        0.198453,
+        0.207505,
+        0.253533
+      ]
+    },
+    {
+      "part": "Forearm_r",
+      "source": "body_forearm_R",
+      "dimensions": [
+        0.230303,
+        0.235,
+        0.220556
+      ]
+    },
+    {
+      "part": "Hand_r",
+      "source": "body_hand_R",
+      "dimensions": [
+        0.22,
+        0.235,
+        0.175
+      ]
+    }
+  ],
+  "geometry": {
+    "status": "PASS",
+    "editable_parts": 89,
+    "body_parts": 18,
+    "triangles": 1068,
+    "dimensions": [
+      1.257604,
+      0.703,
+      1.437
+    ],
+    "bounds_min": [
+      -0.6288018822669983,
+      -0.3075000047683716,
+      0.0
+    ],
+    "bounds_max": [
+      0.6288019418716431,
+      0.3955000042915344,
+      1.4369999170303345
+    ],
+    "closed_meshes": true,
+    "positive_volume": true,
+    "degenerate_faces": 0,
+    "uv_density_max_error": 0.000847979678347599,
+    "ground_pivot": true,
+    "identity_transforms": true,
+    "flat_shading": true,
+    "animations": 2,
+    "rigs": 1
+  },
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "density_px_per_m": 64,
+    "padding_px": 3,
+    "face_islands": 534,
+    "materials": 1,
+    "nearest": true,
+    "opaque": true
+  },
+  "static_review": false,
+  "animations": 2,
+  "rigging_deferred": false,
+  "review_refinements": [
+    {
+      "race": "dwarf",
+      "part": "Hand_l",
+      "fix": "2.5% wider hand gives a distinct wrist step"
+    },
+    {
+      "race": "dwarf",
+      "part": "Hand_r",
+      "fix": "2.5% wider hand gives a distinct wrist step"
+    },
+    {
+      "race": "dwarf",
+      "part": "moustache / central beard lock",
+      "fix": "Butt join moustache and inset central beard tier"
+    },
+    {
+      "race": "dwarf",
+      "part": "Bedroll_ties",
+      "fix": "Full rectangular strap wrap; inset cap ends avoid coincident faces"
+    },
+    {
+      "race": "dwarf",
+      "part": "beard_lock_2_0",
+      "fix": "Inset upper/lower strand ends by 3.16 mm, retaining 64 px/m UVs"
+    }
+  ],
+  "surface_validation": {
+    "status": "PASS",
+    "exposed_coplanar_pairs": 0,
+    "hidden_coplanar_pairs": 10,
+    "backface_culling": true
+  },
+  "export": {
+    "bytes": 237396,
+    "triangles": 1068,
+    "meshes": 1,
+    "surfaces": 1,
+    "materials": 1,
+    "skins": 1,
+    "bones": 16,
+    "animations": 2,
+    "clips": [
+      "idle",
+      "walk"
+    ],
+    "atlas_sha256": "476b0a2ff1da3ce5607af13f7329cd434b335bb88d98cbf8757872435eba9118",
+    "editable_source_parts": 89,
+    "cameras": 0,
+    "lights": 0
+  },
+  "source_preserved": true,
+  "arm_correction": {
+    "changed_parts": [],
+    "dwarf_unchanged": true,
+    "details": []
+  },
+  "animation": {
+    "status": "PASS",
+    "fps": 48,
+    "bones": 16,
+    "rigid_skinning": true,
+    "root_motion": false,
+    "walk_speed_m_per_s": 0.19354838709677416,
+    "clips": {
+      "idle": {
+        "frames": 145,
+        "seconds": 3.0,
+        "loop_error": 0.0,
+        "min_ground_z": 0.0,
+        "max_joint_gap": 1.7881393432617188e-07,
+        "max_pose_step": 0.0008923946879804134,
+        "max_planted_foot_z_error": 0,
+        "max_planted_foot_slide_at_recommended_speed": 0,
+        "movement": 0.024373024702072144
+      },
+      "walk": {
+        "frames": 73,
+        "seconds": 1.5,
+        "loop_error": 7.347880536484578e-19,
+        "min_ground_z": 0.0,
+        "max_joint_gap": 1.2489448945403256e-07,
+        "max_pose_step": 0.09616455435752869,
+        "max_planted_foot_z_error": 0,
+        "max_planted_foot_slide_at_recommended_speed": 2.9802322387695312e-08,
+        "movement": 0.7488256953656673
+      }
+    }
+  },
+  "stage": "animated_review"
+}

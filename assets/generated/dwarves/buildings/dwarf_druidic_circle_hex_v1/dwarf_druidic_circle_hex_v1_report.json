@@ -1,0 +1,135 @@
+{
+  "name": "Dwarf_Druidic_Circle_Hex_V1",
+  "display_name": "Círculo Druídico — Anões",
+  "gameplay_building_id": "v2_building_druidic_circle",
+  "trains": [
+    "v2_unit_druid"
+  ],
+  "excludes": [
+    "v2_building_druidic_ritual"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1444,
+  "editable_parts": 113,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.1019999980926514
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.1019999980926514
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 705,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Engenharia de granito com pilares engrossados, sapatas escalonadas e cintas de cobre; coberturas de ardósia escura com cantos chanfrados. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.26,
+    0.54
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "dwarf",
+  "magic_school": "druidism",
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "ritual_building_separate": true,
+  "excluded_buildings": [
+    "v2_building_druidic_ritual"
+  ],
+  "finish_pass": {
+    "revision": 1,
+    "original_structure_preserved": true,
+    "race_details": "Squared granite piers, engraved copper, stone furniture and mechanical bearings.",
+    "roof_rgb": [
+      67,
+      82,
+      89
+    ],
+    "physical_attachment_remaining": [],
+    "relic_source": null
+  },
+  "export": {
+    "file": "dwarf_druidic_circle_hex_v1.glb",
+    "bytes": 678596,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1444,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "dwarf_druidic_circle_hex_v1_emission",
+        "bytes": 22142,
+        "sha256": "b9100bfbf2c3e47464a49cd4ba7259863e1fa2d99257409540f1b282df224005"
+      },
+      {
+        "image": "dwarf_druidic_circle_hex_v1_albedo",
+        "bytes": 548244,
+        "sha256": "d6e83b2dc7017b2cbfab1faa4be045e4c232711badbb14e7f7a67cb3d8a4087f"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "dwarf",
+    "design": "Engenharia de granito com pilares engrossados, sapatas escalonadas e cintas de cobre; coberturas de ardósia escura com cantos chanfrados.",
+    "geometry_changes": [
+      "granite_runestone:Standing_Stone_0",
+      "granite_runestone:Standing_Stone_1",
+      "granite_runestone:Standing_Stone_2",
+      "granite_runestone:Standing_Stone_3",
+      "granite_runestone:Standing_Stone_4",
+      "granite_runestone:Standing_Stone_5"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

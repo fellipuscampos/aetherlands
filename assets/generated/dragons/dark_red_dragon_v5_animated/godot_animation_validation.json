@@ -1,0 +1,72 @@
+{
+  "bones": 53,
+  "clips": {
+    "Dragon_Attack_Flying": {
+      "duration_seconds": 3.0,
+      "frames_directory": "res://art_source/dark_red_dragon_animation_review/frames/Dragon_Attack_Flying/",
+      "loop": false,
+      "loop_error": 0.000000136571401299079,
+      "maximum_geometry_y": 3.5121796131134,
+      "minimum_geometry_y": 0.752383410930634,
+      "samples": 73,
+      "tracks": 159
+    },
+    "Dragon_Attack_Ground": {
+      "duration_seconds": 3.0,
+      "frames_directory": "res://art_source/dark_red_dragon_animation_review/frames/Dragon_Attack_Ground/",
+      "loop": false,
+      "loop_error": 0.000000320980831247653,
+      "maximum_geometry_y": 2.26657581329346,
+      "minimum_geometry_y": -0.0000312328338623047,
+      "samples": 73,
+      "tracks": 159
+    },
+    "Dragon_Idle_Flying": {
+      "duration_seconds": 2.0,
+      "frames_directory": "res://art_source/dark_red_dragon_animation_review/frames/Dragon_Idle_Flying/",
+      "loop": true,
+      "loop_error": 0.000000136571401299079,
+      "maximum_geometry_y": 3.50691723823547,
+      "minimum_geometry_y": 0.764426350593567,
+      "samples": 49,
+      "tracks": 159
+    },
+    "Dragon_Idle_Ground": {
+      "duration_seconds": 3.0,
+      "frames_directory": "res://art_source/dark_red_dragon_animation_review/frames/Dragon_Idle_Ground/",
+      "loop": true,
+      "loop_error": 0.000000320980831247653,
+      "maximum_geometry_y": 2.20624017715454,
+      "minimum_geometry_y": 0.00121444463729858,
+      "samples": 73,
+      "tracks": 159
+    },
+    "Dragon_Walk_Flying": {
+      "duration_seconds": 1.5,
+      "frames_directory": "res://art_source/dark_red_dragon_animation_review/frames/Dragon_Walk_Flying/",
+      "loop": true,
+      "loop_error": 0.000000181280455535671,
+      "maximum_geometry_y": 3.86390614509583,
+      "minimum_geometry_y": 0.729113340377808,
+      "samples": 37,
+      "tracks": 159
+    },
+    "Dragon_Walk_Ground": {
+      "duration_seconds": 1.5,
+      "frames_directory": "res://art_source/dark_red_dragon_animation_review/frames/Dragon_Walk_Ground/",
+      "loop": true,
+      "loop_error": 0.000000362948242127459,
+      "maximum_geometry_y": 2.21256589889526,
+      "minimum_geometry_y": 0.00145754218101501,
+      "samples": 37,
+      "tracks": 159
+    }
+  },
+  "fire_end_seconds": 2.0,
+  "fire_start_seconds": 0.75,
+  "fps": 24,
+  "issues": [],
+  "meshes": 1,
+  "mouth_socket": "mouth_fire",
+  "status": "PASS"
+}

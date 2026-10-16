@@ -1,0 +1,151 @@
+{
+  "status": "PASS",
+  "model": "elder_lich_blocky_v3_animated",
+  "source_model": "elder_lich_blocky_v2",
+  "approved_textures_preserved": true,
+  "rigid_body_geometry_preserved": true,
+  "cloth_surface_tessellation_only": true,
+  "meshes": 1,
+  "materials": 1,
+  "triangles": 1548,
+  "bones": 37,
+  "root_motion": false,
+  "fps": 24,
+  "same_channels_all_clips": true,
+  "rest_height_m": 3.0,
+  "clips": {
+    "Idle": {
+      "samples": 289,
+      "loop": true,
+      "duration_s": 6.0,
+      "description": "Flutuação suave, manto ondulando e vestígios espectrais em movimento.",
+      "minimum_ground_clearance_m": 0.19984929263591766,
+      "bounds_min_m": [
+        -0.8104530572891235,
+        -0.5600958466529846,
+        0.19984929263591766
+      ],
+      "bounds_max_m": [
+        0.7556794285774231,
+        0.6223881840705872,
+        3.250750780105591
+      ],
+      "seam_vertex_delta_m": 0.0,
+      "maximum_half_frame_vertex_step_m": 0.0012055005912239125,
+      "maximum_joint_gap_m": 4.805480091749757e-07,
+      "maximum_wrist_rotation_deg": 1.6085985554406246,
+      "cloth_anchor_error_m": 4.777675730550706e-07,
+      "cloth_tip_motion_m": {
+        "robe_front_L": 0.03260814023714023,
+        "robe_front_R": 0.032605234713382204,
+        "robe_side_L": 0.03487455372341285,
+        "robe_side_R": 0.034880735393495774,
+        "cape_left": 0.09379516695692489,
+        "cape_center": 0.09238706752152413,
+        "cape_right": 0.07858481645217659
+      },
+      "props_body_collision_checks": 0,
+      "body_and_limbs_rigid": true
+    },
+    "Walk": {
+      "samples": 97,
+      "loop": true,
+      "duration_s": 2.0,
+      "description": "Deslizamento no lugar, corpo levemente inclinado e manto acompanhando o fluxo.",
+      "minimum_ground_clearance_m": 0.26388785243034363,
+      "bounds_min_m": [
+        -0.8215636014938354,
+        -0.598953366279602,
+        0.26388785243034363
+      ],
+      "bounds_max_m": [
+        0.7625882625579834,
+        0.7486116886138916,
+        3.291154384613037
+      ],
+      "seam_vertex_delta_m": 0.0,
+      "maximum_half_frame_vertex_step_m": 0.004040673470719357,
+      "maximum_joint_gap_m": 4.805480091749757e-07,
+      "maximum_wrist_rotation_deg": 9.141522623824127,
+      "cloth_anchor_error_m": 4.777675730550706e-07,
+      "cloth_tip_motion_m": {
+        "robe_front_L": 0.04723654935740233,
+        "robe_front_R": 0.04720708361735308,
+        "robe_side_L": 0.050460407802222884,
+        "robe_side_R": 0.050498742029549404,
+        "cape_left": 0.1222430295656081,
+        "cape_center": 0.11874222573497345,
+        "cape_right": 0.1020355500571623
+      },
+      "props_body_collision_checks": 0,
+      "body_and_limbs_rigid": true
+    },
+    "Attack": {
+      "samples": 73,
+      "loop": false,
+      "duration_s": 1.5,
+      "description": "Preparação e golpe mágico frontal com o cajado, seguido de recuperação.",
+      "minimum_ground_clearance_m": 0.1996496468782425,
+      "bounds_min_m": [
+        -0.8433822393417358,
+        -1.1078441143035889,
+        0.1996496468782425
+      ],
+      "bounds_max_m": [
+        0.7920156121253967,
+        0.6531232595443726,
+        3.24648380279541
+      ],
+      "seam_vertex_delta_m": 0.0,
+      "maximum_half_frame_vertex_step_m": 0.13053991394304226,
+      "maximum_joint_gap_m": 4.858469849892207e-07,
+      "maximum_wrist_rotation_deg": 30.92848992040842,
+      "cloth_anchor_error_m": 4.77999893794818e-07,
+      "cloth_tip_motion_m": {
+        "robe_front_L": 0.02763508473219028,
+        "robe_front_R": 0.02289742177552535,
+        "robe_side_L": 0.02178292405783991,
+        "robe_side_R": 0.02834833659845606,
+        "cape_left": 0.12102158034625483,
+        "cape_center": 0.13459271024216557,
+        "cape_right": 0.17962977691147797
+      },
+      "props_body_collision_checks": 5,
+      "body_and_limbs_rigid": true
+    },
+    "Spell": {
+      "samples": 145,
+      "loop": false,
+      "duration_s": 3.0,
+      "description": "Ergue o grimório, lê e canaliza a magia pelo cajado; retorna ao repouso.",
+      "minimum_ground_clearance_m": 0.19972646236419678,
+      "bounds_min_m": [
+        -0.8309460878372192,
+        -0.7124999165534973,
+        0.19972646236419678
+      ],
+      "bounds_max_m": [
+        0.7514761090278625,
+        0.582417368888855,
+        3.309481143951416
+      ],
+      "seam_vertex_delta_m": 0.0,
+      "maximum_half_frame_vertex_step_m": 0.045196678216294355,
+      "maximum_joint_gap_m": 4.951133646320149e-07,
+      "maximum_wrist_rotation_deg": 23.448573882956328,
+      "cloth_anchor_error_m": 4.770699320310986e-07,
+      "cloth_tip_motion_m": {
+        "robe_front_L": 0.030803374585679555,
+        "robe_front_R": 0.028673579326284854,
+        "robe_side_L": 0.03209185969327508,
+        "robe_side_R": 0.03374785501315301,
+        "cape_left": 0.09112894799971627,
+        "cape_center": 0.09743369626350219,
+        "cape_right": 0.09047351780315939
+      },
+      "props_body_collision_checks": 0,
+      "body_and_limbs_rigid": true
+    }
+  },
+  "protected_files": 13
+}

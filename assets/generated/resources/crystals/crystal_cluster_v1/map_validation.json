@@ -1,0 +1,15 @@
+{
+  "gem_tiles": 4,
+  "generated_map": [
+    48,
+    36
+  ],
+  "painted_atlas": true,
+  "real_hex_grid": true,
+  "seed": 122026,
+  "status": "PASS",
+  "target_coord": [
+    4,
+    -7
+  ]
+}

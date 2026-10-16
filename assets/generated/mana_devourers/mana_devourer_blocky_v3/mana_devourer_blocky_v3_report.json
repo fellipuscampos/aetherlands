@@ -1,0 +1,80 @@
+{
+  "name": "Mana_Devourer_Blocky_V3",
+  "display_name": "Devorador de Mana",
+  "parts": 5,
+  "triangles": 92,
+  "bones": 7,
+  "atlas_size": 256,
+  "materials": 1,
+  "meshes": 1,
+  "geometry": "One cube and four closed rectilinear stones; flat faces and squared corners; no bevels or extra fragments.",
+  "concept": "Slow energy cube animates four orbiting raw stones. Natural mana-driven stone life that inspired golems.",
+  "pivot": "Ground origin; native Godot dimensions; +Z front after export; static root.",
+  "minimum_clearance_m": 0.24145954847335815,
+  "animations": {
+    "ManaDevourer_Idle": {
+      "frames_checked": 385,
+      "duration_s": 16.0,
+      "loop": true,
+      "seam_max_m": 2.7314279645418166e-07,
+      "bounds_min": [
+        -1.0528843402862549,
+        -0.9275113940238953,
+        0.24145954847335815
+      ],
+      "bounds_max": [
+        1.0636205673217773,
+        0.9411100149154663,
+        1.7958447933197021
+      ],
+      "root_static": true,
+      "finite_bones": true
+    },
+    "ManaDevourer_Walk": {
+      "frames_checked": 193,
+      "duration_s": 8.0,
+      "loop": true,
+      "seam_max_m": 2.7314279645418166e-07,
+      "bounds_min": [
+        -1.0528202056884766,
+        -0.9275113940238953,
+        0.24145954847335815
+      ],
+      "bounds_max": [
+        1.0636205673217773,
+        0.9410085678100586,
+        1.7958447933197021
+      ],
+      "root_static": true,
+      "finite_bones": true
+    },
+    "ManaDevourer_Attack": {
+      "frames_checked": 37,
+      "duration_s": 1.5,
+      "loop": false,
+      "seam_max_m": 0.0,
+      "bounds_min": [
+        -0.9761025905609131,
+        -0.8026964664459229,
+        0.38672205805778503
+      ],
+      "bounds_max": [
+        0.9810230731964111,
+        0.7912147045135498,
+        1.6882176399230957
+      ],
+      "root_static": true,
+      "finite_bones": true
+    }
+  },
+  "references": [
+    "ancient_golem_v2",
+    "troll_blocky_v3",
+    "mana_devourer_v1"
+  ],
+  "previous_asset_files_preserved": 36,
+  "previous_scenes_preserved": 535,
+  "scenes_after": 536,
+  "embedded_textures_match": true,
+  "pixel_filter": "NEAREST"
+}

@@ -1,0 +1,569 @@
+{
+  "stem": "orc_arcanist_v1",
+  "name": "Arcanista Orc — Arcanismo",
+  "school": "arcanism",
+  "race": "orc",
+  "gameplay_unit_kind": "v2_unit_arcanist",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "source": "assets/generated/orcs/orc_settler_v1/orc_settler_v1.blend",
+  "source_sha256": "a0791a9afcf2d461cdd953366f8c52fdccb08d35725574724203f5b200485ea2",
+  "source_body": [
+    {
+      "part": "Pelvis",
+      "source": "Pelvis",
+      "dimensions": [
+        0.634411,
+        0.336464,
+        0.18126
+      ]
+    },
+    {
+      "part": "Belly",
+      "source": "Belly",
+      "dimensions": [
+        0.587283,
+        0.317206,
+        0.181261
+      ]
+    },
+    {
+      "part": "Chest",
+      "source": "Chest",
+      "dimensions": [
+        0.822469,
+        0.396507,
+        0.317206
+      ]
+    },
+    {
+      "part": "Head",
+      "source": "Head",
+      "dimensions": [
+        0.367052,
+        0.351758,
+        0.305877
+      ]
+    },
+    {
+      "part": "ElfEar_l_0",
+      "source": "ElfEar_l_0",
+      "dimensions": [
+        0.067973,
+        0.056644,
+        0.09063
+      ]
+    },
+    {
+      "part": "ElfEar_l_1",
+      "source": "ElfEar_l_1",
+      "dimensions": [
+        0.053245,
+        0.045315,
+        0.064574
+      ]
+    },
+    {
+      "part": "ElfEar_l_2",
+      "source": "ElfEar_l_2",
+      "dimensions": [
+        0.029455,
+        0.033986,
+        0.037385
+      ]
+    },
+    {
+      "part": "ElfEar_r_0",
+      "source": "ElfEar_r_0",
+      "dimensions": [
+        0.067973,
+        0.056644,
+        0.09063
+      ]
+    },
+    {
+      "part": "ElfEar_r_1",
+      "source": "ElfEar_r_1",
+      "dimensions": [
+        0.053245,
+        0.045315,
+        0.064574
+      ]
+    },
+    {
+      "part": "ElfEar_r_2",
+      "source": "ElfEar_r_2",
+      "dimensions": [
+        0.029455,
+        0.033986,
+        0.037385
+      ]
+    },
+    {
+      "part": "Tusk_l_0",
+      "source": "Tusk_l_0",
+      "dimensions": [
+        0.029109,
+        0.032602,
+        0.03493
+      ]
+    },
+    {
+      "part": "Tusk_l_1",
+      "source": "Tusk_l_1",
+      "dimensions": [
+        0.019794,
+        0.024451,
+        0.027944
+      ]
+    },
+    {
+      "part": "Tusk_r_0",
+      "source": "Tusk_r_0",
+      "dimensions": [
+        0.029109,
+        0.032602,
+        0.03493
+      ]
+    },
+    {
+      "part": "Tusk_r_1",
+      "source": "Tusk_r_1",
+      "dimensions": [
+        0.019794,
+        0.024451,
+        0.027944
+      ]
+    },
+    {
+      "part": "Brow_l",
+      "source": "Brow_l",
+      "dimensions": [
+        0.128399,
+        0.038423,
+        0.056653
+      ]
+    },
+    {
+      "part": "Brow_r",
+      "source": "Brow_r",
+      "dimensions": [
+        0.128399,
+        0.038423,
+        0.056653
+      ]
+    },
+    {
+      "part": "Shoulder_l",
+      "source": "Shoulder_l",
+      "dimensions": [
+        0.253765,
+        0.348926,
+        0.203918
+      ]
+    },
+    {
+      "part": "Shoulder_r",
+      "source": "Shoulder_r",
+      "dimensions": [
+        0.253765,
+        0.348926,
+        0.203918
+      ]
+    },
+    {
+      "part": "UpperArm_l",
+      "source": "UpperArm_l",
+      "dimensions": [
+        0.304022,
+        0.295141,
+        0.38332
+      ]
+    },
+    {
+      "part": "Forearm_l",
+      "source": "Forearm_l",
+      "dimensions": [
+        0.301789,
+        0.293261,
+        0.37157
+      ]
+    },
+    {
+      "part": "Hand_l",
+      "source": "Hand_l",
+      "dimensions": [
+        0.235927,
+        0.235848,
+        0.189886
+      ]
+    },
+    {
+      "part": "UpperArm_r",
+      "source": "UpperArm_r",
+      "dimensions": [
+        0.304837,
+        0.295826,
+        0.387619
+      ]
+    },
+    {
+      "part": "Forearm_r",
+      "source": "Forearm_r",
+      "dimensions": [
+        0.304729,
+        0.295735,
+        0.387047
+      ]
+    },
+    {
+      "part": "Hand_r",
+      "source": "Hand_r",
+      "dimensions": [
+        0.235928,
+        0.235847,
+        0.189886
+      ]
+    },
+    {
+      "part": "Foot_l",
+      "source": "Foot_l",
+      "dimensions": [
+        0.285485,
+        0.406023,
+        0.113288
+      ]
+    },
+    {
+      "part": "Shin_l",
+      "source": "Shin_l",
+      "dimensions": [
+        0.253764,
+        0.275289,
+        0.430493
+      ]
+    },
+    {
+      "part": "Thigh_l",
+      "source": "Thigh_l",
+      "dimensions": [
+        0.228275,
+        0.246401,
+        0.453151
+      ]
+    },
+    {
+      "part": "Foot_r",
+      "source": "Foot_r",
+      "dimensions": [
+        0.285485,
+        0.406023,
+        0.113288
+      ]
+    },
+    {
+      "part": "Shin_r",
+      "source": "Shin_r",
+      "dimensions": [
+        0.253764,
+        0.275289,
+        0.430493
+      ]
+    },
+    {
+      "part": "Thigh_r",
+      "source": "Thigh_r",
+      "dimensions": [
+        0.228275,
+        0.246401,
+        0.453151
+      ]
+    }
+  ],
+  "approved_style_reference": "elf_school_mages_revision_3_plain_clothes_and_human_school_colors",
+  "style_revision": 2,
+  "style_validation": {
+    "status": "PASS",
+    "original_orc_head_geometry": true,
+    "head_scale": 1.0,
+    "original_head_max_vertex_error_m": 1.1920928955078125e-07,
+    "original_orc_face_preserved": true,
+    "original_orc_ears": 6,
+    "original_orc_tusks": 4,
+    "original_orc_brows": 2,
+    "headwear": "angular_hat",
+    "hood_painted": false,
+    "hair_palette": "aged_grey_orc_crest_and_brows",
+    "human_beard": false,
+    "relaxed_offhand": true,
+    "plain_clothes": true,
+    "bare_forearms": true,
+    "actual_face_pixels_verified": true,
+    "actual_head_size_verified": true,
+    "actual_ears_verified": true,
+    "actual_tusks_verified": true,
+    "native_body_proportions_verified": true,
+    "facial_geometry_max_error_m": 1.2013700229374393e-07,
+    "body_edge_length_max_error_m": 8.82461147488911e-08,
+    "orc_beard": true,
+    "beard_parts": 3,
+    "beard_color": [
+      184,
+      183,
+      158
+    ],
+    "beard_tusks_clear": true,
+    "beard_attached_to_jaw": true
+  },
+  "elderly_posture": {
+    "torso_forward_degrees": 5,
+    "head_counter_degrees": -3,
+    "shoulder_drop_m": 0.024
+  },
+  "geometry": {
+    "status": "PASS",
+    "editable_parts": 56,
+    "body_parts": 18,
+    "triangles": 668,
+    "dimensions": [
+      1.5880892276763916,
+      0.8367858529090881,
+      2.3912522825979465
+    ],
+    "bounds_min": [
+      -0.8620245456695557,
+      -0.6325812339782715,
+      -3.316330321467831e-09
+    ],
+    "bounds_max": [
+      0.7260646820068359,
+      0.20420461893081665,
+      2.391252279281616
+    ],
+    "closed_meshes": true,
+    "ground_pivot": true,
+    "identity_transforms": true,
+    "flat_shading": true,
+    "uv_density_max_error": 0.0008381683885829716,
+    "animations": 3,
+    "rigs": 1
+  },
+  "texture": "assets/generated/orcs/orc_arcanist_v1/orc_arcanist_v1_albedo.png",
+  "palette": {
+    "cloth": [
+      49,
+      72,
+      115
+    ],
+    "linen": [
+      69,
+      92,
+      137
+    ],
+    "trim": [
+      156,
+      170,
+      181
+    ],
+    "accent": [
+      99,
+      152,
+      223
+    ],
+    "skin": [
+      99,
+      125,
+      65
+    ],
+    "hair": [
+      184,
+      183,
+      158
+    ],
+    "leather": [
+      86,
+      59,
+      36
+    ],
+    "wood": [
+      106,
+      80,
+      44
+    ],
+    "metal": [
+      101,
+      106,
+      87
+    ],
+    "ivory": [
+      212,
+      202,
+      166
+    ],
+    "orc_brown": [
+      113,
+      78,
+      45
+    ]
+  },
+  "school_color_validation": {
+    "status": "PASS",
+    "human_school_cloth": [
+      49,
+      72,
+      115
+    ],
+    "human_school_linen": [
+      69,
+      92,
+      137
+    ]
+  },
+  "animations": 3,
+  "rigging_deferred": false,
+  "books": 0,
+  "surface_validation": {
+    "school": "arcanism",
+    "exposed_coplanar_pairs": 0,
+    "hidden_coplanar_pairs": 0,
+    "staff_forearm_intersection": false,
+    "staff_hand_contact": true,
+    "issues": [],
+    "status": "PASS",
+    "backface_culling": true
+  },
+  "source_preserved": true,
+  "blend": "assets/generated/orcs/orc_arcanist_v1/orc_arcanist_v1.blend",
+  "glb": "assets/generated/orcs/orc_arcanist_v1/orc_arcanist_v1.glb",
+  "export": {
+    "status": "PASS",
+    "bytes": 298424,
+    "triangles": 668,
+    "meshes": 1,
+    "surfaces": 1,
+    "materials": 1,
+    "skins": 1,
+    "bones": 16,
+    "animations": 3,
+    "clips": [
+      "idle",
+      "walk",
+      "spell"
+    ],
+    "atlas_hashes": {
+      "albedo": "6b20ce202b106e4b9b9196478bf0ac0c6a2b31912ba0986e0e341186e47fab88",
+      "emission": "70ce389d9f0551cc4f79266d79e911202dc5b56cbf1740f484ee23ed0768c689"
+    },
+    "editable_source_parts": 56,
+    "cameras": 0,
+    "lights": 0
+  },
+  "game_usage": {
+    "units": "meters",
+    "model_scale_multiplier": 1.0,
+    "pivot": "feet_at_origin",
+    "blender_front": "-Y",
+    "godot_front": "+Z",
+    "stage": "animated_review",
+    "game_database_changed": false,
+    "spell_clip": "spell",
+    "spell_release_seconds": 1.7999999999999998
+  },
+  "beard_validation": {
+    "school": "arcanism",
+    "status": "PASS",
+    "beard_parts": 3,
+    "beard_triangles": 36,
+    "new_uv_islands": 18,
+    "old_geometry_and_uvs_unchanged": true,
+    "old_geometry_uv_sha256": "8593418c5d28e552811349ed7db767e23d8b09e16626129e20e05763b499ccaa",
+    "old_atlas_islands_unchanged": true,
+    "emission_unchanged": true,
+    "tusks_clear": true,
+    "attached_to_jaw": true
+  },
+  "static_review": false,
+  "stage": "animated_review",
+  "animation": {
+    "status": "PASS",
+    "fps": 48,
+    "bones": 16,
+    "rigid_skinning": true,
+    "root_motion": false,
+    "arm_motion": "fixed_anatomical_elbow_hinge_with_forearm_following_hand",
+    "walk_speed_m_per_s": 0.3440860215053763,
+    "approved_geometry_and_uvs_preserved": true,
+    "choreography_revision": 3,
+    "casting_name": "Chamado xamânico",
+    "casting_description": "Abre o gesto ritual, ergue o cajado, reúne a força do corpo e projeta a magia.",
+    "same_casting_for_all_schools": true,
+    "spell_release_seconds": 1.7999999999999998,
+    "clips": {
+      "idle": {
+        "frames": 145,
+        "seconds": 3.0,
+        "loop": true,
+        "end_to_start_error": 0.0,
+        "min_ground_z": -3.316330321467831e-09,
+        "max_joint_gap_m": 3.577054704474748e-07,
+        "max_frame_step": 0.0016698967665433884,
+        "movement": 0.06898888200521469,
+        "max_planted_foot_z_error_m": 0,
+        "max_planted_foot_slide_m": 0,
+        "staff_forearm_intersections": 0,
+        "staff_hand_detachments": 0,
+        "max_elbow_axial_roll_degrees": 0,
+        "max_wrist_rotation_degrees": {
+          "l": 0,
+          "r": 2.0725530286354923
+        },
+        "max_arm_frame_rotation_degrees": 0.07912936237050427,
+        "max_arm_frame_acceleration_degrees": 0,
+        "hand_forearm_torso_intersections": 0
+      },
+      "walk": {
+        "frames": 73,
+        "seconds": 1.5,
+        "loop": true,
+        "end_to_start_error": 9.797174737963282e-19,
+        "min_ground_z": -3.316330321467831e-09,
+        "max_joint_gap_m": 2.4755668231600746e-07,
+        "max_frame_step": 0.05409909784793854,
+        "movement": 0.4301268719136715,
+        "max_planted_foot_z_error_m": 0,
+        "max_planted_foot_slide_m": 2.9802322387695312e-08,
+        "staff_forearm_intersections": 0,
+        "staff_hand_detachments": 0,
+        "max_elbow_axial_roll_degrees": 0,
+        "max_wrist_rotation_degrees": {
+          "l": 0,
+          "r": 13.451448829730335
+        },
+        "max_arm_frame_rotation_degrees": 0.9462522731794509,
+        "max_arm_frame_acceleration_degrees": 0.07912936237050427,
+        "hand_forearm_torso_intersections": 0
+      },
+      "spell": {
+        "frames": 145,
+        "seconds": 3.0,
+        "loop": false,
+        "end_to_start_error": 0.0,
+        "min_ground_z": -3.316330321467831e-09,
+        "max_joint_gap_m": 3.7726726833498965e-07,
+        "max_frame_step": 0.06583642959594727,
+        "movement": 1.4623750448226929,
+        "max_planted_foot_z_error_m": 0,
+        "max_planted_foot_slide_m": 0,
+        "staff_forearm_intersections": 0,
+        "staff_hand_detachments": 0,
+        "max_elbow_axial_roll_degrees": 0,
+        "max_wrist_rotation_degrees": {
+          "l": 3.999955572784928,
+          "r": 0
+        },
+        "max_arm_frame_rotation_degrees": 3.847324750497238,
+        "max_arm_frame_acceleration_degrees": 0.5787820126955353,
+        "hand_forearm_torso_intersections": 0
+      }
+    }
+  }
+}

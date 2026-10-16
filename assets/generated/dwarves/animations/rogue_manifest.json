@@ -1,0 +1,34 @@
+{
+  "family": "rogue",
+  "fps": 48,
+  "motion_revision": 3,
+  "clips": {
+    "idle": {
+      "action": "Dwarf_rogue_idle",
+      "frames": 145,
+      "loop": true,
+      "description": "Respiração contida e olhar atento.",
+      "impact_frame": null
+    },
+    "walk": {
+      "action": "Dwarf_rogue_walk",
+      "frames": 57,
+      "loop": true,
+      "description": "Passos baixos e leves; lâmina firme em uma mão.",
+      "impact_frame": null
+    },
+    "attack": {
+      "action": "Dwarf_rogue_attack",
+      "frames": 81,
+      "loop": false,
+      "description": "Prepara a lâmina e executa um corte/estocada rápida à frente.",
+      "impact_frame": 37
+    }
+  },
+  "variants": [
+    "dwarf_rogue_v1",
+    "dwarf_saboteur_v1",
+    "dwarf_assassin_v1",
+    "dwarf_shadow_master_v1"
+  ]
+}

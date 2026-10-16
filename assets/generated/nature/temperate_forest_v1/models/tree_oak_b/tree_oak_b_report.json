@@ -1,0 +1,47 @@
+{
+  "asset": "tree_oak_b",
+  "name": "Temperate_Forest_V1_tree_oak_b",
+  "display_name": "Carvalho bifurcado",
+  "category": "main_tree",
+  "species": "oak",
+  "triangles": 166,
+  "vertices": 85,
+  "polygons": 52,
+  "bounds_blender": {
+    "min": [
+      -0.2800000011920929,
+      -0.1599999964237213,
+      0.0
+    ],
+    "max": [
+      0.23999999463558197,
+      0.1599999964237213,
+      1.0399999618530273
+    ]
+  },
+  "dimensions": [
+    0.5199999958276749,
+    0.3199999928474426,
+    1.0399999618530273
+  ],
+  "pivot": "ground at base of trunk / center of prop",
+  "native_scale": 1,
+  "pixel_density_px_per_unit": 128,
+  "materials": 1,
+  "game_meshes": 1,
+  "atlas": "textures/forest_pixel_atlas.png",
+  "alpha_blending": false,
+  "voxel_cells": 966,
+  "surface_cells_removed": true,
+  "nonmanifold_edges": 0,
+  "mcp_only": true,
+  "export": {
+    "bytes": 138408,
+    "meshes": 1,
+    "surfaces": 1,
+    "materials": 1,
+    "triangles": 166,
+    "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+    "no_studio": true
+  }
+}

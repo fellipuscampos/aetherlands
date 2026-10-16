@@ -1,0 +1,115 @@
+{
+  "name": "Druidic_Ritual_Hex_V1",
+  "display_name": "Bosque Ancestral — Humanos",
+  "gameplay_building_id": "v2_building_druidic_ritual",
+  "trains": [
+    "v2_manifestation_nature_avatar"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 924,
+  "editable_parts": 70,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.7949999570846558
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.7949999570846558
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 446,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Bosque de uma árvore ancestral de copa ampla, raízes expostas, marcos baixos, oferenda viva e jardim ritual; o mobiliário e a talha seguem a civilização. Alvenaria formal, pilastras, vitrais e madeira com ferragens douradas.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "human",
+  "magic_school": "druidism",
+  "grand_magic": true,
+  "asset_only": true,
+  "requires_building": "v2_building_druidic_circle",
+  "includes_perimeter_walls": false,
+  "school_building_separate": true,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "craft": {
+    "race_details": "Alvenaria formal, pilastras, vitrais e madeira com ferragens douradas.",
+    "material_reference": "assets/generated/humans/buildings/druidic_circle_hex_v1",
+    "roof_rgb": [
+      49,
+      79,
+      127
+    ],
+    "physical_attachment_remaining": [],
+    "intentional_levitation": [],
+    "relic_source": null
+  },
+  "export": {
+    "file": "druidic_ritual_hex_v1.glb",
+    "bytes": 671012,
+    "meshes": 7,
+    "primitives": 7,
+    "triangles": 924,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "druidic_ritual_hex_v1_emission",
+        "bytes": 22125,
+        "sha256": "192503d4419e77fbe9b2958797d4ca534337bf208bb69ceb98a2ef482f6f0c2f"
+      },
+      {
+        "image": "druidic_ritual_hex_v1_albedo",
+        "bytes": 576900,
+        "sha256": "51edd216d743412c48ef207d50091af2194d8d0a47f95dd7f49746c3f9f1d0fd"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

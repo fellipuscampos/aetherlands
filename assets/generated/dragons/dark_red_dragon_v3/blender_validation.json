@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "parts": 141,
+  "bones": 38,
+  "non_manifold_edges": 0,
+  "degenerate_faces": 0,
+  "bad_weights": 0,
+  "invalid_vertices": 0,
+  "invalid_uvs": 0,
+  "symmetry_max_distance_m": 0.0,
+  "paired_parts": 53,
+  "core": false,
+  "jaw_in_one_local_frame": true,
+  "mirror_symmetric_wings": true
+}

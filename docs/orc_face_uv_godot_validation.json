@@ -1,0 +1,249 @@
+{
+	"assets": [
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				1.31394505500793,
+				2.0,
+				0.842908978462219
+			],
+			"rendered_ground_y": -0.0000000149011611938477,
+			"stem": "orc_squire_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				1.51177167892456,
+				2.0,
+				0.8685142993927
+			],
+			"rendered_ground_y": 0.0000000298023188349816,
+			"stem": "orc_guardian_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				1.51081132888794,
+				2.17625999450684,
+				0.896465718746185
+			],
+			"rendered_ground_y": -0.00000000107233011359398,
+			"stem": "orc_sentinel_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				1.67926061153412,
+				2.41736388206482,
+				1.04199159145355
+			],
+			"rendered_ground_y": -0.00000000109679831883369,
+			"stem": "orc_guardian_champion_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 4,
+			"dimensions": [
+				1.61982822418213,
+				2.02706575393677,
+				1.25812709331512
+			],
+			"rendered_ground_y": 0.0000000298023206113385,
+			"stem": "orc_warrior_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				1.68242847919464,
+				2.30174946784973,
+				1.33054065704346
+			],
+			"rendered_ground_y": 0.000000044703483581543,
+			"stem": "orc_swordsman_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				1.68242847919464,
+				2.50728678703308,
+				1.48248422145844
+			],
+			"rendered_ground_y": 0.000000044703483581543,
+			"stem": "orc_weapon_master_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				1.85055637359619,
+				2.7505989074707,
+				1.64554512500763
+			],
+			"rendered_ground_y": -0.0000000149011611938477,
+			"stem": "orc_blade_hero_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 19,
+			"clips_played": 4,
+			"dimensions": [
+				1.75357413291931,
+				1.99999952316284,
+				1.4172191619873
+			],
+			"rendered_ground_y": 0.0000000298023188349816,
+			"stem": "orc_archer_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 19,
+			"clips_played": 5,
+			"dimensions": [
+				1.7681839466095,
+				2.02206921577454,
+				1.41713094711304
+			],
+			"rendered_ground_y": -0.00000000745058059692383,
+			"stem": "orc_hunter_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 19,
+			"clips_played": 5,
+			"dimensions": [
+				1.75653231143951,
+				2.15783667564392,
+				1.41720187664032
+			],
+			"rendered_ground_y": 0.0000000298023188349816,
+			"stem": "orc_elite_marksman_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 19,
+			"clips_played": 5,
+			"dimensions": [
+				1.93648958206177,
+				2.37359237670898,
+				1.55890679359436
+			],
+			"rendered_ground_y": -0.000000000000000242116162340965,
+			"stem": "orc_legend_hunter_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 28,
+			"clips_played": 4,
+			"dimensions": [
+				1.64260470867157,
+				3.68663048744202,
+				2.58397817611694
+			],
+			"rendered_ground_y": 0.0,
+			"stem": "orc_cavalier_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 28,
+			"clips_played": 4,
+			"dimensions": [
+				1.64260470867157,
+				3.77477884292603,
+				2.58397817611694
+			],
+			"rendered_ground_y": 0.0,
+			"stem": "orc_shock_cavalier_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 28,
+			"clips_played": 4,
+			"dimensions": [
+				1.64260470867157,
+				3.79597306251526,
+				2.58397817611694
+			],
+			"rendered_ground_y": 0.0,
+			"stem": "orc_armored_cavalier_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 28,
+			"clips_played": 4,
+			"dimensions": [
+				1.81016087532043,
+				4.18696546554565,
+				2.84237623214722
+			],
+			"rendered_ground_y": 0.0,
+			"stem": "orc_griffon_rider_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 4,
+			"dimensions": [
+				1.61982822418213,
+				1.99999976158142,
+				1.00286972522736
+			],
+			"rendered_ground_y": 0.0000000298023206113385,
+			"stem": "orc_rogue_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				1.61982822418213,
+				1.99999976158142,
+				1.00286972522736
+			],
+			"rendered_ground_y": 0.0000000298023206113385,
+			"stem": "orc_saboteur_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				1.61982822418213,
+				1.99999976158142,
+				1.22394073009491
+			],
+			"rendered_ground_y": 0.0000000298023206113385,
+			"stem": "orc_assassin_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				1.78181135654449,
+				2.20000028610229,
+				1.43345284461975
+			],
+			"rendered_ground_y": 0.000000029802325940409,
+			"stem": "orc_shadow_master_v1"
+		}
+	],
+	"clips_played": 93,
+	"problems": [],
+	"review_classes": 5,
+	"status": "PASS",
+	"verified": 20
+}

@@ -1,0 +1,182 @@
+{
+  "human_infernal_warlock_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.033523693680763245,
+      -0.04839295148849476,
+      0.7180001139640811
+    ],
+    "release_seconds": 1.1
+  },
+  "human_necromancer_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.021315336227416992,
+      -0.12523534893989552,
+      0.6820001602172855
+    ],
+    "release_seconds": 1.1
+  },
+  "human_druid_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.008736610412597656,
+      -0.07054203748702981,
+      0.5950000286102298
+    ],
+    "release_seconds": 1.1
+  },
+  "human_arcanist_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.019901817043622316,
+      -0.04893895983695973,
+      0.7840000391006473
+    ],
+    "release_seconds": 1.1
+  },
+  "human_elementalist_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.02045387029647827,
+      -0.048682689666747936,
+      0.7590001821517948
+    ],
+    "release_seconds": 1.1
+  },
+  "elf_infernal_warlock_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.019632279872894287,
+      -0.04905468225479115,
+      0.7560001611709598
+    ],
+    "release_seconds": 1.1
+  },
+  "elf_necromancer_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.019632279872894287,
+      -0.08905467391014088,
+      0.7850002050399784
+    ],
+    "release_seconds": 1.1
+  },
+  "elf_druid_v1": {
+    "bone": "hand_r",
+    "offset": [
+      0.0966329574584961,
+      -0.06616222858428938,
+      0.8810001611709598
+    ],
+    "release_seconds": 1.1
+  },
+  "elf_arcanist_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.01910606026649475,
+      -0.04926162461439754,
+      0.7900000810623172
+    ],
+    "release_seconds": 1.1
+  },
+  "elf_elementalist_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.0193670392036438,
+      -0.04916223883628834,
+      0.7670001983642581
+    ],
+    "release_seconds": 1.1
+  },
+  "orc_infernal_warlock_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.03566795587539673,
+      -0.05033340305089923,
+      0.9538288116455081
+    ],
+    "release_seconds": 1.1
+  },
+  "orc_necromancer_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.02516794204711914,
+      -0.05033341050147988,
+      0.905828952789307
+    ],
+    "release_seconds": 1.1
+  },
+  "orc_druid_v1": {
+    "bone": "hand_r",
+    "offset": [
+      0.1278320550918579,
+      -0.041333511471748074,
+      1.0152704715728764
+    ],
+    "release_seconds": 1.1
+  },
+  "orc_arcanist_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.02516794204711914,
+      -0.054333537817001065,
+      0.92827053864797
+    ],
+    "release_seconds": 1.1
+  },
+  "orc_elementalist_v1": {
+    "bone": "hand_r",
+    "offset": [
+      -0.02516794204711914,
+      -0.050333529710769376,
+      1.0622704029083256
+    ],
+    "release_seconds": 1.1
+  },
+  "dwarf_infernal_warlock_v1": {
+    "bone": "hand_r",
+    "offset": [
+      0.02311772108078003,
+      -0.0770826637744903,
+      0.854170918464661
+    ],
+    "release_seconds": 1.1
+  },
+  "dwarf_necromancer_v1": {
+    "bone": "hand_r",
+    "offset": [
+      0.03211772441864014,
+      -0.0770826637744903,
+      0.8116709589958192
+    ],
+    "release_seconds": 1.1
+  },
+  "dwarf_druid_v1": {
+    "bone": "hand_r",
+    "offset": [
+      0.13711780309677124,
+      -0.07708269357681269,
+      0.8761606812477115
+    ],
+    "release_seconds": 1.1
+  },
+  "dwarf_arcanist_v1": {
+    "bone": "hand_r",
+    "offset": [
+      0.03211778402328491,
+      -0.07708269357681269,
+      0.8381606936454776
+    ],
+    "release_seconds": 1.1
+  },
+  "dwarf_elementalist_v1": {
+    "bone": "hand_r",
+    "offset": [
+      0.03211778402328491,
+      -0.07708269357681269,
+      0.8051607012748719
+    ],
+    "release_seconds": 1.1
+  }
+}

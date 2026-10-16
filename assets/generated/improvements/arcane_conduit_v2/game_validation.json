@@ -1,0 +1,15 @@
+{
+	"checks": 29,
+	"failures": [],
+	"method": "One native Godot execution; actual HexGrid and V2ConstructorRuntime; synthetic map; cities/actors hidden for asset photography",
+	"races": [
+		"human",
+		"elf",
+		"orc",
+		"dwarf"
+	],
+	"reuses_full_raw_resource_model": false,
+	"reuses_original_crystal_primitive": true,
+	"runtime_resource_light_count": 4,
+	"status": "PASS"
+}

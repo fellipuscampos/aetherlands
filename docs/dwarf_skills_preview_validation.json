@@ -1,0 +1,266 @@
+{
+  "status": "PASS",
+  "models": 24,
+  "skill_clips": 43,
+  "native_renders": true,
+  "sequences": [
+    {
+      "stem": "dwarf_shieldbearer_v1",
+      "role": "shield_wall",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_shieldbearer_v1\\shield_wall"
+    },
+    {
+      "stem": "dwarf_shieldbearer_v1",
+      "role": "shield_wall_hold",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_shieldbearer_v1\\shield_wall_hold"
+    },
+    {
+      "stem": "dwarf_guardian_v1",
+      "role": "shield_wall",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_guardian_v1\\shield_wall"
+    },
+    {
+      "stem": "dwarf_guardian_v1",
+      "role": "shield_wall_hold",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_guardian_v1\\shield_wall_hold"
+    },
+    {
+      "stem": "dwarf_sentinel_v1",
+      "role": "shield_wall",
+      "frames": 15,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_sentinel_v1\\shield_wall"
+    },
+    {
+      "stem": "dwarf_sentinel_v1",
+      "role": "shield_wall_hold",
+      "frames": 18,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_sentinel_v1\\shield_wall_hold"
+    },
+    {
+      "stem": "dwarf_guardian_champion_v1",
+      "role": "shield_wall",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_guardian_champion_v1\\shield_wall"
+    },
+    {
+      "stem": "dwarf_guardian_champion_v1",
+      "role": "shield_wall_hold",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_guardian_champion_v1\\shield_wall_hold"
+    },
+    {
+      "stem": "dwarf_warrior_v1",
+      "role": "power_strike",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_warrior_v1\\power_strike"
+    },
+    {
+      "stem": "dwarf_swordsman_v1",
+      "role": "power_strike",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_swordsman_v1\\power_strike"
+    },
+    {
+      "stem": "dwarf_swordsman_v1",
+      "role": "arc_attack",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_swordsman_v1\\arc_attack"
+    },
+    {
+      "stem": "dwarf_weapon_master_v1",
+      "role": "power_strike",
+      "frames": 24,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_weapon_master_v1\\power_strike"
+    },
+    {
+      "stem": "dwarf_weapon_master_v1",
+      "role": "arc_attack",
+      "frames": 24,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_weapon_master_v1\\arc_attack"
+    },
+    {
+      "stem": "dwarf_blade_hero_v1",
+      "role": "power_strike",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_blade_hero_v1\\power_strike"
+    },
+    {
+      "stem": "dwarf_blade_hero_v1",
+      "role": "arc_attack",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_blade_hero_v1\\arc_attack"
+    },
+    {
+      "stem": "dwarf_archer_v1",
+      "role": "precise_shot",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_archer_v1\\precise_shot"
+    },
+    {
+      "stem": "dwarf_hunter_v1",
+      "role": "precise_shot",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_hunter_v1\\precise_shot"
+    },
+    {
+      "stem": "dwarf_hunter_v1",
+      "role": "volley",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_hunter_v1\\volley"
+    },
+    {
+      "stem": "dwarf_elite_marksman_v1",
+      "role": "precise_shot",
+      "frames": 24,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_elite_marksman_v1\\precise_shot"
+    },
+    {
+      "stem": "dwarf_elite_marksman_v1",
+      "role": "volley",
+      "frames": 30,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_elite_marksman_v1\\volley"
+    },
+    {
+      "stem": "dwarf_legend_hunter_v1",
+      "role": "precise_shot",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_legend_hunter_v1\\precise_shot"
+    },
+    {
+      "stem": "dwarf_legend_hunter_v1",
+      "role": "volley",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_legend_hunter_v1\\volley"
+    },
+    {
+      "stem": "dwarf_cavalier_v1",
+      "role": "charge",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_cavalier_v1\\charge"
+    },
+    {
+      "stem": "dwarf_shock_cavalier_v1",
+      "role": "charge",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_shock_cavalier_v1\\charge"
+    },
+    {
+      "stem": "dwarf_shock_cavalier_v1",
+      "role": "tactical_retreat",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_shock_cavalier_v1\\tactical_retreat"
+    },
+    {
+      "stem": "dwarf_armored_cavalier_v1",
+      "role": "charge",
+      "frames": 24,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_armored_cavalier_v1\\charge"
+    },
+    {
+      "stem": "dwarf_armored_cavalier_v1",
+      "role": "tactical_retreat",
+      "frames": 24,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_armored_cavalier_v1\\tactical_retreat"
+    },
+    {
+      "stem": "dwarf_ram_lord_v1",
+      "role": "charge",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_ram_lord_v1\\charge"
+    },
+    {
+      "stem": "dwarf_ram_lord_v1",
+      "role": "tactical_retreat",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_ram_lord_v1\\tactical_retreat"
+    },
+    {
+      "stem": "dwarf_rogue_v1",
+      "role": "sneak_attack",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_rogue_v1\\sneak_attack"
+    },
+    {
+      "stem": "dwarf_saboteur_v1",
+      "role": "sneak_attack",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_saboteur_v1\\sneak_attack"
+    },
+    {
+      "stem": "dwarf_saboteur_v1",
+      "role": "dismantle",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_saboteur_v1\\dismantle"
+    },
+    {
+      "stem": "dwarf_assassin_v1",
+      "role": "sneak_attack",
+      "frames": 21,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_assassin_v1\\sneak_attack"
+    },
+    {
+      "stem": "dwarf_assassin_v1",
+      "role": "dismantle",
+      "frames": 27,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_assassin_v1\\dismantle"
+    },
+    {
+      "stem": "dwarf_shadow_master_v1",
+      "role": "sneak_attack",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_shadow_master_v1\\sneak_attack"
+    },
+    {
+      "stem": "dwarf_shadow_master_v1",
+      "role": "dismantle",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_shadow_master_v1\\dismantle"
+    },
+    {
+      "stem": "dwarf_catapult_v1",
+      "role": "demolition_ammo",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_catapult_v1\\demolition_ammo"
+    },
+    {
+      "stem": "dwarf_trebuchet_v1",
+      "role": "demolition_ammo",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_trebuchet_v1\\demolition_ammo"
+    },
+    {
+      "stem": "dwarf_trebuchet_v1",
+      "role": "prepared_bombardment",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_trebuchet_v1\\prepared_bombardment"
+    },
+    {
+      "stem": "dwarf_bombard_v1",
+      "role": "demolition_ammo",
+      "frames": 36,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_bombard_v1\\demolition_ammo"
+    },
+    {
+      "stem": "dwarf_bombard_v1",
+      "role": "prepared_bombardment",
+      "frames": 48,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_bombard_v1\\prepared_bombardment"
+    },
+    {
+      "stem": "dwarf_siege_colossus_v1",
+      "role": "demolition_ammo",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_siege_colossus_v1\\demolition_ammo"
+    },
+    {
+      "stem": "dwarf_siege_colossus_v1",
+      "role": "prepared_bombardment",
+      "frames": 3,
+      "folder": "C:\\Users\\felipe campos\\Documents\\jogo\\art_source\\dwarf_skills\\frames\\dwarf_siege_colossus_v1\\prepared_bombardment"
+    }
+  ]
+}

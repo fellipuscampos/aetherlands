@@ -1,0 +1,52 @@
+{
+  "asset": "horse_resource_v1",
+  "resource": "horses",
+  "method": "live Blender MCP",
+  "source_asset": "assets\\generated\\humans\\cavalier_v1\\cavalier_v1.blend",
+  "source_sha256": "0563380647ebeb0f8edff6eb64e1093ea60f3e53daa78e013e593873cb0d1dfd",
+  "source_geometry_preserved": true,
+  "source_painted_pixels_preserved": true,
+  "source_scale": 0.35,
+  "source_parts": [
+    "HorseBody",
+    "HorseCannon_bl",
+    "HorseCannon_br",
+    "HorseCannon_fl",
+    "HorseCannon_fr",
+    "HorseEar_l",
+    "HorseEar_r",
+    "HorseHead",
+    "HorseHoof_bl",
+    "HorseHoof_br",
+    "HorseHoof_fl",
+    "HorseHoof_fr",
+    "HorseMane",
+    "HorseNeck",
+    "HorseTail",
+    "HorseThigh_bl",
+    "HorseThigh_br",
+    "HorseThigh_fl",
+    "HorseThigh_fr"
+  ],
+  "removed": "rider, saddle, blanket, stirrups, reins, bit and painted bridle",
+  "bridle_pixels_removed": 434,
+  "triangles": 228,
+  "height": 0.7095779180526733,
+  "footprint_radius": 0.3805629040136082,
+  "materials": 1,
+  "texture_size": [
+    512,
+    512
+  ],
+  "texture_filter": "nearest",
+  "native_editable_parts": 19,
+  "previous_scenes": [
+    "Arcane_Node_Resource_V1",
+    "Cavalier_V1",
+    "Crystal_Resource_V1",
+    "Crystal_Resource_V1_Blocky",
+    "Iron_Resource_V1",
+    "Scene",
+    "Silk_Resource_V1"
+  ]
+}

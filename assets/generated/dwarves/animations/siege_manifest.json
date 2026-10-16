@@ -1,0 +1,34 @@
+{
+  "family": "siege",
+  "fps": 48,
+  "motion_revision": 2,
+  "clips": {
+    "idle": {
+      "action": "Dwarf_siege_idle",
+      "frames": 145,
+      "loop": true,
+      "description": "Completamente imóvel.",
+      "impact_frame": null
+    },
+    "walk": {
+      "action": "Dwarf_siege_walk",
+      "frames": 97,
+      "loop": true,
+      "description": "Rodas giram, chassi oscila discretamente e pistões acompanham o deslocamento.",
+      "impact_frame": null
+    },
+    "attack": {
+      "action": "Dwarf_siege_attack",
+      "frames": 121,
+      "loop": false,
+      "description": "Ciclo comum de preparar, liberar/disparar e recuperar; braço ou recuo conforme o mecanismo.",
+      "impact_frame": 47
+    }
+  },
+  "variants": [
+    "dwarf_catapult_v1",
+    "dwarf_trebuchet_v1",
+    "dwarf_bombard_v1",
+    "dwarf_siege_colossus_v1"
+  ]
+}

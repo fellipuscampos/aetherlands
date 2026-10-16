@@ -3,23 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cw1dn6bgeh6iu"
-path="res://.godot/imported/squire_v1_squire_v1_albedo.png-0df65062f6b2d82e9b08719100d98738.ctex"
+path.bptc="res://.godot/imported/squire_v1_squire_v1_albedo.png-0df65062f6b2d82e9b08719100d98738.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "4a956831e1b56be183c5ebc7a67b6dbc"
+"md5": "9962eed435b25611dd1d3b89dae0e883"
 }
 
 [deps]
 
 source_file="res://assets/generated/humans/squire_v1/squire_v1_squire_v1_albedo.png"
-dest_files=["res://.godot/imported/squire_v1_squire_v1_albedo.png-0df65062f6b2d82e9b08719100d98738.ctex"]
+dest_files=["res://.godot/imported/squire_v1_squire_v1_albedo.png-0df65062f6b2d82e9b08719100d98738.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

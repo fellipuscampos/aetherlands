@@ -1,0 +1,265 @@
+{
+  "name": "Elf_Siege_Arsenal_Hex_V1",
+  "display_name": "Arsenal de Guerra dos Elfos",
+  "gameplay_building_id": "v2_building_siege_arsenal",
+  "trains": [
+    "v2_unit_catapult",
+    "v2_unit_trebuchet",
+    "v2_unit_bombard"
+  ],
+  "excludes": [
+    "v2_legendary_siege_colossus"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 4096,
+  "editable_parts": 243,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.4123399257659912
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.4123399257659912
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units; pointy-top tile radius 1, military foundation radius .92; placement scale tile_radius. Asset only, no integration.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1753,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Cantaria clara com armação esbelta de madeira, mãos-francesas em forma de galhos e coberturas verdes com cantos facetados e beirais ascendentes. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.69,
+    0.427
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "unit_class": "siege",
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "layout_source": "orc_siege_arsenal_hex_v1",
+  "hex_tile": {
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "placement_scale": "tile_radius",
+    "max_half_plane_blender": 0.7978273816244401,
+    "tile_apothem": 0.8660254037844386
+  },
+  "faction_tint": "Clan cloth and shield/horse blanket accents isolated in Faction mesh; architecture keeps its civilization palette. No runtime integration.",
+  "export": {
+    "file": "elf_siege_arsenal_hex_v1.glb",
+    "bytes": 1244592,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 4096,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_siege_arsenal_hex_v1_emission",
+        "bytes": 79060,
+        "sha256": "8cdd5df11839a3bc834917f4111050f0d571663ff4bd3c8462c15250e4c9f405"
+      },
+      {
+        "image": "elf_siege_arsenal_hex_v1_albedo",
+        "bytes": 889453,
+        "sha256": "78dfa73563359f2d896629728ec51182f2c65126c00cf9ae507aa4dfc7b8e006"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "elf",
+    "design": "Cantaria clara com armação esbelta de madeira, mãos-francesas em forma de galhos e coberturas verdes com cantos facetados e beirais ascendentes.",
+    "geometry_changes": [
+      "remove_inherited_roof_lashing:Roof_Front_Iron_Binding_0",
+      "remove_inherited_roof_lashing:Roof_Front_Iron_Binding_1",
+      "remove_inherited_roof_lashing:Roof_Front_Iron_Binding_2",
+      "remove_inherited_roof_lashing:Roof_Front_Iron_Binding_3",
+      "remove_inherited_roof_lashing:Roof_Front_Iron_Binding_4",
+      "remove_inherited_roof_lashing:Roof_Front_Iron_Binding_5",
+      "roof_geometry:Rust_Red_Workshop_Roof_0",
+      "roof_geometry:Rust_Red_Workshop_Roof_1",
+      "roof_geometry:Rust_Red_Workshop_Roof_2",
+      "roof_geometry:Rust_Red_Workshop_Roof_3",
+      "roof_geometry:Rust_Red_Workshop_Roof_4",
+      "roof_geometry:Rust_Red_Workshop_Roof_5",
+      "branch_pier:Workshop_Heavy_Post_0",
+      "branch_pier:Workshop_Heavy_Post_1",
+      "branch_pier:Workshop_Heavy_Post_2",
+      "branch_pier:Workshop_Heavy_Post_3",
+      "branch_pier:Workshop_Heavy_Post_4",
+      "branch_pier:Workshop_Heavy_Post_5",
+      "branch_pier:Assembly_Portal_Middle_Post",
+      "upper_structure_proportion:1.22"
+    ],
+    "roof_braces": [
+      {
+        "post": "Workshop_Heavy_Post_0",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          -0.4599999785423279,
+          0.18000000715255737,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Workshop_Heavy_Post_0",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          -0.5899999737739563,
+          0.3100000023841858,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Workshop_Heavy_Post_1",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          0.4599999785423279,
+          0.18000000715255737,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Workshop_Heavy_Post_1",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          0.5899999737739563,
+          0.3100000023841858,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Workshop_Heavy_Post_2",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          0.4599999785423279,
+          0.3409999907016754,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Workshop_Heavy_Post_2",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          0.5899999737739563,
+          0.38260000944137573,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Workshop_Heavy_Post_3",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          0.0507499985396862,
+          0.6420000195503235,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Workshop_Heavy_Post_3",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          0.14499999582767487,
+          0.5120000243186951,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Workshop_Heavy_Post_4",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          -0.0507499985396862,
+          0.6420000195503235,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Workshop_Heavy_Post_4",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          -0.14499999582767487,
+          0.5120000243186951,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Workshop_Heavy_Post_5",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          -0.4599999785423279,
+          0.3409999907016754,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Workshop_Heavy_Post_5",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          -0.5899999737739563,
+          0.38260000944137573,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Assembly_Portal_Middle_Post",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          0.05950000137090683,
+          0.1679999977350235,
+          0.6499999761581421
+        ]
+      },
+      {
+        "post": "Assembly_Portal_Middle_Post",
+        "roof": "Rust_Red_Workshop_Roof_0",
+        "end": [
+          0.17000000178813934,
+          0.2980000078678131,
+          0.6499999761581421
+        ]
+      }
+    ],
+    "max_tile_half_plane": 0.7978273816244401,
+    "blender_mcp_only": true
+  }
+}

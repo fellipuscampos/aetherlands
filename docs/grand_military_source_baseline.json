@@ -1,0 +1,3382 @@
+[
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_conclave_hex_v1/dwarf_arcane_conclave_hex_v1.blend",
+    "sha256": "cb49d85c5a063d45cd4ee1b2074c4b5d8d9fa11b4bba4dfae4d8c4f91e6db2f1"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_conclave_hex_v1/dwarf_arcane_conclave_hex_v1.glb",
+    "sha256": "82348adfaa0cf76d1f7266aa4dc774b6662b8aa5a708e328657a301d828940ce"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_conclave_hex_v1/dwarf_arcane_conclave_hex_v1_albedo.png",
+    "sha256": "f5853eaa21d8b32f6c86ad76275b44d1080c23443069ceb96d6b8245917f1896"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_conclave_hex_v1/dwarf_arcane_conclave_hex_v1_emission.png",
+    "sha256": "08d4dd2107d661b0f66b5a97c4363e4ba86f096529745b46c90a88ab5dbffbd4"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_conclave_hex_v1/dwarf_arcane_conclave_hex_v1_report.json",
+    "sha256": "da6dcc308d93b4942ecd8d3fc26c32301599f31c1dea253fabaf90dba6829857"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_conclave_hex_v1/previews/back.png",
+    "sha256": "af8ed11a6be7d8338efb2f676e23bcb13c5743a17f3504dca35aef3f7977c66f"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_conclave_hex_v1/previews/game_top.png",
+    "sha256": "824a355b930594bffe54f31561685b6ba9e0d0d7f964624a08cc6461cf1b5eb2"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_conclave_hex_v1/previews/three_quarter.png",
+    "sha256": "f6d893e5be5ea8e156905e71e7fbbd7052812ebf3b3aeaa9047809113aa1f266"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_conclave_hex_v1/previews/top.png",
+    "sha256": "d98c7e57bfa237ecc17d502c4514fdc756d76fcd684e4c19edd430d1a3c382ba"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_conclave_hex_v1/README.md",
+    "sha256": "b32ffc904ad021b94a733b8bc089048ad704f074b4540471eb54773fcf9a57b1"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_ritual_hex_v1/dwarf_arcane_ritual_hex_v1.blend",
+    "sha256": "e77f92f9422be5911882c1c69ad72d656216fa9425658b778ec7279eeeafbcdc"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_ritual_hex_v1/dwarf_arcane_ritual_hex_v1.glb",
+    "sha256": "ad868d7a87dfbe2b8035ce6237044b8e1b725fb456391f7fda0ffed6d039b556"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_ritual_hex_v1/dwarf_arcane_ritual_hex_v1_albedo.png",
+    "sha256": "4c71cecd89258cec60fcaaf38e24ec39bc91ad5db56e5a105a3896b1ec2a78bb"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_ritual_hex_v1/dwarf_arcane_ritual_hex_v1_emission.png",
+    "sha256": "f350d1542943afbc12ae8edd38b9c7dee8552bdde937175b60b722276daece70"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_ritual_hex_v1/dwarf_arcane_ritual_hex_v1_report.json",
+    "sha256": "a1c9045b13228cd51d0bbc4910c05628fdfb2fb0388c45b6d87a669cc40489a9"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_ritual_hex_v1/previews/back.png",
+    "sha256": "4697e5c052bf8044019d6510f7b3b904152643761d4460130af658860cf5d42c"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_ritual_hex_v1/previews/game_top.png",
+    "sha256": "0752f0462864d1d5f7a9fed7453e7c7fa4f87932076ee509763e8db5faf5dfa1"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "10fc23d8d5ded59ae3edd502204969c09a6b445c6267150613cc36e5363f99e2"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_ritual_hex_v1/previews/top.png",
+    "sha256": "7d61d72133dd125186ff4227094e83e7dbeac3592a6a7f8f1a6ea9777c2cf972"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_arcane_ritual_hex_v1/README.md",
+    "sha256": "174e5617b9703f81cf7d7906703ded6f3331796c5ef3592195d378638d348c01"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_city_level_1_hex_v1/dwarf_city_level_1_hex_v1.blend",
+    "sha256": "6632d41c02564a36aa92bada6946dbc42fceb15070535c12753e88f35f738934"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_city_level_1_hex_v1/dwarf_city_level_1_hex_v1.glb",
+    "sha256": "c959ae0f89db223944fd695de2c73b09c8fc3edcc740841cb2b64eb49b750bff"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_city_level_1_hex_v1/dwarf_city_level_1_hex_v1_albedo.png",
+    "sha256": "81ed2242272374f2135085839cc5bdfdbdd657304102bd4acc9c3dadad648ecc"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_city_level_1_hex_v1/dwarf_city_level_1_hex_v1_emission.png",
+    "sha256": "710f4df364d1decfe93f5e9d335da6f82934a7997a8e39621da340707423656c"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_city_level_1_hex_v1/dwarf_city_level_1_hex_v1_report.json",
+    "sha256": "34cddef5b54689c02676e16013bc35a95265fb1e6de664aa914d1b8be4ec3f7d"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_city_level_1_hex_v1/previews/back.png",
+    "sha256": "eaa5a1b2c6a470088e6314cc6dad3080e8c97c83df42e176c87ea225cb1b9667"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_city_level_1_hex_v1/previews/game_top.png",
+    "sha256": "bfd6f22d4929e524ff78b7e74a258a01a23daba405d8696dae9df10ab50f00b7"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_city_level_1_hex_v1/previews/three_quarter.png",
+    "sha256": "26efd46abd2b7b5de712333092fc8453de90dabba7c902c3eb474548a3a676ac"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_city_level_1_hex_v1/previews/top.png",
+    "sha256": "58011b54b0488bb75e0ce16d5359e277d935c87dfd09408580e2c3a958c2a25b"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_city_level_1_hex_v1/README.md",
+    "sha256": "f52f2b759b039d7a2ce0a871e738a0962831ffd7c79e6eaeaccae6060be8520c"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_circle_hex_v1/dwarf_druidic_circle_hex_v1.blend",
+    "sha256": "b9373d7f286f33f46ff1cd84a040e8b663fa5da1ecc1a4e19c0e02407cf17529"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_circle_hex_v1/dwarf_druidic_circle_hex_v1.glb",
+    "sha256": "293fabc73aeac8d73d2bfa1617f96686ff90507cdf33900c80b31b77c5499d05"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_circle_hex_v1/dwarf_druidic_circle_hex_v1_albedo.png",
+    "sha256": "3ae9b41cd717ac78980c7c82017ea64532c48bbcc7bbb4113f2e02aaac05b65c"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_circle_hex_v1/dwarf_druidic_circle_hex_v1_emission.png",
+    "sha256": "17ea90eb1a3d594080397e6ed0af15052bc4460e69b123a7c4cab1fcaf00a82e"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_circle_hex_v1/dwarf_druidic_circle_hex_v1_report.json",
+    "sha256": "2c7f1e294c948c23bda4bcb1ff5a5b4e68e3da941351b08502258aade1e06d48"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_circle_hex_v1/previews/back.png",
+    "sha256": "ff2f7059cffc49498a4a9902ff6c02d73b39f76f6fe16702d82d23f2da7eb4ba"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_circle_hex_v1/previews/game_top.png",
+    "sha256": "e8fe6ea657dc6ed4daf4297e5e72cbe23dd05a2b33a76dcaf0d23b5e979a3933"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_circle_hex_v1/previews/three_quarter.png",
+    "sha256": "80c7c431f2951402fd54771bce5df8dc52384cff6d62f425cd7886614f5233f3"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_circle_hex_v1/previews/top.png",
+    "sha256": "0e4104bac760f16d5a1c46e83d78a01f9a47aa10d4b883f038b56a6d016c276e"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_circle_hex_v1/README.md",
+    "sha256": "f5fed1ed41bd0e29187f59367e4b225cba17ebe10af41c0fa3bac561948e5515"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_ritual_hex_v1/dwarf_druidic_ritual_hex_v1.blend",
+    "sha256": "ff9b9545455a5e371f7548eef9c3609249e1355c41e32f5f845cbcfedc0f4d54"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_ritual_hex_v1/dwarf_druidic_ritual_hex_v1.glb",
+    "sha256": "15b0433dcd3d48d54f81b6ff29234e59ba63df4d515f4cf81346937b0ec07499"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_ritual_hex_v1/dwarf_druidic_ritual_hex_v1_albedo.png",
+    "sha256": "7abd9413cbdd560561714e4c40ed726808980ce162e1637b794f85e41d762268"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_ritual_hex_v1/dwarf_druidic_ritual_hex_v1_emission.png",
+    "sha256": "4cb4740a67d1d85d07ff94bf997d06e3d56d5786151e56501515348d0157930a"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_ritual_hex_v1/dwarf_druidic_ritual_hex_v1_report.json",
+    "sha256": "e7605c6be62bee32d55b1372b8027c1ef48676ba2f556ca10cd6004953a71be1"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_ritual_hex_v1/previews/back.png",
+    "sha256": "498f19ce3284f26de1cb06a5665ea26c3080261291eb9ae559f4ae4865113f30"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_ritual_hex_v1/previews/game_top.png",
+    "sha256": "6110b59d1ca11fb404fa508709f61160ee744647f445dd89a905df218b08044f"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "1df964753a3c5abb7509bbc206862486a94cf69fe89cda565d17bdd05b53332e"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_ritual_hex_v1/previews/top.png",
+    "sha256": "c9903112f42a8ae819d23429d2ca2622d83811d4aff687fe3ef4d97dbe513bbd"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_druidic_ritual_hex_v1/README.md",
+    "sha256": "1a561d41919de960eb17f3bad5a6809a84ba01c4658b54a8e1747ed701b44ed0"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1/dwarf_elemental_observatory_hex_v1.blend",
+    "sha256": "e1952d0e06f118d8178dde8427a693ba06731537b6f224bbc156c56b702d1aca"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1/dwarf_elemental_observatory_hex_v1.glb",
+    "sha256": "fdca7f2d07fafd07b639a2ee2a102d118dbd2beccee4bfe5525dbdc90ab9afe2"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1/dwarf_elemental_observatory_hex_v1_albedo.png",
+    "sha256": "f4534738a3d60202012da771532c8f7ddd3f180c4646d23f96e93a402c143006"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1/dwarf_elemental_observatory_hex_v1_emission.png",
+    "sha256": "42b60dc64263d4f34f1c505e7ebc736ab87501fcdfc48cd20fe0001a7c02283c"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1/dwarf_elemental_observatory_hex_v1_report.json",
+    "sha256": "06ec791848686f4de9f085d5f2de1d6b5731bfef3af5518baeb9233a37f16505"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1/previews/back.png",
+    "sha256": "39a23ac0fd2f8f316d2916e0a5fff8f143dea0515cb22871db9d36a614773eaf"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1/previews/game_top.png",
+    "sha256": "6fbe89c151337528faaea1cb6439f0968184c501d62676e344a84ebd677e3ac0"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1/previews/three_quarter.png",
+    "sha256": "197a3ee44bfed2f7a834e92b0e82568e2b2f4cbc24633877ecd54e806a77ae0d"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1/previews/top.png",
+    "sha256": "5a0ec3cb1c71e84caac7ffe55bc63146e540fa3947ae259f1a4f8f86c5ca96a7"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1/README.md",
+    "sha256": "d9b933bb2b0df1ec4d6cc354402462cfd38be866a1c91beadcc5bec8f0f8dc29"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_ritual_hex_v1/dwarf_elemental_ritual_hex_v1.blend",
+    "sha256": "2c3b20e1b522d8ac78ab6a66dec597446cfdfc296c8ce2ee1649673983c29fd0"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_ritual_hex_v1/dwarf_elemental_ritual_hex_v1.glb",
+    "sha256": "aae2176e49acc94b7a2f59684834562dc2744cff0dbfcaf2d635ef0e088d4c37"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_ritual_hex_v1/dwarf_elemental_ritual_hex_v1_albedo.png",
+    "sha256": "d4be6d57c90518a74d5dd57f9c3561f8342d9d21cd98e5f2e23485fe93430474"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_ritual_hex_v1/dwarf_elemental_ritual_hex_v1_emission.png",
+    "sha256": "4469818db1dd009eb93692048dc3005c99b1ca5bf051687d6c5e5912d9908ac9"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_ritual_hex_v1/dwarf_elemental_ritual_hex_v1_report.json",
+    "sha256": "5c2db9de7d3a4ea2d8a475eb1763bc7db3d7b009d8951c70348d67c56f80c3ac"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_ritual_hex_v1/previews/back.png",
+    "sha256": "6ca2298a1201d340dcf01f2c227ccbcaec0a63275e03edb6dbfa545df2d855a4"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_ritual_hex_v1/previews/game_top.png",
+    "sha256": "f8259861f8ce26717a3285f5ad549c10367be2ebba0e7cda17a2a7d89697ca95"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "27eb8ccf9147a817aad00922142c94593d6ff6c81761f70718e0cc893d075f44"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_ritual_hex_v1/previews/top.png",
+    "sha256": "f138ab4f468c1c38451226b386b76186d01bf4e94b9c1443485c0028b1b2d0c1"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_elemental_ritual_hex_v1/README.md",
+    "sha256": "3db6d401e363d4a1bb0dc1bed53e1a03953935d064c0fb22053e4e5d97401903"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1/dwarf_guardian_hall_hex_v1.blend",
+    "sha256": "f0335783a048b2e2b6efa270bc753542a774a150eb1525068488659555cf5f67"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1/dwarf_guardian_hall_hex_v1.glb",
+    "sha256": "393fb9165faec658b613808654cb6b4e90118894cf508cd2812509baa68e8cfd"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1/dwarf_guardian_hall_hex_v1_albedo.png",
+    "sha256": "a0a37bc3f5dddd493bfa8144d53308dd32899045e1653492b2ee26826096b257"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1/dwarf_guardian_hall_hex_v1_emission.png",
+    "sha256": "e1b1653c7c3e5f2b280f5da049c6654fce68b1a5b27780d6625873b70fff7722"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1/dwarf_guardian_hall_hex_v1_report.json",
+    "sha256": "14100eb68313544cbbc99af64616e7cd99f9cb6f1bc3df78cd129e98e7a7ffde"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1/previews/back.png",
+    "sha256": "ebcf8e73972f27bdaef572259c1d0d02f003d2b2711fa0e473f6f42f9ed98a26"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1/previews/game_top.png",
+    "sha256": "d61b76bbdf169fe3607696fa0e0052eef495e5b8269446f87a10253715625e95"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1/previews/three_quarter.png",
+    "sha256": "68bf00f1ee29870321186149f3d3d39284425ad9e50e30853236e0630bf85c0d"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1/previews/top.png",
+    "sha256": "6c1613293839509337f59c320ab0a3edab1c1ba4b38a87e37fff38dc4425a38e"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1/README.md",
+    "sha256": "a24a73d5f514ee3b936374371e7fbb66fecba8a67ff9c9d6603a1c476de1c640"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_ritual_hex_v1/dwarf_infernal_ritual_hex_v1.blend",
+    "sha256": "1cc1f84526f0719043c92a42c8c10d5a8e51906b51692e4e61777cc74ab3b661"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_ritual_hex_v1/dwarf_infernal_ritual_hex_v1.glb",
+    "sha256": "4b3d7d9b3a12e7d9d53cca86c880d608afa8885ccdd0200c877fc30b65491fb6"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_ritual_hex_v1/dwarf_infernal_ritual_hex_v1_albedo.png",
+    "sha256": "7130b79e7c352d30f52cb4e0fecc52dabfcdf0aedffe716fd17fac1827337af7"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_ritual_hex_v1/dwarf_infernal_ritual_hex_v1_emission.png",
+    "sha256": "1a565f9ce5881bebccd5de527b77dc2247ba79f27128aba3a899fa385ea7c01e"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_ritual_hex_v1/dwarf_infernal_ritual_hex_v1_report.json",
+    "sha256": "c77e96574b6eea321ecde9f54e8e0b7c9cc9204bf6708f325eb139b52be5e5b1"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_ritual_hex_v1/previews/back.png",
+    "sha256": "50cd53bd0ca703dd9a75f1c9a1af90e70c51492bc81d5b2ce1b2aace13b11a66"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_ritual_hex_v1/previews/game_top.png",
+    "sha256": "990a3f29be0f16d2e00fbd791b1d44e4d2b3438607497830c66b7ae243e83aae"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "1ae2303c5f984d3db1f1b80876760433b198a6a45d93996cccf0a8e5c8218b3d"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_ritual_hex_v1/previews/top.png",
+    "sha256": "9494527e8d09d79c5357aaf7095d91afc787ae60f65044d285ef3be4b4b1a041"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_ritual_hex_v1/README.md",
+    "sha256": "781473fd8f1b59642f708212ca087faf615ab76d503215b09515d3b02a1b35e9"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_sanctum_hex_v1/dwarf_infernal_sanctum_hex_v1.blend",
+    "sha256": "7a59054f8b4c6340af5eca79f156fc3a49d75ec2162215e371b4c2bee1b1383e"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_sanctum_hex_v1/dwarf_infernal_sanctum_hex_v1.glb",
+    "sha256": "2ea1454c3a01399f0d3ca14263a75a232a91f11ee07cd8943370655c1588f20a"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_sanctum_hex_v1/dwarf_infernal_sanctum_hex_v1_albedo.png",
+    "sha256": "204539cebce44fcc82f7929e41f7b7e7b92bde9a97f124ba238787fd3d686627"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_sanctum_hex_v1/dwarf_infernal_sanctum_hex_v1_emission.png",
+    "sha256": "ad7bb3fdc7a017488f69e9b1ced830dd0c1e7d8091c33d9079ff3593498e65c7"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_sanctum_hex_v1/dwarf_infernal_sanctum_hex_v1_report.json",
+    "sha256": "e8cd3fcca62096f9bb6c0e9e5e5e3822d0f2771acf7eec0eea27c830940046f1"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_sanctum_hex_v1/previews/back.png",
+    "sha256": "9368cae863114b4d58d0d3673d8577d8257f82ff132f75dccbbde55201a2159c"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_sanctum_hex_v1/previews/game_top.png",
+    "sha256": "0a90aa6031afccbe73924c9850bb25a7263a72b479c19aeb0845c8f1a74bfe1a"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_sanctum_hex_v1/previews/three_quarter.png",
+    "sha256": "806af0069b95590711f18ab6f6b89c2a349c43ef3d3833565f0fc784cda9a47b"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_sanctum_hex_v1/previews/top.png",
+    "sha256": "bd16764ceed445545d0f371b43881a617e03b0b4ca720d5739b44de3b7b1d5e8"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_infernal_sanctum_hex_v1/README.md",
+    "sha256": "1083627d2fcde8a6ae2dcc75cd38a6aecbcae866f397fb88b07cf002c36e50e4"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ossuary_hex_v1/dwarf_necromancy_ossuary_hex_v1.blend",
+    "sha256": "11d5ea3cf727275b82de853c9f3d92090c47c8883bc1d9a37e585fd14de7b240"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ossuary_hex_v1/dwarf_necromancy_ossuary_hex_v1.glb",
+    "sha256": "08653bab64079e7af8f357f1cc81ef600df03c42c5b5a9fad9ec37383bfe1dc0"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ossuary_hex_v1/dwarf_necromancy_ossuary_hex_v1_albedo.png",
+    "sha256": "1a76a8477fc1e186bcf854f1451cb3859bdbeaa48f8394bc9707b4b47eecdc41"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ossuary_hex_v1/dwarf_necromancy_ossuary_hex_v1_emission.png",
+    "sha256": "2e2a6a3afa6d39b4415d05a4e5f4baf1e743465862cb7a3a03b5cd6ee169e774"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ossuary_hex_v1/dwarf_necromancy_ossuary_hex_v1_report.json",
+    "sha256": "d76fca63032dcae0e54c0a64cced6f179d0653011a70e2d1667f17f2452925b0"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ossuary_hex_v1/previews/back.png",
+    "sha256": "b0d283f8c2fc5b29843eff7e1e0241e3a73519378a4aaf8814b56cca9bf12a3e"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ossuary_hex_v1/previews/game_top.png",
+    "sha256": "f3a1436bf34497b512de335ec63cab2c12fe415734295063933b09f12463e2ed"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ossuary_hex_v1/previews/three_quarter.png",
+    "sha256": "abb0fbec797b9ff814e2aa37d0736fd63dadbb37f880384062939776620dca09"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ossuary_hex_v1/previews/top.png",
+    "sha256": "f47c807112bba47a6f6ac497b58744b891118b2a7462ef074af995b248c952fb"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ossuary_hex_v1/README.md",
+    "sha256": "cf7391eef3bfec7e4a75552dc0e90043a513ce9dbd3d931919002ec3cb64b63d"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ritual_hex_v1/dwarf_necromancy_ritual_hex_v1.blend",
+    "sha256": "4c2ea2411ba809647c8053f348c82596f4ad6ffcc0bea9c4bc7fc03b605f7779"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ritual_hex_v1/dwarf_necromancy_ritual_hex_v1.glb",
+    "sha256": "a2f1dea5a597ac9075a4f53f1b418bf6e8d74b051c5bec4ddba407b37f46eee3"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ritual_hex_v1/dwarf_necromancy_ritual_hex_v1_albedo.png",
+    "sha256": "051ec3c37bd437c9eec3581a0419b4c1c5f2babd915204671fd81f9d9415ce4a"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ritual_hex_v1/dwarf_necromancy_ritual_hex_v1_emission.png",
+    "sha256": "4d131d786633efd80dc52f41835988414c2b1e7811c2c60d10523edea2071f5a"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ritual_hex_v1/dwarf_necromancy_ritual_hex_v1_report.json",
+    "sha256": "30065806517924543dbc73d8b535ae94a3cf7a02387057c34a16db1df16dc66e"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ritual_hex_v1/previews/back.png",
+    "sha256": "d625e7f51bd0ee8088043d4f2e9dbe0aca74a29c81a14000488d1684b6819cea"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ritual_hex_v1/previews/game_top.png",
+    "sha256": "07f4c2ffbb0d5f51c203c0d29d26b20e0ae82d6e52a2856ef31ba41ac05a1f1d"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "bd7665cfabe5da849cfd27777665c6d8e7ee0b33a0a2058f98e636b9c65241db"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ritual_hex_v1/previews/top.png",
+    "sha256": "b0aaace3bb36328a79958269be6b70433d9c487d3881435d652d02a1ec3f8889"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_necromancy_ritual_hex_v1/README.md",
+    "sha256": "430e3b1b8a04bd1fa3c4161acb19118426b03a796879e72f750ed46697584f5f"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_ranger_camp_hex_v1/dwarf_ranger_camp_hex_v1.blend",
+    "sha256": "50988d9af335db52e62f4c1a1b2a7be5c4e4a2c27d2f29ef23a4665668f5ba0b"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_ranger_camp_hex_v1/dwarf_ranger_camp_hex_v1.glb",
+    "sha256": "1a834bf887d58b54ec8f5eb5c0b8a2ae3560f4a10f9267488e715492ed2ec116"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_ranger_camp_hex_v1/dwarf_ranger_camp_hex_v1_albedo.png",
+    "sha256": "db01bedb4cbf90246a6af28a9b9579c3a2b03b749d3e9414012fce0818663d2f"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_ranger_camp_hex_v1/dwarf_ranger_camp_hex_v1_emission.png",
+    "sha256": "9611feaa782661de442ca926b34057a3eb2d19784bc9abf635888f792233abd1"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_ranger_camp_hex_v1/dwarf_ranger_camp_hex_v1_report.json",
+    "sha256": "ffaff8a2771b1f512b83f509032909a3a973236fc32f8ff9b55614f3a06fae68"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_ranger_camp_hex_v1/previews/back.png",
+    "sha256": "3751c5bb8196887de898bbd0b985340d91965a7d37e7b646fc825397c30eb198"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_ranger_camp_hex_v1/previews/game_top.png",
+    "sha256": "a0ffcf00f51147680dd0eedb25e72e7e69fee8c2d4c8e29bf34081a893442398"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_ranger_camp_hex_v1/previews/three_quarter.png",
+    "sha256": "cdd3f426944975b62789c315c5365de095b291d132f44f09198e3ef842ecf2e7"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_ranger_camp_hex_v1/previews/top.png",
+    "sha256": "b45a08e5c8a1e797a4d12362d5547969a6b46056f371a969f80e953c0a444908"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_ranger_camp_hex_v1/README.md",
+    "sha256": "e0a7c059ef0064e3840bbb291333ee6368b5965e61087d2c0e01ae15897b9583"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_rogue_guild_hex_v1/dwarf_rogue_guild_hex_v1.blend",
+    "sha256": "c137f852126576d201da4372012af828204467e62fb9f753e5f49784faf290bd"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_rogue_guild_hex_v1/dwarf_rogue_guild_hex_v1.glb",
+    "sha256": "0b0f7cbb6e6189072c1e0e071c618d2df4a65d486bf29c8f81fc7f30d8f1a282"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_rogue_guild_hex_v1/dwarf_rogue_guild_hex_v1_albedo.png",
+    "sha256": "ae6ef45ddb886b62cf9f176b07013ed9f2c5be708e9efabaa426014884e5d101"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_rogue_guild_hex_v1/dwarf_rogue_guild_hex_v1_emission.png",
+    "sha256": "f6668ab6705a90ca9cd8bd3fab9e22970744241dc117859fb31459531e6da2ae"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_rogue_guild_hex_v1/dwarf_rogue_guild_hex_v1_report.json",
+    "sha256": "583599a028609a80269ece16dd58b45c748dda82f2baed986dde0ba8b65b5213"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_rogue_guild_hex_v1/previews/back.png",
+    "sha256": "8e502638cfcdbed0ec47c8f6db61665c13dac68c7bc0ac997a3eea947a81ae6a"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_rogue_guild_hex_v1/previews/game_top.png",
+    "sha256": "dfe6ea53f4c7e5f874628d9ad445a2c8e573a90ea83bffbaecf8b00f0c36767c"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_rogue_guild_hex_v1/previews/three_quarter.png",
+    "sha256": "f47919d74cc4e8bfb2a9d87fdea913ff863e3dba9fc0d4b3910f1b815285fba7"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_rogue_guild_hex_v1/previews/top.png",
+    "sha256": "d84144e58143f99d9fbc1f2f7beec544844642869747f58fdd35180335ba586e"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_rogue_guild_hex_v1/README.md",
+    "sha256": "d64a232150c10d4c0f43ed217f5a4ceedf3453bb8ef5e964762ce67f67fd9304"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_ritual_hex_v1/dwarf_sacred_ritual_hex_v1.blend",
+    "sha256": "25f60404d55ce59a21c5d177d07fcf0c5695ce45cea6365e022c9520f78ff128"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_ritual_hex_v1/dwarf_sacred_ritual_hex_v1.glb",
+    "sha256": "d79d288b138827b15a1a1119ba8622247e70f8db06302dae9c8b627e2d16c790"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_ritual_hex_v1/dwarf_sacred_ritual_hex_v1_albedo.png",
+    "sha256": "ae0e9e6a7db9771b62a939fc8cfac6d8c57fc4c8270e435abe7317fab2df5f0d"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_ritual_hex_v1/dwarf_sacred_ritual_hex_v1_emission.png",
+    "sha256": "52c6b014c33fef32078d9843b2f6e5ad0fe553624b795cc4296361c3ed0f5fb3"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_ritual_hex_v1/dwarf_sacred_ritual_hex_v1_report.json",
+    "sha256": "2ab2c8b319b7c041694a5c6d4013d520987aa81e1251977845a370e3cdba7625"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_ritual_hex_v1/previews/back.png",
+    "sha256": "1de5d74ad2a7ee0af21c33eba27db2e27dbfa9614007e4d7106fe0ded2b8b0ba"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_ritual_hex_v1/previews/game_top.png",
+    "sha256": "7069bc069574bf642e6a1ba5bbd9a98e4a9dd6248bd41c0633e7d62264eea6aa"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "a5c77a4882fc9ae170001b3bb6c93cc9231cd6685621a68a38790c1c2b19fc84"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_ritual_hex_v1/previews/top.png",
+    "sha256": "25a7c176ddb75c2cf8ddecdd9e812b97dbd9d6105be16c11551de055a8f6513a"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_ritual_hex_v1/README.md",
+    "sha256": "066befe9e899056341d41c7ad1ff2788349104da445cd83f478cba33345c8b07"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_temple_hex_v1/dwarf_sacred_temple_hex_v1.blend",
+    "sha256": "c8890867ade12fdf89e9033d0272a342ae5774e3faeeae86eb925685ea5e90d5"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_temple_hex_v1/dwarf_sacred_temple_hex_v1.glb",
+    "sha256": "b5762dc6d67491093951633bbb60a4ff0035d0ea261401a3b2c8f6623ff52502"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_temple_hex_v1/dwarf_sacred_temple_hex_v1_albedo.png",
+    "sha256": "d5d35c109241b9b08353cadd6e525b58d0a034325caeb85154b2974c4188f7c9"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_temple_hex_v1/dwarf_sacred_temple_hex_v1_emission.png",
+    "sha256": "a3ab03d9b6b4c2fae7d6b0d175a19d7a25bde816cc9ceeed1b8de378b9ccdb73"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_temple_hex_v1/dwarf_sacred_temple_hex_v1_report.json",
+    "sha256": "713bad4f3530f8ca6e90c9585897b75108ac63b904aa86ed3622773e3cef168b"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_temple_hex_v1/previews/back.png",
+    "sha256": "728f1e1932cb869fe10fdde0b37566644a8e20923585d3ca758b8b5a2f6246c8"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_temple_hex_v1/previews/game_top.png",
+    "sha256": "1a344a09b9c3631880f59ab0a08c4c47d71740167e4ee08e7226dfaed136e1da"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_temple_hex_v1/previews/three_quarter.png",
+    "sha256": "bb4b50cd4613e115bec35301cfa0e5306d56f20b29e9fd9c87b7139f14d4c2c1"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_temple_hex_v1/previews/top.png",
+    "sha256": "1c6d0cd51a28058f8fb8d475ad68601faaa201846b57ae93381933b00ffb9ef4"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_sacred_temple_hex_v1/README.md",
+    "sha256": "3a0fb7dd5f8b2c15f6001f1f816359afc417263e135fb8b9295b4fd1439ca7fd"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_siege_arsenal_hex_v1/dwarf_siege_arsenal_hex_v1.blend",
+    "sha256": "1c95c5c43e076c7910fab6b675929000587545d1130ed2b6458076c75d6d29ba"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_siege_arsenal_hex_v1/dwarf_siege_arsenal_hex_v1.glb",
+    "sha256": "9b1df155d483e56fc1bb6e82a849b9a44cb97945dc9c3beccc2ec9cd0c1faf74"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_siege_arsenal_hex_v1/dwarf_siege_arsenal_hex_v1_albedo.png",
+    "sha256": "7af0a6164b9c2da1ebce2fc2576cb998bfa990a2eda4f5b73c1439967a6cb788"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_siege_arsenal_hex_v1/dwarf_siege_arsenal_hex_v1_emission.png",
+    "sha256": "7bcd854ed1c21730c661746013469e103dcb4cc296cdbf1ee605a6c846ceab3c"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_siege_arsenal_hex_v1/dwarf_siege_arsenal_hex_v1_report.json",
+    "sha256": "ae6db818c479e1140525d310bb25ecdb6fc7d428b89ae2cc5ea7906b099dc8dd"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_siege_arsenal_hex_v1/previews/back.png",
+    "sha256": "dd06e266096dfd84ca567235380dc62ad69dd1e92475311ee5db3d047df0049e"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_siege_arsenal_hex_v1/previews/game_top.png",
+    "sha256": "371ea01be3991985d794ab4ed5466d3260c4740095dec7c5f56ad97e02143913"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_siege_arsenal_hex_v1/previews/three_quarter.png",
+    "sha256": "19927f6865000c6d681d2e54b2ad17ea6abc9032723294de1fb1b259dd31cc5a"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_siege_arsenal_hex_v1/previews/top.png",
+    "sha256": "880092ec197066ac753d000084693e1bba9046c2c4d61b9d679028a838acc31f"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_siege_arsenal_hex_v1/README.md",
+    "sha256": "42d8cdfad8b670abb420ca50d91dc2a1f0b47a4c01469e9e50dc041451b5fe9e"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_war_stable_hex_v1/dwarf_war_stable_hex_v1.blend",
+    "sha256": "e4505519aed27ebe167850fff51c72c3b40c317542d6564fc373066907c3598e"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_war_stable_hex_v1/dwarf_war_stable_hex_v1.glb",
+    "sha256": "1538649f3708ceee8c3121b17690fdfa3c22847da4659e36f8538d87b2b3148d"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_war_stable_hex_v1/dwarf_war_stable_hex_v1_albedo.png",
+    "sha256": "5298e0348268faf49bd53b41139f115c868ce32ddef9254b102c1a7b81fc2022"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_war_stable_hex_v1/dwarf_war_stable_hex_v1_emission.png",
+    "sha256": "00644d1d04f83e4478296a4f9f5246904802764e0b3124ed0a56cb91c7adb116"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_war_stable_hex_v1/dwarf_war_stable_hex_v1_report.json",
+    "sha256": "d6fb6021000c16d57816989372211374bfc5389266966da9beef196b81d94355"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_war_stable_hex_v1/previews/back.png",
+    "sha256": "6c3945d42998d108ae3a398846c8578daaeb7db0f0930de8c8f040f3d1d89d0f"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_war_stable_hex_v1/previews/game_top.png",
+    "sha256": "1e3ef6658c0d17af571e09d6e7fba11b6b41a179f4052955cb2e0175a628ffca"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_war_stable_hex_v1/previews/three_quarter.png",
+    "sha256": "8948ada3184d51e863ed8cfb66069527c4b13331f4194ffc5f2888e81f461b8d"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_war_stable_hex_v1/previews/top.png",
+    "sha256": "a35c375f3a80127156ec8f5d7be149d25c2bda0c90ae5b278039a996ec637658"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_war_stable_hex_v1/README.md",
+    "sha256": "c118319b57141f9dafc7c50008f59a1aae77776cd8b5b3a7c5698ceb933dc002"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_warrior_hall_hex_v1/dwarf_warrior_hall_hex_v1.blend",
+    "sha256": "329d4492d9f8cf971a6ba2f8a83babfe7af7ca83905c056e193efa8bb6d3c26d"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_warrior_hall_hex_v1/dwarf_warrior_hall_hex_v1.glb",
+    "sha256": "be2da69acd730b5f76263e7589c65793a7aa50e41de99b27df649ffd2ff52132"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_warrior_hall_hex_v1/dwarf_warrior_hall_hex_v1_albedo.png",
+    "sha256": "502b45f46068b8930627904396d1ab5a72d55bbd416fbef6a70d7f1272c35cf1"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_warrior_hall_hex_v1/dwarf_warrior_hall_hex_v1_emission.png",
+    "sha256": "9e6c376dcb752c6e1cb5350bc604a4f6f4a38ab8479f04efecda6fa075278f98"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_warrior_hall_hex_v1/dwarf_warrior_hall_hex_v1_report.json",
+    "sha256": "43e700f37f3a64818f6745635db1283538d5ce866f508422e18a7c7476dacbbe"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_warrior_hall_hex_v1/previews/back.png",
+    "sha256": "fb20fd3e39cd4ec0490f48f23a8620514540affc5f91a1484d4824fc6692dfe7"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_warrior_hall_hex_v1/previews/game_top.png",
+    "sha256": "44421f6265c983b1895b6eb74b5855d7121261fb2cf7e958d581c6d5d9bd6c74"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_warrior_hall_hex_v1/previews/three_quarter.png",
+    "sha256": "3ec314ef302ae51eb1562188617f8e95b36b799b0e1275436d86141650605c36"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_warrior_hall_hex_v1/previews/top.png",
+    "sha256": "ba68dcf004b1b03f8260b48d94122f17e82a56c86e2fb8d1074aa7b0ef864b01"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/dwarf_warrior_hall_hex_v1/README.md",
+    "sha256": "364d2f4fb42bc9180b902c5526cd002a43b631985a36bb420a930fdaef242ad4"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/grand_magic_game_top.jpg",
+    "sha256": "8b60701f297d64f9e388cc94c12bb5f5e299012d1c50dbd28d155d93dfc1e668"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/grand_magic_three_quarter.jpg",
+    "sha256": "7febf888ad38e34ad86a5bac7fdb4f271ed5d7dd5ef1d8ffcaad4c5cf3028355"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/magic_schools_game_top.jpg",
+    "sha256": "b6cc66fa6fc16ab65a368d369209f919b112269d45b6ce9c1b2f9837a6a8c96c"
+  },
+  {
+    "path": "assets/generated/dwarves/buildings/magic_schools_three_quarter.jpg",
+    "sha256": "a4cb641818d0891f87bfb73e995e1a7ca187bd03624d325e53f724c9209b85bf"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_conclave_hex_v1/elf_arcane_conclave_hex_v1.blend",
+    "sha256": "a5f66dcd07f6b91573490ecb9bcc6b0ff0b8dcda8532db1bacc6c87c7e072520"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_conclave_hex_v1/elf_arcane_conclave_hex_v1.glb",
+    "sha256": "e9f12eb72a621aae4bf4707c225148cb581a11937a455639a9d906c3c1c0814c"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_conclave_hex_v1/elf_arcane_conclave_hex_v1_albedo.png",
+    "sha256": "e22d0c38eaefd6476fd101d2dd6041beb334812c522220150464161519675ab0"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_conclave_hex_v1/elf_arcane_conclave_hex_v1_emission.png",
+    "sha256": "cfa289712c545ce4174e04e464caac33ebeb30f4b2e0f9a96df96f430700d2cc"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_conclave_hex_v1/elf_arcane_conclave_hex_v1_report.json",
+    "sha256": "d81e03a0a6c4a6384d7e89e524f8125a83f0a4ff9115f840d1026e91cbe6b25b"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_conclave_hex_v1/previews/back.png",
+    "sha256": "243d521e7027fc87ec1a7d3176dd8b0169b93c47d365f2b12106787fa0d58610"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_conclave_hex_v1/previews/game_top.png",
+    "sha256": "546ec47b904f0fa8959ddac77a18650d95f6648956f1307072f0565b1d93b340"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_conclave_hex_v1/previews/three_quarter.png",
+    "sha256": "ead17fbe16165ba489bd0af0f71cbf1092dd9ac904709c235bf224f10915a09b"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_conclave_hex_v1/previews/top.png",
+    "sha256": "6cdc6ffbcef4932518b9fcd24a9355c1269e1e45aff2d7de77efa6c8e1ac087f"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_conclave_hex_v1/README.md",
+    "sha256": "fd4477241ae8513225f9df5bed2b63e35e561cc56411cec631138c8f9426a8f4"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_ritual_hex_v1/elf_arcane_ritual_hex_v1.blend",
+    "sha256": "9f549940d217f23486669a2f2fcc60ce4106a14941cec6a8edc795ad473b65c2"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_ritual_hex_v1/elf_arcane_ritual_hex_v1.glb",
+    "sha256": "c46726e633b8a94a72ccf25159279162c3818035035221cc727912c4e0e64e94"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_ritual_hex_v1/elf_arcane_ritual_hex_v1_albedo.png",
+    "sha256": "20c0ec360596f72f684c3a65c54b977b54706220fdbe4340d87f2034d4ba0fb9"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_ritual_hex_v1/elf_arcane_ritual_hex_v1_emission.png",
+    "sha256": "d4f1c7bca2b2597ef4432022bbc43c41546c677faddcee0f312e8ea72e42febe"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_ritual_hex_v1/elf_arcane_ritual_hex_v1_report.json",
+    "sha256": "0ab8b0ac6cac6a27bb40cff186132a5200529763e5b68c86497a0aede87b2b7a"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_ritual_hex_v1/previews/back.png",
+    "sha256": "7bed78f71f36fae6fd12faabf3fd0166fe3e10ff90aea92d2dfd162a9d6ef8fd"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_ritual_hex_v1/previews/game_top.png",
+    "sha256": "bec477e797bc229cba68db5f6d289f52a97b5eafeb9eafef716a9dac16b4d6b2"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "714c610844a07b1ca66e31f8d12c99fe679e72efbbb8012df0d6bf449fd95658"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_ritual_hex_v1/previews/top.png",
+    "sha256": "f484068564e265ed41cabb7f5c99896cbe317f0c19c39898cd60d4dec5eb54ad"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_arcane_ritual_hex_v1/README.md",
+    "sha256": "ce7da2e22cdf0f3eaebe778ed6a0b3499173ba8e21daad51366d3679c50c76ff"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_city_level_1_hex_v1/elf_city_level_1_hex_v1.blend",
+    "sha256": "739fb5cd7df9002cb6badc65d6a423b983ddcafe81dae989fdb16a7e93d8685d"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_city_level_1_hex_v1/elf_city_level_1_hex_v1.glb",
+    "sha256": "7f26b67f854e59ab699765216fd1efb27e02a69f8b93ca1cb3ec4d5c5673f9bd"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_city_level_1_hex_v1/elf_city_level_1_hex_v1_albedo.png",
+    "sha256": "2aa71f5d04384f88c479b051d9137c1c2b87689228f1783117abd9396a9504e1"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_city_level_1_hex_v1/elf_city_level_1_hex_v1_emission.png",
+    "sha256": "97e3ec2cbf0234e74ce7d89a0789be3ed76abcaceffb0f3891b7b6d3e39abe30"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_city_level_1_hex_v1/elf_city_level_1_hex_v1_report.json",
+    "sha256": "314748d121c8b9ae60a8a3c7dc07e3c3c393b4a950aafe67396f35ee0a62ce48"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_city_level_1_hex_v1/previews/back.png",
+    "sha256": "11b13214969487900e2454b863399c63929c7b7d8308bcf7be4f179c3f1dbaba"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_city_level_1_hex_v1/previews/game_top.png",
+    "sha256": "ccfd19e23a5ee46ac3e231bc3fbce1d9149e7e1788620b1529741a43f305d7c7"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_city_level_1_hex_v1/previews/three_quarter.png",
+    "sha256": "1c79a48f7886fa1688fba39f87addb5aa2f185769a347029ae7e0f22fe57a7ac"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_city_level_1_hex_v1/previews/top.png",
+    "sha256": "5dc4f247be5042116665250cbb889fde855cc54c861ff9a7554446c8bfbe7749"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_city_level_1_hex_v1/README.md",
+    "sha256": "475cd32e1b6211faeca40eeeda1ca054e7fad468ea86488578c8e4aebb8b37da"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_circle_hex_v1/elf_druidic_circle_hex_v1.blend",
+    "sha256": "8665eb8f2af5df6bf7722744aacee27c714e6355cec78b53d3b853384022a613"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_circle_hex_v1/elf_druidic_circle_hex_v1.glb",
+    "sha256": "3cd7df12cbf5d87316cf52508ac5be6bef9e11d7a5a0f34f116d6b85131d7a41"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_circle_hex_v1/elf_druidic_circle_hex_v1_albedo.png",
+    "sha256": "0703567ff989458c7d17c1b1b32ccb2ba30e320a2dbba4908ff89a02833ff417"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_circle_hex_v1/elf_druidic_circle_hex_v1_emission.png",
+    "sha256": "67dad91573acabfd893f89f4041de635dc12e3a6cf79eb86cf99052e97f7430d"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_circle_hex_v1/elf_druidic_circle_hex_v1_report.json",
+    "sha256": "fc39ada18ab0a90f61b1405d603b5ad8f61ab6410ca042006023d736b6ba30be"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_circle_hex_v1/previews/back.png",
+    "sha256": "cd1d5d29682d1a46449c3280aae6dcb19b10d1523f0a9c66fddaeacad07dced3"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_circle_hex_v1/previews/game_top.png",
+    "sha256": "aad0a8439ace39a19b72c2d15d134dacccdd841a07af6fb9c796bb893a05308c"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_circle_hex_v1/previews/three_quarter.png",
+    "sha256": "7245454b95a0d4e20f61f522ed857c182a4406da05080aacef5ec79368fe9d0f"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_circle_hex_v1/previews/top.png",
+    "sha256": "6eecf3eb96f7af443a29900d167900c4aa10ce57efc9ff7c35ed6d991f70f967"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_circle_hex_v1/README.md",
+    "sha256": "52a5e76493c5490be140a4f36dd7c004d74e19cd03fd6bbc0a729bc13c916a37"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_ritual_hex_v1/elf_druidic_ritual_hex_v1.blend",
+    "sha256": "45eeb2c4b5b09df4dd585b2cf26c4d50503c4ae0d354356811a85ed7a40781ae"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_ritual_hex_v1/elf_druidic_ritual_hex_v1.glb",
+    "sha256": "ac7068369e7b9794a3931c626b7975e3b151bd467cb0515956ef46be8826675c"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_ritual_hex_v1/elf_druidic_ritual_hex_v1_albedo.png",
+    "sha256": "7926726fbf91bff9ba6588b5ae7a682f819a83a505f5ed9f76f2ff00c6a261a1"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_ritual_hex_v1/elf_druidic_ritual_hex_v1_emission.png",
+    "sha256": "daad5907787d5473527eee1e3f73749b09f902a373596a24df4c89b674283188"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_ritual_hex_v1/elf_druidic_ritual_hex_v1_report.json",
+    "sha256": "2c83e9c79773e19995bc7376362e48f93cb77b18308506aaf459e31cad9d6774"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_ritual_hex_v1/previews/back.png",
+    "sha256": "89736947254ee289b7b495f1d5f035e36cbe522166b0e7065a60fcb8d4b7c459"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_ritual_hex_v1/previews/game_top.png",
+    "sha256": "67338feb21308ef9e7f065d107eccbfad291eea0c24805aff55c0562d3e06785"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "05b92c0ae3a0f462ce9d84b177ef34c592b7f59c81d8a66425ed9c506d0c1276"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_ritual_hex_v1/previews/top.png",
+    "sha256": "5c19fdd02bd8d22c62c18fd90486631904d7fb6c45c0726d3f2d8d1812ce8be2"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_druidic_ritual_hex_v1/README.md",
+    "sha256": "134d71483894de484375c5adb3fbb340df2bb3250ed487aebcebda0e5b5d0c1c"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_observatory_hex_v1/elf_elemental_observatory_hex_v1.blend",
+    "sha256": "2e3a28b949d643bd8d50884b4a8374fdfb72958af5d9a9965b30c88182812be2"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_observatory_hex_v1/elf_elemental_observatory_hex_v1.glb",
+    "sha256": "12fe8a1501066d1473e2766ead8f407a4d879442a26ffdc80952c892daf3e7fb"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_observatory_hex_v1/elf_elemental_observatory_hex_v1_albedo.png",
+    "sha256": "956d63c65869df1b985fedb8be946dddf1a50e1905e39e59508f5c7011f9b2a7"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_observatory_hex_v1/elf_elemental_observatory_hex_v1_emission.png",
+    "sha256": "11cd45fd0419357480d8a1c2a51337c9bec13daa0744dd60f1704a994b36cdc3"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_observatory_hex_v1/elf_elemental_observatory_hex_v1_report.json",
+    "sha256": "8d479a111d75709a6d9c2163a1f816c2facb002be1e5435f24e6912f93d355fc"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_observatory_hex_v1/previews/back.png",
+    "sha256": "1490b39382f9a4962284f3b0e9afec2ec1fbc5f54ab96ef6529495eb3c3faded"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_observatory_hex_v1/previews/game_top.png",
+    "sha256": "44756c9a40a92cab4ea0ac7d0d7ba4d6964ce5a0a35be7822d3abf80cb71c158"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_observatory_hex_v1/previews/three_quarter.png",
+    "sha256": "d0712e789d23e405a31784dfcb6acb5eff03324b7a7439dc6aa500d795559a66"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_observatory_hex_v1/previews/top.png",
+    "sha256": "661d9bc82677c2ccada62fe3d1bc19a23a62c5fdeb7398abd64a2446f9221aea"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_observatory_hex_v1/README.md",
+    "sha256": "c0c6705f495ef68c884583f127735132ecd2022806e8e3fe482193e9c435910b"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_ritual_hex_v1/elf_elemental_ritual_hex_v1.blend",
+    "sha256": "c7b439c8404f598c7baeaf77009e72d0bc95b4a49fe4d4bebfd880bacff37a89"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_ritual_hex_v1/elf_elemental_ritual_hex_v1.glb",
+    "sha256": "8568457c0151b658e2e1960e65ad31082f2a41a46e10c53c01c84b4f3814170d"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_ritual_hex_v1/elf_elemental_ritual_hex_v1_albedo.png",
+    "sha256": "615b0a906662cbba7611e4a3515d7eb6353c57dacf8ec8484fdf0d1a44952e06"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_ritual_hex_v1/elf_elemental_ritual_hex_v1_emission.png",
+    "sha256": "180e49f982a1f76432b30077864b52752fd927dbf59a592fe30b3842b1225e55"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_ritual_hex_v1/elf_elemental_ritual_hex_v1_report.json",
+    "sha256": "39c504c76766a52ee4137af291890b91730e811f434081200253d6cb05c9e21f"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_ritual_hex_v1/previews/back.png",
+    "sha256": "ca4ecf6a7e54a35ee6b3c5f976607dc4772e13e33c7de520b9c3b9e4512efb44"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_ritual_hex_v1/previews/game_top.png",
+    "sha256": "14fd2db17882773b3cdfe17d5d5835994aabc5b193f729b605e02ebca9f50d0f"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "14809bfca3deba70a90869c551d956f52be101a1a4c64a7edfbe5a6118d687b2"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_ritual_hex_v1/previews/top.png",
+    "sha256": "31d521bfa1df3c3e5581f2cac8e240fd1eba6ad2e0fb330860c180c08e2be716"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_elemental_ritual_hex_v1/README.md",
+    "sha256": "6f4a58f69cba71f9725f2a91832bc2e63e471956c4b237436da380c70eaded92"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_guardian_hall_hex_v1/elf_guardian_hall_hex_v1.blend",
+    "sha256": "90e5fffe83cc12a39470eb72e16bd84a0fafd780d9ca194c7bb761cc2499e849"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_guardian_hall_hex_v1/elf_guardian_hall_hex_v1.glb",
+    "sha256": "b8804cc48e6e60fdb8eb34ab7be8dd640fd0827a3fede3a72255ecea1fdd15e8"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_guardian_hall_hex_v1/elf_guardian_hall_hex_v1_albedo.png",
+    "sha256": "5951fdeb7dd6532dd4748699011187220cbc9e38a959ef19b39131f0346413d0"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_guardian_hall_hex_v1/elf_guardian_hall_hex_v1_emission.png",
+    "sha256": "ea4e134ffca4ea858a3f6960f80c8c1c7b22475e30a179761eba0bb1a2a87727"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_guardian_hall_hex_v1/elf_guardian_hall_hex_v1_report.json",
+    "sha256": "021d048998235eb6bacbec559acc1f4bec2d46267008e2db329e846587701978"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_guardian_hall_hex_v1/previews/back.png",
+    "sha256": "f17505ed1e179206dfa41e45e5162aeb9f1fd556dc10860ffeb4e6d18c8ab8c3"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_guardian_hall_hex_v1/previews/game_top.png",
+    "sha256": "f6868495e5c812d9e61459ac4e80054319c4f3384236a6d74914c157ea62eb54"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_guardian_hall_hex_v1/previews/three_quarter.png",
+    "sha256": "64ebe719fc350ec820445219d2fbd6bf2da0116d6f47e09d5e921e00ea3005c7"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_guardian_hall_hex_v1/previews/top.png",
+    "sha256": "d18dd970bd66b5304777392ad5fc713884f6b10d0c4c5c8bd16afbf09304871b"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_guardian_hall_hex_v1/README.md",
+    "sha256": "d63ce493c3d6d5e685231d7ef8d200226d1c123ce96f01719cf937c43be9790f"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_ritual_hex_v1/elf_infernal_ritual_hex_v1.blend",
+    "sha256": "cdae75f6dff325051392f03b68ba9cf5476d9b6277528775e215cd10c105eb9d"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_ritual_hex_v1/elf_infernal_ritual_hex_v1.glb",
+    "sha256": "ceafb0d8864058ef5cd9f26a878395259dd9f6d7e83064bdd95ef49f25b7a6b2"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_ritual_hex_v1/elf_infernal_ritual_hex_v1_albedo.png",
+    "sha256": "3c246593efed795f3b26a29461539fb5c0d058e06b0b7276447b2b31a92fcd88"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_ritual_hex_v1/elf_infernal_ritual_hex_v1_emission.png",
+    "sha256": "e207594c0a57982e57467d0d9c5f147398e42633ec1ba02e6fd56e4ddb09c708"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_ritual_hex_v1/elf_infernal_ritual_hex_v1_report.json",
+    "sha256": "21d2fc376bddc48af3031657610fcde93c7f81f3e9e8e709a8c2fc4dad261af5"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_ritual_hex_v1/previews/back.png",
+    "sha256": "5ec9739f36e96d6c635539359a9de23016ffa905d2225fb28d95b4d6fe2c2d65"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_ritual_hex_v1/previews/game_top.png",
+    "sha256": "d2778f609b9d1383323334640c641546ddd3ee8fe209d61415f1b8cfe1a0a6a1"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "4f7468d375cfa7e5425fd8916e87e5bb99aac3db53178405a33a1c27ca5d7d9a"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_ritual_hex_v1/previews/top.png",
+    "sha256": "2bb38f6681757539322d0b777633888d2f7e9a1f796db3774b790b94b5b874af"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_ritual_hex_v1/README.md",
+    "sha256": "724ee2ed8091d62d1e43cb61989ff90ff473794721b739a1ff94c34ec382f410"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1/elf_infernal_sanctum_hex_v1.blend",
+    "sha256": "3a3677e3cd8705fd1e26d9c9d3c935798d87c63babe90f79303a170ade108e27"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1/elf_infernal_sanctum_hex_v1.glb",
+    "sha256": "9732345734681a86133cee5bf8f0ec8b07724d53853bc1e466d7d175710f5dfb"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1/elf_infernal_sanctum_hex_v1_albedo.png",
+    "sha256": "b79a90c3a11801b837eeb0d85348043ae31e282de1a30f1221b09c44bf4cb014"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1/elf_infernal_sanctum_hex_v1_emission.png",
+    "sha256": "db33398cb6af60df88f52b19eed380515bed51f3069bf9b723b7da9e7c192c4c"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1/elf_infernal_sanctum_hex_v1_report.json",
+    "sha256": "6a5eff099d7b92de1307b4edb1b9e7f407edc086b5cd1b3bf6f028755d47df12"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1/previews/back.png",
+    "sha256": "dc51226eb1519f76d5b4e5e77fa6792401ff754f0cf7c23470a497ea1b8c1881"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1/previews/game_top.png",
+    "sha256": "2b17a2626253d151d22c38536d2508312e97bec8bae628bf6e540633576411dc"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1/previews/three_quarter.png",
+    "sha256": "48b4bcc6129b60e16a991bc8a1fe8c47a45c0e805a1fc43f4a1f20226e5fc4e3"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1/previews/top.png",
+    "sha256": "d9b95b7e4ffc3f34558db7eb88f7d55cc5f55ed230345137627f4083ea43efde"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1/README.md",
+    "sha256": "db05b1eb674662ba61bc0ef9e24e20aad273ca56366a77d3de3a1ccf63bf4d59"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ossuary_hex_v1/elf_necromancy_ossuary_hex_v1.blend",
+    "sha256": "b38ffd94d3e0f028a8df8c7a7aaa72e93ec7f0c99c92bfd24020bb43333bcb35"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ossuary_hex_v1/elf_necromancy_ossuary_hex_v1.glb",
+    "sha256": "49b525b2ed75a4b7220868a2c2dda6002a52639f91d9ed1eb022a5bab2da25ee"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ossuary_hex_v1/elf_necromancy_ossuary_hex_v1_albedo.png",
+    "sha256": "35cefb4a130459154d15e5b77675853cc533391b56bb3a64735f617c63e01213"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ossuary_hex_v1/elf_necromancy_ossuary_hex_v1_emission.png",
+    "sha256": "790cfab4af15f33ef3eae730b40b0028eee68146a03faf6185da1c0e72574225"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ossuary_hex_v1/elf_necromancy_ossuary_hex_v1_report.json",
+    "sha256": "2f0a49a44040e3753f657dbc58af6f9a5e841865104791ef267f862092547862"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ossuary_hex_v1/previews/back.png",
+    "sha256": "b07d2ff77efbcdc3bbecd3b507ae84b124632a06079ee1ac15dfcb15ce3801f0"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ossuary_hex_v1/previews/game_top.png",
+    "sha256": "ad9b0b46be843e9c9308490d6dc934bee97baaf971ed2f3d22e4f09ed0e490aa"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ossuary_hex_v1/previews/three_quarter.png",
+    "sha256": "3a548ea212fe326c943a5cc4e76fd2d6ecd9c5a80f7c204235f3f2084e97ebb4"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ossuary_hex_v1/previews/top.png",
+    "sha256": "065c89216690946acc0223eec534ad0fe88b896ec7fec809bf54ab1958cd7447"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ossuary_hex_v1/README.md",
+    "sha256": "5e65731fd7921c5119d33b4adf44e991fbee1eda7b3b3b26030409b85f14ab21"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ritual_hex_v1/elf_necromancy_ritual_hex_v1.blend",
+    "sha256": "f8899f1aebb40302902f152ea9f9f8ab4270f6c7efd7d15a5b0565ddea65658d"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ritual_hex_v1/elf_necromancy_ritual_hex_v1.glb",
+    "sha256": "391344c4b9f16326fd43d84981bdbdca6680de88414e72b8f1825dff56686d5a"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ritual_hex_v1/elf_necromancy_ritual_hex_v1_albedo.png",
+    "sha256": "1cfcd099ea9ac503c8670512b49c4399570e87b515e2753af933fa5a98d8e018"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ritual_hex_v1/elf_necromancy_ritual_hex_v1_emission.png",
+    "sha256": "d0c14ed610f9b1dc474f52a5246bd4699183b6871c6cb28fc75630c8f8232020"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ritual_hex_v1/elf_necromancy_ritual_hex_v1_report.json",
+    "sha256": "6c3c2dcd579da9251abc5fc7d1ab20fa98a4f35c2d2c7d2f45ffc58408e2260c"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ritual_hex_v1/previews/back.png",
+    "sha256": "5e4d1c25e12dc8c5b27baec0601831231d17dd874acd7dcb05f66d1709686f43"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ritual_hex_v1/previews/game_top.png",
+    "sha256": "3d2e7dfe594fa42b116d8484f2c8ee243f2eaf306f47d62b440a4f1505a6cab2"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "be629c1debea45013faefcdffeac354df4381a230e3034a81cdeb4be44022e5b"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ritual_hex_v1/previews/top.png",
+    "sha256": "7e1f03dbd26bc9a7a6e6febcf3854576a70b9ba5bbf9147d90b4d2a9cecdaa93"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_necromancy_ritual_hex_v1/README.md",
+    "sha256": "9b54ff5ba6df1181a27272d4da01a100c2ef63dae8fc6020cf07ca8b334d15ff"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_ranger_camp_hex_v1/elf_ranger_camp_hex_v1.blend",
+    "sha256": "8b656889c98c3a28b3bf9b0a1411bf9c617d56cb9eb9d1ff525f4d6424ccaeb1"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_ranger_camp_hex_v1/elf_ranger_camp_hex_v1.glb",
+    "sha256": "faacbd57389e2e0572c658663819d34101c3f16e42695e30090f542aa9c7df0c"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_ranger_camp_hex_v1/elf_ranger_camp_hex_v1_albedo.png",
+    "sha256": "9b664f8929bf3643e12df9b170502006b6eb0fa438c56d13cdce574b859f0eb2"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_ranger_camp_hex_v1/elf_ranger_camp_hex_v1_emission.png",
+    "sha256": "14cb0053a9d9d28666bc4cfde12534be8972e5c01f4ae45af603a6c969748d76"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_ranger_camp_hex_v1/elf_ranger_camp_hex_v1_report.json",
+    "sha256": "233a317dbffaec6d3e6c464f1b51acccd5cdc74e29f7d803bd235e041641c6ec"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_ranger_camp_hex_v1/previews/back.png",
+    "sha256": "445889258c2b31d9f749d8a49ec23009101bc80063779c410ea5f9ee8a6eee55"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_ranger_camp_hex_v1/previews/game_top.png",
+    "sha256": "60f6efad7643cf01006dda816a1faddf88287ec8609fa14f170e04beb9514d0e"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_ranger_camp_hex_v1/previews/three_quarter.png",
+    "sha256": "13c7c66666b23d324288d49120516de663c8a5389b4b5c44489f13c0b3580662"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_ranger_camp_hex_v1/previews/top.png",
+    "sha256": "4223ae8ada85ded06ba695d5973deab04baf8f15fc689bd66b25eb934ea0f8ff"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_ranger_camp_hex_v1/README.md",
+    "sha256": "781abbdf07a9216f10c31f57871009bf7e15965e014f0be69c5c560e58e0580a"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_rogue_guild_hex_v1/elf_rogue_guild_hex_v1.blend",
+    "sha256": "71367fba60da9e180c7114da69d17f878f6b12e20f5b0283c79470f6c019397d"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_rogue_guild_hex_v1/elf_rogue_guild_hex_v1.glb",
+    "sha256": "aade259fb8be5b4e3b3e9778caab3fcae6deb5d0f8ad2168ec352eb398517435"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_rogue_guild_hex_v1/elf_rogue_guild_hex_v1_albedo.png",
+    "sha256": "44530913d2499b7f38d92a00cfccab90dfdd2fe158f571dc578d13cff038c3f6"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_rogue_guild_hex_v1/elf_rogue_guild_hex_v1_emission.png",
+    "sha256": "6f5a10e2c78e31b0c6bdcbc50d49374ea73484eedc61c08225ed2df768fa7332"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_rogue_guild_hex_v1/elf_rogue_guild_hex_v1_report.json",
+    "sha256": "0c1accba0a3923201d46f26986e9ef3aeb2f6a7c7030e12bff180edad6d9b785"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_rogue_guild_hex_v1/previews/back.png",
+    "sha256": "ccda63ba0eb53ab950cf9cb10bfde7c96ad511faa77599669aae67e2de2483b8"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_rogue_guild_hex_v1/previews/game_top.png",
+    "sha256": "5a94d8a1556643ebc488f2e687bc26c6bb875332ae9358e935e7d565295f84b5"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_rogue_guild_hex_v1/previews/three_quarter.png",
+    "sha256": "da16053a8237e090988ce502f8df1abe23bcfd5752f296cfbe9bf28bfcd366a7"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_rogue_guild_hex_v1/previews/top.png",
+    "sha256": "583673db29a7bd625c1f82ca383f66e518024b97436b308755cc319160daf5e4"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_rogue_guild_hex_v1/README.md",
+    "sha256": "ad1b48b1cddc7e5384af73f5cae48d5307a9a6f3f46ac64c135195373961d7ac"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_ritual_hex_v1/elf_sacred_ritual_hex_v1.blend",
+    "sha256": "fecc355f4ed74b05ad5c02695df37bd5a54cdfd703ebbba7bd94b10c973c5c2d"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_ritual_hex_v1/elf_sacred_ritual_hex_v1.glb",
+    "sha256": "09d55ee164329e46ef6e4e5c06644e052553174c5e5aa3761bee7dada46f41e7"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_ritual_hex_v1/elf_sacred_ritual_hex_v1_albedo.png",
+    "sha256": "eacae0a3272b255870ce516bcf65fac77e71708c605a51244399e9f1638178ee"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_ritual_hex_v1/elf_sacred_ritual_hex_v1_emission.png",
+    "sha256": "0fa6fc77cde6c943bf0f1f0bd35a9a7dc6c622629b2ad9ea258d5bcd33d2ada2"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_ritual_hex_v1/elf_sacred_ritual_hex_v1_report.json",
+    "sha256": "dd79ac90692ef32cef486720b2e287c7ffeff9ff510f80af4ad7444da4e154b3"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_ritual_hex_v1/previews/back.png",
+    "sha256": "a763ec2212f44b495a0705ab3c45f8558494cbfad3159597517957ac9e2a22f5"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_ritual_hex_v1/previews/game_top.png",
+    "sha256": "0096cc810fdb70ea219a9d3c0f3b40ba22cf139da39d842d6b9e6ccb796b4639"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "9b6db729767579215f1202867918af2d68b7c769e6d85cb5a1b71438dca15e38"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_ritual_hex_v1/previews/top.png",
+    "sha256": "69a7106717a7f193a2d9c75fc0b007f01d90541ba385a2c97b1651b2c75b4948"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_ritual_hex_v1/README.md",
+    "sha256": "2d55d8075a799539d03a01c3e69368e23c173d387df7c8c4b607eced26ae0a03"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_temple_hex_v1/elf_sacred_temple_hex_v1.blend",
+    "sha256": "35dcdad6fc10ef5581e7462270fd496d47b4ac56b9e70fd93ee9c59aadb2498a"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_temple_hex_v1/elf_sacred_temple_hex_v1.glb",
+    "sha256": "1383e07201d88cc3cd9ce5724b89072d6a62910f06a2e1946eb20b9aad467278"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_temple_hex_v1/elf_sacred_temple_hex_v1_albedo.png",
+    "sha256": "903260a21109f5bb2f4b26d9eebb591a5e9f6bfd78f1ae64283607f236e8f38a"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_temple_hex_v1/elf_sacred_temple_hex_v1_emission.png",
+    "sha256": "4cfd66b255965b087290c8ef583c4e5c4922067022bff7f42b11e825bf5ffa45"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_temple_hex_v1/elf_sacred_temple_hex_v1_report.json",
+    "sha256": "d07060cfd11309b5b70283d777007305e356f5826138f427a99fd131ee3793fd"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_temple_hex_v1/previews/back.png",
+    "sha256": "a9c33ebcf62d6a35c3044f4d998d8560b88354da08d4abba86da2297f70e974a"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_temple_hex_v1/previews/game_top.png",
+    "sha256": "d92358a8bca0a1dfabd66b745cfab60b5bd15e976de8a003a00553b35cf4514c"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_temple_hex_v1/previews/three_quarter.png",
+    "sha256": "b7888ba9b2098c2eedf28a1a2c0faa27d25be97c5a3aad0d6a3b4db6b4e868fb"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_temple_hex_v1/previews/top.png",
+    "sha256": "ee1dabe6ab7e0ebeb79d94728ac9b3d60dc4ce084c47338d24a655de6d783fac"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_sacred_temple_hex_v1/README.md",
+    "sha256": "4e6a2f595feb9551cb732d27b0904054411d65ec2ecf637f4b4846a9b26e7608"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_siege_arsenal_hex_v1/elf_siege_arsenal_hex_v1.blend",
+    "sha256": "96f369a928dbfe4cca8e088f2d1090221155ad9cdf046b2621a509b5c1532b94"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_siege_arsenal_hex_v1/elf_siege_arsenal_hex_v1.glb",
+    "sha256": "2e40231fdb672bf32c482a5d956db0a7e8b2736b6a8cfd3a5d253aa57507df55"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_siege_arsenal_hex_v1/elf_siege_arsenal_hex_v1_albedo.png",
+    "sha256": "c646c482a17b0dd877e423434c205a65485e91021ae23c4bd6b59d1b0fad565e"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_siege_arsenal_hex_v1/elf_siege_arsenal_hex_v1_emission.png",
+    "sha256": "8f60d188c66e3d38ca4f11b96adc4d98a7c071409d949f2f18810e1d89659b4f"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_siege_arsenal_hex_v1/elf_siege_arsenal_hex_v1_report.json",
+    "sha256": "4e5a01b74871bf8f38a466f28e7d6f9ff23cc863b5b0036fe3887140f128e97e"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_siege_arsenal_hex_v1/previews/back.png",
+    "sha256": "308118f9abd60d72a0535f00dd80d49501f69b6cfda3c53d924cf87fb8b13994"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_siege_arsenal_hex_v1/previews/game_top.png",
+    "sha256": "d17c7326713508129e2204f2ff38c54d58fe08d1751f9f5450d1d1ffda237987"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_siege_arsenal_hex_v1/previews/three_quarter.png",
+    "sha256": "7c87be2fdfe6fb50b125b20c191011fd750f5d5b46b85459dd74bd99e968020d"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_siege_arsenal_hex_v1/previews/top.png",
+    "sha256": "f505d0323433ed139664a942ca4a29c8c46cc12281ec8ddaa9d2afb098de3e33"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_siege_arsenal_hex_v1/README.md",
+    "sha256": "511b401117db156aee97727ae5faeb5e3ebc955b072ae56bee556e5be16e4ef7"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_war_stable_hex_v1/elf_war_stable_hex_v1.blend",
+    "sha256": "96934dbf438d114a3a8fc5acdfc3cc0ea3f4041927c6b4b813c30a3e03eca9e2"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_war_stable_hex_v1/elf_war_stable_hex_v1.glb",
+    "sha256": "1b597be87beedc6628237897faa472714ddaed49d584dcd122c6ee4e31a17228"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_war_stable_hex_v1/elf_war_stable_hex_v1_albedo.png",
+    "sha256": "3c36eb8f0455672f4a6b839b189bb0067db4dde4d6f8291e516bf99ac29ace7d"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_war_stable_hex_v1/elf_war_stable_hex_v1_emission.png",
+    "sha256": "10e8d66c088a940b2f06def5be9713c6f53ddb8ebf31fccf21afbcc7dadc6ed2"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_war_stable_hex_v1/elf_war_stable_hex_v1_report.json",
+    "sha256": "4528f804f38f136f3cac0a9b8ed126d684c5ca814858e016aa0623e21b18e711"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_war_stable_hex_v1/previews/back.png",
+    "sha256": "6c0bd2507d5635511fc0bbd36a85fe3c7a9944ab9a3cbbf47d7d7f92fbd0ceff"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_war_stable_hex_v1/previews/game_top.png",
+    "sha256": "8c153e06bc6fb90b4462b9024fd39916eb5cfd24d134bbde4eda0191abfedd93"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_war_stable_hex_v1/previews/three_quarter.png",
+    "sha256": "9b20384be025b8f44d8c0da5de6a4ca342499ae9784cf2ff3a076b9ff7612e11"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_war_stable_hex_v1/previews/top.png",
+    "sha256": "5bac3a57bbe7b705c4900a719044b9a1360088be72b258233ea5897954541a19"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_war_stable_hex_v1/README.md",
+    "sha256": "86dd2e8c92cf5ce615c4b1d523f7a9a787416df87daf98a3315d40930e467688"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_warrior_hall_hex_v1/elf_warrior_hall_hex_v1.blend",
+    "sha256": "bab0d548ce2c08e4754e21e4ac6255fc5cc6714f96f519067f00d9cf7c150ec6"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_warrior_hall_hex_v1/elf_warrior_hall_hex_v1.glb",
+    "sha256": "eb6685b39f95b6753789fbd2c646062155e6aa96def75614cf1ab80eee4d4fcd"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_warrior_hall_hex_v1/elf_warrior_hall_hex_v1_albedo.png",
+    "sha256": "4d7b653f76bf22720db8dd3a1d9412b0ab70160066e70f6839304ba650b7445a"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_warrior_hall_hex_v1/elf_warrior_hall_hex_v1_emission.png",
+    "sha256": "a811c1ab2cfb51949ac656ee9db488e9218e2bd04fb42ac93514bf1255f42d23"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_warrior_hall_hex_v1/elf_warrior_hall_hex_v1_report.json",
+    "sha256": "36fd12b14f6e5812b1fc7eb6367b3182e4756fc3dc88e5b0932804c2beb67d67"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_warrior_hall_hex_v1/previews/back.png",
+    "sha256": "1357fdaf940638a1c6d2979f301c522bb99a1f3e6769e4102e307faf76928761"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_warrior_hall_hex_v1/previews/game_top.png",
+    "sha256": "83d40f81a3c76c530305460f00981ef1e88cd6d5e8ea7ad712e56fd647bf07d6"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_warrior_hall_hex_v1/previews/three_quarter.png",
+    "sha256": "c1126f5c14335828940eeab71f9203eb2910c0a88ed7bf6cbf17ab7838a42f8d"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_warrior_hall_hex_v1/previews/top.png",
+    "sha256": "f861adc7975e546afa307b33ee7fd947ae262bebd328797c38739efd236546e2"
+  },
+  {
+    "path": "assets/generated/elves/buildings/elf_warrior_hall_hex_v1/README.md",
+    "sha256": "3dc77efbada438d17159f726ace12a96240edd829d661c37a1ecfe3f1db7552f"
+  },
+  {
+    "path": "assets/generated/elves/buildings/grand_magic_game_top.jpg",
+    "sha256": "cdf543af6c7b37ede5b3146162b7ce13606cee2a13e9d7835ee929bcafe45d2c"
+  },
+  {
+    "path": "assets/generated/elves/buildings/grand_magic_three_quarter.jpg",
+    "sha256": "aabcc4042c0b7babfa6f5ac5ab67f960eed9c5201f5e2f8d938141c49382292a"
+  },
+  {
+    "path": "assets/generated/elves/buildings/magic_schools_game_top.jpg",
+    "sha256": "52e79f49bc27c3812451699487afa86c10db6e5a12180eecf3e28693419e11b3"
+  },
+  {
+    "path": "assets/generated/elves/buildings/magic_schools_three_quarter.jpg",
+    "sha256": "6378e3f65f9657d29078eaf2abbab3993b11a068827412419d103580f383108c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_conclave_hex_v1/arcane_conclave_hex_v1.blend",
+    "sha256": "99dc8d6af4fbd9160811bb456dde8222c18a2a253695dcc420da32a3f294e72c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_conclave_hex_v1/arcane_conclave_hex_v1.glb",
+    "sha256": "3158f839ec36dd6d820de0c51074305fa065473dcf07deaa159d0b480b923acc"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_conclave_hex_v1/arcane_conclave_hex_v1_albedo.png",
+    "sha256": "1ae24ceaa84f447139705dd55aa13fd31382045c8e418c8be3c1c976bdc53adf"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_conclave_hex_v1/arcane_conclave_hex_v1_emission.png",
+    "sha256": "414fe8e472cb711d61689b139cf7e4486aba942191a01e460c64b3440423ba07"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_conclave_hex_v1/arcane_conclave_hex_v1_report.json",
+    "sha256": "7c6b64abcd016ee9ce2a7c37e4ddba6f8823f8a5456b3f19ac635043b25ae9f1"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_conclave_hex_v1/previews/back.png",
+    "sha256": "95522d1c8b2a62366e79febf16e6f8c0bdc64da8b79587ff533874d2ff44dd49"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_conclave_hex_v1/previews/game_top.png",
+    "sha256": "e39645d8d93d0c2582b284166442a688bc7dda55f838dc8bef4abc8bd527f084"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_conclave_hex_v1/previews/three_quarter.png",
+    "sha256": "33b23b472b8367362fdc76b6ba3cf2c028b86196afa2966c629380dedb961479"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_conclave_hex_v1/previews/top.png",
+    "sha256": "500f5c6a82f80de8f3852b7beed84c2c496bc626c6e0b9316eae2be497ea5817"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_conclave_hex_v1/README.md",
+    "sha256": "14b8728058851d04013520c510206725593f09b1538c68d45c3242906c74c067"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_ritual_hex_v1/arcane_ritual_hex_v1.blend",
+    "sha256": "5d578dc64588cdfc7f73236842f0ffeae1ebbf6db1abc81fc1569f7a1c36aad3"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_ritual_hex_v1/arcane_ritual_hex_v1.glb",
+    "sha256": "f88d707c3679a2fec081c3d906ad4c42a34c4272ee19208121938eaaf01e891b"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_ritual_hex_v1/arcane_ritual_hex_v1_albedo.png",
+    "sha256": "acb910b6c3db1d923298e5f85aca9c61623cd393ca6024841f47ddc04ae5e0c2"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_ritual_hex_v1/arcane_ritual_hex_v1_emission.png",
+    "sha256": "af52914ee26d78c302b646e0776e4e0fb00d7fa039fe48c1715aafd1aa1d00cc"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_ritual_hex_v1/arcane_ritual_hex_v1_report.json",
+    "sha256": "62156917f2d2c2d449e1073a0357a8a7cd5dee9ce952a10fb759e6d3b1c60023"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_ritual_hex_v1/previews/back.png",
+    "sha256": "0cf781c5a6c7f18badba2fa25cb5aa38bdc8c93850a107edcbe468c17f069216"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_ritual_hex_v1/previews/game_top.png",
+    "sha256": "c1f71e533d5b37cdd09ffff3622f6b0640c444abf07504bb183eca9c4eccbc6e"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "3c26ee50cebde8fd1e7196a3b8e22e92b81d3d0b4b8b241c58f0106a180efebc"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_ritual_hex_v1/previews/top.png",
+    "sha256": "2709d068aade771e94d7f3f1f04d28f1d01d7066ea13e4afd9779c1b515fd0d7"
+  },
+  {
+    "path": "assets/generated/humans/buildings/arcane_ritual_hex_v1/README.md",
+    "sha256": "2fb468fc17b38866f14ef97e9a83f88078ec3a991e582d01aa7fa8378df08570"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_1_hex_v1/city_level_1_hex_v1.blend",
+    "sha256": "84857619314c521ba915b72bf2e922b198d45d319a43c547cf5ea6b0cb505f66"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_1_hex_v1/city_level_1_hex_v1.glb",
+    "sha256": "1ff05a0c796b44cf0d4cecce02fae052db46b4fa5cdc186761ff0e5e9379406e"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_1_hex_v1/city_level_1_hex_v1_albedo.png",
+    "sha256": "a8c118dc9e1e502c024ebc2ae869f0482bf2656fa6eba4f0684a4eb6c2987b3b"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_1_hex_v1/city_level_1_hex_v1_city_level_1_hex_v1_albedo.png",
+    "sha256": "a8c118dc9e1e502c024ebc2ae869f0482bf2656fa6eba4f0684a4eb6c2987b3b"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_1_hex_v1/city_level_1_hex_v1_city_level_1_hex_v1_emission.png",
+    "sha256": "356e8761ee35a79c34dc826c78bd76b4743274058b192464c9d9c76bd8fb2846"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_1_hex_v1/city_level_1_hex_v1_emission.png",
+    "sha256": "356e8761ee35a79c34dc826c78bd76b4743274058b192464c9d9c76bd8fb2846"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_1_hex_v1/city_level_1_hex_v1_report.json",
+    "sha256": "0d5e96b17fb51301320eff7afdc28b87d4ad57aec63aaa1a2bb6f67000e72363"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_1_hex_v1/previews/back.png",
+    "sha256": "20893dbaa913cc25d2db013bf9c1aed289b30f313002092cc7210b0724712aaa"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_1_hex_v1/previews/game_top.png",
+    "sha256": "da8bcd4c861ae6b74d2e7d81d9f94d2f6d64cfe3163b84811387d8ada43de6cf"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_1_hex_v1/previews/three_quarter.png",
+    "sha256": "e20ca24e4a795e0238b363847b0564e8a4471f0a9b96a3195a57517562182ae9"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_1_hex_v1/previews/top.png",
+    "sha256": "7abde9c86aebd569e6277cb632345b158b8ee5d2f82323f29882cb651cdec5fd"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_1_hex_v1/README.md",
+    "sha256": "e1cf53483fbd7630d018280350d6a62bbdca566c4fb1e987bdc93a71c3c0ccf5"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_2_hex_v1/city_level_2_hex_v1.blend",
+    "sha256": "4ff779418eb38c2aef4b7eba1e53badf3db8e93b7153691a2df680bf7b0fe122"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_2_hex_v1/city_level_2_hex_v1.glb",
+    "sha256": "a867fb4d39c4612e0f8192a4616855b966e2613d7d9026e01cdaa7697808031f"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_2_hex_v1/city_level_2_hex_v1_albedo.png",
+    "sha256": "03f50173072bb22ff08eee3d84aafdbc307e1a038fc4d04367a0b548ac1cd7ba"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_2_hex_v1/city_level_2_hex_v1_city_level_2_hex_v1_albedo.png",
+    "sha256": "03f50173072bb22ff08eee3d84aafdbc307e1a038fc4d04367a0b548ac1cd7ba"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_2_hex_v1/city_level_2_hex_v1_city_level_2_hex_v1_emission.png",
+    "sha256": "0028b591d3191e5f79d49010a046352f2b8ee9c952e98023f38953209411fe3c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_2_hex_v1/city_level_2_hex_v1_emission.png",
+    "sha256": "0028b591d3191e5f79d49010a046352f2b8ee9c952e98023f38953209411fe3c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_2_hex_v1/city_level_2_hex_v1_report.json",
+    "sha256": "315d3cdefa4e0ae734463b4aa73597c3d197b9d9740f13409ffa6a6d1c33f821"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_2_hex_v1/previews/back.png",
+    "sha256": "4d1f5e509dfe8904ed27c1e878c599aca8ca4dfe31b33085adb69b4c7c0d5786"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_2_hex_v1/previews/game_top.png",
+    "sha256": "2de8050dd995016ce2385043f0d4866bf999db479dc78948546ee6c728e96798"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_2_hex_v1/previews/three_quarter.png",
+    "sha256": "fcf855983ecf88347ce15ad857a9ea65a811ca3bfc35ef038b289b062c08f9b7"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_2_hex_v1/previews/top.png",
+    "sha256": "7c4503614b7a6bca87731ab3c31ea0cdc934fe60dac8d2e8104d71e42f56e7d4"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_2_hex_v1/README.md",
+    "sha256": "43522aab99ccc520451c4eb20457bb084a7d25b166d34feb850d1d2bb29d8cb3"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_3_hex_v1/city_level_3_hex_v1.blend",
+    "sha256": "3360c5eeff7b2d090d75c36c241fcad29c3603bfe21e6db5731cfab90d068381"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_3_hex_v1/city_level_3_hex_v1.glb",
+    "sha256": "c30a5129164dbe0bdfa5c38ebffd3b09ff6ee6f49ce8af27713400a97d0a1462"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_3_hex_v1/city_level_3_hex_v1_albedo.png",
+    "sha256": "eb146a2262ad03a29f9915ecb58349ffdcb0f407d65392fe341579811f6909d0"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_3_hex_v1/city_level_3_hex_v1_city_level_3_hex_v1_albedo.png",
+    "sha256": "eb146a2262ad03a29f9915ecb58349ffdcb0f407d65392fe341579811f6909d0"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_3_hex_v1/city_level_3_hex_v1_city_level_3_hex_v1_emission.png",
+    "sha256": "d861ac6f5546bd5586b819a2fede84eb5c79dc6b4989a9694f6f664affdc6552"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_3_hex_v1/city_level_3_hex_v1_emission.png",
+    "sha256": "d861ac6f5546bd5586b819a2fede84eb5c79dc6b4989a9694f6f664affdc6552"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_3_hex_v1/city_level_3_hex_v1_report.json",
+    "sha256": "cbfd6db91ae781b2f069c30338ba1a1359538e60b71b33a9a5d72b8f84337b12"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_3_hex_v1/previews/back.png",
+    "sha256": "38c67771ddf3242fc5b471eed27deddb7e8981205891c8176a89fd10ada1ff91"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_3_hex_v1/previews/game_top.png",
+    "sha256": "7b5da4df2b8fc829942d7ae3c098e3fe5a53f18dee6e6ce61266857ac9875bea"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_3_hex_v1/previews/three_quarter.png",
+    "sha256": "b0742e64cb6fc839f520cad72177ee51cdbddefa04849b8b3cf8d7c5a2a955e1"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_3_hex_v1/previews/top.png",
+    "sha256": "09f2dab90136f1a6ccf5487ccb0259827512a24a988506f0cd2262119f11ecdf"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_3_hex_v1/README.md",
+    "sha256": "1cb9d93430cc7a78e115bd9ef327b0babbd2eaf0ec37c14aa143885b5f75c75f"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_4_hex_v1/city_level_4_hex_v1.blend",
+    "sha256": "0f437386879866001bf96aa613d71d02d387f95e7c38d46892b20bd621b5b91f"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_4_hex_v1/city_level_4_hex_v1.glb",
+    "sha256": "0ea2cd901806419e206b001cb71a7d65353ecbcf5039a927cfe336582483cf2c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_4_hex_v1/city_level_4_hex_v1_albedo.png",
+    "sha256": "61cadd6df2a049415dd4ce1ddb80a74515c52a02a92e17d52db628a69f609db5"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_4_hex_v1/city_level_4_hex_v1_city_level_4_hex_v1_albedo.png",
+    "sha256": "61cadd6df2a049415dd4ce1ddb80a74515c52a02a92e17d52db628a69f609db5"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_4_hex_v1/city_level_4_hex_v1_city_level_4_hex_v1_emission.png",
+    "sha256": "99a2b1e359c12c298ac5df49e61167307bd6ff686b6c7899e04acb27ccfbfd95"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_4_hex_v1/city_level_4_hex_v1_emission.png",
+    "sha256": "99a2b1e359c12c298ac5df49e61167307bd6ff686b6c7899e04acb27ccfbfd95"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_4_hex_v1/city_level_4_hex_v1_report.json",
+    "sha256": "5fa5173ab51080b02e47c81f8fbf6102d12780cac7edc13dd706d8fe42d5389a"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_4_hex_v1/previews/back.png",
+    "sha256": "f938161763758bd67ed83c581a9dcd8e30f49aa632c0e216c3bcb0d9c1bf37ae"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_4_hex_v1/previews/game_top.png",
+    "sha256": "4c31ea164058ab40e64eb1c913f1a1d79e7cd54e38ef8880d755bae5d8eb0d02"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_4_hex_v1/previews/three_quarter.png",
+    "sha256": "9c8fbd099970e3d4ee64aa28aa42f7fac529052c36040f8c0b164237a757ed6d"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_4_hex_v1/previews/top.png",
+    "sha256": "f5168836244bc6ee65d4ee120552acac2a2311efe80a817a56519b2001983d99"
+  },
+  {
+    "path": "assets/generated/humans/buildings/city_level_4_hex_v1/README.md",
+    "sha256": "96ce9b3241d545bb408e51f8563a29a2dad7765dd2987800ca7ff41fef914a96"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_circle_hex_v1/druidic_circle_hex_v1.blend",
+    "sha256": "d316799a3b60bb9f12a2c9b8a801cab0715946fc07b52b3175cfa7a78dae3367"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_circle_hex_v1/druidic_circle_hex_v1.glb",
+    "sha256": "2026e4c00e4f24b705b94d0b781a9a6ba1fb5f85d99518c0f091ba251131597c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_circle_hex_v1/druidic_circle_hex_v1_albedo.png",
+    "sha256": "2e2db9daf210cd53ce3a799251eb77ff693595e7a7385ae0df574d093b67d828"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_circle_hex_v1/druidic_circle_hex_v1_emission.png",
+    "sha256": "89b3b51f9fb9d35d9000135152820e79b1ea6683db430074bf95c1679d356a19"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_circle_hex_v1/druidic_circle_hex_v1_report.json",
+    "sha256": "047aaedd5c4461c6a6b26ba6f993cfd8e469cecb1ce157d3fc964fdd67cb32ce"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_circle_hex_v1/previews/back.png",
+    "sha256": "610caec7cd6151b7c4e7d582184a1381aede654750e6d4eb2b3b4f43902bd126"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_circle_hex_v1/previews/game_top.png",
+    "sha256": "961c93bed097ec7c107c1c17bd53f0b1cdb3c2010baafaeb918dd961116243b0"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_circle_hex_v1/previews/three_quarter.png",
+    "sha256": "21b71dafaa1147875818842af893fe6ee68c3290875f370ecf3c1c3aac4e1994"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_circle_hex_v1/previews/top.png",
+    "sha256": "4b05c62a012fab57833f73e57f62fa617fd578925aa432160148a6b4ba7f7438"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_circle_hex_v1/README.md",
+    "sha256": "b72cc539862a6b7c9c2e1d14c1c5b739cd73031e413c6770c1f0b4fcbd601762"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_ritual_hex_v1/druidic_ritual_hex_v1.blend",
+    "sha256": "e29f39270c5decc0425178a473da81f3a5040d951d6c6a3324df489aed0f80f7"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_ritual_hex_v1/druidic_ritual_hex_v1.glb",
+    "sha256": "da446eea81e16fe29f9d4814ac9ddbb726ccff682403778f4008b70e655c6a01"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_ritual_hex_v1/druidic_ritual_hex_v1_albedo.png",
+    "sha256": "51edd216d743412c48ef207d50091af2194d8d0a47f95dd7f49746c3f9f1d0fd"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_ritual_hex_v1/druidic_ritual_hex_v1_emission.png",
+    "sha256": "192503d4419e77fbe9b2958797d4ca534337bf208bb69ceb98a2ef482f6f0c2f"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_ritual_hex_v1/druidic_ritual_hex_v1_report.json",
+    "sha256": "06cc5514b416a9963c25a518a5e6741545cd2bd7f14751238b6828fdd507fc73"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_ritual_hex_v1/previews/back.png",
+    "sha256": "e333416f72a5cd8a4017956bc6b2e70a2fcad1b0ddfc9d7e9c01e26455fd9730"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_ritual_hex_v1/previews/game_top.png",
+    "sha256": "cf61c85833a44fb54ea64083f2fe8aba5f7eb3715bf9d05edd5fe05187183470"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "2df81d384ad0f99c79fab39b755e9689c508c2e95dcb8198204bea6b73cc7c18"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_ritual_hex_v1/previews/top.png",
+    "sha256": "8341926f8cb86906f4fa2b32eb6d4dd76c7ab17fc3146c0bf456e824b67a4442"
+  },
+  {
+    "path": "assets/generated/humans/buildings/druidic_ritual_hex_v1/README.md",
+    "sha256": "f327dfb7cda12ce3452c92ef269563cb9f855ca45b47af4655d687f6efe6e5d7"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_observatory_hex_v1/elemental_observatory_hex_v1.blend",
+    "sha256": "3b76807a749095098bac993cc4523c3fefaf68eec326e3b9e75555986dcd1f2c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_observatory_hex_v1/elemental_observatory_hex_v1.glb",
+    "sha256": "b855b4700e5849b46d93c7941130ea755b01fec3b37e705eb02075c23c5eb72c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_observatory_hex_v1/elemental_observatory_hex_v1_albedo.png",
+    "sha256": "b15e4f390ae3b17f02adc15991915228143087d7509dd2e112481418f1d14a3c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_observatory_hex_v1/elemental_observatory_hex_v1_emission.png",
+    "sha256": "96960a166ef1abbc40142dac2dec3854d5ca083e885f150479567317a51333f6"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_observatory_hex_v1/elemental_observatory_hex_v1_report.json",
+    "sha256": "7c9a259ce175ea3936a55530777443e77031f437d7e1b2f24ab9e91943ed0ce1"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_observatory_hex_v1/previews/back.png",
+    "sha256": "581825015efcd4441590fe4127bd497d63b31ca3a306a74a2a2ed89b1190c9ba"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_observatory_hex_v1/previews/game_top.png",
+    "sha256": "ee5506bb9b9861e982652acbf05d20a2635036dfd40bd90f9751edf367859849"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_observatory_hex_v1/previews/three_quarter.png",
+    "sha256": "9176098588972d3d05efa6898f283ec96ad89f23179a5647bff448a7600c41d4"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_observatory_hex_v1/previews/top.png",
+    "sha256": "216d1dbbb00a90f8b09268179188f85dfc3b377a142b7e912a618e6fb4a4233c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_observatory_hex_v1/README.md",
+    "sha256": "ca4c9db4707ff4419fff4e96410aabac18a784ab6c25c0dddbfcf656235db6ae"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_ritual_hex_v1/elemental_ritual_hex_v1.blend",
+    "sha256": "3703aa77399553be8959943d9b3d5d33435772f014ed15a4d8ccaf515e53f417"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_ritual_hex_v1/elemental_ritual_hex_v1.glb",
+    "sha256": "250ec3e80b0a57f0a593ae9fe8db6476ed52adbe627411b31eda64cbf47de8ef"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_ritual_hex_v1/elemental_ritual_hex_v1_albedo.png",
+    "sha256": "00534e0fd4fd7dc402c3ac7c211dd0136a1de4c8522b8bb934b7c77aa74de2c2"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_ritual_hex_v1/elemental_ritual_hex_v1_emission.png",
+    "sha256": "fe4f1af16ae842c9e7996b8f6ebb0f29a098b4676b32f6d7aed9bb5c5d2d8707"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_ritual_hex_v1/elemental_ritual_hex_v1_report.json",
+    "sha256": "416ea7829dbd0e4ae16f4c0fb45224851159e21ac95b0be41ecac46e18b75b22"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_ritual_hex_v1/previews/back.png",
+    "sha256": "c6fb473a0ddcd105fd5d660f31ef6bd3905f593b77cf736343964cd725f363e2"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_ritual_hex_v1/previews/game_top.png",
+    "sha256": "778209853214fc97ff9a1217238925aa823d73357cff1c754da630e0092cae4f"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "19811b01e1aebc17c004ca6475c51d7842f187a93b6c9aed0d7ec7b8c5035fe4"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_ritual_hex_v1/previews/top.png",
+    "sha256": "d7a1184d51819744e347c7fe8400852b4563b73200b1bf477c1741178420d11c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/elemental_ritual_hex_v1/README.md",
+    "sha256": "5b3efc08c4fb72bf41f539b3905e6d6906863574e4bfd894ca904ff66df6f61a"
+  },
+  {
+    "path": "assets/generated/humans/buildings/grand_magic_game_top.jpg",
+    "sha256": "309094ec9610c3bfda7228b73d68f587ffb3540b350f6f36b72087923bd7150e"
+  },
+  {
+    "path": "assets/generated/humans/buildings/grand_magic_three_quarter.jpg",
+    "sha256": "ae7785d10e82febe90b32309238929f43cba3a72c99bcc962639cf08bbc57023"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_hex_v2/guardian_hall_hex_v2.blend",
+    "sha256": "e92019264cc6ff34fee6540c43311e105b1b43ed26b74960673da1ad12180222"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_hex_v2/guardian_hall_hex_v2.glb",
+    "sha256": "bf0edc09688e9a5b6480bfb57da6c2be2cd2d09fa872406cf0ee11236cd47a98"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_hex_v2/guardian_hall_hex_v2_albedo.png",
+    "sha256": "55310439ea851a04baad66252c40cc9aab24e587437dc9174449e25da7174f25"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_hex_v2/guardian_hall_hex_v2_emission.png",
+    "sha256": "d224e61299741a3627e6534a0478ae46cc11778497b99d81153ffb34a0d1750e"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_hex_v2/guardian_hall_hex_v2_guardian_hall_hex_v2_albedo.png",
+    "sha256": "55310439ea851a04baad66252c40cc9aab24e587437dc9174449e25da7174f25"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_hex_v2/guardian_hall_hex_v2_guardian_hall_hex_v2_emission.png",
+    "sha256": "d224e61299741a3627e6534a0478ae46cc11778497b99d81153ffb34a0d1750e"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_hex_v2/guardian_hall_hex_v2_report.json",
+    "sha256": "08b6c850af897dcafaf5ad54c5d1b8497795f02d2dda0fca1d92d2fb1d8c8730"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_hex_v2/previews/back.png",
+    "sha256": "b5babb9ed3361a3d60a7f07713f841c11eea7dcb8652284d7c7643d91a5b671d"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_hex_v2/previews/game_top.png",
+    "sha256": "443b95c59ab634186d10285fb06935654cb71c10d60eaf5f3044c3ce8e8b2119"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_hex_v2/previews/three_quarter.png",
+    "sha256": "810d30fc68e1b0ccda822df80a5d06e0c3cffc42e95b37fa2ca39a889013b913"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_hex_v2/previews/top.png",
+    "sha256": "912016e9dabcd1d6629ca2421264c75b158ace3bc9446948d7719663b4073954"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_hex_v2/README.md",
+    "sha256": "9e2b8ef2fce768cd0fce8fe24a44de7886ffd6327b6a1617bda0be2c52f97b14"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/guardian_hall_v1.blend",
+    "sha256": "0fae9451748819539a122bc8efcc00aa5521ba23f36216e0fc75dfad2483bf8f"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/guardian_hall_v1.glb",
+    "sha256": "206060414fc0d10f45685bafd833214c8da212b4f0516157abb60e1b66598506"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/guardian_hall_v1_albedo.png",
+    "sha256": "c38a7a7349c0fff2a8a0195aecd6b3b112b325d115c234bafca31ec7fa151c0b"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/guardian_hall_v1_emission.png",
+    "sha256": "0cfce35793b07148a1810ffe0af21e35a4d18beb62ea728a39c9c7187e73322f"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/guardian_hall_v1_guardian_hall_v1_albedo.png",
+    "sha256": "c38a7a7349c0fff2a8a0195aecd6b3b112b325d115c234bafca31ec7fa151c0b"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/guardian_hall_v1_guardian_hall_v1_emission.png",
+    "sha256": "0cfce35793b07148a1810ffe0af21e35a4d18beb62ea728a39c9c7187e73322f"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/guardian_hall_v1_report.json",
+    "sha256": "96d77b697ecdb6c481fca5c5c9643c486d98074a9979800ab77f1a4c6db8b05f"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/previews/back.png",
+    "sha256": "72cb6d7883d1aa8a041c1ddaad9b0e158a1ff8914e86294da3c071b8f3231ff4"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/previews/courtyard_detail.png",
+    "sha256": "8f27ed090facfca343b25fccaf1451d0961761b00d9edfe72c7a8a13effb0350"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/previews/front.png",
+    "sha256": "7df042bc6ebcbc8e1c80b0a1f08c50655ff271e7ba80fbf55d3057d051f1c34c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/previews/game_top.png",
+    "sha256": "3c5004e06bd0444054cbdd5e009322e7c01fab083ce073e71d0d5a9fae30cf44"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/previews/scale_with_squire.png",
+    "sha256": "8ca474df4dab464220b446ef8cb2958cade4f641f06266993f63847597c7b708"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/previews/side.png",
+    "sha256": "b213683c3e9d73d5fd9f20100d87914bafc92c64823ede576d9740c5b61fc768"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/previews/three_quarter.png",
+    "sha256": "4029d12aa65477650614a2c89c4540195dafd2753dc475e4ca9eb2a666395003"
+  },
+  {
+    "path": "assets/generated/humans/buildings/guardian_hall_v1/README.md",
+    "sha256": "9c15401aa818e26b1183e9d65ac5346022865da0daaf3581182cd531354a0e2e"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_ritual_hex_v1/infernal_ritual_hex_v1.blend",
+    "sha256": "9a58488314bc2f04eded32eeae0be64ad50e26ee89e47e53e917dfaa6a704feb"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_ritual_hex_v1/infernal_ritual_hex_v1.glb",
+    "sha256": "ab5978f6976ccb9d3a2a1f71042d89272c341d0ecb57e38d76443d4e3b8e90a5"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_ritual_hex_v1/infernal_ritual_hex_v1_albedo.png",
+    "sha256": "1c10a3e7223d0313bb1e66ffab09f1725a30c13f137a5b34209adefa12ce97c0"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_ritual_hex_v1/infernal_ritual_hex_v1_emission.png",
+    "sha256": "c7a050818582645409fbb4548b35722b428478b1cfe28667be1088a1ac5bb18a"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_ritual_hex_v1/infernal_ritual_hex_v1_report.json",
+    "sha256": "a7bbc6d379073f46510f8ae8de8f031af0d36d3d93c350623106c61f960c1faf"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_ritual_hex_v1/previews/back.png",
+    "sha256": "e2e39c77e376812f13858fa634d1dfc477a2749a36fee6cd1ec7d1f446bde212"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_ritual_hex_v1/previews/game_top.png",
+    "sha256": "753879aa122a704217d98ed1bce081949e3ba59b21d0bb2c0e0d497a2d1ede7a"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "04b1dbf3dc407838fe8d3dd42a6d7c677a3c4bb5c9e863e4547b8a588e85a8ca"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_ritual_hex_v1/previews/top.png",
+    "sha256": "1028d62f692b73bf0ca126c85349307fe1ee39f654121e1ca773324505f8d48d"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_ritual_hex_v1/README.md",
+    "sha256": "6ca1504f9db34dac50802ef5e1b52922dbe0f7656532b8753f187ce39f2c1c91"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_sanctum_hex_v1/infernal_sanctum_hex_v1.blend",
+    "sha256": "e3639cce7904a25a0f9b9bc382932e24499cea3399aac046f4d8365d15f267cd"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_sanctum_hex_v1/infernal_sanctum_hex_v1.glb",
+    "sha256": "7b4fd22a3e2ac9925d6f47f45a733623e2a9091edaa77a41c257e271ecd045a7"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_sanctum_hex_v1/infernal_sanctum_hex_v1_albedo.png",
+    "sha256": "3a493f9c415a082a2366b0d332118ac5e8452c2d7a7af90ad4d12c95b0bd0a0d"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_sanctum_hex_v1/infernal_sanctum_hex_v1_emission.png",
+    "sha256": "71be057c677def05a4b0edf1bd6a2f7cf7552d0365c634fa572eb94b9313a6d8"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_sanctum_hex_v1/infernal_sanctum_hex_v1_report.json",
+    "sha256": "fb265be4bfa36a26c8803aec553009c4ed0664baf3cf8ff19b03d3d01a400804"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_sanctum_hex_v1/previews/back.png",
+    "sha256": "89b59ae512bbec35492541ad4f82cb83470e928eff2d854b16a68633b3bd08f9"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_sanctum_hex_v1/previews/game_top.png",
+    "sha256": "dbc2b0e9d2cbcdef5ca371f349e841b47c7bc4a4d5b26050eabc4c68e799b8dd"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_sanctum_hex_v1/previews/three_quarter.png",
+    "sha256": "b93f1c2970670827de4669dece4c5df958a157060873e63f8c8f6ad87ee07fdc"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_sanctum_hex_v1/previews/top.png",
+    "sha256": "aa63fbfae55b4bf3065c5862f9355ca96760d04248a1a6a11f98eb96d87d17c5"
+  },
+  {
+    "path": "assets/generated/humans/buildings/infernal_sanctum_hex_v1/README.md",
+    "sha256": "cb13138e978789889d69cd2072a081838dac5f1b4dd34c509312ff0fbc9f9e66"
+  },
+  {
+    "path": "assets/generated/humans/buildings/magic_schools_game_top.jpg",
+    "sha256": "626a5259838662d9329a9279ac8d65b0c2af56571a2124b852a126a232702d06"
+  },
+  {
+    "path": "assets/generated/humans/buildings/magic_schools_three_quarter.jpg",
+    "sha256": "179068863fe21d87f05af34ef40aa8b7f1c60dfa03af522757b85cc028243c70"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ossuary_hex_v1/necromancy_ossuary_hex_v1.blend",
+    "sha256": "dd9373f9be9c701b5456645c0603e0b5d40eb34e4df0de558222417d5ae992db"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ossuary_hex_v1/necromancy_ossuary_hex_v1.glb",
+    "sha256": "b9ca3fe8f74ecfead3a774b4bd6b2d90f5570680c52c8d23ddc6ea48b8375b2e"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ossuary_hex_v1/necromancy_ossuary_hex_v1_albedo.png",
+    "sha256": "b0da770742d075aadf06b80eb2d3fea53e31d65d530e0b5ffe7cbcece6c57120"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ossuary_hex_v1/necromancy_ossuary_hex_v1_emission.png",
+    "sha256": "023644f54c8b80415c6d2fa83acf82cd53726162d54e12ae391e9721f5b58e03"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ossuary_hex_v1/necromancy_ossuary_hex_v1_report.json",
+    "sha256": "bc8d002f28c2d0565cc0969169ebb27ffa1308d03398eb0b7c5eef6fb01825ec"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ossuary_hex_v1/previews/back.png",
+    "sha256": "bfb17fcd939e1f3beb5e6466177523b7e26f583e968756a100c53c784bd4050b"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ossuary_hex_v1/previews/game_top.png",
+    "sha256": "6bf84824b584567bc4dc9b714ec889921f773dcc9582e95fc11d02307278a4f4"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ossuary_hex_v1/previews/three_quarter.png",
+    "sha256": "9027c8b1ef5dc6317af2584f540a00ec612aa4f2d21fd0b44f8b872d68aa3a2b"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ossuary_hex_v1/previews/top.png",
+    "sha256": "3af8f5db3dbee441bfa4b57543aa03bb1270747c5f3441973c573fdfb1431917"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ossuary_hex_v1/README.md",
+    "sha256": "bff1309042a5418dcf9bc9cb0f23edb9250397a99d3991496ba0af231a7a6bbb"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ritual_hex_v1/necromancy_ritual_hex_v1.blend",
+    "sha256": "7d38dc54d45ab1b17d2f7ef0b5a4f73fe537b681a4ce0931c5e4f1743d8fcd73"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ritual_hex_v1/necromancy_ritual_hex_v1.glb",
+    "sha256": "117c9a9c60e0dee41308275ec3554fc3e71e0800328beedfd20cfc79a1cc0dde"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ritual_hex_v1/necromancy_ritual_hex_v1_albedo.png",
+    "sha256": "f51c923cdcf192779989f91c90ab96e74215fb8fc74564d8aaf9ec3c367d0b2e"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ritual_hex_v1/necromancy_ritual_hex_v1_emission.png",
+    "sha256": "26b1255e7ae223fc51a3ed0ff5a7a735209e2368816589deb35e4562fbd1f198"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ritual_hex_v1/necromancy_ritual_hex_v1_report.json",
+    "sha256": "0f053b9a108fa1ce8efa4bed01e7c346e8d598dc850d1f3644631e0f95a97316"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ritual_hex_v1/previews/back.png",
+    "sha256": "b682cb9f62fc501716f4c9b172df5a645f9d0da57dad40a938b724fe1a9e6c3e"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ritual_hex_v1/previews/game_top.png",
+    "sha256": "deabb7838f9546899d907c73227a78606a60437448a9744ea447358f7da78f75"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "7fef03101b8daff1b9b31b5ca54a9ee7dc773e713a1a54ef99c221193f2b94c2"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ritual_hex_v1/previews/top.png",
+    "sha256": "19e70c035703b47309ed2e111994d74f713611c36b924438ffaed108a264fee0"
+  },
+  {
+    "path": "assets/generated/humans/buildings/necromancy_ritual_hex_v1/README.md",
+    "sha256": "26399fc768dd61d75bf5ff5b8549b2341de9f79459cbb42cd13203ef3c44ec38"
+  },
+  {
+    "path": "assets/generated/humans/buildings/ranger_camp_hex_v1/previews/back.png",
+    "sha256": "8a484a86531332e359955b28b3ac78ec10e36944b7e3c10263dfcc93eae31722"
+  },
+  {
+    "path": "assets/generated/humans/buildings/ranger_camp_hex_v1/previews/game_top.png",
+    "sha256": "cf1b574e8187a543a480812fd322ff52903dedce6070392c267404f1d2164ee9"
+  },
+  {
+    "path": "assets/generated/humans/buildings/ranger_camp_hex_v1/previews/three_quarter.png",
+    "sha256": "edb561f1440a9d9f90de34413ce2ede4197706ec08eb789a7aba2e136560b814"
+  },
+  {
+    "path": "assets/generated/humans/buildings/ranger_camp_hex_v1/previews/top.png",
+    "sha256": "22994018d316e57730e910ea991fe1057f82d559184adaa6c207cfcc82db1273"
+  },
+  {
+    "path": "assets/generated/humans/buildings/ranger_camp_hex_v1/ranger_camp_hex_v1.blend",
+    "sha256": "a8f0298ded45fdcee7f042a68fa22492f536a00d501f35dfdd336ad78a750956"
+  },
+  {
+    "path": "assets/generated/humans/buildings/ranger_camp_hex_v1/ranger_camp_hex_v1.glb",
+    "sha256": "66a6fe63667f9012d46d4d97a234ac5028970d704db54792d1d90a72d4ae0018"
+  },
+  {
+    "path": "assets/generated/humans/buildings/ranger_camp_hex_v1/ranger_camp_hex_v1_albedo.png",
+    "sha256": "a8e0f2dac3fb61ad396df3084276ae6a4778f8b72d4e615b002d7bc75d5b8e75"
+  },
+  {
+    "path": "assets/generated/humans/buildings/ranger_camp_hex_v1/ranger_camp_hex_v1_emission.png",
+    "sha256": "4045d775f56f3208735dfeabc5bbe0998b617e806beac27d0e054a7de1d4a722"
+  },
+  {
+    "path": "assets/generated/humans/buildings/ranger_camp_hex_v1/ranger_camp_hex_v1_ranger_camp_hex_v1_albedo.png",
+    "sha256": "a8e0f2dac3fb61ad396df3084276ae6a4778f8b72d4e615b002d7bc75d5b8e75"
+  },
+  {
+    "path": "assets/generated/humans/buildings/ranger_camp_hex_v1/ranger_camp_hex_v1_ranger_camp_hex_v1_emission.png",
+    "sha256": "4045d775f56f3208735dfeabc5bbe0998b617e806beac27d0e054a7de1d4a722"
+  },
+  {
+    "path": "assets/generated/humans/buildings/ranger_camp_hex_v1/ranger_camp_hex_v1_report.json",
+    "sha256": "0c97ab1caef97ef455bf272d1332c6281077c32d049dbb0012744046b72abbd3"
+  },
+  {
+    "path": "assets/generated/humans/buildings/ranger_camp_hex_v1/README.md",
+    "sha256": "0adcf22b0f49983769880c25433db61bfe44b856d42c18f036ab45e90dd64643"
+  },
+  {
+    "path": "assets/generated/humans/buildings/rogue_guild_hex_v1/previews/back.png",
+    "sha256": "a061c81a45a1b0a8e5beb75dd79c022ad61655afcd7f071b8056f1fc89906b1b"
+  },
+  {
+    "path": "assets/generated/humans/buildings/rogue_guild_hex_v1/previews/game_top.png",
+    "sha256": "5db5302a611b45b1584e353eb5ae0f83a1239ea7cb62d799b51e044acde12e24"
+  },
+  {
+    "path": "assets/generated/humans/buildings/rogue_guild_hex_v1/previews/three_quarter.png",
+    "sha256": "24e5584e0f79854dd8e35c26a88d471a867f915c6dc2020b502e016bdc432e74"
+  },
+  {
+    "path": "assets/generated/humans/buildings/rogue_guild_hex_v1/previews/top.png",
+    "sha256": "a27023c2afe73694e76f42678f0cb70efdd2d8a3803782e7ba7acd91b1b01248"
+  },
+  {
+    "path": "assets/generated/humans/buildings/rogue_guild_hex_v1/README.md",
+    "sha256": "b9124db27c148f607e29d0ea3cedeabd5ff7a49cfc0d79d7f593e2872dc3f171"
+  },
+  {
+    "path": "assets/generated/humans/buildings/rogue_guild_hex_v1/rogue_guild_hex_v1.blend",
+    "sha256": "da944034493cb0017aeab27ed9acdb4acda05dd5f4efd077c389149cdf73a835"
+  },
+  {
+    "path": "assets/generated/humans/buildings/rogue_guild_hex_v1/rogue_guild_hex_v1.glb",
+    "sha256": "6705319d9927b77e37473665a16d9f74401427fce9035027cfdb17384da73dd5"
+  },
+  {
+    "path": "assets/generated/humans/buildings/rogue_guild_hex_v1/rogue_guild_hex_v1_albedo.png",
+    "sha256": "78103ece8ebfeee544bc9b6662fa0301c3e9c30ccf4ee8571d35b0905f3e9e76"
+  },
+  {
+    "path": "assets/generated/humans/buildings/rogue_guild_hex_v1/rogue_guild_hex_v1_emission.png",
+    "sha256": "09a3f6eb3c8dcf8fd3032a3fcb3ec12dd7e541ec947bec7b6a36782bd9f1e24a"
+  },
+  {
+    "path": "assets/generated/humans/buildings/rogue_guild_hex_v1/rogue_guild_hex_v1_report.json",
+    "sha256": "c7124357e50962193eb07cee09f3f846cbc7029094451f1ab99c9a6bbe157c8f"
+  },
+  {
+    "path": "assets/generated/humans/buildings/rogue_guild_hex_v1/rogue_guild_hex_v1_rogue_guild_hex_v1_albedo.png",
+    "sha256": "78103ece8ebfeee544bc9b6662fa0301c3e9c30ccf4ee8571d35b0905f3e9e76"
+  },
+  {
+    "path": "assets/generated/humans/buildings/rogue_guild_hex_v1/rogue_guild_hex_v1_rogue_guild_hex_v1_emission.png",
+    "sha256": "09a3f6eb3c8dcf8fd3032a3fcb3ec12dd7e541ec947bec7b6a36782bd9f1e24a"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_ritual_hex_v1/previews/back.png",
+    "sha256": "d40f29e4d362ba8418c8174b6ce129dbccdd61963644832e5b0c6ae5baada524"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_ritual_hex_v1/previews/game_top.png",
+    "sha256": "7d18d1e034d976609e3decffc4cef2ce43e8b6179e93ef82f3ad8da0bc86f132"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "4585dda9b1fcb2563584eb047667da4a87255709dc1231aea214643717499b2f"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_ritual_hex_v1/previews/top.png",
+    "sha256": "16fb041c9dc83a4280ce6b0fed3a190ca521339e6eba186a277949c60b1ddc20"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_ritual_hex_v1/README.md",
+    "sha256": "55c27d8784d41933ad51f0a1ebc4a9ef2cbd72da454bc06da4c3942a948d0e75"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_ritual_hex_v1/sacred_ritual_hex_v1.blend",
+    "sha256": "acd17ff50e96fed8f6caf38e8ad3dd5168916ba2f8bf70ced635f5f5ea8487d7"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_ritual_hex_v1/sacred_ritual_hex_v1.glb",
+    "sha256": "09cf85d62ba38ebf699dfa590ac356ba40508e66568ba047f811868b97b73d72"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_ritual_hex_v1/sacred_ritual_hex_v1_albedo.png",
+    "sha256": "eae6bfe2b4c9008941f1ef90a77c7f3eb926c836ccd088582ca17dea597a1b53"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_ritual_hex_v1/sacred_ritual_hex_v1_emission.png",
+    "sha256": "91a7a1bfc7f76f0b4523548381e2431dc61a804a571499aef5e2b17ca1f9a180"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_ritual_hex_v1/sacred_ritual_hex_v1_report.json",
+    "sha256": "243517d8e26b8d6e79272bae6b4b5e3e1936d6ebd3e09d3133610bdc7395658a"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_temple_hex_v1/previews/back.png",
+    "sha256": "9e42a27e3e349d2d764fb9a0790911f25057fb88887383761948a03594729393"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_temple_hex_v1/previews/game_top.png",
+    "sha256": "0a52723f0d1e94b5cabf7abcb3c35791b4dcbf5d790ba961da217e5fe9963865"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_temple_hex_v1/previews/three_quarter.png",
+    "sha256": "f130814510c1a27e36356d1200bdfc6d843874dc16bbff2f5eed9199aef85df6"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_temple_hex_v1/previews/top.png",
+    "sha256": "127975eb7fa0aee7dfa2f8c305514ca38ff04265450fbe753c68df6838910781"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_temple_hex_v1/README.md",
+    "sha256": "4c93e296ab945467e73d5155b6fc41e3f4b9d860f76df5acd23611c4936929b1"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_temple_hex_v1/sacred_temple_hex_v1.blend",
+    "sha256": "a1347a29fdb8c372e2c99bb691a1154ef89e534c66dfa4dbae788aaab82f2bac"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_temple_hex_v1/sacred_temple_hex_v1.glb",
+    "sha256": "4d25e713aaf23943455a028a7b4288eaa7da5d9faaa2173ae1d3f9c4555fdb2e"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_temple_hex_v1/sacred_temple_hex_v1_albedo.png",
+    "sha256": "e9aaa424f0d1c81f6c0434b0a1f135399e8635af7f7e34fe7bf3cc9489d5cf81"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_temple_hex_v1/sacred_temple_hex_v1_emission.png",
+    "sha256": "130a6659af540eb37727d08a062fc53258a9a836158ea4b55e2a70409310ca3b"
+  },
+  {
+    "path": "assets/generated/humans/buildings/sacred_temple_hex_v1/sacred_temple_hex_v1_report.json",
+    "sha256": "2f15653fd1e97b52c962daf1f57b6ad51b4671a8de702050d12a011437a85f6a"
+  },
+  {
+    "path": "assets/generated/humans/buildings/siege_arsenal_hex_v1/previews/back.png",
+    "sha256": "139202fc89a284d08c5d872554c52d4531e163777fc996a285daab5beb76fedb"
+  },
+  {
+    "path": "assets/generated/humans/buildings/siege_arsenal_hex_v1/previews/game_top.png",
+    "sha256": "f82310b881e694c74e82c7945d3c6a74ae25faae4a76e35ebbac43df62622a08"
+  },
+  {
+    "path": "assets/generated/humans/buildings/siege_arsenal_hex_v1/previews/three_quarter.png",
+    "sha256": "b052e6ab1fe0806c257ea1575b84c246bae25c6ca68660a49fec889eea4e9652"
+  },
+  {
+    "path": "assets/generated/humans/buildings/siege_arsenal_hex_v1/previews/top.png",
+    "sha256": "d4df39b379ef0f6de12957a4258d3f714fcbf2239dc7fd8c749333383cb06a4a"
+  },
+  {
+    "path": "assets/generated/humans/buildings/siege_arsenal_hex_v1/README.md",
+    "sha256": "baf20af6412822a323302c5d6f9ad9f0b6e7c967445aa01a3771fac8de5b4e42"
+  },
+  {
+    "path": "assets/generated/humans/buildings/siege_arsenal_hex_v1/siege_arsenal_hex_v1.blend",
+    "sha256": "c54d583834fb3eb6442cd9c2040add96e71a96e237ef790a6bdc79e1dca25b47"
+  },
+  {
+    "path": "assets/generated/humans/buildings/siege_arsenal_hex_v1/siege_arsenal_hex_v1.glb",
+    "sha256": "606fc7c331a8c41e5b9c483a20bac2a877dc6e397fefd9db20e0fde682879048"
+  },
+  {
+    "path": "assets/generated/humans/buildings/siege_arsenal_hex_v1/siege_arsenal_hex_v1_albedo.png",
+    "sha256": "e212412454612f9afd3d20ad52613cfef64c52ab1772b6f60fdf0833961db153"
+  },
+  {
+    "path": "assets/generated/humans/buildings/siege_arsenal_hex_v1/siege_arsenal_hex_v1_emission.png",
+    "sha256": "1cb8d5918989bf09680a47e4e35e6319e6e0c2a5f3a5730718492aa6d418a4cc"
+  },
+  {
+    "path": "assets/generated/humans/buildings/siege_arsenal_hex_v1/siege_arsenal_hex_v1_report.json",
+    "sha256": "efdbd37d97fde0823b60051a8a4b7d959eff13020bd65395bfde123f29859a42"
+  },
+  {
+    "path": "assets/generated/humans/buildings/siege_arsenal_hex_v1/siege_arsenal_hex_v1_siege_arsenal_hex_v1_albedo.png",
+    "sha256": "e212412454612f9afd3d20ad52613cfef64c52ab1772b6f60fdf0833961db153"
+  },
+  {
+    "path": "assets/generated/humans/buildings/siege_arsenal_hex_v1/siege_arsenal_hex_v1_siege_arsenal_hex_v1_emission.png",
+    "sha256": "1cb8d5918989bf09680a47e4e35e6319e6e0c2a5f3a5730718492aa6d418a4cc"
+  },
+  {
+    "path": "assets/generated/humans/buildings/war_stable_hex_v1/previews/back.png",
+    "sha256": "668f4f970b38d3f5439f29bc4105b854e071d42e9d5ae2fdb388db7b77986bdf"
+  },
+  {
+    "path": "assets/generated/humans/buildings/war_stable_hex_v1/previews/game_top.png",
+    "sha256": "d213388305f0d10bbc187a50bef0e1d7aac6fde443c9bcb45e8a3fc666d28981"
+  },
+  {
+    "path": "assets/generated/humans/buildings/war_stable_hex_v1/previews/three_quarter.png",
+    "sha256": "a712d44fbdf70e03eac340f11a559ad73fe739cf2e62270de22202ed833bdce8"
+  },
+  {
+    "path": "assets/generated/humans/buildings/war_stable_hex_v1/previews/top.png",
+    "sha256": "32a1b09d9e4c3e45bb608a235d7ad8e09a9d9ff38875341a22b6d037626ecdaf"
+  },
+  {
+    "path": "assets/generated/humans/buildings/war_stable_hex_v1/README.md",
+    "sha256": "6ef4f67c6fe0cf227671b24a543b8ad3efa7f0e44958a9800e03a22d52a40183"
+  },
+  {
+    "path": "assets/generated/humans/buildings/war_stable_hex_v1/war_stable_hex_v1.blend",
+    "sha256": "5fd914e90b12f730eaf0bf15b8dd269fe2ff34bb8003461653dfc8b077e6517a"
+  },
+  {
+    "path": "assets/generated/humans/buildings/war_stable_hex_v1/war_stable_hex_v1.glb",
+    "sha256": "f8b47edccb993170fcd8bbae842eaca23eb2bdfc11dd329f2056249541e8d0c3"
+  },
+  {
+    "path": "assets/generated/humans/buildings/war_stable_hex_v1/war_stable_hex_v1_albedo.png",
+    "sha256": "11b7661d359b79c1cb2dc5d8ac1bd3aa808bc264dba93aa12bb73c00e923704d"
+  },
+  {
+    "path": "assets/generated/humans/buildings/war_stable_hex_v1/war_stable_hex_v1_emission.png",
+    "sha256": "810e72e25e7c54b499323aefcedcdab1f5bdd249197898f01f2e9ac94e77a3a6"
+  },
+  {
+    "path": "assets/generated/humans/buildings/war_stable_hex_v1/war_stable_hex_v1_report.json",
+    "sha256": "3c74e7cda71da8b82f0a30f6b5334ad43fa30177004ddf65a550ffab260089dc"
+  },
+  {
+    "path": "assets/generated/humans/buildings/war_stable_hex_v1/war_stable_hex_v1_war_stable_hex_v1_albedo.png",
+    "sha256": "11b7661d359b79c1cb2dc5d8ac1bd3aa808bc264dba93aa12bb73c00e923704d"
+  },
+  {
+    "path": "assets/generated/humans/buildings/war_stable_hex_v1/war_stable_hex_v1_war_stable_hex_v1_emission.png",
+    "sha256": "810e72e25e7c54b499323aefcedcdab1f5bdd249197898f01f2e9ac94e77a3a6"
+  },
+  {
+    "path": "assets/generated/humans/buildings/warrior_hall_hex_v1/previews/back.png",
+    "sha256": "941518c96f3b8d9151fbff70dfa8c51141e87fd0231b85c9949d479595ea96ac"
+  },
+  {
+    "path": "assets/generated/humans/buildings/warrior_hall_hex_v1/previews/game_top.png",
+    "sha256": "89007d484139dcc56c2513047d6427a2a0d7d1d974cfad234c6a38fa40e16ed8"
+  },
+  {
+    "path": "assets/generated/humans/buildings/warrior_hall_hex_v1/previews/three_quarter.png",
+    "sha256": "9fdab760e7eb38366e0f07a599e21f039b887a265a556c308da9091dcfdf6905"
+  },
+  {
+    "path": "assets/generated/humans/buildings/warrior_hall_hex_v1/previews/top.png",
+    "sha256": "8e322787b1b5a3c6f55de0bf0a2b594410e2666d23e040784ee049dc7acd35eb"
+  },
+  {
+    "path": "assets/generated/humans/buildings/warrior_hall_hex_v1/README.md",
+    "sha256": "4599c75e2a120a855f0c18bdce258477c69712116d65c8fce472c42d6a89ef46"
+  },
+  {
+    "path": "assets/generated/humans/buildings/warrior_hall_hex_v1/warrior_hall_hex_v1.blend",
+    "sha256": "68c7eb4a18061ea38a01d6ca649b887d8c5b268006638206f7414774fb22f923"
+  },
+  {
+    "path": "assets/generated/humans/buildings/warrior_hall_hex_v1/warrior_hall_hex_v1.glb",
+    "sha256": "d7d97578ef869d7bb501ebcff4496bbc4df70608d87d72488b213109aa53583c"
+  },
+  {
+    "path": "assets/generated/humans/buildings/warrior_hall_hex_v1/warrior_hall_hex_v1_albedo.png",
+    "sha256": "3bf881d9434a1c104936e6583dc521c01b7235277155eb35e2875254b3a90ac0"
+  },
+  {
+    "path": "assets/generated/humans/buildings/warrior_hall_hex_v1/warrior_hall_hex_v1_emission.png",
+    "sha256": "7cf3bc8bae99795e670626858e7f7acc947e127a0ef944f6efae5f157bf1eb56"
+  },
+  {
+    "path": "assets/generated/humans/buildings/warrior_hall_hex_v1/warrior_hall_hex_v1_report.json",
+    "sha256": "7224c0983c3122fbbe57a3efb93c4cdacd822bc077e5e794bff29c11abd12b4f"
+  },
+  {
+    "path": "assets/generated/humans/buildings/warrior_hall_hex_v1/warrior_hall_hex_v1_warrior_hall_hex_v1_albedo.png",
+    "sha256": "3bf881d9434a1c104936e6583dc521c01b7235277155eb35e2875254b3a90ac0"
+  },
+  {
+    "path": "assets/generated/humans/buildings/warrior_hall_hex_v1/warrior_hall_hex_v1_warrior_hall_hex_v1_emission.png",
+    "sha256": "7cf3bc8bae99795e670626858e7f7acc947e127a0ef944f6efae5f157bf1eb56"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/grand_magic_game_top.jpg",
+    "sha256": "2700f813a07e08fe7c39835d06a37005a0f14f072ea3649cb5248dfa91d82111"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/grand_magic_three_quarter.jpg",
+    "sha256": "c087d9e76861606913aabb152e2076c5bd3911e47430ff6a74ae4bab9cbc934a"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/magic_schools_game_top.jpg",
+    "sha256": "6d61a4a514a6d453c809e73299778906660e7a1bb14aee7600ed5f9d0c36e34b"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/magic_schools_three_quarter.jpg",
+    "sha256": "a20c6356c5a45328d3f5156993c7a403da55d76d2c677357bc6a1c506fec8d40"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_conclave_hex_v1/orc_arcane_conclave_hex_v1.blend",
+    "sha256": "ebabbb33f0611c81ff6eb452ceb7b25255ec790fcd55a29da7d86de7a611878c"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_conclave_hex_v1/orc_arcane_conclave_hex_v1.glb",
+    "sha256": "49efc25ea952b30ae2c7651dc647a3f1a807422cc0504902cb0c2a08b98a6b8a"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_conclave_hex_v1/orc_arcane_conclave_hex_v1_albedo.png",
+    "sha256": "60ea34b0a8c34982723b036879f158341cfc823dc887244d4d5b172b0c785d5f"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_conclave_hex_v1/orc_arcane_conclave_hex_v1_emission.png",
+    "sha256": "e0ee6628b06d5a7de5c043dc02bb3d488037dab7a9f79e5ba2d5c14f4625a61d"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_conclave_hex_v1/orc_arcane_conclave_hex_v1_report.json",
+    "sha256": "9452343ab7f06f6fc77f2c1c05561649a88fdbc36014c38e147ed2a8588a4e17"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_conclave_hex_v1/previews/back.png",
+    "sha256": "30fe89dfdd3defe9b776b64b714f9c0dc2d61668e9647bd259e87811bdb7dedc"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_conclave_hex_v1/previews/game_top.png",
+    "sha256": "fd1d83ce9a9a7ec6b87e23d7b6f4ddb5b84e9d2164e773d14c891eba83b902b1"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_conclave_hex_v1/previews/three_quarter.png",
+    "sha256": "0d9e70f08cad973c4607f67317f485522ef3dcbab18a36a83e7ed8631537723f"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_conclave_hex_v1/previews/top.png",
+    "sha256": "f2f1bde0d526c9ac749b5c66e7cb25ce802a2be3da5a1c3e95d34ae572fc806d"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_conclave_hex_v1/README.md",
+    "sha256": "37f05317af85d0095a230f616c6ec13b37e9fdedb4f86e361a8e4b9b286351e6"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_ritual_hex_v1/orc_arcane_ritual_hex_v1.blend",
+    "sha256": "b97cdefe15110927daf4e3a6c6798815a4eac1bd81bae9904db6cf8e0479089b"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_ritual_hex_v1/orc_arcane_ritual_hex_v1.glb",
+    "sha256": "8562b9ccf92a69fe53c74327f5c0497a508a7f7c8d5dc60a12419e0dd3cd4ece"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_ritual_hex_v1/orc_arcane_ritual_hex_v1_albedo.png",
+    "sha256": "83646f35208c09ef4d501af3535e38cea87845f00090e8dd0490299007878f0a"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_ritual_hex_v1/orc_arcane_ritual_hex_v1_emission.png",
+    "sha256": "d86017d35b8fd6853dade248c22721904ad7e769f8b4768bf9dcef34540f05b0"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_ritual_hex_v1/orc_arcane_ritual_hex_v1_report.json",
+    "sha256": "59c9a9fa4db355c08117c6ba20fc6482aaaeaa4f231c0c7c75c048885ad9151e"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_ritual_hex_v1/previews/back.png",
+    "sha256": "26d8e153990b5b2c0ecfa4d332fae0c5bc529d4ce9bb49ba6281bc951c4a39e5"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_ritual_hex_v1/previews/game_top.png",
+    "sha256": "8169c9433867ce4c7086514bd3d4cc261353bcb19aea3873c7e227d868ed3be2"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "9a8ad1dc62389f20ba7df96dc4a74cef73d9e79ecb5d6bda16884212d2644e00"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_ritual_hex_v1/previews/top.png",
+    "sha256": "14e2ce70f0ddc688c0785f08de06c3fa387e1795716a7c69ed13edabf4a27d2d"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_arcane_ritual_hex_v1/README.md",
+    "sha256": "94561bb8337b487f32dcc5c47a21225df2b12fda7bc90437ed7cacc971531939"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_city_level_1_hex_v1/orc_city_level_1_hex_v1.blend",
+    "sha256": "295f9540ea34fb64956374948f9a06a208e50ab5e2b7107435cd4723d3396f7e"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_city_level_1_hex_v1/orc_city_level_1_hex_v1.glb",
+    "sha256": "524e9ae578e6512bec65e1577ad9f4fa5c914a288b678a7615bef016a9d4341a"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_city_level_1_hex_v1/orc_city_level_1_hex_v1_albedo.png",
+    "sha256": "8354178f7d83f821084a317a77a441d55d5a5f2a6272cbba65d2307b0e45afc7"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_city_level_1_hex_v1/orc_city_level_1_hex_v1_emission.png",
+    "sha256": "589c9824ab2dfaad2ec00529543124408f4f8ef0319eca1b5f713a1515be07bc"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_city_level_1_hex_v1/orc_city_level_1_hex_v1_report.json",
+    "sha256": "dab86e439952d67da7e06a929c01f5eb173b7b697f9ced120615a60c1b0a1618"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_city_level_1_hex_v1/previews/back.png",
+    "sha256": "1be6f82f3ed63fcf57a88d40517a2bf63636bd9d5136f4784f853c045b318277"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_city_level_1_hex_v1/previews/game_top.png",
+    "sha256": "19e352f0db6b100310cc1aabf4545e612d5e632f738b7bd0fd8ae199484025d5"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_city_level_1_hex_v1/previews/three_quarter.png",
+    "sha256": "a2b37640b46f31eceb5900c28967459f7e5a19ca801e3bd9395bd522d1857b54"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_city_level_1_hex_v1/previews/top.png",
+    "sha256": "aae9e131115df6f30bca20f81c770479109cc4d827838c971cf3f90c5654a85f"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_city_level_1_hex_v1/README.md",
+    "sha256": "b76a108d94fb38084940965b686179e505bb2e3f8bd1cafa3dcab33b0ecd3278"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_circle_hex_v1/orc_druidic_circle_hex_v1.blend",
+    "sha256": "dbc416a5fee1dc9d3af21e81351b86bae6e6cef269d7641ecd293f29ff59b4d1"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_circle_hex_v1/orc_druidic_circle_hex_v1.glb",
+    "sha256": "188b1ad14c525cd10c4d18971719517c5e91203cb76b0354e3835a0c48a60b9e"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_circle_hex_v1/orc_druidic_circle_hex_v1_albedo.png",
+    "sha256": "4dcbfd2047395c489c7cd272447d7ff470fdeed52eb743785dd9e4cdbf4dba3e"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_circle_hex_v1/orc_druidic_circle_hex_v1_emission.png",
+    "sha256": "5289d16cb0ea9f689ae3cdc754e7101e7f198ee87d45c3a57a94fa8ccd0b001c"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_circle_hex_v1/orc_druidic_circle_hex_v1_report.json",
+    "sha256": "d83b3a72f50c3cd2d56141f45d42f844ce66800e00ba2953079cdb294babe271"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_circle_hex_v1/previews/back.png",
+    "sha256": "4a08b4ca9fa21e75837d997456a6f3507537486e5198f3f1979404b9e4a506f4"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_circle_hex_v1/previews/game_top.png",
+    "sha256": "646836f6099972b6a7f86e1c5529e8c4459b67dc412217cdd01d7c463ca04acb"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_circle_hex_v1/previews/three_quarter.png",
+    "sha256": "62812cf3a8f8fabf38f2a310ad8832f63f788b24a8168b505dc336e2105df84d"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_circle_hex_v1/previews/top.png",
+    "sha256": "3818fd3ac745cca84b89fea018e647a218fea70d7e4647eae83894ae5f7ce8a2"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_circle_hex_v1/README.md",
+    "sha256": "d925bd2f0f4bae8d73a1c5fb80e5f6fbc4517eca35b84873a78b6f2431c94400"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_ritual_hex_v1/orc_druidic_ritual_hex_v1.blend",
+    "sha256": "f038f30e8c496c9480eb1777d1175615bc5d602df66396b385bb5588825d1a3a"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_ritual_hex_v1/orc_druidic_ritual_hex_v1.glb",
+    "sha256": "612da08a6a63945991b28515a2126553534a696830d93c3a5d7af0f4648009e5"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_ritual_hex_v1/orc_druidic_ritual_hex_v1_albedo.png",
+    "sha256": "d3ee658d870ec3f698bd1454cb540a571b37354c310b2da2af0f6734285ea0c9"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_ritual_hex_v1/orc_druidic_ritual_hex_v1_emission.png",
+    "sha256": "c2227312448216a3b2de65508fc94ab401b00b7b69e2d9f023baa880b2665f3c"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_ritual_hex_v1/orc_druidic_ritual_hex_v1_report.json",
+    "sha256": "e0b8ef3746ead2d53ace07b7cc598e82bf1365ea9f0e5db61f1416c0c4a28dc3"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_ritual_hex_v1/previews/back.png",
+    "sha256": "615c9366d5861adc79a1103131f24345048d5eb6e5c2e350fe3b45ba5e1c05ad"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_ritual_hex_v1/previews/game_top.png",
+    "sha256": "002a41de7ca73effd1ab90256cafefd31a516e23df89dd63046a4393e81f1161"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "264548a71d73ba6d628aeac8a03ce3a0a493d6f9f3987c6cd965261039934eaf"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_ritual_hex_v1/previews/top.png",
+    "sha256": "e6a4853c871cb34cbaa1b2087a36a7cf1f5169d5c54c8168365dcf4fb46acf85"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_druidic_ritual_hex_v1/README.md",
+    "sha256": "b95b84ed9813467004671b312c5dc0f2a3cce66e9e596fa957404bcdd5519673"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1/orc_elemental_observatory_hex_v1.blend",
+    "sha256": "2c4fcf471144f59f0dcc24febc9feac72f325f7edd5e2c355ea147ed8676bda3"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1/orc_elemental_observatory_hex_v1.glb",
+    "sha256": "e994233a50d068f109ef1ee58f4e01a3efccaf9155f3c3a1f76cef58c423d098"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1/orc_elemental_observatory_hex_v1_albedo.png",
+    "sha256": "79a13198925dd0b1cf5b4cfea5eb86b49b26b19c53ade38dd9cdd6047b29bd0a"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1/orc_elemental_observatory_hex_v1_emission.png",
+    "sha256": "ee239033f5b4484e50e9597e363263dc9dc4dbf40854420ca31ff1ab1cc9c6e5"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1/orc_elemental_observatory_hex_v1_report.json",
+    "sha256": "da91909dd9023994604c484a02ce7da01389edfdb41610c3af90a4b2943e9574"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1/previews/back.png",
+    "sha256": "703a3838ab9c33bc0c35a1ed5254600176b1fa87ea51068390ca3170d1383ee6"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1/previews/game_top.png",
+    "sha256": "2c19cb75c309980612e1b96af44ca179b80a17913e297fb886bd2cbde7dc7b9d"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1/previews/three_quarter.png",
+    "sha256": "63b94160080c63f7aef9b440ded5512427e638e23d19bca9ecab3df029e99b86"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1/previews/top.png",
+    "sha256": "06f1b703988ceee1bba3fc83424a62ac8c1ab03c7c4013e5ea2366f3c15aadc8"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1/README.md",
+    "sha256": "d74db4273c9b0c3475e1c45a22bd00b91fe4fa0578527ea846eebe920a0cc97b"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_ritual_hex_v1/orc_elemental_ritual_hex_v1.blend",
+    "sha256": "61bcb3baf4d77080dc1fb4c1b21455008d6d14a7bd7ef8d3a84a2624636d00d6"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_ritual_hex_v1/orc_elemental_ritual_hex_v1.glb",
+    "sha256": "e318dfee0781d0c71c43f377fe576fa45f9ce7f0f31cd606f222c0731d05c1f3"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_ritual_hex_v1/orc_elemental_ritual_hex_v1_albedo.png",
+    "sha256": "a1e7df2bd15b0e5d88e618025d5b968797fcec082e7af56b110346e0b499bf9f"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_ritual_hex_v1/orc_elemental_ritual_hex_v1_emission.png",
+    "sha256": "18d362894ecb6f438a60bc4b4c4740b740a70cd086de095c9bd40cf088c53f04"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_ritual_hex_v1/orc_elemental_ritual_hex_v1_report.json",
+    "sha256": "61f05381f73894e9a3b1fc02d9e35987427055dae09827715034e420029e0def"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_ritual_hex_v1/previews/back.png",
+    "sha256": "41ba69f1ad19350251013f94c1be7253e36f1456482135d6ffa079ebe095278e"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_ritual_hex_v1/previews/game_top.png",
+    "sha256": "c16601f59c3526945f144da519cacee767b0a31d8366e22b3a5329cd20d04a93"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "a147d80a238870a5672e137ad4d76f99690a48b87011d0bf98f532791de3fcd9"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_ritual_hex_v1/previews/top.png",
+    "sha256": "eb0e7d263be4ede29a38f9d61b0e7177dcfcb0f3d8c3b16847fb1f26dabe8f21"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_elemental_ritual_hex_v1/README.md",
+    "sha256": "e6cf6f828e3721d3bc51dce1daabfec7e8c749a3578be43c206148b6a9e1a5ca"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_guardian_hall_hex_v1/orc_guardian_hall_hex_v1.blend",
+    "sha256": "c407c0d438653cfdfd25a910313ccf25cfa90752961117cfde96595c7e700299"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_guardian_hall_hex_v1/orc_guardian_hall_hex_v1.glb",
+    "sha256": "4d1d442c1021a6925e90edc40c3e5a6c41d04cde037e3011c040f2bc66689899"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_guardian_hall_hex_v1/orc_guardian_hall_hex_v1_albedo.png",
+    "sha256": "6cc0d081496923efd108d382a9fd03c48b28cff4323be1ad6bd404a2c00d2605"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_guardian_hall_hex_v1/orc_guardian_hall_hex_v1_emission.png",
+    "sha256": "c5af7b89b98d39215168c4e7cd85657723f37a037b5001c59a5f2bd5fad4526f"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_guardian_hall_hex_v1/orc_guardian_hall_hex_v1_report.json",
+    "sha256": "e97f069eed26ca3a857236b495cdc90f74b4c0fb37362fc1656fd6f3f8d371f5"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_guardian_hall_hex_v1/previews/back.png",
+    "sha256": "ad537a135eb19487ee54ea25f7fd010f4a86c7e4f2f1ff173561791edc209fe1"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_guardian_hall_hex_v1/previews/game_top.png",
+    "sha256": "78487ab30555c90333145477533ba60e340e614fcd5129560ad24ce441bc646e"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_guardian_hall_hex_v1/previews/three_quarter.png",
+    "sha256": "5dad02a582cb177490ed9c8c29d01e15451ea0848fec32de002c47fc02612f56"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_guardian_hall_hex_v1/previews/top.png",
+    "sha256": "233d520548e80c7e425cb2d77aa5c58cdc4415b306cb3423307f7d4acba99275"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_guardian_hall_hex_v1/README.md",
+    "sha256": "c204bfcebc5e8a42e461727f4f697ea98c96e3a38d218a8e3c3c44211256554f"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_ritual_hex_v1/orc_infernal_ritual_hex_v1.blend",
+    "sha256": "cf95735152000016c0db60c31bdb1b07ad6fead8c396f78bb35a5dc51614427a"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_ritual_hex_v1/orc_infernal_ritual_hex_v1.glb",
+    "sha256": "e16acd895e762db511b911a0130335e7eb3d69aadea84097fe1e07b1f269ac21"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_ritual_hex_v1/orc_infernal_ritual_hex_v1_albedo.png",
+    "sha256": "7c3da7d4a646e2400abd0bdb98b3951ace788363fdeb281f78e280ff1ec75e6f"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_ritual_hex_v1/orc_infernal_ritual_hex_v1_emission.png",
+    "sha256": "1cd4aeb4f4bdd46e6751633deb29047415f1cb8abcb7c0c7d4b331343cafc495"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_ritual_hex_v1/orc_infernal_ritual_hex_v1_report.json",
+    "sha256": "0c2394c83e08c8f18ecbd3725662e90ef87c934ffa80327d146739a358847f10"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_ritual_hex_v1/previews/back.png",
+    "sha256": "d1a6afeb20266260ee804680ec55cbe6aef33df69b462463c519aef7726953f0"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_ritual_hex_v1/previews/game_top.png",
+    "sha256": "59d5d13897fb117217d3c7a4b325eb053652f683aa0fb306c715ecfa79246692"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "deb5c1c85f3fea5533f679edb4c8ae60898cfefec467717d50feb3c88592a0d0"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_ritual_hex_v1/previews/top.png",
+    "sha256": "368eaacded5843ffc358a0ee753aa29758f69808142e312c74d13c9c9cc01f5e"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_ritual_hex_v1/README.md",
+    "sha256": "310adb3583cfd64f39f7fe8b3bfbae643fe0704f52dd9c2e3af8700221fef722"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_sanctum_hex_v1/orc_infernal_sanctum_hex_v1.blend",
+    "sha256": "22b87e2fb549ad21f2239501b89bf19ff6951ea72d8661b7aadc44afc38230d7"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_sanctum_hex_v1/orc_infernal_sanctum_hex_v1.glb",
+    "sha256": "7c50a63bce60d76d67d8005a7f0cbbea1d4435503e0957e76f5afe84ffaee245"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_sanctum_hex_v1/orc_infernal_sanctum_hex_v1_albedo.png",
+    "sha256": "d73c94b2ac9dce8c9296c20ada511668c1ad8c8e2606f89d78ab9682c63b1f2b"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_sanctum_hex_v1/orc_infernal_sanctum_hex_v1_emission.png",
+    "sha256": "112e3a33f1532b9bddb4b0eeeee5ea0f6aa405134bcfa277170095cf2c82dbac"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_sanctum_hex_v1/orc_infernal_sanctum_hex_v1_report.json",
+    "sha256": "0f6d66ce89f8aaf2a624687ff5663384284f4dd7f3573b7e5c5f78cb2be7d990"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_sanctum_hex_v1/previews/back.png",
+    "sha256": "c77edf6becfe9de7855c884ce5f13c0f5d0b44c7fef99bc88b56885f6daf6ef2"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_sanctum_hex_v1/previews/game_top.png",
+    "sha256": "96a49602000e1ab971997c61004ad2913fbdbe76713f32c62fbddbef6e2c9f43"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_sanctum_hex_v1/previews/three_quarter.png",
+    "sha256": "8fcbd2c6bfaa70bef6a71f3a75e6fc739cf967a72ce8208793a9aacbb65c615a"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_sanctum_hex_v1/previews/top.png",
+    "sha256": "08502de29236d6fc02e1a674876cb163322ddd7f0ffb063dd79774db7fa0e5ff"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_infernal_sanctum_hex_v1/README.md",
+    "sha256": "85cd5d9673b18221155b07fc608ac4bb73b363ec1509c291a06d0b9d787817d2"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ossuary_hex_v1/orc_necromancy_ossuary_hex_v1.blend",
+    "sha256": "bb2deb3eb2f6029750a6d2d5169515dcdb2daee2602e3f3d86c940a2a91418de"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ossuary_hex_v1/orc_necromancy_ossuary_hex_v1.glb",
+    "sha256": "a523cdf221620032e389a5c4dda428324c740b164193a5be8bfeadd3ed42bea1"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ossuary_hex_v1/orc_necromancy_ossuary_hex_v1_albedo.png",
+    "sha256": "b6c4d2fa21c0f9b6bfeeeeea2c6f153c49c1078a37f4eb1cd852b1e34c9297e9"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ossuary_hex_v1/orc_necromancy_ossuary_hex_v1_emission.png",
+    "sha256": "003dc36f636366ea356942e6c1fb07e656b7ca0a42b3f814970db9605bdfbabf"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ossuary_hex_v1/orc_necromancy_ossuary_hex_v1_report.json",
+    "sha256": "44ff612ef14191782aeedcfbc45b2daa6fed16c8669898b07142e416cc8536e2"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ossuary_hex_v1/previews/back.png",
+    "sha256": "f8d03700a87475688815867fec1ecb64909ab5d298d5ce5f060385dc492f544b"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ossuary_hex_v1/previews/game_top.png",
+    "sha256": "b7a148f67735411dc0b6aa2977e3452cf196d85a87bb7f8531b2add6e2375e93"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ossuary_hex_v1/previews/three_quarter.png",
+    "sha256": "b37f4ae2cd7cae2c2bd4103f12e4532b6799f49cac9f3d945fba66bbd9918e66"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ossuary_hex_v1/previews/top.png",
+    "sha256": "7f3e977d86494606329725efceb25ee4b1fa52f32b0242a77cf18a92c4ea26a3"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ossuary_hex_v1/README.md",
+    "sha256": "21ad7177401fd8f94edf940ce5cdc39a04a91b1925968e882dd095c608887f29"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ritual_hex_v1/orc_necromancy_ritual_hex_v1.blend",
+    "sha256": "a7d7e460cb0ba6652bc63efb3084908507c85eb5fd8ba4ffeb934227254c5e33"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ritual_hex_v1/orc_necromancy_ritual_hex_v1.glb",
+    "sha256": "902c31fb01b9ef5d7369c063044cf4495e6700eada5a1157c43f6410369000a2"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ritual_hex_v1/orc_necromancy_ritual_hex_v1_albedo.png",
+    "sha256": "e246d45b3b6d72d95d2385d40355d7acc1057a317f5914c72dc0aa1ee1f6792c"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ritual_hex_v1/orc_necromancy_ritual_hex_v1_emission.png",
+    "sha256": "a25890fac6eb05b8721da25660dac9c3be8692ab808a95db4863abc429874df6"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ritual_hex_v1/orc_necromancy_ritual_hex_v1_report.json",
+    "sha256": "1c0330328f4adfded332411d1daa4a205cecde02ea78d37b16b2dc8b39a2b30b"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ritual_hex_v1/previews/back.png",
+    "sha256": "00f28c887d53003a3af10cecd91cda4340a752f754a75108fc7f1fa0e2781977"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ritual_hex_v1/previews/game_top.png",
+    "sha256": "7d6ebe6cc3f5faa233aa60edafaa20a5cee1f46d4a6801d0343c2a273357db6e"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "bae1b41646f6e262a607d3e715ce71cda99a8d0ded717231fd98fce8d0409300"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ritual_hex_v1/previews/top.png",
+    "sha256": "08fb76fec559b13c6774017be8309b3b2c706f840048a3e247a13498a725d0d0"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_necromancy_ritual_hex_v1/README.md",
+    "sha256": "5e78b9a478130f118acd1e0dd31f7e031dcfe5fa2f3f3a88b5bda29b9617423b"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_ranger_camp_hex_v1/orc_ranger_camp_hex_v1.blend",
+    "sha256": "51ab3feb325aa5dd4df0fb234f97dd7a72f1fd553f1e562a709efe6a8b58fd19"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_ranger_camp_hex_v1/orc_ranger_camp_hex_v1.glb",
+    "sha256": "3a0a98005af37a1ff8b06f9884acb3fe1224e74e285c8ae29850c7558767edf0"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_ranger_camp_hex_v1/orc_ranger_camp_hex_v1_albedo.png",
+    "sha256": "b3a5f963e0ac57aebed4c69599389b7b82fa5b468911e6cfb03c97bcff79a855"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_ranger_camp_hex_v1/orc_ranger_camp_hex_v1_emission.png",
+    "sha256": "826a4971b0981bd3283eb0cfab9142e19544f7dfbbe356c21c37ac0db78536ad"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_ranger_camp_hex_v1/orc_ranger_camp_hex_v1_report.json",
+    "sha256": "58788129db0f55a91b46ab4c3b3cc01dad4800d03bce01c77d8d705861804743"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_ranger_camp_hex_v1/previews/back.png",
+    "sha256": "f4526b4ab3ff6ac45c4beaf1a68eb9f558f093ba08b5f4737d923935692d3d93"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_ranger_camp_hex_v1/previews/game_top.png",
+    "sha256": "39fff5dfea7b3c6155e8def2c23438ad1f58f86ab8674e70039e7db469371358"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_ranger_camp_hex_v1/previews/three_quarter.png",
+    "sha256": "432599ec31a7af39c1cf138d8d8fd87f6a6651983bba8172aad94e546c62a011"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_ranger_camp_hex_v1/previews/top.png",
+    "sha256": "09a870fbd80d5cf375c4d695374f5a94a632e49d6e1fff6c9139cbb623016cd4"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_ranger_camp_hex_v1/README.md",
+    "sha256": "a72d1ac4a99ce96fe4114c86fb15098dfc4b7d1b0c5e7d11562f2ea97caebce9"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_rogue_guild_hex_v1/orc_rogue_guild_hex_v1.blend",
+    "sha256": "d886772c5a0c9bcded8a7d30029d7ec371937e7450456955538aca2efa69a286"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_rogue_guild_hex_v1/orc_rogue_guild_hex_v1.glb",
+    "sha256": "38ccb008ca844c533ec5d8dca77aafa4f5a3f150f433a2d91064c4a90be4376c"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_rogue_guild_hex_v1/orc_rogue_guild_hex_v1_albedo.png",
+    "sha256": "6ce9f641d6bc9486f2c097157edfa6e0f7e8c375c54d7609d0eb680861f88669"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_rogue_guild_hex_v1/orc_rogue_guild_hex_v1_emission.png",
+    "sha256": "1838cde01180c18af99eead2ee11678c6e3c10d325259f4b8306cef1b0322613"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_rogue_guild_hex_v1/orc_rogue_guild_hex_v1_report.json",
+    "sha256": "a9246cc96e6c5f40b93e674e9b8a8072017cac650f1dec95273b0fdf41cb01a3"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_rogue_guild_hex_v1/previews/back.png",
+    "sha256": "c1aea17f0fe6a062dd3bb1ea0df2552de755be2d9dd83b1868473c0c94d30959"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_rogue_guild_hex_v1/previews/game_top.png",
+    "sha256": "293b18dddc394c22ce601fc204b50e0b642bc3b9dd1eb22fabbeecaecf9e179a"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_rogue_guild_hex_v1/previews/three_quarter.png",
+    "sha256": "6b4e04e58d9d9e3a6eedb123d067d601c8867fb3f8909c0d38303c4595d35fa7"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_rogue_guild_hex_v1/previews/top.png",
+    "sha256": "6cd2c3e1604905da7997469acc16e97d52a2153e2e75f4a56386909990800e8d"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_rogue_guild_hex_v1/README.md",
+    "sha256": "42e63c44538f4111e62353526fc1513f0767c6a3122a313a81ce7b5d4b843ff6"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_ritual_hex_v1/orc_sacred_ritual_hex_v1.blend",
+    "sha256": "06b9c5c2d48d33a1356635564432ae36ae20f117f7e244fd028839eca907fa71"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_ritual_hex_v1/orc_sacred_ritual_hex_v1.glb",
+    "sha256": "d41db4296c1be77ea8f918ccbfe894ce11536108eba48bbb315bb5902798b031"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_ritual_hex_v1/orc_sacred_ritual_hex_v1_albedo.png",
+    "sha256": "04f78b15a0d4251fb5985d237d5e22d4083fb5024c186553ea8870a6cee1bd5e"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_ritual_hex_v1/orc_sacred_ritual_hex_v1_emission.png",
+    "sha256": "2bdaa1ebe8c1b76f9ead1cfd8791fa4589bcd7da9cb54618f8bb24c45719898b"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_ritual_hex_v1/orc_sacred_ritual_hex_v1_report.json",
+    "sha256": "181488eb53fa4a651c9a986c6feef87f319667161edde34edb7bae56d920673a"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_ritual_hex_v1/previews/back.png",
+    "sha256": "f8fb9c1b43c64833469966e25d3a606c6ed7419ddc38d39e147b64766e5b8ff3"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_ritual_hex_v1/previews/game_top.png",
+    "sha256": "267561935c84c8b17fc4704a70680e026e28d6911c55b753d5ef752860df1e17"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_ritual_hex_v1/previews/three_quarter.png",
+    "sha256": "b5b85f50565453f180435ec4c30b1c3edd12470a9aa248cbc08ea662d648cf9c"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_ritual_hex_v1/previews/top.png",
+    "sha256": "5f0aa2c24fb29ad76a07d2e02e9073408851ad154c0d2da32851194b32a76953"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_ritual_hex_v1/README.md",
+    "sha256": "32c77f106f883446149b2251726f93d6d89075edff6295a81c1dbffe6e54216d"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1/orc_sacred_temple_hex_v1.blend",
+    "sha256": "f09d4b7635b1fcc132190f8deb2dc6506b0b86f21eb33754990868bbd05484df"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1/orc_sacred_temple_hex_v1.glb",
+    "sha256": "41440a6e350c87b855dce867542c4fd9b8562456308772274b009951d88fe4a3"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1/orc_sacred_temple_hex_v1_albedo.png",
+    "sha256": "2da5b25ed8f5602bc9efda1495ab750f3defc534fbf902b1974c0a458b3a5b72"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1/orc_sacred_temple_hex_v1_emission.png",
+    "sha256": "91f8c844375244d3aac8dcbe51b9610aeeb8ba8fe0a705e5fef55e9e59394011"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1/orc_sacred_temple_hex_v1_report.json",
+    "sha256": "568648ed92927efcfbfb646a331496feebc8c5315b769425cc0bd49cd3e06f49"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1/previews/back.png",
+    "sha256": "6557ea9eec7e9abae739252e48eff1e573a5c577c3cd304662a745ce7d6014fd"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1/previews/game_top.png",
+    "sha256": "840845825f25468aa0148ab782fd48b7b7ad1b813e4d162656c93076acbd4b9f"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1/previews/three_quarter.png",
+    "sha256": "bd1a46f100fc570d272719f028bbce35ac1d2bdc6cb223b9192fa2fd8c34ef5b"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1/previews/top.png",
+    "sha256": "eb7f0be1a0cc80ba0bb4eeb066e46f1d757becfb1a41e4b42d90b11034f74968"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1/README.md",
+    "sha256": "3a5a8e1c81dbfadfd9e5bb68f9f32304151a2725afb3653c850ad9cd79cb8dac"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_siege_arsenal_hex_v1/orc_siege_arsenal_hex_v1.blend",
+    "sha256": "d45ad33cbde985640922c6591adadf460e4cf2c17bfef2954229afb99c775adb"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_siege_arsenal_hex_v1/orc_siege_arsenal_hex_v1.glb",
+    "sha256": "1c3d5b8f5b88d317747beb38a6526d78327e07462a16caa69120fe8c50689699"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_siege_arsenal_hex_v1/orc_siege_arsenal_hex_v1_albedo.png",
+    "sha256": "28039a8db1fc3d202790639566a87412f059ccb77508dbd03b5879edcbbcd318"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_siege_arsenal_hex_v1/orc_siege_arsenal_hex_v1_emission.png",
+    "sha256": "c665faec17083ab24758373f5f71e8907609ee64a6e75c8a2ce090001fc8fdcf"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_siege_arsenal_hex_v1/orc_siege_arsenal_hex_v1_report.json",
+    "sha256": "b14faf65ab468bc1bbb9bc4b0bdc5a80e2df6e65a8907893bb616098752e8cf8"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_siege_arsenal_hex_v1/previews/back.png",
+    "sha256": "c0647fcbf162a0adb2ae598f45fa06d92568439bf0befafcb168f5cd4cf1e1f7"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_siege_arsenal_hex_v1/previews/game_top.png",
+    "sha256": "33f36f3237d28e17e678ec385487b5a527e31799e5a0f97a27d5a627aefe8dc4"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_siege_arsenal_hex_v1/previews/three_quarter.png",
+    "sha256": "d1f081419d1adbdc2301c88366e54a258eeadce3c353f2be11e7d00d46c427a4"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_siege_arsenal_hex_v1/previews/top.png",
+    "sha256": "128f055f1cbbc3afed6d161dae698b23574e3daf49ba78d6663254a41faec239"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_siege_arsenal_hex_v1/README.md",
+    "sha256": "7924157f259f5671b4726cca865ebb7744eeb878a3a85e2dbf2637c195ab89ad"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_war_stable_hex_v1/orc_war_stable_hex_v1.blend",
+    "sha256": "a6e2c97cad1291cd3a6b6f35b14cf9ef338bda432c2d2b0c77382b931baae0bc"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_war_stable_hex_v1/orc_war_stable_hex_v1.glb",
+    "sha256": "cd56a0391968407153e4eec1b01862de581c68c07bbecaba71c50220b0458e04"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_war_stable_hex_v1/orc_war_stable_hex_v1_albedo.png",
+    "sha256": "440158447fa86b0ddbdf3ff4e37958ca1d3477c6e5b6c0c950f962d3ba647644"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_war_stable_hex_v1/orc_war_stable_hex_v1_emission.png",
+    "sha256": "389023c6b6847ce50debf30d74e65392ae2a4269c4b856b669f5d06f8e843546"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_war_stable_hex_v1/orc_war_stable_hex_v1_report.json",
+    "sha256": "6437f3ddf5275ef8a3f97513ca8e3d8ab3473dd2ef39596b02b61cdf92da6e60"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_war_stable_hex_v1/previews/back.png",
+    "sha256": "74572bbc6b4b02a5535006e79f6dff888ebe1b1b044943dad34b23b14bf10d35"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_war_stable_hex_v1/previews/game_top.png",
+    "sha256": "52c8f376b7dc4456cf2dfebb6ac28da4dbbe14f9ef599d04cd6e4b29e68770c5"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_war_stable_hex_v1/previews/three_quarter.png",
+    "sha256": "285183aaade74a90853868c0ceadeabb27f30683187bdf150e3c95a6ca4ef783"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_war_stable_hex_v1/previews/top.png",
+    "sha256": "853180c1596d4213208235e5fe5e402495839aa19a683e8e23cbac1e49b18e27"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_war_stable_hex_v1/README.md",
+    "sha256": "b49f8a0c26b0bea6c4952c067ef6030a3648bae8a0f42b33b94bd026216fb1fe"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_warrior_hall_hex_v1/orc_warrior_hall_hex_v1.blend",
+    "sha256": "9cc3630d011b4c816363c67d51b9b1581b85cf778b1187c66d6155fda90eb3be"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_warrior_hall_hex_v1/orc_warrior_hall_hex_v1.glb",
+    "sha256": "0763363619b9c8446cd93e20884b8c84aa550caeb1d3552dc5ec5030f37db7c7"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_warrior_hall_hex_v1/orc_warrior_hall_hex_v1_albedo.png",
+    "sha256": "b239f8fb5e8ad0c70d98da7f6db598060a03f0b94499ee0f7e434ea39ecdef3d"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_warrior_hall_hex_v1/orc_warrior_hall_hex_v1_emission.png",
+    "sha256": "1afa90e0f10d69c09346b94976c6934bd55508822834eecbe220552585280156"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_warrior_hall_hex_v1/orc_warrior_hall_hex_v1_report.json",
+    "sha256": "69a6235f85f8a3b79bb40c4cbaf3dbef85417d5903881cdfc1f3b91f4b486b4b"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_warrior_hall_hex_v1/previews/back.png",
+    "sha256": "b948abaa14a1fb5df0d4df3f6c0b77277bc53d7635d843354b085ad28f822e71"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_warrior_hall_hex_v1/previews/game_top.png",
+    "sha256": "458734d16c52cd247fbcd49e06feadd5402430393423ad36c900b539e487b78c"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_warrior_hall_hex_v1/previews/three_quarter.png",
+    "sha256": "8e4e3293a1b835da44915a748606bcb740161faea528c4609fc8b0f63e8186cb"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_warrior_hall_hex_v1/previews/top.png",
+    "sha256": "403eb4cab9159675bf15968d05fdadc8d4c56e74cddf5c9241bd7567db06131e"
+  },
+  {
+    "path": "assets/generated/orcs/buildings/orc_warrior_hall_hex_v1/README.md",
+    "sha256": "3a5d10e080031a40578efdc3af62d53184f99a6306b799b06221f0298b8f8ac0"
+  },
+  {
+    "path": "scripts/city/Building.gd",
+    "sha256": "eb6ddcdfe5efb2c6291558f0f00fa4becb2feeccee629d6b864d412cecf166c8"
+  },
+  {
+    "path": "scripts/city/City.gd",
+    "sha256": "6bdbf60b2f9947f08ec8e69aafdad17bfb49b2ee0e57deb4e692d310dc57bf36"
+  },
+  {
+    "path": "scripts/data/BuildingData.gd",
+    "sha256": "cff409aef8dea1d0b3fd43708933c2145d99b165e3d45c0dbd90e120348b9580"
+  },
+  {
+    "path": "scripts/data/BuildingDatabase.gd",
+    "sha256": "3a65e312d3ec8bee5881d324bbbde0353f5b998d9186543c18e600cf28b3c713"
+  }
+]

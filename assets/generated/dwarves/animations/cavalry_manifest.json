@@ -1,0 +1,34 @@
+{
+  "family": "cavalry",
+  "fps": 48,
+  "motion_revision": 2,
+  "clips": {
+    "idle": {
+      "action": "Dwarf_cavalry_idle",
+      "frames": 145,
+      "loop": true,
+      "description": "Carneiro respira e move a cabeça; cavaleiro acompanha a sela.",
+      "impact_frame": null
+    },
+    "walk": {
+      "action": "Dwarf_cavalry_walk",
+      "frames": 49,
+      "loop": true,
+      "description": "Trote articulado: coxas, canelas e cascos das quatro pernas; cavaleiro acompanha a sela.",
+      "impact_frame": null
+    },
+    "attack": {
+      "action": "Dwarf_cavalry_attack",
+      "frames": 89,
+      "loop": false,
+      "description": "Carneiro firma a postura e cavaleiro executa um golpe frontal de machado com uma mão.",
+      "impact_frame": 39
+    }
+  },
+  "variants": [
+    "dwarf_cavalier_v1",
+    "dwarf_shock_cavalier_v1",
+    "dwarf_armored_cavalier_v1",
+    "dwarf_ram_lord_v1"
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "name": "Mana_Devourer_Blocky_V2",
+  "display_name": "Devorador de Mana",
+  "parts": 55,
+  "triangles": 660,
+  "bones": 18,
+  "atlas_size": 512,
+  "materials": 1,
+  "meshes": 1,
+  "geometry": "Only closed flat cuboids; no bevels, organic anatomy, spheres or painted fake aperture.",
+  "concept": "Disconnected folded cubic mass surrounding a real void. Violet intake, cyan-white exhaust.",
+  "pivot": "Ground origin; native Godot dimensions; +Z front after export; static root.",
+  "minimum_clearance_m": 0.14780749380588531,
+  "animations": {
+    "ManaDevourer_Idle": {
+      "frames_checked": 97,
+      "duration_s": 4.0,
+      "loop": true,
+      "seam_max_m": 0.0,
+      "bounds_min": [
+        -0.9315150380134583,
+        -0.6766712069511414,
+        0.16522176563739777
+      ],
+      "bounds_max": [
+        0.9129406809806824,
+        0.48485979437828064,
+        1.8983783721923828
+      ],
+      "root_static": true,
+      "finite_bones": true
+    },
+    "ManaDevourer_Walk": {
+      "frames_checked": 49,
+      "duration_s": 2.0,
+      "loop": true,
+      "seam_max_m": 0.0,
+      "bounds_min": [
+        -0.9314579963684082,
+        -0.6757577657699585,
+        0.16522197425365448
+      ],
+      "bounds_max": [
+        0.9129406809806824,
+        0.48485979437828064,
+        1.918528437614441
+      ],
+      "root_static": true,
+      "finite_bones": true
+    },
+    "ManaDevourer_Attack": {
+      "frames_checked": 37,
+      "duration_s": 1.5,
+      "loop": false,
+      "seam_max_m": 0.0,
+      "bounds_min": [
+        -1.0501739978790283,
+        -0.7839816808700562,
+        0.14780749380588531
+      ],
+      "bounds_max": [
+        1.036346673965454,
+        0.48000001907348633,
+        1.8982166051864624
+      ],
+      "root_static": true,
+      "finite_bones": true
+    }
+  },
+  "references": [
+    "ancient_golem_v2",
+    "troll_blocky_v3",
+    "mana_devourer_v1"
+  ],
+  "previous_asset_files_preserved": 36,
+  "previous_scenes_preserved": 534,
+  "scenes_after": 535,
+  "embedded_textures_match": true,
+  "pixel_filter": "NEAREST"
+}

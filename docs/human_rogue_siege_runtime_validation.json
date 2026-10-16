@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "units": 8,
+  "clips": 38,
+  "godot_import": "8 PackedScenes, native heights, rigs, embedded nearest textures, all clip samples finite",
+  "geometry": "8 assets, no disconnected AABB candidates, same-normal coplanar candidates, intersecting wheels or sampled mast/weapon collisions",
+  "runtime_tests": {
+    "scripts": 2,
+    "tests": 10,
+    "passing": 10,
+    "assertions": 260,
+    "log": "art_source/human_rogue_siege_runtime_before/gut_models.log",
+    "notes": "GUT logs PhysicalBoneSimulator3D orphan warnings in both the new and existing troop fixtures; all assertions pass."
+  },
+  "review_scene_smoke": "PASS: headless _human_rogue_siege_review.tscn, 8 frames, exit 0, no script errors",
+  "previous_sources_preserved": 1867,
+  "expected_existing_file_change": "scripts/data/UnitDatabase.gd: native visual paths/clip mappings and provisional visual descriptions only",
+  "backup": "art_source/human_rogue_siege_runtime_before/UnitDatabase.gd",
+  "pipeline": "Live Blender MCP, one asset completed and saved before the next"
+}

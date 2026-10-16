@@ -1,0 +1,1251 @@
+{
+  "status": "PASS",
+  "version": "human_texture_cleanup_v1",
+  "reviewed": 22,
+  "repaired": 20,
+  "reviewed_without_changes": [
+    "guard_blocky",
+    "settler_blocky"
+  ],
+  "excluded_siege": [
+    "bombard_v1",
+    "catapult_v1",
+    "trebuchet_v1",
+    "siege_colossus_v1"
+  ],
+  "original_backups": "art_source/human_texture_repair/before",
+  "unchanged_file_counts": {
+    "guard_blocky": 13,
+    "settler_blocky": 10,
+    "bombard_v1": 7,
+    "catapult_v1": 7,
+    "trebuchet_v1": 7,
+    "siege_colossus_v1": 7
+  },
+  "units": [
+    {
+      "unit": "archer_v1",
+      "status": "applied",
+      "size": [
+        256,
+        256
+      ],
+      "changed_pixels_by_region": {
+        "pelvis_sash": 1692,
+        "brass": 5,
+        "gambeson": 5053,
+        "archer_chest": 1119,
+        "face_hood": 1048,
+        "bracer": 713,
+        "glove": 966,
+        "boot": 1285,
+        "boot_shaft": 1475,
+        "trousers": 2418,
+        "bow_grip": 259,
+        "bow_wood": 1014,
+        "bow_string": 0,
+        "arrow_shaft": 510,
+        "arrow_head": 0,
+        "fletching": 54,
+        "quiver": 639
+      },
+      "changed_pixels": 18250,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 510,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "Archer_Idle",
+          "Archer_Walk",
+          "Archer_Attack",
+          "Archer_PreciseShot"
+        ],
+        "skin_count": 1,
+        "sha256": "2bdd7c8857216eae40ff74e6406e4f109e616fe327a8450b5a6017f535de7823"
+      }
+    },
+    {
+      "unit": "armored_cavalier_v1",
+      "status": "applied",
+      "size": [
+        512,
+        512
+      ],
+      "changed_pixels_by_region": {
+        "pelvis_sash": 1694,
+        "brass": 14,
+        "plate": 2881,
+        "breastplate": 908,
+        "great_helm": 758,
+        "pauldron": 766,
+        "vambrace": 758,
+        "glove": 1065,
+        "sabaton": 519,
+        "lance_haft": 1221,
+        "iron": 488,
+        "pennant": 400,
+        "shield_heater": 1173,
+        "rein": 0,
+        "horse_body": 4760,
+        "horse_neck": 2595,
+        "horse_mane": 941,
+        "horse_head": 2745,
+        "horse_ear": 437,
+        "horse_tail": 676,
+        "horse_leg": 4016,
+        "horse_cannon_front": 1577,
+        "horse_hoof": 1310,
+        "horse_cannon_back": 1657,
+        "saddle_blanket": 4602,
+        "saddle": 745
+      },
+      "changed_pixels": 38706,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 0,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "ArmoredCavalier_Idle",
+          "ArmoredCavalier_Walk",
+          "ArmoredCavalier_Attack",
+          "ArmoredCavalier_Charge"
+        ],
+        "skin_count": 1,
+        "sha256": "0d92b35f1030b6ad060022320b0e76d368f923eea733e5029d54251812513253"
+      }
+    },
+    {
+      "unit": "assassin_v1",
+      "status": "applied",
+      "size": [
+        256,
+        256
+      ],
+      "changed_pixels_by_region": {
+        "pelvis_sash": 1622,
+        "brass": 6,
+        "jerkin": 3468,
+        "rogue_hood": 2006,
+        "bracer": 799,
+        "glove": 1087,
+        "boot": 1202,
+        "boot_shaft": 1379,
+        "trousers": 2392,
+        "dark_leather": 1695,
+        "iron": 192,
+        "blade": 20,
+        "team": 41,
+        "cloak": 921
+      },
+      "changed_pixels": 16830,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 20,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "Assassin_Idle",
+          "Assassin_Walk",
+          "Assassin_Attack",
+          "Assassin_SneakAttack",
+          "Assassin_Dismantle"
+        ],
+        "skin_count": 1,
+        "sha256": "370d60848ab169bee03466c3c16cdaf34e16d4b99688301dcd7b046cc5b360e4"
+      }
+    },
+    {
+      "unit": "blade_hero_v1",
+      "status": "applied",
+      "size": [
+        512,
+        512
+      ],
+      "changed_pixels_by_region": {
+        "mail_skirt": 1485,
+        "brass": 8,
+        "mail": 2623,
+        "breastplate": 1884,
+        "face": 1295,
+        "hair": 882,
+        "circlet": 665,
+        "pauldron": 1679,
+        "vambrace": 2791,
+        "glove": 1056,
+        "boot": 1460,
+        "greave": 2906,
+        "trousers": 2762,
+        "sword_grip": 321,
+        "gold": 275,
+        "gem": 147,
+        "sword_ricasso": 66,
+        "hero_blade": 205,
+        "scabbard": 385,
+        "cape": 1138
+      },
+      "changed_pixels": 24033,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 612,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "BladeHero_Idle",
+          "BladeHero_Walk",
+          "BladeHero_Attack",
+          "BladeHero_PowerStrike",
+          "BladeHero_ArcAttack"
+        ],
+        "skin_count": 1,
+        "sha256": "7e78205c480ad5f52be599277e7294420a25490d191b7453aa4f54be8ec48a0d"
+      }
+    },
+    {
+      "unit": "cavalier_v1",
+      "status": "applied",
+      "size": [
+        512,
+        512
+      ],
+      "changed_pixels_by_region": {
+        "pelvis_sash": 1694,
+        "brass": 14,
+        "gambeson": 3000,
+        "jerkin": 1058,
+        "face_helm": 1252,
+        "shoulder": 778,
+        "bracer": 647,
+        "glove": 1065,
+        "trousers": 2534,
+        "boot_shaft": 1371,
+        "boot": 1787,
+        "lance_haft": 1365,
+        "iron": 293,
+        "pennant": 377,
+        "rein": 0,
+        "horse_body": 4760,
+        "horse_neck": 2595,
+        "horse_mane": 675,
+        "horse_head": 2745,
+        "horse_ear": 437,
+        "horse_tail": 343,
+        "horse_leg": 4016,
+        "horse_cannon_front": 1577,
+        "horse_hoof": 1310,
+        "horse_cannon_back": 1657,
+        "saddle_blanket": 2425,
+        "saddle": 745
+      },
+      "changed_pixels": 40520,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 554,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "Cavalier_Idle",
+          "Cavalier_Walk",
+          "Cavalier_Attack",
+          "Cavalier_Charge"
+        ],
+        "skin_count": 1,
+        "sha256": "d100abb325e42d1f0f6fa5dc478c68ba868a54a3c37eccef7b9b3f19a21db8d3"
+      }
+    },
+    {
+      "unit": "elite_marksman_v1",
+      "status": "applied",
+      "size": [
+        256,
+        256
+      ],
+      "changed_pixels_by_region": {
+        "mail_skirt": 1290,
+        "brass": 5,
+        "mail": 2226,
+        "elite_marksman_chest": 1673,
+        "face_hood": 1101,
+        "elite_pauldron": 1144,
+        "steel_bracer": 1176,
+        "glove": 966,
+        "boot": 1285,
+        "elite_boot": 1785,
+        "trousers": 2418,
+        "bow_grip": 259,
+        "bow_wood": 1095,
+        "bow_string": 0,
+        "arrow_shaft": 510,
+        "arrow_head": 0,
+        "fletching": 54,
+        "quiver": 639,
+        "iron_tip": 6,
+        "knife": 202
+      },
+      "changed_pixels": 17834,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 496,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "EliteMarksman_Idle",
+          "EliteMarksman_Walk",
+          "EliteMarksman_Attack",
+          "EliteMarksman_PreciseShot",
+          "EliteMarksman_Volley"
+        ],
+        "skin_count": 1,
+        "sha256": "10a8f29157f8a2ae0d635155390a22f68bae231afa69b3c7e27ab9fd569941ed"
+      }
+    },
+    {
+      "unit": "griffon_rider_v1",
+      "status": "applied",
+      "size": [
+        512,
+        512
+      ],
+      "changed_pixels_by_region": {
+        "pelvis_sash": 1880,
+        "brass": 17,
+        "plate": 9190,
+        "breastplate": 2303,
+        "gorget": 1336,
+        "great_helm": 1926,
+        "gold": 102,
+        "pauldron": 2533,
+        "pauldron_lame": 1845,
+        "vambrace": 2402,
+        "gauntlet": 536,
+        "sabaton": 1714,
+        "lance_haft": 1380,
+        "iron": 633,
+        "pennant": 792,
+        "shield_heater": 1488,
+        "rein": 0,
+        "cape": 1478,
+        "horse_body": 6537,
+        "horse_neck": 3132,
+        "horse_mane": 918,
+        "horse_head": 3407,
+        "horse_ear": 516,
+        "horse_tail": 538,
+        "horse_leg": 4711,
+        "horse_cannon_front": 1967,
+        "horse_hoof": 1593,
+        "horse_cannon_back": 1953,
+        "saddle_blanket": 10198,
+        "saddle": 898
+      },
+      "changed_pixels": 67923,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 0,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "GriffonRider_Idle",
+          "GriffonRider_Walk",
+          "GriffonRider_Attack",
+          "GriffonRider_Charge"
+        ],
+        "skin_count": 1,
+        "sha256": "90517d7714cd8b6f2e1f9638e24f82045d101445383f79fb472c24cbdf0d4605"
+      }
+    },
+    {
+      "unit": "guard_blocky",
+      "status": "reviewed_no_repair_needed",
+      "reason": "Original small tiled materials have no glove or trouser stroke artifacts."
+    },
+    {
+      "unit": "guardian_champion_v1",
+      "status": "applied",
+      "size": [
+        512,
+        512
+      ],
+      "changed_pixels_by_region": {
+        "mail_skirt": 1310,
+        "brass": 8,
+        "mail": 4675,
+        "royal_tabard": 2126,
+        "greathelm": 1081,
+        "gold": 202,
+        "plume": 57,
+        "pauldron": 967,
+        "vambrace": 1085,
+        "gauntlet": 324,
+        "sabaton": 734,
+        "greave": 1644,
+        "heater": 4731,
+        "glove": 343,
+        "tabard": 256,
+        "cape": 2983
+      },
+      "changed_pixels": 22526,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 0,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "Champion_Idle",
+          "Champion_Walk",
+          "Champion_Attack",
+          "Champion_ShieldWall",
+          "Champion_ShieldWallHold"
+        ],
+        "skin_count": 1,
+        "sha256": "7292a353052e731d0b53291fb986a99b34be79575c05329d7bf518de012bbbce"
+      }
+    },
+    {
+      "unit": "guardian_v1",
+      "status": "applied",
+      "size": [
+        256,
+        256
+      ],
+      "changed_pixels_by_region": {
+        "mail_skirt": 1144,
+        "brass": 5,
+        "mail": 2137,
+        "surcoat": 1717,
+        "face": 939,
+        "steel": 503,
+        "helm": 505,
+        "shoulder": 711,
+        "bracer": 708,
+        "glove": 1470,
+        "boot": 1256,
+        "boot_shaft": 1390,
+        "trousers": 2287,
+        "round_heraldic": 7106,
+        "tabard": 282
+      },
+      "changed_pixels": 22160,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 589,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "Guardian_Idle",
+          "Guardian_Walk",
+          "Guardian_Attack",
+          "Guardian_ShieldWall",
+          "Guardian_ShieldWallHold"
+        ],
+        "skin_count": 1,
+        "sha256": "25bf4f5b0c8d7ccb354d225b51aceb0c948c75162b71ce25573b827a57681bc7"
+      }
+    },
+    {
+      "unit": "hunter_v1",
+      "status": "applied",
+      "size": [
+        256,
+        256
+      ],
+      "changed_pixels_by_region": {
+        "pelvis_sash": 1663,
+        "brass": 5,
+        "leather_belly": 832,
+        "hunter_chest": 1773,
+        "face_hood": 1094,
+        "fur_pauldron": 1698,
+        "gambeson": 1698,
+        "bracer": 718,
+        "glove": 926,
+        "boot": 1285,
+        "fur_boot": 2279,
+        "trousers": 2333,
+        "bow_grip": 259,
+        "bow_wood": 972,
+        "bow_string": 0,
+        "arrow_shaft": 490,
+        "arrow_head": 0,
+        "fletching": 54,
+        "quiver": 603,
+        "horn": 3,
+        "knife": 202
+      },
+      "changed_pixels": 18887,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 500,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "Hunter_Idle",
+          "Hunter_Walk",
+          "Hunter_Attack",
+          "Hunter_PreciseShot",
+          "Hunter_Volley"
+        ],
+        "skin_count": 1,
+        "sha256": "fb8a27c88665f7abc4c4d522bc4675e3b805bbd62671dee23620c6bf5eb1b817"
+      }
+    },
+    {
+      "unit": "legend_hunter_v1",
+      "status": "applied",
+      "size": [
+        512,
+        512
+      ],
+      "changed_pixels_by_region": {
+        "mail_skirt": 1518,
+        "brass": 14,
+        "mail": 2681,
+        "legend_hunter_chest": 2192,
+        "face_hood": 1326,
+        "elite_pauldron": 2342,
+        "steel_bracer": 2505,
+        "glove": 1121,
+        "boot": 1557,
+        "elite_boot": 2692,
+        "trousers": 2912,
+        "bow_grip": 377,
+        "bow_wood": 1350,
+        "bow_string": 0,
+        "arrow_shaft": 535,
+        "arrow_head": 0,
+        "fletching": 77,
+        "quiver": 950,
+        "gold": 13,
+        "knife": 236,
+        "pelt": 2010
+      },
+      "changed_pixels": 26408,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 594,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "LegendHunter_Idle",
+          "LegendHunter_Walk",
+          "LegendHunter_Attack",
+          "LegendHunter_PreciseShot",
+          "LegendHunter_Volley"
+        ],
+        "skin_count": 1,
+        "sha256": "898631dff4fa5ddaaafc3bf060d5e593afbc20119d02728ab8aab9f8af3209c6"
+      }
+    },
+    {
+      "unit": "rogue_v1",
+      "status": "applied",
+      "size": [
+        256,
+        256
+      ],
+      "changed_pixels_by_region": {
+        "pelvis_sash": 1622,
+        "brass": 6,
+        "jerkin": 3468,
+        "rogue_hood": 2006,
+        "bracer": 799,
+        "glove": 1087,
+        "boot": 1202,
+        "boot_shaft": 1379,
+        "trousers": 2392,
+        "dark_leather": 695,
+        "iron": 0,
+        "blade": 0,
+        "cloak": 718
+      },
+      "changed_pixels": 15374,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 20,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "Rogue_Idle",
+          "Rogue_Walk",
+          "Rogue_Attack",
+          "Rogue_SneakAttack"
+        ],
+        "skin_count": 1,
+        "sha256": "c2ebd3d7d33bbd7585da19044149c90634232ab5bef79f22d4e3ea7646200be0"
+      }
+    },
+    {
+      "unit": "saboteur_v1",
+      "status": "applied",
+      "size": [
+        256,
+        256
+      ],
+      "changed_pixels_by_region": {
+        "pelvis_sash": 1622,
+        "brass": 6,
+        "jerkin": 3468,
+        "rogue_hood": 2006,
+        "bracer": 799,
+        "glove": 1087,
+        "boot": 1202,
+        "boot_shaft": 1379,
+        "trousers": 2392,
+        "dark_leather": 1486,
+        "iron": 0,
+        "blade": 0,
+        "cloak": 747,
+        "team": 38
+      },
+      "changed_pixels": 16232,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 20,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "Saboteur_Idle",
+          "Saboteur_Walk",
+          "Saboteur_Attack",
+          "Saboteur_SneakAttack",
+          "Saboteur_Dismantle"
+        ],
+        "skin_count": 1,
+        "sha256": "8a6f13de8b0350ab4ee0b59a8945d38efe67a8cf0d23cdc49da482360048fcdc"
+      }
+    },
+    {
+      "unit": "sentinel_v1",
+      "status": "applied",
+      "size": [
+        256,
+        256
+      ],
+      "changed_pixels_by_region": {
+        "mail_skirt": 1173,
+        "brass": 5,
+        "mail": 4177,
+        "breastplate": 784,
+        "greathelm": 825,
+        "steel": 39,
+        "pauldron": 486,
+        "vambrace": 799,
+        "gauntlet": 201,
+        "sabaton": 475,
+        "greave": 1336,
+        "heater": 3556,
+        "glove": 313,
+        "tabard": 310
+      },
+      "changed_pixels": 14479,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 0,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "Sentinel_Idle",
+          "Sentinel_Walk",
+          "Sentinel_Attack",
+          "Sentinel_ShieldWall",
+          "Sentinel_ShieldWallHold"
+        ],
+        "skin_count": 1,
+        "sha256": "2bd4b55f56478af7b873d41f2f09a6db7bc25abf365214b46c09802efdc98bd0"
+      }
+    },
+    {
+      "unit": "settler_blocky",
+      "status": "reviewed_no_repair_needed",
+      "reason": "Original small tiled materials have no glove or trouser stroke artifacts."
+    },
+    {
+      "unit": "shadow_master_v1",
+      "status": "applied",
+      "size": [
+        512,
+        512
+      ],
+      "changed_pixels_by_region": {
+        "pelvis_sash": 1622,
+        "brass": 6,
+        "jerkin": 3468,
+        "rogue_hood": 2006,
+        "bracer": 799,
+        "glove": 1087,
+        "boot": 1202,
+        "boot_shaft": 1379,
+        "trousers": 2392,
+        "dark_leather": 1711,
+        "iron": 193,
+        "team": 38,
+        "blade": 34,
+        "gold": 52,
+        "royal_cloak": 1442
+      },
+      "changed_pixels": 17431,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 20,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "ShadowMaster_Idle",
+          "ShadowMaster_Walk",
+          "ShadowMaster_Attack",
+          "ShadowMaster_SneakAttack",
+          "ShadowMaster_Dismantle"
+        ],
+        "skin_count": 1,
+        "sha256": "c6516e7cad3a27123c4d4958a89e0ec7519cfb976a395f236a0f5bf8980a1c56"
+      }
+    },
+    {
+      "unit": "shock_cavalier_v1",
+      "status": "applied",
+      "size": [
+        512,
+        512
+      ],
+      "changed_pixels_by_region": {
+        "pelvis_sash": 1694,
+        "brass": 14,
+        "mail": 2099,
+        "mail_chest": 1777,
+        "face_coif": 1323,
+        "shoulder": 778,
+        "bracer": 647,
+        "glove": 1065,
+        "trousers": 2534,
+        "boot_shaft": 1371,
+        "boot": 1179,
+        "lance_haft": 1221,
+        "iron": 488,
+        "pennant": 400,
+        "rein": 0,
+        "horse_body": 4760,
+        "horse_neck": 2595,
+        "horse_mane": 675,
+        "horse_head": 2768,
+        "horse_ear": 437,
+        "horse_tail": 343,
+        "horse_leg": 4016,
+        "horse_cannon_front": 1577,
+        "horse_hoof": 1310,
+        "horse_cannon_back": 1657,
+        "saddle_blanket": 4602,
+        "saddle": 745
+      },
+      "changed_pixels": 42075,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 510,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "ShockCavalier_Idle",
+          "ShockCavalier_Walk",
+          "ShockCavalier_Attack",
+          "ShockCavalier_Charge"
+        ],
+        "skin_count": 1,
+        "sha256": "481e8c3d4e4ed24128cb328ed8e138a55e06d620c0b8f557ef12fa05dfa59c5c"
+      }
+    },
+    {
+      "unit": "squire_v1",
+      "status": "applied",
+      "size": [
+        256,
+        256
+      ],
+      "changed_pixels_by_region": {
+        "pelvis": 1545,
+        "brass": 5,
+        "gambeson": 2943,
+        "jerkin": 1051,
+        "face": 959,
+        "iron": 1118,
+        "shoulder": 652,
+        "bracer": 712,
+        "glove": 1407,
+        "boot": 1256,
+        "boot_shaft": 1390,
+        "trousers": 2287,
+        "shield": 6061
+      },
+      "changed_pixels": 21386,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 589,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "Squire_Idle",
+          "Squire_Walk",
+          "Squire_Attack",
+          "Squire_ShieldWall",
+          "Squire_ShieldWallHold"
+        ],
+        "skin_count": 1,
+        "sha256": "9cd4f255911793ccae2c0f9b5e99445f6cdab62813440c9024fd0e3c4e771805"
+      }
+    },
+    {
+      "unit": "swordsman_v1",
+      "status": "applied",
+      "size": [
+        256,
+        256
+      ],
+      "changed_pixels_by_region": {
+        "pelvis_sash": 1663,
+        "brass": 19,
+        "brigandine": 586,
+        "brigandine_chest": 1133,
+        "face": 989,
+        "hair": 485,
+        "band": 617,
+        "shoulder": 407,
+        "shoulder_plate": 792,
+        "gambeson": 1723,
+        "bracer": 772,
+        "glove": 1129,
+        "boot": 1256,
+        "boot_shaft": 1388,
+        "trousers": 2333,
+        "sword_grip": 187,
+        "sword_guard": 36,
+        "sword_blade": 487,
+        "scabbard": 318
+      },
+      "changed_pixels": 16320,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 590,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "Swordsman_Idle",
+          "Swordsman_Walk",
+          "Swordsman_Attack",
+          "Swordsman_PowerStrike",
+          "Swordsman_ArcAttack"
+        ],
+        "skin_count": 1,
+        "sha256": "b58ebec67283db4ccb64793258d7bfa804f2f1a0fa4e3443cfb44d7879c57a3c"
+      }
+    },
+    {
+      "unit": "warrior_v1",
+      "status": "applied",
+      "size": [
+        256,
+        256
+      ],
+      "changed_pixels_by_region": {
+        "pelvis_sash": 1663,
+        "brass": 5,
+        "gambeson": 4015,
+        "gambeson_chest": 2467,
+        "face": 1005,
+        "cap": 0,
+        "shoulder": 388,
+        "bracer": 830,
+        "glove": 1060,
+        "boot": 1285,
+        "boot_shaft": 1388,
+        "trousers": 2333,
+        "axe_haft": 530,
+        "axe_head": 56,
+        "axe_edge": 0
+      },
+      "changed_pixels": 17025,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 598,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "Warrior_Idle",
+          "Warrior_Walk",
+          "Warrior_Attack",
+          "Warrior_PowerStrike"
+        ],
+        "skin_count": 1,
+        "sha256": "98a1457344c525472cc22981c1769e4635a204095a4b2eddba1991f3d3a77fa4"
+      }
+    },
+    {
+      "unit": "weapon_master_v1",
+      "status": "applied",
+      "size": [
+        256,
+        256
+      ],
+      "changed_pixels_by_region": {
+        "mail_skirt": 1264,
+        "brass": 5,
+        "mail": 2149,
+        "breastplate": 843,
+        "face": 943,
+        "skullcap": 623,
+        "pauldron": 546,
+        "vambrace": 718,
+        "glove": 1060,
+        "boot": 1256,
+        "greave": 1382,
+        "trousers": 2333,
+        "sword_grip": 282,
+        "sword_pommel": 91,
+        "sword_cross": 82,
+        "sword_ricasso": 42,
+        "great_blade": 120,
+        "scabbard": 309,
+        "dagger": 168
+      },
+      "changed_pixels": 14216,
+      "outside_uv_padding_unchanged": true,
+      "alpha_unchanged": true,
+      "facial_feature_pixels_preserved": 513,
+      "emission_unchanged": true,
+      "glb_validation": {
+        "non_image_metadata_identical": true,
+        "non_image_buffer_views_identical": true,
+        "animations": [
+          "WeaponMaster_Idle",
+          "WeaponMaster_Walk",
+          "WeaponMaster_Attack",
+          "WeaponMaster_PowerStrike",
+          "WeaponMaster_ArcAttack"
+        ],
+        "skin_count": 1,
+        "sha256": "bafb6f5c66cad5626939491fca7406cf476206f936e36ab2ab0e237535e408ea"
+      }
+    }
+  ],
+  "editable_sources": [
+    {
+      "unit": "archer_v1",
+      "geometry_uv_skinning_animation_digest": "bae88bc7b87cf5cb4a7ab5447f50a121e50b9c2d64efb49f68e75fe0df73b816",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "armored_cavalier_v1",
+      "geometry_uv_skinning_animation_digest": "494f63c1f13ba038d92b07478720d41bf68a194635b6a67611b08511e77a2b63",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "assassin_v1",
+      "geometry_uv_skinning_animation_digest": "8c19cde4846963eeb65acfb39896c42a4341066b935eea1ee1f6484c0568bdc7",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "blade_hero_v1",
+      "geometry_uv_skinning_animation_digest": "556148a07b2b18c27cc6b7348d702de774084efbed7d28df655baa6d14894633",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "cavalier_v1",
+      "geometry_uv_skinning_animation_digest": "e775cdb3edfa0a8eafa74e0b30bb7cd8ea824c3947fd43e7c82dc31967a81989",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "elite_marksman_v1",
+      "geometry_uv_skinning_animation_digest": "22f916bf3f4d30840fe22b8884f7a1305d7a2782829c950d652a710cc73de0bc",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "griffon_rider_v1",
+      "geometry_uv_skinning_animation_digest": "d2f507c9b5ed640f9e07f30a38a16289afc7cf0a1cf95c1eb3adf14da64d247a",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "guardian_champion_v1",
+      "geometry_uv_skinning_animation_digest": "186439019e879437454be7d51597b2aa4f34462555168b573f525941d3d0226a",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "guardian_v1",
+      "geometry_uv_skinning_animation_digest": "b62656e591c6723768742b4a30566c4d33ce7e793e9a76f1b06cac9e50bf8d21",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "hunter_v1",
+      "geometry_uv_skinning_animation_digest": "88b8c05d84a5cda3c6fab7be8dacf0e9e111d3b37307be605e14cc2bcc2cdb31",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "legend_hunter_v1",
+      "geometry_uv_skinning_animation_digest": "8e116e698f5a1bf866e0d9f132e3aeccdf981f561ef69c6d3adae8d67e4e80d8",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "rogue_v1",
+      "geometry_uv_skinning_animation_digest": "ef001551cd64b3c8afc400580fe84fda35d42fdef9d5f7632cb69419d3ec979d",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "saboteur_v1",
+      "geometry_uv_skinning_animation_digest": "b7c0e65697b617a927ac64cbfc725847ca0e434ba58ac7eb53755633b42b9bb5",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "sentinel_v1",
+      "geometry_uv_skinning_animation_digest": "8e7a52564ba8d809728a367611dfb20bcfa001bbb8f1fc41159271f23f907453",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "shadow_master_v1",
+      "geometry_uv_skinning_animation_digest": "74463c61e57ff2a97fcdc1b85203bffcef85f815da6fe4bc903ebe37b5ceb7ae",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "shock_cavalier_v1",
+      "geometry_uv_skinning_animation_digest": "99c6291eb7d1e5abbfe1e2a08ff0583931722731325f9841e14bc6601483bde4",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "squire_v1",
+      "geometry_uv_skinning_animation_digest": "b84e37221dfaf821ff17d59e3349f505a8558ab15b929250463a851168b5dd24",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "swordsman_v1",
+      "geometry_uv_skinning_animation_digest": "3eaf7f00ede3518bf7bf958bf83c70327346483aa43a71ea6810642cf361b462",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "warrior_v1",
+      "geometry_uv_skinning_animation_digest": "60f9efd743f53e79d0d5e6c56489f2c8889fc49ba1659b5d4bfa415ecfd0a866",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    },
+    {
+      "unit": "weapon_master_v1",
+      "geometry_uv_skinning_animation_digest": "f824f26b48d11ba90c1af24ff465a8a191d47cdd73c44ea5dbe2d40dcc1b872e",
+      "source_geometry_uv_skinning_animations_unchanged": true,
+      "packed_albedo_matches_png": true,
+      "portable_relative_texture_paths": true,
+      "views": [
+        "back",
+        "front",
+        "game_top",
+        "side",
+        "three_quarter"
+      ]
+    }
+  ],
+  "godot_validation": "docs/human_texture_repair_godot_validation.json",
+  "project_godot_validation": "docs/human_texture_repair_project_validation.json",
+  "project_import_cache_updated": true
+}

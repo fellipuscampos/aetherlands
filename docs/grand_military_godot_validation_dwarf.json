@@ -1,0 +1,68 @@
+{
+  "status": "PASS",
+  "verified": 6,
+  "assets": [
+    {
+      "asset": "dwarf_guardian_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.18999981880188,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1196
+    },
+    {
+      "asset": "dwarf_warrior_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.21999990940094,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1312
+    },
+    {
+      "asset": "dwarf_ranger_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.46200001239777,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1952
+    },
+    {
+      "asset": "dwarf_cavalry_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.47250008583069,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1668
+    },
+    {
+      "asset": "dwarf_rogue_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.16999983787537,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1256
+    },
+    {
+      "asset": "dwarf_grand_arsenal_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.41550004482269,
+        1.8400000333786
+      ],
+      "meshes": 7,
+      "triangles": 1908
+    }
+  ],
+  "problems": [],
+  "source": "grand_military_godot_validation.json"
+}

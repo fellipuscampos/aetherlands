@@ -1,0 +1,31 @@
+"""Prepare the root sovereign revision without changing either previous source."""
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[2]; TOOLS=ROOT/'tools/art_pipeline'
+OLD='nature_avatar_blocky_v2'; NEW='nature_avatar_blocky_v3'
+def read(name): return (TOOLS/name).read_text(encoding='utf-8')
+def names(s): return s.replace(OLD,NEW).replace('Nature_Avatar_Blocky_V2','Nature_Avatar_Blocky_V3').replace('NatureAvatarModelReviewV2','NatureAvatarModelReviewV3')
+def write(name,s): (TOOLS/name).write_text(s,encoding='utf-8')
+src=read('build_nature_avatar_blocky_v2_mcp.py')
+head=names(src[:src.index('# Reference: a headless root brute')])
+head=head.replace('old_hashes={',"protected.extend(ROOT/'assets/generated/grand_manifestations'/'nature_avatar_blocky_v2'/('nature_avatar_blocky_v2.'+ext) for ext in ('glb','blend'))\nold_hashes={")
+uv=src[src.index('coords=[v.co for o in parts for v in o.data.vertices]'):src.index('# Weathered pale wood')]
+tail=names(src[src.index('images=[]'):]).replace('Weathered_Roots_Green_Core','Sovereign_Bark_Green_Core')
+tail=tail.replace('Static root entity with hollow body, massive connected arms, angular crown arch and a separate exposed green cube core.','Static ancient root sovereign: massive asymmetrical shoulder knots, contiguous crown roots, connected heavy arms, a firm grounded stance and exposed green cube core.')
+tail=tail.replace('Three-meter root avatar inspired by the user reference: no face, hollow intertwined wooden torso, angular root arch, exposed green cube core, heavy low block hands, splinters and moss.','Three-meter ancient root sovereign inspired by the user reference: massive fused bark silhouette, dark layered root knots, broad asymmetric shoulders, dense forearms, root crown, hollow chest and a single exposed green cube core.')
+write('build_nature_avatar_blocky_v3_mcp.py',head+read('nature_avatar_v3_geometry.py')+'\n'+uv+read('nature_avatar_v3_texture.py')+'\n'+tail)
+export=names(read('export_nature_avatar_blocky_v2_mcp.py')).replace("'revision':2","'revision':3")
+export=export.replace('Headless root entity inspired by the supplied Root Brute reference: hollow crossed roots, angular arch around an exposed green cube core, heavy low block hands, pale weathered wood and sparse moss.','Ancient root sovereign: broad asymmetric fused root shoulders, strong contiguous trunk masses, narrow hollow abdomen, sculpted root crown, dense low square fists and dark bark framing an exposed green cube core.')
+write('export_nature_avatar_blocky_v3_mcp.py',export)
+for old,new in [('validate_nature_avatar_blocky_v2.py','validate_nature_avatar_blocky_v3.py'),('verify_nature_avatar_blocky_v2.gd','verify_nature_avatar_blocky_v3.gd'),('finalize_nature_avatar_blocky_v2_mcp.py','finalize_nature_avatar_blocky_v3_mcp.py')]: write(new,names(read(old)))
+script=names((ROOT/'scripts/art_review/NatureAvatarModelReviewV2.gd').read_text(encoding='utf-8')).replace('Modelo V2','Modelo V3')
+(ROOT/'scripts/art_review/NatureAvatarModelReviewV3.gd').write_text(script,encoding='utf-8')
+scene=names((ROOT/'scenes/art_review/NatureAvatarModelReviewV2.tscn').read_text(encoding='utf-8'))
+(ROOT/'scenes/art_review/NatureAvatarModelReviewV3.tscn').write_text(scene,encoding='utf-8')
+gallery=names(read('write_nature_avatar_v2_review.py'))
+gallery=gallery.replace('Uma entidade de raízes com o corpo vazado, braços pesados e baixos, madeira envelhecida e galhos quebrados. Um arco de raízes envolve o núcleo cúbico verde exposto no alto do corpo. A silhueta segue a referência enviada, traduzida para a estética blocky do jogo.','Um soberano de raízes ancestrais, com ombros enormes e assimétricos, tronco robusto, braços maciços e uma postura firme. A coroa nasce de massas contínuas de casca; o núcleo cúbico verde brilha no alto do corpo, contrastando com a madeira escura. O abdômen mantém sua abertura e suas raízes internas.')
+gallery=gallery.replace('raízes entrelaçadas, corpo vazado, arco superior, núcleo cúbico verde exposto, madeira envelhecida, musgo e galhos quebrados.','massas contínuas de raízes, ombros enormes e assimétricos, braços pesados, coroa esculpida, casca escura, abdômen vazado e núcleo cúbico verde exposto.')
+gallery=gallery.replace("(OUT/'index.html').write_text(page,encoding='utf-8')", '''assert (OUT/'comparison.png').is_file()
+page=page.replace('<h2>Referências do jogo</h2>','<h2>Presença e escala no jogo</h2><p>Druida humano, Avatar V2, Avatar V3 e Arcdemônio V5, renderizados no Godot com a mesma escala, câmera e iluminação. As três grandes invocações mantêm 3 metros de altura.</p><a href="comparison.png"><img src="comparison.png" style="width:100%;display:block;border-radius:10px" alt="Comparação dos modelos na mesma escala"></a><h2>Referências do jogo</h2>')
+(OUT/'index.html').write_text(page,encoding='utf-8')''')
+write('write_nature_avatar_v3_review.py',gallery)
+print('Root sovereign V3 pipeline prepared; both earlier avatar versions preserved.')

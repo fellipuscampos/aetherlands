@@ -1,0 +1,58 @@
+{
+  "kind": "wyvern",
+  "tier": "Intermediário",
+  "name": "Poleiro da escarpa",
+  "concept": "Escarpa escalonada com galhos chamuscados, ovos e ossos na plataforma.",
+  "stem": "wyvern_lair_v2",
+  "method": "Live Blender MCP localhost:9876",
+  "editable_parts": 70,
+  "vertices": 658,
+  "triangles": 1036,
+  "materials": 1,
+  "draw_calls": 1,
+  "atlas": [
+    1024,
+    1024
+  ],
+  "pixels_per_meter": 64,
+  "measured_uv_density_range": [
+    63.99728596320701,
+    64.00333735148911
+  ],
+  "filter": "nearest",
+  "footprint_radius": 0.78,
+  "height": 0.8743144273757935,
+  "ground_min": 0.0,
+  "source_bounds_xyz": [
+    [
+      -0.583838939666748,
+      -0.7178581357002258,
+      0.0
+    ],
+    [
+      0.6246507167816162,
+      0.6800358891487122,
+      0.8743144273757935
+    ]
+  ],
+  "scale_multiplier": 1.0,
+  "forward": "-Y Blender / +Z glTF",
+  "pivot": [
+    0,
+    0,
+    0
+  ],
+  "nonmanifold_edges": 0,
+  "degenerate_faces": 0,
+  "animations": [],
+  "collision": false,
+  "game_source_changed": false,
+  "art_scale": 0.3362747915328659,
+  "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+  "isolated_by_gdignore": true,
+  "previews": [
+    "three_quarter",
+    "game_top",
+    "back"
+  ]
+}

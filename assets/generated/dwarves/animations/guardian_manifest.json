@@ -1,0 +1,34 @@
+{
+  "family": "guardian",
+  "fps": 48,
+  "motion_revision": 3,
+  "clips": {
+    "idle": {
+      "action": "Dwarf_guardian_idle",
+      "frames": 145,
+      "loop": true,
+      "description": "Respiração discreta, guarda firme com o escudo.",
+      "impact_frame": null
+    },
+    "walk": {
+      "action": "Dwarf_guardian_walk",
+      "frames": 57,
+      "loop": true,
+      "description": "Passos curtos e pesados; escudo estável e braço livre em contrapeso.",
+      "impact_frame": null
+    },
+    "attack": {
+      "action": "Dwarf_guardian_attack",
+      "frames": 81,
+      "loop": false,
+      "description": "Preparação, avanço do tronco e golpe frontal de escudo; recuperação.",
+      "impact_frame": 35
+    }
+  },
+  "variants": [
+    "dwarf_shieldbearer_v1",
+    "dwarf_guardian_v1",
+    "dwarf_sentinel_v1",
+    "dwarf_guardian_champion_v1"
+  ]
+}

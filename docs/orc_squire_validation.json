@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "models": 1,
+  "clips": 5,
+  "height_m": 2.0,
+  "triangles": 884,
+  "animation_max_error": 2.534556735156457e-06,
+  "head_blocks": 1,
+  "body_cuboids": 18,
+  "ear_cuboids": 6,
+  "tusk_cuboids": 4,
+  "eyes_mirrored": true,
+  "embedded_atlas_matches": true,
+  "protected_files": 475,
+  "stance_offsets_verified": true,
+  "bone_accessory_cuboids": 0,
+  "eyebrow_cuboids": 2,
+  "approved_shield_pixels_unchanged": true,
+  "relaxed_right_arm_degrees": 24,
+  "shield_size_factor": 1.18
+}

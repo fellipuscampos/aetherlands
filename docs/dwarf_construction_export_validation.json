@@ -1,0 +1,67 @@
+{
+  "status": "PASS",
+  "race": "dwarf",
+  "revision": 1,
+  "bytes": 609840,
+  "triangles": 4632,
+  "meshes": 2,
+  "materials": 1,
+  "skins": 1,
+  "bones": 25,
+  "clip": "construction",
+  "seconds": 6,
+  "embedded_atlas_sha256": "ecb3a700c9dabbeb69cdd91f7097bd06320f6ea79e44b703baf2429ef132f1d1",
+  "nearest": true,
+  "studio_excluded": true,
+  "ground_plate": false,
+  "generic_construction": true,
+  "jobs": [
+    "granite_dressing_hammer_and_chisel",
+    "roof_slate_filing",
+    "copper_plate_riveting_on_anvil"
+  ],
+  "loose_building_blocks": 9,
+  "original_beard_parts": 54,
+  "original_head_attachments": 90,
+  "building_materials": {
+    "reference": "tools/art_pipeline/dwarf_city_level_1_hex_v1_model.py",
+    "structure": "granite_copper_and_dark_slate",
+    "stone": [
+      117,
+      124,
+      123
+    ],
+    "cutstone": [
+      175,
+      172,
+      152
+    ],
+    "loose_building_blocks": 9,
+    "copper": [
+      191,
+      133,
+      71
+    ],
+    "copper_sheets": 3,
+    "copper_ingots": 6,
+    "loose_copper_brackets": 3,
+    "loose_copper_roof_bindings": 3,
+    "roof": [
+      67,
+      82,
+      89
+    ],
+    "roof_dark": [
+      43,
+      59,
+      64
+    ],
+    "loose_dark_slate_roof_tiles": 10,
+    "reference_previews": [
+      "assets/generated/dwarves/buildings/dwarf_city_level_1_hex_v1/previews/three_quarter.png",
+      "assets/generated/dwarves/buildings/dwarf_workshop_hex_v1/previews/three_quarter.png",
+      "assets/generated/dwarves/buildings/dwarf_guardian_hall_hex_v1/previews/three_quarter.png"
+    ]
+  },
+  "footprint_margin": 0.03880990378744864
+}

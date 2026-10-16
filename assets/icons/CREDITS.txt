@@ -1,0 +1,61 @@
+Icones do jogo (assets/icons/glyphs) - creditos
+
+Os pictogramas sao derivados de icones de https://game-icons.net (github.com/game-icons/icons),
+licenciados sob Creative Commons Atribuicao 3.0 (https://creativecommons.org/licenses/by/3.0/).
+O CREDITO AO AUTOR E OBRIGATORIO em qualquer distribuicao do jogo: "Icons made by <autor>" (lista abaixo).
+Modificacoes: fundo removido, recorte/escala para 128x128 e coloracao em tempo de execucao (IconCatalog).
+
+Arquivo gerado por tools/art_pipeline/build_icon_glyphs.gd a partir de icon_sources/manifest.json - nao editar a mao.
+
+Icons made by Carl Olsen (https://game-icons.net) - CC BY 3.0
+	flame.png ("flame")
+	spider.png ("spider-alt")
+
+Icons made by Caro Asercion (https://game-icons.net) - CC BY 3.0
+	goblin.png ("goblin")
+
+Icons made by Delapouite (https://game-icons.net) - CC BY 3.0
+	demon.png ("devil-mask")
+	devourer.png ("brain-tentacle")
+	dragon.png ("spiked-dragon-head")
+	eye.png ("warlock-eye")
+	golem.png ("golem-head")
+	horse.png ("horse-head")
+	horseshoe.png ("horseshoe")
+	spool.png ("sewing-string")
+	star.png ("polar-star")
+	tent.png ("barracks-tent")
+	troll.png ("ogre")
+
+Icons made by HeavenlyDog (https://game-icons.net) - CC BY 3.0
+	catapult.png ("catapult")
+
+Icons made by Lorc (https://game-icons.net) - CC BY 3.0
+	anvil.png ("anvil")
+	bolt.png ("power-lightning")
+	bow.png ("high-shot")
+	crystals.png ("crystal-growth")
+	gem.png ("cut-diamond")
+	hammer.png ("flat-hammer")
+	helm.png ("cracked-helm")
+	hood.png ("hood")
+	leaf.png ("linden-leaf")
+	lich.png ("crowned-skull")
+	minotaur.png ("minotaur")
+	scythe.png ("reaper-scythe")
+	seraph.png ("angel-wings")
+	shield.png ("checked-shield")
+	snake.png ("snake")
+	sun.png ("sun")
+	sword.png ("broadsword")
+	tree.png ("oak")
+	whirlwind.png ("whirlwind")
+	wolf.png ("wolf-head")
+	worm.png ("leeching-worm")
+	wyvern.png ("wyvern")
+
+Icons made by Sbed (https://game-icons.net) - CC BY 3.0
+	skull.png ("death-skull")
+
+Icons made by Skoll (https://game-icons.net) - CC BY 3.0
+	risen.png ("raise-skeleton")

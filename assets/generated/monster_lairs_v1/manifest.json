@@ -1,0 +1,650 @@
+[
+  {
+    "kind": "goblin",
+    "tier": "Básico",
+    "name": "Acampamento de saqueadores",
+    "concept": "Tenda remendada, paliçada irregular, saque e fogueira apagada.",
+    "stem": "goblin_lair_v1",
+    "method": "Live Blender MCP localhost:9876",
+    "editable_parts": 66,
+    "vertices": 540,
+    "triangles": 816,
+    "materials": 1,
+    "draw_calls": 1,
+    "atlas": [
+      1024,
+      1024
+    ],
+    "pixels_per_meter": 64,
+    "filter": "nearest",
+    "footprint_radius": 0.78,
+    "height": 0.6580402255058289,
+    "ground_min": 0.0,
+    "source_bounds_xyz": [
+      [
+        -0.5488885641098022,
+        -0.621976912021637,
+        0.0
+      ],
+      [
+        0.6011878848075867,
+        0.6073965430259705,
+        0.6580402255058289
+      ]
+    ],
+    "scale_multiplier": 1.0,
+    "forward": "-Y Blender / +Z glTF",
+    "pivot": [
+      0,
+      0,
+      0
+    ],
+    "nonmanifold_edges": 0,
+    "degenerate_faces": 0,
+    "animations": [],
+    "collision": false,
+    "game_source_changed": false,
+    "art_scale": 0.30031781558778575,
+    "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+    "isolated_by_gdignore": true,
+    "previews": [
+      "three_quarter",
+      "game_top",
+      "back"
+    ]
+  },
+  {
+    "kind": "skeleton",
+    "tier": "Básico",
+    "name": "Cripta violada",
+    "concept": "Sepultura aberta e ossário sob um arco funerário partido.",
+    "stem": "skeleton_lair_v1",
+    "method": "Live Blender MCP localhost:9876",
+    "editable_parts": 67,
+    "vertices": 558,
+    "triangles": 848,
+    "materials": 1,
+    "draw_calls": 1,
+    "atlas": [
+      1024,
+      1024
+    ],
+    "pixels_per_meter": 64,
+    "filter": "nearest",
+    "footprint_radius": 0.78,
+    "height": 0.8640580773353577,
+    "ground_min": 0.0,
+    "source_bounds_xyz": [
+      [
+        -0.7264074683189392,
+        -0.6604779958724976,
+        0.0
+      ],
+      [
+        0.6272574663162231,
+        0.6719169616699219,
+        0.8640580773353577
+      ]
+    ],
+    "scale_multiplier": 1.0,
+    "forward": "-Y Blender / +Z glTF",
+    "pivot": [
+      0,
+      0,
+      0
+    ],
+    "nonmanifold_edges": 0,
+    "degenerate_faces": 0,
+    "animations": [],
+    "collision": false,
+    "game_source_changed": false,
+    "art_scale": 0.3362747915328659,
+    "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+    "isolated_by_gdignore": true,
+    "previews": [
+      "three_quarter",
+      "game_top",
+      "back"
+    ]
+  },
+  {
+    "kind": "worg",
+    "tier": "Básico",
+    "name": "Toca das raízes",
+    "concept": "Abrigo baixo entre raízes de árvore caída, ossos de presas e terra pisada.",
+    "stem": "worg_lair_v1",
+    "method": "Live Blender MCP localhost:9876",
+    "editable_parts": 61,
+    "vertices": 516,
+    "triangles": 788,
+    "materials": 1,
+    "draw_calls": 1,
+    "atlas": [
+      1024,
+      1024
+    ],
+    "pixels_per_meter": 64,
+    "filter": "nearest",
+    "footprint_radius": 0.78,
+    "height": 0.6787331104278564,
+    "ground_min": 0.0,
+    "source_bounds_xyz": [
+      [
+        -0.7491095662117004,
+        -0.7333455085754395,
+        0.0
+      ],
+      [
+        0.6789329051971436,
+        0.7266344428062439,
+        0.6787331104278564
+      ]
+    ],
+    "scale_multiplier": 1.0,
+    "forward": "-Y Blender / +Z glTF",
+    "pivot": [
+      0,
+      0,
+      0
+    ],
+    "nonmanifold_edges": 0,
+    "degenerate_faces": 0,
+    "animations": [],
+    "collision": false,
+    "game_source_changed": false,
+    "art_scale": 0.3362747915328659,
+    "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+    "isolated_by_gdignore": true,
+    "previews": [
+      "three_quarter",
+      "game_top",
+      "back"
+    ]
+  },
+  {
+    "kind": "giant_spider",
+    "tier": "Básico",
+    "name": "Ninho de seda",
+    "concept": "Troncos mortos sustentam teias poligonais, casulos e bolsas de ovos.",
+    "stem": "giant_spider_lair_v1",
+    "method": "Live Blender MCP localhost:9876",
+    "editable_parts": 98,
+    "vertices": 806,
+    "triangles": 1220,
+    "materials": 1,
+    "draw_calls": 1,
+    "atlas": [
+      1024,
+      1024
+    ],
+    "pixels_per_meter": 64,
+    "filter": "nearest",
+    "footprint_radius": 0.78,
+    "height": 0.894023597240448,
+    "ground_min": 0.0,
+    "source_bounds_xyz": [
+      [
+        -0.6679884791374207,
+        -0.716041624546051,
+        0.0
+      ],
+      [
+        0.643433690071106,
+        0.6968941688537598,
+        0.894023597240448
+      ]
+    ],
+    "scale_multiplier": 1.0,
+    "forward": "-Y Blender / +Z glTF",
+    "pivot": [
+      0,
+      0,
+      0
+    ],
+    "nonmanifold_edges": 0,
+    "degenerate_faces": 0,
+    "animations": [],
+    "collision": false,
+    "game_source_changed": false,
+    "art_scale": 0.3362747915328659,
+    "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+    "isolated_by_gdignore": true,
+    "previews": [
+      "three_quarter",
+      "game_top",
+      "back"
+    ]
+  },
+  {
+    "kind": "troll",
+    "tier": "Intermediário",
+    "name": "Abrigo sob a laje",
+    "concept": "Caverna de blocos pesados, musgo, clava e restos de uma refeição.",
+    "stem": "troll_lair_v1",
+    "method": "Live Blender MCP localhost:9876",
+    "editable_parts": 53,
+    "vertices": 458,
+    "triangles": 704,
+    "materials": 1,
+    "draw_calls": 1,
+    "atlas": [
+      1024,
+      1024
+    ],
+    "pixels_per_meter": 64,
+    "filter": "nearest",
+    "footprint_radius": 0.78,
+    "height": 0.7868829965591431,
+    "ground_min": 0.0,
+    "source_bounds_xyz": [
+      [
+        -0.6816713213920593,
+        -0.7505781650543213,
+        0.0
+      ],
+      [
+        0.7388984560966492,
+        0.6568699479103088,
+        0.7868829965591431
+      ]
+    ],
+    "scale_multiplier": 1.0,
+    "forward": "-Y Blender / +Z glTF",
+    "pivot": [
+      0,
+      0,
+      0
+    ],
+    "nonmanifold_edges": 0,
+    "degenerate_faces": 0,
+    "animations": [],
+    "collision": false,
+    "game_source_changed": false,
+    "art_scale": 0.3362747915328659,
+    "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+    "isolated_by_gdignore": true,
+    "previews": [
+      "three_quarter",
+      "game_top",
+      "back"
+    ]
+  },
+  {
+    "kind": "wyvern",
+    "tier": "Intermediário",
+    "name": "Poleiro da escarpa",
+    "concept": "Escarpa escalonada com galhos chamuscados, ovos e ossos na plataforma.",
+    "stem": "wyvern_lair_v1",
+    "method": "Live Blender MCP localhost:9876",
+    "editable_parts": 77,
+    "vertices": 650,
+    "triangles": 992,
+    "materials": 1,
+    "draw_calls": 1,
+    "atlas": [
+      1024,
+      1024
+    ],
+    "pixels_per_meter": 64,
+    "filter": "nearest",
+    "footprint_radius": 0.78,
+    "height": 0.9096233248710632,
+    "ground_min": 0.0,
+    "source_bounds_xyz": [
+      [
+        -0.6997873187065125,
+        -0.6885846257209778,
+        0.0
+      ],
+      [
+        0.6491418480873108,
+        0.681269109249115,
+        0.9096233248710632
+      ]
+    ],
+    "scale_multiplier": 1.0,
+    "forward": "-Y Blender / +Z glTF",
+    "pivot": [
+      0,
+      0,
+      0
+    ],
+    "nonmanifold_edges": 0,
+    "degenerate_faces": 0,
+    "animations": [],
+    "collision": false,
+    "game_source_changed": false,
+    "art_scale": 0.3362747915328659,
+    "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+    "isolated_by_gdignore": true,
+    "previews": [
+      "three_quarter",
+      "game_top",
+      "back"
+    ]
+  },
+  {
+    "kind": "minotaur",
+    "tier": "Intermediário",
+    "name": "Labirinto arruinado",
+    "concept": "Paredes baixas em meandro, porta com chifres e troféu de crânio bovino.",
+    "stem": "minotaur_lair_v1",
+    "method": "Live Blender MCP localhost:9876",
+    "editable_parts": 57,
+    "vertices": 476,
+    "triangles": 724,
+    "materials": 1,
+    "draw_calls": 1,
+    "atlas": [
+      1024,
+      1024
+    ],
+    "pixels_per_meter": 64,
+    "filter": "nearest",
+    "footprint_radius": 0.78,
+    "height": 0.8746843934059143,
+    "ground_min": 0.0,
+    "source_bounds_xyz": [
+      [
+        -0.6303656697273254,
+        -0.7194702625274658,
+        0.0
+      ],
+      [
+        0.7007619142532349,
+        0.6730658411979675,
+        0.8746843934059143
+      ]
+    ],
+    "scale_multiplier": 1.0,
+    "forward": "-Y Blender / +Z glTF",
+    "pivot": [
+      0,
+      0,
+      0
+    ],
+    "nonmanifold_edges": 0,
+    "degenerate_faces": 0,
+    "animations": [],
+    "collision": false,
+    "game_source_changed": false,
+    "art_scale": 0.3362747915328659,
+    "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+    "isolated_by_gdignore": true,
+    "previews": [
+      "three_quarter",
+      "game_top",
+      "back"
+    ]
+  },
+  {
+    "kind": "basilisk",
+    "tier": "Intermediário",
+    "name": "Ninho da petrificação",
+    "concept": "Ninho de gravetos e palha em rocha árida, ovos manchados e presas petrificadas.",
+    "stem": "basilisk_lair_v1",
+    "method": "Live Blender MCP localhost:9876",
+    "editable_parts": 97,
+    "vertices": 802,
+    "triangles": 1216,
+    "materials": 1,
+    "draw_calls": 1,
+    "atlas": [
+      1024,
+      1024
+    ],
+    "pixels_per_meter": 64,
+    "filter": "nearest",
+    "footprint_radius": 0.78,
+    "height": 0.33078059554100037,
+    "ground_min": 0.0,
+    "source_bounds_xyz": [
+      [
+        -0.6695612072944641,
+        -0.6432352662086487,
+        0.0
+      ],
+      [
+        0.5964857935905457,
+        0.6921048164367676,
+        0.33078059554100037
+      ]
+    ],
+    "scale_multiplier": 1.0,
+    "forward": "-Y Blender / +Z glTF",
+    "pivot": [
+      0,
+      0,
+      0
+    ],
+    "nonmanifold_edges": 0,
+    "degenerate_faces": 0,
+    "animations": [],
+    "collision": false,
+    "game_source_changed": false,
+    "art_scale": 0.3180582821827681,
+    "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+    "isolated_by_gdignore": true,
+    "previews": [
+      "three_quarter",
+      "game_top",
+      "back"
+    ]
+  },
+  {
+    "kind": "colossal_worm",
+    "tier": "Avançado",
+    "name": "Poço de escavação",
+    "concept": "Funil profundo entre placas de areia rompida, túneis escuros e cascas segmentadas.",
+    "stem": "colossal_worm_lair_v1",
+    "method": "Live Blender MCP localhost:9876",
+    "editable_parts": 59,
+    "vertices": 550,
+    "triangles": 864,
+    "materials": 1,
+    "draw_calls": 1,
+    "atlas": [
+      1024,
+      1024
+    ],
+    "pixels_per_meter": 64,
+    "filter": "nearest",
+    "footprint_radius": 0.78,
+    "height": 0.2716201841831207,
+    "ground_min": 0.0,
+    "source_bounds_xyz": [
+      [
+        -0.7503893971443176,
+        -0.7698541283607483,
+        0.0
+      ],
+      [
+        0.7464441061019897,
+        0.7668456435203552,
+        0.2716201841831207
+      ]
+    ],
+    "scale_multiplier": 1.0,
+    "forward": "-Y Blender / +Z glTF",
+    "pivot": [
+      0,
+      0,
+      0
+    ],
+    "nonmanifold_edges": 0,
+    "degenerate_faces": 0,
+    "animations": [],
+    "collision": false,
+    "game_source_changed": false,
+    "art_scale": 0.335333544614153,
+    "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+    "isolated_by_gdignore": true,
+    "previews": [
+      "three_quarter",
+      "game_top",
+      "back"
+    ]
+  },
+  {
+    "kind": "arboreal_ancient",
+    "tier": "Avançado",
+    "name": "Berço de pedra viva",
+    "concept": "Pedras de espiral ancestral, raízes e musgo em torno de um núcleo verde.",
+    "stem": "arboreal_ancient_lair_v1",
+    "method": "Live Blender MCP localhost:9876",
+    "editable_parts": 91,
+    "vertices": 760,
+    "triangles": 1156,
+    "materials": 1,
+    "draw_calls": 1,
+    "atlas": [
+      1024,
+      1024
+    ],
+    "pixels_per_meter": 64,
+    "filter": "nearest",
+    "footprint_radius": 0.78,
+    "height": 0.6490103602409363,
+    "ground_min": 0.0,
+    "source_bounds_xyz": [
+      [
+        -0.6403067111968994,
+        -0.7024492621421814,
+        0.0
+      ],
+      [
+        0.6899462938308716,
+        0.7188135981559753,
+        0.6490103602409363
+      ]
+    ],
+    "scale_multiplier": 1.0,
+    "forward": "-Y Blender / +Z glTF",
+    "pivot": [
+      0,
+      0,
+      0
+    ],
+    "nonmanifold_edges": 0,
+    "degenerate_faces": 0,
+    "animations": [],
+    "collision": false,
+    "game_source_changed": false,
+    "art_scale": 0.3362747915328659,
+    "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+    "isolated_by_gdignore": true,
+    "previews": [
+      "three_quarter",
+      "game_top",
+      "back"
+    ]
+  },
+  {
+    "kind": "mana_devourer",
+    "tier": "Avançado",
+    "name": "Jazida arcana exaurida",
+    "concept": "Leito cúbico fraturado, cristais drenados e fendas violetas na rocha.",
+    "stem": "mana_devourer_lair_v1",
+    "method": "Live Blender MCP localhost:9876",
+    "editable_parts": 45,
+    "vertices": 400,
+    "triangles": 620,
+    "materials": 1,
+    "draw_calls": 1,
+    "atlas": [
+      1024,
+      1024
+    ],
+    "pixels_per_meter": 64,
+    "filter": "nearest",
+    "footprint_radius": 0.78,
+    "height": 0.6221083402633667,
+    "ground_min": 0.0,
+    "source_bounds_xyz": [
+      [
+        -0.7399852871894836,
+        -0.6492002606391907,
+        0.0
+      ],
+      [
+        0.6510615348815918,
+        0.6622401475906372,
+        0.6221083402633667
+      ]
+    ],
+    "scale_multiplier": 1.0,
+    "forward": "-Y Blender / +Z glTF",
+    "pivot": [
+      0,
+      0,
+      0
+    ],
+    "nonmanifold_edges": 0,
+    "degenerate_faces": 0,
+    "animations": [],
+    "collision": false,
+    "game_source_changed": false,
+    "art_scale": 0.3362747915328659,
+    "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+    "isolated_by_gdignore": true,
+    "previews": [
+      "three_quarter",
+      "game_top",
+      "back"
+    ]
+  },
+  {
+    "kind": "corrupted_hero",
+    "tier": "Avançado",
+    "name": "Vigília abandonada",
+    "concept": "Posto militar em ruínas, assento vazio, estandarte gasto e escudo-torre esquecido.",
+    "stem": "corrupted_hero_lair_v1",
+    "method": "Live Blender MCP localhost:9876",
+    "editable_parts": 54,
+    "vertices": 456,
+    "triangles": 696,
+    "materials": 1,
+    "draw_calls": 1,
+    "atlas": [
+      1024,
+      1024
+    ],
+    "pixels_per_meter": 64,
+    "filter": "nearest",
+    "footprint_radius": 0.78,
+    "height": 0.8507752418518066,
+    "ground_min": 0.0,
+    "source_bounds_xyz": [
+      [
+        -0.7329797744750977,
+        -0.6597457528114319,
+        0.0
+      ],
+      [
+        0.6536873579025269,
+        0.6796092391014099,
+        0.8507752418518066
+      ]
+    ],
+    "scale_multiplier": 1.0,
+    "forward": "-Y Blender / +Z glTF",
+    "pivot": [
+      0,
+      0,
+      0
+    ],
+    "nonmanifold_edges": 0,
+    "degenerate_faces": 0,
+    "animations": [],
+    "collision": false,
+    "game_source_changed": false,
+    "art_scale": 0.3362747915328659,
+    "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+    "isolated_by_gdignore": true,
+    "previews": [
+      "three_quarter",
+      "game_top",
+      "back"
+    ]
+  }
+]

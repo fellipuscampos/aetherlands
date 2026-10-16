@@ -1,0 +1,49 @@
+{
+  "status": "PASS",
+  "suites": [
+    {
+      "script": "res://test/unit/test_dwarf_wall_models.gd",
+      "passed": 4,
+      "total": 4
+    },
+    {
+      "script": "res://test/unit/test_orc_wall_models.gd",
+      "passed": 4,
+      "total": 4
+    },
+    {
+      "script": "res://test/unit/test_elf_wall_models.gd",
+      "passed": 4,
+      "total": 4
+    },
+    {
+      "script": "res://test/unit/test_human_wall_models.gd",
+      "passed": 3,
+      "total": 3
+    },
+    {
+      "script": "res://test/unit/test_city_center_model.gd",
+      "passed": 3,
+      "total": 3
+    },
+    {
+      "script": "res://test/unit/test_city.gd",
+      "passed": 43,
+      "total": 43
+    },
+    {
+      "script": "res://test/unit/test_v2_fortification.gd",
+      "passed": 31,
+      "total": 31
+    },
+    {
+      "script": "res://test/unit/test_building_art_catalog.gd",
+      "passed": 8,
+      "total": 8
+    }
+  ],
+  "total_tests": 100,
+  "protected_existing_files": 107,
+  "existing_assets_unchanged": true,
+  "all_four_races_have_three_levels": true
+}

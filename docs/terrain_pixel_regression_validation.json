@@ -1,0 +1,46 @@
+{
+  "status": "FUNCTIONAL_PASS_TIMING_FAIL",
+  "passed": 167,
+  "total": 168,
+  "failed": 1,
+  "failed_tests": [
+    "test_generate_map_at_large_radius_completes_quickly"
+  ],
+  "suites": [
+    {
+      "script": "res://test/unit/test_terrain_pixel_materials.gd",
+      "passed": 1,
+      "total": 1,
+      "log": "art_source/terrain_pixel_review/material_tests.log"
+    },
+    {
+      "script": "res://test/unit/test_terrain_generation.gd",
+      "passed": 57,
+      "total": 58,
+      "log": "art_source/terrain_pixel_review/regression_tests.log"
+    },
+    {
+      "script": "res://test/unit/test_hex_grid_movement.gd",
+      "passed": 70,
+      "total": 70,
+      "log": "art_source/terrain_pixel_review/regression_tests.log"
+    },
+    {
+      "script": "res://test/unit/test_v2_terrain_modification.gd",
+      "passed": 27,
+      "total": 27,
+      "log": "art_source/terrain_pixel_review/regression_tests.log"
+    },
+    {
+      "script": "res://test/unit/test_nature_composition.gd",
+      "passed": 12,
+      "total": 12,
+      "log": "art_source/terrain_pixel_review/regression_tests.log"
+    }
+  ],
+  "notes": [
+    "Combined GUT run reports 46 ObjectDB instances and 7 resources at exit; the isolated material test and the native visual review exit cleanly."
+  ],
+  "timing_recheck_log": "art_source/terrain_pixel_review/timing_recheck.log",
+  "material_comparison": "docs/terrain_pixel_generation_comparison_special.json"
+}

@@ -1,0 +1,247 @@
+{
+	"assets": [
+		{
+			"asset": "sacred_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.47500002384186,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2100
+		},
+		{
+			"asset": "infernal_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.29449987411499,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1352
+		},
+		{
+			"asset": "necromancy_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.73499989509583,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1740
+		},
+		{
+			"asset": "druidic_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.79500007629395,
+				1.8400000333786
+			],
+			"meshes": 7,
+			"triangles": 924
+		},
+		{
+			"asset": "arcane_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				2.2081081867218,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1492
+		},
+		{
+			"asset": "elemental_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.45652294158936,
+				1.8400000333786
+			],
+			"meshes": 7,
+			"triangles": 1392
+		},
+		{
+			"asset": "orc_sacred_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.47850000858307,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2688
+		},
+		{
+			"asset": "orc_infernal_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.29449987411499,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1464
+		},
+		{
+			"asset": "orc_necromancy_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.65499997138977,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2000
+		},
+		{
+			"asset": "orc_druidic_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.79500007629395,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1092
+		},
+		{
+			"asset": "orc_arcane_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				2.0996081829071,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1928
+		},
+		{
+			"asset": "orc_elemental_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.45652294158936,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1580
+		},
+		{
+			"asset": "dwarf_sacred_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.30050003528595,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2364
+		},
+		{
+			"asset": "dwarf_infernal_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.29449987411499,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1412
+		},
+		{
+			"asset": "dwarf_necromancy_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.57499992847443,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1860
+		},
+		{
+			"asset": "dwarf_druidic_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.79500007629395,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 984
+		},
+		{
+			"asset": "dwarf_arcane_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				2.00110816955566,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1732
+		},
+		{
+			"asset": "dwarf_elemental_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.45652294158936,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1704
+		},
+		{
+			"asset": "elf_sacred_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.6583000421524,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2944
+		},
+		{
+			"asset": "elf_infernal_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.29449987411499,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1816
+		},
+		{
+			"asset": "elf_necromancy_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.84700000286102,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2196
+		},
+		{
+			"asset": "elf_druidic_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.79500007629395,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1588
+		},
+		{
+			"asset": "elf_arcane_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				2.35600829124451,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2212
+		},
+		{
+			"asset": "elf_elemental_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.45652294158936,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1708
+		}
+	],
+	"problems": [],
+	"status": "PASS",
+	"verified": 24
+}

@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "textures": 15,
+  "maximum_colors": 24,
+  "resolution": [
+    128,
+    128
+  ],
+  "runtime_png_bytes": 445442,
+  "backup_files_preserved": 18,
+  "original_photographs_preserved": 7,
+  "geometry_and_generator_unchanged": true,
+  "gallery_cards": 15,
+  "gallery_terrain_inventory": 25,
+  "gallery_repeat_and_comparison": true,
+  "gallery_mobile_overflow": false
+}

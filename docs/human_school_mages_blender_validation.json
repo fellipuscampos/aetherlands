@@ -1,0 +1,1721 @@
+{
+  "status": "PASS",
+  "models": 6,
+  "pipeline": "Live Blender MCP localhost:9876",
+  "animations": 0,
+  "rigging_deferred": true,
+  "exposed_coplanar_pairs": 0,
+  "review_blend": "art_source/human_school_mages_review/human_school_mages_six_schools_review.blend",
+  "assets": [
+    {
+      "stem": "human_sacred_cleric_v1",
+      "name": "Clérigo — Escola Sagrada",
+      "school": "sacred",
+      "race": "human",
+      "gameplay_unit_kind": "v2_unit_sacred_cleric",
+      "pipeline": "Live Blender MCP localhost:9876",
+      "source": "assets/generated/humans/human_settler_v1/human_settler_v1.blend",
+      "source_sha256": "433edafe622f077613783efc326c345fde0e134dbc8c7b0ec9f1840d3509ab4a",
+      "source_body": [
+        {
+          "part": "Pelvis",
+          "source": "Pelvis",
+          "dimensions": [
+            0.389189,
+            0.214054,
+            0.155676
+          ]
+        },
+        {
+          "part": "Belly",
+          "source": "Belly",
+          "dimensions": [
+            0.311351,
+            0.194595,
+            0.155676
+          ]
+        },
+        {
+          "part": "Chest",
+          "source": "Chest",
+          "dimensions": [
+            0.428108,
+            0.243243,
+            0.272432
+          ]
+        },
+        {
+          "part": "Head",
+          "source": "Head",
+          "dimensions": [
+            0.262703,
+            0.262703,
+            0.262703
+          ]
+        },
+        {
+          "part": "Shoulder_l",
+          "source": "Shoulder_l",
+          "dimensions": [
+            0.155676,
+            0.214054,
+            0.175135
+          ]
+        },
+        {
+          "part": "Shoulder_r",
+          "source": "Shoulder_r",
+          "dimensions": [
+            0.155676,
+            0.214054,
+            0.175135
+          ]
+        },
+        {
+          "part": "UpperArm_l",
+          "source": "UpperArm_l",
+          "dimensions": [
+            0.163096,
+            0.169008,
+            0.295673
+          ]
+        },
+        {
+          "part": "Forearm_l",
+          "source": "Forearm_l",
+          "dimensions": [
+            0.161031,
+            0.167269,
+            0.284804
+          ]
+        },
+        {
+          "part": "Hand_l",
+          "source": "Hand_l",
+          "dimensions": [
+            0.132696,
+            0.143408,
+            0.135671
+          ]
+        },
+        {
+          "part": "UpperArm_r",
+          "source": "UpperArm_r",
+          "dimensions": [
+            0.16379,
+            0.169593,
+            0.299326
+          ]
+        },
+        {
+          "part": "Forearm_r",
+          "source": "Forearm_r",
+          "dimensions": [
+            0.163532,
+            0.169375,
+            0.297966
+          ]
+        },
+        {
+          "part": "Hand_r",
+          "source": "Hand_r",
+          "dimensions": [
+            0.132696,
+            0.143408,
+            0.135671
+          ]
+        },
+        {
+          "part": "Foot_l",
+          "source": "Foot_l",
+          "dimensions": [
+            0.175135,
+            0.272432,
+            0.097297
+          ]
+        },
+        {
+          "part": "Shin_l",
+          "source": "Shin_l",
+          "dimensions": [
+            0.155676,
+            0.175135,
+            0.36973
+          ]
+        },
+        {
+          "part": "Thigh_l",
+          "source": "Thigh_l",
+          "dimensions": [
+            0.126486,
+            0.145946,
+            0.389189
+          ]
+        },
+        {
+          "part": "Foot_r",
+          "source": "Foot_r",
+          "dimensions": [
+            0.175135,
+            0.272432,
+            0.097297
+          ]
+        },
+        {
+          "part": "Shin_r",
+          "source": "Shin_r",
+          "dimensions": [
+            0.155676,
+            0.175135,
+            0.36973
+          ]
+        },
+        {
+          "part": "Thigh_r",
+          "source": "Thigh_r",
+          "dimensions": [
+            0.126486,
+            0.145946,
+            0.389189
+          ]
+        }
+      ],
+      "elderly_posture": {
+        "torso_forward_degrees": 8,
+        "head_counter_degrees": -3,
+        "shoulder_drop_m": 0.022,
+        "grey_beard_length_m": 0.08999999999999986
+      },
+      "geometry": {
+        "status": "PASS",
+        "editable_parts": 46,
+        "body_parts": 18,
+        "triangles": 552,
+        "dimensions": [
+          0.9957587420940399,
+          0.6585875451564789,
+          1.9502837681241667
+        ],
+        "bounds_min": [
+          -0.5651755332946777,
+          -0.4776923358440399,
+          -2.331320025916739e-09
+        ],
+        "bounds_max": [
+          0.4305832087993622,
+          0.18089520931243896,
+          1.9502837657928467
+        ],
+        "closed_meshes": true,
+        "positive_volume": true,
+        "ground_pivot": true,
+        "identity_transforms": true,
+        "flat_shading": true,
+        "uv_density_max_error": 0.0012187654306217155
+      },
+      "texture": "assets/generated/humans/human_sacred_cleric_v1/human_sacred_cleric_v1_albedo.png",
+      "animations": 0,
+      "rigging_deferred": true,
+      "style_revision": 3,
+      "books": 0,
+      "head_scalp_texture": "original_human_white_hair_or_painted_hood",
+      "facial_features": "approved_original_eyes_brows_nose_mouth_preserved",
+      "style_references": [
+        "human_settler_v1",
+        "squire_v1",
+        "archer_v1"
+      ],
+      "surface_validation": {
+        "school": "sacred",
+        "exposed_coplanar_pairs": 0,
+        "hidden_coplanar_pairs": 0,
+        "staff_forearm_intersection": false,
+        "staff_hand_contact": true,
+        "issues": [],
+        "status": "PASS",
+        "backface_culling": true
+      },
+      "style_validation": {
+        "school": "sacred",
+        "status": "PASS",
+        "original_head_geometry": true,
+        "head_scale": 1.0,
+        "source_head_dimensions_m": [
+          0.262702703,
+          0.262702703,
+          0.262702703
+        ],
+        "original_head_max_vertex_error_m": 1.4901161193847656e-08,
+        "original_facial_features_preserved": true,
+        "painted_white_hair": true,
+        "painted_hood": false,
+        "bulky_hood_shells": 0,
+        "separate_hair_shells": 0,
+        "hood_texture_pixels": 0,
+        "beard_texture_pixels": 92,
+        "body_and_clothing_geometry_unchanged": true,
+        "preserved_non_head_texture_islands": 264,
+        "books": 0,
+        "relaxed_offhand": true,
+        "actual_head_texture_verified": true,
+        "actual_head_size_verified": true
+      },
+      "source_preserved": true,
+      "blend": "assets/generated/humans/human_sacred_cleric_v1/human_sacred_cleric_v1.blend",
+      "glb": "assets/generated/humans/human_sacred_cleric_v1/human_sacred_cleric_v1.glb",
+      "export": {
+        "status": "PASS",
+        "bytes": 84012,
+        "triangles": 552,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "embedded_images": 2,
+        "atlas_hashes": {
+          "albedo": "db86ee10fa51a9375b40e3822fca80b748cd913f54e8a5ffba4e5ff2d55c7cd3",
+          "emission": "c530864462525e11b3f55b1e48aa1b12339a2587dbdf10e85be82a0409b22553"
+        },
+        "animations": 0,
+        "skins": 0,
+        "cameras": 0,
+        "lights": 0,
+        "static_mesh_joined": true,
+        "editable_source_parts": 46
+      },
+      "game_usage": {
+        "units": "meters",
+        "model_scale_multiplier": 1.0,
+        "pivot": "feet_at_origin",
+        "blender_front": "-Y",
+        "godot_front": "+Z",
+        "stage": "static_model_review",
+        "game_database_changed": false
+      }
+    },
+    {
+      "stem": "human_infernal_warlock_v1",
+      "name": "Bruxo — Escola Infernal",
+      "school": "infernal",
+      "race": "human",
+      "gameplay_unit_kind": "v2_unit_infernal_warlock",
+      "pipeline": "Live Blender MCP localhost:9876",
+      "source": "assets/generated/humans/human_settler_v1/human_settler_v1.blend",
+      "source_sha256": "433edafe622f077613783efc326c345fde0e134dbc8c7b0ec9f1840d3509ab4a",
+      "source_body": [
+        {
+          "part": "Pelvis",
+          "source": "Pelvis",
+          "dimensions": [
+            0.389189,
+            0.214054,
+            0.155676
+          ]
+        },
+        {
+          "part": "Belly",
+          "source": "Belly",
+          "dimensions": [
+            0.311351,
+            0.194595,
+            0.155676
+          ]
+        },
+        {
+          "part": "Chest",
+          "source": "Chest",
+          "dimensions": [
+            0.428108,
+            0.243243,
+            0.272432
+          ]
+        },
+        {
+          "part": "Head",
+          "source": "Head",
+          "dimensions": [
+            0.262703,
+            0.262703,
+            0.262703
+          ]
+        },
+        {
+          "part": "Shoulder_l",
+          "source": "Shoulder_l",
+          "dimensions": [
+            0.155676,
+            0.214054,
+            0.175135
+          ]
+        },
+        {
+          "part": "Shoulder_r",
+          "source": "Shoulder_r",
+          "dimensions": [
+            0.155676,
+            0.214054,
+            0.175135
+          ]
+        },
+        {
+          "part": "UpperArm_l",
+          "source": "UpperArm_l",
+          "dimensions": [
+            0.163096,
+            0.169008,
+            0.295673
+          ]
+        },
+        {
+          "part": "Forearm_l",
+          "source": "Forearm_l",
+          "dimensions": [
+            0.161031,
+            0.167269,
+            0.284804
+          ]
+        },
+        {
+          "part": "Hand_l",
+          "source": "Hand_l",
+          "dimensions": [
+            0.132696,
+            0.143408,
+            0.135671
+          ]
+        },
+        {
+          "part": "UpperArm_r",
+          "source": "UpperArm_r",
+          "dimensions": [
+            0.16379,
+            0.169593,
+            0.299326
+          ]
+        },
+        {
+          "part": "Forearm_r",
+          "source": "Forearm_r",
+          "dimensions": [
+            0.163532,
+            0.169375,
+            0.297966
+          ]
+        },
+        {
+          "part": "Hand_r",
+          "source": "Hand_r",
+          "dimensions": [
+            0.132696,
+            0.143408,
+            0.135671
+          ]
+        },
+        {
+          "part": "Foot_l",
+          "source": "Foot_l",
+          "dimensions": [
+            0.175135,
+            0.272432,
+            0.097297
+          ]
+        },
+        {
+          "part": "Shin_l",
+          "source": "Shin_l",
+          "dimensions": [
+            0.155676,
+            0.175135,
+            0.36973
+          ]
+        },
+        {
+          "part": "Thigh_l",
+          "source": "Thigh_l",
+          "dimensions": [
+            0.126486,
+            0.145946,
+            0.389189
+          ]
+        },
+        {
+          "part": "Foot_r",
+          "source": "Foot_r",
+          "dimensions": [
+            0.175135,
+            0.272432,
+            0.097297
+          ]
+        },
+        {
+          "part": "Shin_r",
+          "source": "Shin_r",
+          "dimensions": [
+            0.155676,
+            0.175135,
+            0.36973
+          ]
+        },
+        {
+          "part": "Thigh_r",
+          "source": "Thigh_r",
+          "dimensions": [
+            0.126486,
+            0.145946,
+            0.389189
+          ]
+        }
+      ],
+      "elderly_posture": {
+        "torso_forward_degrees": 11,
+        "head_counter_degrees": -3,
+        "shoulder_drop_m": 0.022,
+        "grey_beard_length_m": 0.08999999999999986
+      },
+      "geometry": {
+        "status": "PASS",
+        "editable_parts": 44,
+        "body_parts": 18,
+        "triangles": 528,
+        "dimensions": [
+          1.013280212879181,
+          0.6583225578069687,
+          1.8984684967466032
+        ],
+        "bounds_min": [
+          -0.5826969742774963,
+          -0.47969287633895874,
+          -2.331320025916739e-09
+        ],
+        "bounds_max": [
+          0.43058323860168457,
+          0.17862968146800995,
+          1.8984684944152832
+        ],
+        "closed_meshes": true,
+        "positive_volume": true,
+        "ground_pivot": true,
+        "identity_transforms": true,
+        "flat_shading": true,
+        "uv_density_max_error": 0.0015252841279504992
+      },
+      "texture": "assets/generated/humans/human_infernal_warlock_v1/human_infernal_warlock_v1_albedo.png",
+      "animations": 0,
+      "rigging_deferred": true,
+      "style_revision": 3,
+      "books": 0,
+      "head_scalp_texture": "original_human_white_hair_or_painted_hood",
+      "facial_features": "approved_original_eyes_brows_nose_mouth_preserved",
+      "style_references": [
+        "human_settler_v1",
+        "squire_v1",
+        "archer_v1"
+      ],
+      "surface_validation": {
+        "school": "infernal",
+        "exposed_coplanar_pairs": 0,
+        "hidden_coplanar_pairs": 0,
+        "staff_forearm_intersection": false,
+        "staff_hand_contact": true,
+        "issues": [],
+        "status": "PASS",
+        "backface_culling": true
+      },
+      "style_validation": {
+        "school": "infernal",
+        "status": "PASS",
+        "original_head_geometry": true,
+        "head_scale": 1.0,
+        "source_head_dimensions_m": [
+          0.262702703,
+          0.262702703,
+          0.262702703
+        ],
+        "original_head_max_vertex_error_m": 1.1920928955078125e-07,
+        "original_facial_features_preserved": true,
+        "painted_white_hair": true,
+        "painted_hood": true,
+        "bulky_hood_shells": 0,
+        "separate_hair_shells": 0,
+        "hood_texture_pixels": 1410,
+        "beard_texture_pixels": 68,
+        "body_and_clothing_geometry_unchanged": true,
+        "preserved_non_head_texture_islands": 252,
+        "books": 0,
+        "relaxed_offhand": true,
+        "actual_head_texture_verified": true,
+        "actual_head_size_verified": true
+      },
+      "source_preserved": true,
+      "blend": "assets/generated/humans/human_infernal_warlock_v1/human_infernal_warlock_v1.blend",
+      "glb": "assets/generated/humans/human_infernal_warlock_v1/human_infernal_warlock_v1.glb",
+      "export": {
+        "status": "PASS",
+        "bytes": 81008,
+        "triangles": 528,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "embedded_images": 2,
+        "atlas_hashes": {
+          "albedo": "975e7a135054b92fccd79f0e6b5ac72b08e5c13a361b996e62233a8c9d6605cc",
+          "emission": "2089c46603a28e954e3e04e4eb84af481a1e237595e831cdbd8fc0e084ee944a"
+        },
+        "animations": 0,
+        "skins": 0,
+        "cameras": 0,
+        "lights": 0,
+        "static_mesh_joined": true,
+        "editable_source_parts": 44
+      },
+      "game_usage": {
+        "units": "meters",
+        "model_scale_multiplier": 1.0,
+        "pivot": "feet_at_origin",
+        "blender_front": "-Y",
+        "godot_front": "+Z",
+        "stage": "static_model_review",
+        "game_database_changed": false
+      }
+    },
+    {
+      "stem": "human_necromancer_v1",
+      "name": "Necromante — Necromancia",
+      "school": "necromancy",
+      "race": "human",
+      "gameplay_unit_kind": "v2_unit_necromancer",
+      "pipeline": "Live Blender MCP localhost:9876",
+      "source": "assets/generated/humans/human_settler_v1/human_settler_v1.blend",
+      "source_sha256": "433edafe622f077613783efc326c345fde0e134dbc8c7b0ec9f1840d3509ab4a",
+      "source_body": [
+        {
+          "part": "Pelvis",
+          "source": "Pelvis",
+          "dimensions": [
+            0.389189,
+            0.214054,
+            0.155676
+          ]
+        },
+        {
+          "part": "Belly",
+          "source": "Belly",
+          "dimensions": [
+            0.311351,
+            0.194595,
+            0.155676
+          ]
+        },
+        {
+          "part": "Chest",
+          "source": "Chest",
+          "dimensions": [
+            0.428108,
+            0.243243,
+            0.272432
+          ]
+        },
+        {
+          "part": "Head",
+          "source": "Head",
+          "dimensions": [
+            0.262703,
+            0.262703,
+            0.262703
+          ]
+        },
+        {
+          "part": "Shoulder_l",
+          "source": "Shoulder_l",
+          "dimensions": [
+            0.155676,
+            0.214054,
+            0.175135
+          ]
+        },
+        {
+          "part": "Shoulder_r",
+          "source": "Shoulder_r",
+          "dimensions": [
+            0.155676,
+            0.214054,
+            0.175135
+          ]
+        },
+        {
+          "part": "UpperArm_l",
+          "source": "UpperArm_l",
+          "dimensions": [
+            0.163096,
+            0.169008,
+            0.295673
+          ]
+        },
+        {
+          "part": "Forearm_l",
+          "source": "Forearm_l",
+          "dimensions": [
+            0.161031,
+            0.167269,
+            0.284804
+          ]
+        },
+        {
+          "part": "Hand_l",
+          "source": "Hand_l",
+          "dimensions": [
+            0.132696,
+            0.143408,
+            0.135671
+          ]
+        },
+        {
+          "part": "UpperArm_r",
+          "source": "UpperArm_r",
+          "dimensions": [
+            0.16379,
+            0.169593,
+            0.299326
+          ]
+        },
+        {
+          "part": "Forearm_r",
+          "source": "Forearm_r",
+          "dimensions": [
+            0.163532,
+            0.169375,
+            0.297966
+          ]
+        },
+        {
+          "part": "Hand_r",
+          "source": "Hand_r",
+          "dimensions": [
+            0.132696,
+            0.143408,
+            0.135671
+          ]
+        },
+        {
+          "part": "Foot_l",
+          "source": "Foot_l",
+          "dimensions": [
+            0.175135,
+            0.272432,
+            0.097297
+          ]
+        },
+        {
+          "part": "Shin_l",
+          "source": "Shin_l",
+          "dimensions": [
+            0.155676,
+            0.175135,
+            0.36973
+          ]
+        },
+        {
+          "part": "Thigh_l",
+          "source": "Thigh_l",
+          "dimensions": [
+            0.126486,
+            0.145946,
+            0.389189
+          ]
+        },
+        {
+          "part": "Foot_r",
+          "source": "Foot_r",
+          "dimensions": [
+            0.175135,
+            0.272432,
+            0.097297
+          ]
+        },
+        {
+          "part": "Shin_r",
+          "source": "Shin_r",
+          "dimensions": [
+            0.155676,
+            0.175135,
+            0.36973
+          ]
+        },
+        {
+          "part": "Thigh_r",
+          "source": "Thigh_r",
+          "dimensions": [
+            0.126486,
+            0.145946,
+            0.389189
+          ]
+        }
+      ],
+      "elderly_posture": {
+        "torso_forward_degrees": 12,
+        "head_counter_degrees": -3,
+        "shoulder_drop_m": 0.022,
+        "grey_beard_length_m": 0.08999999999999986
+      },
+      "geometry": {
+        "status": "PASS",
+        "editable_parts": 47,
+        "body_parts": 18,
+        "triangles": 564,
+        "dimensions": [
+          0.9563985168933868,
+          0.6775007545948029,
+          1.8309999727674162
+        ],
+        "bounds_min": [
+          -0.5258153080940247,
+          -0.49973538517951965,
+          -2.331320025916739e-09
+        ],
+        "bounds_max": [
+          0.4305832087993622,
+          0.1777653694152832,
+          1.8309999704360962
+        ],
+        "closed_meshes": true,
+        "positive_volume": true,
+        "ground_pivot": true,
+        "identity_transforms": true,
+        "flat_shading": true,
+        "uv_density_max_error": 0.0007888715721549033
+      },
+      "texture": "assets/generated/humans/human_necromancer_v1/human_necromancer_v1_albedo.png",
+      "animations": 0,
+      "rigging_deferred": true,
+      "style_revision": 3,
+      "books": 0,
+      "head_scalp_texture": "original_human_white_hair_or_painted_hood",
+      "facial_features": "approved_original_eyes_brows_nose_mouth_preserved",
+      "style_references": [
+        "human_settler_v1",
+        "squire_v1",
+        "archer_v1"
+      ],
+      "surface_validation": {
+        "school": "necromancy",
+        "exposed_coplanar_pairs": 0,
+        "hidden_coplanar_pairs": 0,
+        "staff_forearm_intersection": false,
+        "staff_hand_contact": true,
+        "issues": [],
+        "status": "PASS",
+        "backface_culling": true
+      },
+      "style_validation": {
+        "school": "necromancy",
+        "status": "PASS",
+        "original_head_geometry": true,
+        "head_scale": 1.0,
+        "source_head_dimensions_m": [
+          0.262702703,
+          0.262702703,
+          0.262702703
+        ],
+        "original_head_max_vertex_error_m": 2.9802322387695312e-08,
+        "original_facial_features_preserved": true,
+        "painted_white_hair": true,
+        "painted_hood": true,
+        "bulky_hood_shells": 0,
+        "separate_hair_shells": 0,
+        "hood_texture_pixels": 1410,
+        "beard_texture_pixels": 68,
+        "body_and_clothing_geometry_unchanged": true,
+        "preserved_non_head_texture_islands": 270,
+        "books": 0,
+        "relaxed_offhand": true,
+        "actual_head_texture_verified": true,
+        "actual_head_size_verified": true
+      },
+      "source_preserved": true,
+      "blend": "assets/generated/humans/human_necromancer_v1/human_necromancer_v1.blend",
+      "glb": "assets/generated/humans/human_necromancer_v1/human_necromancer_v1.glb",
+      "export": {
+        "status": "PASS",
+        "bytes": 82288,
+        "triangles": 564,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "embedded_images": 2,
+        "atlas_hashes": {
+          "albedo": "642e860b513127729343be40a788ba75ed54193b07ce9a654e5b50aa1e6c21df",
+          "emission": "bc0f0a442421f25b1f203a7b68f16de968b7dcaa958c14b0ffd3e61cccdd6c9c"
+        },
+        "animations": 0,
+        "skins": 0,
+        "cameras": 0,
+        "lights": 0,
+        "static_mesh_joined": true,
+        "editable_source_parts": 47
+      },
+      "game_usage": {
+        "units": "meters",
+        "model_scale_multiplier": 1.0,
+        "pivot": "feet_at_origin",
+        "blender_front": "-Y",
+        "godot_front": "+Z",
+        "stage": "static_model_review",
+        "game_database_changed": false
+      }
+    },
+    {
+      "stem": "human_druid_v1",
+      "name": "Druida — Druidismo",
+      "school": "druidism",
+      "race": "human",
+      "gameplay_unit_kind": "v2_unit_druid",
+      "pipeline": "Live Blender MCP localhost:9876",
+      "source": "assets/generated/humans/human_settler_v1/human_settler_v1.blend",
+      "source_sha256": "433edafe622f077613783efc326c345fde0e134dbc8c7b0ec9f1840d3509ab4a",
+      "source_body": [
+        {
+          "part": "Pelvis",
+          "source": "Pelvis",
+          "dimensions": [
+            0.389189,
+            0.214054,
+            0.155676
+          ]
+        },
+        {
+          "part": "Belly",
+          "source": "Belly",
+          "dimensions": [
+            0.311351,
+            0.194595,
+            0.155676
+          ]
+        },
+        {
+          "part": "Chest",
+          "source": "Chest",
+          "dimensions": [
+            0.428108,
+            0.243243,
+            0.272432
+          ]
+        },
+        {
+          "part": "Head",
+          "source": "Head",
+          "dimensions": [
+            0.262703,
+            0.262703,
+            0.262703
+          ]
+        },
+        {
+          "part": "Shoulder_l",
+          "source": "Shoulder_l",
+          "dimensions": [
+            0.155676,
+            0.214054,
+            0.175135
+          ]
+        },
+        {
+          "part": "Shoulder_r",
+          "source": "Shoulder_r",
+          "dimensions": [
+            0.155676,
+            0.214054,
+            0.175135
+          ]
+        },
+        {
+          "part": "UpperArm_l",
+          "source": "UpperArm_l",
+          "dimensions": [
+            0.163096,
+            0.169008,
+            0.295673
+          ]
+        },
+        {
+          "part": "Forearm_l",
+          "source": "Forearm_l",
+          "dimensions": [
+            0.161031,
+            0.167269,
+            0.284804
+          ]
+        },
+        {
+          "part": "Hand_l",
+          "source": "Hand_l",
+          "dimensions": [
+            0.132696,
+            0.143408,
+            0.135671
+          ]
+        },
+        {
+          "part": "UpperArm_r",
+          "source": "UpperArm_r",
+          "dimensions": [
+            0.16379,
+            0.169593,
+            0.299326
+          ]
+        },
+        {
+          "part": "Forearm_r",
+          "source": "Forearm_r",
+          "dimensions": [
+            0.163532,
+            0.169375,
+            0.297966
+          ]
+        },
+        {
+          "part": "Hand_r",
+          "source": "Hand_r",
+          "dimensions": [
+            0.132696,
+            0.143408,
+            0.135671
+          ]
+        },
+        {
+          "part": "Foot_l",
+          "source": "Foot_l",
+          "dimensions": [
+            0.175135,
+            0.272432,
+            0.097297
+          ]
+        },
+        {
+          "part": "Shin_l",
+          "source": "Shin_l",
+          "dimensions": [
+            0.155676,
+            0.175135,
+            0.36973
+          ]
+        },
+        {
+          "part": "Thigh_l",
+          "source": "Thigh_l",
+          "dimensions": [
+            0.126486,
+            0.145946,
+            0.389189
+          ]
+        },
+        {
+          "part": "Foot_r",
+          "source": "Foot_r",
+          "dimensions": [
+            0.175135,
+            0.272432,
+            0.097297
+          ]
+        },
+        {
+          "part": "Shin_r",
+          "source": "Shin_r",
+          "dimensions": [
+            0.155676,
+            0.175135,
+            0.36973
+          ]
+        },
+        {
+          "part": "Thigh_r",
+          "source": "Thigh_r",
+          "dimensions": [
+            0.126486,
+            0.145946,
+            0.389189
+          ]
+        }
+      ],
+      "elderly_posture": {
+        "torso_forward_degrees": 10,
+        "head_counter_degrees": -3,
+        "shoulder_drop_m": 0.022,
+        "grey_beard_length_m": 0.10299999999999998
+      },
+      "geometry": {
+        "status": "PASS",
+        "editable_parts": 49,
+        "body_parts": 18,
+        "triangles": 588,
+        "dimensions": [
+          1.050319790840149,
+          0.6584794819355011,
+          1.9135000729032194
+        ],
+        "bounds_min": [
+          -0.6197365522384644,
+          -0.47903987765312195,
+          -2.331320025916739e-09
+        ],
+        "bounds_max": [
+          0.43058323860168457,
+          0.17943960428237915,
+          1.9135000705718994
+        ],
+        "closed_meshes": true,
+        "positive_volume": true,
+        "ground_pivot": true,
+        "identity_transforms": true,
+        "flat_shading": true,
+        "uv_density_max_error": 0.0006619641828748968
+      },
+      "texture": "assets/generated/humans/human_druid_v1/human_druid_v1_albedo.png",
+      "animations": 0,
+      "rigging_deferred": true,
+      "style_revision": 3,
+      "books": 0,
+      "head_scalp_texture": "original_human_white_hair_or_painted_hood",
+      "facial_features": "approved_original_eyes_brows_nose_mouth_preserved",
+      "style_references": [
+        "human_settler_v1",
+        "squire_v1",
+        "archer_v1"
+      ],
+      "surface_validation": {
+        "school": "druidism",
+        "exposed_coplanar_pairs": 0,
+        "hidden_coplanar_pairs": 4,
+        "staff_forearm_intersection": false,
+        "staff_hand_contact": true,
+        "issues": [],
+        "status": "PASS",
+        "backface_culling": true
+      },
+      "style_validation": {
+        "school": "druidism",
+        "status": "PASS",
+        "original_head_geometry": true,
+        "head_scale": 1.0,
+        "source_head_dimensions_m": [
+          0.262702703,
+          0.262702703,
+          0.262702703
+        ],
+        "original_head_max_vertex_error_m": 1.228781230931777e-07,
+        "original_facial_features_preserved": true,
+        "painted_white_hair": true,
+        "painted_hood": false,
+        "bulky_hood_shells": 0,
+        "separate_hair_shells": 0,
+        "hood_texture_pixels": 0,
+        "beard_texture_pixels": 92,
+        "body_and_clothing_geometry_unchanged": true,
+        "preserved_non_head_texture_islands": 282,
+        "books": 0,
+        "relaxed_offhand": true,
+        "actual_head_texture_verified": true,
+        "actual_head_size_verified": true
+      },
+      "source_preserved": true,
+      "blend": "assets/generated/humans/human_druid_v1/human_druid_v1.blend",
+      "glb": "assets/generated/humans/human_druid_v1/human_druid_v1.glb",
+      "export": {
+        "status": "PASS",
+        "bytes": 85972,
+        "triangles": 588,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "embedded_images": 2,
+        "atlas_hashes": {
+          "albedo": "efb997dc64cf170b56c4ff2dc279f061cee9056bfab5518f6eff3bf5c55f7d3d",
+          "emission": "9a334c89c9511a9c155910ad84763ff23c8b112f0211566c41a19673f0552c6c"
+        },
+        "animations": 0,
+        "skins": 0,
+        "cameras": 0,
+        "lights": 0,
+        "static_mesh_joined": true,
+        "editable_source_parts": 49
+      },
+      "game_usage": {
+        "units": "meters",
+        "model_scale_multiplier": 1.0,
+        "pivot": "feet_at_origin",
+        "blender_front": "-Y",
+        "godot_front": "+Z",
+        "stage": "static_model_review",
+        "game_database_changed": false
+      }
+    },
+    {
+      "stem": "human_arcanist_v1",
+      "name": "Arcanista — Arcanismo",
+      "school": "arcanism",
+      "race": "human",
+      "gameplay_unit_kind": "v2_unit_arcanist",
+      "pipeline": "Live Blender MCP localhost:9876",
+      "source": "assets/generated/humans/human_settler_v1/human_settler_v1.blend",
+      "source_sha256": "433edafe622f077613783efc326c345fde0e134dbc8c7b0ec9f1840d3509ab4a",
+      "source_body": [
+        {
+          "part": "Pelvis",
+          "source": "Pelvis",
+          "dimensions": [
+            0.389189,
+            0.214054,
+            0.155676
+          ]
+        },
+        {
+          "part": "Belly",
+          "source": "Belly",
+          "dimensions": [
+            0.311351,
+            0.194595,
+            0.155676
+          ]
+        },
+        {
+          "part": "Chest",
+          "source": "Chest",
+          "dimensions": [
+            0.428108,
+            0.243243,
+            0.272432
+          ]
+        },
+        {
+          "part": "Head",
+          "source": "Head",
+          "dimensions": [
+            0.262703,
+            0.262703,
+            0.262703
+          ]
+        },
+        {
+          "part": "Shoulder_l",
+          "source": "Shoulder_l",
+          "dimensions": [
+            0.155676,
+            0.214054,
+            0.175135
+          ]
+        },
+        {
+          "part": "Shoulder_r",
+          "source": "Shoulder_r",
+          "dimensions": [
+            0.155676,
+            0.214054,
+            0.175135
+          ]
+        },
+        {
+          "part": "UpperArm_l",
+          "source": "UpperArm_l",
+          "dimensions": [
+            0.163096,
+            0.169008,
+            0.295673
+          ]
+        },
+        {
+          "part": "Forearm_l",
+          "source": "Forearm_l",
+          "dimensions": [
+            0.161031,
+            0.167269,
+            0.284804
+          ]
+        },
+        {
+          "part": "Hand_l",
+          "source": "Hand_l",
+          "dimensions": [
+            0.132696,
+            0.143408,
+            0.135671
+          ]
+        },
+        {
+          "part": "UpperArm_r",
+          "source": "UpperArm_r",
+          "dimensions": [
+            0.16379,
+            0.169593,
+            0.299326
+          ]
+        },
+        {
+          "part": "Forearm_r",
+          "source": "Forearm_r",
+          "dimensions": [
+            0.163532,
+            0.169375,
+            0.297966
+          ]
+        },
+        {
+          "part": "Hand_r",
+          "source": "Hand_r",
+          "dimensions": [
+            0.132696,
+            0.143408,
+            0.135671
+          ]
+        },
+        {
+          "part": "Foot_l",
+          "source": "Foot_l",
+          "dimensions": [
+            0.175135,
+            0.272432,
+            0.097297
+          ]
+        },
+        {
+          "part": "Shin_l",
+          "source": "Shin_l",
+          "dimensions": [
+            0.155676,
+            0.175135,
+            0.36973
+          ]
+        },
+        {
+          "part": "Thigh_l",
+          "source": "Thigh_l",
+          "dimensions": [
+            0.126486,
+            0.145946,
+            0.389189
+          ]
+        },
+        {
+          "part": "Foot_r",
+          "source": "Foot_r",
+          "dimensions": [
+            0.175135,
+            0.272432,
+            0.097297
+          ]
+        },
+        {
+          "part": "Shin_r",
+          "source": "Shin_r",
+          "dimensions": [
+            0.155676,
+            0.175135,
+            0.36973
+          ]
+        },
+        {
+          "part": "Thigh_r",
+          "source": "Thigh_r",
+          "dimensions": [
+            0.126486,
+            0.145946,
+            0.389189
+          ]
+        }
+      ],
+      "elderly_posture": {
+        "torso_forward_degrees": 7,
+        "head_counter_degrees": -3,
+        "shoulder_drop_m": 0.022,
+        "grey_beard_length_m": 0.08999999999999986
+      },
+      "geometry": {
+        "status": "PASS",
+        "editable_parts": 49,
+        "body_parts": 18,
+        "triangles": 584,
+        "dimensions": [
+          1.0061257183551788,
+          0.6599794030189514,
+          2.0796396755643523
+        ],
+        "bounds_min": [
+          -0.5755425095558167,
+          -0.47843894362449646,
+          -2.331320025916739e-09
+        ],
+        "bounds_max": [
+          0.4305832087993622,
+          0.18154045939445496,
+          2.0796396732330322
+        ],
+        "closed_meshes": true,
+        "positive_volume": true,
+        "ground_pivot": true,
+        "identity_transforms": true,
+        "flat_shading": true,
+        "uv_density_max_error": 0.001957345037254754
+      },
+      "texture": "assets/generated/humans/human_arcanist_v1/human_arcanist_v1_albedo.png",
+      "animations": 0,
+      "rigging_deferred": true,
+      "style_revision": 3,
+      "books": 0,
+      "head_scalp_texture": "original_human_white_hair_or_painted_hood",
+      "facial_features": "approved_original_eyes_brows_nose_mouth_preserved",
+      "style_references": [
+        "human_settler_v1",
+        "squire_v1",
+        "archer_v1"
+      ],
+      "surface_validation": {
+        "school": "arcanism",
+        "exposed_coplanar_pairs": 0,
+        "hidden_coplanar_pairs": 0,
+        "staff_forearm_intersection": false,
+        "staff_hand_contact": true,
+        "issues": [],
+        "status": "PASS",
+        "backface_culling": true
+      },
+      "style_validation": {
+        "school": "arcanism",
+        "status": "PASS",
+        "original_head_geometry": true,
+        "head_scale": 1.0,
+        "source_head_dimensions_m": [
+          0.262702703,
+          0.262702703,
+          0.262702703
+        ],
+        "original_head_max_vertex_error_m": 1.2013700229374393e-07,
+        "original_facial_features_preserved": true,
+        "painted_white_hair": true,
+        "painted_hood": false,
+        "bulky_hood_shells": 0,
+        "separate_hair_shells": 0,
+        "hood_texture_pixels": 0,
+        "beard_texture_pixels": 92,
+        "body_and_clothing_geometry_unchanged": true,
+        "preserved_non_head_texture_islands": 284,
+        "books": 0,
+        "relaxed_offhand": true,
+        "actual_head_texture_verified": true,
+        "actual_head_size_verified": true
+      },
+      "source_preserved": true,
+      "blend": "assets/generated/humans/human_arcanist_v1/human_arcanist_v1.blend",
+      "glb": "assets/generated/humans/human_arcanist_v1/human_arcanist_v1.glb",
+      "export": {
+        "status": "PASS",
+        "bytes": 88532,
+        "triangles": 584,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "embedded_images": 2,
+        "atlas_hashes": {
+          "albedo": "dac844ecfde3732b98005c0e2c4b57b28687fa7e35d6391ed1be19a6763d717e",
+          "emission": "467e9d80bd82673a9a8f09329164762f4ddb9477f400ea9760b3944ab077cd42"
+        },
+        "animations": 0,
+        "skins": 0,
+        "cameras": 0,
+        "lights": 0,
+        "static_mesh_joined": true,
+        "editable_source_parts": 49
+      },
+      "game_usage": {
+        "units": "meters",
+        "model_scale_multiplier": 1.0,
+        "pivot": "feet_at_origin",
+        "blender_front": "-Y",
+        "godot_front": "+Z",
+        "stage": "static_model_review",
+        "game_database_changed": false
+      }
+    },
+    {
+      "stem": "human_elementalist_v1",
+      "name": "Elementalista — Elementalismo",
+      "school": "elementalism",
+      "race": "human",
+      "gameplay_unit_kind": "v2_unit_elementalist",
+      "pipeline": "Live Blender MCP localhost:9876",
+      "source": "assets/generated/humans/human_settler_v1/human_settler_v1.blend",
+      "source_sha256": "433edafe622f077613783efc326c345fde0e134dbc8c7b0ec9f1840d3509ab4a",
+      "source_body": [
+        {
+          "part": "Pelvis",
+          "source": "Pelvis",
+          "dimensions": [
+            0.389189,
+            0.214054,
+            0.155676
+          ]
+        },
+        {
+          "part": "Belly",
+          "source": "Belly",
+          "dimensions": [
+            0.311351,
+            0.194595,
+            0.155676
+          ]
+        },
+        {
+          "part": "Chest",
+          "source": "Chest",
+          "dimensions": [
+            0.428108,
+            0.243243,
+            0.272432
+          ]
+        },
+        {
+          "part": "Head",
+          "source": "Head",
+          "dimensions": [
+            0.262703,
+            0.262703,
+            0.262703
+          ]
+        },
+        {
+          "part": "Shoulder_l",
+          "source": "Shoulder_l",
+          "dimensions": [
+            0.155676,
+            0.214054,
+            0.175135
+          ]
+        },
+        {
+          "part": "Shoulder_r",
+          "source": "Shoulder_r",
+          "dimensions": [
+            0.155676,
+            0.214054,
+            0.175135
+          ]
+        },
+        {
+          "part": "UpperArm_l",
+          "source": "UpperArm_l",
+          "dimensions": [
+            0.163096,
+            0.169008,
+            0.295673
+          ]
+        },
+        {
+          "part": "Forearm_l",
+          "source": "Forearm_l",
+          "dimensions": [
+            0.161031,
+            0.167269,
+            0.284804
+          ]
+        },
+        {
+          "part": "Hand_l",
+          "source": "Hand_l",
+          "dimensions": [
+            0.132696,
+            0.143408,
+            0.135671
+          ]
+        },
+        {
+          "part": "UpperArm_r",
+          "source": "UpperArm_r",
+          "dimensions": [
+            0.16379,
+            0.169593,
+            0.299326
+          ]
+        },
+        {
+          "part": "Forearm_r",
+          "source": "Forearm_r",
+          "dimensions": [
+            0.163532,
+            0.169375,
+            0.297966
+          ]
+        },
+        {
+          "part": "Hand_r",
+          "source": "Hand_r",
+          "dimensions": [
+            0.132696,
+            0.143408,
+            0.135671
+          ]
+        },
+        {
+          "part": "Foot_l",
+          "source": "Foot_l",
+          "dimensions": [
+            0.175135,
+            0.272432,
+            0.097297
+          ]
+        },
+        {
+          "part": "Shin_l",
+          "source": "Shin_l",
+          "dimensions": [
+            0.155676,
+            0.175135,
+            0.36973
+          ]
+        },
+        {
+          "part": "Thigh_l",
+          "source": "Thigh_l",
+          "dimensions": [
+            0.126486,
+            0.145946,
+            0.389189
+          ]
+        },
+        {
+          "part": "Foot_r",
+          "source": "Foot_r",
+          "dimensions": [
+            0.175135,
+            0.272432,
+            0.097297
+          ]
+        },
+        {
+          "part": "Shin_r",
+          "source": "Shin_r",
+          "dimensions": [
+            0.155676,
+            0.175135,
+            0.36973
+          ]
+        },
+        {
+          "part": "Thigh_r",
+          "source": "Thigh_r",
+          "dimensions": [
+            0.126486,
+            0.145946,
+            0.389189
+          ]
+        }
+      ],
+      "elderly_posture": {
+        "torso_forward_degrees": 9,
+        "head_counter_degrees": -3,
+        "shoulder_drop_m": 0.022,
+        "grey_beard_length_m": 0.08999999999999986
+      },
+      "geometry": {
+        "status": "PASS",
+        "editable_parts": 50,
+        "body_parts": 18,
+        "triangles": 584,
+        "dimensions": [
+          1.0020371079444885,
+          0.6585681587457657,
+          1.9364999556012785
+        ],
+        "bounds_min": [
+          -0.571453869342804,
+          -0.47837331891059875,
+          -2.331320025916739e-09
+        ],
+        "bounds_max": [
+          0.43058323860168457,
+          0.18019483983516693,
+          1.9364999532699585
+        ],
+        "closed_meshes": true,
+        "positive_volume": true,
+        "ground_pivot": true,
+        "identity_transforms": true,
+        "flat_shading": true,
+        "uv_density_max_error": 0.0011124071483550324
+      },
+      "texture": "assets/generated/humans/human_elementalist_v1/human_elementalist_v1_albedo.png",
+      "animations": 0,
+      "rigging_deferred": true,
+      "style_revision": 3,
+      "books": 0,
+      "head_scalp_texture": "original_human_white_hair_or_painted_hood",
+      "facial_features": "approved_original_eyes_brows_nose_mouth_preserved",
+      "style_references": [
+        "human_settler_v1",
+        "squire_v1",
+        "archer_v1"
+      ],
+      "surface_validation": {
+        "school": "elementalism",
+        "exposed_coplanar_pairs": 0,
+        "hidden_coplanar_pairs": 0,
+        "staff_forearm_intersection": false,
+        "staff_hand_contact": true,
+        "issues": [],
+        "status": "PASS",
+        "backface_culling": true
+      },
+      "style_validation": {
+        "school": "elementalism",
+        "status": "PASS",
+        "original_head_geometry": true,
+        "head_scale": 1.0,
+        "source_head_dimensions_m": [
+          0.262702703,
+          0.262702703,
+          0.262702703
+        ],
+        "original_head_max_vertex_error_m": 1.1920928955078125e-07,
+        "original_facial_features_preserved": true,
+        "painted_white_hair": true,
+        "painted_hood": true,
+        "bulky_hood_shells": 0,
+        "separate_hair_shells": 0,
+        "hood_texture_pixels": 1410,
+        "beard_texture_pixels": 68,
+        "body_and_clothing_geometry_unchanged": true,
+        "preserved_non_head_texture_islands": 296,
+        "books": 0,
+        "relaxed_offhand": true,
+        "actual_head_texture_verified": true,
+        "actual_head_size_verified": true
+      },
+      "source_preserved": true,
+      "blend": "assets/generated/humans/human_elementalist_v1/human_elementalist_v1.blend",
+      "glb": "assets/generated/humans/human_elementalist_v1/human_elementalist_v1.glb",
+      "export": {
+        "status": "PASS",
+        "bytes": 84984,
+        "triangles": 584,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "embedded_images": 2,
+        "atlas_hashes": {
+          "albedo": "42e47398681ff2aa1d7b7d52a3ccb7bcc83917d61fdad77a1483817703b6f086",
+          "emission": "d8e5519370f46983144a1bb21d3d2892195abf92fff106d858e206c45bd7e5ae"
+        },
+        "animations": 0,
+        "skins": 0,
+        "cameras": 0,
+        "lights": 0,
+        "static_mesh_joined": true,
+        "editable_source_parts": 50
+      },
+      "game_usage": {
+        "units": "meters",
+        "model_scale_multiplier": 1.0,
+        "pivot": "feet_at_origin",
+        "blender_front": "-Y",
+        "godot_front": "+Z",
+        "stage": "static_model_review",
+        "game_database_changed": false
+      }
+    }
+  ]
+}

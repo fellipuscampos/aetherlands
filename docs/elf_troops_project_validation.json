@@ -1,0 +1,272 @@
+{
+	"assets": [
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				0.737390398979187,
+				1.80000007152557,
+				0.712418079376221
+			],
+			"stem": "elf_squire_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				0.739388704299927,
+				1.79999995231628,
+				0.685080409049988
+			],
+			"stem": "elf_guardian_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				0.772881388664246,
+				1.79999995231628,
+				0.702202618122101
+			],
+			"stem": "elf_sentinel_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				0.903954803943634,
+				2.0,
+				0.817749917507172
+			],
+			"stem": "elf_guardian_champion_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 4,
+			"dimensions": [
+				0.786877393722534,
+				1.80000007152557,
+				0.70633465051651
+			],
+			"stem": "elf_warrior_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				0.804863214492798,
+				2.17096447944641,
+				0.788865149021149
+			],
+			"stem": "elf_swordsman_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				0.793967127799988,
+				2.25411748886108,
+				0.862054824829102
+			],
+			"stem": "elf_weapon_master_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				0.904870510101318,
+				2.57155632972717,
+				0.987568318843842
+			],
+			"stem": "elf_blade_hero_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 19,
+			"clips_played": 4,
+			"dimensions": [
+				0.794744968414307,
+				1.80000007152557,
+				1.1851704120636
+			],
+			"stem": "elf_archer_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 19,
+			"clips_played": 5,
+			"dimensions": [
+				0.794744968414307,
+				1.83596515655518,
+				1.1851704120636
+			],
+			"stem": "elf_hunter_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 19,
+			"clips_played": 5,
+			"dimensions": [
+				0.794744968414307,
+				1.95939385890961,
+				1.1851704120636
+			],
+			"stem": "elf_elite_marksman_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 19,
+			"clips_played": 5,
+			"dimensions": [
+				0.88305002450943,
+				2.17710423469543,
+				1.31685602664948
+			],
+			"stem": "elf_legend_hunter_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 28,
+			"clips_played": 4,
+			"dimensions": [
+				0.862377166748047,
+				3.23597264289856,
+				2.15654397010803
+			],
+			"stem": "elf_cavalier_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 28,
+			"clips_played": 4,
+			"dimensions": [
+				0.862377166748047,
+				3.29600191116333,
+				2.15654397010803
+			],
+			"stem": "elf_shock_cavalier_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 28,
+			"clips_played": 4,
+			"dimensions": [
+				0.862377166748047,
+				3.29600191116333,
+				2.15654397010803
+			],
+			"stem": "elf_armored_cavalier_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 28,
+			"clips_played": 4,
+			"dimensions": [
+				0.958196878433228,
+				3.66222453117371,
+				2.39616012573242
+			],
+			"stem": "elf_griffon_rider_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 4,
+			"dimensions": [
+				0.786877393722534,
+				1.79999995231628,
+				0.611478447914124
+			],
+			"stem": "elf_rogue_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				0.786877393722534,
+				1.79999995231628,
+				0.611478447914124
+			],
+			"stem": "elf_saboteur_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				0.786877393722534,
+				1.79999995231628,
+				0.679423689842224
+			],
+			"stem": "elf_assassin_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 16,
+			"clips_played": 5,
+			"dimensions": [
+				0.874308228492737,
+				2.0,
+				0.833025395870209
+			],
+			"stem": "elf_shadow_master_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 8,
+			"clips_played": 4,
+			"dimensions": [
+				1.42370581626892,
+				1.80000007152557,
+				1.54226016998291
+			],
+			"stem": "elf_catapult_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 10,
+			"clips_played": 5,
+			"dimensions": [
+				1.28353726863861,
+				1.80000007152557,
+				1.48802518844604
+			],
+			"stem": "elf_trebuchet_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 8,
+			"clips_played": 5,
+			"dimensions": [
+				1.78792631626129,
+				1.79999995231628,
+				2.16162300109863
+			],
+			"stem": "elf_bombard_v1"
+		},
+		{
+			"atlas_pixels_match": true,
+			"bones": 12,
+			"clips_played": 5,
+			"dimensions": [
+				2.87244915962219,
+				1.99999988079071,
+				2.73190498352051
+			],
+			"stem": "elf_siege_colossus_v1"
+		}
+	],
+	"problems": [],
+	"review_classes": 6,
+	"status": "PASS",
+	"verified": 24
+}

@@ -1,0 +1,277 @@
+{
+  "name": "Saboteur_V1",
+  "kind": "v2_unit_saboteur",
+  "label": "Sabotador",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "height_m": 1.8,
+  "height_convention": "Body/rest geometry; animated equipment may exceed body height",
+  "triangles": 360,
+  "editable_parts": 30,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "texture": {
+    "size": [
+      256,
+      256
+    ],
+    "density_px_per_meter": 64,
+    "filter": "NEAREST",
+    "padding": 2,
+    "cleanup": {
+      "version": "human_texture_cleanup_v1",
+      "changed_pixels": 16232,
+      "geometry_uv_skinning_animations_preserved": true,
+      "embedded_albedo_matches_png": true,
+      "editable_source_packed_albedo_matches_png": true,
+      "emission_unchanged": true
+    }
+  },
+  "derivation": {
+    "predecessor": "rogue_v1",
+    "source_blend_sha256": "ac90814aa7619142c4d2e8a098cc873554df2f18858d8d993f4a9787f29704e2",
+    "copied_parts": [
+      "Pelvis",
+      "Buckle",
+      "Belly",
+      "Chest",
+      "Head",
+      "Shoulder_l",
+      "Shoulder_r",
+      "UpperArm_l",
+      "Forearm_l",
+      "Hand_l",
+      "UpperArm_r",
+      "Forearm_r",
+      "Hand_r",
+      "Foot_l",
+      "Shin_l",
+      "Thigh_l",
+      "Foot_r",
+      "Shin_r",
+      "Thigh_r",
+      "DaggerGrip_r",
+      "DaggerGuard_r",
+      "DaggerBlade_r",
+      "BeltPouch",
+      "ShortMantle"
+    ],
+    "inherited_actions": [
+      "Idle",
+      "Walk",
+      "Attack",
+      "SneakAttack"
+    ]
+  },
+  "notes": "Approved Warrior body, hood painted on the single head block, blue human heraldry; rigid authored equipment.",
+  "rig": {
+    "bones": [
+      "root",
+      "hips",
+      "chest",
+      "head",
+      "upper_arm_l",
+      "forearm_l",
+      "hand_l",
+      "thigh_l",
+      "shin_l",
+      "foot_l",
+      "upper_arm_r",
+      "forearm_r",
+      "hand_r",
+      "thigh_r",
+      "shin_r",
+      "foot_r"
+    ],
+    "hierarchy": "flat: every bone is a child of root; legs baked from two-bone IK",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "Pelvis": "hips",
+      "Buckle": "hips",
+      "Belly": "chest",
+      "Chest": "chest",
+      "Head": "head",
+      "Shoulder_l": "chest",
+      "Shoulder_r": "chest",
+      "UpperArm_l": "upper_arm_l",
+      "Forearm_l": "forearm_l",
+      "Hand_l": "hand_l",
+      "UpperArm_r": "upper_arm_r",
+      "Forearm_r": "forearm_r",
+      "Hand_r": "hand_r",
+      "Foot_l": "foot_l",
+      "Shin_l": "shin_l",
+      "Thigh_l": "thigh_l",
+      "Foot_r": "foot_r",
+      "Shin_r": "shin_r",
+      "Thigh_r": "thigh_r",
+      "DaggerGrip_r": "hand_r",
+      "DaggerGuard_r": "hand_r",
+      "DaggerBlade_r": "hand_r",
+      "BeltPouch": "hips",
+      "ShortMantle": "chest",
+      "ToolSatchel": "hips",
+      "SatchelStrap": "chest",
+      "Tool_0": "hips",
+      "Tool_1": "hips",
+      "Tool_2": "hips",
+      "ToolClasp": "hips"
+    }
+  },
+  "animations": {
+    "Saboteur_Idle": {
+      "start": 1,
+      "end": 73,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Inherited without changing curves from rogue_v1",
+      "inherited_sha256": "a5eb188ef426a9ac1d6016a65a2cf01ef7c68567a53a1373307e95469f3e4a7f",
+      "seconds": 3
+    },
+    "Saboteur_Walk": {
+      "start": 1,
+      "end": 29,
+      "loop": true,
+      "nla_start": 82,
+      "description": "Inherited without changing curves from rogue_v1",
+      "inherited_sha256": "ce1a9b6c4f83fbaa5a40e47fe1e7eb5c8cd4ef15b3deff7f4f9eadb7aa22ea5a",
+      "seconds": 1.1666666666666667
+    },
+    "Saboteur_Attack": {
+      "start": 1,
+      "end": 33,
+      "loop": false,
+      "nla_start": 119,
+      "description": "Inherited without changing curves from rogue_v1",
+      "inherited_sha256": "f1cef0fdc839a05d268cb1bd060555ab8d4a446bb1fd2d0cfd2da00afe8dc543",
+      "seconds": 1.3333333333333333
+    },
+    "Saboteur_SneakAttack": {
+      "start": 1,
+      "end": 57,
+      "loop": false,
+      "nla_start": 160,
+      "description": "Inherited without changing curves from rogue_v1",
+      "inherited_sha256": "1cbe6f8dbe57948577844fffafb295f0d8e727fcf3bfbafd8acbd8a6a4ce8536",
+      "seconds": 2.3333333333333335
+    },
+    "Saboteur_Dismantle": {
+      "start": 1,
+      "end": 73,
+      "loop": false,
+      "nla_start": 225,
+      "description": "Brace the target, three short prying/tool movements, recover",
+      "impact_frame": 36,
+      "seconds": 3
+    }
+  },
+  "animation_validation": {
+    "problems": [],
+    "samples": {
+      "Saboteur_Idle": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "a5eb188ef426a9ac1d6016a65a2cf01ef7c68567a53a1373307e95469f3e4a7f"
+      },
+      "Saboteur_Walk": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "ce1a9b6c4f83fbaa5a40e47fe1e7eb5c8cd4ef15b3deff7f4f9eadb7aa22ea5a"
+      },
+      "Saboteur_Attack": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "f1cef0fdc839a05d268cb1bd060555ab8d4a446bb1fd2d0cfd2da00afe8dc543"
+      },
+      "Saboteur_SneakAttack": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "1cbe6f8dbe57948577844fffafb295f0d8e727fcf3bfbafd8acbd8a6a4ce8536"
+      },
+      "Saboteur_Dismantle": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "e259c8135838dca256ac8ab225bc04e9e4ad12295a2005fee83dbfc36b62fc58"
+      }
+    }
+  },
+  "glb": {
+    "file": "saboteur_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 16,
+    "triangles": 360,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Saboteur_Idle": 3,
+      "Saboteur_Walk": 1.1666666666666667,
+      "Saboteur_Attack": 1.3333333333333333,
+      "Saboteur_SneakAttack": 2.3333333333333335,
+      "Saboteur_Dismantle": 3
+    },
+    "channels": "location, rotation on every bone"
+  },
+  "status": "Finished human Sabotador; rig, clips, nearest embedded textures and isolated editable source verified.",
+  "rig_bone_map": {
+    "Pelvis": "hips",
+    "Buckle": "hips",
+    "Belly": "chest",
+    "Chest": "chest",
+    "Head": "head",
+    "Shoulder_l": "chest",
+    "Shoulder_r": "chest",
+    "UpperArm_l": "upper_arm_l",
+    "Forearm_l": "forearm_l",
+    "Hand_l": "hand_l",
+    "UpperArm_r": "upper_arm_r",
+    "Forearm_r": "forearm_r",
+    "Hand_r": "hand_r",
+    "Foot_l": "foot_l",
+    "Shin_l": "shin_l",
+    "Thigh_l": "thigh_l",
+    "Foot_r": "foot_r",
+    "Shin_r": "shin_r",
+    "Thigh_r": "thigh_r",
+    "DaggerGrip_r": "hand_r",
+    "DaggerGuard_r": "hand_r",
+    "DaggerBlade_r": "hand_r",
+    "BeltPouch": "hips",
+    "ShortMantle": "chest",
+    "ToolSatchel": "hips",
+    "SatchelStrap": "chest",
+    "Tool_0": "hips",
+    "Tool_1": "hips",
+    "Tool_2": "hips",
+    "ToolClasp": "hips"
+  },
+  "source_validation": {
+    "scenes": [
+      "Saboteur_V1"
+    ],
+    "actions": [
+      "Saboteur_Walk",
+      "Saboteur_SneakAttack",
+      "Saboteur_Idle",
+      "Saboteur_Dismantle",
+      "Saboteur_Attack"
+    ],
+    "armatures": [
+      "Saboteur_V1_Skeleton"
+    ]
+  },
+  "geometry_validation": {
+    "asset": "saboteur_v1",
+    "nonmanifold_edges": 0,
+    "unattached_parts_candidates": [],
+    "same_normal_coplanar_candidates": [],
+    "mast_weapon_collisions": [],
+    "intersecting_wheels": [],
+    "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+  }
+}

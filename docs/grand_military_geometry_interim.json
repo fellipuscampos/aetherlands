@@ -1,0 +1,5774 @@
+[
+  {
+    "scene": "Cavalry_Mastery_Hex_V1",
+    "coplanar_faces": [],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Order_Entry",
+        "x": 0.0,
+        "front": 0.2160000056028366,
+        "bottom": 0.14800000190734863,
+        "top": 0.4747999906539917,
+        "width": 0.20899999141693115,
+        "blockers": []
+      }
+    ],
+    "open_passages": [
+      {
+        "name": "Stable_Wing_-1",
+        "lo": [
+          -0.5009999680519104,
+          -0.3799999952316284,
+          0.16200000405311585
+        ],
+        "hi": [
+          -0.37900002717971804,
+          -0.1749999952316284,
+          0.46600002646446226
+        ],
+        "blockers": [
+          "Paddock_-1_Post_1_Capital"
+        ]
+      },
+      {
+        "name": "Stable_Wing_1",
+        "lo": [
+          0.37900002717971804,
+          -0.3799999952316284,
+          0.16200000405311585
+        ],
+        "hi": [
+          0.5009999680519104,
+          -0.1749999952316284,
+          0.46600002646446226
+        ],
+        "blockers": [
+          "Paddock_1_Post_1_Capital"
+        ]
+      },
+      {
+        "name": "Officers_Court_Approach",
+        "lo": [
+          -0.07,
+          -0.6,
+          0.135
+        ],
+        "hi": [
+          0.07,
+          0.2,
+          0.4
+        ],
+        "blockers": []
+      }
+    ]
+  },
+  {
+    "scene": "Dwarf_Cavalry_Mastery_Hex_V1",
+    "coplanar_faces": [
+      {
+        "a": "Order_Stone_Vault_Course_04",
+        "b": "Order_Stone_Vault_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.2782000005245209,
+        "area": 5.499864340591243e-06
+      },
+      {
+        "a": "Order_Stone_Vault_Course_04",
+        "b": "Order_Stone_Vault_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.2782000005245209,
+        "area": 0.00010449873375797947
+      },
+      {
+        "a": "Dock_Stair_0",
+        "b": "Dock_Stair_1",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.4449999928474426,
+        "area": 0.0001199999791825267
+      },
+      {
+        "a": "Dock_Stair_1",
+        "b": "Dock_Stair_2",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.4449999928474426,
+        "area": 0.0002399999881673733
+      },
+      {
+        "a": "Dock_Stair_2",
+        "b": "Dock_Stair_3",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.4449999928474426,
+        "area": 0.0003600000650352946
+      },
+      {
+        "a": "Dock_Stair_3",
+        "b": "Dock_Stair_4",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.4449999928474426,
+        "area": 0.00047999958614516197
+      },
+      {
+        "a": "Dock_Stair_0",
+        "b": "Dock_Stair_1",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.574999988079071,
+        "area": 0.00023999985405694785
+      },
+      {
+        "a": "Dock_Stair_1",
+        "b": "Dock_Stair_2",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.574999988079071,
+        "area": 0.00035999999052948326
+      },
+      {
+        "a": "Dock_Stair_2",
+        "b": "Dock_Stair_3",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.574999988079071,
+        "area": 0.0004800000828504621
+      },
+      {
+        "a": "Dock_Stair_3",
+        "b": "Dock_Stair_4",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.574999988079071,
+        "area": 0.003239999137697126
+      },
+      {
+        "a": "Dock_Stair_4",
+        "b": "Dock_Stair_5",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.574999988079071,
+        "area": 0.0007200005605486892
+      },
+      {
+        "a": "Order_Court_Rail_Post_0_Shaft",
+        "b": "Order_Court_Rail_Post_0_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.24700000882148743,
+        "area": 0.0006125009179118734
+      },
+      {
+        "a": "Order_Court_Rail_Post_1_Shaft",
+        "b": "Order_Court_Rail_Post_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.24700000882148743,
+        "area": 0.0006125003330956988
+      },
+      {
+        "a": "Standard_Shaft",
+        "b": "Standard_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.2899999618530273,
+        "area": 0.0002645000010281784
+      },
+      {
+        "a": "Order_Court_Rail_Post_0_Belt_0.177",
+        "b": "Order_Court_Rail_Post_0_Belt_0.147",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.4255000054836273,
+        "area": 8.225597591046685e-07
+      },
+      {
+        "a": "Order_Court_Rail_Post_1_Belt_0.177",
+        "b": "Order_Court_Rail_Post_1_Belt_0.147",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.4255000054836273,
+        "area": 8.22559759101199e-07
+      },
+      {
+        "a": "Order_Court_Rail_Post_0_Belt_0.177",
+        "b": "Order_Court_Rail_Post_0_Belt_0.147",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.37450000643730164,
+        "area": 8.225597591046685e-07
+      },
+      {
+        "a": "Order_Court_Rail_Post_1_Belt_0.177",
+        "b": "Order_Court_Rail_Post_1_Belt_0.147",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.37450000643730164,
+        "area": 8.225597591029338e-07
+      },
+      {
+        "a": "Order_Court_Rail_Post_0_Belt_0.177",
+        "b": "Order_Court_Rail_Post_0_Belt_0.147",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.4855000078678131,
+        "area": 8.225597591046685e-07
+      },
+      {
+        "a": "Order_Court_Rail_Post_0_Belt_0.177",
+        "b": "Order_Court_Rail_Post_0_Belt_0.147",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.4345000088214874,
+        "area": 8.225597591046685e-07
+      },
+      {
+        "a": "Order_Court_Rail_Post_1_Belt_0.177",
+        "b": "Order_Court_Rail_Post_1_Belt_0.147",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.1745000034570694,
+        "area": 8.225597591046685e-07
+      },
+      {
+        "a": "Order_Court_Rail_Post_1_Belt_0.177",
+        "b": "Order_Court_Rail_Post_1_Belt_0.147",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.22550000250339508,
+        "area": 8.225597591046685e-07
+      }
+    ],
+    "mast_roof_intersections": [
+      {
+        "part": "Iron_Aerial_Dock_Post_Shaft",
+        "roof": "Order_Stone_Vault_Course_00"
+      },
+      {
+        "part": "Iron_Aerial_Dock_Post_Shaft",
+        "roof": "Order_Stone_Vault_Course_01"
+      },
+      {
+        "part": "Iron_Aerial_Dock_Post_Shaft",
+        "roof": "Order_Stone_Vault_Course_02"
+      },
+      {
+        "part": "Iron_Aerial_Dock_Post_Shaft",
+        "roof": "Order_Stone_Vault_Course_03"
+      },
+      {
+        "part": "Iron_Aerial_Dock_Post_Shaft",
+        "roof": "Order_Stone_Vault_Course_04"
+      },
+      {
+        "part": "Iron_Aerial_Dock_Post_Shaft",
+        "roof": "Order_Stone_Vault_Ridge"
+      }
+    ],
+    "entrances": [],
+    "open_passages": [
+      {
+        "name": "Left_Stable_Gate",
+        "lo": [
+          -0.29,
+          -0.52,
+          0.135
+        ],
+        "hi": [
+          -0.15,
+          0.07,
+          0.45
+        ],
+        "blockers": []
+      }
+    ]
+  },
+  {
+    "scene": "Dwarf_Grand_Arsenal_Hex_V1",
+    "coplanar_faces": [
+      {
+        "a": "Colossus_Assembly_Vault_Floor",
+        "b": "Colossus_Assembly_Vault_Backwall",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.5349999666213989,
+        "area": 2.4864871806348776e-05
+      },
+      {
+        "a": "Colossus_Assembly_Vault_Floor",
+        "b": "Colossus_Assembly_Vault_Backwall",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.23499998450279236,
+        "area": 0.0008228096103575222
+      },
+      {
+        "a": "Colossus_Assembly_Vault_Course_04",
+        "b": "Colossus_Assembly_Vault_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -0.9999999403953552,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.37619999051094055,
+        "area": 5.499864340591243e-06
+      },
+      {
+        "a": "Colossus_Assembly_Vault_Course_04",
+        "b": "Colossus_Assembly_Vault_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": 0.0761999860405922,
+        "area": 0.00010449873375797947
+      },
+      {
+        "a": "Smelter_Copper_Collar_0.38_0.29",
+        "b": "Smelter_Copper_Collar_0.54_0.29",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.2590000033378601,
+        "area": 5.588224016676857e-05
+      },
+      {
+        "a": "Smelter_Copper_Collar_0.38_0.29",
+        "b": "Smelter_Copper_Collar_0.54_0.29",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.32099997997283936,
+        "area": 5.58822499633696e-05
+      },
+      {
+        "a": "Smelter_Copper_Collar_0.38_0.29",
+        "b": "Smelter_Copper_Collar_0.54_0.29",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": -0.22499999403953552,
+        "area": 1.823525387113084e-05
+      },
+      {
+        "a": "Smelter_Copper_Collar_0.38_0.7",
+        "b": "Smelter_Copper_Collar_0.54_0.7",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": -0.22499999403953552,
+        "area": 1.8235271401878528e-05
+      },
+      {
+        "a": "Smelter_Copper_Collar_0.38_0.29",
+        "b": "Smelter_Copper_Collar_0.54_0.29",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": 0.41499999165534973,
+        "area": 1.8235250674347725e-05
+      },
+      {
+        "a": "Smelter_Copper_Collar_0.38_0.7",
+        "b": "Smelter_Copper_Collar_0.54_0.7",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": 0.41499999165534973,
+        "area": 1.823526820510235e-05
+      },
+      {
+        "a": "Smelter_Copper_Collar_0.38_0.7",
+        "b": "Smelter_Copper_Collar_0.54_0.7",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.668999969959259,
+        "area": 5.588224016676857e-05
+      },
+      {
+        "a": "Smelter_Copper_Collar_0.38_0.7",
+        "b": "Smelter_Copper_Collar_0.54_0.7",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.7310000061988831,
+        "area": 5.58822499633696e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_00",
+        "b": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_01",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.2930000126361847,
+        "area": 0.00010095765006213481
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_02",
+        "b": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_03",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": -0.2930000126361847,
+        "area": 0.00010035169840690028
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_04",
+        "b": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_05",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          -0.0
+        ],
+        "plane": -0.2929999828338623,
+        "area": 0.0001009576557040974
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_06",
+        "b": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_07",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": -0.2929999828338623,
+        "area": 0.00011970768013007393
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_00",
+        "b": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_01",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.2930000126361847,
+        "area": 0.0001009576505772128
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_02",
+        "b": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_03",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": -0.2930000126361847,
+        "area": 0.00010035174793978155
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_04",
+        "b": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_05",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": -0.2930000126361847,
+        "area": 0.00010095771905136754
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_06",
+        "b": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_07",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.2930000126361847,
+        "area": 0.0001197076918799981
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_00",
+        "b": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_01",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.3269999921321869,
+        "area": 1.875002610977894e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_02",
+        "b": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_03",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3269999921321869,
+        "area": 1.8144063753881834e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_04",
+        "b": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_05",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3269999623298645,
+        "area": 1.8750024425976536e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_06",
+        "b": "Colossus_Test_Chassis_Wheel_-1_-0.1656_Rim_07",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          -0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3269999623298645,
+        "area": 0.00011970768013007393
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_00",
+        "b": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_01",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.3269999921321869,
+        "area": 1.8750046280127837e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_02",
+        "b": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_03",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3269999921321869,
+        "area": 1.814407108766125e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_04",
+        "b": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_05",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3269999921321869,
+        "area": 1.8750030523225977e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_06",
+        "b": "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_07",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3269999921321869,
+        "area": 0.00011970769187999789
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_00",
+        "b": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_01",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.18700000643730164,
+        "area": 0.00010095765006213481
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_02",
+        "b": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_03",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.18700000643730164,
+        "area": 0.00010035169840690028
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_04",
+        "b": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_05",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.18699999153614044,
+        "area": 0.0001009576557040974
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_06",
+        "b": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_07",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": 0.18699999153614044,
+        "area": 0.00011970768013007393
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_00",
+        "b": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_01",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.18700000643730164,
+        "area": 0.0001009576505772128
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_02",
+        "b": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_03",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.18700000643730164,
+        "area": 0.00010035174793978155
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_04",
+        "b": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_05",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.18700000643730164,
+        "area": 0.00010095771905136754
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_06",
+        "b": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_07",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.18700000643730164,
+        "area": 0.0001197076918799981
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_00",
+        "b": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_01",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": -0.15299999713897705,
+        "area": 1.875002610977894e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_02",
+        "b": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_03",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.15299999713897705,
+        "area": 1.8144063753881834e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_04",
+        "b": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_05",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": -0.15299998223781586,
+        "area": 1.8750024425976536e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_06",
+        "b": "Colossus_Test_Chassis_Wheel_1_-0.1656_Rim_07",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          -0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": -0.15299998223781586,
+        "area": 0.00011970768013007393
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_00",
+        "b": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_01",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": -0.15299999713897705,
+        "area": 1.8750046280127837e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_02",
+        "b": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_03",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.15299999713897705,
+        "area": 1.814407108766125e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_04",
+        "b": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_05",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.15299999713897705,
+        "area": 1.8750030523225977e-05
+      },
+      {
+        "a": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_06",
+        "b": "Colossus_Test_Chassis_Wheel_1_0.1656_Rim_07",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.15299999713897705,
+        "area": 0.00011970769187999789
+      },
+      {
+        "a": "Colossus_Test_Chassis_Rail_-1",
+        "b": "Colossus_Test_Chassis_Deck",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.49000000953674316,
+        "area": 0.0001934868948845897
+      },
+      {
+        "a": "Colossus_Test_Chassis_Rail_1",
+        "b": "Colossus_Test_Chassis_Deck",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.49000000953674316,
+        "area": 0.00039486573364983825
+      },
+      {
+        "a": "Colossus_Test_Chassis_Rail_-1",
+        "b": "Colossus_Test_Chassis_Deck",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.0299999862909317,
+        "area": 0.0013079810030683717
+      },
+      {
+        "a": "Colossus_Test_Chassis_Rail_1",
+        "b": "Colossus_Test_Chassis_Deck",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.0299999862909317,
+        "area": 0.001514634190115818
+      },
+      {
+        "a": "Colossus_Cog_Cog_00",
+        "b": "Colossus_Cog_Cog_01",
+        "face_a": 3,
+        "face_b": 4,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.009399998933076859,
+        "area": 1.6594193527230683e-05
+      },
+      {
+        "a": "Colossus_Cog_Cog_00",
+        "b": "Colossus_Cog_Cog_07",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.009399998933076859,
+        "area": 1.659400225507285e-05
+      },
+      {
+        "a": "Colossus_Cog_Cog_01",
+        "b": "Colossus_Cog_Cog_02",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          0.0,
+          -0.9999999403953552,
+          0.0
+        ],
+        "plane": 0.009399998933076859,
+        "area": 1.659409097923975e-05
+      },
+      {
+        "a": "Colossus_Cog_Cog_02",
+        "b": "Colossus_Cog_Cog_03",
+        "face_a": 4,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.009399999864399433,
+        "area": 1.6594014488710562e-05
+      },
+      {
+        "a": "Colossus_Cog_Cog_03",
+        "b": "Colossus_Cog_Cog_04",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          -0.0,
+          -0.9999999403953552,
+          0.0
+        ],
+        "plane": 0.009399998933076859,
+        "area": 1.6593993801689022e-05
+      },
+      {
+        "a": "Colossus_Cog_Cog_04",
+        "b": "Colossus_Cog_Cog_05",
+        "face_a": 3,
+        "face_b": 5,
+        "normal": [
+          -0.0,
+          -0.9999999403953552,
+          0.0
+        ],
+        "plane": 0.009399998933076859,
+        "area": 6.73460558539285e-05
+      },
+      {
+        "a": "Colossus_Cog_Cog_05",
+        "b": "Colossus_Cog_Cog_06",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          -0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.009399999864399433,
+        "area": 1.6594090979232812e-05
+      },
+      {
+        "a": "Colossus_Cog_Cog_06",
+        "b": "Colossus_Cog_Cog_07",
+        "face_a": 5,
+        "face_b": 3,
+        "normal": [
+          -0.0,
+          -0.9999999403953552,
+          0.0
+        ],
+        "plane": 0.009399998933076859,
+        "area": 8.589147903127758e-05
+      },
+      {
+        "a": "Standard_Shaft",
+        "b": "Standard_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.2699999809265137,
+        "area": 0.00026449995025218387
+      },
+      {
+        "a": "Copper_Parts_Bench_Leg_-1_Belt_0.177",
+        "b": "Copper_Parts_Bench_Leg_-1_Belt_0.167",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.26649999618530273,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Copper_Parts_Bench_Leg_1_Belt_0.177",
+        "b": "Copper_Parts_Bench_Leg_1_Belt_0.167",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.26649999618530273,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Copper_Parts_Bench_Leg_-1_Belt_0.177",
+        "b": "Copper_Parts_Bench_Leg_-1_Belt_0.167",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.2134999930858612,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Copper_Parts_Bench_Leg_1_Belt_0.177",
+        "b": "Copper_Parts_Bench_Leg_1_Belt_0.167",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.2134999930858612,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Copper_Parts_Bench_Leg_-1_Belt_0.177",
+        "b": "Copper_Parts_Bench_Leg_-1_Belt_0.167",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.3475000262260437,
+        "area": 0.00037698342304241794
+      },
+      {
+        "a": "Copper_Parts_Bench_Leg_-1_Belt_0.177",
+        "b": "Copper_Parts_Bench_Leg_-1_Belt_0.167",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.40049999952316284,
+        "area": 0.00037698342304241794
+      },
+      {
+        "a": "Copper_Parts_Bench_Leg_1_Belt_0.177",
+        "b": "Copper_Parts_Bench_Leg_1_Belt_0.167",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.5394999980926514,
+        "area": 0.00037698342304241794
+      },
+      {
+        "a": "Copper_Parts_Bench_Leg_1_Belt_0.177",
+        "b": "Copper_Parts_Bench_Leg_1_Belt_0.167",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.5924999713897705,
+        "area": 0.00037698342304241794
+      }
+    ],
+    "mast_roof_intersections": [],
+    "entrances": [],
+    "open_passages": [
+      {
+        "name": "Colossus_Assembly_Vault",
+        "lo": [
+          -0.4,
+          -0.050000011920928955,
+          0.16200000405311585
+        ],
+        "hi": [
+          -0.28,
+          0.15499998807907106,
+          0.6359999537467956
+        ],
+        "blockers": [
+          "Colossus_Test_Chassis_Wheel_-1_0.1656_Rim_00"
+        ]
+      }
+    ]
+  },
+  {
+    "scene": "Dwarf_Guardian_Mastery_Hex_V1",
+    "coplanar_faces": [
+      {
+        "a": "Fortress_Gate_Jamb_-1",
+        "b": "Fortress_Gate_Lintel",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.12200000137090683,
+        "area": 1.1631069935229277e-05
+      },
+      {
+        "a": "Fortress_Gate_Jamb_1",
+        "b": "Fortress_Gate_Lintel",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.12200000137090683,
+        "area": 0.0011607070905888875
+      },
+      {
+        "a": "Broad_Slate_Vault_1",
+        "b": "Vault_Copper_Edge_1",
+        "face_a": 3,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.4778999984264374,
+        "area": 6.277311070133343e-05
+      },
+      {
+        "a": "Broad_Slate_Vault_1",
+        "b": "Vault_Copper_Edge_1",
+        "face_a": 7,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.4778999984264374,
+        "area": 5.318188272110391e-06
+      },
+      {
+        "a": "Broad_Slate_Vault_2",
+        "b": "Vault_Copper_Edge_2",
+        "face_a": 3,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.415800005197525,
+        "area": 1.0296982640434216e-06
+      },
+      {
+        "a": "Broad_Slate_Vault_2",
+        "b": "Vault_Copper_Edge_2",
+        "face_a": 7,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.415800005197525,
+        "area": 5.318188272111259e-06
+      },
+      {
+        "a": "Broad_Slate_Vault_3",
+        "b": "Vault_Copper_Edge_3",
+        "face_a": 3,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.35370001196861267,
+        "area": 1.1875367205566034e-06
+      },
+      {
+        "a": "Broad_Slate_Vault_3",
+        "b": "Vault_Copper_Edge_3",
+        "face_a": 7,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.35370001196861267,
+        "area": 5.31819487604307e-06
+      },
+      {
+        "a": "Broad_Slate_Vault_4",
+        "b": "Vault_Copper_Edge_4",
+        "face_a": 3,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.29159998893737793,
+        "area": 1.4025183682278564e-06
+      },
+      {
+        "a": "Broad_Slate_Vault_4",
+        "b": "Vault_Copper_Edge_4",
+        "face_a": 7,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.29159998893737793,
+        "area": 5.318181668184652e-06
+      },
+      {
+        "a": "Broad_Slate_Vault_5",
+        "b": "Vault_Copper_Edge_5",
+        "face_a": 3,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.22949999570846558,
+        "area": 1.7125508226731312e-06
+      },
+      {
+        "a": "Broad_Slate_Vault_5",
+        "b": "Vault_Copper_Edge_5",
+        "face_a": 7,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.22949999570846558,
+        "area": 5.318181668177713e-06
+      },
+      {
+        "a": "Standard_Shaft",
+        "b": "Standard_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.190000057220459,
+        "area": 0.0002645000438690204
+      }
+    ],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Fortress_Gate",
+        "x": 0.0,
+        "front": -0.11400000005960464,
+        "bottom": 0.20000000298023224,
+        "top": 0.5956000089645386,
+        "width": 0.26600000262260437,
+        "blockers": []
+      }
+    ],
+    "open_passages": []
+  },
+  {
+    "scene": "Dwarf_Ranger_Mastery_Hex_V1",
+    "coplanar_faces": [
+      {
+        "a": "Survey_Entry_Jamb_-1",
+        "b": "Survey_Entry_Lintel",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.06849999725818634,
+        "area": 1.924350429036853e-05
+      },
+      {
+        "a": "Survey_Entry_Jamb_1",
+        "b": "Survey_Entry_Lintel",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -0.9999999403953552,
+          -0.0
+        ],
+        "plane": 0.06849998980760574,
+        "area": 4.3053522372920455e-05
+      },
+      {
+        "a": "Survey_Stair_0",
+        "b": "Survey_Stair_1",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.24000000953674316,
+        "area": 0.00015779210164839144
+      },
+      {
+        "a": "Survey_Stair_1",
+        "b": "Survey_Stair_2",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.24000000953674316,
+        "area": 0.0003155846944546143
+      },
+      {
+        "a": "Survey_Stair_2",
+        "b": "Survey_Stair_3",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.24000000953674316,
+        "area": 0.00047337671433376766
+      },
+      {
+        "a": "Survey_Stair_3",
+        "b": "Survey_Stair_4",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -0.9999999403953552,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.23999999463558197,
+        "area": 0.0006311687747922281
+      },
+      {
+        "a": "Survey_Stair_4",
+        "b": "Survey_Stair_5",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.24000000953674316,
+        "area": 0.0007889612637074564
+      },
+      {
+        "a": "Survey_Stair_5",
+        "b": "Survey_Stair_6",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.24000000953674316,
+        "area": 0.0009467538205487729
+      },
+      {
+        "a": "Survey_Stair_6",
+        "b": "Survey_Stair_7",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.24000000953674316,
+        "area": 0.0011045445077606866
+      },
+      {
+        "a": "Survey_Stair_0",
+        "b": "Survey_Stair_1",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3799999952316284,
+        "area": 0.0003155840378359382
+      },
+      {
+        "a": "Survey_Stair_1",
+        "b": "Survey_Stair_2",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3799999952316284,
+        "area": 0.00047337691027438816
+      },
+      {
+        "a": "Survey_Stair_2",
+        "b": "Survey_Stair_3",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3799999952316284,
+        "area": 0.0006311687678254513
+      },
+      {
+        "a": "Survey_Stair_3",
+        "b": "Survey_Stair_4",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": 0.37999996542930603,
+        "area": 0.0007889609371397944
+      },
+      {
+        "a": "Survey_Stair_4",
+        "b": "Survey_Stair_5",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3799999952316284,
+        "area": 0.0009467534286675371
+      },
+      {
+        "a": "Survey_Stair_5",
+        "b": "Survey_Stair_6",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3799999952316284,
+        "area": 0.001104546336539584
+      },
+      {
+        "a": "Survey_Stair_6",
+        "b": "Survey_Stair_7",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3799999952316284,
+        "area": 0.001262336214044691
+      },
+      {
+        "a": "Crossbow_Target_0_Stand_Shaft",
+        "b": "Crossbow_Target_0_Stand_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.3799999952316284,
+        "area": 0.0007604989969157011
+      },
+      {
+        "a": "Crossbow_Target_1_Stand_Shaft",
+        "b": "Crossbow_Target_1_Stand_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          0.9999999403953552
+        ],
+        "plane": 0.37999996542930603,
+        "area": 0.0007604992977410284
+      },
+      {
+        "a": "Crossbow_Target_2_Stand_Shaft",
+        "b": "Crossbow_Target_2_Stand_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.3799999952316284,
+        "area": 0.0007604993049503683
+      },
+      {
+        "a": "Standard_Shaft",
+        "b": "Standard_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.2200000286102295,
+        "area": 0.0002645000438690204
+      },
+      {
+        "a": "Bolt_Workbench_Leg_-1_Belt_0.177",
+        "b": "Bolt_Workbench_Leg_-1_Belt_0.167",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": -0.06350000202655792,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Bolt_Workbench_Leg_1_Belt_0.177",
+        "b": "Bolt_Workbench_Leg_1_Belt_0.167",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": -0.06350000202655792,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Bolt_Workbench_Leg_-1_Belt_0.177",
+        "b": "Bolt_Workbench_Leg_-1_Belt_0.167",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": 0.11650000512599945,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Bolt_Workbench_Leg_1_Belt_0.177",
+        "b": "Bolt_Workbench_Leg_1_Belt_0.167",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": 0.11650000512599945,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Bolt_Workbench_Leg_-1_Belt_0.177",
+        "b": "Bolt_Workbench_Leg_-1_Belt_0.167",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.5824999809265137,
+        "area": 0.0003769834230424162
+      },
+      {
+        "a": "Bolt_Workbench_Leg_-1_Belt_0.177",
+        "b": "Bolt_Workbench_Leg_-1_Belt_0.167",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.5295000076293945,
+        "area": 0.00037698342304241534
+      },
+      {
+        "a": "Bolt_Workbench_Leg_1_Belt_0.177",
+        "b": "Bolt_Workbench_Leg_1_Belt_0.167",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.3904999792575836,
+        "area": 0.0003769834230424162
+      },
+      {
+        "a": "Bolt_Workbench_Leg_1_Belt_0.177",
+        "b": "Bolt_Workbench_Leg_1_Belt_0.167",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.3375000059604645,
+        "area": 0.00037698342304241534
+      }
+    ],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Survey_Entry",
+        "x": -0.06000000238418579,
+        "front": -0.06050000339746475,
+        "bottom": 0.14800000190734863,
+        "top": 0.4318000078201294,
+        "width": 0.1899999976158142,
+        "blockers": [
+          "Survey_Granite_Tower_Pier_5_Shaft"
+        ]
+      }
+    ],
+    "open_passages": []
+  },
+  {
+    "scene": "Dwarf_Rogue_Mastery_Hex_V1",
+    "coplanar_faces": [
+      {
+        "a": "Understone_Secret_Gate_Jamb_-1",
+        "b": "Understone_Secret_Gate_Lintel",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.1720000058412552,
+        "area": 0.00013611044619292467
+      },
+      {
+        "a": "Understone_Secret_Gate_Jamb_1",
+        "b": "Understone_Secret_Gate_Lintel",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.1720000058412552,
+        "area": 4.425951131935063e-05
+      },
+      {
+        "a": "Hidden_Gate_Pier_-1_Shaft",
+        "b": "Hidden_Gate_Pier_-1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.6100000143051147,
+        "area": 0.00451250081001512
+      },
+      {
+        "a": "Hidden_Gate_Pier_1_Shaft",
+        "b": "Hidden_Gate_Pier_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.6100000143051147,
+        "area": 0.0045124995328486225
+      },
+      {
+        "a": "Understone_Slate_0_Course_01",
+        "b": "Understone_Slate_0_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -0.9999999403953552,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.49079999327659607,
+        "area": 5.499864340591243e-06
+      },
+      {
+        "a": "Understone_Slate_0_Course_01",
+        "b": "Understone_Slate_0_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": 0.45079997181892395,
+        "area": 5.499864340594712e-06
+      },
+      {
+        "a": "Understone_Slate_1_Course_01",
+        "b": "Understone_Slate_1_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.4620000123977661,
+        "area": 5.499864340591243e-06
+      },
+      {
+        "a": "Understone_Slate_1_Course_01",
+        "b": "Understone_Slate_1_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.24199999868869781,
+        "area": 0.00010449873375797947
+      },
+      {
+        "a": "Understone_Slate_2_Course_01",
+        "b": "Understone_Slate_2_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -0.9999999403953552,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.4243999719619751,
+        "area": 5.499862850519288e-06
+      },
+      {
+        "a": "Understone_Slate_2_Course_01",
+        "b": "Understone_Slate_2_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": 0.02439999394118786,
+        "area": 0.00010449870544611273
+      },
+      {
+        "a": "Understone_Vent_Cap_Course_01",
+        "b": "Understone_Vent_Cap_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.2688000202178955,
+        "area": 5.499862850519288e-06
+      },
+      {
+        "a": "Understone_Vent_Cap_Course_01",
+        "b": "Understone_Vent_Cap_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.47119998931884766,
+        "area": 0.00010449870544611273
+      },
+      {
+        "a": "Understone_Knife_Target_Stand_Shaft",
+        "b": "Understone_Knife_Target_Stand_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.32999998331069946,
+        "area": 0.0007604990143779133
+      },
+      {
+        "a": "Understone_Hood_Blade_-1_Blade",
+        "b": "Understone_Hood_Blade_1_Blade",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.1996207982301712,
+        "area": 6.209376823459317e-05
+      },
+      {
+        "a": "Understone_Hood_Blade_-1_Guard",
+        "b": "Understone_Hood_Blade_1_Guard",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.20273299515247345,
+        "area": 1.7942436844609055e-07
+      },
+      {
+        "a": "Standard_Shaft",
+        "b": "Standard_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.1700000762939453,
+        "area": 0.0002645000438690204
+      },
+      {
+        "a": "Hidden_Blade_Table_Leg_-1_Belt_0.177",
+        "b": "Hidden_Blade_Table_Leg_-1_Belt_0.167",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.3865000009536743,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Hidden_Blade_Table_Leg_1_Belt_0.177",
+        "b": "Hidden_Blade_Table_Leg_1_Belt_0.167",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.3865000009536743,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Hidden_Blade_Table_Leg_-1_Belt_0.177",
+        "b": "Hidden_Blade_Table_Leg_-1_Belt_0.167",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.3335000276565552,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Hidden_Blade_Table_Leg_1_Belt_0.177",
+        "b": "Hidden_Blade_Table_Leg_1_Belt_0.167",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.3335000276565552,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Hidden_Blade_Table_Leg_-1_Belt_0.177",
+        "b": "Hidden_Blade_Table_Leg_-1_Belt_0.167",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.5525000095367432,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Hidden_Blade_Table_Leg_-1_Belt_0.177",
+        "b": "Hidden_Blade_Table_Leg_-1_Belt_0.167",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.499500036239624,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Hidden_Blade_Table_Leg_1_Belt_0.177",
+        "b": "Hidden_Blade_Table_Leg_1_Belt_0.167",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.3604999780654907,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Hidden_Blade_Table_Leg_1_Belt_0.177",
+        "b": "Hidden_Blade_Table_Leg_1_Belt_0.167",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.3075000047683716,
+        "area": 0.00037698321106164473
+      }
+    ],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Understone_Secret_Gate",
+        "x": -0.14999999292194843,
+        "front": -0.1639999896287918,
+        "bottom": 0.14800000190734863,
+        "top": 0.42320001125335693,
+        "width": 0.23749997839331627,
+        "blockers": [
+          "Understone_Hood_Backing",
+          "Understone_Hood_Cloth"
+        ]
+      }
+    ],
+    "open_passages": []
+  },
+  {
+    "scene": "Dwarf_Warrior_Mastery_Hex_V1",
+    "coplanar_faces": [
+      {
+        "a": "Hammer_Tribune_Body",
+        "b": "Hammer_Tribune_Rear_Copper_Band",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.29499998688697815,
+        "area": 0.00019384513745682175
+      },
+      {
+        "a": "Hammer_Tribune_Body",
+        "b": "Hammer_Tribune_Rear_Copper_Band",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.29499998688697815,
+        "area": 3.0153505466284924e-05
+      },
+      {
+        "a": "Hammer_Tribune_Door_Jamb_-1",
+        "b": "Hammer_Tribune_Door_Lintel",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": -0.23800000548362732,
+        "area": 1.923096754126788e-05
+      },
+      {
+        "a": "Hammer_Tribune_Door_Jamb_1",
+        "b": "Hammer_Tribune_Door_Lintel",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": -0.23800000548362732,
+        "area": 4.5534992793021256e-05
+      },
+      {
+        "a": "Hammer_Tribune_Course_04",
+        "b": "Hammer_Tribune_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.17705999314785004,
+        "area": 5.499864340591243e-06
+      },
+      {
+        "a": "Hammer_Tribune_Course_04",
+        "b": "Hammer_Tribune_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.17705999314785004,
+        "area": 0.00010449873375797947
+      },
+      {
+        "a": "Arena_Monolith_-1_Shaft",
+        "b": "Arena_Monolith_-1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          0.9999999403953552
+        ],
+        "plane": 0.5699999332427979,
+        "area": 0.0055125003445568865
+      },
+      {
+        "a": "Arena_Monolith_1_Shaft",
+        "b": "Arena_Monolith_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          0.9999999403953552
+        ],
+        "plane": 0.5699999332427979,
+        "area": 0.00551250034455688
+      },
+      {
+        "a": "Stone_Stand_-1_0",
+        "b": "Stone_Stand_-1_1",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -0.9999999403953552,
+          -0.0
+        ],
+        "plane": 0.29499995708465576,
+        "area": 7.593747984151883e-05
+      },
+      {
+        "a": "Stone_Stand_-1_1",
+        "b": "Stone_Stand_-1_2",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.29499998688697815,
+        "area": 0.00012529771419119914
+      },
+      {
+        "a": "Stone_Stand_1_0",
+        "b": "Stone_Stand_1_1",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -0.9999999403953552,
+          -0.0
+        ],
+        "plane": 0.29499995708465576,
+        "area": 0.0001252969514366764
+      },
+      {
+        "a": "Stone_Stand_1_1",
+        "b": "Stone_Stand_1_2",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.29499998688697815,
+        "area": 0.00017465749382201273
+      },
+      {
+        "a": "Stone_Stand_-1_0",
+        "b": "Stone_Stand_-1_1",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          0.9999999403953552,
+          0.0
+        ],
+        "plane": 0.2749999761581421,
+        "area": 0.001004062896561804
+      },
+      {
+        "a": "Stone_Stand_-1_1",
+        "b": "Stone_Stand_-1_2",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": 0.2750000059604645,
+        "area": 0.0016567088379089503
+      },
+      {
+        "a": "Stone_Stand_1_0",
+        "b": "Stone_Stand_1_1",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          0.9999999403953552,
+          0.0
+        ],
+        "plane": 0.2749999761581421,
+        "area": 0.0008787658780698981
+      },
+      {
+        "a": "Stone_Stand_1_1",
+        "b": "Stone_Stand_1_2",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": 0.2750000059604645,
+        "area": 0.0014820512770314653
+      },
+      {
+        "a": "Hammer_Champion_Clan_Weapon_-1_Haft",
+        "b": "Hammer_Champion_Clan_Weapon_1_Haft",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": -0.19849999248981476,
+        "area": 0.00012286993799893314
+      },
+      {
+        "a": "Hammer_Champion_Clan_Weapon_-1_Head",
+        "b": "Hammer_Champion_Clan_Weapon_1_Head",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          0.0,
+          -0.9999999403953552,
+          6.371939065275001e-08
+        ],
+        "plane": -0.19699993620534784,
+        "area": 0.0007448450178576846
+      },
+      {
+        "a": "Hammer_Champion_Clan_Weapon_1_Haft",
+        "b": "Hammer_Champion_Clan_Weapon_1_Head",
+        "face_a": 1,
+        "face_b": 4,
+        "normal": [
+          0.6131183505058289,
+          0.0,
+          0.7899909615516663
+        ],
+        "plane": 0.6353940591216087,
+        "area": 0.00016803300059511223
+      },
+      {
+        "a": "Standard_Shaft",
+        "b": "Standard_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.2200000286102295,
+        "area": 0.0002645000438690204
+      },
+      {
+        "a": "Arena_Armorer_Leg_-1_Belt_0.177",
+        "b": "Arena_Armorer_Leg_-1_Belt_0.167",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.42649999260902405,
+        "area": 0.0003769834230424162
+      },
+      {
+        "a": "Arena_Armorer_Leg_1_Belt_0.177",
+        "b": "Arena_Armorer_Leg_1_Belt_0.167",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.42649999260902405,
+        "area": 0.00037698338329602123
+      },
+      {
+        "a": "Arena_Armorer_Leg_-1_Belt_0.177",
+        "b": "Arena_Armorer_Leg_-1_Belt_0.167",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.3735000193119049,
+        "area": 0.0003769834230424162
+      },
+      {
+        "a": "Arena_Armorer_Leg_1_Belt_0.177",
+        "b": "Arena_Armorer_Leg_1_Belt_0.167",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.3735000193119049,
+        "area": 0.00037698338329602166
+      },
+      {
+        "a": "Arena_Armorer_Leg_-1_Belt_0.177",
+        "b": "Arena_Armorer_Leg_-1_Belt_0.167",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.17249999940395355,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Arena_Armorer_Leg_-1_Belt_0.177",
+        "b": "Arena_Armorer_Leg_-1_Belt_0.167",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.11949999630451202,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Arena_Armorer_Leg_1_Belt_0.177",
+        "b": "Arena_Armorer_Leg_1_Belt_0.167",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.019500000402331352,
+        "area": 0.00037698321106164473
+      },
+      {
+        "a": "Arena_Armorer_Leg_1_Belt_0.177",
+        "b": "Arena_Armorer_Leg_1_Belt_0.167",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.07249999791383743,
+        "area": 0.00037698321106164473
+      }
+    ],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Hammer_Tribune_Door",
+        "x": 0.0,
+        "front": 0.2459999918937683,
+        "bottom": 0.14800000190734863,
+        "top": 0.4146000146865845,
+        "width": 0.20899999141693115,
+        "blockers": []
+      }
+    ],
+    "open_passages": [
+      {
+        "name": "Courtyard_Gate",
+        "lo": [
+          -0.1,
+          -0.61,
+          0.14
+        ],
+        "hi": [
+          0.1,
+          -0.25,
+          0.48
+        ],
+        "blockers": [
+          "Arena_Armorer_Leg_1_Shaft",
+          "Arena_Armorer_Top",
+          "Arena_Armorer_Leg_1_Belt_0.177",
+          "Arena_Armorer_Leg_1_Belt_0.167"
+        ]
+      }
+    ]
+  },
+  {
+    "scene": "Elf_Cavalry_Mastery_Hex_V1",
+    "coplanar_faces": [
+      {
+        "a": "Leaf_Stable_Left_Floor",
+        "b": "Leaf_Stable_Left_Backwall",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.5199999809265137,
+        "area": 3.138281220531336e-05
+      },
+      {
+        "a": "Leaf_Stable_Left_Floor",
+        "b": "Leaf_Stable_Left_Backwall",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.2199999988079071,
+        "area": 0.00081970465391926
+      },
+      {
+        "a": "Leaf_Stable_Left_1_-1_Foot",
+        "b": "Order_Leaf_Portal_-1_1_Foot",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.11699999123811722,
+        "area": 0.0005779998923196228
+      },
+      {
+        "a": "Leaf_Stable_Left_1_-1_Foot",
+        "b": "Order_Leaf_Portal_-1_1_Shaft",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.11699999123811722,
+        "area": 7.199994451266762e-05
+      },
+      {
+        "a": "Leaf_Stable_Left_1_-1_Foot",
+        "b": "Order_Leaf_Portal_-1_-1_Foot",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.11699999123811722,
+        "area": 0.0014959997453689589
+      },
+      {
+        "a": "Leaf_Stable_Left_1_-1_Shaft",
+        "b": "Order_Leaf_Portal_-1_1_Foot",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.11699999868869781,
+        "area": 7.19999329069649e-05
+      },
+      {
+        "a": "Order_Leaf_Portal_1_-1_Foot",
+        "b": "Order_Leaf_Portal_1_1_Foot",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.11699999123811722,
+        "area": 9.799997997284038e-05
+      },
+      {
+        "a": "Leaf_Stable_Left_1_-1_Foot",
+        "b": "Order_Leaf_Portal_-1_-1_Foot",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.17099998891353607,
+        "area": 0.0014959997453689589
+      },
+      {
+        "a": "Leaf_Stable_Left_1_-1_Foot",
+        "b": "Order_Leaf_Portal_-1_1_Foot",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.17099998891353607,
+        "area": 0.0005779997991515662
+      },
+      {
+        "a": "Order_Leaf_Portal_-1_-1_Foot",
+        "b": "Order_Leaf_Portal_-1_1_Foot",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.17099998891353607,
+        "area": 9.799998699357854e-05
+      },
+      {
+        "a": "Order_Leaf_Portal_1_-1_Foot",
+        "b": "Order_Leaf_Portal_1_1_Foot",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.17099998891353607,
+        "area": 9.799997997284038e-05
+      },
+      {
+        "a": "Order_Leaf_Portal_-1_-1_Capital",
+        "b": "Order_Leaf_Portal_-1_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.5570000410079956,
+        "area": 4.500017518012378e-06
+      },
+      {
+        "a": "Order_Leaf_Portal_1_-1_Capital",
+        "b": "Order_Leaf_Portal_1_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.5570000410079956,
+        "area": 4.5000182390397825e-06
+      },
+      {
+        "a": "Leaf_Stable_Right_Floor",
+        "b": "Leaf_Stable_Right_Backwall",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.5099999904632568,
+        "area": 0.0007997320431024253
+      },
+      {
+        "a": "Order_Leaf_Portal_Floor",
+        "b": "Order_Leaf_Portal_Backwall",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.20000000298023224,
+        "area": 1.7473634433858368e-05
+      },
+      {
+        "a": "Order_Leaf_Portal_Floor",
+        "b": "Order_Leaf_Portal_Backwall",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.14000000059604645,
+        "area": 0.0007218120889978235
+      },
+      {
+        "a": "Order_Leaf_Portal_-1_-1_Foot",
+        "b": "Order_Leaf_Portal_-1_1_Foot",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.12299999594688416,
+        "area": 0.000654230682160405
+      },
+      {
+        "a": "Order_Leaf_Portal_-1_-1_Capital",
+        "b": "Order_Leaf_Portal_-1_1_Capital",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.5130000114440918,
+        "area": 0.00027000051436759133
+      },
+      {
+        "a": "Order_Leaf_Portal_1_-1_Capital",
+        "b": "Order_Leaf_Portal_1_1_Capital",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.5130000114440918,
+        "area": 4.5000185094246255e-06
+      },
+      {
+        "a": "Order_Leaf_Portal_-1_-1_Capital",
+        "b": "Order_Leaf_Portal_-1_1_Capital",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.12849999964237213,
+        "area": 2.129042224675165e-06
+      },
+      {
+        "a": "Order_Leaf_Portal_1_-1_Foot",
+        "b": "Order_Leaf_Portal_1_1_Foot",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.06300000101327896,
+        "area": 5.088460539093981e-05
+      },
+      {
+        "a": "Order_Leaf_Portal_1_-1_Foot",
+        "b": "Order_Leaf_Portal_1_1_Foot",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.16699999570846558,
+        "area": 5.088460265690285e-05
+      },
+      {
+        "a": "Order_Leaf_Portal_1_-1_Capital",
+        "b": "Order_Leaf_Portal_1_1_Capital",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.06849999725818634,
+        "area": 2.1290420967531865e-06
+      },
+      {
+        "a": "Order_Leaf_Portal_1_-1_Capital",
+        "b": "Order_Leaf_Portal_1_1_Capital",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.1615000069141388,
+        "area": 2.129042224675165e-06
+      },
+      {
+        "a": "Leaf_Stable_Left_Course_05",
+        "b": "Leaf_Stable_Left_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.44999998807907104,
+        "area": 5.499864340591243e-06
+      },
+      {
+        "a": "Leaf_Stable_Left_Course_05",
+        "b": "Leaf_Stable_Left_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.2900000214576721,
+        "area": 0.00010449873375797947
+      },
+      {
+        "a": "Leaf_Stable_Right_Course_04",
+        "b": "Leaf_Stable_Right_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -0.9999999403953552,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.2255999892950058,
+        "area": 5.499864340591243e-06
+      },
+      {
+        "a": "Leaf_Stable_Right_Course_04",
+        "b": "Leaf_Stable_Right_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": 0.454399973154068,
+        "area": 0.00010449873375797947
+      },
+      {
+        "a": "Order_Leaf_Portal_Course_03",
+        "b": "Order_Leaf_Portal_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.17080000042915344,
+        "area": 5.500191049528924e-06
+      },
+      {
+        "a": "Order_Leaf_Portal_Course_03",
+        "b": "Order_Leaf_Portal_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.11079999804496765,
+        "area": 0.0001045016629528106
+      },
+      {
+        "a": "Aerial_Order_Tree_Crown_0",
+        "b": "Aerial_Order_Tree_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -1.1638000011444092,
+        "area": 0.003684784885820233
+      },
+      {
+        "a": "Aerial_Order_Tree_Crown_1",
+        "b": "Aerial_Order_Tree_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -1.1638000011444092,
+        "area": 0.011632798192811045
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_0_Shaft",
+        "b": "Leaf_Paddock_0_Post_0_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0006125009179118734
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Shaft",
+        "b": "Leaf_Paddock_0_Post_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0006125009179118734
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Shaft",
+        "b": "Leaf_Paddock_1_Post_0_Shaft",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0006125009179118734
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Shaft",
+        "b": "Leaf_Paddock_1_Post_0_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0006125009179118734
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Capital",
+        "b": "Leaf_Paddock_1_Post_0_Shaft",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0006125009179118734
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Capital",
+        "b": "Leaf_Paddock_1_Post_0_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0023120012645723165
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_0_Shaft",
+        "b": "Leaf_Paddock_1_Post_0_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0006125009179118734
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Shaft",
+        "b": "Leaf_Paddock_1_Post_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0006124999227659677
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Shaft",
+        "b": "Leaf_Paddock_2_Post_0_Shaft",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0006124999400228259
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Shaft",
+        "b": "Leaf_Paddock_2_Post_0_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0006124999227659677
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Capital",
+        "b": "Leaf_Paddock_2_Post_0_Shaft",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0006124999400228285
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Capital",
+        "b": "Leaf_Paddock_2_Post_0_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.002311999744653681
+      },
+      {
+        "a": "Leaf_Paddock_2_Post_0_Shaft",
+        "b": "Leaf_Paddock_2_Post_0_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0006124999227659677
+      },
+      {
+        "a": "Leaf_Paddock_2_Post_1_Shaft",
+        "b": "Leaf_Paddock_2_Post_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.2070000022649765,
+        "area": 0.0006125006571413572
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Foot",
+        "b": "Leaf_Paddock_1_Post_0_Foot",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -0.9999999403953552,
+          -0.0
+        ],
+        "plane": 0.46949997544288635,
+        "area": 0.002132999805182223
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Foot",
+        "b": "Leaf_Paddock_1_Post_0_Foot",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          0.9999999403953552,
+          0.0
+        ],
+        "plane": -0.3904999792575836,
+        "area": 0.002132999805182223
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Foot",
+        "b": "Leaf_Paddock_1_Post_0_Foot",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -0.9999999403953552,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.30949997901916504,
+        "area": 0.002132999805182223
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Foot",
+        "b": "Leaf_Paddock_1_Post_0_Foot",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": -0.2304999977350235,
+        "area": 0.002132999805182223
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Capital",
+        "b": "Leaf_Paddock_1_Post_0_Capital",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -0.9999999403953552,
+          -0.0
+        ],
+        "plane": 0.46399998664855957,
+        "area": 0.0014960004010200478
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Capital",
+        "b": "Leaf_Paddock_1_Post_0_Capital",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          0.9999999403953552,
+          0.0
+        ],
+        "plane": -0.3959999680519104,
+        "area": 0.0014960004010200478
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Capital",
+        "b": "Leaf_Paddock_1_Post_0_Capital",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -0.9999999403953552,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.30399999022483826,
+        "area": 0.0014960004010200478
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Capital",
+        "b": "Leaf_Paddock_1_Post_0_Capital",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": -0.23599998652935028,
+        "area": 0.0014960004010200478
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Branch",
+        "b": "Leaf_Paddock_1_Post_0_Branch",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.5364129543304443,
+          0.0,
+          0.8439556956291199
+        ],
+        "plane": 0.059970833361148834,
+        "area": 0.0002852573521749946
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Branch",
+        "b": "Leaf_Paddock_1_Post_0_Branch",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.8439558148384094,
+          0.0,
+          -0.53641277551651
+        ],
+        "plane": -0.2561718598008156,
+        "area": 0.0015340011659858988
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Branch",
+        "b": "Leaf_Paddock_1_Post_0_Branch",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          0.0,
+          1.0,
+          -0.0
+        ],
+        "plane": -0.4169999957084656,
+        "area": 0.0018176313324969051
+      },
+      {
+        "a": "Leaf_Paddock_0_Post_1_Branch",
+        "b": "Leaf_Paddock_1_Post_0_Branch",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.44300001859664917,
+        "area": 0.0018176313324969051
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Foot",
+        "b": "Leaf_Paddock_2_Post_0_Foot",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.5394999980926514,
+        "area": 0.0021330000063478904
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Foot",
+        "b": "Leaf_Paddock_2_Post_0_Foot",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.46050000190734863,
+        "area": 0.0021330000063478904
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Foot",
+        "b": "Leaf_Paddock_2_Post_0_Foot",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -0.9999999403953552,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.03949999809265137,
+        "area": 0.002132999805182223
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Foot",
+        "b": "Leaf_Paddock_2_Post_0_Foot",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": 0.03949999809265137,
+        "area": 0.002132999805182223
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Capital",
+        "b": "Leaf_Paddock_2_Post_0_Capital",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.5339999794960022,
+        "area": 0.0014960000731945033
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Capital",
+        "b": "Leaf_Paddock_2_Post_0_Capital",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.4659999907016754,
+        "area": 0.0014960000731945033
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Capital",
+        "b": "Leaf_Paddock_2_Post_0_Capital",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -0.9999999403953552,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.03399999812245369,
+        "area": 0.0014959997453689589
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Capital",
+        "b": "Leaf_Paddock_2_Post_0_Capital",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": 0.03399999812245369,
+        "area": 0.0014959997453689589
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Branch",
+        "b": "Leaf_Paddock_2_Post_0_Branch",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.5364129543304443,
+          0.0,
+          0.8439556956291199
+        ],
+        "plane": 0.20480233058333397,
+        "area": 0.0002852573521749946
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Branch",
+        "b": "Leaf_Paddock_2_Post_0_Branch",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.8439558148384094,
+          0.0,
+          -0.5364126563072205
+        ],
+        "plane": -0.028303775005042553,
+        "area": 0.0015340011659858988
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Branch",
+        "b": "Leaf_Paddock_2_Post_0_Branch",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          0.0,
+          1.0,
+          -0.0
+        ],
+        "plane": -0.4869999885559082,
+        "area": 0.0018176312285855811
+      },
+      {
+        "a": "Leaf_Paddock_1_Post_1_Branch",
+        "b": "Leaf_Paddock_2_Post_0_Branch",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.5130000114440918,
+        "area": 0.0018176312285855811
+      },
+      {
+        "a": "Standard_Shaft",
+        "b": "Standard_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.1800000667572021,
+        "area": 0.0002645000438690204
+      }
+    ],
+    "mast_roof_intersections": [],
+    "entrances": [],
+    "open_passages": [
+      {
+        "name": "Leaf_Stable_Left",
+        "lo": [
+          -0.43749998092651365,
+          -0.20499999821186066,
+          0.16200000405311585
+        ],
+        "hi": [
+          -0.3024999988079071,
+          1.7881393449270533e-09,
+          0.5259999990463257
+        ],
+        "blockers": []
+      },
+      {
+        "name": "Leaf_Stable_Right",
+        "lo": [
+          0.25250000178813936,
+          -0.015000000596046448,
+          0.16200000405311585
+        ],
+        "hi": [
+          0.4274999904632568,
+          0.18999999940395357,
+          0.4560000360012054
+        ],
+        "blockers": []
+      },
+      {
+        "name": "Order_Leaf_Portal",
+        "lo": [
+          -0.11750000298023223,
+          -0.26500000059604645,
+          0.16200000405311585
+        ],
+        "hi": [
+          0.057500000596046444,
+          -0.060000000596046446,
+          0.5059999585151672
+        ],
+        "blockers": []
+      },
+      {
+        "name": "Living_Order_Gate",
+        "lo": [
+          -0.1,
+          -0.58,
+          0.135
+        ],
+        "hi": [
+          0.04,
+          -0.05,
+          0.4
+        ],
+        "blockers": [
+          "Leaf_Paddock_1_Post_1_Shaft",
+          "Leaf_Paddock_2_Post_0_Shaft"
+        ]
+      }
+    ]
+  },
+  {
+    "scene": "Elf_Grand_Arsenal_Hex_V1",
+    "coplanar_faces": [
+      {
+        "a": "Living_Assembly_Left_Floor",
+        "b": "Living_Assembly_Left_Backwall",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.5249999761581421,
+        "area": 2.7471293594542173e-05
+      },
+      {
+        "a": "Living_Assembly_Left_Floor",
+        "b": "Living_Assembly_Left_Backwall",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.17499999701976776,
+        "area": 0.0008256537689670558
+      },
+      {
+        "a": "Living_Assembly_Right_Floor",
+        "b": "Living_Assembly_Right_Backwall",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.0949999988079071,
+        "area": 2.6134172073227768e-05
+      },
+      {
+        "a": "Living_Assembly_Right_Floor",
+        "b": "Living_Assembly_Right_Backwall",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.5449999570846558,
+        "area": 0.000780116595150232
+      },
+      {
+        "a": "Living_Assembly_Left_Course_05",
+        "b": "Living_Assembly_Left_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.4399999976158142,
+        "area": 5.499864340591243e-06
+      },
+      {
+        "a": "Living_Assembly_Left_Course_05",
+        "b": "Living_Assembly_Left_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.25999999046325684,
+        "area": 0.00010449873375797947
+      },
+      {
+        "a": "Living_Assembly_Right_Course_04",
+        "b": "Living_Assembly_Right_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.1769999861717224,
+        "area": 5.499864340591243e-06
+      },
+      {
+        "a": "Living_Assembly_Right_Course_04",
+        "b": "Living_Assembly_Right_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.46299999952316284,
+        "area": 0.00010449873375797947
+      },
+      {
+        "a": "Living_Hoist_Tree_Crown_0",
+        "b": "Living_Hoist_Tree_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -1.239799976348877,
+        "area": 0.0030962432161859618
+      },
+      {
+        "a": "Living_Hoist_Tree_Crown_1",
+        "b": "Living_Hoist_Tree_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -0.9999999403953552
+        ],
+        "plane": -1.2397998571395874,
+        "area": 0.010012202958154859
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_00",
+        "b": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_01",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          0.9999999403953552,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.3211999833583832,
+        "area": 0.00010095762982731404
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_02",
+        "b": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_03",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": -0.32120001316070557,
+        "area": 0.00010035163482794568
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_04",
+        "b": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_05",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": -0.32120001316070557,
+        "area": 0.0001009575501192024
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_06",
+        "b": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_07",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": -0.3211999833583832,
+        "area": 0.00011970763214224495
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_00",
+        "b": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_01",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.32120001316070557,
+        "area": 0.0001009576678869242
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_02",
+        "b": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_03",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": -0.32120001316070557,
+        "area": 0.00010035174404987579
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_04",
+        "b": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_05",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": -0.32120001316070557,
+        "area": 0.00010095771384390113
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_06",
+        "b": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_07",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.32120001316070557,
+        "area": 0.00011970769436821412
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_00",
+        "b": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_01",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          -0.9999999403953552,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.3551999628543854,
+        "area": 1.8750037685470733e-05
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_02",
+        "b": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_03",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.35519999265670776,
+        "area": 1.8144060214261848e-05
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_04",
+        "b": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_05",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.35519999265670776,
+        "area": 1.8750033552422662e-05
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_06",
+        "b": "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_07",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          -0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": 0.3551999628543854,
+        "area": 0.00011970763214224495
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_00",
+        "b": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_01",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.35519999265670776,
+        "area": 1.875004218749622e-05
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_02",
+        "b": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_03",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.35519999265670776,
+        "area": 1.8144072405232303e-05
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_04",
+        "b": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_05",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.35519999265670776,
+        "area": 1.875003573069238e-05
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_06",
+        "b": "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_07",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.35519999265670776,
+        "area": 0.00011970769436821412
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_00",
+        "b": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_01",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          0.9999999403953552,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.09519998729228973,
+        "area": 0.00010095762982731404
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_02",
+        "b": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_03",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.09520000219345093,
+        "area": 0.00010035163482794568
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_04",
+        "b": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_05",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.09519999474287033,
+        "area": 0.0001009575501192024
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_06",
+        "b": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_07",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": 0.09519999474287033,
+        "area": 0.00011970763214224495
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_00",
+        "b": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_01",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.09520000219345093,
+        "area": 0.0001009576678869242
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_02",
+        "b": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_03",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.09520000219345093,
+        "area": 0.00010035174404987579
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_04",
+        "b": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_05",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": 0.09520000219345093,
+        "area": 0.00010095771384390113
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_06",
+        "b": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_07",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.09520000219345093,
+        "area": 0.00011970769436821412
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_00",
+        "b": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_01",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          -0.9999999403953552,
+          0.0,
+          -0.0
+        ],
+        "plane": -0.06119999662041664,
+        "area": 1.8750037685470733e-05
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_02",
+        "b": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_03",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.06119999662041664,
+        "area": 1.8144060214261848e-05
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_04",
+        "b": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_05",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.06120000034570694,
+        "area": 1.8750033552422662e-05
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_06",
+        "b": "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_07",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          -0.9999999403953552,
+          0.0,
+          0.0
+        ],
+        "plane": -0.06119999289512634,
+        "area": 0.00011970763214224495
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_00",
+        "b": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_01",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "plane": -0.06119999662041664,
+        "area": 1.875004218749622e-05
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_02",
+        "b": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_03",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.06119999662041664,
+        "area": 1.8144072405232303e-05
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_04",
+        "b": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_05",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.06119999662041664,
+        "area": 1.875003573069238e-05
+      },
+      {
+        "a": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_06",
+        "b": "Great_Leaf_Ballista_Wheel_1_0.144_Rim_07",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.06119999662041664,
+        "area": 0.00011970769436821412
+      },
+      {
+        "a": "Great_Leaf_Ballista_Rail_-1",
+        "b": "Great_Leaf_Ballista_Deck",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.4700000286102295,
+        "area": 0.00020143067654180766
+      },
+      {
+        "a": "Great_Leaf_Ballista_Rail_1",
+        "b": "Great_Leaf_Ballista_Deck",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.4700000286102295,
+        "area": 0.0003948657594566728
+      },
+      {
+        "a": "Great_Leaf_Ballista_Rail_-1",
+        "b": "Great_Leaf_Ballista_Deck",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.07000000774860382,
+        "area": 0.001315924790270373
+      },
+      {
+        "a": "Great_Leaf_Ballista_Rail_1",
+        "b": "Great_Leaf_Ballista_Deck",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "plane": -0.07000000774860382,
+        "area": 0.0015146342891062116
+      },
+      {
+        "a": "Leaf_Engineering_Cog_Cog_00",
+        "b": "Leaf_Engineering_Cog_Cog_01",
+        "face_a": 3,
+        "face_b": 4,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.12219999730587006,
+        "area": 1.3943707943275818e-05
+      },
+      {
+        "a": "Leaf_Engineering_Cog_Cog_00",
+        "b": "Leaf_Engineering_Cog_Cog_07",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.12219999730587006,
+        "area": 1.3943688584497349e-05
+      },
+      {
+        "a": "Leaf_Engineering_Cog_Cog_01",
+        "b": "Leaf_Engineering_Cog_Cog_02",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.12219999730587006,
+        "area": 1.3943720500342316e-05
+      },
+      {
+        "a": "Leaf_Engineering_Cog_Cog_02",
+        "b": "Leaf_Engineering_Cog_Cog_03",
+        "face_a": 4,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.12219999730587006,
+        "area": 1.3943536595811823e-05
+      },
+      {
+        "a": "Leaf_Engineering_Cog_Cog_03",
+        "b": "Leaf_Engineering_Cog_Cog_04",
+        "face_a": 3,
+        "face_b": 3,
+        "normal": [
+          -0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.12219999730587006,
+        "area": 1.3943688584483471e-05
+      },
+      {
+        "a": "Leaf_Engineering_Cog_Cog_04",
+        "b": "Leaf_Engineering_Cog_Cog_05",
+        "face_a": 3,
+        "face_b": 5,
+        "normal": [
+          -0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.12219999730587006,
+        "area": 5.658930608867796e-05
+      },
+      {
+        "a": "Leaf_Engineering_Cog_Cog_05",
+        "b": "Leaf_Engineering_Cog_Cog_06",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          -0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.12219999730587006,
+        "area": 1.3943720500370071e-05
+      },
+      {
+        "a": "Leaf_Engineering_Cog_Cog_06",
+        "b": "Leaf_Engineering_Cog_Cog_07",
+        "face_a": 5,
+        "face_b": 3,
+        "normal": [
+          -0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.12219999730587006,
+        "area": 7.217253491917375e-05
+      },
+      {
+        "a": "Standard_Shaft",
+        "b": "Standard_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.2400000095367432,
+        "area": 0.0002645000438690204
+      }
+    ],
+    "mast_roof_intersections": [],
+    "entrances": [],
+    "open_passages": [
+      {
+        "name": "Living_Assembly_Left",
+        "lo": [
+          -0.44249997615814207,
+          -0.16499999165534973,
+          0.16200000405311585
+        ],
+        "hi": [
+          -0.2574999970197678,
+          0.04000000834465027,
+          0.5959999918937683
+        ],
+        "blockers": [
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_00",
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Spoke_Z",
+          "Great_Leaf_Ballista_Rail_-1"
+        ]
+      },
+      {
+        "name": "Living_Assembly_Right",
+        "lo": [
+          0.17749999880790712,
+          0.11500000953674316,
+          0.16200000405311585
+        ],
+        "hi": [
+          0.46249995708465574,
+          0.3200000095367432,
+          0.5059999585151672
+        ],
+        "blockers": []
+      }
+    ]
+  },
+  {
+    "scene": "Elf_Guardian_Mastery_Hex_V1",
+    "coplanar_faces": [
+      {
+        "a": "Sentinel_Wing_-1_Floor",
+        "b": "Sentinel_Wing_-1_Backwall",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.5350000262260437,
+        "area": 2.920967550024134e-05
+      },
+      {
+        "a": "Sentinel_Wing_-1_Floor",
+        "b": "Sentinel_Wing_-1_Backwall",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.26499998569488525,
+        "area": 0.0008115810847531303
+      },
+      {
+        "a": "Sentinel_Wing_1_Floor",
+        "b": "Sentinel_Wing_1_Backwall",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.26499998569488525,
+        "area": 2.920967550024134e-05
+      },
+      {
+        "a": "Sentinel_Wing_1_Floor",
+        "b": "Sentinel_Wing_1_Backwall",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.5350000262260437,
+        "area": 0.0008115810847531303
+      },
+      {
+        "a": "Shield_Pavilion_Gate_Jamb_-1",
+        "b": "Shield_Pavilion_Gate_Lintel",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": -0.020159998908638954,
+        "area": 1.612799806380641e-05
+      },
+      {
+        "a": "Shield_Pavilion_Gate_Jamb_1",
+        "b": "Shield_Pavilion_Gate_Lintel",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": -0.020159998908638954,
+        "area": 3.700360099827271e-05
+      },
+      {
+        "a": "Living_Approach_-1_Shaft",
+        "b": "Living_Approach_-1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          0.9999999403953552
+        ],
+        "plane": 0.5199999213218689,
+        "area": 0.0003919999198913615
+      },
+      {
+        "a": "Living_Approach_1_Shaft",
+        "b": "Living_Approach_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          0.9999999403953552
+        ],
+        "plane": 0.5199999213218689,
+        "area": 0.0003919999198913615
+      },
+      {
+        "a": "Sentinel_Wing_-1_Course_04",
+        "b": "Sentinel_Wing_-1_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.49619999527931213,
+        "area": 5.499864340598182e-06
+      },
+      {
+        "a": "Sentinel_Wing_-1_Course_04",
+        "b": "Sentinel_Wing_-1_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.3038000166416168,
+        "area": 0.00010449873375797253
+      },
+      {
+        "a": "Sentinel_Wing_1_Course_04",
+        "b": "Sentinel_Wing_1_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": -0.3038000166416168,
+        "area": 5.499864340598182e-06
+      },
+      {
+        "a": "Sentinel_Wing_1_Course_04",
+        "b": "Sentinel_Wing_1_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.49619999527931213,
+        "area": 0.00010449873375797253
+      },
+      {
+        "a": "Living_Sentinel_-1_Crown_0",
+        "b": "Living_Sentinel_-1_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.9889999628067017,
+        "area": 0.0014393693616844838
+      },
+      {
+        "a": "Living_Sentinel_-1_Crown_1",
+        "b": "Living_Sentinel_-1_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -0.9999999403953552
+        ],
+        "plane": -0.9889999032020569,
+        "area": 0.0052724955165395215
+      },
+      {
+        "a": "Living_Sentinel_1_Crown_0",
+        "b": "Living_Sentinel_1_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.9889999628067017,
+        "area": 0.0014393680831312483
+      },
+      {
+        "a": "Living_Sentinel_1_Crown_1",
+        "b": "Living_Sentinel_1_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.9889999628067017,
+        "area": 0.005272498347759225
+      },
+      {
+        "a": "Living_Arch_-1",
+        "b": "Living_Arch_1",
+        "face_a": 4,
+        "face_b": 5,
+        "normal": [
+          0.0,
+          1.0,
+          -0.0
+        ],
+        "plane": -0.15450000762939453,
+        "area": 5.330698729871981e-06
+      },
+      {
+        "a": "Living_Arch_-1",
+        "b": "Living_Arch_1",
+        "face_a": 5,
+        "face_b": 4,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.18549999594688416,
+        "area": 5.330698729872523e-06
+      },
+      {
+        "a": "Standard_Shaft",
+        "b": "Standard_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.2200000286102295,
+        "area": 0.00026449999197273796
+      }
+    ],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Shield_Pavilion_Gate",
+        "x": 0.0,
+        "front": 0.02816000021994114,
+        "bottom": 0.14800000190734863,
+        "top": 0.48339998722076416,
+        "width": 0.19949999451637268,
+        "blockers": [
+          "Leaf_Shield_Pavilion_Pier_5_Shaft"
+        ]
+      }
+    ],
+    "open_passages": [
+      {
+        "name": "Sentinel_Wing_-1",
+        "lo": [
+          -0.4525000262260437,
+          -0.20499999821186066,
+          0.16200000405311585
+        ],
+        "hi": [
+          -0.34749998569488527,
+          1.7881393449270533e-09,
+          0.5359999895095825
+        ],
+        "blockers": []
+      },
+      {
+        "name": "Sentinel_Wing_1",
+        "lo": [
+          0.34749998569488527,
+          -0.20499999821186066,
+          0.16200000405311585
+        ],
+        "hi": [
+          0.4525000262260437,
+          1.7881393449270533e-09,
+          0.5359999895095825
+        ],
+        "blockers": []
+      }
+    ]
+  },
+  {
+    "scene": "Elf_Ranger_Mastery_Hex_V1",
+    "coplanar_faces": [
+      {
+        "a": "Leaf_Lookout_Pod_Floor",
+        "b": "Tree_Lookout_Deck_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -1.4800000190734863,
+        "area": 0.0030380016198158213
+      },
+      {
+        "a": "Tree_Deck_Rail_2_Post_0_Foot",
+        "b": "Tree_Deck_Rail_2_Post_0_Shaft",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -1.5200001001358032,
+        "area": 0.0006124999400228251
+      },
+      {
+        "a": "Tree_Deck_Rail_2_Post_1_Foot",
+        "b": "Tree_Deck_Rail_2_Post_1_Shaft",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -1.5200001001358032,
+        "area": 0.0006124999400228264
+      },
+      {
+        "a": "Leaf_Lookout_Pod_Course_03",
+        "b": "Leaf_Lookout_Pod_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.13120000064373016,
+        "area": 5.4992087167582415e-06
+      },
+      {
+        "a": "Leaf_Lookout_Pod_Course_03",
+        "b": "Leaf_Lookout_Pod_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.13120000064373016,
+        "area": 0.00010449283287003452
+      },
+      {
+        "a": "Great_Lookout_Tree_Crown_0",
+        "b": "Great_Lookout_Tree_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -1.3766000270843506,
+        "area": 0.005380040634115825
+      },
+      {
+        "a": "Great_Lookout_Tree_Crown_1",
+        "b": "Great_Lookout_Tree_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -1.3766000270843506,
+        "area": 0.01620229741801027
+      },
+      {
+        "a": "Tree_Deck_Rail_0_Post_0_Foot",
+        "b": "Tree_Deck_Rail_0_Post_0_Shaft",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.5799999833106995,
+        "area": 0.0006124995488674444
+      },
+      {
+        "a": "Tree_Deck_Rail_0_Post_1_Foot",
+        "b": "Tree_Deck_Rail_0_Post_1_Shaft",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -0.9999999403953552
+        ],
+        "plane": -0.5799999237060547,
+        "area": 0.0006124998096376823
+      },
+      {
+        "a": "Tree_Deck_Rail_0_Post_0_Shaft",
+        "b": "Tree_Deck_Rail_0_Post_0_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.7099999785423279,
+        "area": 0.000612499841275255
+      },
+      {
+        "a": "Tree_Deck_Rail_0_Post_1_Shaft",
+        "b": "Tree_Deck_Rail_0_Post_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.7099999785423279,
+        "area": 0.0006124998412752637
+      },
+      {
+        "a": "Tree_Deck_Rail_1_Post_0_Foot",
+        "b": "Tree_Deck_Rail_1_Post_0_Shaft",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -0.9999999403953552
+        ],
+        "plane": -1.0699999332427979,
+        "area": 0.0006124996140599859
+      },
+      {
+        "a": "Tree_Deck_Rail_1_Post_1_Foot",
+        "b": "Tree_Deck_Rail_1_Post_1_Shaft",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -1.0700000524520874,
+        "area": 0.0006124998459474743
+      },
+      {
+        "a": "Tree_Deck_Rail_1_Post_0_Shaft",
+        "b": "Tree_Deck_Rail_1_Post_0_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.2000000476837158,
+        "area": 0.000612499841275255
+      },
+      {
+        "a": "Tree_Deck_Rail_1_Post_1_Shaft",
+        "b": "Tree_Deck_Rail_1_Post_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.2000000476837158,
+        "area": 0.0006124998412752655
+      },
+      {
+        "a": "Tree_Deck_Rail_2_Post_0_Shaft",
+        "b": "Tree_Deck_Rail_2_Post_0_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.6500000953674316,
+        "area": 0.0006124999053690188
+      },
+      {
+        "a": "Tree_Deck_Rail_2_Post_1_Shaft",
+        "b": "Tree_Deck_Rail_2_Post_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.6500000953674316,
+        "area": 0.0006124998077325036
+      },
+      {
+        "a": "Woodland_Target_0_Stand_Shaft",
+        "b": "Woodland_Target_0_Stand_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.3499999940395355,
+        "area": 0.0007604991668659355
+      },
+      {
+        "a": "Woodland_Target_1_Stand_Shaft",
+        "b": "Woodland_Target_1_Stand_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          0.9999999403953552
+        ],
+        "plane": 0.34999996423721313,
+        "area": 0.0007604992429011415
+      },
+      {
+        "a": "Woodland_Target_2_Stand_Shaft",
+        "b": "Woodland_Target_2_Stand_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.3499999940395355,
+        "area": 0.0007604990143779133
+      },
+      {
+        "a": "Woodland_Bow_Ranged_Bow_Limb_0",
+        "b": "Woodland_Bow_Ranged_Bow_Limb_1",
+        "face_a": 5,
+        "face_b": 3,
+        "normal": [
+          0.0,
+          -0.9999999403953552,
+          0.0
+        ],
+        "plane": 0.06149999424815178,
+        "area": 2.0093705584922628e-05
+      },
+      {
+        "a": "Woodland_Bow_Ranged_Bow_Limb_2",
+        "b": "Woodland_Bow_Ranged_Bow_Limb_3",
+        "face_a": 3,
+        "face_b": 4,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.06149999797344208,
+        "area": 1.7767934327145296e-05
+      },
+      {
+        "a": "Standard_Shaft",
+        "b": "Standard_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.1800000667572021,
+        "area": 0.0002645000438690204
+      }
+    ],
+    "mast_roof_intersections": [],
+    "entrances": [],
+    "open_passages": [
+      {
+        "name": "Leaf_Lookout_Pod",
+        "lo": [
+          -0.07250000119209289,
+          -0.09000000357627869,
+          1.5649999713897704
+        ],
+        "hi": [
+          0.07250000119209289,
+          0.11499999642372132,
+          1.6989999771118165
+        ],
+        "blockers": [
+          "Great_Lookout_Tree_Crown_1",
+          "Great_Lookout_Tree_Crown_Top",
+          "Tree_Deck_Rail_2_Bar_1.5785",
+          "Tree_Deck_Rail_2_Bar_1.63",
+          "Woodland_Bow_Backing",
+          "Woodland_Bow_Cloth",
+          "Woodland_Bow_Ranged_Bow_Limb_0",
+          "Woodland_Bow_Ranged_Bow_Limb_1",
+          "Woodland_Bow_Ranged_Bow_Limb_2",
+          "Woodland_Bow_Ranged_Bow_String",
+          "Woodland_Bow_Ranged_Arrow"
+        ]
+      }
+    ]
+  },
+  {
+    "scene": "Elf_Rogue_Mastery_Hex_V1",
+    "coplanar_faces": [
+      {
+        "a": "Pod_Stilt_0.31_-1_Foot",
+        "b": "Shadow_Bridge_Pile_0.13_Foot",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.13099999725818634,
+        "area": 0.0016190000539123145
+      },
+      {
+        "a": "Shadow_Pod_Gate_Jamb_-1",
+        "b": "Shadow_Pod_Gate_Lintel",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": -0.02345999889075756,
+        "area": 2.2868500098971456e-05
+      },
+      {
+        "a": "Shadow_Pod_Gate_Jamb_1",
+        "b": "Shadow_Pod_Gate_Lintel",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": -0.02345999889075756,
+        "area": 4.688608772261682e-05
+      },
+      {
+        "a": "Shadow_Bridge_Rail_Post_1_Foot",
+        "b": "Shadow_Bridge_Rail_Post_1_Shaft",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -0.9999999403953552
+        ],
+        "plane": -0.7539999485015869,
+        "area": 0.0006124998748302524
+      },
+      {
+        "a": "Shadow_Pod_Stair_0",
+        "b": "Shadow_Pod_Stair_1",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.39500001072883606,
+        "area": 0.00014999985573472228
+      },
+      {
+        "a": "Shadow_Pod_Stair_1",
+        "b": "Shadow_Pod_Stair_2",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.39500001072883606,
+        "area": 0.0002999997368565814
+      },
+      {
+        "a": "Shadow_Pod_Stair_2",
+        "b": "Shadow_Pod_Stair_3",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.39500001072883606,
+        "area": 0.0004500002907382415
+      },
+      {
+        "a": "Shadow_Pod_Stair_3",
+        "b": "Shadow_Pod_Stair_4",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.39500001072883606,
+        "area": 0.0005999999704184352
+      },
+      {
+        "a": "Shadow_Pod_Stair_4",
+        "b": "Shadow_Pod_Stair_5",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.39500001072883606,
+        "area": 0.0007499999332207232
+      },
+      {
+        "a": "Shadow_Pod_Stair_5",
+        "b": "Shadow_Pod_Stair_6",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.39500001072883606,
+        "area": 0.0008999998364183741
+      },
+      {
+        "a": "Shadow_Pod_Stair_6",
+        "b": "Shadow_Pod_Stair_7",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.39500001072883606,
+        "area": 0.001049999086172676
+      },
+      {
+        "a": "Shadow_Pod_Stair_0",
+        "b": "Shadow_Pod_Stair_1",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.22499999403953552,
+        "area": 0.0002999996027462093
+      },
+      {
+        "a": "Shadow_Pod_Stair_1",
+        "b": "Shadow_Pod_Stair_2",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.22499999403953552,
+        "area": 0.0004499995456802852
+      },
+      {
+        "a": "Shadow_Pod_Stair_2",
+        "b": "Shadow_Pod_Stair_3",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.22499999403953552,
+        "area": 0.003000000636886468
+      },
+      {
+        "a": "Shadow_Pod_Stair_3",
+        "b": "Shadow_Pod_Stair_4",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.22499999403953552,
+        "area": 0.004050000078479438
+      },
+      {
+        "a": "Shadow_Pod_Stair_4",
+        "b": "Shadow_Pod_Stair_5",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.22499999403953552,
+        "area": 0.000899999836418373
+      },
+      {
+        "a": "Shadow_Pod_Stair_5",
+        "b": "Shadow_Pod_Stair_6",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.22499999403953552,
+        "area": 0.001049999955406897
+      },
+      {
+        "a": "Shadow_Pod_Stair_6",
+        "b": "Shadow_Pod_Stair_7",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": -0.22499999403953552,
+        "area": 0.0011999984705894275
+      },
+      {
+        "a": "Leaf_Knife_Target_Stand_Shaft",
+        "b": "Leaf_Knife_Target_Stand_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.3199999928474426,
+        "area": 0.0007604993715399702
+      },
+      {
+        "a": "Leaf_Shadow_Hood_Blade_-1_Blade",
+        "b": "Leaf_Shadow_Hood_Blade_1_Blade",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": 0.09741920232772827,
+        "area": 5.2908952619223903e-05
+      },
+      {
+        "a": "Leaf_Shadow_Hood_Blade_-1_Guard",
+        "b": "Leaf_Shadow_Hood_Blade_1_Guard",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": 0.10029199719429016,
+        "area": 1.529051560922312e-07
+      },
+      {
+        "a": "Standard_Shaft",
+        "b": "Standard_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.1200000047683716,
+        "area": 0.0002645000438690204
+      }
+    ],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Shadow_Pod_Gate",
+        "x": -0.3099999949336052,
+        "front": 0.031460002064704895,
+        "bottom": 0.7400000095367432,
+        "top": 0.9980000257492065,
+        "width": 0.1614999920129776,
+        "blockers": [
+          "Shadow_Left_Pod_Pier_5_Foot",
+          "Shadow_Left_Pod_Pier_5_Shaft"
+        ]
+      }
+    ],
+    "open_passages": []
+  },
+  {
+    "scene": "Elf_Warrior_Mastery_Hex_V1",
+    "coplanar_faces": [
+      {
+        "a": "Leaf_Duel_Judges_Floor",
+        "b": "Leaf_Duel_Judges_Backwall",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.1899999976158142,
+        "area": 3.3654675040017956e-05
+      },
+      {
+        "a": "Leaf_Duel_Judges_Floor",
+        "b": "Leaf_Duel_Judges_Backwall",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.1899999976158142,
+        "area": 0.0007592024943351011
+      },
+      {
+        "a": "Duel_Gate_-1_Shaft",
+        "b": "Duel_Gate_-1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.6899999976158142,
+        "area": 0.0006124998077202751
+      },
+      {
+        "a": "Duel_Gate_1_Shaft",
+        "b": "Duel_Gate_1_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 0.6899999976158142,
+        "area": 0.0006124998077202751
+      },
+      {
+        "a": "Leaf_Duel_Judges_Course_03",
+        "b": "Leaf_Duel_Judges_Ridge",
+        "face_a": 4,
+        "face_b": 4,
+        "normal": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "plane": 0.15360000729560852,
+        "area": 5.499864340591243e-06
+      },
+      {
+        "a": "Leaf_Duel_Judges_Course_03",
+        "b": "Leaf_Duel_Judges_Ridge",
+        "face_a": 5,
+        "face_b": 5,
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "plane": 0.15360000729560852,
+        "area": 0.00010449873375797947
+      },
+      {
+        "a": "Arena_Shade_0_Crown_0",
+        "b": "Arena_Shade_0_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.9509999752044678,
+        "area": 0.0013450133408881727
+      },
+      {
+        "a": "Arena_Shade_0_Crown_1",
+        "b": "Arena_Shade_0_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.9509999752044678,
+        "area": 0.004989449351134878
+      },
+      {
+        "a": "Arena_Shade_1_Crown_0",
+        "b": "Arena_Shade_1_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.9509999752044678,
+        "area": 0.001345010093939161
+      },
+      {
+        "a": "Arena_Shade_1_Crown_1",
+        "b": "Arena_Shade_1_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.9509999752044678,
+        "area": 0.004989454894366974
+      },
+      {
+        "a": "Arena_Shade_2_Crown_0",
+        "b": "Arena_Shade_2_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.9509999752044678,
+        "area": 0.0013450102647006353
+      },
+      {
+        "a": "Arena_Shade_2_Crown_1",
+        "b": "Arena_Shade_2_Crown_2",
+        "face_a": 0,
+        "face_b": 0,
+        "normal": [
+          -0.0,
+          0.0,
+          -1.0
+        ],
+        "plane": -0.9509999752044678,
+        "area": 0.004989449644315247
+      },
+      {
+        "a": "Leaf_Duel_Swords_Blade_-1_Blade",
+        "b": "Leaf_Duel_Swords_Blade_1_Blade",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": -0.21320798993110657,
+        "area": 0.00023527231844431076
+      },
+      {
+        "a": "Leaf_Duel_Swords_Blade_-1_Fuller",
+        "b": "Leaf_Duel_Swords_Blade_1_Fuller",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": -0.21095648407936096,
+        "area": 1.3000563551608365e-05
+      },
+      {
+        "a": "Leaf_Duel_Swords_Blade_-1_Guard",
+        "b": "Leaf_Duel_Swords_Blade_1_Guard",
+        "face_a": 2,
+        "face_b": 2,
+        "normal": [
+          0.0,
+          -1.0,
+          -0.0
+        ],
+        "plane": -0.20870499312877655,
+        "area": 3.756078422118621e-07
+      },
+      {
+        "a": "Standard_Shaft",
+        "b": "Standard_Capital",
+        "face_a": 1,
+        "face_b": 1,
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "plane": 1.2200000286102295,
+        "area": 0.0002645000438690204
+      }
+    ],
+    "mast_roof_intersections": [],
+    "entrances": [],
+    "open_passages": [
+      {
+        "name": "Leaf_Duel_Judges",
+        "lo": [
+          -0.1074999976158142,
+          0.17000001668930054,
+          0.35499999284744266
+        ],
+        "hi": [
+          0.1074999976158142,
+          0.37500001668930055,
+          0.5789999723434448
+        ],
+        "blockers": [
+          "Leaf_Duel_Swords_Backing",
+          "Leaf_Duel_Swords_Cloth",
+          "Leaf_Duel_Swords_Blade_-1_Blade",
+          "Leaf_Duel_Swords_Blade_1_Blade"
+        ]
+      },
+      {
+        "name": "Courtyard_Gate",
+        "lo": [
+          -0.1,
+          -0.61,
+          0.14
+        ],
+        "hi": [
+          0.1,
+          -0.25,
+          0.48
+        ],
+        "blockers": [
+          "Sword_Care_Bench_Leg_1_Shaft",
+          "Sword_Care_Bench_Top"
+        ]
+      }
+    ]
+  },
+  {
+    "scene": "Grand_Arsenal_Hex_V1",
+    "coplanar_faces": [],
+    "mast_roof_intersections": [],
+    "entrances": [],
+    "open_passages": [
+      {
+        "name": "Engineering_Bay_-0.3",
+        "lo": [
+          -0.48,
+          -0.009999990463256836,
+          0.16200000405311585
+        ],
+        "hi": [
+          -0.36,
+          0.19500000953674318,
+          0.6559999942779541
+        ],
+        "blockers": []
+      },
+      {
+        "name": "Engineering_Bay_0.3",
+        "lo": [
+          0.15400001078844072,
+          -0.009999990463256836,
+          0.16200000405311585
+        ],
+        "hi": [
+          0.4460000205039978,
+          0.19500000953674318,
+          0.6559999942779541
+        ],
+        "blockers": []
+      }
+    ]
+  },
+  {
+    "scene": "Guardian_Mastery_Hex_V1",
+    "coplanar_faces": [],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Keep_Gate",
+        "x": 0.0,
+        "front": -0.1857599914073944,
+        "bottom": 0.14800000190734863,
+        "top": 0.5608000159263611,
+        "width": 0.2565000057220459,
+        "blockers": []
+      }
+    ],
+    "open_passages": []
+  },
+  {
+    "scene": "Orc_Cavalry_Mastery_Hex_V1",
+    "coplanar_faces": [],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Handler_Entry",
+        "x": 0.4299999922513962,
+        "front": -0.014000000432133675,
+        "bottom": 0.14799998700618744,
+        "top": 0.35439997911453247,
+        "width": 0.11399999260902405,
+        "blockers": []
+      }
+    ],
+    "open_passages": [
+      {
+        "name": "War_Mount_Longhouse",
+        "lo": [
+          -0.13,
+          -0.13499999046325684,
+          0.16200000405311585
+        ],
+        "hi": [
+          -0.03,
+          0.07000000953674317,
+          0.5959999918937683
+        ],
+        "blockers": []
+      }
+    ]
+  },
+  {
+    "scene": "Orc_Grand_Arsenal_Hex_V1",
+    "coplanar_faces": [],
+    "mast_roof_intersections": [],
+    "entrances": [],
+    "open_passages": [
+      {
+        "name": "Ram_Assembly_Hangar",
+        "lo": [
+          -0.47,
+          -0.0949999988079071,
+          0.16200000405311585
+        ],
+        "hi": [
+          -0.37,
+          0.1100000011920929,
+          0.6759999752044678
+        ],
+        "blockers": []
+      }
+    ]
+  },
+  {
+    "scene": "Orc_Guardian_Mastery_Hex_V1",
+    "coplanar_faces": [],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Clan_Great_Gate",
+        "x": 0.009999997913837433,
+        "front": -0.10400000214576721,
+        "bottom": 0.1899999976158142,
+        "top": 0.6028000116348267,
+        "width": 0.2564999908208847,
+        "blockers": []
+      }
+    ],
+    "open_passages": []
+  },
+  {
+    "scene": "Orc_Ranger_Mastery_Hex_V1",
+    "coplanar_faces": [],
+    "mast_roof_intersections": [],
+    "entrances": [],
+    "open_passages": []
+  },
+  {
+    "scene": "Orc_Rogue_Mastery_Hex_V1",
+    "coplanar_faces": [],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Sneak_Entry",
+        "x": -0.1899999976158142,
+        "front": -0.08399999886751175,
+        "bottom": 0.14800000190734863,
+        "top": 0.44040000438690186,
+        "width": 0.23750001192092896,
+        "blockers": []
+      }
+    ],
+    "open_passages": []
+  },
+  {
+    "scene": "Orc_Warrior_Mastery_Hex_V1",
+    "coplanar_faces": [],
+    "mast_roof_intersections": [],
+    "entrances": [],
+    "open_passages": [
+      {
+        "name": "Clan_Chief_Tribune",
+        "lo": [
+          -0.1309999930858612,
+          0.22499999403953552,
+          0.44499999642372134
+        ],
+        "hi": [
+          0.1309999930858612,
+          0.42999999403953554,
+          0.6289999842643738
+        ],
+        "blockers": []
+      },
+      {
+        "name": "Courtyard_Gate",
+        "lo": [
+          -0.1,
+          -0.61,
+          0.14
+        ],
+        "hi": [
+          0.1,
+          -0.25,
+          0.48
+        ],
+        "blockers": []
+      }
+    ]
+  },
+  {
+    "scene": "Ranger_Mastery_Hex_V1",
+    "coplanar_faces": [],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Lodge_Entry",
+        "x": -0.3999999910593033,
+        "front": -0.10400000214576721,
+        "bottom": 0.14800000190734863,
+        "top": 0.3458000123500824,
+        "width": 0.11399999260902405,
+        "blockers": []
+      }
+    ],
+    "open_passages": []
+  },
+  {
+    "scene": "Rogue_Mastery_Hex_V1",
+    "coplanar_faces": [],
+    "mast_roof_intersections": [],
+    "entrances": [
+      {
+        "prefix": "Shadow_Door",
+        "x": 0.09999999590218067,
+        "front": 0.0560000017285347,
+        "bottom": 0.14799998700618744,
+        "top": 0.5005999803543091,
+        "width": 0.20899998769164085,
+        "blockers": []
+      }
+    ],
+    "open_passages": []
+  },
+  {
+    "scene": "Warrior_Mastery_Hex_V1",
+    "coplanar_faces": [],
+    "mast_roof_intersections": [],
+    "entrances": [],
+    "open_passages": [
+      {
+        "name": "Royal_Gallery",
+        "lo": [
+          -0.17599997997283934,
+          0.25,
+          0.3729999995231629
+        ],
+        "hi": [
+          0.17599997997283934,
+          0.455,
+          0.6669999718666076
+        ],
+        "blockers": [
+          "Champion_Blades_Backing",
+          "Champion_Blades_Cloth",
+          "Champion_Blades_Blade_-1_Blade",
+          "Champion_Blades_Blade_-1_Grip",
+          "Champion_Blades_Blade_1_Blade",
+          "Champion_Blades_Blade_1_Grip"
+        ]
+      },
+      {
+        "name": "Courtyard_Gate",
+        "lo": [
+          -0.1,
+          -0.61,
+          0.14
+        ],
+        "hi": [
+          0.1,
+          -0.25,
+          0.48
+        ],
+        "blockers": []
+      }
+    ]
+  }
+]

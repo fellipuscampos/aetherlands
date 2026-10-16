@@ -1,0 +1,122 @@
+[
+  {
+    "scene": "Arcane_Conclave_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Druidic_Circle_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Dwarf_Arcane_Conclave_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Dwarf_Druidic_Circle_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Dwarf_Elemental_Observatory_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Dwarf_Infernal_Sanctum_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Dwarf_Necromancy_Ossuary_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Dwarf_Sacred_Temple_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Elemental_Observatory_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Elf_Arcane_Conclave_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Elf_Druidic_Circle_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Elf_Elemental_Observatory_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Elf_Infernal_Sanctum_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Elf_Necromancy_Ossuary_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Elf_Sacred_Temple_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Infernal_Sanctum_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Necromancy_Ossuary_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Orc_Arcane_Conclave_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Orc_Druidic_Circle_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Orc_Elemental_Observatory_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Orc_Infernal_Sanctum_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Orc_Necromancy_Ossuary_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Orc_Sacred_Temple_Hex_V1",
+    "polished": true,
+    "detached": []
+  },
+  {
+    "scene": "Sacred_Temple_Hex_V1",
+    "polished": true,
+    "detached": []
+  }
+]

@@ -1,0 +1,702 @@
+{
+	"failures": [],
+	"status": "PASS",
+	"variants": [
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.02514469623566,
+					"min_skin_y": -0.000309379101963714
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "guardian",
+			"shared_library": "res://assets/generated/dwarves/animations/guardian.tres",
+			"stem": "dwarf_shieldbearer_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.02514469623566,
+					"min_skin_y": -0.000309379101963714
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "guardian",
+			"shared_library": "res://assets/generated/dwarves/animations/guardian.tres",
+			"stem": "dwarf_guardian_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.02514469623566,
+					"min_skin_y": -0.000309379101963714
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "guardian",
+			"shared_library": "res://assets/generated/dwarves/animations/guardian.tres",
+			"stem": "dwarf_sentinel_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.02514469623566,
+					"min_skin_y": -0.000309379101963714
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "guardian",
+			"shared_library": "res://assets/generated/dwarves/animations/guardian.tres",
+			"stem": "dwarf_guardian_champion_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.66287565231323,
+					"min_skin_y": -0.000208236742764711
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "warrior",
+			"shared_library": "res://assets/generated/dwarves/animations/warrior.tres",
+			"stem": "dwarf_warrior_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.66287565231323,
+					"min_skin_y": -0.000208236742764711
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "warrior",
+			"shared_library": "res://assets/generated/dwarves/animations/warrior.tres",
+			"stem": "dwarf_swordsman_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.66287565231323,
+					"min_skin_y": -0.000208236742764711
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "warrior",
+			"shared_library": "res://assets/generated/dwarves/animations/warrior.tres",
+			"stem": "dwarf_weapon_master_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.66287565231323,
+					"min_skin_y": -0.000208236742764711
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "warrior",
+			"shared_library": "res://assets/generated/dwarves/animations/warrior.tres",
+			"stem": "dwarf_blade_hero_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.564175307750702,
+					"min_skin_y": -0.000400294928112999
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "ranger",
+			"shared_library": "res://assets/generated/dwarves/animations/ranger.tres",
+			"stem": "dwarf_archer_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.564175307750702,
+					"min_skin_y": -0.000400294928112999
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "ranger",
+			"shared_library": "res://assets/generated/dwarves/animations/ranger.tres",
+			"stem": "dwarf_hunter_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.564175307750702,
+					"min_skin_y": -0.000400294928112999
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "ranger",
+			"shared_library": "res://assets/generated/dwarves/animations/ranger.tres",
+			"stem": "dwarf_elite_marksman_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.564175307750702,
+					"min_skin_y": -0.000400294928112999
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "ranger",
+			"shared_library": "res://assets/generated/dwarves/animations/ranger.tres",
+			"stem": "dwarf_legend_hunter_v1"
+		},
+		{
+			"bones": 31,
+			"clips": {
+				"attack": {
+					"length": 1.83333337306976,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.86352694034576,
+					"min_skin_y": -0.000239550950936973
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.163718417286873,
+					"min_skin_y": -0.000665710074827075
+				},
+				"walk": {
+					"length": 1.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.91381698846817,
+					"min_skin_y": -0.000980569748207927
+				}
+			},
+			"family": "cavalry",
+			"shared_library": "res://assets/generated/dwarves/animations/cavalry.tres",
+			"stem": "dwarf_cavalier_v1"
+		},
+		{
+			"bones": 31,
+			"clips": {
+				"attack": {
+					"length": 1.83333337306976,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.86352694034576,
+					"min_skin_y": -0.000239550950936973
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.163718417286873,
+					"min_skin_y": -0.000665710074827075
+				},
+				"walk": {
+					"length": 1.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.91381698846817,
+					"min_skin_y": -0.000980569748207927
+				}
+			},
+			"family": "cavalry",
+			"shared_library": "res://assets/generated/dwarves/animations/cavalry.tres",
+			"stem": "dwarf_shock_cavalier_v1"
+		},
+		{
+			"bones": 31,
+			"clips": {
+				"attack": {
+					"length": 1.83333337306976,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.86352694034576,
+					"min_skin_y": -0.000239550950936973
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.163718417286873,
+					"min_skin_y": -0.000665710074827075
+				},
+				"walk": {
+					"length": 1.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.91381698846817,
+					"min_skin_y": -0.000980569748207927
+				}
+			},
+			"family": "cavalry",
+			"shared_library": "res://assets/generated/dwarves/animations/cavalry.tres",
+			"stem": "dwarf_armored_cavalier_v1"
+		},
+		{
+			"bones": 31,
+			"clips": {
+				"attack": {
+					"length": 1.83333337306976,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.86352694034576,
+					"min_skin_y": -0.000239550950936973
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.163718417286873,
+					"min_skin_y": -0.000665710074827075
+				},
+				"walk": {
+					"length": 1.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.91381698846817,
+					"min_skin_y": -0.000980569748207927
+				}
+			},
+			"family": "cavalry",
+			"shared_library": "res://assets/generated/dwarves/animations/cavalry.tres",
+			"stem": "dwarf_ram_lord_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.73463475704193,
+					"min_skin_y": -0.0000808638360467739
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "rogue",
+			"shared_library": "res://assets/generated/dwarves/animations/rogue.tres",
+			"stem": "dwarf_rogue_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.73463475704193,
+					"min_skin_y": -0.0000808638360467739
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "rogue",
+			"shared_library": "res://assets/generated/dwarves/animations/rogue.tres",
+			"stem": "dwarf_saboteur_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.73463475704193,
+					"min_skin_y": -0.0000808638360467739
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "rogue",
+			"shared_library": "res://assets/generated/dwarves/animations/rogue.tres",
+			"stem": "dwarf_assassin_v1"
+		},
+		{
+			"bones": 16,
+			"clips": {
+				"attack": {
+					"length": 1.66666662693024,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.73463475704193,
+					"min_skin_y": -0.0000808638360467739
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.305243194103241,
+					"min_skin_y": -0.000260452885413542
+				},
+				"walk": {
+					"length": 1.16666662693024,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.915328204631805,
+					"min_skin_y": -0.000969107029959559
+				}
+			},
+			"family": "rogue",
+			"shared_library": "res://assets/generated/dwarves/animations/rogue.tres",
+			"stem": "dwarf_shadow_master_v1"
+		},
+		{
+			"bones": 14,
+			"clips": {
+				"attack": {
+					"length": 2.5,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.23132300376892,
+					"min_skin_y": 0.0
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.0,
+					"min_skin_y": 0.0
+				},
+				"walk": {
+					"length": 2.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 2.0,
+					"min_skin_y": 0.0
+				}
+			},
+			"family": "siege",
+			"shared_library": "res://assets/generated/dwarves/animations/siege.tres",
+			"stem": "dwarf_catapult_v1"
+		},
+		{
+			"bones": 14,
+			"clips": {
+				"attack": {
+					"length": 2.5,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.23132300376892,
+					"min_skin_y": 0.0
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.0,
+					"min_skin_y": 0.0
+				},
+				"walk": {
+					"length": 2.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 2.0,
+					"min_skin_y": -0.0000000298023223876953
+				}
+			},
+			"family": "siege",
+			"shared_library": "res://assets/generated/dwarves/animations/siege.tres",
+			"stem": "dwarf_trebuchet_v1"
+		},
+		{
+			"bones": 14,
+			"clips": {
+				"attack": {
+					"length": 2.5,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.23132300376892,
+					"min_skin_y": 0.0
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.0,
+					"min_skin_y": 0.0
+				},
+				"walk": {
+					"length": 2.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 2.0,
+					"min_skin_y": -0.0000000596046447753906
+				}
+			},
+			"family": "siege",
+			"shared_library": "res://assets/generated/dwarves/animations/siege.tres",
+			"stem": "dwarf_bombard_v1"
+		},
+		{
+			"bones": 14,
+			"clips": {
+				"attack": {
+					"length": 2.5,
+					"loop": false,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 1.23132300376892,
+					"min_skin_y": 0.0
+				},
+				"idle": {
+					"length": 3.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 0.0,
+					"min_skin_y": 0.0
+				},
+				"walk": {
+					"length": 2.0,
+					"loop": true,
+					"loop_or_recovery_error": 0.0,
+					"max_motion": 2.0,
+					"min_skin_y": 0.0
+				}
+			},
+			"family": "siege",
+			"shared_library": "res://assets/generated/dwarves/animations/siege.tres",
+			"stem": "dwarf_siege_colossus_v1"
+		}
+	]
+}

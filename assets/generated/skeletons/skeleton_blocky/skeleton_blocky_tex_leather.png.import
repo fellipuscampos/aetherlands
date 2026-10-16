@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ci2y8us7csbny"
-path="res://.godot/imported/skeleton_blocky_tex_leather.png-3673e552058bdd33cb25a2752743619a.ctex"
+path.bptc="res://.godot/imported/skeleton_blocky_tex_leather.png-3673e552058bdd33cb25a2752743619a.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "82a5f5d3cf80bf18f5bc89465327403a"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/skeletons/skeleton_blocky/skeleton_blocky_tex_leather.png"
-dest_files=["res://.godot/imported/skeleton_blocky_tex_leather.png-3673e552058bdd33cb25a2752743619a.ctex"]
+dest_files=["res://.godot/imported/skeleton_blocky_tex_leather.png-3673e552058bdd33cb25a2752743619a.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

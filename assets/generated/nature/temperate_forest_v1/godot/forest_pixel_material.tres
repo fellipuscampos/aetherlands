@@ -1,0 +1,10 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/generated/nature/temperate_forest_v1/textures/forest_pixel_atlas.png" id="1_ossce"]
+
+[resource]
+resource_name = "Temperate Forest Shared Pixel Material"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_ossce")
+roughness = 0.92
+texture_filter = 2

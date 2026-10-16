@@ -1,0 +1,119 @@
+{
+  "status": "PASS",
+  "model": "seraph_blocky_v4_animated",
+  "geometry_and_uv_unchanged": true,
+  "textures_unchanged": true,
+  "meshes": 1,
+  "materials": 1,
+  "triangles": 2072,
+  "bones": 11,
+  "root_motion": false,
+  "fps": 24,
+  "same_channels_all_clips": true,
+  "rest_height_m": 3.0,
+  "prepared_wing_pairs": 3,
+  "clips": {
+    "Idle": {
+      "samples": 1153,
+      "loop": true,
+      "duration_s": 24.0,
+      "minimum_ground_clearance_m": 0.19944292306900024,
+      "bounds_min_m": [
+        -2.70590877532959,
+        -2.053952693939209,
+        0.19944292306900024
+      ],
+      "bounds_max_m": [
+        2.71124267578125,
+        0.9992012977600098,
+        3.3240110874176025
+      ],
+      "seam_vertex_delta_m": 1.3328003749250113e-07,
+      "maximum_half_frame_vertex_step_m": 0.006035946332627374,
+      "uniform_scale_error": 5.713662435402611e-07,
+      "minimum_separation_m": {
+        "cube_inner_m": 0.1412302139475633,
+        "between_rings_m": 0.09512932723450873,
+        "rings_wings_and_cubes_m": 0.09886036231298367
+      },
+      "new_wing_intersections": 0
+    },
+    "Walk": {
+      "samples": 385,
+      "loop": true,
+      "duration_s": 8.0,
+      "minimum_ground_clearance_m": 0.24709144234657288,
+      "bounds_min_m": [
+        -2.7040326595306396,
+        -2.056429624557495,
+        0.24709144234657288
+      ],
+      "bounds_max_m": [
+        2.7040326595306396,
+        0.8268741369247437,
+        3.4738473892211914
+      ],
+      "seam_vertex_delta_m": 2.7028258364226004e-07,
+      "maximum_half_frame_vertex_step_m": 0.016573683452248716,
+      "uniform_scale_error": 5.050095597258775e-07,
+      "minimum_separation_m": {
+        "cube_inner_m": 0.14123025964391128,
+        "between_rings_m": 0.09512938146831507,
+        "rings_wings_and_cubes_m": 0.0959430777844531
+      },
+      "new_wing_intersections": 0
+    },
+    "Attack": {
+      "samples": 73,
+      "loop": false,
+      "duration_s": 1.5,
+      "minimum_ground_clearance_m": 0.1974758803844452,
+      "bounds_min_m": [
+        -2.815063714981079,
+        -2.2649614810943604,
+        0.1974758803844452
+      ],
+      "bounds_max_m": [
+        2.815063714981079,
+        1.35575270652771,
+        3.4081480503082275
+      ],
+      "seam_vertex_delta_m": 1.3328003749250113e-07,
+      "maximum_half_frame_vertex_step_m": 0.17356393577967302,
+      "uniform_scale_error": 3.1310196835221404e-07,
+      "minimum_separation_m": {
+        "cube_inner_m": 0.09187240633440541,
+        "between_rings_m": 0.09512959473228111,
+        "rings_wings_and_cubes_m": 0.07060099051128277
+      },
+      "new_wing_intersections": 0
+    },
+    "Spell": {
+      "samples": 145,
+      "loop": false,
+      "duration_s": 3.0,
+      "minimum_ground_clearance_m": 0.2199999988079071,
+      "bounds_min_m": [
+        -2.6752028465270996,
+        -2.015322208404541,
+        0.2199999988079071
+      ],
+      "bounds_max_m": [
+        2.6752028465270996,
+        1.1383166313171387,
+        3.4149434566497803
+      ],
+      "seam_vertex_delta_m": 1.884864366154897e-07,
+      "maximum_half_frame_vertex_step_m": 0.07570953501379157,
+      "uniform_scale_error": 4.4739811122518347e-07,
+      "minimum_separation_m": {
+        "cube_inner_m": 0.061852217895602135,
+        "between_rings_m": 0.09512952144026843,
+        "rings_wings_and_cubes_m": 0.0919044837940588
+      },
+      "new_wing_intersections": 0
+    }
+  },
+  "static_wing_overlap_pairs": 0,
+  "protected_files": 11
+}

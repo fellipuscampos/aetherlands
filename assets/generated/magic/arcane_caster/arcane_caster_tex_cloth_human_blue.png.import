@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c4hrsgoyua2bu"
-path="res://.godot/imported/arcane_caster_tex_cloth_human_blue.png-56b50ed334dc405fde498c7ba96680bc.ctex"
+path.bptc="res://.godot/imported/arcane_caster_tex_cloth_human_blue.png-56b50ed334dc405fde498c7ba96680bc.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "a43a24fe3126f3cd0eaae902e4dc55fe"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/magic/arcane_caster/arcane_caster_tex_cloth_human_blue.png"
-dest_files=["res://.godot/imported/arcane_caster_tex_cloth_human_blue.png-56b50ed334dc405fde498c7ba96680bc.ctex"]
+dest_files=["res://.godot/imported/arcane_caster_tex_cloth_human_blue.png-56b50ed334dc405fde498c7ba96680bc.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

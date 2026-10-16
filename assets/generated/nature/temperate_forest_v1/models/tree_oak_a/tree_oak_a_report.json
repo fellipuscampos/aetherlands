@@ -1,0 +1,47 @@
+{
+  "asset": "tree_oak_a",
+  "name": "Temperate_Forest_V1_tree_oak_a",
+  "display_name": "Carvalho amplo",
+  "category": "main_tree",
+  "species": "oak",
+  "triangles": 156,
+  "vertices": 80,
+  "polygons": 51,
+  "bounds_blender": {
+    "min": [
+      -0.2800000011920929,
+      -0.20000000298023224,
+      0.0
+    ],
+    "max": [
+      0.2800000011920929,
+      0.20000000298023224,
+      0.9200000166893005
+    ]
+  },
+  "dimensions": [
+    0.5600000023841858,
+    0.4000000059604645,
+    0.9200000166893005
+  ],
+  "pivot": "ground at base of trunk / center of prop",
+  "native_scale": 1,
+  "pixel_density_px_per_unit": 128,
+  "materials": 1,
+  "game_meshes": 1,
+  "atlas": "textures/forest_pixel_atlas.png",
+  "alpha_blending": false,
+  "voxel_cells": 1244,
+  "surface_cells_removed": true,
+  "nonmanifold_edges": 0,
+  "mcp_only": true,
+  "export": {
+    "bytes": 137960,
+    "meshes": 1,
+    "surfaces": 1,
+    "materials": 1,
+    "triangles": 156,
+    "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+    "no_studio": true
+  }
+}

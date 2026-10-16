@@ -1,0 +1,67 @@
+{
+	"assets": [
+		{
+			"asset": "dwarf_sacred_temple_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.20650005340576,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1180
+		},
+		{
+			"asset": "dwarf_infernal_sanctum_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.08200001716614,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1236
+		},
+		{
+			"asset": "dwarf_necromancy_ossuary_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.02999997138977,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1704
+		},
+		{
+			"asset": "dwarf_druidic_circle_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.04550004005432,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 996
+		},
+		{
+			"asset": "dwarf_arcane_conclave_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.444176197052,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1528
+		},
+		{
+			"asset": "dwarf_elemental_observatory_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.31759107112885,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1480
+		}
+	],
+	"problems": [],
+	"status": "PASS",
+	"verified": 6
+}

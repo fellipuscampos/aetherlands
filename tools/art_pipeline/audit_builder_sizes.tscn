@@ -1,0 +1,4 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://tools/art_pipeline/audit_builder_sizes.gd" id="1"]
+[node name="BuilderSizeAudit" type="Node3D"]
+script = ExtResource("1")

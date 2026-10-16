@@ -1,0 +1,551 @@
+{
+  "kit": "temperate_forest_v1",
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "asset_count": 10,
+  "atlas_size": [
+    512,
+    512
+  ],
+  "pixel_density": 128,
+  "shared_material": true,
+  "scale": "native map units: tile circumradius 1; main trees 0.92–1.16 high",
+  "no_tile_geometry": true,
+  "assets": [
+    {
+      "asset": "tree_oak_a",
+      "name": "Temperate_Forest_V1_tree_oak_a",
+      "display_name": "Carvalho amplo",
+      "category": "main_tree",
+      "species": "oak",
+      "triangles": 156,
+      "vertices": 80,
+      "polygons": 51,
+      "bounds_blender": {
+        "min": [
+          -0.2800000011920929,
+          -0.20000000298023224,
+          0.0
+        ],
+        "max": [
+          0.2800000011920929,
+          0.20000000298023224,
+          0.9200000166893005
+        ]
+      },
+      "dimensions": [
+        0.5600000023841858,
+        0.4000000059604645,
+        0.9200000166893005
+      ],
+      "pivot": "ground at base of trunk / center of prop",
+      "native_scale": 1,
+      "pixel_density_px_per_unit": 128,
+      "materials": 1,
+      "game_meshes": 1,
+      "atlas": "textures/forest_pixel_atlas.png",
+      "alpha_blending": false,
+      "voxel_cells": 1244,
+      "surface_cells_removed": true,
+      "nonmanifold_edges": 0,
+      "mcp_only": true,
+      "export": {
+        "bytes": 137960,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "triangles": 156,
+        "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+        "no_studio": true
+      },
+      "godot_scene": "godot/tree_oak_a.tscn",
+      "godot_mesh": "godot/tree_oak_a.res",
+      "footprint_radius": 0.34409301338397574,
+      "blend": "models/tree_oak_a/tree_oak_a.blend",
+      "glb": "models/tree_oak_a/tree_oak_a.glb",
+      "preview": "models/tree_oak_a/previews/three_quarter.png"
+    },
+    {
+      "asset": "tree_oak_b",
+      "name": "Temperate_Forest_V1_tree_oak_b",
+      "display_name": "Carvalho bifurcado",
+      "category": "main_tree",
+      "species": "oak",
+      "triangles": 166,
+      "vertices": 85,
+      "polygons": 52,
+      "bounds_blender": {
+        "min": [
+          -0.2800000011920929,
+          -0.1599999964237213,
+          0.0
+        ],
+        "max": [
+          0.23999999463558197,
+          0.1599999964237213,
+          1.0399999618530273
+        ]
+      },
+      "dimensions": [
+        0.5199999958276749,
+        0.3199999928474426,
+        1.0399999618530273
+      ],
+      "pivot": "ground at base of trunk / center of prop",
+      "native_scale": 1,
+      "pixel_density_px_per_unit": 128,
+      "materials": 1,
+      "game_meshes": 1,
+      "atlas": "textures/forest_pixel_atlas.png",
+      "alpha_blending": false,
+      "voxel_cells": 966,
+      "surface_cells_removed": true,
+      "nonmanifold_edges": 0,
+      "mcp_only": true,
+      "export": {
+        "bytes": 138408,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "triangles": 166,
+        "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+        "no_studio": true
+      },
+      "godot_scene": "godot/tree_oak_b.tscn",
+      "godot_mesh": "godot/tree_oak_b.res",
+      "footprint_radius": 0.3224903091926374,
+      "blend": "models/tree_oak_b/tree_oak_b.blend",
+      "glb": "models/tree_oak_b/tree_oak_b.glb",
+      "preview": "models/tree_oak_b/previews/three_quarter.png"
+    },
+    {
+      "asset": "tree_beech_a",
+      "name": "Temperate_Forest_V1_tree_beech_a",
+      "display_name": "Faia vertical",
+      "category": "main_tree",
+      "species": "beech",
+      "triangles": 116,
+      "vertices": 60,
+      "polygons": 39,
+      "bounds_blender": {
+        "min": [
+          -0.20000000298023224,
+          -0.20000000298023224,
+          0.0
+        ],
+        "max": [
+          0.20000000298023224,
+          0.1599999964237213,
+          1.0800000429153442
+        ]
+      },
+      "dimensions": [
+        0.4000000059604645,
+        0.35999999940395355,
+        1.0800000429153442
+      ],
+      "pivot": "ground at base of trunk / center of prop",
+      "native_scale": 1,
+      "pixel_density_px_per_unit": 128,
+      "materials": 1,
+      "game_meshes": 1,
+      "atlas": "textures/forest_pixel_atlas.png",
+      "alpha_blending": false,
+      "voxel_cells": 1116,
+      "surface_cells_removed": true,
+      "nonmanifold_edges": 0,
+      "mcp_only": true,
+      "export": {
+        "bytes": 135696,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "triangles": 116,
+        "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+        "no_studio": true
+      },
+      "godot_scene": "godot/tree_beech_a.tscn",
+      "godot_mesh": "godot/tree_beech_a.res",
+      "footprint_radius": 0.2828427166893039,
+      "blend": "models/tree_beech_a/tree_beech_a.blend",
+      "glb": "models/tree_beech_a/tree_beech_a.glb",
+      "preview": "models/tree_beech_a/previews/three_quarter.png"
+    },
+    {
+      "asset": "tree_pine_a",
+      "name": "Temperate_Forest_V1_tree_pine_a",
+      "display_name": "Pinheiro adulto",
+      "category": "main_tree",
+      "species": "pine",
+      "triangles": 220,
+      "vertices": 112,
+      "polygons": 70,
+      "bounds_blender": {
+        "min": [
+          -0.23999999463558197,
+          -0.23999999463558197,
+          0.0
+        ],
+        "max": [
+          0.23999999463558197,
+          0.23999999463558197,
+          1.159999966621399
+        ]
+      },
+      "dimensions": [
+        0.47999998927116394,
+        0.47999998927116394,
+        1.159999966621399
+      ],
+      "pivot": "ground at base of trunk / center of prop",
+      "native_scale": 1,
+      "pixel_density_px_per_unit": 128,
+      "materials": 1,
+      "game_meshes": 1,
+      "atlas": "textures/forest_pixel_atlas.png",
+      "alpha_blending": false,
+      "voxel_cells": 1080,
+      "surface_cells_removed": true,
+      "nonmanifold_edges": 0,
+      "mcp_only": true,
+      "export": {
+        "bytes": 141628,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "triangles": 220,
+        "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+        "no_studio": true
+      },
+      "godot_scene": "godot/tree_pine_a.tscn",
+      "godot_mesh": "godot/tree_pine_a.res",
+      "footprint_radius": 0.2561249695904008,
+      "blend": "models/tree_pine_a/tree_pine_a.blend",
+      "glb": "models/tree_pine_a/tree_pine_a.glb",
+      "preview": "models/tree_pine_a/previews/three_quarter.png"
+    },
+    {
+      "asset": "tree_oak_young",
+      "name": "Temperate_Forest_V1_tree_oak_young",
+      "display_name": "Carvalho jovem",
+      "category": "small_tree",
+      "species": "oak",
+      "triangles": 114,
+      "vertices": 59,
+      "polygons": 38,
+      "bounds_blender": {
+        "min": [
+          -0.1599999964237213,
+          -0.11999999731779099,
+          0.0
+        ],
+        "max": [
+          0.1599999964237213,
+          0.11999999731779099,
+          0.6399999856948853
+        ]
+      },
+      "dimensions": [
+        0.3199999928474426,
+        0.23999999463558197,
+        0.6399999856948853
+      ],
+      "pivot": "ground at base of trunk / center of prop",
+      "native_scale": 1,
+      "pixel_density_px_per_unit": 128,
+      "materials": 1,
+      "game_meshes": 1,
+      "atlas": "textures/forest_pixel_atlas.png",
+      "alpha_blending": false,
+      "voxel_cells": 442,
+      "surface_cells_removed": true,
+      "nonmanifold_edges": 0,
+      "mcp_only": true,
+      "export": {
+        "bytes": 135568,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "triangles": 114,
+        "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+        "no_studio": true
+      },
+      "godot_scene": "godot/tree_oak_young.tscn",
+      "godot_mesh": "godot/tree_oak_young.res",
+      "footprint_radius": 0.19999999552965164,
+      "blend": "models/tree_oak_young/tree_oak_young.blend",
+      "glb": "models/tree_oak_young/tree_oak_young.glb",
+      "preview": "models/tree_oak_young/previews/three_quarter.png"
+    },
+    {
+      "asset": "tree_pine_young",
+      "name": "Temperate_Forest_V1_tree_pine_young",
+      "display_name": "Pinheiro jovem",
+      "category": "small_tree",
+      "species": "pine",
+      "triangles": 136,
+      "vertices": 70,
+      "polygons": 44,
+      "bounds_blender": {
+        "min": [
+          -0.1599999964237213,
+          -0.11999999731779099,
+          0.0
+        ],
+        "max": [
+          0.1599999964237213,
+          0.11999999731779099,
+          0.7599999904632568
+        ]
+      },
+      "dimensions": [
+        0.3199999928474426,
+        0.23999999463558197,
+        0.7599999904632568
+      ],
+      "pivot": "ground at base of trunk / center of prop",
+      "native_scale": 1,
+      "pixel_density_px_per_unit": 128,
+      "materials": 1,
+      "game_meshes": 1,
+      "atlas": "textures/forest_pixel_atlas.png",
+      "alpha_blending": false,
+      "voxel_cells": 432,
+      "surface_cells_removed": true,
+      "nonmanifold_edges": 0,
+      "mcp_only": true,
+      "export": {
+        "bytes": 136800,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "triangles": 136,
+        "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+        "no_studio": true
+      },
+      "godot_scene": "godot/tree_pine_young.tscn",
+      "godot_mesh": "godot/tree_pine_young.res",
+      "footprint_radius": 0.19999999552965164,
+      "blend": "models/tree_pine_young/tree_pine_young.blend",
+      "glb": "models/tree_pine_young/tree_pine_young.glb",
+      "preview": "models/tree_pine_young/previews/three_quarter.png"
+    },
+    {
+      "asset": "shrub_hazel",
+      "name": "Temperate_Forest_V1_shrub_hazel",
+      "display_name": "Arbusto de aveleira",
+      "category": "shrub",
+      "species": "hazel",
+      "triangles": 54,
+      "vertices": 29,
+      "polygons": 17,
+      "bounds_blender": {
+        "min": [
+          -0.1599999964237213,
+          -0.11999999731779099,
+          0.0
+        ],
+        "max": [
+          0.1599999964237213,
+          0.11999999731779099,
+          0.2800000011920929
+        ]
+      },
+      "dimensions": [
+        0.3199999928474426,
+        0.23999999463558197,
+        0.2800000011920929
+      ],
+      "pivot": "ground at base of trunk / center of prop",
+      "native_scale": 1,
+      "pixel_density_px_per_unit": 128,
+      "materials": 1,
+      "game_meshes": 1,
+      "atlas": "textures/forest_pixel_atlas.png",
+      "alpha_blending": false,
+      "voxel_cells": 198,
+      "surface_cells_removed": true,
+      "nonmanifold_edges": 0,
+      "mcp_only": true,
+      "export": {
+        "bytes": 131908,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "triangles": 54,
+        "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+        "no_studio": true
+      },
+      "godot_scene": "godot/shrub_hazel.tscn",
+      "godot_mesh": "godot/shrub_hazel.res",
+      "footprint_radius": 0.19999999552965164,
+      "blend": "models/shrub_hazel/shrub_hazel.blend",
+      "glb": "models/shrub_hazel/shrub_hazel.glb",
+      "preview": "models/shrub_hazel/previews/three_quarter.png"
+    },
+    {
+      "asset": "shrub_bracken",
+      "name": "Temperate_Forest_V1_shrub_bracken",
+      "display_name": "Arbusto de sub-bosque",
+      "category": "shrub",
+      "species": "underbrush",
+      "triangles": 110,
+      "vertices": 57,
+      "polygons": 32,
+      "bounds_blender": {
+        "min": [
+          -0.20000000298023224,
+          -0.11999999731779099,
+          0.0
+        ],
+        "max": [
+          0.20000000298023224,
+          0.11999999731779099,
+          0.20000000298023224
+        ]
+      },
+      "dimensions": [
+        0.4000000059604645,
+        0.23999999463558197,
+        0.20000000298023224
+      ],
+      "pivot": "ground at base of trunk / center of prop",
+      "native_scale": 1,
+      "pixel_density_px_per_unit": 128,
+      "materials": 1,
+      "game_meshes": 1,
+      "atlas": "textures/forest_pixel_atlas.png",
+      "alpha_blending": false,
+      "voxel_cells": 116,
+      "surface_cells_removed": true,
+      "nonmanifold_edges": 0,
+      "mcp_only": true,
+      "export": {
+        "bytes": 135040,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "triangles": 110,
+        "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+        "no_studio": true
+      },
+      "godot_scene": "godot/shrub_bracken.tscn",
+      "godot_mesh": "godot/shrub_bracken.res",
+      "footprint_radius": 0.20396078329072806,
+      "blend": "models/shrub_bracken/shrub_bracken.blend",
+      "glb": "models/shrub_bracken/shrub_bracken.glb",
+      "preview": "models/shrub_bracken/previews/three_quarter.png"
+    },
+    {
+      "asset": "fallen_log",
+      "name": "Temperate_Forest_V1_fallen_log",
+      "display_name": "Tronco caído",
+      "category": "fallen_log",
+      "species": "oak",
+      "triangles": 74,
+      "vertices": 39,
+      "polygons": 22,
+      "bounds_blender": {
+        "min": [
+          -0.3199999928474426,
+          -0.07999999821186066,
+          0.0
+        ],
+        "max": [
+          0.3199999928474426,
+          0.20000000298023224,
+          0.1599999964237213
+        ]
+      },
+      "dimensions": [
+        0.6399999856948853,
+        0.2800000011920929,
+        0.1599999964237213
+      ],
+      "pivot": "ground at base of trunk / center of prop",
+      "native_scale": 1,
+      "pixel_density_px_per_unit": 128,
+      "materials": 1,
+      "game_meshes": 1,
+      "atlas": "textures/forest_pixel_atlas.png",
+      "alpha_blending": false,
+      "voxel_cells": 227,
+      "surface_cells_removed": true,
+      "nonmanifold_edges": 0,
+      "mcp_only": true,
+      "export": {
+        "bytes": 132992,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "triangles": 74,
+        "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+        "no_studio": true
+      },
+      "godot_scene": "godot/fallen_log.tscn",
+      "godot_mesh": "godot/fallen_log.res",
+      "footprint_radius": 0.3298484426767255,
+      "blend": "models/fallen_log/fallen_log.blend",
+      "glb": "models/fallen_log/fallen_log.glb",
+      "preview": "models/fallen_log/previews/three_quarter.png"
+    },
+    {
+      "asset": "rock_root_small",
+      "name": "Temperate_Forest_V1_rock_root_small",
+      "display_name": "Pedra com musgo e raiz",
+      "category": "decoration",
+      "species": "stone_root",
+      "triangles": 56,
+      "vertices": 30,
+      "polygons": 20,
+      "bounds_blender": {
+        "min": [
+          -0.1599999964237213,
+          -0.07999999821186066,
+          0.0
+        ],
+        "max": [
+          0.11999999731779099,
+          0.07999999821186066,
+          0.20000000298023224
+        ]
+      },
+      "dimensions": [
+        0.2799999937415123,
+        0.1599999964237213,
+        0.20000000298023224
+      ],
+      "pivot": "ground at base of trunk / center of prop",
+      "native_scale": 1,
+      "pixel_density_px_per_unit": 128,
+      "materials": 1,
+      "game_meshes": 1,
+      "atlas": "textures/forest_pixel_atlas.png",
+      "alpha_blending": false,
+      "voxel_cells": 91,
+      "surface_cells_removed": true,
+      "nonmanifold_edges": 0,
+      "mcp_only": true,
+      "export": {
+        "bytes": 132240,
+        "meshes": 1,
+        "surfaces": 1,
+        "materials": 1,
+        "triangles": 56,
+        "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+        "no_studio": true
+      },
+      "godot_scene": "godot/rock_root_small.tscn",
+      "godot_mesh": "godot/rock_root_small.res",
+      "footprint_radius": 0.17888543420158204,
+      "blend": "models/rock_root_small/rock_root_small.blend",
+      "glb": "models/rock_root_small/rock_root_small.glb",
+      "preview": "models/rock_root_small/previews/three_quarter.png"
+    }
+  ],
+  "godot_material": "godot/forest_pixel_material.tres",
+  "recommended_scale_variation": [
+    0.85,
+    1.12
+  ],
+  "texture_filter": "nearest with mipmaps; shared opaque material"
+}

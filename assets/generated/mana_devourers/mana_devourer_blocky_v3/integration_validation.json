@@ -1,0 +1,15 @@
+{
+  "game_integration": "PASS",
+  "regression_tests_passed": 45,
+  "native_godot_poses_checked": 615,
+  "animation_blending_preserves_orbit": true,
+  "forms": 5,
+  "stones": 4,
+  "triangles": 92,
+  "previous_mana_devourer_files_preserved": 36,
+  "previous_blender_scenes_preserved": 535,
+  "new_scene": "Mana_Devourer_Blocky_V3",
+  "idle_seconds": 16,
+  "preview_renderer": "Godot, imported GLB",
+  "lore": "Elven study of this natural mana-driven stone life led humans to develop golems."
+}

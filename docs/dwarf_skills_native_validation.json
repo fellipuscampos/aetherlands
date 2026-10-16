@@ -1,0 +1,151 @@
+{
+  "status": "PASS",
+  "models": 24,
+  "new_native_actions": 43,
+  "assets": [
+    {
+      "stem": "dwarf_shieldbearer_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_guardian_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_sentinel_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_guardian_champion_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_warrior_v1",
+      "private_skills": 1,
+      "total_actions": 4,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_swordsman_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_weapon_master_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_blade_hero_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_archer_v1",
+      "private_skills": 1,
+      "total_actions": 4,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_hunter_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_elite_marksman_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_legend_hunter_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_cavalier_v1",
+      "private_skills": 1,
+      "total_actions": 4,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_shock_cavalier_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_armored_cavalier_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_ram_lord_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_rogue_v1",
+      "private_skills": 1,
+      "total_actions": 4,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_saboteur_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_assassin_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_shadow_master_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_catapult_v1",
+      "private_skills": 1,
+      "total_actions": 4,
+      "timeline_end": 145
+    },
+    {
+      "stem": "dwarf_trebuchet_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 193
+    },
+    {
+      "stem": "dwarf_bombard_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 193
+    },
+    {
+      "stem": "dwarf_siege_colossus_v1",
+      "private_skills": 2,
+      "total_actions": 5,
+      "timeline_end": 193
+    }
+  ]
+}

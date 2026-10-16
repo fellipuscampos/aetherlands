@@ -1,0 +1,63 @@
+{
+  "status": "PASS",
+  "name": "Orc_Walls_Level_1_Hex_V1",
+  "stem": "orc_walls_level_1_hex_v1",
+  "race": "orc",
+  "fortification_level": 1,
+  "display_name": "Muralhas I",
+  "pipeline": "Blender 5.2 MCP localhost:9876",
+  "material_source": "assets\\generated\\orcs\\buildings\\orc_city_level_1_hex_v1\\orc_city_level_1_hex_v1.blend",
+  "texture_reuse": "Byte-identical approved orc city atlas; existing UV islands sampled",
+  "embedded_images": [
+    {
+      "name": "orc_city_level_1_hex_v1_emission",
+      "sha256": "589c9824ab2dfaad2ec00529543124408f4f8ef0319eca1b5f713a1515be07bc",
+      "bytes": 22065
+    },
+    {
+      "name": "orc_city_level_1_hex_v1_albedo",
+      "sha256": "8354178f7d83f821084a317a77a441d55d5a5f2a6272cbba65d2307b0e45afc7",
+      "bytes": 556856
+    }
+  ],
+  "triangles": 2580,
+  "editable_parts": 147,
+  "runtime_meshes": 1,
+  "source_boundary_sections": true,
+  "surface_cleanup": {
+    "removed_buried_and_shared_face_area": 4.554761350484946,
+    "source_parts": 147,
+    "visible_parts": 147,
+    "visible_faces": 1290,
+    "coplanar_overlaps_before": 292,
+    "coplanar_overlaps_after": 0,
+    "audit_includes_opposing_normals": true,
+    "atlas_bytes_unchanged": true
+  },
+  "shade": "Flat",
+  "height": 0.23800000548362732,
+  "native_tile_radius": 1.0,
+  "scales_with": "City.tile_radius",
+  "pointy_hex": true,
+  "wall_center_radius": 0.94,
+  "max_half_plane": 0.8530350625514984,
+  "tile_half_plane": 0.8660254037844386,
+  "minimum_city_foundation_clearance": 0.017801224049678765,
+  "city_foundation_radius": 0.84,
+  "includes_ground_plate": false,
+  "includes_city": false,
+  "bounds_blender": {
+    "min": [
+      -0.853035032749176,
+      -0.9850000143051147,
+      0.0
+    ],
+    "max": [
+      0.853035032749176,
+      0.9850000143051147,
+      0.23800000548362732
+    ]
+  },
+  "design": "Closed timber palisade on basalt, dark crossbars, six iron-bound square posts and a simple plank gate.",
+  "mesh_vertex_compression": false
+}

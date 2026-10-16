@@ -1,0 +1,64 @@
+{
+  "status": "PASS",
+  "name": "Dwarf_Walls_Level_1_Hex_V1",
+  "stem": "dwarf_walls_level_1_hex_v1",
+  "race": "dwarf",
+  "fortification_level": 1,
+  "display_name": "Muralhas I",
+  "pipeline": "Blender 5.2 MCP localhost:9876",
+  "material_source": "assets\\generated\\dwarves\\buildings\\dwarf_city_level_1_hex_v1\\dwarf_city_level_1_hex_v1.blend",
+  "texture_reuse": "Byte-identical approved dwarf city atlas; existing UV islands sampled",
+  "embedded_images": [
+    {
+      "name": "dwarf_city_level_1_hex_v1_emission",
+      "sha256": "710f4df364d1decfe93f5e9d335da6f82934a7997a8e39621da340707423656c",
+      "bytes": 22630
+    },
+    {
+      "name": "dwarf_city_level_1_hex_v1_albedo",
+      "sha256": "81ed2242272374f2135085839cc5bdfdbdd657304102bd4acc9c3dadad648ecc",
+      "bytes": 542905
+    }
+  ],
+  "triangles": 1750,
+  "editable_parts": 133,
+  "runtime_meshes": 1,
+  "source_boundary_sections": true,
+  "surface_cleanup": {
+    "removed_buried_and_shared_face_area": 4.5257502959824985,
+    "source_parts": 133,
+    "visible_parts": 133,
+    "visible_faces": 875,
+    "coplanar_overlaps_before": 327,
+    "coplanar_overlaps_after": 0,
+    "audit_includes_opposing_normals": true,
+    "atlas_bytes_unchanged": true,
+    "positional_tolerance": 8e-07
+  },
+  "shade": "Flat",
+  "height": 0.25200000405311584,
+  "native_tile_radius": 1.0,
+  "scales_with": "City.tile_radius",
+  "pointy_hex": true,
+  "wall_center_radius": 0.94,
+  "max_half_plane": 0.8530350662767887,
+  "tile_half_plane": 0.8660254037844386,
+  "minimum_city_foundation_clearance": 0.010971124079576455,
+  "city_foundation_radius": 0.84,
+  "includes_ground_plate": false,
+  "includes_city": false,
+  "bounds_blender": {
+    "min": [
+      -0.853035032749176,
+      -0.9850000143051147,
+      0.0
+    ],
+    "max": [
+      0.853035032749176,
+      0.9850000143051147,
+      0.25200000405311584
+    ]
+  },
+  "design": "Plain granite masonry, carved coping, short squared stone piers and a copper-bound plank gate.",
+  "mesh_vertex_compression": false
+}

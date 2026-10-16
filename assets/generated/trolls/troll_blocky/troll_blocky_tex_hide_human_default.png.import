@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bobmu4pjatueq"
-path="res://.godot/imported/troll_blocky_tex_hide_human_default.png-22c92a2a29fbfb2e5a29e4c88d7eebbc.ctex"
+path.bptc="res://.godot/imported/troll_blocky_tex_hide_human_default.png-22c92a2a29fbfb2e5a29e4c88d7eebbc.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "c4ead8f3568d455529620bc23f9eacb8"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/trolls/troll_blocky/troll_blocky_tex_hide_human_default.png"
-dest_files=["res://.godot/imported/troll_blocky_tex_hide_human_default.png-22c92a2a29fbfb2e5a29e4c88d7eebbc.ctex"]
+dest_files=["res://.godot/imported/troll_blocky_tex_hide_human_default.png-22c92a2a29fbfb2e5a29e4c88d7eebbc.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

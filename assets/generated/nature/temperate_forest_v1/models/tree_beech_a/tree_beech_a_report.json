@@ -1,0 +1,47 @@
+{
+  "asset": "tree_beech_a",
+  "name": "Temperate_Forest_V1_tree_beech_a",
+  "display_name": "Faia vertical",
+  "category": "main_tree",
+  "species": "beech",
+  "triangles": 116,
+  "vertices": 60,
+  "polygons": 39,
+  "bounds_blender": {
+    "min": [
+      -0.20000000298023224,
+      -0.20000000298023224,
+      0.0
+    ],
+    "max": [
+      0.20000000298023224,
+      0.1599999964237213,
+      1.0800000429153442
+    ]
+  },
+  "dimensions": [
+    0.4000000059604645,
+    0.35999999940395355,
+    1.0800000429153442
+  ],
+  "pivot": "ground at base of trunk / center of prop",
+  "native_scale": 1,
+  "pixel_density_px_per_unit": 128,
+  "materials": 1,
+  "game_meshes": 1,
+  "atlas": "textures/forest_pixel_atlas.png",
+  "alpha_blending": false,
+  "voxel_cells": 1116,
+  "surface_cells_removed": true,
+  "nonmanifold_edges": 0,
+  "mcp_only": true,
+  "export": {
+    "bytes": 135696,
+    "meshes": 1,
+    "surfaces": 1,
+    "materials": 1,
+    "triangles": 116,
+    "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+    "no_studio": true
+  }
+}

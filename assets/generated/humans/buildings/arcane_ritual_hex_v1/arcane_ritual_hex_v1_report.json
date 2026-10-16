@@ -1,0 +1,131 @@
+{
+  "name": "Arcane_Ritual_Hex_V1",
+  "display_name": "Torre do Véu — Humanos",
+  "gameplay_building_id": "v2_building_arcane_ritual",
+  "trains": [
+    "v2_manifestation_veil_archon"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1492,
+  "editable_parts": 122,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      2.2081081867218018
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    2.2081081867218018
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 744,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "human",
+  "magic_school": "arcanism",
+  "grand_magic": true,
+  "asset_only": true,
+  "requires_building": "v2_building_arcane_conclave",
+  "includes_perimeter_walls": false,
+  "school_building_separate": true,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "craft": {
+    "race_details": "Alvenaria formal, pilastras, vitrais e madeira com ferragens douradas.",
+    "material_reference": "assets/generated/humans/buildings/arcane_conclave_hex_v1",
+    "roof_rgb": [
+      49,
+      79,
+      127
+    ],
+    "physical_attachment_remaining": [],
+    "intentional_levitation": [
+      "Veil_Core"
+    ],
+    "relic_source": null
+  },
+  "export": {
+    "file": "arcane_ritual_hex_v1.glb",
+    "bytes": 706912,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1492,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "arcane_ritual_hex_v1_emission",
+        "bytes": 22048,
+        "sha256": "580a3475449bb07dd782134c26a8947d1d91ed3eb754526dac4f81372ecfbab3"
+      },
+      {
+        "image": "arcane_ritual_hex_v1_albedo",
+        "bytes": 572493,
+        "sha256": "4c7f9aef64e8d4f97595e4d75a6da5a19e77cb44a22af3358e325556fe466a7e"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "human",
+    "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos.",
+    "geometry_changes": [
+      "masonry:Veil_Lower_Tower_Body",
+      "masonry:Veil_Middle_Tower_Body",
+      "masonry:Veil_Upper_Tower_Body"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

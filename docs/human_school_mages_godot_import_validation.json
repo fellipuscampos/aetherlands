@@ -1,0 +1,65 @@
+{
+	"assets": [
+		{
+			"ground_pivot": true,
+			"height_m": 1.95028376579285,
+			"meshes": 1,
+			"nearest_with_mipmaps": true,
+			"school": "sacred",
+			"surfaces": 1,
+			"triangles": 552
+		},
+		{
+			"ground_pivot": true,
+			"height_m": 1.89846849441528,
+			"meshes": 1,
+			"nearest_with_mipmaps": true,
+			"school": "infernal",
+			"surfaces": 1,
+			"triangles": 528
+		},
+		{
+			"ground_pivot": true,
+			"height_m": 1.8309999704361,
+			"meshes": 1,
+			"nearest_with_mipmaps": true,
+			"school": "necromancy",
+			"surfaces": 1,
+			"triangles": 564
+		},
+		{
+			"ground_pivot": true,
+			"height_m": 1.9135000705719,
+			"meshes": 1,
+			"nearest_with_mipmaps": true,
+			"school": "druidism",
+			"surfaces": 1,
+			"triangles": 588
+		},
+		{
+			"ground_pivot": true,
+			"height_m": 2.07963967323303,
+			"meshes": 1,
+			"nearest_with_mipmaps": true,
+			"school": "arcanism",
+			"surfaces": 1,
+			"triangles": 584
+		},
+		{
+			"ground_pivot": true,
+			"height_m": 1.93649995326996,
+			"meshes": 1,
+			"nearest_with_mipmaps": true,
+			"school": "elementalism",
+			"surfaces": 1,
+			"triangles": 584
+		}
+	],
+	"failures": [],
+	"game_database_changed": false,
+	"native_screenshots": 0,
+	"renderer": "forward_plus",
+	"stage": "static_model_review",
+	"status": "PASS",
+	"verified": 6
+}

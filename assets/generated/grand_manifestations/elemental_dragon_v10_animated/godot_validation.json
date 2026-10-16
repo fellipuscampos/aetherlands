@@ -1,0 +1,125 @@
+{
+  "actions": {
+    "attack": {
+      "average_middle_body_motion_m": 2.42437668045362,
+      "axial_roll_degrees": 0.0,
+      "body_motion_beyond_root_m": 3.31493496894836,
+      "core_energy_range": [
+        0.499999582767487,
+        1.98451912403107
+      ],
+      "core_scale_range": [
+        0.899999916553497,
+        1.19690382480621
+      ],
+      "duration_s": 2.4,
+      "end_pose_difference_m": 0.000000684805229411722,
+      "head_advance_m": 2.59956812858582,
+      "head_lift_m": 0.193000316619873,
+      "head_travel_m": 19.4826353234239,
+      "jaw_open_degrees": 25.0000001265059,
+      "loop": false,
+      "maximum_spine_length_error_m": 0.000000357627868652344,
+      "minimum_ground_clearance_m": 0.472164392471313,
+      "path_following": false,
+      "samples": 145,
+      "tail_motion_beyond_root_m": 5.01310014724731,
+      "unit_scale_preserved": true
+    },
+    "spell": {
+      "average_middle_body_motion_m": 2.43414006133874,
+      "axial_roll_degrees": 0.0,
+      "body_motion_beyond_root_m": 3.31962370872498,
+      "core_energy_range": [
+        0.350395768880844,
+        1.64960479736328
+      ],
+      "core_scale_range": [
+        0.870079159736633,
+        1.12992107868195
+      ],
+      "duration_s": 8.0,
+      "end_pose_difference_m": 0.00000102026717740955,
+      "head_advance_m": 2.32524383068085,
+      "head_lift_m": 0.0,
+      "head_travel_m": 20.3830405822082,
+      "jaw_open_degrees": 0.0,
+      "loop": false,
+      "maximum_spine_length_error_m": 0.000000372529029846191,
+      "minimum_ground_clearance_m": 0.446147561073303,
+      "path_following": false,
+      "samples": 481,
+      "tail_motion_beyond_root_m": 5.16909742355347,
+      "unit_scale_preserved": true
+    },
+    "walk": {
+      "average_middle_body_motion_m": 0.938428244491418,
+      "axial_roll_degrees": 0.0,
+      "body_motion_beyond_root_m": 1.15440344810486,
+      "core_energy_range": [
+        0.500000178813934,
+        1.50000071525574
+      ],
+      "core_scale_range": [
+        0.900000035762787,
+        1.10000014305115
+      ],
+      "duration_s": 4.0,
+      "end_pose_difference_m": 0.0,
+      "head_advance_m": 0.0522311925888062,
+      "head_lift_m": 0.0131688117980957,
+      "head_travel_m": 3.47139486193191,
+      "jaw_open_degrees": 0.0,
+      "loop": true,
+      "maximum_spine_length_error_m": 0.000000491738319396973,
+      "minimum_ground_clearance_m": 1.29527521133423,
+      "path_following": false,
+      "samples": 241,
+      "tail_motion_beyond_root_m": 1.05765306949615,
+      "unit_scale_preserved": true
+    }
+  },
+  "animations": 4,
+  "bones": 91,
+  "continuous_spine": true,
+  "emission": true,
+  "ground_clearance_m": 0.350000083446503,
+  "height_m": 2.99999958276749,
+  "idle": {
+    "average_middle_body_motion_m": 0.070748048958679,
+    "axial_roll_degrees": 0.0,
+    "body_motion_beyond_root_m": 0.115446262061596,
+    "core_energy_range": [
+      0.750151932239532,
+      1.24984776973724
+    ],
+    "core_scale_range": [
+      0.950030386447906,
+      1.04996955394745
+    ],
+    "duration_s": 6.0,
+    "float_range_m": 0.0359999984502792,
+    "independent_core_rotation": true,
+    "loop": true,
+    "loop_seam_m": 0.0,
+    "maximum_spine_length_error_m": 0.000000312924385070801,
+    "minimum_ground_clearance_m": 0.42876136302948,
+    "samples": 361,
+    "tail_motion_beyond_root_m": 0.106623262166977,
+    "unit_scale_preserved": true
+  },
+  "independent_core": true,
+  "materials": 1,
+  "maximum_skin_influences": 1,
+  "maximum_weight_packing_error": 0.0,
+  "meshes": 1,
+  "nearest": true,
+  "size_m": [
+    3.17874646186829,
+    2.99999958276749,
+    2.33465147018433
+  ],
+  "spine_bones": 39,
+  "status": "PASS",
+  "triangles": 1738
+}

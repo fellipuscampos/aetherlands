@@ -1,0 +1,116 @@
+{
+  "status": "PASS",
+  "via": "Blender MCP live",
+  "duration_s": 5,
+  "frames": 121,
+  "samples": 241,
+  "fps": 24,
+  "parts": 79,
+  "bones": 37,
+  "particles_included": false,
+  "root_motion": false,
+  "initial_to_idle_vertex_error_m": 0.0,
+  "bounds_min": [
+    -0.9081102609634399,
+    -1.0006933212280273,
+    -3.3901731967926025
+  ],
+  "bounds_max": [
+    0.8927531242370605,
+    1.3766223192214966,
+    3.295314073562622
+  ],
+  "maximum_half_frame_step_m": 0.06306495944436095,
+  "joint_gap_m": 4.786961795153919e-07,
+  "maximum_wrist_angle_deg": 32.2864703221038,
+  "cloth_anchor_error_m": 4.777675730550706e-07,
+  "prop_body_collision_checks": 14,
+  "prop_body_intersections": 0,
+  "death_style": "sinks while agonizing",
+  "sinking_samples": {
+    "0.0": {
+      "minimum": [
+        -0.8057448863983154,
+        -0.558111310005188,
+        0.20000000298023224
+      ],
+      "maximum": [
+        0.7514761090278625,
+        0.5607360601425171,
+        3.200000047683716
+      ],
+      "fraction_vertices_above_floor": 1.0
+    },
+    "1.0": {
+      "minimum": [
+        -0.894248366355896,
+        -0.6704610586166382,
+        -0.02556801214814186
+      ],
+      "maximum": [
+        0.7075281143188477,
+        0.8570907115936279,
+        2.960366725921631
+      ],
+      "fraction_vertices_above_floor": 0.9957081545064378
+    },
+    "2.0": {
+      "minimum": [
+        -0.7772731781005859,
+        -0.6995143890380859,
+        -0.499622106552124
+      ],
+      "maximum": [
+        0.8387947678565979,
+        0.9913212656974792,
+        2.4859464168548584
+      ],
+      "fraction_vertices_above_floor": 0.8862660944206009
+    },
+    "3.0": {
+      "minimum": [
+        -0.8638699650764465,
+        -0.7580357193946838,
+        -1.2168326377868652
+      ],
+      "maximum": [
+        0.7406508326530457,
+        1.0390602350234985,
+        1.7790603637695312
+      ],
+      "fraction_vertices_above_floor": 0.6824034334763949
+    },
+    "4.0": {
+      "minimum": [
+        -0.8323197364807129,
+        -0.980016827583313,
+        -2.184074640274048
+      ],
+      "maximum": [
+        0.7769777774810791,
+        1.3363436460494995,
+        0.6940593719482422
+      ],
+      "fraction_vertices_above_floor": 0.20278969957081544
+    },
+    "5.0": {
+      "minimum": [
+        -0.8328286409378052,
+        -1.0006932020187378,
+        -3.3901731967926025
+      ],
+      "maximum": [
+        0.7767632603645325,
+        1.376622200012207,
+        -0.5439118146896362
+      ],
+      "fraction_vertices_above_floor": 0.0
+    }
+  },
+  "full_size_throughout": true,
+  "final_all_vertices_below_floor": true,
+  "original_asset_files_unchanged": true,
+  "original_five_clips_preserved": true,
+  "serialized_original_clip_error": 0.0,
+  "serialized_death_to_idle_error": 0.0
+}

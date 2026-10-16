@@ -1,0 +1,296 @@
+{
+  "name": "Elf_Sacred_Temple_Hex_V1",
+  "display_name": "Templo Sagrado — Elfos",
+  "gameplay_building_id": "v2_building_sacred_temple",
+  "trains": [
+    "v2_unit_sacred_cleric"
+  ],
+  "excludes": [
+    "v2_building_sacred_ritual"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 2448,
+  "editable_parts": 154,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.5727099180221558
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.5727099180221558
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1074,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Cantaria clara com armação esbelta de madeira, mãos-francesas em forma de galhos e coberturas verdes com cantos facetados e beirais ascendentes. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.23,
+    0.35
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "magic_school": "sacred",
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "ritual_building_separate": true,
+  "excluded_buildings": [
+    "v2_building_sacred_ritual"
+  ],
+  "finish_pass": {
+    "revision": 1,
+    "original_structure_preserved": true,
+    "race_details": "Carved branches, attached vine foliage, pointed details and leaf-shaped mounts.",
+    "roof_rgb": [
+      48,
+      122,
+      88
+    ],
+    "physical_attachment_remaining": [],
+    "relic_source": null
+  },
+  "export": {
+    "file": "elf_sacred_temple_hex_v1.glb",
+    "bytes": 768360,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2448,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_sacred_temple_hex_v1_emission",
+        "bytes": 22430,
+        "sha256": "69402497368056b85fa3aa3126f41d24235814353a8a51c34e2a60044fd0c49b"
+      },
+      {
+        "image": "elf_sacred_temple_hex_v1_albedo",
+        "bytes": 576006,
+        "sha256": "0266719eb481df3a6b0dbdd857894439df0e0ca19dd1bb99ea3cfaf3c80c99da"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "elf",
+    "design": "Cantaria clara com armação esbelta de madeira, mãos-francesas em forma de galhos e coberturas verdes com cantos facetados e beirais ascendentes.",
+    "geometry_changes": [
+      "ivory:Chapel_Body",
+      "ivory:Bell_Tower_Shaft",
+      "roof_geometry:Chapel_Course_00",
+      "roof_geometry:Chapel_Course_01",
+      "roof_geometry:Chapel_Course_02",
+      "roof_geometry:Chapel_Course_03",
+      "roof_geometry:Chapel_Course_04",
+      "roof_geometry:Chapel_Course_05",
+      "roof_geometry:Bell_Crown_Course_00",
+      "roof_geometry:Bell_Crown_Course_01",
+      "roof_geometry:Bell_Crown_Course_02",
+      "roof_geometry:Bell_Crown_Course_03",
+      "branch_pier:Chapel_Post_-1_-1",
+      "branch_pier:Chapel_Post_-1_1",
+      "branch_pier:Chapel_Post_1_-1",
+      "branch_pier:Chapel_Post_1_1",
+      "branch_pier:Bell_Tower_Shaft",
+      "branch_pier:Bell_Stage_Post_-0.083_-0.084",
+      "branch_pier:Bell_Stage_Post_-0.083_0.084",
+      "branch_pier:Bell_Stage_Post_0.083_-0.084",
+      "branch_pier:Bell_Stage_Post_0.083_0.084",
+      "upper_structure_proportion:1.22"
+    ],
+    "roof_braces": [
+      {
+        "post": "Chapel_Post_-1_-1",
+        "roof": "Chapel_Course_00",
+        "end": [
+          -0.09099999815225601,
+          -0.1509999930858612,
+          0.660760042667389
+        ]
+      },
+      {
+        "post": "Chapel_Post_-1_-1",
+        "roof": "Chapel_Course_00",
+        "end": [
+          -0.22100000083446503,
+          -0.02099999226629734,
+          0.660760042667389
+        ]
+      },
+      {
+        "post": "Chapel_Post_-1_1",
+        "roof": "Chapel_Course_00",
+        "end": [
+          -0.09099999815225601,
+          0.45100000500679016,
+          0.660760042667389
+        ]
+      },
+      {
+        "post": "Chapel_Post_-1_1",
+        "roof": "Chapel_Course_00",
+        "end": [
+          -0.22100000083446503,
+          0.32100000977516174,
+          0.660760042667389
+        ]
+      },
+      {
+        "post": "Chapel_Post_1_-1",
+        "roof": "Chapel_Course_00",
+        "end": [
+          0.1809999942779541,
+          -0.1509999930858612,
+          0.660760042667389
+        ]
+      },
+      {
+        "post": "Chapel_Post_1_-1",
+        "roof": "Chapel_Course_00",
+        "end": [
+          0.3109999895095825,
+          -0.02099999226629734,
+          0.660760042667389
+        ]
+      },
+      {
+        "post": "Chapel_Post_1_1",
+        "roof": "Chapel_Course_00",
+        "end": [
+          0.1809999942779541,
+          0.45100000500679016,
+          0.660760042667389
+        ]
+      },
+      {
+        "post": "Chapel_Post_1_1",
+        "roof": "Chapel_Course_00",
+        "end": [
+          0.3109999895095825,
+          0.32100000977516174,
+          0.660760042667389
+        ]
+      },
+      {
+        "post": "Bell_Stage_Post_-0.083_-0.084",
+        "roof": "Bell_Crown_Course_00",
+        "end": [
+          -0.5090500116348267,
+          0.061000000685453415,
+          1.0645800065994262
+        ]
+      },
+      {
+        "post": "Bell_Stage_Post_-0.083_-0.084",
+        "roof": "Bell_Crown_Course_00",
+        "end": [
+          -0.5630000233650208,
+          0.11559999734163284,
+          1.0645800065994262
+        ]
+      },
+      {
+        "post": "Bell_Stage_Post_-0.083_0.084",
+        "roof": "Bell_Crown_Course_00",
+        "end": [
+          -0.5090500116348267,
+          0.2290000021457672,
+          1.0645800065994262
+        ]
+      },
+      {
+        "post": "Bell_Stage_Post_-0.083_0.084",
+        "roof": "Bell_Crown_Course_00",
+        "end": [
+          -0.5630000233650208,
+          0.17440000176429749,
+          1.0645800065994262
+        ]
+      },
+      {
+        "post": "Bell_Stage_Post_0.083_-0.084",
+        "roof": "Bell_Crown_Course_00",
+        "end": [
+          -0.450950026512146,
+          0.061000000685453415,
+          1.0645800065994262
+        ]
+      },
+      {
+        "post": "Bell_Stage_Post_0.083_-0.084",
+        "roof": "Bell_Crown_Course_00",
+        "end": [
+          -0.3970000147819519,
+          0.11559999734163284,
+          1.0645800065994262
+        ]
+      },
+      {
+        "post": "Bell_Stage_Post_0.083_0.084",
+        "roof": "Bell_Crown_Course_00",
+        "end": [
+          -0.450950026512146,
+          0.2290000021457672,
+          1.0645800065994262
+        ]
+      },
+      {
+        "post": "Bell_Stage_Post_0.083_0.084",
+        "roof": "Bell_Crown_Course_00",
+        "end": [
+          -0.3970000147819519,
+          0.17440000176429749,
+          1.0645800065994262
+        ]
+      }
+    ],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

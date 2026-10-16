@@ -1,0 +1,337 @@
+{
+	"assets": [
+		{
+			"asset": "war_stable_hex_v1",
+			"meshes": 8,
+			"triangles": 2348
+		},
+		{
+			"asset": "elf_war_stable_hex_v1",
+			"meshes": 8,
+			"triangles": 3072
+		},
+		{
+			"asset": "dwarf_war_stable_hex_v1",
+			"meshes": 8,
+			"triangles": 2680
+		},
+		{
+			"asset": "orc_arcane_conclave_hex_v1",
+			"meshes": 8,
+			"triangles": 2640
+		},
+		{
+			"asset": "warrior_hall_hex_v1",
+			"meshes": 8,
+			"triangles": 2404
+		},
+		{
+			"asset": "ranger_camp_hex_v1",
+			"meshes": 8,
+			"triangles": 3220
+		},
+		{
+			"asset": "rogue_guild_hex_v1",
+			"meshes": 8,
+			"triangles": 2728
+		},
+		{
+			"asset": "siege_arsenal_hex_v1",
+			"meshes": 8,
+			"triangles": 3316
+		},
+		{
+			"asset": "cavalry_mastery_hex_v1",
+			"meshes": 8,
+			"triangles": 2412
+		},
+		{
+			"asset": "rogue_mastery_hex_v1",
+			"meshes": 8,
+			"triangles": 1888
+		},
+		{
+			"asset": "grand_arsenal_hex_v1",
+			"meshes": 7,
+			"triangles": 2172
+		},
+		{
+			"asset": "ranger_mastery_hex_v1",
+			"meshes": 8,
+			"triangles": 1532
+		},
+		{
+			"asset": "warrior_mastery_hex_v1",
+			"meshes": 8,
+			"triangles": 1700
+		},
+		{
+			"asset": "sacred_temple_hex_v1",
+			"meshes": 8,
+			"triangles": 1620
+		},
+		{
+			"asset": "sacred_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 2100
+		},
+		{
+			"asset": "infernal_sanctum_hex_v1",
+			"meshes": 8,
+			"triangles": 1540
+		},
+		{
+			"asset": "infernal_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1400
+		},
+		{
+			"asset": "necromancy_ossuary_hex_v1",
+			"meshes": 8,
+			"triangles": 1992
+		},
+		{
+			"asset": "necromancy_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1740
+		},
+		{
+			"asset": "arcane_conclave_hex_v1",
+			"meshes": 8,
+			"triangles": 2116
+		},
+		{
+			"asset": "arcane_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1492
+		},
+		{
+			"asset": "elemental_observatory_hex_v1",
+			"meshes": 8,
+			"triangles": 1868
+		},
+		{
+			"asset": "elemental_ritual_hex_v1",
+			"meshes": 7,
+			"triangles": 1392
+		},
+		{
+			"asset": "elf_guardian_hall_hex_v1",
+			"meshes": 8,
+			"triangles": 2948
+		},
+		{
+			"asset": "elf_warrior_hall_hex_v1",
+			"meshes": 8,
+			"triangles": 2776
+		},
+		{
+			"asset": "elf_ranger_camp_hex_v1",
+			"meshes": 8,
+			"triangles": 4088
+		},
+		{
+			"asset": "elf_rogue_guild_hex_v1",
+			"meshes": 8,
+			"triangles": 3268
+		},
+		{
+			"asset": "elf_siege_arsenal_hex_v1",
+			"meshes": 8,
+			"triangles": 4096
+		},
+		{
+			"asset": "dwarf_ranger_camp_hex_v1",
+			"meshes": 8,
+			"triangles": 3694
+		},
+		{
+			"asset": "dwarf_rogue_guild_hex_v1",
+			"meshes": 8,
+			"triangles": 3180
+		},
+		{
+			"asset": "dwarf_siege_arsenal_hex_v1",
+			"meshes": 8,
+			"triangles": 3872
+		},
+		{
+			"asset": "elf_sacred_temple_hex_v1",
+			"meshes": 8,
+			"triangles": 2448
+		},
+		{
+			"asset": "elf_sacred_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 3296
+		},
+		{
+			"asset": "elf_infernal_sanctum_hex_v1",
+			"meshes": 8,
+			"triangles": 2316
+		},
+		{
+			"asset": "elf_infernal_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 2056
+		},
+		{
+			"asset": "elf_necromancy_ossuary_hex_v1",
+			"meshes": 8,
+			"triangles": 2872
+		},
+		{
+			"asset": "elf_necromancy_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 2452
+		},
+		{
+			"asset": "elf_druidic_circle_hex_v1",
+			"meshes": 8,
+			"triangles": 2460
+		},
+		{
+			"asset": "elf_druidic_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1732
+		},
+		{
+			"asset": "elf_arcane_conclave_hex_v1",
+			"meshes": 8,
+			"triangles": 2904
+		},
+		{
+			"asset": "elf_arcane_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 2356
+		},
+		{
+			"asset": "elf_elemental_observatory_hex_v1",
+			"meshes": 8,
+			"triangles": 2728
+		},
+		{
+			"asset": "elf_elemental_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1900
+		},
+		{
+			"asset": "dwarf_sacred_temple_hex_v1",
+			"meshes": 8,
+			"triangles": 2056
+		},
+		{
+			"asset": "dwarf_sacred_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 2716
+		},
+		{
+			"asset": "dwarf_infernal_sanctum_hex_v1",
+			"meshes": 8,
+			"triangles": 1864
+		},
+		{
+			"asset": "dwarf_infernal_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1724
+		},
+		{
+			"asset": "dwarf_necromancy_ossuary_hex_v1",
+			"meshes": 8,
+			"triangles": 2272
+		},
+		{
+			"asset": "dwarf_necromancy_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 2116
+		},
+		{
+			"asset": "dwarf_druidic_circle_hex_v1",
+			"meshes": 8,
+			"triangles": 1444
+		},
+		{
+			"asset": "dwarf_druidic_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1128
+		},
+		{
+			"asset": "dwarf_arcane_conclave_hex_v1",
+			"meshes": 8,
+			"triangles": 2488
+		},
+		{
+			"asset": "dwarf_arcane_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1876
+		},
+		{
+			"asset": "dwarf_elemental_observatory_hex_v1",
+			"meshes": 8,
+			"triangles": 2240
+		},
+		{
+			"asset": "dwarf_elemental_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1896
+		},
+		{
+			"asset": "orc_sacred_temple_hex_v1",
+			"meshes": 8,
+			"triangles": 2204
+		},
+		{
+			"asset": "orc_sacred_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 2688
+		},
+		{
+			"asset": "orc_infernal_sanctum_hex_v1",
+			"meshes": 8,
+			"triangles": 1988
+		},
+		{
+			"asset": "orc_infernal_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1512
+		},
+		{
+			"asset": "orc_necromancy_ossuary_hex_v1",
+			"meshes": 8,
+			"triangles": 2324
+		},
+		{
+			"asset": "orc_necromancy_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 2000
+		},
+		{
+			"asset": "orc_druidic_circle_hex_v1",
+			"meshes": 8,
+			"triangles": 1536
+		},
+		{
+			"asset": "orc_druidic_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1236
+		},
+		{
+			"asset": "orc_arcane_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1928
+		},
+		{
+			"asset": "orc_elemental_observatory_hex_v1",
+			"meshes": 8,
+			"triangles": 2212
+		},
+		{
+			"asset": "orc_elemental_ritual_hex_v1",
+			"meshes": 8,
+			"triangles": 1580
+		}
+	],
+	"problems": [],
+	"status": "PASS",
+	"verified": 66
+}

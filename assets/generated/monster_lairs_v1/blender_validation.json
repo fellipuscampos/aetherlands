@@ -1,0 +1,164 @@
+{
+  "status": "PASS",
+  "method": "Live Blender MCP source load + GLB round-trip",
+  "assets": [
+    {
+      "kind": "arboreal_ancient",
+      "result": "PASS",
+      "source_scenes": [
+        "arboreal_ancient_lair_v1"
+      ],
+      "editable_parts": 91,
+      "packed_source_images": 2,
+      "imported_meshes": 1,
+      "imported_triangles": 1156,
+      "bounds_match": true,
+      "studio_exported": false
+    },
+    {
+      "kind": "basilisk",
+      "result": "PASS",
+      "source_scenes": [
+        "basilisk_lair_v1"
+      ],
+      "editable_parts": 97,
+      "packed_source_images": 2,
+      "imported_meshes": 1,
+      "imported_triangles": 1216,
+      "bounds_match": true,
+      "studio_exported": false
+    },
+    {
+      "kind": "colossal_worm",
+      "result": "PASS",
+      "source_scenes": [
+        "colossal_worm_lair_v1"
+      ],
+      "editable_parts": 59,
+      "packed_source_images": 2,
+      "imported_meshes": 1,
+      "imported_triangles": 864,
+      "bounds_match": true,
+      "studio_exported": false
+    },
+    {
+      "kind": "corrupted_hero",
+      "result": "PASS",
+      "source_scenes": [
+        "corrupted_hero_lair_v1"
+      ],
+      "editable_parts": 54,
+      "packed_source_images": 2,
+      "imported_meshes": 1,
+      "imported_triangles": 696,
+      "bounds_match": true,
+      "studio_exported": false
+    },
+    {
+      "kind": "giant_spider",
+      "result": "PASS",
+      "source_scenes": [
+        "giant_spider_lair_v1"
+      ],
+      "editable_parts": 98,
+      "packed_source_images": 2,
+      "imported_meshes": 1,
+      "imported_triangles": 1220,
+      "bounds_match": true,
+      "studio_exported": false
+    },
+    {
+      "kind": "goblin",
+      "result": "PASS",
+      "source_scenes": [
+        "goblin_lair_v1.001"
+      ],
+      "editable_parts": 66,
+      "packed_source_images": 2,
+      "imported_meshes": 1,
+      "imported_triangles": 816,
+      "bounds_match": true,
+      "studio_exported": false
+    },
+    {
+      "kind": "mana_devourer",
+      "result": "PASS",
+      "source_scenes": [
+        "mana_devourer_lair_v1.001"
+      ],
+      "editable_parts": 45,
+      "packed_source_images": 2,
+      "imported_meshes": 1,
+      "imported_triangles": 620,
+      "bounds_match": true,
+      "studio_exported": false
+    },
+    {
+      "kind": "minotaur",
+      "result": "PASS",
+      "source_scenes": [
+        "minotaur_lair_v1.001"
+      ],
+      "editable_parts": 57,
+      "packed_source_images": 2,
+      "imported_meshes": 1,
+      "imported_triangles": 724,
+      "bounds_match": true,
+      "studio_exported": false
+    },
+    {
+      "kind": "skeleton",
+      "result": "PASS",
+      "source_scenes": [
+        "skeleton_lair_v1"
+      ],
+      "editable_parts": 67,
+      "packed_source_images": 2,
+      "imported_meshes": 1,
+      "imported_triangles": 848,
+      "bounds_match": true,
+      "studio_exported": false
+    },
+    {
+      "kind": "troll",
+      "result": "PASS",
+      "source_scenes": [
+        "troll_lair_v1"
+      ],
+      "editable_parts": 53,
+      "packed_source_images": 2,
+      "imported_meshes": 1,
+      "imported_triangles": 704,
+      "bounds_match": true,
+      "studio_exported": false
+    },
+    {
+      "kind": "worg",
+      "result": "PASS",
+      "source_scenes": [
+        "worg_lair_v1"
+      ],
+      "editable_parts": 61,
+      "packed_source_images": 2,
+      "imported_meshes": 1,
+      "imported_triangles": 788,
+      "bounds_match": true,
+      "studio_exported": false
+    },
+    {
+      "kind": "wyvern",
+      "result": "PASS",
+      "source_scenes": [
+        "wyvern_lair_v1"
+      ],
+      "editable_parts": 77,
+      "packed_source_images": 2,
+      "imported_meshes": 1,
+      "imported_triangles": 992,
+      "bounds_match": true,
+      "studio_exported": false
+    }
+  ],
+  "original_scene_restored": true,
+  "existing_scenes_preserved": true
+}

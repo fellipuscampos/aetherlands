@@ -1,0 +1,61 @@
+{
+  "status": "PASS",
+  "anatomy": {
+    "body_belly": "1b281d82ce9c63459c5b143318d539453965b4479711405cb1affd1b4b721eac",
+    "body_chest": "c78b881b49d6bc372b5107fe16d50954ac934792ec86ac3b985341d2667eead7",
+    "body_foot_L": "c9b06769765e4482bb9bc38bbcbef54581a5bd62bafab193be220a797992d4a5",
+    "body_foot_R": "c9b06769765e4482bb9bc38bbcbef54581a5bd62bafab193be220a797992d4a5",
+    "body_forearm_L": "470dbeccca8b05bfdec2eef37cbb2b502cf6abbc4dc5faa4c944f167f3eeee91",
+    "body_forearm_R": "470dbeccca8b05bfdec2eef37cbb2b502cf6abbc4dc5faa4c944f167f3eeee91",
+    "body_hand_L": "cb78ae0bc057ebec335a111a4a583398bbf0ba5dc337865ff01fba37348ce3d6",
+    "body_hand_R": "cb78ae0bc057ebec335a111a4a583398bbf0ba5dc337865ff01fba37348ce3d6",
+    "body_head": "2cb8d362e52dd59c6fea0bf48f47b846f7c2f756a5dd3ca7807a0e1dd082d993",
+    "body_pelvis": "31f2365c98e2dc61260dd07a40ce6c2ee4dd845a8fb594ed1bc762316ff91b25",
+    "body_shin_L": "096c9ae3f1b685173c09d5ddbdbfb991d333ac64332931972dfebe74f85357dc",
+    "body_shin_R": "096c9ae3f1b685173c09d5ddbdbfb991d333ac64332931972dfebe74f85357dc",
+    "body_shoulder_L": "d8056e397a2097abaf79a343bc320d304513aa003fea254b92bacf5e7b8946c5",
+    "body_shoulder_R": "d8056e397a2097abaf79a343bc320d304513aa003fea254b92bacf5e7b8946c5",
+    "body_thigh_L": "7796157034e6a7046bcb0d840f29de37dea512bd9a8a378c60305ccb13881f26",
+    "body_thigh_R": "7796157034e6a7046bcb0d840f29de37dea512bd9a8a378c60305ccb13881f26",
+    "body_upper_arm_L": "6086967f8afc9181e047f9ff79231296d926c0c92eb9f99526a4bd8060ab8a20",
+    "body_upper_arm_R": "6086967f8afc9181e047f9ff79231296d926c0c92eb9f99526a4bd8060ab8a20"
+  },
+  "geometry": {
+    "parts": 45,
+    "triangles": 540,
+    "bounds_min": [
+      -0.5170000195503235,
+      -0.448632150888443,
+      0.0
+    ],
+    "bounds_max": [
+      0.5214075446128845,
+      0.16750000417232513,
+      1.3760000467300415
+    ],
+    "dimensions": [
+      1.038407564163208,
+      0.6161321401596069,
+      1.3760000467300415
+    ],
+    "closed_meshes": true,
+    "uv_in_bounds": true
+  },
+  "atlas": {
+    "size": 512,
+    "density_px_per_m": 64,
+    "padding_px": 3,
+    "face_islands": 270,
+    "paint_revision": 7,
+    "sha256": "97df80664121cb44d92a9633bc6fe892991ffd91cc83746442f15a0ac625496b"
+  },
+  "export": {
+    "bytes": 75828,
+    "meshes": 15,
+    "animations": 0,
+    "skins": 0,
+    "embedded_png_matches": true,
+    "nearest_filter": true,
+    "sha256": "8a464ae494161d1a3dd2904654c94240eb542c633c290d6e705386bc7b9321eb"
+  }
+}

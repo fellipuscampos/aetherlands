@@ -1,0 +1,112 @@
+{
+  "name": "Orc_Rogue_Guild_Hex_V1",
+  "display_name": "Guilda dos Ladinos Orcs",
+  "gameplay_building_id": "v2_building_rogue_guild",
+  "trains": [
+    "v2_unit_rogue",
+    "v2_unit_saboteur",
+    "v2_unit_assassin"
+  ],
+  "excludes": [
+    "v2_legendary_shadow_master"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 2652,
+  "editable_parts": 191,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.1349999904632568
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.1349999904632568
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units; pointy-top tile radius 1, military foundation radius .92; placement scale tile_radius. Asset only, no integration.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1236,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Original orc rogue guild: asymmetric dark timber and basalt rear hall with rust-red stepped hood roof matching the orc building family, short ivory ridge tusks and rust-red bindings; prominent silver hood, narrow eyes, little tusks and crossed short daggers on clan-red plaque. Low attached storehouse with dark red roof and canvas awning, ragged red awning valance, blade bench and stoppered preparation bottles. Open precision training yard with one straw marked-throat/heart dummy and one knife-throwing board, separate closed cellar hatch and moss shrubs. Same regular rogue/saboteur/assassin line; legendary shadow master belongs to separate mastery building. No character dependency, watchtower or perimeter wall ring.",
+  "door_clearance_m": [
+    0.204,
+    0.283
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "orc",
+  "unit_class": "rogue",
+  "asset_only": true,
+  "hex_tile": {
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "placement_scale": "tile_radius",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "training_props": {
+    "precision_dummy": 1,
+    "knife_throwing_board": 1,
+    "knife_bench": true,
+    "preparation_bottles": 2,
+    "closed_cellar_hatch": true
+  },
+  "faction_tint": "Crest backing cloth and ragged awning valance isolated in Faction mesh for future owner tint. No runtime integration.",
+  "export": {
+    "file": "orc_rogue_guild_hex_v1.glb",
+    "bytes": 995144,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2652,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "orc_rogue_guild_hex_v1_emission",
+        "bytes": 79038,
+        "sha256": "1838cde01180c18af99eead2ee11678c6e3c10d325259f4b8306cef1b0322613"
+      },
+      {
+        "image": "orc_rogue_guild_hex_v1_albedo",
+        "bytes": 725608,
+        "sha256": "6ce9f641d6bc9486f2c097157edfa6e0f7e8c375c54d7609d0eb680861f88669"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "generated_map": [
+    48,
+    36
+  ],
+  "painted_atlas": true,
+  "real_hex_grid": true,
+  "resource": "iron",
+  "resource_tiles": 4,
+  "seed": 122026,
+  "status": "PASS",
+  "target_coord": [
+    -2,
+    -13
+  ]
+}

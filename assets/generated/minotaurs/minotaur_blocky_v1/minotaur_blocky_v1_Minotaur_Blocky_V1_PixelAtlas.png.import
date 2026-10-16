@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dc2yg2ct4w6u5"
-path="res://.godot/imported/minotaur_blocky_v1_Minotaur_Blocky_V1_PixelAtlas.png-61adfcab165a5e503b9f7cf4a21a89cf.ctex"
+path.bptc="res://.godot/imported/minotaur_blocky_v1_Minotaur_Blocky_V1_PixelAtlas.png-61adfcab165a5e503b9f7cf4a21a89cf.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "c7f0dcf8b737a9f1984eb9515162259b"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/minotaurs/minotaur_blocky_v1/minotaur_blocky_v1_Minotaur_Blocky_V1_PixelAtlas.png"
-dest_files=["res://.godot/imported/minotaur_blocky_v1_Minotaur_Blocky_V1_PixelAtlas.png-61adfcab165a5e503b9f7cf4a21a89cf.ctex"]
+dest_files=["res://.godot/imported/minotaur_blocky_v1_Minotaur_Blocky_V1_PixelAtlas.png-61adfcab165a5e503b9f7cf4a21a89cf.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

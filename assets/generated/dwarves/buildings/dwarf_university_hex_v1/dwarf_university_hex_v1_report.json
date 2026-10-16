@@ -1,0 +1,159 @@
+{
+  "name": "Dwarf_University_Hex_V1",
+  "display_name": "Universidade",
+  "gameplay_building_id": "v2_building_academy",
+  "trains": [],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1436,
+  "editable_parts": 107,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      0.9539999961853027
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    0.9539999961853027
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Escala nativa 1:1 do mapa; tile pointy-top de raio 1; multiplicador 1.0.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 680,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Granito, pilares espessos, sapatas de pedra e cintas de cobre. Telhados baixos de ardósia escura e engenharia mecânica robusta. Universidade de infraestrutura, uma única versão sem evolução. Revisão: Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores. Junções ajustadas para eliminar faces coplanares expostas.",
+  "door_clearance_m": [
+    0.2,
+    0.32
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "dwarf",
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "infrastructure": {
+    "branch": "academy",
+    "single_version": true,
+    "evolutions": [],
+    "blender_mcp_only": true,
+    "architecture": "Granito, pilares espessos, sapatas de pedra e cintas de cobre. Telhados baixos de ardósia escura e engenharia mecânica robusta.",
+    "recipe": "dwarf_university"
+  },
+  "hex_tile": {
+    "circumradius": 1.0,
+    "source_base_radius": 0.92,
+    "max_half_plane_blender": 0.796743392944336,
+    "minimum_margin": 0.06928201084010255
+  },
+  "surface_overlap_review": {
+    "version": 1,
+    "mcp_only": true,
+    "exposed_coplanar_overlap_faces": 0,
+    "repaired_parts": {
+      "Archive_Window_-0.32_Edge_-1": {
+        "reason": "butt_join_window_rails",
+        "sha256": "06da22d1bd32d4ea3a8fbb59048fa23c9ee4278ce7df2a001e2bf0b507c436d0"
+      },
+      "Archive_Window_-0.32_Edge_1": {
+        "reason": "butt_join_window_rails",
+        "sha256": "22bf2316954b4e91c2fa01ba73b10955bfd1c9055a6c42e30405daf391198d0d"
+      },
+      "Archive_Window_0.32_Edge_-1": {
+        "reason": "butt_join_window_rails",
+        "sha256": "ffc7e6e268f0a904a81d383c7789871095e50d1228c3fb16a2857816ea42dfce"
+      },
+      "Archive_Window_0.32_Edge_1": {
+        "reason": "butt_join_window_rails",
+        "sha256": "1f954db9962a32403fc2a25ec5a188221d2307f064fcbf99686049302b760ad4"
+      },
+      "Granite_Archive_Pier_-1_-1_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "9b847422c7583e30d06149c3e8b7537fda2c9ef20c1288d14f49fca193cfbf62"
+      },
+      "Granite_Archive_Pier_-1_1_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "a4d98f6d4b8efd2d3eaa36d1eede8ca90df8297f5161216b1552d55b63b42f16"
+      },
+      "Granite_Archive_Pier_1_-1_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "702e3d6b949041e1d4b7e186c2583d8df383a501d9efe3dc04781b38cd2d5f34"
+      },
+      "Granite_Archive_Pier_1_1_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "a1362d1d237e2353d492f3373e86dc91ef5898324ff3ee7a045a3d4c8d06286f"
+      }
+    },
+    "method": "Native Blender MCP; triangle clipping on matching outward planes, visible area checked against a BVH of all game meshes",
+    "before_overlap_faces": 12
+  },
+  "infrastructure_roof_review": {
+    "version": 1,
+    "mcp_only": true,
+    "roofs": [
+      {
+        "roof": "Granite_Archive",
+        "shape": "straight_gable",
+        "courses": 6,
+        "base_height": 0.746
+      }
+    ],
+    "support_contacts": [],
+    "note": "Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores.",
+    "before_backup": "art_source/infrastructure_before_roof_review"
+  },
+  "export": {
+    "file": "dwarf_university_hex_v1.glb",
+    "bytes": 674896,
+    "meshes": 7,
+    "primitives": 7,
+    "triangles": 1436,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "dwarf_university_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "dwarf_university_hex_v1_albedo",
+        "bytes": 548806,
+        "sha256": "aa36e9f7d4c3200f7e6a130d5090f6fa093ec10bd89860a23139556b50b79f69"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

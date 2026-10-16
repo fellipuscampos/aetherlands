@@ -1,0 +1,98 @@
+{
+  "assets": [
+    {
+      "asset": "tree_oak_a",
+      "gpu_benchmark": false,
+      "multimesh_instances_configured": 1000,
+      "native_scale": true,
+      "shared_material": true,
+      "surfaces": 1,
+      "triangles": 156.0
+    },
+    {
+      "asset": "tree_oak_b",
+      "gpu_benchmark": false,
+      "multimesh_instances_configured": 1000,
+      "native_scale": true,
+      "shared_material": true,
+      "surfaces": 1,
+      "triangles": 166.0
+    },
+    {
+      "asset": "tree_beech_a",
+      "gpu_benchmark": false,
+      "multimesh_instances_configured": 1000,
+      "native_scale": true,
+      "shared_material": true,
+      "surfaces": 1,
+      "triangles": 116.0
+    },
+    {
+      "asset": "tree_pine_a",
+      "gpu_benchmark": false,
+      "multimesh_instances_configured": 1000,
+      "native_scale": true,
+      "shared_material": true,
+      "surfaces": 1,
+      "triangles": 220.0
+    },
+    {
+      "asset": "tree_oak_young",
+      "gpu_benchmark": false,
+      "multimesh_instances_configured": 1000,
+      "native_scale": true,
+      "shared_material": true,
+      "surfaces": 1,
+      "triangles": 114.0
+    },
+    {
+      "asset": "tree_pine_young",
+      "gpu_benchmark": false,
+      "multimesh_instances_configured": 1000,
+      "native_scale": true,
+      "shared_material": true,
+      "surfaces": 1,
+      "triangles": 136.0
+    },
+    {
+      "asset": "shrub_hazel",
+      "gpu_benchmark": false,
+      "multimesh_instances_configured": 1000,
+      "native_scale": true,
+      "shared_material": true,
+      "surfaces": 1,
+      "triangles": 54.0
+    },
+    {
+      "asset": "shrub_bracken",
+      "gpu_benchmark": false,
+      "multimesh_instances_configured": 1000,
+      "native_scale": true,
+      "shared_material": true,
+      "surfaces": 1,
+      "triangles": 110.0
+    },
+    {
+      "asset": "fallen_log",
+      "gpu_benchmark": false,
+      "multimesh_instances_configured": 1000,
+      "native_scale": true,
+      "shared_material": true,
+      "surfaces": 1,
+      "triangles": 74.0
+    },
+    {
+      "asset": "rock_root_small",
+      "gpu_benchmark": false,
+      "multimesh_instances_configured": 1000,
+      "native_scale": true,
+      "shared_material": true,
+      "surfaces": 1,
+      "triangles": 56.0
+    }
+  ],
+  "no_tile_scene_saved": true,
+  "problems": [],
+  "status": "PASS",
+  "verified": 10
+}

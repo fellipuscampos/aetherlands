@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://belqebu4mryk"
-path="res://.godot/imported/lesser_demon_FaceTex_human_default.png-4d4a5fc39e0bebadd9ca093b01b9635d.ctex"
+path.bptc="res://.godot/imported/lesser_demon_FaceTex_human_default.png-4d4a5fc39e0bebadd9ca093b01b9635d.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "134dbce110b7831e5525813303e32710"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/magic/lesser_demon/lesser_demon_FaceTex_human_default.png"
-dest_files=["res://.godot/imported/lesser_demon_FaceTex_human_default.png-4d4a5fc39e0bebadd9ca093b01b9635d.ctex"]
+dest_files=["res://.godot/imported/lesser_demon_FaceTex_human_default.png-4d4a5fc39e0bebadd9ca093b01b9635d.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

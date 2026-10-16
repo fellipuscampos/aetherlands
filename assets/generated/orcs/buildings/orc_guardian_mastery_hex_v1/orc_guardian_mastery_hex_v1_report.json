@@ -1,0 +1,138 @@
+{
+  "name": "Orc_Guardian_Mastery_Hex_V1",
+  "display_name": "Bastião de Maestria — Orcs",
+  "gameplay_building_id": "v2_building_guardian_mastery",
+  "trains": [
+    "v2_legendary_guardian_champion"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 1980,
+  "editable_parts": 157,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.6929999589920044
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.6929999589920044
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 966,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Bastião orc de clã: salão pentagonal de madeira pesada sobre basalto, grande cobertura longitudinal de couro vermelho e duas torres desiguais de ferro com mirantes cobertos. Preserva os pórticos com presas e escudos do salão orc.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "orc",
+  "military_role": "guardian",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_guardian_hall",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "orc_guardian",
+  "material_reference": "assets/generated/orcs/buildings/orc_guardian_hall_hex_v1",
+  "roof_rgb": [
+    130,
+    58,
+    39
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 35,
+        "iterations": 2
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [
+        {
+          "prefix": "Clan_Great_Gate",
+          "x": 0.009999997913837433,
+          "front": -0.10400000214576721,
+          "bottom": 0.1899999976158142,
+          "top": 0.6028000116348267,
+          "width": 0.2564999908208847,
+          "blockers": []
+        }
+      ],
+      "open_passages": []
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "orc_guardian_mastery_hex_v1.glb",
+    "bytes": 971504,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1980,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "orc_guardian_mastery_hex_v1_emission",
+        "bytes": 78303,
+        "sha256": "98af1805c2d325e0d84b365ca83126f8297f3994debc43ee46b2cee121eb471a"
+      },
+      {
+        "image": "orc_guardian_mastery_hex_v1_albedo",
+        "bytes": 745095,
+        "sha256": "54b59a68b0fec75267c525d1c407c37956ca1588464f2b5a6ee6c114bbfc3c97"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

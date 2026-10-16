@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "suites": [
+    {
+      "script": "res://test/unit/test_human_wall_models.gd",
+      "passed": 3,
+      "total": 3
+    },
+    {
+      "script": "res://test/unit/test_city_center_model.gd",
+      "passed": 3,
+      "total": 3
+    },
+    {
+      "script": "res://test/unit/test_city.gd",
+      "passed": 43,
+      "total": 43
+    },
+    {
+      "script": "res://test/unit/test_v2_fortification.gd",
+      "passed": 31,
+      "total": 31
+    }
+  ],
+  "total_tests": 80,
+  "previous_city_assets_unchanged": true,
+  "face_cleanup": true,
+  "shutdown_notes": "Combined GUT run reported 6 ObjectDB instances and 2 resources at shutdown; all assertions passed. Native Godot visual review exited cleanly."
+}

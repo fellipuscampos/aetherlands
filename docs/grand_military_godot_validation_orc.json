@@ -1,0 +1,68 @@
+{
+  "status": "PASS",
+  "verified": 6,
+  "assets": [
+    {
+      "asset": "orc_guardian_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.692999958992,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1980
+    },
+    {
+      "asset": "orc_warrior_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.16999983787537,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1416
+    },
+    {
+      "asset": "orc_ranger_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.78299999237061,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1884
+    },
+    {
+      "asset": "orc_cavalry_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.375,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 2492
+    },
+    {
+      "asset": "orc_rogue_mastery_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.32099997997284,
+        1.8400000333786
+      ],
+      "meshes": 8,
+      "triangles": 1948
+    },
+    {
+      "asset": "orc_grand_arsenal_hex_v1",
+      "dimensions": [
+        1.59348678588867,
+        1.40550005435944,
+        1.8400000333786
+      ],
+      "meshes": 7,
+      "triangles": 2328
+    }
+  ],
+  "problems": [],
+  "source": "grand_military_godot_validation.json"
+}

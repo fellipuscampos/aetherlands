@@ -1,0 +1,14 @@
+{
+	"checks": 29,
+	"failures": [],
+	"method": "One native Godot execution, actual HexGrid, V2ConstructorRuntime and four racial owners; synthetic map fixtures",
+	"races": [
+		"human",
+		"elf",
+		"orc",
+		"dwarf"
+	],
+	"raw_node_preserved_in_asset": true,
+	"runtime_resource_light_count": 4,
+	"status": "PASS"
+}

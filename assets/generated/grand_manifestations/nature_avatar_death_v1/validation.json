@@ -1,0 +1,67 @@
+{
+  "status": "PASS",
+  "via": "Blender MCP live",
+  "duration_s": 5,
+  "frames": 121,
+  "samples": 241,
+  "fps": 24,
+  "parts": 86,
+  "bones": 103,
+  "particles_included": false,
+  "root_motion": false,
+  "simulation": "Blender Bullet, gravity -9.81, 32 substeps, 50 solver iterations",
+  "initial_to_idle_vertex_error_m": 4.924151790695877e-07,
+  "minimum_z_m": -0.005697621498256922,
+  "bounds_min": [
+    -1.3793683052062988,
+    -1.0035008192062378,
+    -0.005697621498256922
+  ],
+  "bounds_max": [
+    1.3784723281860352,
+    1.2293459177017212,
+    3.0162265300750732
+  ],
+  "maximum_half_frame_step_m": 0.1437867620296453,
+  "ground_rest_samples": {
+    "3.0": {
+      "minimum": [
+        -1.3790206909179688,
+        -1.0034055709838867,
+        0.0006970912218093872
+      ],
+      "maximum": [
+        1.3625856637954712,
+        1.0837370157241821,
+        1.2294466495513916
+      ]
+    },
+    "4.0": {
+      "minimum": [
+        -1.3790132999420166,
+        -1.0034055709838867,
+        0.0009262710809707642
+      ],
+      "maximum": [
+        1.3625770807266235,
+        1.2290583848953247,
+        1.248307466506958
+      ]
+    }
+  },
+  "full_size_wood_until_s": 4.0,
+  "core_disappearance_starts_s": 0.18,
+  "core_completely_gone_s": 0.9,
+  "wood_held_until_s": 1.05,
+  "wood_hold_vertex_error_m": 4.924151790695877e-07,
+  "gone_core_extent_m": 1.0947034460695743e-05,
+  "core_falls": false,
+  "wood_disappearance_starts_s": 4.0,
+  "final_maximum_piece_extent_m": 1.8069071198278243e-05,
+  "physics_helpers_exported": false,
+  "original_asset_files_unchanged": true,
+  "original_five_clips_preserved": true,
+  "serialized_original_clip_error": 0.0,
+  "serialized_death_to_idle_error": 4.76837158203125e-07,
+  "embedded_textures_preserved": true
+}

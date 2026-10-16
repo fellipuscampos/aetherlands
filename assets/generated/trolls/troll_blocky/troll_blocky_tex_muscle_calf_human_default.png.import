@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dlx822iooomu"
-path="res://.godot/imported/troll_blocky_tex_muscle_calf_human_default.png-193189be0560a5fdc2cde87cded2be4b.ctex"
+path.bptc="res://.godot/imported/troll_blocky_tex_muscle_calf_human_default.png-193189be0560a5fdc2cde87cded2be4b.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "4ef87cf8dc815b7e45642143a81ef9b7"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/trolls/troll_blocky/troll_blocky_tex_muscle_calf_human_default.png"
-dest_files=["res://.godot/imported/troll_blocky_tex_muscle_calf_human_default.png-193189be0560a5fdc2cde87cded2be4b.ctex"]
+dest_files=["res://.godot/imported/troll_blocky_tex_muscle_calf_human_default.png-193189be0560a5fdc2cde87cded2be4b.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

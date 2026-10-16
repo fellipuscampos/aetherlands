@@ -1,0 +1,118 @@
+{
+  "name": "Druidic_Circle_Hex_V1",
+  "display_name": "Círculo Druídico — Humanos",
+  "gameplay_building_id": "v2_building_druidic_circle",
+  "trains": [
+    "v2_unit_druid"
+  ],
+  "excludes": [
+    "v2_building_druidic_ritual"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 1204,
+  "editable_parts": 93,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.0770000219345093
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.0770000219345093
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 585,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Blue slate, light plaster and timber. Open six-stone teaching circle, glowing verdant runes, central seed altar, block-canopy grove tree and herbarium. Finish pass: Formal masonry pilasters, stained-glass leads, timber side braces and a fixed standard. Roof palette unified; structural volumes and layout preserved.",
+  "door_clearance_m": [
+    0.26,
+    0.54
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "human",
+  "magic_school": "druidism",
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "ritual_building_separate": true,
+  "excluded_buildings": [
+    "v2_building_druidic_ritual"
+  ],
+  "finish_pass": {
+    "revision": 1,
+    "original_structure_preserved": true,
+    "race_details": "Formal masonry pilasters, stained-glass leads, timber side braces and a fixed standard.",
+    "roof_rgb": [
+      49,
+      79,
+      127
+    ],
+    "physical_attachment_remaining": [],
+    "relic_source": null
+  },
+  "export": {
+    "file": "druidic_circle_hex_v1.glb",
+    "bytes": 623576,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1204,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "druidic_circle_hex_v1_emission",
+        "bytes": 22018,
+        "sha256": "89b3b51f9fb9d35d9000135152820e79b1ea6683db430074bf95c1679d356a19"
+      },
+      {
+        "image": "druidic_circle_hex_v1_albedo",
+        "bytes": 508051,
+        "sha256": "2e2db9daf210cd53ce3a799251eb77ff693595e7a7385ae0df574d093b67d828"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

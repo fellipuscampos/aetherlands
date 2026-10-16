@@ -1,0 +1,34 @@
+{
+  "family": "warrior",
+  "fps": 48,
+  "motion_revision": 3,
+  "clips": {
+    "idle": {
+      "action": "Dwarf_warrior_idle",
+      "frames": 145,
+      "loop": true,
+      "description": "Respiração e pequeno ajuste do martelo, mantendo uma mão livre.",
+      "impact_frame": null
+    },
+    "walk": {
+      "action": "Dwarf_warrior_walk",
+      "frames": 57,
+      "loop": true,
+      "description": "Passada pesada com contrapeso do braço livre e martelo seguro.",
+      "impact_frame": null
+    },
+    "attack": {
+      "action": "Dwarf_warrior_attack",
+      "frames": 81,
+      "loop": false,
+      "description": "Martelo erguido acima do ombro, arco frontal forte e recuperação.",
+      "impact_frame": 37
+    }
+  },
+  "variants": [
+    "dwarf_warrior_v1",
+    "dwarf_swordsman_v1",
+    "dwarf_weapon_master_v1",
+    "dwarf_blade_hero_v1"
+  ]
+}

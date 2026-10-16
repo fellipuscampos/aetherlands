@@ -1,0 +1,66 @@
+{
+  "status": "PASS",
+  "name": "Human_Walls_Level_2_Hex_V1",
+  "stem": "human_walls_level_2_hex_v1",
+  "race": "human",
+  "fortification_level": 2,
+  "display_name": "Muralhas II",
+  "pipeline": "Blender 5.2 MCP localhost:9876",
+  "material_source": "assets\\generated\\humans\\buildings\\city_level_4_hex_v1\\city_level_4_hex_v1.blend",
+  "texture_reuse": "Byte-identical approved City IV atlas; existing face islands sampled, no repaint",
+  "embedded_images": [
+    {
+      "name": "city_level_4_hex_v1_emission",
+      "sha256": "99a2b1e359c12c298ac5df49e61167307bd6ff686b6c7899e04acb27ccfbfd95",
+      "bytes": 79091
+    },
+    {
+      "name": "city_level_4_hex_v1_albedo",
+      "sha256": "61cadd6df2a049415dd4ce1ddb80a74515c52a02a92e17d52db628a69f609db5",
+      "bytes": 767864
+    }
+  ],
+  "triangles": 2742,
+  "editable_parts": 196,
+  "runtime_meshes": 2,
+  "shade": "Flat",
+  "origin": "Footprint center, ground Z=0",
+  "native_tile_radius": 1.0,
+  "scales_with": "City.tile_radius",
+  "pointy_hex": true,
+  "wall_center_radius": 0.94,
+  "max_half_plane": 0.8530350923538208,
+  "tile_half_plane": 0.8660254037844386,
+  "height": 0.34599998593330383,
+  "minimum_city_foundation_clearance": 0.012337120976797067,
+  "city_foundation_radius": 0.84,
+  "includes_ground_plate": false,
+  "includes_city": false,
+  "bounds_blender": {
+    "min": [
+      -0.853035032749176,
+      -0.9850000143051147,
+      0.0
+    ],
+    "max": [
+      0.853035032749176,
+      0.9850000143051147,
+      0.34599998593330383
+    ]
+  },
+  "design": "Low crenellated masonry, square corner battlements, arrow slits, dressed portal and blue gate cap.",
+  "surface_cleanup": {
+    "removed_buried_and_shared_face_area": 5.2137428919967315,
+    "source_parts": 196,
+    "visible_parts": 196,
+    "visible_faces": 1371,
+    "coplanar_overlaps_before": 140,
+    "coplanar_overlaps_after": 0,
+    "silhouette_bounds_unchanged": true,
+    "atlas_bytes_unchanged": true,
+    "method": "Visible boundary partition, interpolated original UVs",
+    "audit_includes_opposing_normals": true
+  },
+  "source_boundary_sections": true,
+  "mesh_vertex_compression": false
+}

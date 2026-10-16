@@ -1,0 +1,288 @@
+{
+  "verified": 24,
+  "runtime_unchanged": true,
+  "assets": [
+    {
+      "civilization": "human",
+      "school": "sacred",
+      "label": "Templo Sagrado",
+      "folder": "assets/generated/humans/buildings/sacred_temple_hex_v1",
+      "triangles": 1452,
+      "parts": 118,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "4d25e713aaf23943455a028a7b4288eaa7da5d9faaa2173ae1d3f9c4555fdb2e"
+    },
+    {
+      "civilization": "human",
+      "school": "infernal",
+      "label": "Santuário Infernal",
+      "folder": "assets/generated/humans/buildings/infernal_sanctum_hex_v1",
+      "triangles": 1444,
+      "parts": 114,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "7b4fd22a3e2ac9925d6f47f45a733623e2a9091edaa77a41c257e271ecd045a7"
+    },
+    {
+      "civilization": "human",
+      "school": "necromancy",
+      "label": "Ossuário",
+      "folder": "assets/generated/humans/buildings/necromancy_ossuary_hex_v1",
+      "triangles": 1992,
+      "parts": 162,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "b9ca3fe8f74ecfead3a774b4bd6b2d90f5570680c52c8d23ddc6ea48b8375b2e"
+    },
+    {
+      "civilization": "human",
+      "school": "druidism",
+      "label": "Círculo Druídico",
+      "folder": "assets/generated/humans/buildings/druidic_circle_hex_v1",
+      "triangles": 1204,
+      "parts": 93,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "2026e4c00e4f24b705b94d0b781a9a6ba1fb5f85d99518c0f091ba251131597c"
+    },
+    {
+      "civilization": "human",
+      "school": "arcanism",
+      "label": "Conclave Arcano",
+      "folder": "assets/generated/humans/buildings/arcane_conclave_hex_v1",
+      "triangles": 1852,
+      "parts": 145,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "3158f839ec36dd6d820de0c51074305fa065473dcf07deaa159d0b480b923acc"
+    },
+    {
+      "civilization": "human",
+      "school": "elementalism",
+      "label": "Observatório Elemental",
+      "folder": "assets/generated/humans/buildings/elemental_observatory_hex_v1",
+      "triangles": 1820,
+      "parts": 143,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "b855b4700e5849b46d93c7941130ea755b01fec3b37e705eb02075c23c5eb72c"
+    },
+    {
+      "civilization": "orc",
+      "school": "sacred",
+      "label": "Templo Sagrado",
+      "folder": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1",
+      "triangles": 1796,
+      "parts": 141,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "41440a6e350c87b855dce867542c4fd9b8562456308772274b009951d88fe4a3"
+    },
+    {
+      "civilization": "orc",
+      "school": "infernal",
+      "label": "Santuário Infernal",
+      "folder": "assets/generated/orcs/buildings/orc_infernal_sanctum_hex_v1",
+      "triangles": 1796,
+      "parts": 139,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "7c50a63bce60d76d67d8005a7f0cbbea1d4435503e0957e76f5afe84ffaee245"
+    },
+    {
+      "civilization": "orc",
+      "school": "necromancy",
+      "label": "Ossuário",
+      "folder": "assets/generated/orcs/buildings/orc_necromancy_ossuary_hex_v1",
+      "triangles": 2324,
+      "parts": 184,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "a523cdf221620032e389a5c4dda428324c740b164193a5be8bfeadd3ed42bea1"
+    },
+    {
+      "civilization": "orc",
+      "school": "druidism",
+      "label": "Círculo Druídico",
+      "folder": "assets/generated/orcs/buildings/orc_druidic_circle_hex_v1",
+      "triangles": 1392,
+      "parts": 103,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "188b1ad14c525cd10c4d18971719517c5e91203cb76b0354e3835a0c48a60b9e"
+    },
+    {
+      "civilization": "orc",
+      "school": "arcanism",
+      "label": "Conclave Arcano",
+      "folder": "assets/generated/orcs/buildings/orc_arcane_conclave_hex_v1",
+      "triangles": 2160,
+      "parts": 165,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "49efc25ea952b30ae2c7651dc647a3f1a807422cc0504902cb0c2a08b98a6b8a"
+    },
+    {
+      "civilization": "orc",
+      "school": "elementalism",
+      "label": "Observatório Elemental",
+      "folder": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1",
+      "triangles": 2164,
+      "parts": 166,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "e994233a50d068f109ef1ee58f4e01a3efccaf9155f3c3a1f76cef58c423d098"
+    },
+    {
+      "civilization": "dwarf",
+      "school": "sacred",
+      "label": "Templo Sagrado",
+      "folder": "assets/generated/dwarves/buildings/dwarf_sacred_temple_hex_v1",
+      "triangles": 1572,
+      "parts": 128,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "b5762dc6d67491093951633bbb60a4ff0035d0ea261401a3b2c8f6623ff52502"
+    },
+    {
+      "civilization": "dwarf",
+      "school": "infernal",
+      "label": "Santuário Infernal",
+      "folder": "assets/generated/dwarves/buildings/dwarf_infernal_sanctum_hex_v1",
+      "triangles": 1624,
+      "parts": 129,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "2ea1454c3a01399f0d3ca14263a75a232a91f11ee07cd8943370655c1588f20a"
+    },
+    {
+      "civilization": "dwarf",
+      "school": "necromancy",
+      "label": "Ossuário",
+      "folder": "assets/generated/dwarves/buildings/dwarf_necromancy_ossuary_hex_v1",
+      "triangles": 2112,
+      "parts": 172,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "08653bab64079e7af8f357f1cc81ef600df03c42c5b5a9fad9ec37383bfe1dc0"
+    },
+    {
+      "civilization": "dwarf",
+      "school": "druidism",
+      "label": "Círculo Druídico",
+      "folder": "assets/generated/dwarves/buildings/dwarf_druidic_circle_hex_v1",
+      "triangles": 1300,
+      "parts": 101,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "293fabc73aeac8d73d2bfa1617f96686ff90507cdf33900c80b31b77c5499d05"
+    },
+    {
+      "civilization": "dwarf",
+      "school": "arcanism",
+      "label": "Conclave Arcano",
+      "folder": "assets/generated/dwarves/buildings/dwarf_arcane_conclave_hex_v1",
+      "triangles": 1996,
+      "parts": 157,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "82348adfaa0cf76d1f7266aa4dc774b6662b8aa5a708e328657a301d828940ce"
+    },
+    {
+      "civilization": "dwarf",
+      "school": "elementalism",
+      "label": "Observatório Elemental",
+      "folder": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1",
+      "triangles": 2168,
+      "parts": 172,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "fdca7f2d07fafd07b639a2ee2a102d118dbd2beccee4bfe5525dbdc90ab9afe2"
+    },
+    {
+      "civilization": "elf",
+      "school": "sacred",
+      "label": "Templo Sagrado",
+      "folder": "assets/generated/elves/buildings/elf_sacred_temple_hex_v1",
+      "triangles": 2096,
+      "parts": 138,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "1383e07201d88cc3cd9ce5724b89072d6a62910f06a2e1946eb20b9aad467278"
+    },
+    {
+      "civilization": "elf",
+      "school": "infernal",
+      "label": "Santuário Infernal",
+      "folder": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1",
+      "triangles": 2124,
+      "parts": 137,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "9732345734681a86133cee5bf8f0ec8b07724d53853bc1e466d7d175710f5dfb"
+    },
+    {
+      "civilization": "elf",
+      "school": "necromancy",
+      "label": "Ossuário",
+      "folder": "assets/generated/elves/buildings/elf_necromancy_ossuary_hex_v1",
+      "triangles": 2712,
+      "parts": 185,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "49b525b2ed75a4b7220868a2c2dda6002a52639f91d9ed1eb022a5bab2da25ee"
+    },
+    {
+      "civilization": "elf",
+      "school": "druidism",
+      "label": "Círculo Druídico",
+      "folder": "assets/generated/elves/buildings/elf_druidic_circle_hex_v1",
+      "triangles": 2316,
+      "parts": 122,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "3cd7df12cbf5d87316cf52508ac5be6bef9e11d7a5a0f34f116d6b85131d7a41"
+    },
+    {
+      "civilization": "elf",
+      "school": "arcanism",
+      "label": "Conclave Arcano",
+      "folder": "assets/generated/elves/buildings/elf_arcane_conclave_hex_v1",
+      "triangles": 2592,
+      "parts": 173,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "e9f12eb72a621aae4bf4707c225148cb581a11937a455639a9d906c3c1c0814c"
+    },
+    {
+      "civilization": "elf",
+      "school": "elementalism",
+      "label": "Observatório Elemental",
+      "folder": "assets/generated/elves/buildings/elf_elemental_observatory_hex_v1",
+      "triangles": 2728,
+      "parts": 175,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "12fe8a1501066d1473e2766ead8f407a4d879442a26ffdc80952c892daf3e7fb"
+    }
+  ],
+  "sheets": {
+    "human": {
+      "three_quarter": "assets/generated/humans/buildings/magic_schools_three_quarter.jpg",
+      "game_top": "assets/generated/humans/buildings/magic_schools_game_top.jpg"
+    },
+    "orc": {
+      "three_quarter": "assets/generated/orcs/buildings/magic_schools_three_quarter.jpg",
+      "game_top": "assets/generated/orcs/buildings/magic_schools_game_top.jpg"
+    },
+    "dwarf": {
+      "three_quarter": "assets/generated/dwarves/buildings/magic_schools_three_quarter.jpg",
+      "game_top": "assets/generated/dwarves/buildings/magic_schools_game_top.jpg"
+    },
+    "elf": {
+      "three_quarter": "assets/generated/elves/buildings/magic_schools_three_quarter.jpg",
+      "game_top": "assets/generated/elves/buildings/magic_schools_game_top.jpg"
+    }
+  }
+}

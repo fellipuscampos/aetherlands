@@ -1,0 +1,213 @@
+{
+  "status": "PASS",
+  "verified": 24,
+  "style_revision": 6,
+  "hip_leg_balance_corrected": true,
+  "hands_and_foot_length_preserved": true,
+  "boot_width_matches_shin": true,
+  "shins_wider_than_thighs": true,
+  "one_hand_equipment": true,
+  "guardians_shield_only": true,
+  "material_emblems": false,
+  "articulated_ram_legs": true,
+  "humanoids_with_same_18_parts": 20,
+  "no_neck": true,
+  "mount": "war_ram_all_four_tiers",
+  "animations": 18,
+  "animated_variants": 24,
+  "protected_files_unchanged": 240,
+  "assets": [
+    {
+      "stem": "dwarf_shieldbearer_v1",
+      "triangles": 680,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_guardian_v1",
+      "triangles": 704,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_sentinel_v1",
+      "triangles": 800,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_guardian_champion_v1",
+      "triangles": 824,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_warrior_v1",
+      "triangles": 588,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_swordsman_v1",
+      "triangles": 636,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_weapon_master_v1",
+      "triangles": 732,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_blade_hero_v1",
+      "triangles": 756,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_archer_v1",
+      "triangles": 780,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_hunter_v1",
+      "triangles": 828,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_elite_marksman_v1",
+      "triangles": 948,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_legend_hunter_v1",
+      "triangles": 960,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_cavalier_v1",
+      "triangles": 1288,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_shock_cavalier_v1",
+      "triangles": 1348,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_armored_cavalier_v1",
+      "triangles": 1480,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_ram_lord_v1",
+      "triangles": 1580,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_rogue_v1",
+      "triangles": 644,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_saboteur_v1",
+      "triangles": 740,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_assassin_v1",
+      "triangles": 752,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_shadow_master_v1",
+      "triangles": 764,
+      "meshes": 1,
+      "shared_body": true,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_catapult_v1",
+      "triangles": 1000,
+      "meshes": 1,
+      "shared_body": false,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_trebuchet_v1",
+      "triangles": 988,
+      "meshes": 1,
+      "shared_body": false,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_bombard_v1",
+      "triangles": 1132,
+      "meshes": 1,
+      "shared_body": false,
+      "static": false,
+      "embedded_atlas": true
+    },
+    {
+      "stem": "dwarf_siege_colossus_v1",
+      "triangles": 1600,
+      "meshes": 1,
+      "shared_body": false,
+      "static": false,
+      "embedded_atlas": true
+    }
+  ]
+}

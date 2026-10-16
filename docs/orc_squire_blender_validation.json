@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "body_cuboids": 18,
+  "head_blocks": 1,
+  "ear_cuboids": 6,
+  "tusk_cuboids": 4,
+  "ear_shape_error": 1.3351440419917537e-07,
+  "height_m": 2.0,
+  "body_armor_painted": true,
+  "head_hair_painted": true,
+  "saved_animation_tracks_enabled": true,
+  "clips": 5,
+  "body_geometry_compatible_with_approved_arm_relaxation": true,
+  "right_arm_relaxed_degrees": 24,
+  "body_geometry_max_error": 0.0026513338088989258,
+  "eyebrow_cuboids": 2,
+  "eyebrows_mirrored_and_head_weighted": true,
+  "shield_width_height_factor": 1.18,
+  "shield_grip_unchanged": true
+}

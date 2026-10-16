@@ -1,0 +1,683 @@
+{
+  "stem": "dwarf_druid_v1",
+  "name": "Druida Anão — Druidismo",
+  "school": "druidism",
+  "race": "dwarf",
+  "gameplay_unit_kind": "v2_unit_druid",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "source": "assets/generated/dwarves/dwarf_settler_v1/dwarf_settler_v1.blend",
+  "source_sha256": "a9a0c02c4dda2a535ce0405c34d665cca6558c556216f3f50f10d88f38eb681b",
+  "source_body": [
+    {
+      "part": "Pelvis",
+      "source": "Pelvis",
+      "dimensions": [
+        0.52,
+        0.3,
+        0.16
+      ]
+    },
+    {
+      "part": "Belly",
+      "source": "Belly",
+      "dimensions": [
+        0.43,
+        0.29,
+        0.17
+      ]
+    },
+    {
+      "part": "Chest",
+      "source": "Chest",
+      "dimensions": [
+        0.62,
+        0.33,
+        0.28
+      ]
+    },
+    {
+      "part": "Head",
+      "source": "Head",
+      "dimensions": [
+        0.38,
+        0.34,
+        0.33
+      ]
+    },
+    {
+      "part": "hair_cap",
+      "source": "hair_cap",
+      "dimensions": [
+        0.386,
+        0.35,
+        0.026
+      ]
+    },
+    {
+      "part": "nose_bridge",
+      "source": "nose_bridge",
+      "dimensions": [
+        0.062,
+        0.062,
+        0.111
+      ]
+    },
+    {
+      "part": "nose_tip",
+      "source": "nose_tip",
+      "dimensions": [
+        0.092,
+        0.094,
+        0.075
+      ]
+    },
+    {
+      "part": "brow_-1",
+      "source": "brow_-1",
+      "dimensions": [
+        0.146,
+        0.051,
+        0.047
+      ]
+    },
+    {
+      "part": "moustache_-1",
+      "source": "moustache_-1",
+      "dimensions": [
+        0.14356,
+        0.091,
+        0.067
+      ]
+    },
+    {
+      "part": "sideburn_-1",
+      "source": "sideburn_-1",
+      "dimensions": [
+        0.049,
+        0.14,
+        0.17
+      ]
+    },
+    {
+      "part": "brow_1",
+      "source": "brow_1",
+      "dimensions": [
+        0.146,
+        0.051,
+        0.047
+      ]
+    },
+    {
+      "part": "moustache_1",
+      "source": "moustache_1",
+      "dimensions": [
+        0.14356,
+        0.091,
+        0.067
+      ]
+    },
+    {
+      "part": "sideburn_1",
+      "source": "sideburn_1",
+      "dimensions": [
+        0.049,
+        0.14,
+        0.17
+      ]
+    },
+    {
+      "part": "beard_lock_0_0",
+      "source": "beard_lock_0_0",
+      "dimensions": [
+        0.077,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_0_1",
+      "source": "beard_lock_0_1",
+      "dimensions": [
+        0.071,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_0_2",
+      "source": "beard_lock_0_2",
+      "dimensions": [
+        0.065,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_1_0",
+      "source": "beard_lock_1_0",
+      "dimensions": [
+        0.077,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_1_1",
+      "source": "beard_lock_1_1",
+      "dimensions": [
+        0.071,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_1_2",
+      "source": "beard_lock_1_2",
+      "dimensions": [
+        0.065,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_1_3",
+      "source": "beard_lock_1_3",
+      "dimensions": [
+        0.059,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_2_0",
+      "source": "beard_lock_2_0",
+      "dimensions": [
+        0.077,
+        0.095,
+        0.07268
+      ]
+    },
+    {
+      "part": "beard_lock_2_1",
+      "source": "beard_lock_2_1",
+      "dimensions": [
+        0.071,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_2_2",
+      "source": "beard_lock_2_2",
+      "dimensions": [
+        0.065,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_2_3",
+      "source": "beard_lock_2_3",
+      "dimensions": [
+        0.059,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_3_0",
+      "source": "beard_lock_3_0",
+      "dimensions": [
+        0.077,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_3_1",
+      "source": "beard_lock_3_1",
+      "dimensions": [
+        0.071,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_3_2",
+      "source": "beard_lock_3_2",
+      "dimensions": [
+        0.065,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_3_3",
+      "source": "beard_lock_3_3",
+      "dimensions": [
+        0.059,
+        0.086,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_4_0",
+      "source": "beard_lock_4_0",
+      "dimensions": [
+        0.077,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_4_1",
+      "source": "beard_lock_4_1",
+      "dimensions": [
+        0.071,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "beard_lock_4_2",
+      "source": "beard_lock_4_2",
+      "dimensions": [
+        0.065,
+        0.095,
+        0.079
+      ]
+    },
+    {
+      "part": "Thigh_l",
+      "source": "Thigh_l",
+      "dimensions": [
+        0.205,
+        0.23,
+        0.18
+      ]
+    },
+    {
+      "part": "Shin_l",
+      "source": "Shin_l",
+      "dimensions": [
+        0.235,
+        0.245,
+        0.18
+      ]
+    },
+    {
+      "part": "Foot_l",
+      "source": "Foot_l",
+      "dimensions": [
+        0.235,
+        0.405,
+        0.155
+      ]
+    },
+    {
+      "part": "Shoulder_l",
+      "source": "Shoulder_l",
+      "dimensions": [
+        0.23,
+        0.335,
+        0.205
+      ]
+    },
+    {
+      "part": "UpperArm_l",
+      "source": "UpperArm_l",
+      "dimensions": [
+        0.231919,
+        0.246004,
+        0.304758
+      ]
+    },
+    {
+      "part": "Forearm_l",
+      "source": "Forearm_l",
+      "dimensions": [
+        0.260787,
+        0.271989,
+        0.286755
+      ]
+    },
+    {
+      "part": "Hand_l",
+      "source": "Hand_l",
+      "dimensions": [
+        0.253902,
+        0.271593,
+        0.248954
+      ]
+    },
+    {
+      "part": "Thigh_r",
+      "source": "Thigh_r",
+      "dimensions": [
+        0.205,
+        0.23,
+        0.18
+      ]
+    },
+    {
+      "part": "Shin_r",
+      "source": "Shin_r",
+      "dimensions": [
+        0.235,
+        0.245,
+        0.18
+      ]
+    },
+    {
+      "part": "Foot_r",
+      "source": "Foot_r",
+      "dimensions": [
+        0.235,
+        0.405,
+        0.155
+      ]
+    },
+    {
+      "part": "Shoulder_r",
+      "source": "Shoulder_r",
+      "dimensions": [
+        0.23,
+        0.335,
+        0.205
+      ]
+    },
+    {
+      "part": "UpperArm_r",
+      "source": "UpperArm_r",
+      "dimensions": [
+        0.231919,
+        0.246004,
+        0.304758
+      ]
+    },
+    {
+      "part": "Forearm_r",
+      "source": "Forearm_r",
+      "dimensions": [
+        0.260787,
+        0.271989,
+        0.286755
+      ]
+    },
+    {
+      "part": "Hand_r",
+      "source": "Hand_r",
+      "dimensions": [
+        0.253903,
+        0.271593,
+        0.248954
+      ]
+    }
+  ],
+  "approved_style_reference": "original_dwarf_settler_and_plain_school_mages",
+  "style_revision": 1,
+  "style_validation": {
+    "status": "PASS",
+    "original_dwarf_head_geometry": true,
+    "head_scale": 1.0,
+    "original_head_max_vertex_error_m": 1.1920928955078125e-07,
+    "original_dwarf_face_preserved": true,
+    "original_dwarf_beard": true,
+    "original_beard_locks": 18,
+    "headwear": "leather_headband",
+    "hood_painted": false,
+    "hair_palette": "aged_grey_dwarf_hair_beard_moustache_brows",
+    "relaxed_offhand": true,
+    "plain_clothes": true,
+    "original_thick_forearms": true,
+    "actual_face_pixels_verified": true,
+    "actual_head_size_verified": true,
+    "actual_beard_geometry_verified": true,
+    "native_body_proportions_verified": true,
+    "facial_geometry_max_error_m": 1.2013700229374393e-07,
+    "body_edge_length_max_error_m": 1.6212958167671765e-07
+  },
+  "elderly_posture": {
+    "torso_forward_degrees": 5,
+    "head_counter_degrees": -3,
+    "shoulder_drop_m": 0.012
+  },
+  "geometry": {
+    "status": "PASS",
+    "editable_parts": 67,
+    "body_parts": 18,
+    "triangles": 804,
+    "dimensions": [
+      1.3249995112419128,
+      0.7284566313028336,
+      1.5894999504089355
+    ],
+    "bounds_min": [
+      -0.6128817796707153,
+      -0.5408852696418762,
+      0.0
+    ],
+    "bounds_max": [
+      0.7121177315711975,
+      0.18757136166095734,
+      1.5894999504089355
+    ],
+    "closed_meshes": true,
+    "ground_pivot": true,
+    "identity_transforms": true,
+    "flat_shading": true,
+    "uv_density_max_error": 0.0016630484024773295,
+    "animations": 3,
+    "rigs": 1
+  },
+  "texture": "assets/generated/dwarves/dwarf_druid_v1/dwarf_druid_v1_albedo.png",
+  "palette": {
+    "cloth": [
+      87,
+      111,
+      67
+    ],
+    "linen": [
+      115,
+      132,
+      79
+    ],
+    "trim": [
+      138,
+      113,
+      65
+    ],
+    "accent": [
+      99,
+      157,
+      77
+    ],
+    "skin": [
+      211,
+      165,
+      119
+    ],
+    "hair": [
+      205,
+      204,
+      191
+    ],
+    "leather": [
+      105,
+      73,
+      47
+    ],
+    "wood": [
+      112,
+      81,
+      47
+    ],
+    "metal": [
+      97,
+      108,
+      116
+    ],
+    "copper": [
+      177,
+      118,
+      64
+    ],
+    "stone": [
+      114,
+      121,
+      128
+    ]
+  },
+  "school_color_validation": {
+    "status": "PASS",
+    "human_school_cloth": [
+      87,
+      111,
+      67
+    ],
+    "human_school_linen": [
+      115,
+      132,
+      79
+    ]
+  },
+  "animations": 3,
+  "rigging_deferred": false,
+  "books": 0,
+  "surface_validation": {
+    "school": "druidism",
+    "exposed_coplanar_pairs": 0,
+    "hidden_coplanar_pairs": 8,
+    "staff_forearm_intersection": false,
+    "staff_hand_contact": true,
+    "issues": [],
+    "status": "PASS",
+    "backface_culling": true
+  },
+  "surface_refinements": [
+    "Exclude workshop cap inherited from settler equipment",
+    "Inset buckle top and bottom by 3.5 mm, preserving 64 px/m UVs"
+  ],
+  "source_preserved": true,
+  "blend": "assets/generated/dwarves/dwarf_druid_v1/dwarf_druid_v1.blend",
+  "glb": "assets/generated/dwarves/dwarf_druid_v1/dwarf_druid_v1.glb",
+  "export": {
+    "status": "PASS",
+    "bytes": 302344,
+    "triangles": 804,
+    "meshes": 1,
+    "surfaces": 1,
+    "materials": 1,
+    "skins": 1,
+    "bones": 16,
+    "animations": 3,
+    "clips": [
+      "idle",
+      "walk",
+      "spell"
+    ],
+    "atlas_hashes": {
+      "albedo": "cd7dd42e86690b254e832f9055bafb815b37eb55dd5e5ed4bb96defbf60fe69f",
+      "emission": "9a334c89c9511a9c155910ad84763ff23c8b112f0211566c41a19673f0552c6c"
+    },
+    "editable_source_parts": 67,
+    "cameras": 0,
+    "lights": 0
+  },
+  "game_usage": {
+    "units": "meters",
+    "model_scale_multiplier": 1.0,
+    "pivot": "feet_at_origin",
+    "blender_front": "-Y",
+    "godot_front": "+Z",
+    "stage": "animated_review",
+    "game_database_changed": false,
+    "spell_clip": "spell",
+    "spell_release_seconds": 1.62
+  },
+  "static_review": false,
+  "stage": "animated_review",
+  "animation": {
+    "status": "PASS",
+    "fps": 48,
+    "bones": 16,
+    "rigid_skinning": true,
+    "root_motion": false,
+    "arm_motion": "fixed_anatomical_elbow_hinge_with_forearm_following_hand",
+    "walk_speed_m_per_s": 0.15053763440860216,
+    "approved_geometry_and_uvs_preserved": true,
+    "choreography_revision": 3,
+    "casting_name": "Selo da forja",
+    "casting_description": "Firma os pés, concentra junto ao peito e libera um pulso firme do cetro com contrapeso do corpo.",
+    "same_casting_for_all_schools": true,
+    "spell_release_seconds": 1.62,
+    "clips": {
+      "idle": {
+        "frames": 145,
+        "seconds": 3.0,
+        "loop": true,
+        "end_to_start_error": 0.0,
+        "min_ground_z": 0.0,
+        "max_joint_gap_m": 1.3657139822709083e-07,
+        "max_frame_step": 0.002650192938745022,
+        "movement": 0.12093423306941986,
+        "max_planted_foot_z_error_m": 0,
+        "max_planted_foot_slide_m": 0,
+        "staff_forearm_intersections": 0,
+        "staff_hand_detachments": 0,
+        "max_elbow_axial_roll_degrees": 0,
+        "max_wrist_rotation_degrees": {
+          "l": 0,
+          "r": 1.9301954511897361
+        },
+        "max_arm_frame_rotation_degrees": 0.055952909680744456,
+        "max_arm_frame_acceleration_degrees": 0,
+        "hand_forearm_torso_intersections": 0
+      },
+      "walk": {
+        "frames": 73,
+        "seconds": 1.5,
+        "loop": true,
+        "end_to_start_error": 4.898587368981641e-19,
+        "min_ground_z": 0.0,
+        "max_joint_gap_m": 1.3657139822709083e-07,
+        "max_frame_step": 0.0783073753118515,
+        "movement": 0.5960998088121414,
+        "max_planted_foot_z_error_m": 0,
+        "max_planted_foot_slide_m": 1.4901161193847656e-08,
+        "staff_forearm_intersections": 0,
+        "staff_hand_detachments": 0,
+        "max_elbow_axial_roll_degrees": 0,
+        "max_wrist_rotation_degrees": {
+          "l": 0,
+          "r": 19.807068772247785
+        },
+        "max_arm_frame_rotation_degrees": 0.773286056741929,
+        "max_arm_frame_acceleration_degrees": 0.06852804166478502,
+        "hand_forearm_torso_intersections": 0
+      },
+      "spell": {
+        "frames": 145,
+        "seconds": 3.0,
+        "loop": false,
+        "end_to_start_error": 0.0,
+        "min_ground_z": 0.0,
+        "max_joint_gap_m": 1.7120130796843852e-07,
+        "max_frame_step": 0.05913703143596649,
+        "movement": 1.3310889601707458,
+        "max_planted_foot_z_error_m": 0,
+        "max_planted_foot_slide_m": 0,
+        "staff_forearm_intersections": 0,
+        "staff_hand_detachments": 0,
+        "max_elbow_axial_roll_degrees": 0,
+        "max_wrist_rotation_degrees": {
+          "l": 2.999704464357591,
+          "r": 0
+        },
+        "max_arm_frame_rotation_degrees": 3.5907371683814846,
+        "max_arm_frame_acceleration_degrees": 0.48938844347755556,
+        "hand_forearm_torso_intersections": 0
+      }
+    }
+  }
+}

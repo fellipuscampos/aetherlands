@@ -1,0 +1,139 @@
+{
+  "name": "Elf_Arcane_Shrine_Hex_V1",
+  "display_name": "Santuário Arcano",
+  "gameplay_building_id": "v2_building_arcane_shrine",
+  "trains": [],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 906,
+  "editable_parts": 60,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.3769999742507935
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.3769999742507935
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Escala nativa 1:1 do mapa; tile pointy-top de raio 1; multiplicador 1.0.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 411,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Pedra clara e madeira esbelta com apoios ramificados, pavilhões abertos, telhados verdes altos com cantos facetados e folhas douradas. Santuário Arcano de infraestrutura, uma única versão sem evolução. Revisão: Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores. Junções ajustadas para eliminar faces coplanares expostas.",
+  "door_clearance_m": [
+    0.2,
+    0.32
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "infrastructure": {
+    "branch": "arcane",
+    "single_version": true,
+    "evolutions": [],
+    "blender_mcp_only": true,
+    "architecture": "Pedra clara e madeira esbelta com apoios ramificados, pavilhões abertos, telhados verdes altos com cantos facetados e folhas douradas.",
+    "recipe": "elf_arcane_shrine"
+  },
+  "hex_tile": {
+    "circumradius": 1.0,
+    "source_base_radius": 0.92,
+    "max_half_plane_blender": 0.796743392944336,
+    "minimum_margin": 0.06928201084010255
+  },
+  "surface_overlap_review": {
+    "version": 1,
+    "mcp_only": true,
+    "exposed_coplanar_overlap_faces": 0,
+    "repaired_parts": {
+      "Mana_Root_Flow": {
+        "reason": "inset_flow_end_caps",
+        "sha256": "276351fb01d2d0135950acb6bd88617f4d2a12fa5e1aee997f44f4747c9b363b"
+      },
+      "Mana_Root_Tree_Canopy_1": {
+        "reason": "taper_canopy_depth",
+        "sha256": "0c5f5ab4e3c88656cf605542a55df3dc4cb68684f473fa5199a9f2bfcb75152c"
+      },
+      "Mana_Root_Tree_Canopy_2": {
+        "reason": "taper_canopy_depth",
+        "sha256": "e6925cb49bdbfff3d21f43f1a8fb06bbd7c0ce61686c5c85a2d893d4e4bc59c6"
+      }
+    },
+    "method": "Native Blender MCP; triangle clipping on matching outward planes, visible area checked against a BVH of all game meshes",
+    "before_overlap_faces": 3
+  },
+  "infrastructure_roof_review": {
+    "version": 1,
+    "mcp_only": true,
+    "roofs": [
+      {
+        "roof": "Mana_Leaf_Canopy",
+        "shape": "straight_hip",
+        "courses": 7,
+        "base_height": 0.77
+      }
+    ],
+    "support_contacts": [],
+    "note": "Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores.",
+    "before_backup": "art_source/infrastructure_before_roof_review"
+  },
+  "export": {
+    "file": "elf_arcane_shrine_hex_v1.glb",
+    "bytes": 524256,
+    "meshes": 7,
+    "primitives": 7,
+    "triangles": 906,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_arcane_shrine_hex_v1_emission",
+        "bytes": 21343,
+        "sha256": "f80cc0d0a99baf10d9139a536e7600562439228c35ffa188bcb7808e4d57467d"
+      },
+      {
+        "image": "elf_arcane_shrine_hex_v1_albedo",
+        "bytes": 434898,
+        "sha256": "e77e91debbe6b8eaa1055c504660d3360fa0377de9e8d7662ab9509e20659d6a"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

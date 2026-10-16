@@ -1,0 +1,97 @@
+{
+  "race": "orc",
+  "name": "Barco Orc",
+  "stem": "orc_embark_boat_v1",
+  "scene": "Embark_Boats_V1_Orc",
+  "glb": "assets/generated/orcs/orc_embark_boat_v1/orc_embark_boat_v1.glb",
+  "editable_parts": 91,
+  "triangles": 1400,
+  "game_meshes": 5,
+  "materials": 1,
+  "embedded_textures": 2,
+  "texture_size": [
+    512,
+    512
+  ],
+  "filter": "nearest",
+  "closed_source_meshes": true,
+  "bounds_blender": {
+    "min": [
+      -0.8999999761581421,
+      -1.506500005722046,
+      -0.3450000286102295
+    ],
+    "max": [
+      0.8999999761581421,
+      1.4956568479537964,
+      2.490000009536743
+    ]
+  },
+  "waterline": 0,
+  "forward_godot": "-Z",
+  "recommended_map_scale": 0.52,
+  "unit_representation": "1 unit = 1 boat",
+  "source_preservation": "Existing scenes and assets retained; only new IDs created.",
+  "glb_sha256": "ac7caf814c2214a7b1088923c3693f816b6ee9f728d5b982254ecca40d4cf6c8",
+  "mast_behind_sail": true,
+  "sail_revision": 2,
+  "sail_symbols": false,
+  "sail_billow_direction": "Blender +Y / Godot -Z",
+  "removed_symbols": [
+    "Bone_Sigil_-1_0",
+    "Bone_Sigil_-1_1",
+    "Bone_Sigil_-1_2",
+    "Bone_Sigil_-1_3",
+    "Bone_Sigil_-1_4",
+    "Bone_Sigil_-1_5",
+    "Bone_Sigil_-1_6",
+    "Bone_Sigil_1_0",
+    "Bone_Sigil_1_1",
+    "Bone_Sigil_1_2",
+    "Bone_Sigil_1_3",
+    "Bone_Sigil_1_4",
+    "Bone_Sigil_1_5",
+    "Bone_Sigil_1_6"
+  ],
+  "animations": {
+    "idle": {
+      "duration": 4.0,
+      "frames": 121,
+      "fps": 30,
+      "loop_error": 0.0,
+      "vertical_range_native": [
+        -0.030799999833106995,
+        0.0
+      ],
+      "vertical_range_map": [
+        -0.016015999913215638,
+        0.0
+      ],
+      "highest_keel_vertex": -0.25240758061408997,
+      "in_place": true,
+      "water_plane_static": true
+    },
+    "walk": {
+      "duration": 2.0,
+      "frames": 61,
+      "fps": 30,
+      "loop_error": 0.0,
+      "vertical_range_native": [
+        -0.07699999958276749,
+        0.0
+      ],
+      "vertical_range_map": [
+        -0.04003999978303909,
+        0.0
+      ],
+      "highest_keel_vertex": -0.24978098273277283,
+      "in_place": true,
+      "water_plane_static": true
+    }
+  },
+  "exported_clips": [
+    "idle",
+    "walk"
+  ],
+  "morph_targets": 1
+}

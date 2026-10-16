@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bedge1x4vyw2b"
-path="res://.godot/imported/archer_v1_archer_v1_emission.png-102683e2f2a648e6db232041e1c5c9b8.ctex"
+path.bptc="res://.godot/imported/archer_v1_archer_v1_emission.png-102683e2f2a648e6db232041e1c5c9b8.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "149f84fd9b067ee6825c5637166a7fc3"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/humans/archer_v1/archer_v1_archer_v1_emission.png"
-dest_files=["res://.godot/imported/archer_v1_archer_v1_emission.png-102683e2f2a648e6db232041e1c5c9b8.ctex"]
+dest_files=["res://.godot/imported/archer_v1_archer_v1_emission.png-102683e2f2a648e6db232041e1c5c9b8.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

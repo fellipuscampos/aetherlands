@@ -1,0 +1,342 @@
+{
+  "status": "PASS",
+  "models": 20,
+  "clips": 93,
+  "no_new_animations": true,
+  "protected_files": 475,
+  "assets": [
+    {
+      "stem": "orc_squire_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "ShieldGrip"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": true
+    },
+    {
+      "stem": "orc_guardian_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "ShieldGrip"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_sentinel_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "ShieldGrip"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_guardian_champion_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "ShieldGrip"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_warrior_v1",
+      "status": "PASS",
+      "clips": 4,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "AxeHaft"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_swordsman_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "SwordGrip"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_weapon_master_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "SwordGrip"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_blade_hero_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "SwordGrip"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_archer_v1",
+      "status": "PASS",
+      "clips": 4,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "BowGrip"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_hunter_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "BowGrip"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_elite_marksman_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "BowGrip"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_legend_hunter_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "BowGrip"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_cavalier_v1",
+      "status": "PASS",
+      "clips": 4,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "LanceHaft"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [
+        "Chest",
+        "Shoulder_l",
+        "Forearm_l",
+        "Forearm_r"
+      ],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_shock_cavalier_v1",
+      "status": "PASS",
+      "clips": 4,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "LanceHaft"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [
+        "Chest",
+        "Shoulder_l",
+        "Shoulder_r",
+        "Forearm_l",
+        "Forearm_r",
+        "Shin_l",
+        "Shin_r"
+      ],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_armored_cavalier_v1",
+      "status": "PASS",
+      "clips": 4,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "LanceHaft"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [
+        "Pelvis",
+        "Chest",
+        "Shoulder_l",
+        "Shoulder_r",
+        "Forearm_l",
+        "Forearm_r",
+        "Shin_l",
+        "Shin_r"
+      ],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_griffon_rider_v1",
+      "status": "PASS",
+      "clips": 4,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "LanceHaft"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [
+        "Pelvis",
+        "Chest",
+        "Shoulder_l",
+        "Shoulder_r",
+        "Forearm_l",
+        "Forearm_r",
+        "Shin_l",
+        "Shin_r"
+      ],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_rogue_v1",
+      "status": "PASS",
+      "clips": 4,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "DaggerGrip_r"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_saboteur_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "DaggerGrip_r"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_assassin_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "DaggerGrip_r",
+        "DaggerGrip_l"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    },
+    {
+      "stem": "orc_shadow_master_v1",
+      "status": "PASS",
+      "clips": 5,
+      "animation_max_error": 0.0,
+      "rest_skeleton_max_error": 0.0,
+      "anatomy_vertex_max_error": 0.0,
+      "skin_binding_max_error": 0.0,
+      "unchanged_grips": [
+        "DaggerGrip_r",
+        "DaggerGrip_l"
+      ],
+      "approved_face_pixels_preserved": true,
+      "bone_armor_parts": [],
+      "initial_shield_preserved": false
+    }
+  ]
+}

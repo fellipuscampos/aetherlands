@@ -1,0 +1,85 @@
+{
+  "status": "PASS",
+  "models": 6,
+  "backup": "art_source/orc_school_mages_review/before_beards",
+  "assets": [
+    {
+      "school": "sacred",
+      "status": "PASS",
+      "beard_parts": 3,
+      "beard_triangles": 36,
+      "new_uv_islands": 18,
+      "old_geometry_and_uvs_unchanged": true,
+      "old_geometry_uv_sha256": "38c8767b20f91476b5afdafea73e3e51eff2c4226434cba4193c1d5a5cdb1cf3",
+      "old_atlas_islands_unchanged": true,
+      "emission_unchanged": true,
+      "tusks_clear": true,
+      "attached_to_jaw": true
+    },
+    {
+      "school": "infernal",
+      "status": "PASS",
+      "beard_parts": 3,
+      "beard_triangles": 36,
+      "new_uv_islands": 18,
+      "old_geometry_and_uvs_unchanged": true,
+      "old_geometry_uv_sha256": "d215da3b0987b1e4fed1d8751261e2bd38ae881e645ac13badf5e22a7252f5c2",
+      "old_atlas_islands_unchanged": true,
+      "emission_unchanged": true,
+      "tusks_clear": true,
+      "attached_to_jaw": true
+    },
+    {
+      "school": "necromancy",
+      "status": "PASS",
+      "beard_parts": 3,
+      "beard_triangles": 36,
+      "new_uv_islands": 18,
+      "old_geometry_and_uvs_unchanged": true,
+      "old_geometry_uv_sha256": "0eb5ea30f31ad50e3bd14b81eab099b83c9471ab4d531638e160df6768325682",
+      "old_atlas_islands_unchanged": true,
+      "emission_unchanged": true,
+      "tusks_clear": true,
+      "attached_to_jaw": true
+    },
+    {
+      "school": "druidism",
+      "status": "PASS",
+      "beard_parts": 3,
+      "beard_triangles": 36,
+      "new_uv_islands": 18,
+      "old_geometry_and_uvs_unchanged": true,
+      "old_geometry_uv_sha256": "d2bc636d4e00c014781d9d60b8f0d1e3a7b4cbfa1397631c96e04ef3f3b5cfb2",
+      "old_atlas_islands_unchanged": true,
+      "emission_unchanged": true,
+      "tusks_clear": true,
+      "attached_to_jaw": true
+    },
+    {
+      "school": "arcanism",
+      "status": "PASS",
+      "beard_parts": 3,
+      "beard_triangles": 36,
+      "new_uv_islands": 18,
+      "old_geometry_and_uvs_unchanged": true,
+      "old_geometry_uv_sha256": "8593418c5d28e552811349ed7db767e23d8b09e16626129e20e05763b499ccaa",
+      "old_atlas_islands_unchanged": true,
+      "emission_unchanged": true,
+      "tusks_clear": true,
+      "attached_to_jaw": true
+    },
+    {
+      "school": "elementalism",
+      "status": "PASS",
+      "beard_parts": 3,
+      "beard_triangles": 36,
+      "new_uv_islands": 18,
+      "old_geometry_and_uvs_unchanged": true,
+      "old_geometry_uv_sha256": "62f4d2fe34cada2581352fb7b680af93aeecd721e3bfe9e6217d72d1cff21d5c",
+      "old_atlas_islands_unchanged": true,
+      "emission_unchanged": true,
+      "tusks_clear": true,
+      "attached_to_jaw": true
+    }
+  ]
+}

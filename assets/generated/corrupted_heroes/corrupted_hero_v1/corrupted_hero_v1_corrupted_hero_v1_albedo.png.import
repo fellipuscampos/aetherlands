@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dkec5adj045ky"
-path="res://.godot/imported/corrupted_hero_v1_corrupted_hero_v1_albedo.png-69f12916af4c087b085711f520d21e18.ctex"
+path.bptc="res://.godot/imported/corrupted_hero_v1_corrupted_hero_v1_albedo.png-69f12916af4c087b085711f520d21e18.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "0acf424efe6e06f4a385e596030f1fc3"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/corrupted_heroes/corrupted_hero_v1/corrupted_hero_v1_corrupted_hero_v1_albedo.png"
-dest_files=["res://.godot/imported/corrupted_hero_v1_corrupted_hero_v1_albedo.png-69f12916af4c087b085711f520d21e18.ctex"]
+dest_files=["res://.godot/imported/corrupted_hero_v1_corrupted_hero_v1_albedo.png-69f12916af4c087b085711f520d21e18.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

@@ -1,0 +1,1137 @@
+{
+	"assets": [
+		{
+			"asset": "human_sacred_cleric_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000271309749223292,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.79356882934444
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.072792150080204,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000738486123736948,
+					"maximum_wrist_angles_degrees": {
+						"l": 3.94159929028999,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 1.68806135654449,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000322672101901844,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 17.9031450033703
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.449650764465332,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "human_infernal_warlock_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000314615754177794,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.76408759845255
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.072792150080204,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000738528906367719,
+					"maximum_wrist_angles_degrees": {
+						"l": 3.94159929028999,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 1.68806135654449,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000322673935443163,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 17.891333898748
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.449650764465332,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "human_necromancer_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000263839756371453,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.76630474189016
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.072792150080204,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000738518603611737,
+					"maximum_wrist_angles_degrees": {
+						"l": 3.94159929028999,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 1.68806135654449,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000322675798088312,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 17.9030135222287
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.449650764465332,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "human_druid_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000309828901663423,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.77205608133643
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.072792150080204,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000738530594389886,
+					"maximum_wrist_angles_degrees": {
+						"l": 3.94159929028999,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 1.68806135654449,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000322675798088312,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 17.8856665492842
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.449650764465332,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "human_arcanist_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.00026383891236037,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.81827341012897
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.072792150080204,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000738537113647908,
+					"maximum_wrist_angles_degrees": {
+						"l": 3.94159929028999,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 1.68806111812592,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000322675914503634,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 17.9180211553826
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.449650764465332,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "human_elementalist_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000263840775005519,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.79051125247381
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.072792150080204,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000738562317565084,
+					"maximum_wrist_angles_degrees": {
+						"l": 3.94159929028999,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 1.68806135654449,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000340513855917379,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 17.894848031076
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.449650764465332,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "elf_sacred_cleric_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000365428772056475,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.83626412840278
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.072792150080204,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000730917963664979,
+					"maximum_wrist_angles_degrees": {
+						"l": 4.99370242013171,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 1.63445162773132,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000317955855280161,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 17.6348346822047
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.491970837116241,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "elf_infernal_warlock_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000263839756371453,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.8204244928307
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.072792150080204,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000730956671759486,
+					"maximum_wrist_angles_degrees": {
+						"l": 4.99370242013171,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 1.63445162773132,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000181413124664687,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 17.5656790168583
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.491970837116241,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "elf_necromancer_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000263839756371453,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.8204244928307
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.072792150080204,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000730956671759486,
+					"maximum_wrist_angles_degrees": {
+						"l": 4.99370242013171,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 1.63445162773132,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000181413124664687,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 17.5656790168583
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.491970837116241,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "elf_druid_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000263839756371453,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.84604197108648
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.072792150080204,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000730917963664979,
+					"maximum_wrist_angles_degrees": {
+						"l": 4.99370242013171,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 1.63445162773132,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000986696919426322,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 17.5966078209674
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.491970837116241,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "elf_arcanist_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000365428772056475,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.83626412840278
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.072792150080204,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000730917963664979,
+					"maximum_wrist_angles_degrees": {
+						"l": 4.99370242013171,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 1.63445162773132,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000317955855280161,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 17.6348346822047
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.491970837116241,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "elf_elementalist_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000263839756371453,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.84604197108648
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.072792150080204,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000730917963664979,
+					"maximum_wrist_angles_degrees": {
+						"l": 4.99370242013171,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 1.63445162773132,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000986696919426322,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 17.5966078209674
+					},
+					"minimum_floor": -0.00000000233132002591674,
+					"motion": 0.491970837116241,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "dwarf_sacred_cleric_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000925701402593404,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.85745479030275
+					},
+					"minimum_floor": 0.0,
+					"motion": 0.120464600622654,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.00195258087478578,
+					"maximum_wrist_angles_degrees": {
+						"l": 2.95182953403086,
+						"r": 0.0
+					},
+					"minimum_floor": 0.0,
+					"motion": 1.62260103225708,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000964165607001632,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 19.7244132380069
+					},
+					"minimum_floor": 0.0,
+					"motion": 0.632403373718262,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "dwarf_infernal_warlock_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.00092724896967411,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.83924550597549
+					},
+					"minimum_floor": 0.0,
+					"motion": 0.120464600622654,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.00195258087478578,
+					"maximum_wrist_angles_degrees": {
+						"l": 2.95182953403086,
+						"r": 0.0
+					},
+					"minimum_floor": 0.0,
+					"motion": 1.62260103225708,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000969919841736555,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 19.753263957061
+					},
+					"minimum_floor": 0.0,
+					"motion": 0.632403373718262,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "dwarf_necromancer_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.00092724896967411,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.83924550597549
+					},
+					"minimum_floor": 0.0,
+					"motion": 0.120464600622654,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.00195258087478578,
+					"maximum_wrist_angles_degrees": {
+						"l": 2.95182953403086,
+						"r": 0.0
+					},
+					"minimum_floor": 0.0,
+					"motion": 1.62260103225708,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000969919841736555,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 19.753263957061
+					},
+					"minimum_floor": 0.0,
+					"motion": 0.632403373718262,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "dwarf_druid_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000925701402593404,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.85745479030275
+					},
+					"minimum_floor": 0.0,
+					"motion": 0.120464600622654,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.00195258087478578,
+					"maximum_wrist_angles_degrees": {
+						"l": 2.95182953403086,
+						"r": 0.0
+					},
+					"minimum_floor": 0.0,
+					"motion": 1.62260103225708,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000964165607001632,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 19.7244132380069
+					},
+					"minimum_floor": 0.0,
+					"motion": 0.632403373718262,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "dwarf_arcanist_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000925701402593404,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.85745479030275
+					},
+					"minimum_floor": 0.0,
+					"motion": 0.120464600622654,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.00195258087478578,
+					"maximum_wrist_angles_degrees": {
+						"l": 2.95182953403086,
+						"r": 0.0
+					},
+					"minimum_floor": 0.0,
+					"motion": 1.62260103225708,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000964165607001632,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 19.7244132380069
+					},
+					"minimum_floor": 0.0,
+					"motion": 0.632403373718262,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "dwarf_elementalist_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000925701402593404,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.85745479030275
+					},
+					"minimum_floor": 0.0,
+					"motion": 0.120464600622654,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.00195258087478578,
+					"maximum_wrist_angles_degrees": {
+						"l": 2.95182953403086,
+						"r": 0.0
+					},
+					"minimum_floor": 0.0,
+					"motion": 1.62260103225708,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000964165607001632,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 19.7244132380069
+					},
+					"minimum_floor": 0.0,
+					"motion": 0.632403373718262,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "orc_sacred_cleric_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000250640179729089,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.99519964218122
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.0677868500351906,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000746181816793978,
+					"maximum_wrist_angles_degrees": {
+						"l": 3.99995557278493,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 1.70991909503937,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000351972557837144,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 13.4244200636373
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.444837182760239,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "orc_infernal_warlock_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000532401900272816,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 2.00107552585813
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.0677868500351906,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000746114703360945,
+					"maximum_wrist_angles_degrees": {
+						"l": 3.99995557278493,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 1.71003675460815,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000327290123095736,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 13.4503406315375
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.444837182760239,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "orc_necromancer_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000532401900272816,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 2.00107552585813
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.0677868500351906,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000746114703360945,
+					"maximum_wrist_angles_degrees": {
+						"l": 3.99995557278493,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 1.71003675460815,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000327290123095736,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 13.4503406315375
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.444837182760239,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "orc_druid_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000250640179729089,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.99519964218122
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.0677868500351906,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000746181816793978,
+					"maximum_wrist_angles_degrees": {
+						"l": 3.99995557278493,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 1.70991909503937,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000351972557837144,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 13.4244200636373
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.444837182760239,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "orc_arcanist_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000250640179729089,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.99519964218122
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.0677868500351906,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000746181816793978,
+					"maximum_wrist_angles_degrees": {
+						"l": 3.99995557278493,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 1.70991909503937,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000351972557837144,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 13.4244200636373
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.444837182760239,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		},
+		{
+			"asset": "orc_elementalist_v1",
+			"bones": 16,
+			"clips": {
+				"idle": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000250640179729089,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 1.99519964218122
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.0677868500351906,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"spell": {
+					"loop": false,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000746181816793978,
+					"maximum_wrist_angles_degrees": {
+						"l": 3.99995557278493,
+						"r": 0.0
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 1.70991909503937,
+					"pose_samples": 25,
+					"seconds": 3.0
+				},
+				"walk": {
+					"loop": true,
+					"loop_error": 0.0,
+					"maximum_elbow_hinge_error": 0.000351972557837144,
+					"maximum_wrist_angles_degrees": {
+						"l": 0.0,
+						"r": 13.4244200636373
+					},
+					"minimum_floor": -0.00000000331633032146783,
+					"motion": 0.444837182760239,
+					"pose_samples": 25,
+					"seconds": 1.5
+				}
+			},
+			"mesh_count": 1,
+			"surface_count": 1
+		}
+	],
+	"clips": 72,
+	"failures": [],
+	"pose_samples": 1800,
+	"status": "PASS",
+	"verified": 24
+}

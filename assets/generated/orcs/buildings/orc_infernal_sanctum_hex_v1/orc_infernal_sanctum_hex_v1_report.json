@@ -1,0 +1,209 @@
+{
+  "name": "Orc_Infernal_Sanctum_Hex_V1",
+  "display_name": "Santuário Infernal — Orcs",
+  "gameplay_building_id": "v2_building_infernal_sanctum",
+  "trains": [
+    "v2_unit_infernal_warlock"
+  ],
+  "excludes": [
+    "v2_building_infernal_ritual"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1988,
+  "editable_parts": 155,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.072700023651123
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.072700023651123
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 987,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Estrutura de madeira grossa, postes cintados com ferro e contraventamentos diagonais; coberturas ferrugem, pedra escura na fundação e presas do clã. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.23,
+    0.35
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "orc",
+  "magic_school": "infernal",
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "ritual_building_separate": true,
+  "excluded_buildings": [
+    "v2_building_infernal_ritual"
+  ],
+  "finish_pass": {
+    "revision": 1,
+    "original_structure_preserved": true,
+    "race_details": "Iron strapped timber, rivets, clan braces, jagged cloth and secured tusks.",
+    "roof_rgb": [
+      130,
+      58,
+      39
+    ],
+    "physical_attachment_remaining": [],
+    "relic_source": null
+  },
+  "export": {
+    "file": "orc_infernal_sanctum_hex_v1.glb",
+    "bytes": 722788,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1988,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "orc_infernal_sanctum_hex_v1_emission",
+        "bytes": 22534,
+        "sha256": "6e33fc120db5897058e51d76bc5e6faa8827e5d55f13255f12df1d21fcc5fd1a"
+      },
+      {
+        "image": "orc_infernal_sanctum_hex_v1_albedo",
+        "bytes": 553312,
+        "sha256": "5ef506195aaac33805bf112c8ea45dc0ecccd67798a2a873323e41530453a24f"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "orc",
+    "design": "Estrutura de madeira grossa, postes cintados com ferro e contraventamentos diagonais; coberturas ferrugem, pedra escura na fundação e presas do clã.",
+    "geometry_changes": [
+      "timber:Sanctum_Entry_Jamb_-1",
+      "timber:Sanctum_Entry_Jamb_1",
+      "bound_log:Sanctum_Post_-1_-1",
+      "bound_log:Sanctum_Post_-1_1",
+      "bound_log:Sanctum_Post_1_-1",
+      "bound_log:Sanctum_Post_1_1",
+      "upper_structure_proportion:0.86"
+    ],
+    "roof_braces": [
+      {
+        "post": "Sanctum_Post_-1_-1",
+        "roof": "Sanctum_Course_00",
+        "end": [
+          -0.20100000500679016,
+          -0.01600000262260437,
+          0.567880003452301
+        ]
+      },
+      {
+        "post": "Sanctum_Post_-1_-1",
+        "roof": "Sanctum_Course_00",
+        "end": [
+          -0.3310000002384186,
+          0.11400000005960464,
+          0.567880003452301
+        ]
+      },
+      {
+        "post": "Sanctum_Post_-1_1",
+        "roof": "Sanctum_Course_00",
+        "end": [
+          -0.20100000500679016,
+          0.4560000002384186,
+          0.567880003452301
+        ]
+      },
+      {
+        "post": "Sanctum_Post_-1_1",
+        "roof": "Sanctum_Course_00",
+        "end": [
+          -0.3310000002384186,
+          0.32600000500679016,
+          0.567880003452301
+        ]
+      },
+      {
+        "post": "Sanctum_Post_1_-1",
+        "roof": "Sanctum_Course_00",
+        "end": [
+          0.20100000500679016,
+          -0.01600000262260437,
+          0.567880003452301
+        ]
+      },
+      {
+        "post": "Sanctum_Post_1_-1",
+        "roof": "Sanctum_Course_00",
+        "end": [
+          0.3310000002384186,
+          0.11400000005960464,
+          0.567880003452301
+        ]
+      },
+      {
+        "post": "Sanctum_Post_1_1",
+        "roof": "Sanctum_Course_00",
+        "end": [
+          0.20100000500679016,
+          0.4560000002384186,
+          0.567880003452301
+        ]
+      },
+      {
+        "post": "Sanctum_Post_1_1",
+        "roof": "Sanctum_Course_00",
+        "end": [
+          0.3310000002384186,
+          0.32600000500679016,
+          0.567880003452301
+        ]
+      }
+    ],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

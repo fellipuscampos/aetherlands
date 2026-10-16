@@ -1,0 +1,151 @@
+{
+  "name": "Elf_Infernal_Ritual_Hex_V1",
+  "display_name": "Círculo Profano — Elfos",
+  "gameplay_building_id": "v2_building_infernal_ritual",
+  "trains": [
+    "v2_manifestation_archdemon"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 2056,
+  "editable_parts": 113,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.4354979991912842
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.4354979991912842
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 873,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Cantaria clara com armação esbelta de madeira, mãos-francesas em forma de galhos e coberturas verdes com cantos facetados e beirais ascendentes. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "magic_school": "infernal",
+  "grand_magic": true,
+  "asset_only": true,
+  "requires_building": "v2_building_infernal_sanctum",
+  "includes_perimeter_walls": false,
+  "school_building_separate": true,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "craft": {
+    "race_details": "Pedra marfim, madeira fina, galhos entalhados, folhas e telhados verdes mais altos.",
+    "material_reference": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1",
+    "roof_rgb": [
+      48,
+      122,
+      88
+    ],
+    "physical_attachment_remaining": [],
+    "intentional_levitation": [
+      "Infernal_Rift_Core"
+    ],
+    "relic_source": null
+  },
+  "export": {
+    "file": "elf_infernal_ritual_hex_v1.glb",
+    "bytes": 684084,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2056,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_infernal_ritual_hex_v1_emission",
+        "bytes": 22470,
+        "sha256": "6aa646d8fa6937adde13b6bd61918c6be7846be201a9f743845d133102aab2ba"
+      },
+      {
+        "image": "elf_infernal_ritual_hex_v1_albedo",
+        "bytes": 519432,
+        "sha256": "8e05688f7880d3cf3c558586842be56f84715ff23f005f2fed481d27b606920d"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "elf",
+    "design": "Cantaria clara com armação esbelta de madeira, mãos-francesas em forma de galhos e coberturas verdes com cantos facetados e beirais ascendentes.",
+    "geometry_changes": [
+      "ivory:Profane_Totem_0_Body",
+      "ivory:Profane_Totem_1_Body",
+      "ivory:Profane_Totem_2_Body",
+      "ivory:Profane_Totem_3_Body",
+      "ivory:Profane_Totem_4_Body",
+      "roof_geometry:Profane_Totem_0_Course_00",
+      "roof_geometry:Profane_Totem_0_Course_01",
+      "roof_geometry:Profane_Totem_0_Course_02",
+      "roof_geometry:Profane_Totem_1_Course_00",
+      "roof_geometry:Profane_Totem_1_Course_01",
+      "roof_geometry:Profane_Totem_1_Course_02",
+      "roof_geometry:Profane_Totem_2_Course_00",
+      "roof_geometry:Profane_Totem_2_Course_01",
+      "roof_geometry:Profane_Totem_2_Course_02",
+      "roof_geometry:Profane_Totem_3_Course_00",
+      "roof_geometry:Profane_Totem_3_Course_01",
+      "roof_geometry:Profane_Totem_3_Course_02",
+      "roof_geometry:Profane_Totem_4_Course_00",
+      "roof_geometry:Profane_Totem_4_Course_01",
+      "roof_geometry:Profane_Totem_4_Course_02",
+      "branch_pier:Profane_Gate_Post_-1",
+      "branch_pier:Profane_Gate_Post_1",
+      "upper_structure_proportion:1.22"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

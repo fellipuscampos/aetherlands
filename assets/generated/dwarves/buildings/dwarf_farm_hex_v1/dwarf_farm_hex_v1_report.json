@@ -1,0 +1,167 @@
+{
+  "name": "Dwarf_Farm_Hex_V1",
+  "display_name": "Fazenda",
+  "gameplay_building_id": "v2_building_farm",
+  "trains": [],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 2040,
+  "editable_parts": 153,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      0.7465000152587891
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    0.7465000152587891
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Escala nativa 1:1 do mapa; tile pointy-top de raio 1; multiplicador 1.0.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 969,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Granito, pilares espessos, sapatas de pedra e cintas de cobre. Telhados baixos de ardósia escura e engenharia mecânica robusta. Fazenda de infraestrutura, uma única versão sem evolução. Revisão: Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores. Junções ajustadas para eliminar faces coplanares expostas.",
+  "door_clearance_m": [
+    0.2,
+    0.32
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "dwarf",
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "infrastructure": {
+    "branch": "logistics",
+    "single_version": true,
+    "evolutions": [],
+    "blender_mcp_only": true,
+    "architecture": "Granito, pilares espessos, sapatas de pedra e cintas de cobre. Telhados baixos de ardósia escura e engenharia mecânica robusta.",
+    "recipe": "dwarf_farm"
+  },
+  "hex_tile": {
+    "circumradius": 1.0,
+    "source_base_radius": 0.92,
+    "max_half_plane_blender": 0.796743392944336,
+    "minimum_margin": 0.06928201084010255
+  },
+  "surface_overlap_review": {
+    "version": 1,
+    "mcp_only": true,
+    "exposed_coplanar_overlap_faces": 0,
+    "repaired_parts": {
+      "Stone_Terrace_0_Side_-1": {
+        "reason": "butt_join_planter_walls",
+        "sha256": "752034c049bdad45c87613ab59d7424e732c79f8c793b6a0c03d41bcfe1140dc"
+      },
+      "Stone_Terrace_0_Side_1": {
+        "reason": "butt_join_planter_walls",
+        "sha256": "7f693688a5ffd2ea2532d978ca5c82b0b98668d66f939e736cd64d1edaf5583b"
+      },
+      "Stone_Terrace_1_Side_-1": {
+        "reason": "butt_join_planter_walls",
+        "sha256": "3d95e59de32a41e88e8a89cc2abfab9a501cbead457f00b8864a07d171b49c05"
+      },
+      "Stone_Terrace_1_Side_1": {
+        "reason": "butt_join_planter_walls",
+        "sha256": "736033b6ac16c51b290d69697ac0e18aa7e21d28e84c4e72d04742e795a11d0f"
+      },
+      "Stone_Terrace_2_Side_-1": {
+        "reason": "butt_join_planter_walls",
+        "sha256": "89be6716d1956430d00b85d1531147e38b9b92298ce10b9526ba821bf07a464f"
+      },
+      "Stone_Terrace_2_Side_1": {
+        "reason": "butt_join_planter_walls",
+        "sha256": "46ccfb5b03723dbddbfda092f9085f262bcaa475837c35af9131821f5cad6750"
+      },
+      "Pump_Post_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "6ae1c43c6e567a3654163d259aa5e1ee0fce0ba3a14e14d3aea4b447bf309692"
+      },
+      "Granite_Granary_Pier_-1_1_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "8e22386489a5aef2945c95047e0b65cdcacbf819471034103429aab8d6e96918"
+      },
+      "Granite_Granary_Pier_1_-1_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "59ff06e01e490e2184cbb7eade1044ffc4261ad960657fa5a99c5ff9076eb224"
+      },
+      "Granite_Granary_Pier_1_1_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "811ca8e4417e6c6a9f0111ad31d0be83aa5b1158dd3d9f55c58501e0a0faf289"
+      }
+    },
+    "method": "Native Blender MCP; triangle clipping on matching outward planes, visible area checked against a BVH of all game meshes",
+    "before_overlap_faces": 16
+  },
+  "infrastructure_roof_review": {
+    "version": 1,
+    "mcp_only": true,
+    "roofs": [
+      {
+        "roof": "Granite_Granary",
+        "shape": "straight_gable",
+        "courses": 6,
+        "base_height": 0.43600000000000005
+      }
+    ],
+    "support_contacts": [],
+    "note": "Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores.",
+    "before_backup": "art_source/infrastructure_before_roof_review"
+  },
+  "export": {
+    "file": "dwarf_farm_hex_v1.glb",
+    "bytes": 660064,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2040,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "dwarf_farm_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "dwarf_farm_hex_v1_albedo",
+        "bytes": 491789,
+        "sha256": "9e70b4be627f5400146484a347acdae7f99b4d88f95a09ed4d0083a7d0a52128"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

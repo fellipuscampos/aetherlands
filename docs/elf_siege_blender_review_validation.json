@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "models": 4,
+  "clips": 19,
+  "review_movement": {
+    "elf_catapult_v1_Rig.002": 0.7720459699630737,
+    "elf_trebuchet_v1_Rig.002": 0.7720459699630737,
+    "elf_bombard_v1_Rig.002": 0.48830437660217285,
+    "elf_siege_colossus_v1_Rig.003": 1.0605427026748657
+  },
+  "saved": "assets\\generated\\elves\\elf_siege_review.blend",
+  "scene": "Elf_Siege_Four_Evolutions_Animated_Review"
+}

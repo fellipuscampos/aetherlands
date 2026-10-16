@@ -1,0 +1,190 @@
+{
+  "name": "Elf_Ranger_Mastery_Hex_V1",
+  "display_name": "Torre dos Patrulheiros — Elfos",
+  "gameplay_building_id": "v2_building_ranger_mastery",
+  "trains": [
+    "v2_legendary_legend_hunter"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 2112,
+  "editable_parts": 153,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      2.276700019836426
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    2.276700019836426
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 987,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Mirante élfico numa árvore viva: três plataformas apoiadas nos galhos, escada envolvente de madeira, guarda-corpos e pequeno abrigo elevado com telhado verde. O bosque e os arcos do campo básico tornam-se a própria estrutura da torre.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "military_role": "ranger",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_ranger_camp",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "elf_ranger",
+  "material_reference": "assets/generated/elves/buildings/elf_ranger_camp_hex_v1",
+  "roof_rgb": [
+    48,
+    122,
+    88
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "parts": [
+          "Woodland_Bow_Backing",
+          "Woodland_Bow_Cloth",
+          "Woodland_Bow_Ranged_Bow_Limb_0",
+          "Woodland_Bow_Ranged_Bow_Limb_1",
+          "Woodland_Bow_Ranged_Bow_Limb_2",
+          "Woodland_Bow_Ranged_Bow_Limb_3",
+          "Woodland_Bow_Ranged_Bow_String",
+          "Woodland_Bow_Ranged_Arrow",
+          "Woodland_Bow_Ranged_Arrowhead"
+        ],
+        "action": "move",
+        "delta": [
+          0.0,
+          0.0,
+          0.30000001192092896
+        ],
+        "reason": "lookout emblem is mounted above its doorway"
+      },
+      {
+        "part": "Tree_Deck_Rail_2_Bar_1.5785",
+        "action": "archive",
+        "reason": "keep the upper lookout entrance open between its rail posts"
+      },
+      {
+        "part": "Tree_Deck_Rail_2_Bar_1.63",
+        "action": "archive",
+        "reason": "keep the upper lookout entrance open between its rail posts"
+      },
+      {
+        "parts": [
+          "Great_Lookout_Tree_Crown_1",
+          "Great_Lookout_Tree_Crown_Top"
+        ],
+        "action": "move",
+        "delta": [
+          0.0,
+          0.0,
+          0.3700000047683716
+        ],
+        "reason": "lift obstructing foliage clear of the lookout entrance"
+      },
+      {
+        "action": "complete_upper_stair_access",
+        "reason": "three final treads and a supported landing join the upper pavilion floor"
+      },
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 25,
+        "iterations": 2
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [],
+      "open_passages": [
+        {
+          "name": "Leaf_Lookout_Pod",
+          "lo": [
+            -0.07250000119209289,
+            -0.09000000357627869,
+            1.563499960899353
+          ],
+          "hi": [
+            0.07250000119209289,
+            0.11499999642372132,
+            1.6989999771118165
+          ],
+          "blockers": []
+        }
+      ]
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "elf_ranger_mastery_hex_v1.glb",
+    "bytes": 741616,
+    "meshes": 7,
+    "primitives": 7,
+    "triangles": 2112,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_ranger_mastery_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "elf_ranger_mastery_hex_v1_albedo",
+        "bytes": 566115,
+        "sha256": "4444487944d495039a6f8b88b52b48c34f106ee0bd7bbf1098db75ec58f6eba3"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "parts": 94,
+  "bones": 52,
+  "non_manifold_edges": 0,
+  "degenerate_faces": 0,
+  "invalid_vertices": 0,
+  "bad_weights": 0,
+  "invalid_uvs": 0,
+  "mirror_max_distance_m": 0.0,
+  "paired_parts": 40,
+  "ventral_slabs": 0,
+  "core": false,
+  "wings": {
+    "L": {
+      "connected_shells": 1,
+      "contact_samples": 36,
+      "maximum_spar_to_sail_distance_m": 0.007718287408351898,
+      "shell_half_thickness_m": 0.007718399167060852
+    },
+    "R": {
+      "connected_shells": 1,
+      "contact_samples": 36,
+      "maximum_spar_to_sail_distance_m": 0.007718286477029324,
+      "shell_half_thickness_m": 0.007718399167060852
+    }
+  }
+}

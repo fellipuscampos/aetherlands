@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "via": "Blender MCP live",
+  "duration_s": 5,
+  "frames": 151,
+  "samples": 301,
+  "fps": 30,
+  "parts": 125,
+  "bones": 91,
+  "particles_included": false,
+  "root_motion": false,
+  "style": "core collapses; traveling spine wave, delayed sag and tail-to-head dissolution",
+  "core_gone_s": 0.84,
+  "body_dissolution_starts_s": 1.55,
+  "continuous_body": true,
+  "maximum_spine_joint_gap_m": 1.1055014724130278e-06,
+  "nonrigid_span_change_m": 0.4973166865755301,
+  "maximum_adjacent_segment_bend_deg": 31.373405027848463,
+  "bounds_min": [
+    -2.0538010597229004,
+    -1.2871884107589722,
+    -0.9402645826339722
+  ],
+  "bounds_max": [
+    1.5125203132629395,
+    1.5062534809112549,
+    3.5201969146728516
+  ],
+  "initial_to_idle_vertex_error_m": 1.3357958096870762e-06,
+  "maximum_half_frame_step_m": 0.2474739703169003,
+  "core_collision_checks": 17,
+  "gone_core_maximum_piece_extent_m": 1.289556306554251e-05,
+  "final_maximum_piece_extent_m": 1.289556306554251e-05,
+  "final_body_top_m": -0.8257164359092712,
+  "core_intersections": 0,
+  "original_asset_files_unchanged": true,
+  "original_five_clips_preserved": true,
+  "serialized_original_clip_error": 0.0,
+  "serialized_death_to_idle_error": 9.5367431640625e-07,
+  "embedded_textures_preserved": true
+}

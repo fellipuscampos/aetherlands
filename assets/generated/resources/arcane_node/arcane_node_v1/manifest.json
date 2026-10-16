@@ -1,0 +1,25 @@
+{
+  "asset": "arcane_node_v1",
+  "resource": "mana_node",
+  "method": "live Blender MCP",
+  "vertices": 80,
+  "triangles": 124,
+  "floating_shards": 4,
+  "footprint_radius": 0.43139310220581034,
+  "height": 0.84,
+  "core_ground_clearance": 0.25,
+  "crystal_cross_section": "square",
+  "host_rock": "cuboid blocks",
+  "materials": 1,
+  "texture_size": [
+    256,
+    256
+  ],
+  "texture_filter": "nearest",
+  "closed_components": true,
+  "previous_scenes": [
+    "Crystal_Resource_V1",
+    "Crystal_Resource_V1_Blocky",
+    "Scene"
+  ]
+}

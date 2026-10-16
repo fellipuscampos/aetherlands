@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dfi8kvds05wuy"
-path="res://.godot/imported/warrior_v1_warrior_v1_emission.png-6cc842f0e6c2da475982d118ea2f6045.ctex"
+path.bptc="res://.godot/imported/warrior_v1_warrior_v1_emission.png-6cc842f0e6c2da475982d118ea2f6045.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "149f84fd9b067ee6825c5637166a7fc3"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/humans/warrior_v1/warrior_v1_warrior_v1_emission.png"
-dest_files=["res://.godot/imported/warrior_v1_warrior_v1_emission.png-6cc842f0e6c2da475982d118ea2f6045.ctex"]
+dest_files=["res://.godot/imported/warrior_v1_warrior_v1_emission.png-6cc842f0e6c2da475982d118ea2f6045.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

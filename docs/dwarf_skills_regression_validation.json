@@ -1,0 +1,49 @@
+{
+  "status": "PARTIAL",
+  "suites": [
+    {
+      "script": "res://test/unit/test_hex_grid_movement.gd",
+      "passed": 67,
+      "total": 69,
+      "status": "FAIL"
+    },
+    {
+      "script": "res://test/unit/test_combat_resolver.gd",
+      "passed": 36,
+      "total": 36,
+      "status": "PASS"
+    },
+    {
+      "script": "res://test/unit/test_v2_cavalry_flow.gd",
+      "passed": 0,
+      "total": 10,
+      "status": "FAIL"
+    },
+    {
+      "script": "res://test/unit/test_v2_siege_flow.gd",
+      "passed": 0,
+      "total": 8,
+      "status": "FAIL"
+    },
+    {
+      "script": "res://test/unit/test_v2_human_troop_models.gd",
+      "passed": 8,
+      "total": 8,
+      "status": "PASS"
+    },
+    {
+      "script": "res://test/unit/test_v2_human_rogue_siege_models.gd",
+      "passed": 2,
+      "total": 2,
+      "status": "PASS"
+    }
+  ],
+  "passed": 113,
+  "total": 133,
+  "failed": 20,
+  "log": "art_source\\dwarf_skills\\regression_tests.log",
+  "limitations": [
+    "Missing assets/models/kaykit/nature/Tree_1_A_Color1.gltf and forest_texture.png in map-dependent tests.",
+    "Cavalry and siege flow tests also expect a doctrine node that the current research database does not provide."
+  ]
+}

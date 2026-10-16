@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bgiq2ck4h1bj7"
-path="res://.godot/imported/warg_v1_warg_v1_atlas.png-34b206d9da2e24546574fa5a8b159ccb.ctex"
+path.bptc="res://.godot/imported/warg_v1_warg_v1_atlas.png-34b206d9da2e24546574fa5a8b159ccb.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "ad13dcedc765c7f856db2412de114493"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/wargs/warg_v1/warg_v1_warg_v1_atlas.png"
-dest_files=["res://.godot/imported/warg_v1_warg_v1_atlas.png-34b206d9da2e24546574fa5a8b159ccb.ctex"]
+dest_files=["res://.godot/imported/warg_v1_warg_v1_atlas.png-34b206d9da2e24546574fa5a8b159ccb.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

@@ -1,0 +1,256 @@
+{
+  "name": "Trebuchet_V1",
+  "kind": "v2_unit_trebuchet",
+  "label": "Trebuchet",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "height_m": 1.8,
+  "height_convention": "Body/rest geometry; animated equipment may exceed body height",
+  "triangles": 624,
+  "editable_parts": 36,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "density_px_per_meter": 64,
+    "filter": "NEAREST",
+    "padding": 2
+  },
+  "derivation": {
+    "predecessor": "catapult_v1",
+    "source_blend_sha256": "b6c58267caef2e995b4e889be3d81bd0a60a322869ac896c87a37185c6e6a860",
+    "copied_parts": [
+      "Chassis",
+      "Wheel_l_front",
+      "Hub_l_front",
+      "Wheel_l_back",
+      "Hub_l_back",
+      "ChassisRail_l",
+      "Wheel_r_front",
+      "Hub_r_front",
+      "Wheel_r_back",
+      "Hub_r_back",
+      "ChassisRail_r",
+      "AxleFront",
+      "AxleBack"
+    ],
+    "inherited_actions": []
+  },
+  "notes": "Human timber/iron/blue heraldry, autonomous mechanical rig without visible crew. Chassis copied from predecessor; mechanisms upgraded.",
+  "rig": {
+    "bones": [
+      "root",
+      "body",
+      "weapon",
+      "loader",
+      "wheel_l_front",
+      "wheel_l_back",
+      "wheel_r_front",
+      "wheel_r_back",
+      "counterweight"
+    ],
+    "hierarchy": "Flat rigid mechanical rig: body, wheels, weapon, loading mechanism; hanging counterweight in trebuchet",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "Chassis": "body",
+      "Wheel_l_front": "wheel_l_front",
+      "Hub_l_front": "wheel_l_front",
+      "Wheel_l_back": "wheel_l_back",
+      "Hub_l_back": "wheel_l_back",
+      "ChassisRail_l": "body",
+      "Wheel_r_front": "wheel_r_front",
+      "Hub_r_front": "wheel_r_front",
+      "Wheel_r_back": "wheel_r_back",
+      "Hub_r_back": "wheel_r_back",
+      "ChassisRail_r": "body",
+      "AxleFront": "body",
+      "AxleBack": "body",
+      "HumanPennant": "body",
+      "PennantCrossbar": "body",
+      "PennantBracket": "body",
+      "AframeFront_l": "body",
+      "AframeBack_l": "body",
+      "AframeFront_r": "body",
+      "AframeBack_r": "body",
+      "Pivot": "body",
+      "ThrowArm": "weapon",
+      "Spoon": "weapon",
+      "ReadyStone": "weapon",
+      "Counterweight": "counterweight",
+      "CounterweightHanger": "weapon",
+      "Sling_l": "weapon",
+      "Sling_r": "weapon",
+      "Windlass": "loader",
+      "WinchRope": "body",
+      "RearMast": "body",
+      "Standard": "body",
+      "Bearing_Front_l": "body",
+      "Bearing_Front_r": "body",
+      "Bearing_Back_l": "body",
+      "Bearing_Back_r": "body"
+    }
+  },
+  "animations": {
+    "Trebuchet_Idle": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Mechanism at rest, slight taut-rope/crank tension",
+      "seconds": 2
+    },
+    "Trebuchet_Walk": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 58,
+      "description": "Wheels turn in place; return by a full revolution",
+      "seconds": 2
+    },
+    "Trebuchet_Attack": {
+      "start": 1,
+      "end": 49,
+      "loop": false,
+      "nla_start": 115,
+      "description": "Launch/recoil, mechanical recovery and reload",
+      "impact_frame": 27,
+      "seconds": 2
+    },
+    "Trebuchet_DemolitionAmmo": {
+      "start": 1,
+      "end": 73,
+      "loop": false,
+      "nla_start": 172,
+      "description": "Load heavy ammunition; amplified shot and recovery",
+      "impact_frame": 41,
+      "seconds": 3
+    },
+    "Trebuchet_PreparedBombardment": {
+      "start": 1,
+      "end": 97,
+      "loop": false,
+      "nla_start": 253,
+      "description": "Set elevation, wind/lock mechanism, deliberate heavy shot, recovery",
+      "impact_frame": 54,
+      "seconds": 4
+    }
+  },
+  "animation_validation": {
+    "problems": [],
+    "samples": {
+      "Trebuchet_Idle": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "1bd9a80c714f1f3762561fbb7285f3a5c558cc3a88fc89278db382c85132f190"
+      },
+      "Trebuchet_Walk": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "9c4e8955e617c9fb3403b6f05514f978121f5094444d73718c1f4c4596e590ef"
+      },
+      "Trebuchet_Attack": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "010d5034789579b03e194b3217b3c7a642e765762719e94b349936868b656a3f"
+      },
+      "Trebuchet_DemolitionAmmo": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "c4286288d1a328b6249572b4e699bbb20fbe9718e2f20a58ec9352b700628763"
+      },
+      "Trebuchet_PreparedBombardment": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "63ea6c3f5d1bf34f423d7da3828f0139994f9c914e6f9c0a9dbebefceadd3113"
+      }
+    }
+  },
+  "glb": {
+    "file": "trebuchet_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 9,
+    "triangles": 624,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Trebuchet_Idle": 2,
+      "Trebuchet_Walk": 2,
+      "Trebuchet_Attack": 2,
+      "Trebuchet_DemolitionAmmo": 3,
+      "Trebuchet_PreparedBombardment": 4
+    },
+    "channels": "location, rotation on every bone"
+  },
+  "status": "Finished human Trebuchet; rig, clips, nearest embedded textures and isolated editable source verified.",
+  "rig_bone_map": {
+    "Chassis": "body",
+    "Wheel_l_front": "wheel_l_front",
+    "Hub_l_front": "wheel_l_front",
+    "Wheel_l_back": "wheel_l_back",
+    "Hub_l_back": "wheel_l_back",
+    "ChassisRail_l": "body",
+    "Wheel_r_front": "wheel_r_front",
+    "Hub_r_front": "wheel_r_front",
+    "Wheel_r_back": "wheel_r_back",
+    "Hub_r_back": "wheel_r_back",
+    "ChassisRail_r": "body",
+    "AxleFront": "body",
+    "AxleBack": "body",
+    "HumanPennant": "body",
+    "PennantCrossbar": "body",
+    "PennantBracket": "body",
+    "AframeFront_l": "body",
+    "AframeBack_l": "body",
+    "AframeFront_r": "body",
+    "AframeBack_r": "body",
+    "Pivot": "body",
+    "ThrowArm": "weapon",
+    "Spoon": "weapon",
+    "ReadyStone": "weapon",
+    "Counterweight": "counterweight",
+    "CounterweightHanger": "weapon",
+    "Sling_l": "weapon",
+    "Sling_r": "weapon",
+    "Windlass": "loader",
+    "WinchRope": "body",
+    "RearMast": "body",
+    "Standard": "body",
+    "Bearing_Front_l": "body",
+    "Bearing_Front_r": "body",
+    "Bearing_Back_l": "body",
+    "Bearing_Back_r": "body"
+  },
+  "source_validation": {
+    "scenes": [
+      "Trebuchet_V1"
+    ],
+    "actions": [
+      "Trebuchet_Walk",
+      "Trebuchet_PreparedBombardment",
+      "Trebuchet_Idle",
+      "Trebuchet_DemolitionAmmo",
+      "Trebuchet_Attack"
+    ],
+    "armatures": [
+      "Trebuchet_V1_Skeleton"
+    ]
+  },
+  "geometry_validation": {
+    "asset": "trebuchet_v1",
+    "nonmanifold_edges": 0,
+    "unattached_parts_candidates": [],
+    "same_normal_coplanar_candidates": [],
+    "mast_weapon_collisions": [],
+    "intersecting_wheels": [],
+    "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+  }
+}

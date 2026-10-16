@@ -3,23 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b7rtpk7hvhwio"
-path="res://.godot/imported/cavalier_v1_cavalier_v1_albedo.png-cfe43f599b3c7e1e2def175d3189cc4f.ctex"
+path.bptc="res://.godot/imported/cavalier_v1_cavalier_v1_albedo.png-cfe43f599b3c7e1e2def175d3189cc4f.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "efb97c72bf7b09ff4b986fbeeab1738b"
+"md5": "e27af5271d22cdde8ff00b923069fbd1"
 }
 
 [deps]
 
 source_file="res://assets/generated/humans/cavalier_v1/cavalier_v1_cavalier_v1_albedo.png"
-dest_files=["res://.godot/imported/cavalier_v1_cavalier_v1_albedo.png-cfe43f599b3c7e1e2def175d3189cc4f.ctex"]
+dest_files=["res://.godot/imported/cavalier_v1_cavalier_v1_albedo.png-cfe43f599b3c7e1e2def175d3189cc4f.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

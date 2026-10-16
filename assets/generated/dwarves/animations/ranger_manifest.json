@@ -1,0 +1,34 @@
+{
+  "family": "ranger",
+  "fps": 48,
+  "motion_revision": 3,
+  "clips": {
+    "idle": {
+      "action": "Dwarf_ranger_idle",
+      "frames": 145,
+      "loop": true,
+      "description": "Vigia atento com besta apontada à frente.",
+      "impact_frame": null
+    },
+    "walk": {
+      "action": "Dwarf_ranger_walk",
+      "frames": 57,
+      "loop": true,
+      "description": "Passos controlados, besta à frente, braço livre em balanço e tronco em contrapeso.",
+      "impact_frame": null
+    },
+    "attack": {
+      "action": "Dwarf_ranger_attack",
+      "frames": 81,
+      "loop": false,
+      "description": "Ergue ligeiramente a mira, dispara com recuo curto e retorna à guarda.",
+      "impact_frame": 29
+    }
+  },
+  "variants": [
+    "dwarf_archer_v1",
+    "dwarf_hunter_v1",
+    "dwarf_elite_marksman_v1",
+    "dwarf_legend_hunter_v1"
+  ]
+}

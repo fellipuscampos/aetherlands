@@ -1,0 +1,71 @@
+{
+  "status": "PASS",
+  "asset": "siege_colossus_v1",
+  "design": "Single great bombard; shaped oak carriage, six spoked wheels, side trunnions, windlass, human blue heraldry and restrained legendary gold.",
+  "height_m": 2.0,
+  "triangles": 3644,
+  "editable_parts": 121,
+  "rig_bones": 10,
+  "native_animation_clips": 5,
+  "all_existing_action_curves_preserved": true,
+  "geometry_validation": {
+    "asset": "siege_colossus_v1",
+    "nonmanifold_edges": 0,
+    "unattached_parts_candidates": [],
+    "same_normal_coplanar_candidates": [],
+    "mast_weapon_collisions": [],
+    "intersecting_wheels": [],
+    "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+  },
+  "godot_import": {
+    "asset": "siege_colossus_v1",
+    "bones": 10,
+    "clips": {
+      "SiegeColossus_Attack": {
+        "loop": false,
+        "samples": 49,
+        "seconds": 2.0
+      },
+      "SiegeColossus_DemolitionAmmo": {
+        "loop": false,
+        "samples": 73,
+        "seconds": 3.0
+      },
+      "SiegeColossus_Idle": {
+        "loop": true,
+        "samples": 49,
+        "seconds": 2.0
+      },
+      "SiegeColossus_PreparedBombardment": {
+        "loop": false,
+        "samples": 97,
+        "seconds": 4.0
+      },
+      "SiegeColossus_Walk": {
+        "loop": true,
+        "samples": 49,
+        "seconds": 2.0
+      }
+    },
+    "ground_y": 0.0,
+    "height_m": 2.0
+  },
+  "runtime_tests": {
+    "scripts": 1,
+    "tests": 2,
+    "passing": 2,
+    "assertions": 77,
+    "log": "art_source/siege_colossus_before_redesign_v1/gut_redesign.log"
+  },
+  "review_scene_smoke": "PASS, eight frames, exit 0, no errors",
+  "other_troops_and_runtime_files_preserved": 194,
+  "other_files_changed": [],
+  "old_asset_backup": "art_source/siege_colossus_before_redesign_v1/asset",
+  "final_files_sha256": {
+    "siege_colossus_v1.blend": "2b1a8206e96a087bffa8cc9204e876b8ad599acb44c28bd950e8196c2de7e825",
+    "siege_colossus_v1.glb": "5194e6244170c7fc06c3f7e313f1c7eedf547dea2cbfa15f4a5c5baa18d7edf3",
+    "siege_colossus_v1_albedo.png": "1e4e87ad112834f8b42e9b6a3eaf6a32a6dae5a3a9b44d194d63a2d81ea5f111",
+    "siege_colossus_v1_emission.png": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+  },
+  "pipeline": "Live Blender MCP"
+}

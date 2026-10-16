@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://mv6yfh6dubjs"
-path="res://.godot/imported/archdemon_FaceTex_human_default.png-decc2fcd422340e5248bc9c938dc0eb1.ctex"
+path.bptc="res://.godot/imported/archdemon_FaceTex_human_default.png-decc2fcd422340e5248bc9c938dc0eb1.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "134dbce110b7831e5525813303e32710"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/magic/archdemon/archdemon_FaceTex_human_default.png"
-dest_files=["res://.godot/imported/archdemon_FaceTex_human_default.png-decc2fcd422340e5248bc9c938dc0eb1.ctex"]
+dest_files=["res://.godot/imported/archdemon_FaceTex_human_default.png-decc2fcd422340e5248bc9c938dc0eb1.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

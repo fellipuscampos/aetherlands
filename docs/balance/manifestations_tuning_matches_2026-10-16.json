@@ -1,0 +1,362 @@
+{
+  "date": "2026-10-16",
+  "method": "Four AI seats, existing F33B matrix 0-2, 128x72, ecology enabled, turn cap 240. Smoke tests, not statistical balance evidence. Reload smokes ran earlier during tuning; final continuous runs use the final priorities.",
+  "groups": {
+    "reload_during_tuning": [
+      {
+        "match": "F33B-001",
+        "seed": 33102,
+        "end": {
+          "end_reason": "TIMEOUT",
+          "timeout": true,
+          "turn": 240,
+          "turn_cap": 240,
+          "victory_type_raw": ""
+        },
+        "victory": {},
+        "save_load": {
+          "load_ms": 1622.55,
+          "loaded": true,
+          "save_ms": 9.83,
+          "saved": true,
+          "turn": 60
+        },
+        "performance": {
+          "loop_ms": 44677.12,
+          "monitors_after": {
+            "nodes": 16,
+            "objects": 3103,
+            "orphan_nodes": 0,
+            "resources": 450,
+            "static_memory_mb": 119.31
+          },
+          "monitors_before": {
+            "nodes": 16,
+            "objects": 1879,
+            "orphan_nodes": 0,
+            "resources": 231,
+            "static_memory_mb": 85.01
+          },
+          "setup_ms": 2136.75,
+          "turn_ms": {
+            "first": 107.3,
+            "max": 660.52,
+            "mean": 174.17,
+            "n": 239,
+            "p50": 169.66,
+            "p95": 355.3
+          },
+          "turns_processed": 239,
+          "wall_ms": 46896
+        },
+        "counters": {
+          "city_attacks": 34,
+          "city_captures": 6,
+          "engagements": 852,
+          "recaptures": 0,
+          "turns_any_war": 137,
+          "turns_observed": 239,
+          "unit_deaths": 134
+        }
+      },
+      {
+        "match": "F33B-002",
+        "seed": 33109,
+        "end": {
+          "end_reason": "TRANSCENDENCE",
+          "timeout": false,
+          "turn": 157,
+          "turn_cap": 240,
+          "victory_type_raw": "v2_transcendence"
+        },
+        "victory": {
+          "victory_turn": 157,
+          "victory_type": "v2_transcendence",
+          "winner_index": 0,
+          "winner_orientation": "ARCANE",
+          "winner_race": "elf"
+        },
+        "save_load": {
+          "load_ms": 1745.33,
+          "loaded": true,
+          "save_ms": 8.99,
+          "saved": true,
+          "turn": 60
+        },
+        "performance": {
+          "loop_ms": 18451.82,
+          "monitors_after": {
+            "nodes": 16,
+            "objects": 3153,
+            "orphan_nodes": 0,
+            "resources": 491,
+            "static_memory_mb": 123.93
+          },
+          "monitors_before": {
+            "nodes": 16,
+            "objects": 3103,
+            "orphan_nodes": 0,
+            "resources": 450,
+            "static_memory_mb": 119.32
+          },
+          "setup_ms": 2124.44,
+          "turn_ms": {
+            "first": 110.82,
+            "max": 254.31,
+            "mean": 102.2,
+            "n": 156,
+            "p50": 92.0,
+            "p95": 185.02
+          },
+          "turns_processed": 156,
+          "wall_ms": 20664
+        },
+        "counters": {
+          "city_attacks": 8,
+          "city_captures": 3,
+          "engagements": 282,
+          "recaptures": 1,
+          "turns_any_war": 63,
+          "turns_observed": 156,
+          "unit_deaths": 26
+        }
+      },
+      {
+        "match": "F33B-003",
+        "seed": 33116,
+        "end": {
+          "end_reason": "TRANSCENDENCE",
+          "timeout": false,
+          "turn": 151,
+          "turn_cap": 240,
+          "victory_type_raw": "v2_transcendence"
+        },
+        "victory": {
+          "victory_turn": 151,
+          "victory_type": "v2_transcendence",
+          "winner_index": 0,
+          "winner_orientation": "ARCANE",
+          "winner_race": "dwarf"
+        },
+        "save_load": {
+          "load_ms": 1930.98,
+          "loaded": true,
+          "save_ms": 9.96,
+          "saved": true,
+          "turn": 60
+        },
+        "performance": {
+          "loop_ms": 22974.39,
+          "monitors_after": {
+            "nodes": 16,
+            "objects": 3252,
+            "orphan_nodes": 0,
+            "resources": 526,
+            "static_memory_mb": 126.22
+          },
+          "monitors_before": {
+            "nodes": 16,
+            "objects": 3153,
+            "orphan_nodes": 0,
+            "resources": 491,
+            "static_memory_mb": 122.21
+          },
+          "setup_ms": 2220.21,
+          "turn_ms": {
+            "first": 125.04,
+            "max": 455.3,
+            "mean": 134.7,
+            "n": 150,
+            "p50": 130.51,
+            "p95": 254.39
+          },
+          "turns_processed": 150,
+          "wall_ms": 25279
+        },
+        "counters": {
+          "city_attacks": 4,
+          "city_captures": 0,
+          "engagements": 346,
+          "recaptures": 0,
+          "turns_any_war": 41,
+          "turns_observed": 150,
+          "unit_deaths": 37
+        }
+      }
+    ],
+    "final_continuous": [
+      {
+        "match": "F33B-001",
+        "seed": 33102,
+        "end": {
+          "end_reason": "TRANSCENDENCE",
+          "timeout": false,
+          "turn": 196,
+          "turn_cap": 240,
+          "victory_type_raw": "v2_transcendence"
+        },
+        "victory": {
+          "victory_turn": 196,
+          "victory_type": "v2_transcendence",
+          "winner_index": 2,
+          "winner_orientation": "ARCANE",
+          "winner_race": "dwarf"
+        },
+        "save_load": {},
+        "performance": {
+          "loop_ms": 31411.97,
+          "monitors_after": {
+            "nodes": 16,
+            "objects": 2947,
+            "orphan_nodes": 0,
+            "resources": 458,
+            "static_memory_mb": 118.32
+          },
+          "monitors_before": {
+            "nodes": 16,
+            "objects": 1879,
+            "orphan_nodes": 0,
+            "resources": 231,
+            "static_memory_mb": 85.02
+          },
+          "setup_ms": 2066.14,
+          "turn_ms": {
+            "first": 104.59,
+            "max": 678.07,
+            "mean": 155.88,
+            "n": 195,
+            "p50": 144.03,
+            "p95": 309.95
+          },
+          "turns_processed": 195,
+          "wall_ms": 33566
+        },
+        "counters": {
+          "city_attacks": 0,
+          "city_captures": 0,
+          "engagements": 611,
+          "recaptures": 0,
+          "turns_any_war": 98,
+          "turns_observed": 195,
+          "unit_deaths": 81
+        }
+      },
+      {
+        "match": "F33B-002",
+        "seed": 33109,
+        "end": {
+          "end_reason": "TRANSCENDENCE",
+          "timeout": false,
+          "turn": 157,
+          "turn_cap": 240,
+          "victory_type_raw": "v2_transcendence"
+        },
+        "victory": {
+          "victory_turn": 157,
+          "victory_type": "v2_transcendence",
+          "winner_index": 0,
+          "winner_orientation": "ARCANE",
+          "winner_race": "elf"
+        },
+        "save_load": {},
+        "performance": {
+          "loop_ms": 14548.97,
+          "monitors_after": {
+            "nodes": 16,
+            "objects": 3034,
+            "orphan_nodes": 0,
+            "resources": 498,
+            "static_memory_mb": 122.33
+          },
+          "monitors_before": {
+            "nodes": 16,
+            "objects": 2947,
+            "orphan_nodes": 0,
+            "resources": 458,
+            "static_memory_mb": 118.32
+          },
+          "setup_ms": 1953.08,
+          "turn_ms": {
+            "first": 100.17,
+            "max": 190.43,
+            "mean": 89.03,
+            "n": 156,
+            "p50": 81.15,
+            "p95": 154.21
+          },
+          "turns_processed": 156,
+          "wall_ms": 16584
+        },
+        "counters": {
+          "city_attacks": 8,
+          "city_captures": 3,
+          "engagements": 282,
+          "recaptures": 1,
+          "turns_any_war": 63,
+          "turns_observed": 156,
+          "unit_deaths": 26
+        }
+      },
+      {
+        "match": "F33B-003",
+        "seed": 33116,
+        "end": {
+          "end_reason": "TRANSCENDENCE",
+          "timeout": false,
+          "turn": 151,
+          "turn_cap": 240,
+          "victory_type_raw": "v2_transcendence"
+        },
+        "victory": {
+          "victory_turn": 151,
+          "victory_type": "v2_transcendence",
+          "winner_index": 0,
+          "winner_orientation": "ARCANE",
+          "winner_race": "dwarf"
+        },
+        "save_load": {},
+        "performance": {
+          "loop_ms": 15825.04,
+          "monitors_after": {
+            "nodes": 16,
+            "objects": 3143,
+            "orphan_nodes": 0,
+            "resources": 530,
+            "static_memory_mb": 124.68
+          },
+          "monitors_before": {
+            "nodes": 16,
+            "objects": 3034,
+            "orphan_nodes": 0,
+            "resources": 498,
+            "static_memory_mb": 120.86
+          },
+          "setup_ms": 1976.24,
+          "turn_ms": {
+            "first": 105.09,
+            "max": 232.68,
+            "mean": 101.23,
+            "n": 150,
+            "p50": 96.25,
+            "p95": 168.24
+          },
+          "turns_processed": 150,
+          "wall_ms": 17878
+        },
+        "counters": {
+          "city_attacks": 4,
+          "city_captures": 0,
+          "engagements": 343,
+          "recaptures": 0,
+          "turns_any_war": 41,
+          "turns_observed": 150,
+          "unit_deaths": 37
+        }
+      }
+    ]
+  },
+  "controller_sha256": {
+    "before": "2b50a1f3af79ee5abd30958051cb84e5cd21e79fcae71ddf7f48d1de2aab81f4",
+    "after": "8912e58c179b01d3f5967eb9d19a20db6125d9d6b192f84e0f8142ea9d63bd49"
+  }
+}

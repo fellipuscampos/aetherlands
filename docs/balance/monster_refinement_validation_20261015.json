@@ -1,0 +1,139 @@
+{
+  "tests": {
+    "scripts": 15,
+    "tests": 369,
+    "passing": 369,
+    "assertions": 20041,
+    "duration_seconds": 76.97,
+    "notes": [
+      "GUT fixture test_v3_e2_abilities.gd reports 6 unfreed children",
+      "Legacy combat test models fall back to procedural bodies"
+    ]
+  },
+  "pressure_probe": {
+    "method": "CombatResolver.predict; base attributes; no battle simulation",
+    "species": 12,
+    "comparisons": 144,
+    "data": "docs/balance/monster_pressure_20261015.json"
+  },
+  "perf_bench": {
+    "headless": true,
+    "seed": 4242,
+    "map": "128x72",
+    "rivals": 3,
+    "scenarios": "default (all)",
+    "turns": 40,
+    "before": {
+      "turn_ms": {
+        "avg": 131.894125,
+        "max": 219.908,
+        "p50": 136.261,
+        "p95": 214.069
+      },
+      "setup_ms": 2661.906
+    },
+    "after": {
+      "turn_ms": {
+        "avg": 99.0597,
+        "max": 247.457,
+        "p50": 96.113,
+        "p95": 204.982
+      },
+      "setup_ms": 2078.295
+    },
+    "limits": "Different gameplay, warm caches, concurrent workspace activity; not statistical evidence or FPS/GPU measurement"
+  },
+  "lair_controller": {
+    "controller_ms": {
+      "max": 9.896,
+      "mean": 0.99733,
+      "min": 0.565,
+      "p95": 0.947
+    },
+    "map": "128x72",
+    "neutrals": 86,
+    "rounds": 100,
+    "seed": 33102,
+    "sites": {
+      "ADVANCED": 7,
+      "BASIC": 29,
+      "INTERMEDIATE": 14
+    }
+  },
+  "campaign": {
+    "seed": 33102,
+    "end": {
+      "end_reason": "TIMEOUT",
+      "timeout": true,
+      "turn": 140,
+      "turn_cap": 140,
+      "victory_type_raw": ""
+    },
+    "save_load": {
+      "load_ms": 1570.28,
+      "loaded": true,
+      "save_ms": 8.75,
+      "saved": true,
+      "turn": 60
+    },
+    "performance": {
+      "loop_ms": 17139.67,
+      "monitors_after": {
+        "nodes": 16,
+        "objects": 2662,
+        "orphan_nodes": 0,
+        "resources": 405,
+        "static_memory_mb": 112.98
+      },
+      "monitors_before": {
+        "nodes": 16,
+        "objects": 1871,
+        "orphan_nodes": 0,
+        "resources": 223,
+        "static_memory_mb": 83.1
+      },
+      "setup_ms": 2055.05,
+      "turn_ms": {
+        "first": 103.2,
+        "max": 255.6,
+        "mean": 107.89,
+        "n": 139,
+        "p50": 99.29,
+        "p95": 199.56
+      },
+      "turns_processed": 139,
+      "wall_ms": 19260
+    },
+    "aggro": {
+      "ADVANCED": {
+        "acquisitions": 6,
+        "beyond_leash": 0,
+        "leash_disengages": 3,
+        "pursuit_distance_max": 7,
+        "pursuit_distance_sum": 50,
+        "pursuit_steps": 16,
+        "return_home": 3
+      },
+      "BASIC": {
+        "acquisitions": 103,
+        "beyond_leash": 0,
+        "leash_disengages": 25,
+        "pursuit_distance_max": 9,
+        "pursuit_distance_sum": 548,
+        "pursuit_steps": 161,
+        "return_home": 29
+      },
+      "INTERMEDIATE": {
+        "acquisitions": 29,
+        "beyond_leash": 0,
+        "leash_disengages": 9,
+        "pursuit_distance_max": 10,
+        "pursuit_distance_sum": 191,
+        "pursuit_steps": 53,
+        "return_home": 9
+      }
+    },
+    "data": "user://balance/monster_refinement_20261015/final_smoke/F33B-001.json"
+  },
+  "monster_database_identical_to_start": true
+}

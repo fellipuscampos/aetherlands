@@ -3,23 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://6qwndgoc5dhb"
-path="res://.godot/imported/hunter_v1_hunter_v1_albedo.png-3e1cd3b284da1f62ab98db7692bb7f0a.ctex"
+path.bptc="res://.godot/imported/hunter_v1_hunter_v1_albedo.png-3e1cd3b284da1f62ab98db7692bb7f0a.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "d623350ce612a2143c875cabec3d66f2"
+"md5": "503c6447e00942c22ea93448c47b9224"
 }
 
 [deps]
 
 source_file="res://assets/generated/humans/hunter_v1/hunter_v1_hunter_v1_albedo.png"
-dest_files=["res://.godot/imported/hunter_v1_hunter_v1_albedo.png-3e1cd3b284da1f62ab98db7692bb7f0a.ctex"]
+dest_files=["res://.godot/imported/hunter_v1_hunter_v1_albedo.png-3e1cd3b284da1f62ab98db7692bb7f0a.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

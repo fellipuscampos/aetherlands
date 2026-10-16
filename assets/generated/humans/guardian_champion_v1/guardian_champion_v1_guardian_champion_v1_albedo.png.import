@@ -3,23 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://clqiadg0qbiok"
-path="res://.godot/imported/guardian_champion_v1_guardian_champion_v1_albedo.png-13d5997f58dd0ab5acdb8a7085489d0f.ctex"
+path.bptc="res://.godot/imported/guardian_champion_v1_guardian_champion_v1_albedo.png-13d5997f58dd0ab5acdb8a7085489d0f.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "6311525ec20126f99899b5ad0285da99"
+"md5": "4708fec7dc03110bc41faa25f0871a1f"
 }
 
 [deps]
 
 source_file="res://assets/generated/humans/guardian_champion_v1/guardian_champion_v1_guardian_champion_v1_albedo.png"
-dest_files=["res://.godot/imported/guardian_champion_v1_guardian_champion_v1_albedo.png-13d5997f58dd0ab5acdb8a7085489d0f.ctex"]
+dest_files=["res://.godot/imported/guardian_champion_v1_guardian_champion_v1_albedo.png-13d5997f58dd0ab5acdb8a7085489d0f.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

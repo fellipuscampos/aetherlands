@@ -1,0 +1,43 @@
+{
+  "status": "PASS",
+  "method": "Saved-source BVH intersections and rear-facing rays",
+  "assets": [
+    {
+      "kind": "worg",
+      "status": "PASS",
+      "checks": {
+        "rear_ray_hits_solid_back": true
+      }
+    },
+    {
+      "kind": "troll",
+      "status": "PASS",
+      "checks": {
+        "rear_ray_hits_solid_back": true
+      }
+    },
+    {
+      "kind": "arboreal_ancient",
+      "status": "PASS",
+      "checks": {
+        "all_spiral_segments_touch_birth_stones": true,
+        "spiral_segments": 21
+      }
+    },
+    {
+      "kind": "corrupted_hero",
+      "status": "PASS",
+      "checks": {
+        "shield_layers_and_standard_emblem_attached": true
+      }
+    },
+    {
+      "kind": "giant_spider",
+      "status": "PASS",
+      "checks": {
+        "hanging_cocoon_attached": true,
+        "front_snag_anchors_web": true
+      }
+    }
+  ]
+}

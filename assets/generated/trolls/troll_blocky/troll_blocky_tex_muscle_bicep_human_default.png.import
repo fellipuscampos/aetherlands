@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://11ycb5psx3tm"
-path="res://.godot/imported/troll_blocky_tex_muscle_bicep_human_default.png-78ac78e9c02ab3c499183b5e1d7e02b6.ctex"
+path.bptc="res://.godot/imported/troll_blocky_tex_muscle_bicep_human_default.png-78ac78e9c02ab3c499183b5e1d7e02b6.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "806e6954e3197eebc9ed3eceb3d8bb02"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/trolls/troll_blocky/troll_blocky_tex_muscle_bicep_human_default.png"
-dest_files=["res://.godot/imported/troll_blocky_tex_muscle_bicep_human_default.png-78ac78e9c02ab3c499183b5e1d7e02b6.ctex"]
+dest_files=["res://.godot/imported/troll_blocky_tex_muscle_bicep_human_default.png-78ac78e9c02ab3c499183b5e1d7e02b6.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

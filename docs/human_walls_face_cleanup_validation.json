@@ -1,0 +1,46 @@
+{
+  "status": "PASS",
+  "previous_city_assets_unchanged": true,
+  "levels": [
+    {
+      "level": 1,
+      "triangles": 1176,
+      "removed_buried_and_shared_face_area": 4.8982886064418825,
+      "source_parts": 129,
+      "visible_parts": 129,
+      "visible_faces": 588,
+      "coplanar_overlaps_before": 222,
+      "coplanar_overlaps_after": 0,
+      "silhouette_bounds_unchanged": true,
+      "atlas_bytes_unchanged": true,
+      "method": "Visible boundary partition, interpolated original UVs"
+    },
+    {
+      "level": 2,
+      "triangles": 2742,
+      "removed_buried_and_shared_face_area": 5.2137428919967315,
+      "source_parts": 196,
+      "visible_parts": 196,
+      "visible_faces": 1371,
+      "coplanar_overlaps_before": 140,
+      "coplanar_overlaps_after": 0,
+      "silhouette_bounds_unchanged": true,
+      "atlas_bytes_unchanged": true,
+      "method": "Visible boundary partition, interpolated original UVs"
+    },
+    {
+      "level": 3,
+      "triangles": 4002,
+      "removed_buried_and_shared_face_area": 7.119366271271509,
+      "source_parts": 258,
+      "visible_parts": 258,
+      "visible_faces": 2001,
+      "coplanar_overlaps_before": 256,
+      "coplanar_overlaps_after": 0,
+      "silhouette_bounds_unchanged": true,
+      "atlas_bytes_unchanged": true,
+      "method": "Visible boundary partition, interpolated original UVs"
+    }
+  ],
+  "audit_includes_opposing_normals": true
+}

@@ -1,0 +1,384 @@
+{
+  "stem": "dwarf_hunter_v1",
+  "key": "hunter",
+  "family": "ranger",
+  "family_name": "Patrulheiro",
+  "tier": 1,
+  "tier_name": "Evolução I",
+  "name": "Vigia das Passagens",
+  "gameplay_id": "v2_unit_hunter",
+  "status": "PASS",
+  "stage": "animated_troops",
+  "body_height_m": 1.35,
+  "anatomy": {
+    "body_belly": "1b281d82ce9c63459c5b143318d539453965b4479711405cb1affd1b4b721eac",
+    "body_chest": "c78b881b49d6bc372b5107fe16d50954ac934792ec86ac3b985341d2667eead7",
+    "body_foot_L": "c9b06769765e4482bb9bc38bbcbef54581a5bd62bafab193be220a797992d4a5",
+    "body_foot_R": "c9b06769765e4482bb9bc38bbcbef54581a5bd62bafab193be220a797992d4a5",
+    "body_forearm_L": "470dbeccca8b05bfdec2eef37cbb2b502cf6abbc4dc5faa4c944f167f3eeee91",
+    "body_forearm_R": "470dbeccca8b05bfdec2eef37cbb2b502cf6abbc4dc5faa4c944f167f3eeee91",
+    "body_hand_L": "cb78ae0bc057ebec335a111a4a583398bbf0ba5dc337865ff01fba37348ce3d6",
+    "body_hand_R": "cb78ae0bc057ebec335a111a4a583398bbf0ba5dc337865ff01fba37348ce3d6",
+    "body_head": "2cb8d362e52dd59c6fea0bf48f47b846f7c2f756a5dd3ca7807a0e1dd082d993",
+    "body_pelvis": "31f2365c98e2dc61260dd07a40ce6c2ee4dd845a8fb594ed1bc762316ff91b25",
+    "body_shin_L": "096c9ae3f1b685173c09d5ddbdbfb991d333ac64332931972dfebe74f85357dc",
+    "body_shin_R": "096c9ae3f1b685173c09d5ddbdbfb991d333ac64332931972dfebe74f85357dc",
+    "body_shoulder_L": "d8056e397a2097abaf79a343bc320d304513aa003fea254b92bacf5e7b8946c5",
+    "body_shoulder_R": "d8056e397a2097abaf79a343bc320d304513aa003fea254b92bacf5e7b8946c5",
+    "body_thigh_L": "7796157034e6a7046bcb0d840f29de37dea512bd9a8a378c60305ccb13881f26",
+    "body_thigh_R": "7796157034e6a7046bcb0d840f29de37dea512bd9a8a378c60305ccb13881f26",
+    "body_upper_arm_L": "6086967f8afc9181e047f9ff79231296d926c0c92eb9f99526a4bd8060ab8a20",
+    "body_upper_arm_R": "6086967f8afc9181e047f9ff79231296d926c0c92eb9f99526a4bd8060ab8a20"
+  },
+  "anatomical_parts": 18,
+  "neck": false,
+  "style_revision": 6,
+  "created_via": "live_blender_mcp",
+  "geometry": {
+    "parts": 69,
+    "triangles": 828,
+    "bounds_min": [
+      -0.5214075446128845,
+      -0.9618802070617676,
+      0.0
+    ],
+    "bounds_max": [
+      0.8099079728126526,
+      0.21799999475479126,
+      1.4225000143051147
+    ],
+    "dimensions": [
+      1.331315517425537,
+      1.179880142211914,
+      1.4225000143051147
+    ],
+    "closed_meshes": true,
+    "uv_in_bounds": true
+  },
+  "atlas": {
+    "size": 512,
+    "density_px_per_m": 64,
+    "padding_px": 3,
+    "face_islands": 414,
+    "paint_revision": 7,
+    "sha256": "edcf2117b7fb39198dcb8637822bcfd20bfb1a90b3b0bcd7cf0df962889c15eb"
+  },
+  "export": {
+    "bytes": 292564,
+    "sha256": "c7a3f78e07d183b496cad3273ea9b869bea6e352c4b5029aa81de83afe81317b",
+    "meshes": 1,
+    "skins": 1,
+    "animations": 5,
+    "embedded_png_matches": true,
+    "nearest_filter": true
+  },
+  "held_grips": [
+    {
+      "weapon": "clan_crossbow.001",
+      "hand": "body_hand_R",
+      "fist_center_inside_handle": true
+    }
+  ],
+  "design": "balanced_hips_large_feet_one_hand_role_equipment_forged_materials",
+  "material_emblems": false,
+  "mount_leg_segments": 0,
+  "body_part_dimensions": {
+    "body_pelvis": [
+      0.52,
+      0.3,
+      0.16
+    ],
+    "body_belly": [
+      0.43,
+      0.29,
+      0.17
+    ],
+    "body_chest": [
+      0.62,
+      0.33,
+      0.28
+    ],
+    "body_head": [
+      0.38,
+      0.34,
+      0.33
+    ],
+    "body_thigh_L": [
+      0.205,
+      0.23,
+      0.18
+    ],
+    "body_shin_L": [
+      0.235,
+      0.245,
+      0.18
+    ],
+    "body_foot_L": [
+      0.235,
+      0.405,
+      0.155
+    ],
+    "body_shoulder_L": [
+      0.23,
+      0.335,
+      0.205
+    ],
+    "body_upper_arm_L": [
+      0.19,
+      0.205,
+      0.245
+    ],
+    "body_forearm_L": [
+      0.225,
+      0.235,
+      0.215
+    ],
+    "body_hand_L": [
+      0.22,
+      0.235,
+      0.175
+    ],
+    "body_thigh_R": [
+      0.205,
+      0.23,
+      0.18
+    ],
+    "body_shin_R": [
+      0.235,
+      0.245,
+      0.18
+    ],
+    "body_foot_R": [
+      0.235,
+      0.405,
+      0.155
+    ],
+    "body_shoulder_R": [
+      0.23,
+      0.335,
+      0.205
+    ],
+    "body_upper_arm_R": [
+      0.19,
+      0.205,
+      0.245
+    ],
+    "body_forearm_R": [
+      0.225,
+      0.235,
+      0.215
+    ],
+    "body_hand_R": [
+      0.22,
+      0.235,
+      0.175
+    ]
+  },
+  "animation": {
+    "stem": "dwarf_hunter_v1",
+    "status": "PASS",
+    "motion_revision": 3,
+    "approved_meshes_unchanged": true,
+    "shared_actions": {
+      "idle": "Dwarf_ranger_idle",
+      "walk": "Dwarf_ranger_walk",
+      "attack": "Dwarf_ranger_attack"
+    },
+    "clips": {
+      "idle": {
+        "frames": 145,
+        "fps": 48,
+        "loop": true,
+        "loop_or_recovery_error": 0.0,
+        "min_ground_z": -1.1701137481168189e-07,
+        "max_grip_error": 0.0,
+        "max_arm_joint_error": 1.3049487730147238e-07,
+        "max_motion": 0.3926522731781006,
+        "joint_angular_span_degrees": {
+          "root": 0.0,
+          "pelvis": 1.0497732882828086,
+          "chest": 2.7772155344560683,
+          "head": 8.022346609446055,
+          "upper_arm_L": 3.8430494789636334,
+          "forearm_L": 3.4290416178481298,
+          "hand_L": 0.8001478033654139,
+          "upper_arm_R": 2.6852182224212857,
+          "forearm_R": 3.9126952103829606,
+          "hand_R": 5.2198410189275455,
+          "thigh_L": 17.818800704857072,
+          "shin_L": 34.35269597776759,
+          "foot_L": 16.6056242120267,
+          "thigh_R": 17.818800704857072,
+          "shin_R": 34.35269597776759,
+          "foot_R": 16.6056242120267
+        },
+        "max_joint_step_degrees": {
+          "root": 0.0,
+          "pelvis": 0.07912936237050427,
+          "chest": 0.11869405356091633,
+          "head": 0.3494259412333732,
+          "upper_arm_L": 0.10467831195095843,
+          "forearm_L": 0.07912936237050427,
+          "hand_L": 0.0,
+          "upper_arm_R": 0.07912936237050427,
+          "forearm_R": 0.15323335969831878,
+          "hand_R": 0.17245846124184028,
+          "thigh_L": 0.4279577220824609,
+          "shin_L": 0.7922836943097905,
+          "foot_L": 0.37325262926613956,
+          "thigh_R": 0.4279577220824609,
+          "shin_R": 0.7922836943097905,
+          "foot_R": 0.37325262926613956
+        },
+        "free_arm_elbow_flexion_degrees": {
+          "min": 17.412052395704038,
+          "max": 20.838453464193154
+        },
+        "impact_frame": null
+      },
+      "walk": {
+        "frames": 57,
+        "fps": 48,
+        "loop": true,
+        "loop_or_recovery_error": 3.918869895185313e-18,
+        "min_ground_z": -9.13441198235887e-08,
+        "max_grip_error": 0.0,
+        "max_arm_joint_error": 1.4901161193847656e-07,
+        "max_motion": 0.8948556184768677,
+        "joint_angular_span_degrees": {
+          "root": 0.0,
+          "pelvis": 3.6998285229181054,
+          "chest": 6.687380159751539,
+          "head": 1.9499643665252804,
+          "upper_arm_L": 21.27397313236579,
+          "forearm_L": 4.94850108197821,
+          "hand_L": 2.3962397488272162,
+          "upper_arm_R": 8.73247027839488,
+          "forearm_R": 12.430790610166882,
+          "hand_R": 4.162425709458844,
+          "thigh_L": 48.671398685850185,
+          "shin_L": 53.14932876231849,
+          "foot_L": 55.300548067832786,
+          "thigh_R": 48.99372214297226,
+          "shin_R": 43.58659605634249,
+          "foot_R": 47.78118256528199
+        },
+        "max_joint_step_degrees": {
+          "root": 0.0,
+          "pelvis": 0.4130676162071422,
+          "chest": 0.7444063627446754,
+          "head": 0.21670472016987377,
+          "upper_arm_L": 2.128080972483815,
+          "forearm_L": 0.36261645058326947,
+          "hand_L": 0.22381166540340428,
+          "upper_arm_R": 1.1120464708233422,
+          "forearm_R": 1.4099778283154174,
+          "hand_R": 0.6632258291993715,
+          "thigh_L": 9.083744346087697,
+          "shin_L": 10.740111323592686,
+          "foot_L": 8.328389456907756,
+          "thigh_R": 9.083744346087697,
+          "shin_R": 10.740111323592686,
+          "foot_R": 8.328389456907756
+        },
+        "free_arm_elbow_flexion_degrees": {
+          "min": 20.010099452058824,
+          "max": 26.504491391234456
+        },
+        "impact_frame": null
+      },
+      "attack": {
+        "frames": 81,
+        "fps": 48,
+        "loop": false,
+        "loop_or_recovery_error": 0.0,
+        "min_ground_z": -9.308510584560281e-08,
+        "max_grip_error": 0.0,
+        "max_arm_joint_error": 1.35473225786774e-07,
+        "max_motion": 0.7868345379829407,
+        "joint_angular_span_degrees": {
+          "root": 0.0,
+          "pelvis": 2.060812146895652,
+          "chest": 8.05732400818569,
+          "head": 6.322738131192538,
+          "upper_arm_L": 27.299992904974165,
+          "forearm_L": 8.450062446782363,
+          "hand_L": 1.999901587094536,
+          "upper_arm_R": 18.892040281972225,
+          "forearm_R": 20.38500181377383,
+          "hand_R": 23.572114929568933,
+          "thigh_L": 28.438983298134445,
+          "shin_L": 45.000329101319245,
+          "foot_L": 21.947974492115357,
+          "thigh_R": 27.970198387092495,
+          "shin_R": 48.336716001424975,
+          "foot_R": 25.193495970597827
+        },
+        "max_joint_step_degrees": {
+          "root": 0.0,
+          "pelvis": 0.13705608332957003,
+          "chest": 2.0623310102123336,
+          "head": 1.2373119267579644,
+          "upper_arm_L": 8.980430050928438,
+          "forearm_L": 1.0164384433168556,
+          "hand_L": 0.7088606709217539,
+          "upper_arm_R": 3.9775820074980817,
+          "forearm_R": 9.34722999237834,
+          "hand_R": 4.054577876237989,
+          "thigh_L": 4.150748647299062,
+          "shin_L": 4.013437085546064,
+          "foot_L": 2.1649108465924045,
+          "thigh_R": 4.368714497866154,
+          "shin_R": 4.186056456439796,
+          "foot_R": 2.0661228324187486
+        },
+        "free_arm_elbow_flexion_degrees": {
+          "min": 17.412054324342904,
+          "max": 25.85521255668916
+        },
+        "impact_frame": 29
+      }
+    }
+  },
+  "skills": {
+    "status": "PASS",
+    "revision": 1,
+    "source": "native_dwarf_rig",
+    "fps": 48,
+    "foreign_actions_used": false,
+    "basic_actions_preserved": true,
+    "approved_geometry_preserved": true,
+    "technique_clips": {
+      "v2_technique_precise_shot": "precise_shot",
+      "v2_technique_volley": "volley"
+    },
+    "clips": {
+      "precise_shot": {
+        "seconds": 2.0,
+        "loop": false,
+        "frames": 97,
+        "min_ground_z": -5.565583882649605e-08,
+        "arm_joint_error": 2.9839552036674004e-07,
+        "recovery_error": 0.0,
+        "movement": 0.52652907371521,
+        "max_frame_step": 0.10200729966163635,
+        "finite": true,
+        "action": "dwarf_hunter_v1_precise_shot",
+        "independently_authored_for": "dwarf_hunter_v1"
+      },
+      "volley": {
+        "seconds": 2.5,
+        "loop": false,
+        "frames": 121,
+        "min_ground_z": -8.186208868068978e-08,
+        "arm_joint_error": 2.9839552036674004e-07,
+        "recovery_error": 0.0,
+        "movement": 0.5383062362670898,
+        "max_frame_step": 0.12439274787902832,
+        "finite": true,
+        "action": "dwarf_hunter_v1_volley",
+        "independently_authored_for": "dwarf_hunter_v1"
+      }
+    }
+  }
+}

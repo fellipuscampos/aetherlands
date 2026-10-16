@@ -1,0 +1,432 @@
+{
+  "verified": 24,
+  "preserved_source_files": 244,
+  "assets": [
+    {
+      "civilization": "human",
+      "school": "sacred",
+      "label": "Grande Catedral",
+      "folder": "assets/generated/humans/buildings/sacred_ritual_hex_v1",
+      "triangles": 2100,
+      "parts": 173,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "09cf85d62ba38ebf699dfa590ac356ba40508e66568ba047f811868b97b73d72",
+      "roof_rgb": [
+        49,
+        79,
+        127
+      ],
+      "material_reference": "assets/generated/humans/buildings/sacred_temple_hex_v1"
+    },
+    {
+      "civilization": "human",
+      "school": "infernal",
+      "label": "Círculo Profano",
+      "folder": "assets/generated/humans/buildings/infernal_ritual_hex_v1",
+      "triangles": 1352,
+      "parts": 108,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "ab5978f6976ccb9d3a2a1f71042d89272c341d0ecb57e38d76443d4e3b8e90a5",
+      "roof_rgb": [
+        49,
+        79,
+        127
+      ],
+      "material_reference": "assets/generated/humans/buildings/infernal_sanctum_hex_v1"
+    },
+    {
+      "civilization": "human",
+      "school": "necromancy",
+      "label": "Mausoléu Negro",
+      "folder": "assets/generated/humans/buildings/necromancy_ritual_hex_v1",
+      "triangles": 1740,
+      "parts": 139,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "117c9a9c60e0dee41308275ec3554fc3e71e0800328beedfd20cfc79a1cc0dde",
+      "roof_rgb": [
+        49,
+        79,
+        127
+      ],
+      "material_reference": "assets/generated/humans/buildings/necromancy_ossuary_hex_v1"
+    },
+    {
+      "civilization": "human",
+      "school": "druidism",
+      "label": "Bosque Ancestral",
+      "folder": "assets/generated/humans/buildings/druidic_ritual_hex_v1",
+      "triangles": 924,
+      "parts": 70,
+      "meshes": 7,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "da446eea81e16fe29f9d4814ac9ddbb726ccff682403778f4008b70e655c6a01",
+      "roof_rgb": [
+        49,
+        79,
+        127
+      ],
+      "material_reference": "assets/generated/humans/buildings/druidic_circle_hex_v1"
+    },
+    {
+      "civilization": "human",
+      "school": "arcanism",
+      "label": "Torre do Véu",
+      "folder": "assets/generated/humans/buildings/arcane_ritual_hex_v1",
+      "triangles": 1492,
+      "parts": 122,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "f88d707c3679a2fec081c3d906ad4c42a34c4272ee19208121938eaaf01e891b",
+      "roof_rgb": [
+        49,
+        79,
+        127
+      ],
+      "material_reference": "assets/generated/humans/buildings/arcane_conclave_hex_v1"
+    },
+    {
+      "civilization": "human",
+      "school": "elementalism",
+      "label": "Nexus dos Elementos",
+      "folder": "assets/generated/humans/buildings/elemental_ritual_hex_v1",
+      "triangles": 1392,
+      "parts": 111,
+      "meshes": 7,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "250ec3e80b0a57f0a593ae9fe8db6476ed52adbe627411b31eda64cbf47de8ef",
+      "roof_rgb": [
+        49,
+        79,
+        127
+      ],
+      "material_reference": "assets/generated/humans/buildings/elemental_observatory_hex_v1"
+    },
+    {
+      "civilization": "orc",
+      "school": "sacred",
+      "label": "Grande Catedral",
+      "folder": "assets/generated/orcs/buildings/orc_sacred_ritual_hex_v1",
+      "triangles": 2688,
+      "parts": 217,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "d41db4296c1be77ea8f918ccbfe894ce11536108eba48bbb315bb5902798b031",
+      "roof_rgb": [
+        130,
+        58,
+        39
+      ],
+      "material_reference": "assets/generated/orcs/buildings/orc_sacred_temple_hex_v1"
+    },
+    {
+      "civilization": "orc",
+      "school": "infernal",
+      "label": "Círculo Profano",
+      "folder": "assets/generated/orcs/buildings/orc_infernal_ritual_hex_v1",
+      "triangles": 1464,
+      "parts": 113,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "e16acd895e762db511b911a0130335e7eb3d69aadea84097fe1e07b1f269ac21",
+      "roof_rgb": [
+        130,
+        58,
+        39
+      ],
+      "material_reference": "assets/generated/orcs/buildings/orc_infernal_sanctum_hex_v1"
+    },
+    {
+      "civilization": "orc",
+      "school": "necromancy",
+      "label": "Mausoléu Negro",
+      "folder": "assets/generated/orcs/buildings/orc_necromancy_ritual_hex_v1",
+      "triangles": 2000,
+      "parts": 157,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "902c31fb01b9ef5d7369c063044cf4495e6700eada5a1157c43f6410369000a2",
+      "roof_rgb": [
+        130,
+        58,
+        39
+      ],
+      "material_reference": "assets/generated/orcs/buildings/orc_necromancy_ossuary_hex_v1"
+    },
+    {
+      "civilization": "orc",
+      "school": "druidism",
+      "label": "Bosque Ancestral",
+      "folder": "assets/generated/orcs/buildings/orc_druidic_ritual_hex_v1",
+      "triangles": 1092,
+      "parts": 79,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "612da08a6a63945991b28515a2126553534a696830d93c3a5d7af0f4648009e5",
+      "roof_rgb": [
+        130,
+        58,
+        39
+      ],
+      "material_reference": "assets/generated/orcs/buildings/orc_druidic_circle_hex_v1"
+    },
+    {
+      "civilization": "orc",
+      "school": "arcanism",
+      "label": "Torre do Véu",
+      "folder": "assets/generated/orcs/buildings/orc_arcane_ritual_hex_v1",
+      "triangles": 1928,
+      "parts": 156,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "8562b9ccf92a69fe53c74327f5c0497a508a7f7c8d5dc60a12419e0dd3cd4ece",
+      "roof_rgb": [
+        130,
+        58,
+        39
+      ],
+      "material_reference": "assets/generated/orcs/buildings/orc_arcane_conclave_hex_v1"
+    },
+    {
+      "civilization": "orc",
+      "school": "elementalism",
+      "label": "Nexus dos Elementos",
+      "folder": "assets/generated/orcs/buildings/orc_elemental_ritual_hex_v1",
+      "triangles": 1580,
+      "parts": 123,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "e318dfee0781d0c71c43f377fe576fa45f9ce7f0f31cd606f222c0731d05c1f3",
+      "roof_rgb": [
+        130,
+        58,
+        39
+      ],
+      "material_reference": "assets/generated/orcs/buildings/orc_elemental_observatory_hex_v1"
+    },
+    {
+      "civilization": "dwarf",
+      "school": "sacred",
+      "label": "Grande Catedral",
+      "folder": "assets/generated/dwarves/buildings/dwarf_sacred_ritual_hex_v1",
+      "triangles": 2364,
+      "parts": 195,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "d79d288b138827b15a1a1119ba8622247e70f8db06302dae9c8b627e2d16c790",
+      "roof_rgb": [
+        67,
+        82,
+        89
+      ],
+      "material_reference": "assets/generated/dwarves/buildings/dwarf_sacred_temple_hex_v1"
+    },
+    {
+      "civilization": "dwarf",
+      "school": "infernal",
+      "label": "Círculo Profano",
+      "folder": "assets/generated/dwarves/buildings/dwarf_infernal_ritual_hex_v1",
+      "triangles": 1412,
+      "parts": 113,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "4b3d7d9b3a12e7d9d53cca86c880d608afa8885ccdd0200c877fc30b65491fb6",
+      "roof_rgb": [
+        67,
+        82,
+        89
+      ],
+      "material_reference": "assets/generated/dwarves/buildings/dwarf_infernal_sanctum_hex_v1"
+    },
+    {
+      "civilization": "dwarf",
+      "school": "necromancy",
+      "label": "Mausoléu Negro",
+      "folder": "assets/generated/dwarves/buildings/dwarf_necromancy_ritual_hex_v1",
+      "triangles": 1860,
+      "parts": 149,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "a2f1dea5a597ac9075a4f53f1b418bf6e8d74b051c5bec4ddba407b37f46eee3",
+      "roof_rgb": [
+        67,
+        82,
+        89
+      ],
+      "material_reference": "assets/generated/dwarves/buildings/dwarf_necromancy_ossuary_hex_v1"
+    },
+    {
+      "civilization": "dwarf",
+      "school": "druidism",
+      "label": "Bosque Ancestral",
+      "folder": "assets/generated/dwarves/buildings/dwarf_druidic_ritual_hex_v1",
+      "triangles": 984,
+      "parts": 75,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "15b0433dcd3d48d54f81b6ff29234e59ba63df4d515f4cf81346937b0ec07499",
+      "roof_rgb": [
+        67,
+        82,
+        89
+      ],
+      "material_reference": "assets/generated/dwarves/buildings/dwarf_druidic_circle_hex_v1"
+    },
+    {
+      "civilization": "dwarf",
+      "school": "arcanism",
+      "label": "Torre do Véu",
+      "folder": "assets/generated/dwarves/buildings/dwarf_arcane_ritual_hex_v1",
+      "triangles": 1732,
+      "parts": 142,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "ad868d7a87dfbe2b8035ce6237044b8e1b725fb456391f7fda0ffed6d039b556",
+      "roof_rgb": [
+        67,
+        82,
+        89
+      ],
+      "material_reference": "assets/generated/dwarves/buildings/dwarf_arcane_conclave_hex_v1"
+    },
+    {
+      "civilization": "dwarf",
+      "school": "elementalism",
+      "label": "Nexus dos Elementos",
+      "folder": "assets/generated/dwarves/buildings/dwarf_elemental_ritual_hex_v1",
+      "triangles": 1704,
+      "parts": 137,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "aae2176e49acc94b7a2f59684834562dc2744cff0dbfcaf2d635ef0e088d4c37",
+      "roof_rgb": [
+        67,
+        82,
+        89
+      ],
+      "material_reference": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1"
+    },
+    {
+      "civilization": "elf",
+      "school": "sacred",
+      "label": "Grande Catedral",
+      "folder": "assets/generated/elves/buildings/elf_sacred_ritual_hex_v1",
+      "triangles": 2944,
+      "parts": 183,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "09d55ee164329e46ef6e4e5c06644e052553174c5e5aa3761bee7dada46f41e7",
+      "roof_rgb": [
+        48,
+        122,
+        88
+      ],
+      "material_reference": "assets/generated/elves/buildings/elf_sacred_temple_hex_v1"
+    },
+    {
+      "civilization": "elf",
+      "school": "infernal",
+      "label": "Círculo Profano",
+      "folder": "assets/generated/elves/buildings/elf_infernal_ritual_hex_v1",
+      "triangles": 1816,
+      "parts": 113,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "ceafb0d8864058ef5cd9f26a878395259dd9f6d7e83064bdd95ef49f25b7a6b2",
+      "roof_rgb": [
+        48,
+        122,
+        88
+      ],
+      "material_reference": "assets/generated/elves/buildings/elf_infernal_sanctum_hex_v1"
+    },
+    {
+      "civilization": "elf",
+      "school": "necromancy",
+      "label": "Mausoléu Negro",
+      "folder": "assets/generated/elves/buildings/elf_necromancy_ritual_hex_v1",
+      "triangles": 2196,
+      "parts": 150,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "391344c4b9f16326fd43d84981bdbdca6680de88414e72b8f1825dff56686d5a",
+      "roof_rgb": [
+        48,
+        122,
+        88
+      ],
+      "material_reference": "assets/generated/elves/buildings/elf_necromancy_ossuary_hex_v1"
+    },
+    {
+      "civilization": "elf",
+      "school": "druidism",
+      "label": "Bosque Ancestral",
+      "folder": "assets/generated/elves/buildings/elf_druidic_ritual_hex_v1",
+      "triangles": 1588,
+      "parts": 85,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "ac7068369e7b9794a3931c626b7975e3b151bd467cb0515956ef46be8826675c",
+      "roof_rgb": [
+        48,
+        122,
+        88
+      ],
+      "material_reference": "assets/generated/elves/buildings/elf_druidic_circle_hex_v1"
+    },
+    {
+      "civilization": "elf",
+      "school": "arcanism",
+      "label": "Torre do Véu",
+      "folder": "assets/generated/elves/buildings/elf_arcane_ritual_hex_v1",
+      "triangles": 2212,
+      "parts": 135,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "c46726e633b8a94a72ccf25159279162c3818035035221cc727912c4e0e64e94",
+      "roof_rgb": [
+        48,
+        122,
+        88
+      ],
+      "material_reference": "assets/generated/elves/buildings/elf_arcane_conclave_hex_v1"
+    },
+    {
+      "civilization": "elf",
+      "school": "elementalism",
+      "label": "Nexus dos Elementos",
+      "folder": "assets/generated/elves/buildings/elf_elemental_ritual_hex_v1",
+      "triangles": 1708,
+      "parts": 117,
+      "meshes": 8,
+      "hex_margin": 0.06928201084010255,
+      "glb_sha256": "8568457c0151b658e2e1960e65ad31082f2a41a46e10c53c01c84b4f3814170d",
+      "roof_rgb": [
+        48,
+        122,
+        88
+      ],
+      "material_reference": "assets/generated/elves/buildings/elf_elemental_observatory_hex_v1"
+    }
+  ],
+  "sheets": {
+    "human": {
+      "three_quarter": "assets/generated/humans/buildings/grand_magic_three_quarter.jpg",
+      "game_top": "assets/generated/humans/buildings/grand_magic_game_top.jpg"
+    },
+    "orc": {
+      "three_quarter": "assets/generated/orcs/buildings/grand_magic_three_quarter.jpg",
+      "game_top": "assets/generated/orcs/buildings/grand_magic_game_top.jpg"
+    },
+    "dwarf": {
+      "three_quarter": "assets/generated/dwarves/buildings/grand_magic_three_quarter.jpg",
+      "game_top": "assets/generated/dwarves/buildings/grand_magic_game_top.jpg"
+    },
+    "elf": {
+      "three_quarter": "assets/generated/elves/buildings/grand_magic_three_quarter.jpg",
+      "game_top": "assets/generated/elves/buildings/grand_magic_game_top.jpg"
+    }
+  }
+}

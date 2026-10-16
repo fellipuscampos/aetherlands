@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bm4fncq6ekiab"
-path="res://.godot/imported/weapon_master_v1_weapon_master_v1_emission.png-fc5c6412482cb13f7fca093957f825d7.ctex"
+path.bptc="res://.godot/imported/weapon_master_v1_weapon_master_v1_emission.png-fc5c6412482cb13f7fca093957f825d7.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "149f84fd9b067ee6825c5637166a7fc3"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/humans/weapon_master_v1/weapon_master_v1_weapon_master_v1_emission.png"
-dest_files=["res://.godot/imported/weapon_master_v1_weapon_master_v1_emission.png-fc5c6412482cb13f7fca093957f825d7.ctex"]
+dest_files=["res://.godot/imported/weapon_master_v1_weapon_master_v1_emission.png-fc5c6412482cb13f7fca093957f825d7.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

@@ -1,0 +1,209 @@
+{
+  "asset": "arcane_conduit_v1",
+  "improvement": "v2_improvement_arcane_conduit",
+  "resource": "mana_node",
+  "method": "live Blender MCP localhost:9876",
+  "source_resource": "assets\\generated\\resources\\arcane_node\\arcane_node_v1\\arcane_node_v1.glb",
+  "preserved_resource": true,
+  "shared_civilizations": [
+    "human",
+    "elf",
+    "orc",
+    "dwarf"
+  ],
+  "vertices": 424,
+  "triangles": 640,
+  "materials": 1,
+  "meshes": 1,
+  "texture_size": [
+    512,
+    512
+  ],
+  "texture_filter": "nearest",
+  "footprint_radius": 0.7582215981136944,
+  "height": 0.8399999737739563,
+  "ground_origin": true,
+  "closed_components": true,
+  "original_imported_vertices": 280,
+  "parts": [
+    {
+      "name": "Approved_arcane_node_preserved",
+      "faces": 124
+    },
+    {
+      "name": "Foundation_-1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Receiver_stone_-1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Lower_bronze_band_-1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Collector_housing_-1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Inset_lens_-1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Collector_prong_-1_-1-1",
+      "faces": 6
+    },
+    {
+      "name": "Collector_prong_-1_-11",
+      "faces": 6
+    },
+    {
+      "name": "Channel_stone_-1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Channel_metal_-1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Channel_energy_-1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Foundation_1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Receiver_stone_1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Lower_bronze_band_1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Collector_housing_1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Inset_lens_1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Collector_prong_1_-1-1",
+      "faces": 6
+    },
+    {
+      "name": "Collector_prong_1_-11",
+      "faces": 6
+    },
+    {
+      "name": "Channel_stone_1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Channel_metal_1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Channel_energy_1_-1",
+      "faces": 6
+    },
+    {
+      "name": "Foundation_1_1",
+      "faces": 6
+    },
+    {
+      "name": "Receiver_stone_1_1",
+      "faces": 6
+    },
+    {
+      "name": "Lower_bronze_band_1_1",
+      "faces": 6
+    },
+    {
+      "name": "Collector_housing_1_1",
+      "faces": 6
+    },
+    {
+      "name": "Inset_lens_1_1",
+      "faces": 6
+    },
+    {
+      "name": "Collector_prong_1_1-1",
+      "faces": 6
+    },
+    {
+      "name": "Collector_prong_1_11",
+      "faces": 6
+    },
+    {
+      "name": "Channel_stone_1_1",
+      "faces": 6
+    },
+    {
+      "name": "Channel_metal_1_1",
+      "faces": 6
+    },
+    {
+      "name": "Channel_energy_1_1",
+      "faces": 6
+    },
+    {
+      "name": "Foundation_-1_1",
+      "faces": 6
+    },
+    {
+      "name": "Receiver_stone_-1_1",
+      "faces": 6
+    },
+    {
+      "name": "Lower_bronze_band_-1_1",
+      "faces": 6
+    },
+    {
+      "name": "Collector_housing_-1_1",
+      "faces": 6
+    },
+    {
+      "name": "Inset_lens_-1_1",
+      "faces": 6
+    },
+    {
+      "name": "Collector_prong_-1_1-1",
+      "faces": 6
+    },
+    {
+      "name": "Collector_prong_-1_11",
+      "faces": 6
+    },
+    {
+      "name": "Channel_stone_-1_1",
+      "faces": 6
+    },
+    {
+      "name": "Channel_metal_-1_1",
+      "faces": 6
+    },
+    {
+      "name": "Channel_energy_-1_1",
+      "faces": 6
+    },
+    {
+      "name": "Control_foot",
+      "faces": 6
+    },
+    {
+      "name": "Control_body",
+      "faces": 6
+    },
+    {
+      "name": "Rune_control_tablet",
+      "faces": 6
+    }
+  ],
+  "animations": 0,
+  "lights": 0,
+  "concept": "Approved floating node, four low receiver forks, stone channels and rune control lectern"
+}

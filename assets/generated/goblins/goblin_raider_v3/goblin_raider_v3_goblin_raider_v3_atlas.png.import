@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cjvimc5s568w5"
-path="res://.godot/imported/goblin_raider_v3_goblin_raider_v3_atlas.png-af54f111d0bc3253344763d568c5f01c.ctex"
+path.bptc="res://.godot/imported/goblin_raider_v3_goblin_raider_v3_atlas.png-af54f111d0bc3253344763d568c5f01c.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "14cb6000f331424bbae2e1256584ce6a"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/goblins/goblin_raider_v3/goblin_raider_v3_goblin_raider_v3_atlas.png"
-dest_files=["res://.godot/imported/goblin_raider_v3_goblin_raider_v3_atlas.png-af54f111d0bc3253344763d568c5f01c.ctex"]
+dest_files=["res://.godot/imported/goblin_raider_v3_goblin_raider_v3_atlas.png-af54f111d0bc3253344763d568c5f01c.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

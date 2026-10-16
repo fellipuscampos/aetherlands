@@ -1,0 +1,101 @@
+{
+  "name": "Guardian_Hall_Hex_V2",
+  "display_name": "Salão dos Guardiões",
+  "gameplay_building_id": "v2_building_guardian_hall",
+  "trains": [
+    "v2_unit_shieldbearer",
+    "v2_unit_guardian",
+    "v2_unit_sentinel"
+  ],
+  "excludes": [
+    "v2_legendary_guardian_champion"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "hex_tile": {
+    "orientation": "pointy-top; matches HexMetrics",
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.92,
+    "model_scale_multiplier": 1.0,
+    "outside_hex_vertices": 0,
+    "validation": "PASS: HexGrid.place_building, native map scale, pixel textures, perspective camera pitch 50 degrees and zoom 6; 31 tests passed"
+  },
+  "triangles": 2312,
+  "editable_parts": 150,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.496500015258789
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.496500015258789
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, tile circumradius 1; placement scale 1.0. Symbolic architecture.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1028,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Hexagonal foundation and central hall, six-sided stepped roof, three corner towers, oblique walls, front wedge training court. Enlarged shield and banner for 4X readability.",
+  "door_clearance_m": [
+    0.295,
+    0.475
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "export": {
+    "file": "guardian_hall_hex_v2.glb",
+    "bytes": 1209896,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2312,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "guardian_hall_hex_v2_emission",
+        "bytes": 78953,
+        "sha256": "d224e61299741a3627e6534a0478ae46cc11778497b99d81153ffb34a0d1750e"
+      },
+      {
+        "image": "guardian_hall_hex_v2_albedo",
+        "bytes": 968152,
+        "sha256": "55310439ea851a04baad66252c40cc9aab24e587437dc9174449e25da7174f25"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

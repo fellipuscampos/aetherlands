@@ -1,0 +1,133 @@
+{
+  "name": "Dwarf_Ranger_Camp_Hex_V1",
+  "display_name": "Campo dos Patrulheiros dos Anões",
+  "gameplay_building_id": "v2_building_ranger_camp",
+  "trains": [
+    "v2_unit_archer",
+    "v2_unit_hunter",
+    "v2_unit_elite_marksman"
+  ],
+  "excludes": [
+    "v2_legendary_legend_hunter"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 3694,
+  "editable_parts": 203,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      0.8349639773368835
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    0.8349639773368835
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units; pointy-top tile radius 1, military foundation radius .92; placement scale tile_radius. Asset only, no integration.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1536,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Engenharia de granito com pilares engrossados, sapatas escalonadas e cintas de cobre; coberturas de ardósia escura com cantos chanfrados. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.149,
+    0.262
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "dwarf",
+  "unit_class": "ranged",
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "layout_source": "orc_ranger_camp_hex_v1",
+  "hex_tile": {
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "placement_scale": "tile_radius",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "faction_tint": "Clan cloth and shield/horse blanket accents isolated in Faction mesh; architecture keeps its civilization palette. No runtime integration.",
+  "export": {
+    "file": "dwarf_ranger_camp_hex_v1.glb",
+    "bytes": 1046036,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 3694,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "dwarf_ranger_camp_hex_v1_emission",
+        "bytes": 78914,
+        "sha256": "040827761d5e58af1240e2d8f60515ccfd7aea10be586a2c90cac2337e3999b6"
+      },
+      {
+        "image": "dwarf_ranger_camp_hex_v1_albedo",
+        "bytes": 720234,
+        "sha256": "e3d2609c76119d1f22a560a871eda7308b0bef80cff1f357afd26ae63084a0a5"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "dwarf",
+    "design": "Engenharia de granito com pilares engrossados, sapatas escalonadas e cintas de cobre; coberturas de ardósia escura com cantos chanfrados.",
+    "geometry_changes": [
+      "granite:Lodge_Heavy_Ridge",
+      "roof_geometry:Lodge_Red_Hide_Roof_0",
+      "roof_geometry:Lodge_Red_Hide_Roof_1",
+      "roof_geometry:Lodge_Red_Hide_Roof_2",
+      "roof_geometry:Lodge_Red_Hide_Roof_3",
+      "roof_geometry:Lodge_Red_Hide_Roof_4",
+      "roof_geometry:Target_Red_Hide_Cover_0",
+      "roof_geometry:Target_Red_Hide_Cover_1",
+      "roof_geometry:Target_Red_Hide_Cover_2",
+      "granite_pier:Lodge_Post_0",
+      "granite_pier:Lodge_Post_1",
+      "granite_pier:Lodge_Post_2",
+      "granite_pier:Lodge_Post_3",
+      "granite_pier:Lodge_Post_4",
+      "upper_structure_proportion:0.62"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

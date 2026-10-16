@@ -1,0 +1,520 @@
+{
+  "asset": "horse_ranch_v1",
+  "improvement": "v2_improvement_horse_ranch",
+  "resource": "horses",
+  "method": "live Blender MCP localhost:9876",
+  "source_asset": "assets\\generated\\resources\\horses\\horse_resource_v1\\horse_resource_v1.blend",
+  "source_sha256": "b91f1e8c435dcf22fc5f8f5c69872d864c4ed4c2a96984354d17db73df79747f",
+  "source_geometry_preserved": true,
+  "source_painted_pixels_preserved": true,
+  "horse_count": 2,
+  "horse_scales": [
+    0.74,
+    0.76
+  ],
+  "source_parts_per_horse": 19,
+  "concept": "Fenced horse paddock, open timber shelter, feed trough and hay bales",
+  "materials": 1,
+  "meshes": 1,
+  "vertices": 776,
+  "triangles": 1168,
+  "footprint_radius": 0.8062591085224604,
+  "height": 0.7121824622154236,
+  "ground_origin": true,
+  "closed_components": true,
+  "texture_size": [
+    1024,
+    512
+  ],
+  "texture_filter": "nearest",
+  "animations": 0,
+  "lights": 0,
+  "shared_civilizations": [
+    "human",
+    "elf",
+    "orc",
+    "dwarf"
+  ],
+  "parts": [
+    {
+      "name": "Paddock_earth",
+      "vertices": 16,
+      "faces": 10
+    },
+    {
+      "name": "Pasture_patch_left",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Pasture_patch_right",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_post_0",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_post_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_post_2",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_post_3",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_post_4",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_post_5",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_post_6",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(0, 0.13)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(0, 0.265)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(1, 0.13)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(1, 0.265)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(2, 0.13)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(2, 0.265)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(3, 0.13)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(3, 0.265)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(4, 0.13)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(4, 0.265)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(5, 0.13)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(5, 0.265)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(6, 0.13)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(6, 0.265)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(7, 0.13)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Fence_rail_(7, 0.265)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Open_gate_rail_0.13",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Open_gate_rail_0.265",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gate_end",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gate_diagonal",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Gate_hinge",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Shelter_front_post_-0.55",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Shelter_back_post_-0.55",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Shelter_front_post_-0.07",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Shelter_back_post_-0.07",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Shelter_front_beam",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Shelter_back_beam",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Shelter_side_beam_-0.55",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Shelter_brace_-0.55",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Shelter_side_beam_-0.07",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Shelter_brace_-0.07",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Straw_roof_panel_0",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Straw_roof_panel_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Straw_roof_panel_2",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Straw_roof_panel_3",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Straw_roof_panel_4",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Hay_bale_0",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Hay_binding_(0, -1)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Hay_binding_(0, 1)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Hay_bale_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Hay_binding_(1, -1)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Hay_binding_(1, 1)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Trough_bottom",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Trough_side_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Trough_end_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Trough_side_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Trough_end_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Trough_hay",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseBody",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseCannon_bl",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseCannon_br",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseCannon_fl",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseCannon_fr",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseEar_l",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseEar_r",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseHead",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseHoof_bl",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseHoof_br",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseHoof_fl",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseHoof_fr",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseMane",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseNeck",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseTail",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseThigh_bl",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseThigh_br",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseThigh_fl",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_foreground_HorseThigh_fr",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseBody",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseCannon_bl",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseCannon_br",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseCannon_fl",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseCannon_fr",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseEar_l",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseEar_r",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseHead",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseHoof_bl",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseHoof_br",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseHoof_fl",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseHoof_fr",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseMane",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseNeck",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseTail",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseThigh_bl",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseThigh_br",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseThigh_fl",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Horse_right_HorseThigh_fr",
+      "vertices": 8,
+      "faces": 6
+    }
+  ]
+}

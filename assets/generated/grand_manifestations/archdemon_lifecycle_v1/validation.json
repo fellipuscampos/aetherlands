@@ -1,0 +1,139 @@
+{
+  "status": "PASS",
+  "via": "Blender MCP live",
+  "particles_included": false,
+  "root_motion": false,
+  "source_files_unchanged": true,
+  "meshes": 1,
+  "materials": 1,
+  "bones": 57,
+  "parts": 74,
+  "fps": 24,
+  "clips": {
+    "Summon": {
+      "duration_s": 4.0,
+      "frames": 97,
+      "samples": 193,
+      "loop": false,
+      "bounds_min": [
+        -1.8336567878723145,
+        -0.6367962956428528,
+        0.044989198446273804
+      ],
+      "bounds_max": [
+        1.8402947187423706,
+        1.4646520614624023,
+        3.3617687225341797
+      ],
+      "idle_join_error_m": 1.884864366154897e-07,
+      "maximum_half_frame_step_m": 0.14080436761108892,
+      "maximum_cloth_seam_gap_m": 0.0,
+      "core_center_error_m": 4.807789863616728e-07,
+      "hand_shoulder_intersections": 0
+    },
+    "Death": {
+      "duration_s": 5.0,
+      "frames": 121,
+      "samples": 241,
+      "loop": false,
+      "bounds_min": [
+        -1.4555785655975342,
+        -1.0990309715270996,
+        -0.004789471626281738
+      ],
+      "bounds_max": [
+        1.4555785655975342,
+        1.123293161392212,
+        3.200000047683716
+      ],
+      "idle_join_error_m": 1.6858739404357614e-07,
+      "maximum_half_frame_step_m": 0.3760935299547916,
+      "maximum_cloth_seam_gap_m": 0.0,
+      "hand_shoulder_intersections": 0,
+      "core_separation_from_chest_m": 0.8097905661888504,
+      "full_size_error_before_disappearance": 9.387727146759062e-07,
+      "disappearance_starts_s": 4.0,
+      "physics_baked": true,
+      "independent_falling_components": 16,
+      "support_heights_at_3_and_4_seconds": {
+        "core": [
+          0.001982547342777252,
+          0.001982513815164566
+        ],
+        "mantle_lower_l": [
+          0.0019682571291923523,
+          0.0019764453172683716
+        ],
+        "fist_R": [
+          0.001940310001373291,
+          0.0019405782222747803
+        ],
+        "mantle_lower_r": [
+          0.001983892172574997,
+          0.0019814036786556244
+        ],
+        "shoulder_L": [
+          0.5208296775817871,
+          0.5210089683532715
+        ],
+        "crown": [
+          0.662964940071106,
+          0.6225839853286743
+        ],
+        "fist_L": [
+          0.0019439458847045898,
+          0.0019464492797851562
+        ],
+        "stole_front_L": [
+          0.001963004469871521,
+          0.001964271068572998
+        ],
+        "stole_side_R": [
+          0.0019883960485458374,
+          0.0019801147282123566
+        ],
+        "body": [
+          0.0019833806436508894,
+          0.0019833806436508894
+        ],
+        "stole_front_R": [
+          0.0019695423543453217,
+          0.00196925550699234
+        ],
+        "shoulder_R": [
+          0.3276735544204712,
+          0.3233579695224762
+        ],
+        "mantle_upper_l": [
+          0.29275965690612793,
+          0.29276230931282043
+        ],
+        "stole_side_L": [
+          0.0019944175146520138,
+          0.001994228223338723
+        ],
+        "chest": [
+          0.3455146551132202,
+          0.34483689069747925
+        ],
+        "mantle_upper_r": [
+          0.11765331029891968,
+          0.1159297525882721
+        ]
+      },
+      "compact_landing_bounds_min": [
+        -1.048093557357788,
+        -1.0980125665664673,
+        0.0019405782222747803
+      ],
+      "compact_landing_bounds_max": [
+        1.0480493307113647,
+        1.0980122089385986,
+        1.3430942296981812
+      ]
+    }
+  },
+  "approved_summon_preserved": true,
+  "serialized_original_clip_error": 0.0,
+  "original_four_clips_preserved": true
+}

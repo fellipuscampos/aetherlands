@@ -1,0 +1,144 @@
+{
+  "status": "PASS",
+  "verified": 24,
+  "same_18_anatomical_cuboids": 20,
+  "hip_leg_balance_corrected": true,
+  "hands_and_foot_length_preserved": true,
+  "boot_width_matches_shin": true,
+  "shins_wider_than_thighs": true,
+  "resting_hands_vertical": true,
+  "upright_rebalanced_hammers": true,
+  "enlarged_crossbows": true,
+  "held_equipment_forward": true,
+  "one_hand_equipment": true,
+  "guardians_shield_only": true,
+  "material_emblems": false,
+  "ram_legs_with_thigh_shin_hoof": 4,
+  "handles_at_fist_centers": true,
+  "painted_equipment_details": true,
+  "same_ram_anatomy": 4,
+  "neck": false,
+  "mcp": "live",
+  "assets": [
+    {
+      "stem": "dwarf_shieldbearer_v1",
+      "anatomical_parts": 18,
+      "source_parts": 54
+    },
+    {
+      "stem": "dwarf_guardian_v1",
+      "anatomical_parts": 18,
+      "source_parts": 56
+    },
+    {
+      "stem": "dwarf_sentinel_v1",
+      "anatomical_parts": 18,
+      "source_parts": 64
+    },
+    {
+      "stem": "dwarf_guardian_champion_v1",
+      "anatomical_parts": 18,
+      "source_parts": 66
+    },
+    {
+      "stem": "dwarf_warrior_v1",
+      "anatomical_parts": 18,
+      "source_parts": 49
+    },
+    {
+      "stem": "dwarf_swordsman_v1",
+      "anatomical_parts": 18,
+      "source_parts": 53
+    },
+    {
+      "stem": "dwarf_weapon_master_v1",
+      "anatomical_parts": 18,
+      "source_parts": 61
+    },
+    {
+      "stem": "dwarf_blade_hero_v1",
+      "anatomical_parts": 18,
+      "source_parts": 63
+    },
+    {
+      "stem": "dwarf_archer_v1",
+      "anatomical_parts": 18,
+      "source_parts": 65
+    },
+    {
+      "stem": "dwarf_hunter_v1",
+      "anatomical_parts": 18,
+      "source_parts": 69
+    },
+    {
+      "stem": "dwarf_elite_marksman_v1",
+      "anatomical_parts": 18,
+      "source_parts": 79
+    },
+    {
+      "stem": "dwarf_legend_hunter_v1",
+      "anatomical_parts": 18,
+      "source_parts": 80
+    },
+    {
+      "stem": "dwarf_cavalier_v1",
+      "anatomical_parts": 18,
+      "source_parts": 106
+    },
+    {
+      "stem": "dwarf_shock_cavalier_v1",
+      "anatomical_parts": 18,
+      "source_parts": 111
+    },
+    {
+      "stem": "dwarf_armored_cavalier_v1",
+      "anatomical_parts": 18,
+      "source_parts": 122
+    },
+    {
+      "stem": "dwarf_ram_lord_v1",
+      "anatomical_parts": 18,
+      "source_parts": 129
+    },
+    {
+      "stem": "dwarf_rogue_v1",
+      "anatomical_parts": 18,
+      "source_parts": 53
+    },
+    {
+      "stem": "dwarf_saboteur_v1",
+      "anatomical_parts": 18,
+      "source_parts": 61
+    },
+    {
+      "stem": "dwarf_assassin_v1",
+      "anatomical_parts": 18,
+      "source_parts": 62
+    },
+    {
+      "stem": "dwarf_shadow_master_v1",
+      "anatomical_parts": 18,
+      "source_parts": 63
+    },
+    {
+      "stem": "dwarf_catapult_v1",
+      "anatomical_parts": 0,
+      "source_parts": 54
+    },
+    {
+      "stem": "dwarf_trebuchet_v1",
+      "anatomical_parts": 0,
+      "source_parts": 57
+    },
+    {
+      "stem": "dwarf_bombard_v1",
+      "anatomical_parts": 0,
+      "source_parts": 57
+    },
+    {
+      "stem": "dwarf_siege_colossus_v1",
+      "anatomical_parts": 0,
+      "source_parts": 80
+    }
+  ]
+}

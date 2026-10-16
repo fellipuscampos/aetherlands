@@ -1,0 +1,58 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/generated/elves/buildings/elf_construction_site_hex_v1/elf_construction_site_hex_v1.tscn" id="1_site"]
+
+[sub_resource type="Environment" id="Environment_review"]
+background_mode = 1
+background_color = Color(0.20, 0.24, 0.28, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.77, 0.84, 0.94, 1)
+ambient_light_energy = 0.65
+reflected_light_source = 2
+
+[sub_resource type="StandardMaterial3D" id="Material_floor"]
+albedo_color = Color(0.20, 0.24, 0.28, 1)
+roughness = 1.0
+
+[sub_resource type="PlaneMesh" id="Mesh_floor"]
+material = SubResource("Material_floor")
+size = Vector2(200, 200)
+
+[node name="ElfConstructionReview" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_review")
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.004, 0)
+mesh = SubResource("Mesh_floor")
+
+[node name="ConstructionSite" parent="." instance=ExtResource("1_site")]
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -28, 0)
+light_color = Color(1, 0.94, 0.84, 1)
+light_energy = 1.15
+shadow_enabled = true
+
+[node name="Fill" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-35, 145, 0)
+light_color = Color(0.74, 0.85, 1, 1)
+light_energy = 0.45
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(2.4, 2.9, 3.5)
+rotation_degrees = Vector3(-32.3, 34.44, 0)
+projection = 1
+size = 2.55
+current = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Label" type="Label" parent="CanvasLayer"]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 850.0
+offset_bottom = 64.0
+theme_override_font_sizes/font_size = 22
+text = "ELFOS · CANTEIRO DE CONSTRUÇÃO · LOOP (6 s)"

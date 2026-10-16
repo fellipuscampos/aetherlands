@@ -1,0 +1,143 @@
+{
+  "name": "Dwarf_Market_Hex_V1",
+  "display_name": "Mercado",
+  "gameplay_building_id": "v2_building_market",
+  "trains": [],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1120,
+  "editable_parts": 86,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      0.7239999771118164
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    0.7239999771118164
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Escala nativa 1:1 do mapa; tile pointy-top de raio 1; multiplicador 1.0.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 538,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Granito, pilares espessos, sapatas de pedra e cintas de cobre. Telhados baixos de ardósia escura e engenharia mecânica robusta. Mercado de infraestrutura, uma única versão sem evolução. Revisão: Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores. Junções ajustadas para eliminar faces coplanares expostas.",
+  "door_clearance_m": [
+    0.2,
+    0.32
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "dwarf",
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "infrastructure": {
+    "branch": "economy",
+    "single_version": true,
+    "evolutions": [],
+    "blender_mcp_only": true,
+    "architecture": "Granito, pilares espessos, sapatas de pedra e cintas de cobre. Telhados baixos de ardósia escura e engenharia mecânica robusta.",
+    "recipe": "dwarf_market"
+  },
+  "hex_tile": {
+    "circumradius": 1.0,
+    "source_base_radius": 0.92,
+    "max_half_plane_blender": 0.796743392944336,
+    "minimum_margin": 0.06928201084010255
+  },
+  "surface_overlap_review": {
+    "version": 1,
+    "mcp_only": true,
+    "exposed_coplanar_overlap_faces": 0,
+    "repaired_parts": {
+      "Granite_Exchange_Pier_-1_1_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "17e401278b498185012ee67dbb63b435f6fafab83df9a2fd52b360881e2490b5"
+      },
+      "Granite_Exchange_Pier_1_-1_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "cfe045750795251de7c53d1268bab1b576a7fb0e536a24563cf7b85997411977"
+      },
+      "Granite_Exchange_Pier_1_1_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "0a89e0c1b3a72f10eec92e82c84fe6626981c53d52091aecb92b2f6df7ead6b3"
+      },
+      "Exchange_Scale_Post_Shaft": {
+        "reason": "terminate_shaft_inside_capital",
+        "sha256": "ab2ca7ecc9e13241e93907693df0b4a1238d000a7b042b61e87be6cf292b0b1e"
+      }
+    },
+    "method": "Native Blender MCP; triangle clipping on matching outward planes, visible area checked against a BVH of all game meshes",
+    "before_overlap_faces": 4
+  },
+  "infrastructure_roof_review": {
+    "version": 1,
+    "mcp_only": true,
+    "roofs": [
+      {
+        "roof": "Granite_Exchange",
+        "shape": "straight_gable",
+        "courses": 6,
+        "base_height": 0.516
+      }
+    ],
+    "support_contacts": [],
+    "note": "Telhados retangulares com beirais retos; coberturas hexagonais preservadas. Apoios revisados por contato. Oficina e universidade élficas com duas águas, conforme os salões anteriores.",
+    "before_backup": "art_source/infrastructure_before_roof_review"
+  },
+  "export": {
+    "file": "dwarf_market_hex_v1.glb",
+    "bytes": 604664,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1120,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "dwarf_market_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "dwarf_market_hex_v1_albedo",
+        "bytes": 498907,
+        "sha256": "2ece5b48e0751e1ba40ce17cb3c1ceab9f40eb5739f9234ce36a0b4904374168"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

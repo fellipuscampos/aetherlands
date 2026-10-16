@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "exit_code": 0,
+  "errors": [],
+  "warnings": [],
+  "corrected_models": [
+    "elf_settler_v1",
+    "orc_settler_v1"
+  ]
+}

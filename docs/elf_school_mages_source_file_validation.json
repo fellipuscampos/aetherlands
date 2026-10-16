@@ -1,0 +1,62 @@
+{
+  "status": "PASS",
+  "files": [
+    {
+      "file": "assets/generated/elves/elf_sacred_cleric_v1/elf_sacred_cleric_v1.blend",
+      "scenes": 1,
+      "editable_meshes": 52,
+      "images": 2,
+      "materials": 1,
+      "armatures": 0,
+      "actions": 0
+    },
+    {
+      "file": "assets/generated/elves/elf_infernal_warlock_v1/elf_infernal_warlock_v1.blend",
+      "scenes": 1,
+      "editable_meshes": 45,
+      "images": 2,
+      "materials": 1,
+      "armatures": 0,
+      "actions": 0
+    },
+    {
+      "file": "assets/generated/elves/elf_necromancer_v1/elf_necromancer_v1.blend",
+      "scenes": 1,
+      "editable_meshes": 45,
+      "images": 2,
+      "materials": 1,
+      "armatures": 0,
+      "actions": 0
+    },
+    {
+      "file": "assets/generated/elves/elf_druid_v1/elf_druid_v1.blend",
+      "scenes": 1,
+      "editable_meshes": 51,
+      "images": 2,
+      "materials": 1,
+      "armatures": 0,
+      "actions": 0
+    },
+    {
+      "file": "assets/generated/elves/elf_arcanist_v1/elf_arcanist_v1.blend",
+      "scenes": 1,
+      "editable_meshes": 52,
+      "images": 2,
+      "materials": 1,
+      "armatures": 0,
+      "actions": 0
+    },
+    {
+      "file": "assets/generated/elves/elf_elementalist_v1/elf_elementalist_v1.blend",
+      "scenes": 1,
+      "editable_meshes": 56,
+      "images": 2,
+      "materials": 1,
+      "armatures": 0,
+      "actions": 0
+    }
+  ],
+  "active_scene": "Elf_School_Mages_V1_Six_Schools_Review",
+  "review_models": 6,
+  "animations": 0
+}

@@ -1,0 +1,55 @@
+{
+  "status": "PASS",
+  "models": 4,
+  "clips": 19,
+  "assets": [
+    {
+      "stem": "orc_catapult_v1",
+      "status": "PASS",
+      "editable_parts": 136,
+      "triangles": 2772,
+      "bones": 8,
+      "native_actions": 4,
+      "packed_atlas": true,
+      "transforms_applied": true,
+      "closed_meshes": true,
+      "rigid_weights": true
+    },
+    {
+      "stem": "orc_trebuchet_v1",
+      "status": "PASS",
+      "editable_parts": 143,
+      "triangles": 2808,
+      "bones": 10,
+      "native_actions": 5,
+      "packed_atlas": true,
+      "transforms_applied": true,
+      "closed_meshes": true,
+      "rigid_weights": true
+    },
+    {
+      "stem": "orc_bombard_v1",
+      "status": "PASS",
+      "editable_parts": 140,
+      "triangles": 3300,
+      "bones": 8,
+      "native_actions": 5,
+      "packed_atlas": true,
+      "transforms_applied": true,
+      "closed_meshes": true,
+      "rigid_weights": true
+    },
+    {
+      "stem": "orc_siege_colossus_v1",
+      "status": "PASS",
+      "editable_parts": 237,
+      "triangles": 5560,
+      "bones": 11,
+      "native_actions": 5,
+      "packed_atlas": true,
+      "transforms_applied": true,
+      "closed_meshes": true,
+      "rigid_weights": true
+    }
+  ]
+}

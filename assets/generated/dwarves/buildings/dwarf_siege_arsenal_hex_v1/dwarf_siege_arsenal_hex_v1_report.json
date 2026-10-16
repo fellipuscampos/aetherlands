@@ -1,0 +1,142 @@
+{
+  "name": "Dwarf_Siege_Arsenal_Hex_V1",
+  "display_name": "Arsenal de Guerra dos Anões",
+  "gameplay_building_id": "v2_building_siege_arsenal",
+  "trains": [
+    "v2_unit_catapult",
+    "v2_unit_trebuchet",
+    "v2_unit_bombard"
+  ],
+  "excludes": [
+    "v2_legendary_siege_colossus"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 3872,
+  "editable_parts": 251,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.0485600233078003
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.0485600233078003
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units; pointy-top tile radius 1, military foundation radius .92; placement scale tile_radius. Asset only, no integration.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1721,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Engenharia de granito com pilares engrossados, sapatas escalonadas e cintas de cobre; coberturas de ardósia escura com cantos chanfrados. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.69,
+    0.427
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "dwarf",
+  "unit_class": "siege",
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "layout_source": "orc_siege_arsenal_hex_v1",
+  "hex_tile": {
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "placement_scale": "tile_radius",
+    "max_half_plane_blender": 0.7978273816244401,
+    "tile_apothem": 0.8660254037844386
+  },
+  "faction_tint": "Clan cloth and shield/horse blanket accents isolated in Faction mesh; architecture keeps its civilization palette. No runtime integration.",
+  "export": {
+    "file": "dwarf_siege_arsenal_hex_v1.glb",
+    "bytes": 1227868,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 3872,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "dwarf_siege_arsenal_hex_v1_emission",
+        "bytes": 79656,
+        "sha256": "0c95133ffa1cb2eb8286319f791646351af62d9b4eb2888463842ee66e21686a"
+      },
+      {
+        "image": "dwarf_siege_arsenal_hex_v1_albedo",
+        "bytes": 882648,
+        "sha256": "9385d54de165a81bababf5dca465a45dbe64151f0bf99570e417a183acee5f89"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "dwarf",
+    "design": "Engenharia de granito com pilares engrossados, sapatas escalonadas e cintas de cobre; coberturas de ardósia escura com cantos chanfrados.",
+    "geometry_changes": [
+      "granite:Workshop_Back_Planks_1",
+      "granite:Workshop_Back_Planks_2",
+      "granite:Workshop_Back_Planks_3",
+      "granite:Workshop_Back_Planks_4",
+      "granite:Workshop_Back_Planks_5",
+      "granite:Portal_Triangle_Brace_0",
+      "granite:Portal_Triangle_Brace_1",
+      "granite:Right_Stores_Planks",
+      "granite:Stores_Slit_Sill",
+      "granite:Heavy_Transverse_Ridge",
+      "roof_geometry:Rust_Red_Workshop_Roof_0",
+      "roof_geometry:Rust_Red_Workshop_Roof_1",
+      "roof_geometry:Rust_Red_Workshop_Roof_2",
+      "roof_geometry:Rust_Red_Workshop_Roof_3",
+      "roof_geometry:Rust_Red_Workshop_Roof_4",
+      "roof_geometry:Rust_Red_Workshop_Roof_5",
+      "granite_pier:Workshop_Heavy_Post_0",
+      "granite_pier:Workshop_Heavy_Post_1",
+      "granite_pier:Workshop_Heavy_Post_2",
+      "granite_pier:Workshop_Heavy_Post_3",
+      "granite_pier:Workshop_Heavy_Post_4",
+      "granite_pier:Workshop_Heavy_Post_5",
+      "granite_pier:Assembly_Portal_Middle_Post",
+      "upper_structure_proportion:0.62"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.7978273816244401,
+    "blender_mcp_only": true
+  }
+}

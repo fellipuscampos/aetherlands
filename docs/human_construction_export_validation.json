@@ -1,0 +1,76 @@
+{
+  "status": "PASS",
+  "revision": 6,
+  "triangles": 4116,
+  "meshes": 2,
+  "materials": 1,
+  "skins": 1,
+  "bones": 25,
+  "embedded_atlas_sha256": "0e9dbc8befcd3b94a56d61ab8fc3dc204783fd88e15a800134df516b02dcb783",
+  "clip": "construction",
+  "seconds": 6,
+  "nearest": true,
+  "studio_excluded": true,
+  "hex_orientation": "pointy-top virtual footprint; matches HexMetrics.corner",
+  "all_content_cuboids": true,
+  "original_human_head": true,
+  "ground_plate": false,
+  "generic_masonry": true,
+  "footprint_margin": 0.03880990378744864,
+  "building_materials": {
+    "reference": "tools/art_pipeline/guardian_hall_paint_save.py",
+    "stone": [
+      131,
+      141,
+      145
+    ],
+    "cutstone": [
+      172,
+      179,
+      174
+    ],
+    "roof": [
+      49,
+      79,
+      127
+    ],
+    "roof_dark": [
+      37,
+      59,
+      95
+    ],
+    "loose_blue_roof_slates": 10
+  },
+  "stable_elbow_planes": true,
+  "static_shoulder_blocks": 0,
+  "animated_shoulder_height": 0.334,
+  "forearm_lengths": {
+    "Mason": {
+      "L": 0.08090872487439231,
+      "R": 0.08090872415496853
+    },
+    "Carpenter": {
+      "L": 0.07995129281707918,
+      "R": 0.07995129281707918
+    },
+    "Bricklayer": {
+      "L": 0.07995129281707918,
+      "R": 0.07995129281707918
+    }
+  },
+  "hammer_contacts": {
+    "status": "PASS",
+    "pose_samples": 61,
+    "hammer_chisel_contact_error": 0.0,
+    "hammer_handle_min_stone_clearance": 0.07250002026557922,
+    "hammer_grip_min_side_clearance": 0.010223418474197388,
+    "hammer_head_vertical_arc": 0.1272895336151123,
+    "saw_handle_min_clearance": 0.023625999689102173,
+    "mortar_trough_min_foot_clearance": 0.26712972670793533,
+    "trowel_contact_error": 0.0,
+    "saw_support_hand_contact_error": 0.0004999786615371704,
+    "generic_masonry": true,
+    "ground_workers_feet_z": 0.0,
+    "stable_elbow_planes": true
+  }
+}

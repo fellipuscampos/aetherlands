@@ -1,0 +1,78 @@
+{
+  "status": "PASS",
+  "assets": [
+    {
+      "asset": "rogue_v1",
+      "nonmanifold_edges": 0,
+      "unattached_parts_candidates": [],
+      "same_normal_coplanar_candidates": [],
+      "mast_weapon_collisions": [],
+      "intersecting_wheels": [],
+      "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+    },
+    {
+      "asset": "saboteur_v1",
+      "nonmanifold_edges": 0,
+      "unattached_parts_candidates": [],
+      "same_normal_coplanar_candidates": [],
+      "mast_weapon_collisions": [],
+      "intersecting_wheels": [],
+      "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+    },
+    {
+      "asset": "assassin_v1",
+      "nonmanifold_edges": 0,
+      "unattached_parts_candidates": [],
+      "same_normal_coplanar_candidates": [],
+      "mast_weapon_collisions": [],
+      "intersecting_wheels": [],
+      "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+    },
+    {
+      "asset": "shadow_master_v1",
+      "nonmanifold_edges": 0,
+      "unattached_parts_candidates": [],
+      "same_normal_coplanar_candidates": [],
+      "mast_weapon_collisions": [],
+      "intersecting_wheels": [],
+      "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+    },
+    {
+      "asset": "catapult_v1",
+      "nonmanifold_edges": 0,
+      "unattached_parts_candidates": [],
+      "same_normal_coplanar_candidates": [],
+      "mast_weapon_collisions": [],
+      "intersecting_wheels": [],
+      "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+    },
+    {
+      "asset": "trebuchet_v1",
+      "nonmanifold_edges": 0,
+      "unattached_parts_candidates": [],
+      "same_normal_coplanar_candidates": [],
+      "mast_weapon_collisions": [],
+      "intersecting_wheels": [],
+      "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+    },
+    {
+      "asset": "bombard_v1",
+      "nonmanifold_edges": 0,
+      "unattached_parts_candidates": [],
+      "same_normal_coplanar_candidates": [],
+      "mast_weapon_collisions": [],
+      "intersecting_wheels": [],
+      "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+    },
+    {
+      "asset": "siege_colossus_v1",
+      "nonmanifold_edges": 0,
+      "unattached_parts_candidates": [],
+      "same_normal_coplanar_candidates": [],
+      "mast_weapon_collisions": [],
+      "intersecting_wheels": [],
+      "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+    }
+  ],
+  "problems": []
+}

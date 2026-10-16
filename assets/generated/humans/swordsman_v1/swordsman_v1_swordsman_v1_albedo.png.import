@@ -3,23 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://nl8crsso7tw3"
-path="res://.godot/imported/swordsman_v1_swordsman_v1_albedo.png-3b0019ce1c1e01ba0cb15eeb919f175c.ctex"
+path.bptc="res://.godot/imported/swordsman_v1_swordsman_v1_albedo.png-3b0019ce1c1e01ba0cb15eeb919f175c.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "ce4f6cef16e2ffc9b005f081c7f3f8b0"
+"md5": "98ab3a634acbedfdb9b7e70903a01f3a"
 }
 
 [deps]
 
 source_file="res://assets/generated/humans/swordsman_v1/swordsman_v1_swordsman_v1_albedo.png"
-dest_files=["res://.godot/imported/swordsman_v1_swordsman_v1_albedo.png-3b0019ce1c1e01ba0cb15eeb919f175c.ctex"]
+dest_files=["res://.godot/imported/swordsman_v1_swordsman_v1_albedo.png-3b0019ce1c1e01ba0cb15eeb919f175c.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

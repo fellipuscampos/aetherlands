@@ -3,23 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cf4c3pw2ta68"
-path="res://.godot/imported/blade_hero_v1_blade_hero_v1_albedo.png-17842aa66b6d20d901c36b96926b1791.ctex"
+path.bptc="res://.godot/imported/blade_hero_v1_blade_hero_v1_albedo.png-17842aa66b6d20d901c36b96926b1791.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "0d077a33a3d8ed59db9d0a5e301307c6"
+"md5": "5723a248b694c8c301b7b906d8edb24a"
 }
 
 [deps]
 
 source_file="res://assets/generated/humans/blade_hero_v1/blade_hero_v1_blade_hero_v1_albedo.png"
-dest_files=["res://.godot/imported/blade_hero_v1_blade_hero_v1_albedo.png-17842aa66b6d20d901c36b96926b1791.ctex"]
+dest_files=["res://.godot/imported/blade_hero_v1_blade_hero_v1_albedo.png-17842aa66b6d20d901c36b96926b1791.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

@@ -1,0 +1,247 @@
+{
+	"assets": [
+		{
+			"asset": "sacred_temple_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.21399998664856,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1452
+		},
+		{
+			"asset": "infernal_sanctum_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.08200001716614,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1444
+		},
+		{
+			"asset": "necromancy_ossuary_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.07700002193451,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1992
+		},
+		{
+			"asset": "druidic_circle_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.07700002193451,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1204
+		},
+		{
+			"asset": "arcane_conclave_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.51617622375488,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1852
+		},
+		{
+			"asset": "elemental_observatory_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.31759107112885,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1820
+		},
+		{
+			"asset": "orc_sacred_temple_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.31200003623962,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1796
+		},
+		{
+			"asset": "orc_infernal_sanctum_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.15600001811981,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1796
+		},
+		{
+			"asset": "orc_necromancy_ossuary_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.15600001811981,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2324
+		},
+		{
+			"asset": "orc_druidic_circle_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.15600001811981,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1392
+		},
+		{
+			"asset": "orc_arcane_conclave_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.46217632293701,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2160
+		},
+		{
+			"asset": "orc_elemental_observatory_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.31759107112885,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2164
+		},
+		{
+			"asset": "dwarf_sacred_temple_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.20650005340576,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1572
+		},
+		{
+			"asset": "dwarf_infernal_sanctum_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.10199999809265,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1624
+		},
+		{
+			"asset": "dwarf_necromancy_ossuary_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.10199999809265,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2112
+		},
+		{
+			"asset": "dwarf_druidic_circle_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.10199999809265,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1300
+		},
+		{
+			"asset": "dwarf_arcane_conclave_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.444176197052,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1996
+		},
+		{
+			"asset": "dwarf_elemental_observatory_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.31759107112885,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2168
+		},
+		{
+			"asset": "elf_sacred_temple_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.40649998188019,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2096
+		},
+		{
+			"asset": "elf_infernal_sanctum_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.14549994468689,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2124
+		},
+		{
+			"asset": "elf_necromancy_ossuary_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.14549994468689,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2712
+		},
+		{
+			"asset": "elf_druidic_circle_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.182000041008,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2316
+		},
+		{
+			"asset": "elf_arcane_conclave_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.58817625045776,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2592
+		},
+		{
+			"asset": "elf_elemental_observatory_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.31759107112885,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2728
+		}
+	],
+	"problems": [],
+	"status": "PASS",
+	"verified": 24
+}

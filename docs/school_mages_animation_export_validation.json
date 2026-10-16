@@ -1,0 +1,449 @@
+{
+  "status": "PASS",
+  "verified": 24,
+  "clips": 72,
+  "unchanged_texture_files": 96,
+  "triangles": 14852,
+  "assets": [
+    {
+      "stem": "human_sacred_cleric_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [
+        "Belt_clasp",
+        "Gold_stole_lower_-1",
+        "Gold_stole_lower_1",
+        "Gold_stole_top_-1",
+        "Gold_stole_top_1",
+        "Human_blue_belt",
+        "Sun_brooch"
+      ],
+      "approved_animations_unchanged": true,
+      "triangles": 468,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 255320
+    },
+    {
+      "stem": "human_infernal_warlock_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [
+        "Belt_clasp",
+        "Cinder_box_clasp",
+        "Human_blue_belt",
+        "Infernal_sash",
+        "Red_lapel_-1",
+        "Red_lapel_1",
+        "Ritual_belt_box"
+      ],
+      "approved_animations_unchanged": true,
+      "triangles": 444,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 251224
+    },
+    {
+      "stem": "human_necromancer_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [
+        "Belt_clasp",
+        "Bone_necklace_-1",
+        "Bone_necklace_1",
+        "Bone_talisman_-1",
+        "Bone_talisman_1",
+        "Human_blue_belt",
+        "Violet_pendant",
+        "Violet_robe_panel_-1",
+        "Violet_robe_panel_1"
+      ],
+      "approved_animations_unchanged": true,
+      "triangles": 456,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 251432
+    },
+    {
+      "stem": "human_druid_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [
+        "Belt_clasp",
+        "Herb_pouch",
+        "Human_blue_belt",
+        "Leaf_brooch",
+        "Pouch_herb_0",
+        "Pouch_herb_1",
+        "Pouch_herb_2",
+        "Wool_mantle_-1",
+        "Wool_mantle_1"
+      ],
+      "approved_animations_unchanged": true,
+      "triangles": 480,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 256052
+    },
+    {
+      "stem": "human_arcanist_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [
+        "Arcane_rune_0",
+        "Arcane_rune_1",
+        "Arcane_rune_2",
+        "Belt_clasp",
+        "Human_blue_belt",
+        "Silver_skirt_edge_-1",
+        "Silver_skirt_edge_1",
+        "Silver_stole_-1",
+        "Silver_stole_1"
+      ],
+      "approved_animations_unchanged": true,
+      "triangles": 476,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 258628
+    },
+    {
+      "stem": "human_elementalist_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [
+        "Belt_clasp",
+        "Element_clasp_fire",
+        "Element_clasp_stone",
+        "Element_clasp_water",
+        "Element_clasp_wind",
+        "Human_blue_belt",
+        "Wind_hem_-1",
+        "Wind_hem_1"
+      ],
+      "approved_animations_unchanged": true,
+      "triangles": 488,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 256760
+    },
+    {
+      "stem": "elf_sacred_cleric_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 624,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 271760
+    },
+    {
+      "stem": "elf_infernal_warlock_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 540,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 261888
+    },
+    {
+      "stem": "elf_necromancer_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 540,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 260988
+    },
+    {
+      "stem": "elf_druid_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 612,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 270688
+    },
+    {
+      "stem": "elf_arcanist_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 620,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 274416
+    },
+    {
+      "stem": "elf_elementalist_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 640,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 276868
+    },
+    {
+      "stem": "dwarf_sacred_cleric_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 764,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 299704
+    },
+    {
+      "stem": "dwarf_infernal_warlock_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 732,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 294616
+    },
+    {
+      "stem": "dwarf_necromancer_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 720,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 292532
+    },
+    {
+      "stem": "dwarf_druid_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 804,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 302344
+    },
+    {
+      "stem": "dwarf_arcanist_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 780,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 302836
+    },
+    {
+      "stem": "dwarf_elementalist_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 824,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 306348
+    },
+    {
+      "stem": "orc_sacred_cleric_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 668,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 295024
+    },
+    {
+      "stem": "orc_infernal_warlock_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 588,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 284232
+    },
+    {
+      "stem": "orc_necromancer_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 576,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 281544
+    },
+    {
+      "stem": "orc_druid_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 684,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 296828
+    },
+    {
+      "stem": "orc_arcanist_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 668,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 298424
+    },
+    {
+      "stem": "orc_elementalist_v1",
+      "retained_geometry_uvs_unchanged": true,
+      "removed_clothing_parts": [],
+      "approved_animations_unchanged": null,
+      "triangles": 656,
+      "meshes": 1,
+      "surfaces": 1,
+      "bones": 16,
+      "clips": {
+        "idle": 3.0,
+        "walk": 1.5,
+        "spell": 3.0
+      },
+      "bytes": 294772
+    }
+  ],
+  "unchanged_other_race_files": 183
+}

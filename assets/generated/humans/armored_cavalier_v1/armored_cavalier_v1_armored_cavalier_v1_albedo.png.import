@@ -3,23 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://oiurlk05t73b"
-path="res://.godot/imported/armored_cavalier_v1_armored_cavalier_v1_albedo.png-de0ec6a45d50a3de944d3add4337f796.ctex"
+path.bptc="res://.godot/imported/armored_cavalier_v1_armored_cavalier_v1_albedo.png-de0ec6a45d50a3de944d3add4337f796.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "9c23ee1f8257796d601d9a248b63f596"
+"md5": "38edb4432f6e786c0aad63269cc56eca"
 }
 
 [deps]
 
 source_file="res://assets/generated/humans/armored_cavalier_v1/armored_cavalier_v1_armored_cavalier_v1_albedo.png"
-dest_files=["res://.godot/imported/armored_cavalier_v1_armored_cavalier_v1_albedo.png-de0ec6a45d50a3de944d3add4337f796.ctex"]
+dest_files=["res://.godot/imported/armored_cavalier_v1_armored_cavalier_v1_albedo.png-de0ec6a45d50a3de944d3add4337f796.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

@@ -1,6 +1,6 @@
 {
   "name": "BladeHero_V1",
-  "kind": "v2_legendary_blade_hero (Her\u00f3i da L\u00e2mina)",
+  "kind": "v2_legendary_blade_hero (Herói da Lâmina)",
   "pipeline": "Blender MCP localhost:9876 (tools/art_pipeline/blade_hero_*.py)",
   "height_m": 2.5070884227752686,
   "front_y_m": -0.7901083827018738,
@@ -29,7 +29,15 @@
     "density_px_per_meter": 64,
     "measured_min": 63.9997838519399,
     "measured_max": 64.00048105597061,
-    "padding": 2
+    "padding": 2,
+    "cleanup": {
+      "version": "human_texture_cleanup_v1",
+      "changed_pixels": 24033,
+      "geometry_uv_skinning_animations_preserved": true,
+      "embedded_albedo_matches_png": true,
+      "editable_source_packed_albedo_matches_png": true,
+      "emission_unchanged": true
+    }
   },
   "rig": {
     "bones": [
@@ -171,7 +179,7 @@
     "UpperArm_l": "upper_arm_l",
     "UpperArm_r": "upper_arm_r"
   },
-  "notes": "Static BladeHero V1 (Her\u00f3i da L\u00e2mina, legendary), Weapon Master copy, 2.00 m body (sword rises above), one block per body part. Sword follows hand_r; scabbard follows hips; hair, circlet and ponytail follow head; cape follows chest.",
+  "notes": "Static BladeHero V1 (Herói da Lâmina, legendary), Weapon Master copy, 2.00 m body (sword rises above), one block per body part. Sword follows hand_r; scabbard follows hips; hair, circlet and ponytail follow head; cape follows chest.",
   "animation_validation": {
     "problems": [],
     "ik": {},

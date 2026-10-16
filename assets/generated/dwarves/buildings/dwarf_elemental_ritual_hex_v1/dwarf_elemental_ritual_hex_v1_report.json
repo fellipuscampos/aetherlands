@@ -1,0 +1,141 @@
+{
+  "name": "Dwarf_Elemental_Ritual_Hex_V1",
+  "display_name": "Nexus dos Elementos — Anões",
+  "gameplay_building_id": "v2_building_elemental_ritual",
+  "trains": [
+    "v2_manifestation_elemental_primordial"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1896,
+  "editable_parts": 137,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.1101442575454712
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.1101442575454712
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 910,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Engenharia de granito com pilares engrossados, sapatas escalonadas e cintas de cobre; coberturas de ardósia escura com cantos chanfrados. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "dwarf",
+  "magic_school": "elementalism",
+  "grand_magic": true,
+  "asset_only": true,
+  "requires_building": "v2_building_elemental_observatory",
+  "includes_perimeter_walls": false,
+  "school_building_separate": true,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "craft": {
+    "race_details": "Granito, pilares quadrados, cobre gravado e mecanismos.",
+    "material_reference": "assets/generated/dwarves/buildings/dwarf_elemental_observatory_hex_v1",
+    "roof_rgb": [
+      67,
+      82,
+      89
+    ],
+    "physical_attachment_remaining": [],
+    "intentional_levitation": [
+      "Primordial_Core"
+    ],
+    "relic_source": null
+  },
+  "export": {
+    "file": "dwarf_elemental_ritual_hex_v1.glb",
+    "bytes": 653028,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1896,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "dwarf_elemental_ritual_hex_v1_emission",
+        "bytes": 22811,
+        "sha256": "e4fdfbba2fa9ac7c139393c1d9254060cc2aaa78e9477cc632f2794bd4aff1fe"
+      },
+      {
+        "image": "dwarf_elemental_ritual_hex_v1_albedo",
+        "bytes": 491698,
+        "sha256": "1a09558a2a2540d99bc7d31fb2bb983cfff28bbc978c924831a8625fb57a4440"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "dwarf",
+    "design": "Engenharia de granito com pilares engrossados, sapatas escalonadas e cintas de cobre; coberturas de ardósia escura com cantos chanfrados.",
+    "geometry_changes": [
+      "roof_geometry:Nexus_fire_Tower_Course_00",
+      "roof_geometry:Nexus_fire_Tower_Course_01",
+      "roof_geometry:Nexus_fire_Tower_Course_02",
+      "roof_geometry:Nexus_water_Tower_Course_00",
+      "roof_geometry:Nexus_water_Tower_Course_01",
+      "roof_geometry:Nexus_water_Tower_Course_02",
+      "roof_geometry:Nexus_earth_Tower_Course_00",
+      "roof_geometry:Nexus_earth_Tower_Course_01",
+      "roof_geometry:Nexus_earth_Tower_Course_02",
+      "roof_geometry:Nexus_air_Tower_Course_00",
+      "roof_geometry:Nexus_air_Tower_Course_01",
+      "roof_geometry:Nexus_air_Tower_Course_02",
+      "upper_structure_proportion:0.62"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

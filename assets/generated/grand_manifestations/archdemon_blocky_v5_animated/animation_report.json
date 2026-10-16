@@ -1,0 +1,166 @@
+{
+  "status": "PASS",
+  "model": "archdemon_blocky_v5_animated",
+  "armor_pixels_preserved": true,
+  "side_stoles_attached": true,
+  "core_is_cube_inside_chest": true,
+  "meshes": 1,
+  "materials": 1,
+  "triangles": 1084,
+  "bones": 29,
+  "root_motion": false,
+  "fps": 24,
+  "same_channels_all_clips": true,
+  "rest_height_m": 3.0,
+  "clips": {
+    "Idle": {
+      "samples": 1153,
+      "loop": true,
+      "duration_s": 24.0,
+      "minimum_ground_clearance_m": 0.19064559042453766,
+      "bounds_min_m": [
+        -1.4690055847167969,
+        -0.5224615931510925,
+        0.19064559042453766
+      ],
+      "bounds_max_m": [
+        1.4690055847167969,
+        1.13645601272583,
+        3.2507500648498535
+      ],
+      "seam_vertex_delta_m": 4.7706993203109864e-08,
+      "maximum_half_frame_vertex_step_m": 0.003932077625696848,
+      "uniform_scale_error": 3.594904289805356e-07,
+      "minimum_separation_m": {
+        "shoulders_to_body_m": 0.12954562902450562,
+        "hands_to_body_m": 0.3358529210090637,
+        "hands_below_shoulders_m": 0.10847020149230957,
+        "cube_to_chest_m": 0.005400352756739002
+      },
+      "hand_shoulder_intersections": 0,
+      "core_center_fixed_inside_chest": true,
+      "cloth_tip_motion_m": {
+        "front_L": 0.22082396670875365,
+        "front_R": 0.22085048349917225,
+        "side_L": 0.2241765695885519,
+        "side_R": 0.22411421482692787
+      },
+      "cloth_seams_closed": true,
+      "cloth_segment_lengths_preserved": true,
+      "cloth_anchors_fixed": true,
+      "palm_up_wrist_back_checks": 0
+    },
+    "Walk": {
+      "samples": 385,
+      "loop": true,
+      "duration_s": 8.0,
+      "minimum_ground_clearance_m": 0.28304484486579895,
+      "bounds_min_m": [
+        -1.4675241708755493,
+        -0.4840499758720398,
+        0.28304484486579895
+      ],
+      "bounds_max_m": [
+        1.4675241708755493,
+        1.0416978597640991,
+        3.369691848754883
+      ],
+      "seam_vertex_delta_m": 5.3726900748371916e-08,
+      "maximum_half_frame_vertex_step_m": 0.00900224537412329,
+      "uniform_scale_error": 3.650783431119464e-07,
+      "minimum_separation_m": {
+        "shoulders_to_body_m": 0.1520668864250183,
+        "hands_to_body_m": 0.3613487482070923,
+        "hands_below_shoulders_m": 0.094352126121521,
+        "cube_to_chest_m": 0.005400352756739002
+      },
+      "hand_shoulder_intersections": 0,
+      "core_center_fixed_inside_chest": true,
+      "cloth_tip_motion_m": {
+        "front_L": 0.25466996610510484,
+        "front_R": 0.25446749746378483,
+        "side_L": 0.26145078799995536,
+        "side_R": 0.26138252779001353
+      },
+      "cloth_seams_closed": true,
+      "cloth_segment_lengths_preserved": true,
+      "cloth_anchors_fixed": true,
+      "palm_up_wrist_back_checks": 0
+    },
+    "Attack": {
+      "samples": 73,
+      "loop": false,
+      "duration_s": 1.5,
+      "minimum_ground_clearance_m": 0.19147416949272156,
+      "bounds_min_m": [
+        -1.4867545366287231,
+        -0.9083840250968933,
+        0.19147416949272156
+      ],
+      "bounds_max_m": [
+        1.4867545366287231,
+        1.1961321830749512,
+        3.3569648265838623
+      ],
+      "seam_vertex_delta_m": 4.7706993203109864e-08,
+      "maximum_half_frame_vertex_step_m": 0.10578259709337227,
+      "uniform_scale_error": 2.710039508357909e-07,
+      "minimum_separation_m": {
+        "shoulders_to_body_m": 0.13037431240081787,
+        "hands_to_body_m": 0.33588212728500366,
+        "hands_below_shoulders_m": -0.0805579423904419,
+        "cube_to_chest_m": 0.005400352756739002
+      },
+      "hand_shoulder_intersections": 0,
+      "core_center_fixed_inside_chest": true,
+      "cloth_tip_motion_m": {
+        "front_L": 0.3503621580607057,
+        "front_R": 0.3403905442985573,
+        "side_L": 0.41694622727343805,
+        "side_R": 0.37390115352142533
+      },
+      "cloth_seams_closed": true,
+      "cloth_segment_lengths_preserved": true,
+      "cloth_anchors_fixed": true,
+      "palm_up_wrist_back_checks": 0
+    },
+    "Spell": {
+      "samples": 145,
+      "loop": false,
+      "duration_s": 3.0,
+      "minimum_ground_clearance_m": 0.19185219705104828,
+      "bounds_min_m": [
+        -1.4762530326843262,
+        -1.1800364255905151,
+        0.19185219705104828
+      ],
+      "bounds_max_m": [
+        1.4762530326843262,
+        1.1548815965652466,
+        3.3158411979675293
+      ],
+      "seam_vertex_delta_m": 4.7706993203109864e-08,
+      "maximum_half_frame_vertex_step_m": 0.06810519942619202,
+      "uniform_scale_error": 4.768372273700194e-07,
+      "minimum_separation_m": {
+        "shoulders_to_body_m": 0.13037431240081787,
+        "hands_to_body_m": 0.33588212728500366,
+        "hands_below_shoulders_m": -0.3955957889556885,
+        "cube_to_chest_m": 0.005400352756739002
+      },
+      "hand_shoulder_intersections": 0,
+      "core_center_fixed_inside_chest": true,
+      "cloth_tip_motion_m": {
+        "front_L": 0.20573124299467832,
+        "front_R": 0.23435269388704727,
+        "side_L": 0.29980132156604283,
+        "side_R": 0.3185719333265096
+      },
+      "cloth_seams_closed": true,
+      "cloth_segment_lengths_preserved": true,
+      "cloth_anchors_fixed": true,
+      "palm_up_wrist_back_checks": 100
+    }
+  },
+  "protected_files": 17
+}

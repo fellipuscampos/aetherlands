@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "assets": [
+    {
+      "race": "elf",
+      "max_generator_difference_m": 0.0,
+      "exposed_coplanar_pairs": 0
+    },
+    {
+      "race": "orc",
+      "max_generator_difference_m": 0.0,
+      "exposed_coplanar_pairs": 0
+    }
+  ]
+}

@@ -1,0 +1,220 @@
+{
+  "name": "Grand_Arsenal_Hex_V1",
+  "display_name": "Grande Arsenal — Humanos",
+  "gameplay_building_id": "v2_building_grand_arsenal",
+  "trains": [
+    "v2_legendary_siege_colossus"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 2172,
+  "editable_parts": 179,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.4199999570846558
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.4199999570846558
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1080,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "human",
+  "military_role": "siege",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_siege_arsenal",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "human_siege",
+  "material_reference": "assets/generated/humans/buildings/siege_arsenal_hex_v1",
+  "roof_rgb": [
+    49,
+    79,
+    127
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "parts": [
+          "Standard_Foot",
+          "Standard_Shaft",
+          "Standard_Capital",
+          "Standard_Crossbar",
+          "Standard_Cloth",
+          "Standard_Tie_-1",
+          "Standard_Tie_1",
+          "Standard_Badge"
+        ],
+        "action": "move",
+        "delta": [
+          0.07999998331069946,
+          -0.10999998450279236,
+          0.0
+        ],
+        "reason": "flag pole and cloth clear all roof courses and entrances"
+      },
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 113,
+        "iterations": 8
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [],
+      "open_passages": [
+        {
+          "name": "Engineering_Bay_-0.3",
+          "lo": [
+            -0.48,
+            -0.009999990463256836,
+            0.16200000405311585
+          ],
+          "hi": [
+            -0.36,
+            0.19500000953674318,
+            0.6559999942779541
+          ],
+          "blockers": []
+        },
+        {
+          "name": "Engineering_Bay_0.3",
+          "lo": [
+            0.15400001078844072,
+            -0.009999990463256836,
+            0.16200000405311585
+          ],
+          "hi": [
+            0.4460000205039978,
+            0.19500000953674318,
+            0.6559999942779541
+          ],
+          "blockers": []
+        }
+      ]
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "grand_arsenal_hex_v1.glb",
+    "bytes": 807492,
+    "meshes": 7,
+    "primitives": 7,
+    "triangles": 2172,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "grand_arsenal_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "grand_arsenal_hex_v1_albedo",
+        "bytes": 627926,
+        "sha256": "ef56aa7a8256727b9af81f4f1227feaae0ebe6769a5cf894bcb4d5318de2bd6c"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "human",
+    "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos.",
+    "geometry_changes": [
+      "masonry:Engineering_Bay_-0.3_-1_-1_Shaft",
+      "masonry:Engineering_Bay_-0.3_-1_1_Shaft",
+      "masonry:Engineering_Bay_-0.3_1_-1_Shaft",
+      "masonry:Engineering_Bay_-0.3_1_1_Shaft",
+      "masonry:Engineering_Bay_-0.3_Front_Lintel",
+      "masonry:Engineering_Bay_-0.3_Rear_Lintel",
+      "masonry:Engineering_Bay_-0.3_Backwall",
+      "masonry:Engineering_Bay_0.3_-1_-1_Shaft",
+      "masonry:Engineering_Bay_0.3_-1_1_Shaft",
+      "masonry:Engineering_Bay_0.3_1_-1_Shaft",
+      "masonry:Engineering_Bay_0.3_1_1_Shaft",
+      "masonry:Engineering_Bay_0.3_Front_Lintel",
+      "masonry:Engineering_Bay_0.3_Rear_Lintel",
+      "masonry:Engineering_Bay_0.3_Backwall",
+      "masonry:Great_Trebuchet_Deck",
+      "masonry:Trebuchet_A_Frame_-1",
+      "masonry:Trebuchet_Rear_Frame_-1",
+      "masonry:Trebuchet_A_Frame_1",
+      "masonry:Trebuchet_Rear_Frame_1",
+      "masonry:Trebuchet_Arm",
+      "masonry:Trebuchet_Spoon",
+      "masonry:Royal_Gantry_Mast_Shaft",
+      "masonry:Royal_Gantry_Boom",
+      "masonry:Royal_Gantry_Brace",
+      "stone_pier:Engineering_Bay_-0.3_-1_-1_Shaft",
+      "stone_pier:Engineering_Bay_-0.3_-1_1_Shaft",
+      "stone_pier:Engineering_Bay_-0.3_1_-1_Shaft",
+      "stone_pier:Engineering_Bay_-0.3_1_1_Shaft",
+      "stone_pier:Engineering_Bay_0.3_-1_-1_Shaft",
+      "stone_pier:Engineering_Bay_0.3_-1_1_Shaft",
+      "stone_pier:Engineering_Bay_0.3_1_-1_Shaft",
+      "stone_pier:Engineering_Bay_0.3_1_1_Shaft",
+      "stone_pier:Royal_Gantry_Mast_Shaft"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

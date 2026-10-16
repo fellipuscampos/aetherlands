@@ -1,0 +1,308 @@
+{
+  "name": "Orc_Arcane_Conclave_Hex_V1",
+  "display_name": "Conclave Arcano — Orcs",
+  "gameplay_building_id": "v2_building_arcane_conclave",
+  "trains": [
+    "v2_unit_arcanist"
+  ],
+  "excludes": [
+    "v2_building_arcane_ritual"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 2640,
+  "editable_parts": 205,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.3164116144180298
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.3164116144180298
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1290,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Estrutura de madeira grossa, postes cintados com ferro e contraventamentos diagonais; coberturas ferrugem, pedra escura na fundação e presas do clã. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.23,
+    0.35
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "orc",
+  "magic_school": "arcanism",
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "ritual_building_separate": true,
+  "excluded_buildings": [
+    "v2_building_arcane_ritual"
+  ],
+  "finish_pass": {
+    "revision": 1,
+    "original_structure_preserved": true,
+    "race_details": "Iron strapped timber, rivets, clan braces, jagged cloth and secured tusks.",
+    "roof_rgb": [
+      130,
+      58,
+      39
+    ],
+    "physical_attachment_remaining": [],
+    "relic_source": null
+  },
+  "export": {
+    "file": "orc_arcane_conclave_hex_v1.glb",
+    "bytes": 976556,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2640,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "orc_arcane_conclave_hex_v1_emission",
+        "bytes": 78985,
+        "sha256": "cb105e93030561792a96171bff42ba9546130779d5db5495da6d193aefae684b"
+      },
+      {
+        "image": "orc_arcane_conclave_hex_v1_albedo",
+        "bytes": 706499,
+        "sha256": "9c82f8df2eb95d846559510908e1e072d6c0e0e98631b89677d553db6d3e2aba"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "orc",
+    "design": "Estrutura de madeira grossa, postes cintados com ferro e contraventamentos diagonais; coberturas ferrugem, pedra escura na fundação e presas do clã.",
+    "geometry_changes": [
+      "timber:Conclave_Entry_Jamb_-1",
+      "timber:Conclave_Entry_Jamb_1",
+      "timber:Library_Entry_Jamb_-1",
+      "timber:Library_Entry_Jamb_1",
+      "bound_log:Arcane_Tower_Post_0",
+      "bound_log:Arcane_Tower_Post_1",
+      "bound_log:Arcane_Tower_Post_2",
+      "bound_log:Arcane_Tower_Post_3",
+      "bound_log:Arcane_Tower_Post_4",
+      "bound_log:Arcane_Tower_Post_5",
+      "bound_log:Scroll_Library_Post_-1_-1",
+      "bound_log:Scroll_Library_Post_-1_1",
+      "bound_log:Scroll_Library_Post_1_-1",
+      "bound_log:Scroll_Library_Post_1_1",
+      "bound_log:Attunement_Pillar_Column",
+      "upper_structure_proportion:0.86"
+    ],
+    "roof_braces": [
+      {
+        "post": "Arcane_Tower_Post_0",
+        "roof": "Conclave_Hex_Roof_0",
+        "end": [
+          0.047994162887334824,
+          -0.015500000678002834,
+          0.8002599906921386
+        ]
+      },
+      {
+        "post": "Arcane_Tower_Post_0",
+        "roof": "Conclave_Hex_Roof_0",
+        "end": [
+          0.17799416184425354,
+          0.08882500976324081,
+          0.8002599906921386
+        ]
+      },
+      {
+        "post": "Arcane_Tower_Post_1",
+        "roof": "Conclave_Hex_Roof_0",
+        "end": [
+          0.047994162887334824,
+          0.30550000071525574,
+          0.8002599906921386
+        ]
+      },
+      {
+        "post": "Arcane_Tower_Post_1",
+        "roof": "Conclave_Hex_Roof_0",
+        "end": [
+          0.17799416184425354,
+          0.2011750042438507,
+          0.8002599906921386
+        ]
+      },
+      {
+        "post": "Arcane_Tower_Post_2",
+        "roof": "Conclave_Hex_Roof_0",
+        "end": [
+          -0.10000000149011612,
+          0.335999995470047,
+          0.8002599906921386
+        ]
+      },
+      {
+        "post": "Arcane_Tower_Post_3",
+        "roof": "Conclave_Hex_Roof_0",
+        "end": [
+          -0.24799415469169617,
+          0.30550000071525574,
+          0.8002599906921386
+        ]
+      },
+      {
+        "post": "Arcane_Tower_Post_3",
+        "roof": "Conclave_Hex_Roof_0",
+        "end": [
+          -0.3779941499233246,
+          0.2011750042438507,
+          0.8002599906921386
+        ]
+      },
+      {
+        "post": "Arcane_Tower_Post_4",
+        "roof": "Conclave_Hex_Roof_0",
+        "end": [
+          -0.24799415469169617,
+          -0.015500000678002834,
+          0.8002599906921386
+        ]
+      },
+      {
+        "post": "Arcane_Tower_Post_4",
+        "roof": "Conclave_Hex_Roof_0",
+        "end": [
+          -0.3779941499233246,
+          0.08882500976324081,
+          0.8002599906921386
+        ]
+      },
+      {
+        "post": "Arcane_Tower_Post_5",
+        "roof": "Conclave_Hex_Roof_0",
+        "end": [
+          -0.10000000149011612,
+          -0.04600000008940697,
+          0.8002599906921386
+        ]
+      },
+      {
+        "post": "Scroll_Library_Post_-1_-1",
+        "roof": "Scroll_Library_Course_00",
+        "end": [
+          0.375900000333786,
+          0.053999997675418854,
+          0.4278799921274185
+        ]
+      },
+      {
+        "post": "Scroll_Library_Post_-1_-1",
+        "roof": "Scroll_Library_Course_00",
+        "end": [
+          0.2939999997615814,
+          0.1586499959230423,
+          0.4278799921274185
+        ]
+      },
+      {
+        "post": "Scroll_Library_Post_-1_1",
+        "roof": "Scroll_Library_Course_00",
+        "end": [
+          0.375900000333786,
+          0.37599998712539673,
+          0.4278799921274185
+        ]
+      },
+      {
+        "post": "Scroll_Library_Post_-1_1",
+        "roof": "Scroll_Library_Course_00",
+        "end": [
+          0.2939999997615814,
+          0.2713499963283539,
+          0.4278799921274185
+        ]
+      },
+      {
+        "post": "Scroll_Library_Post_1_-1",
+        "roof": "Scroll_Library_Course_00",
+        "end": [
+          0.4641000032424927,
+          0.053999997675418854,
+          0.4278799921274185
+        ]
+      },
+      {
+        "post": "Scroll_Library_Post_1_-1",
+        "roof": "Scroll_Library_Course_00",
+        "end": [
+          0.5460000038146973,
+          0.1586499959230423,
+          0.4278799921274185
+        ]
+      },
+      {
+        "post": "Scroll_Library_Post_1_1",
+        "roof": "Scroll_Library_Course_00",
+        "end": [
+          0.4641000032424927,
+          0.37599998712539673,
+          0.4278799921274185
+        ]
+      },
+      {
+        "post": "Scroll_Library_Post_1_1",
+        "roof": "Scroll_Library_Course_00",
+        "end": [
+          0.5460000038146973,
+          0.2713499963283539,
+          0.4278799921274185
+        ]
+      }
+    ],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

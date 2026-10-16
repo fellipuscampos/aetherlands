@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://doc5cb2kh28qk"
-path="res://.godot/imported/elder_lich_NailTex_human_default_L.png-e9e172fd1b69b6c124a39def76af1b06.ctex"
+path.bptc="res://.godot/imported/elder_lich_NailTex_human_default_L.png-e9e172fd1b69b6c124a39def76af1b06.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "99213d6147828e31a93f4821c99e5c54"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/magic/elder_lich/elder_lich_NailTex_human_default_L.png"
-dest_files=["res://.godot/imported/elder_lich_NailTex_human_default_L.png-e9e172fd1b69b6c124a39def76af1b06.ctex"]
+dest_files=["res://.godot/imported/elder_lich_NailTex_human_default_L.png-e9e172fd1b69b6c124a39def76af1b06.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

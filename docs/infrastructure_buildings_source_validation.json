@@ -1,0 +1,167 @@
+{
+  "status": "PASS",
+  "verified": 20,
+  "method": "live Blender MCP",
+  "assets": [
+    {
+      "asset": "market_hex_v1",
+      "editable_parts": 93,
+      "triangles": 1172,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "elf_market_hex_v1",
+      "editable_parts": 117,
+      "triangles": 1548,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "dwarf_market_hex_v1",
+      "editable_parts": 86,
+      "triangles": 1120,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "orc_market_hex_v1",
+      "editable_parts": 125,
+      "triangles": 1588,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "farm_hex_v1",
+      "editable_parts": 138,
+      "triangles": 1760,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "elf_farm_hex_v1",
+      "editable_parts": 153,
+      "triangles": 1924,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "dwarf_farm_hex_v1",
+      "editable_parts": 153,
+      "triangles": 2040,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 2
+    },
+    {
+      "asset": "orc_farm_hex_v1",
+      "editable_parts": 155,
+      "triangles": 1952,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "workshop_hex_v1",
+      "editable_parts": 64,
+      "triangles": 988,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 3
+    },
+    {
+      "asset": "elf_workshop_hex_v1",
+      "editable_parts": 72,
+      "triangles": 928,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "dwarf_workshop_hex_v1",
+      "editable_parts": 87,
+      "triangles": 1268,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 2
+    },
+    {
+      "asset": "orc_workshop_hex_v1",
+      "editable_parts": 77,
+      "triangles": 1032,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "university_hex_v1",
+      "editable_parts": 108,
+      "triangles": 1376,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "elf_university_hex_v1",
+      "editable_parts": 118,
+      "triangles": 1480,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "dwarf_university_hex_v1",
+      "editable_parts": 107,
+      "triangles": 1436,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "orc_university_hex_v1",
+      "editable_parts": 135,
+      "triangles": 1756,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "arcane_shrine_hex_v1",
+      "editable_parts": 55,
+      "triangles": 738,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "elf_arcane_shrine_hex_v1",
+      "editable_parts": 60,
+      "triangles": 906,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    },
+    {
+      "asset": "dwarf_arcane_shrine_hex_v1",
+      "editable_parts": 82,
+      "triangles": 1170,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 4
+    },
+    {
+      "asset": "orc_arcane_shrine_hex_v1",
+      "editable_parts": 86,
+      "triangles": 1122,
+      "packed_textures": true,
+      "isolated_scene": true,
+      "mechanical_contacts_checked": 0
+    }
+  ]
+}

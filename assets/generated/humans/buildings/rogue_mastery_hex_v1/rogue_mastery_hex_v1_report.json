@@ -1,0 +1,169 @@
+{
+  "name": "Rogue_Mastery_Hex_V1",
+  "display_name": "Refúgio das Sombras — Humanos",
+  "gameplay_building_id": "v2_building_rogue_mastery",
+  "trains": [
+    "v2_legendary_shadow_master"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1888,
+  "editable_parts": 145,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.4769999980926514
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.4769999980926514
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 907,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "human",
+  "military_role": "rogue",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_rogue_guild",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "human_rogue",
+  "material_reference": "assets/generated/humans/buildings/rogue_guild_hex_v1",
+  "roof_rgb": [
+    49,
+    79,
+    127
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 37,
+        "iterations": 2
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [
+        {
+          "prefix": "Shadow_Door",
+          "x": 0.09999999590218067,
+          "front": 0.0560000017285347,
+          "bottom": 0.14799998700618744,
+          "top": 0.5005999803543091,
+          "width": 0.20899998769164085,
+          "blockers": []
+        }
+      ],
+      "open_passages": []
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "rogue_mastery_hex_v1.glb",
+    "bytes": 750744,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1888,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "rogue_mastery_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "rogue_mastery_hex_v1_albedo",
+        "bytes": 592174,
+        "sha256": "2e5dbd5ee64fb4ae4da5dabada4af38eaaad7467ec3a50015d09003e5e2f08bf"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "human",
+    "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos.",
+    "geometry_changes": [
+      "masonry:Shadow_Townhouse_Body",
+      "masonry:Shadow_Watch_Walls",
+      "masonry:Shadow_Watch_Pier_0_Shaft",
+      "masonry:Shadow_Watch_Pier_1_Shaft",
+      "masonry:Shadow_Watch_Pier_2_Shaft",
+      "masonry:Shadow_Watch_Pier_3_Shaft",
+      "masonry:Shadow_Watch_Pier_4_Shaft",
+      "masonry:Shadow_Watch_Pier_5_Shaft",
+      "masonry:Shadow_Rear_Archive_Body",
+      "masonry:Balcony_Column_-1_Shaft",
+      "masonry:Balcony_Column_1_Shaft",
+      "masonry:Shadow_Balcony",
+      "stone_pier:Shadow_Watch_Pier_0_Shaft",
+      "stone_pier:Shadow_Watch_Pier_1_Shaft",
+      "stone_pier:Shadow_Watch_Pier_2_Shaft",
+      "stone_pier:Shadow_Watch_Pier_3_Shaft",
+      "stone_pier:Shadow_Watch_Pier_4_Shaft",
+      "stone_pier:Shadow_Watch_Pier_5_Shaft",
+      "stone_pier:Balcony_Column_-1_Shaft",
+      "stone_pier:Balcony_Column_1_Shaft"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

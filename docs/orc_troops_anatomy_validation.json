@@ -1,0 +1,380 @@
+{
+  "status": "PASS",
+  "models": 20,
+  "pose_samples": 4364,
+  "assets": [
+    {
+      "stem": "orc_squire_v1",
+      "status": "PASS",
+      "pose_samples": 207,
+      "minimum_head_chest_gap_m": 0.009314253795404565,
+      "maximum_joint_gap_m": 1.5176223859753865e-06,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "Squire_Idle": 0.049201917693423684,
+        "Squire_Walk": 0.09597099570804195,
+        "Squire_Attack": 0.5513107888579929,
+        "Squire_ShieldWall": 0.38612969629131444,
+        "Squire_ShieldWallHold": 0.034051398395031476
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_guardian_v1",
+      "status": "PASS",
+      "pose_samples": 207,
+      "minimum_head_chest_gap_m": 0.009314253312962468,
+      "maximum_joint_gap_m": 1.1621104386905741e-06,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "Guardian_Idle": 0.05088035018117431,
+        "Guardian_Walk": 0.09895919351659926,
+        "Guardian_Attack": 0.5921062308220084,
+        "Guardian_ShieldWall": 0.38456801319645545,
+        "Guardian_ShieldWallHold": 0.03574970245211307
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_sentinel_v1",
+      "status": "PASS",
+      "pose_samples": 207,
+      "minimum_head_chest_gap_m": 0.009200316353549634,
+      "maximum_joint_gap_m": 6.371712092724656e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "Sentinel_Idle": 0.0506408503912658,
+        "Sentinel_Walk": 0.09908601331663457,
+        "Sentinel_Attack": 0.5929239432298006,
+        "Sentinel_ShieldWall": 0.38868260108386815,
+        "Sentinel_ShieldWallHold": 0.035928204475091624
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_guardian_champion_v1",
+      "status": "PASS",
+      "pose_samples": 207,
+      "minimum_head_chest_gap_m": 0.01012046752476413,
+      "maximum_joint_gap_m": 6.111257235548649e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "Champion_Idle": 0.05253665772639521,
+        "Champion_Walk": 0.10588552337076895,
+        "Champion_Attack": 0.6325030460864721,
+        "Champion_ShieldWall": 0.42611825452579066,
+        "Champion_ShieldWallHold": 0.03874100990434802
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_warrior_v1",
+      "status": "PASS",
+      "pose_samples": 184,
+      "minimum_head_chest_gap_m": 0.00931417034489281,
+      "maximum_joint_gap_m": 6.484915096396088e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "Warrior_Idle": 0.1283182403988264,
+        "Warrior_Walk": 0.06965448120209355,
+        "Warrior_Attack": 1.1409187213589043,
+        "Warrior_PowerStrike": 1.4682045276586482
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_swordsman_v1",
+      "status": "PASS",
+      "pose_samples": 225,
+      "minimum_head_chest_gap_m": 0.009314507836443397,
+      "maximum_joint_gap_m": 8.810701796496108e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "Swordsman_Idle": 0.1284248973018391,
+        "Swordsman_Walk": 0.06975760707305695,
+        "Swordsman_Attack": 1.1415593948471339,
+        "Swordsman_PowerStrike": 1.4737483088771426,
+        "Swordsman_ArcAttack": 2.2356110510405474
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_weapon_master_v1",
+      "status": "PASS",
+      "pose_samples": 225,
+      "minimum_head_chest_gap_m": 0.009314507836443397,
+      "maximum_joint_gap_m": 8.412023096627333e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "WeaponMaster_Idle": 0.12842488583420658,
+        "WeaponMaster_Walk": 0.06975745928006243,
+        "WeaponMaster_Attack": 1.1415592658430889,
+        "WeaponMaster_PowerStrike": 1.4753698370972506,
+        "WeaponMaster_ArcAttack": 2.2356108856782466
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_blade_hero_v1",
+      "status": "PASS",
+      "pose_samples": 225,
+      "minimum_head_chest_gap_m": 0.01024578170757508,
+      "maximum_joint_gap_m": 8.139066286105345e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "BladeHero_Idle": 0.141268002150268,
+        "BladeHero_Walk": 0.076702194681911,
+        "BladeHero_Attack": 1.25193952523103,
+        "BladeHero_PowerStrike": 1.6229061579584398,
+        "BladeHero_ArcAttack": 2.4517353595459794
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_archer_v1",
+      "status": "PASS",
+      "pose_samples": 208,
+      "minimum_head_chest_gap_m": 0.00931434824373157,
+      "maximum_joint_gap_m": 1.477832692075014e-06,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "Archer_Idle": 0.10858214685384973,
+        "Archer_Walk": 0.16691137402413062,
+        "Archer_Attack": 1.3299031645925448,
+        "Archer_PreciseShot": 1.3220803798015386
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_hunter_v1",
+      "status": "PASS",
+      "pose_samples": 278,
+      "minimum_head_chest_gap_m": 0.00931451145196248,
+      "maximum_joint_gap_m": 9.300556394649837e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "Hunter_Idle": 0.10908331280295054,
+        "Hunter_Walk": 0.16733520120143594,
+        "Hunter_Attack": 1.3291719911834508,
+        "Hunter_PreciseShot": 1.332879889113105,
+        "Hunter_Volley": 1.3471269423593397
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_elite_marksman_v1",
+      "status": "PASS",
+      "pose_samples": 278,
+      "minimum_head_chest_gap_m": 0.00931434824373157,
+      "maximum_joint_gap_m": 1.7252204297610992e-06,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "EliteMarksman_Idle": 0.10858217088852741,
+        "EliteMarksman_Walk": 0.16691135091852383,
+        "EliteMarksman_Attack": 1.3299031077936299,
+        "EliteMarksman_PreciseShot": 1.322080143843899,
+        "EliteMarksman_Volley": 1.3458608980533657
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_legend_hunter_v1",
+      "status": "PASS",
+      "pose_samples": 278,
+      "minimum_head_chest_gap_m": 0.010245805765646815,
+      "maximum_joint_gap_m": 1.394390839750325e-06,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "LegendHunter_Idle": 0.1193110931006446,
+        "LegendHunter_Walk": 0.1827558299897012,
+        "LegendHunter_Attack": 1.475710267596717,
+        "LegendHunter_PreciseShot": 1.4672053426124614,
+        "LegendHunter_Volley": 1.494908175790392
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_cavalier_v1",
+      "status": "PASS",
+      "pose_samples": 162,
+      "minimum_head_chest_gap_m": 0.009452310944696543,
+      "maximum_joint_gap_m": 9.498593448847723e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "Cavalier_Idle": 0.015377508195615494,
+        "Cavalier_Walk": 0.1213784008841713,
+        "Cavalier_Attack": 1.0057798279809602,
+        "Cavalier_Charge": 0.4080638303913082
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_shock_cavalier_v1",
+      "status": "PASS",
+      "pose_samples": 162,
+      "minimum_head_chest_gap_m": 0.009452310944696543,
+      "maximum_joint_gap_m": 9.498593448847723e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "ShockCavalier_Idle": 0.015377508195615494,
+        "ShockCavalier_Walk": 0.1213784008841713,
+        "ShockCavalier_Attack": 1.0057798279809602,
+        "ShockCavalier_Charge": 0.40806400563801704
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_armored_cavalier_v1",
+      "status": "PASS",
+      "pose_samples": 162,
+      "minimum_head_chest_gap_m": 0.009452310944696543,
+      "maximum_joint_gap_m": 9.498593448847723e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "ArmoredCavalier_Idle": 0.015377508195615494,
+        "ArmoredCavalier_Walk": 0.1213784008841713,
+        "ArmoredCavalier_Attack": 1.0057798279809602,
+        "ArmoredCavalier_Charge": 0.40806400563801704
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_griffon_rider_v1",
+      "status": "PASS",
+      "pose_samples": 162,
+      "minimum_head_chest_gap_m": 0.010398118599256125,
+      "maximum_joint_gap_m": 1.358169625138467e-06,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "GriffonRider_Idle": 0.016914127555996493,
+        "GriffonRider_Walk": 0.13351543565484617,
+        "GriffonRider_Attack": 1.1063575359689557,
+        "GriffonRider_Charge": 0.4488700983959783
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_rogue_v1",
+      "status": "PASS",
+      "pose_samples": 192,
+      "minimum_head_chest_gap_m": 0.00931410829993214,
+      "maximum_joint_gap_m": 6.484915096396088e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "Rogue_Idle": 0.1283182403988264,
+        "Rogue_Walk": 0.06965448120209355,
+        "Rogue_Attack": 0.1975498216259768,
+        "Rogue_SneakAttack": 0.3181113353360224
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_saboteur_v1",
+      "status": "PASS",
+      "pose_samples": 265,
+      "minimum_head_chest_gap_m": 0.00931410829993214,
+      "maximum_joint_gap_m": 6.484915096396088e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "Saboteur_Idle": 0.1283182403988264,
+        "Saboteur_Walk": 0.06965448120209355,
+        "Saboteur_Attack": 0.1975498216259768,
+        "Saboteur_SneakAttack": 0.3181113353360224,
+        "Saboteur_Dismantle": 0.35966070747689277
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_assassin_v1",
+      "status": "PASS",
+      "pose_samples": 265,
+      "minimum_head_chest_gap_m": 0.00931410829993214,
+      "maximum_joint_gap_m": 6.484915096396088e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "Assassin_Idle": 0.1283182403988264,
+        "Assassin_Walk": 0.06965448120209355,
+        "Assassin_Attack": 0.1975498216259768,
+        "Assassin_SneakAttack": 0.3181113353360224,
+        "Assassin_Dismantle": 0.35966070747689277
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    },
+    {
+      "stem": "orc_shadow_master_v1",
+      "status": "PASS",
+      "pose_samples": 265,
+      "minimum_head_chest_gap_m": 0.010245807904984661,
+      "maximum_joint_gap_m": 7.133406811078548e-07,
+      "maximum_hand_head_penetration_m": 0.0,
+      "maximum_hand_chest_penetration_m": 0.0,
+      "wrist_motion_m": {
+        "ShadowMaster_Idle": 0.14115006851210266,
+        "ShadowMaster_Walk": 0.076619931533447,
+        "ShadowMaster_Attack": 0.2173048100596875,
+        "ShadowMaster_SneakAttack": 0.3499224789678982,
+        "ShadowMaster_Dismantle": 0.39562678964181813
+      },
+      "body_cuboids": 18,
+      "original_atlas_bytes_preserved": false,
+      "approved_face_and_body_geometry_preserved": true
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "approved_textures_preserved": true,
+  "bones": 39.0,
+  "clips": {
+    "Attack": {
+      "duration_s": 2.25,
+      "loop": false,
+      "minimum_ground_clearance_m": 0.344438314437866,
+      "rigid_uniform_parts": true,
+      "samples": 55,
+      "seam_vertex_delta_m": 1.33280039449346e-07
+    },
+    "Idle": {
+      "duration_s": 24.0,
+      "loop": true,
+      "minimum_ground_clearance_m": 0.523392915725708,
+      "rigid_uniform_parts": true,
+      "samples": 577,
+      "seam_vertex_delta_m": 0.0
+    },
+    "Spell": {
+      "duration_s": 4.0,
+      "loop": false,
+      "minimum_ground_clearance_m": 0.523266136646271,
+      "rigid_uniform_parts": true,
+      "samples": 97,
+      "seam_vertex_delta_m": 2.66560078898692e-07
+    },
+    "Walk": {
+      "duration_s": 12.0,
+      "loop": true,
+      "minimum_ground_clearance_m": 0.452927619218826,
+      "rigid_uniform_parts": true,
+      "samples": 289,
+      "seam_vertex_delta_m": 0.0
+    }
+  },
+  "emission": true,
+  "materials": 1,
+  "meshes": 1,
+  "native_godot_version": "4.7.1-stable (official)",
+  "nearest": true,
+  "previews": {
+    "Attack": {
+      "duration_s": 2.25,
+      "fps": 24,
+      "frames": 54
+    },
+    "Idle": {
+      "duration_s": 24.0,
+      "fps": 12,
+      "frames": 288
+    },
+    "Spell": {
+      "duration_s": 4.0,
+      "fps": 24,
+      "frames": 96
+    },
+    "Walk": {
+      "duration_s": 12.0,
+      "fps": 12,
+      "frames": 144
+    }
+  },
+  "rigid_weights": true,
+  "root_motion": false,
+  "samples": 1018,
+  "spell_to_idle_resets_all_transforms": true,
+  "status": "PASS",
+  "triangles": 1364.0
+}

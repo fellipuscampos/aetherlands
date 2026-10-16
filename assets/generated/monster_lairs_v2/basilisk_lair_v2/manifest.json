@@ -1,0 +1,58 @@
+{
+  "kind": "basilisk",
+  "tier": "Intermediário",
+  "name": "Ninho da petrificação",
+  "concept": "Ninho de gravetos e palha em rocha árida, ovos manchados e presas petrificadas.",
+  "stem": "basilisk_lair_v2",
+  "method": "Live Blender MCP localhost:9876",
+  "editable_parts": 91,
+  "vertices": 854,
+  "triangles": 1344,
+  "materials": 1,
+  "draw_calls": 1,
+  "atlas": [
+    1024,
+    1024
+  ],
+  "pixels_per_meter": 64,
+  "measured_uv_density_range": [
+    63.99621142413113,
+    64.00168971134057
+  ],
+  "filter": "nearest",
+  "footprint_radius": 0.78,
+  "height": 0.3736889064311981,
+  "ground_min": 0.0,
+  "source_bounds_xyz": [
+    [
+      -0.5953257083892822,
+      -0.613152027130127,
+      0.0
+    ],
+    [
+      0.5689622759819031,
+      0.6229627728462219,
+      0.3736889064311981
+    ]
+  ],
+  "scale_multiplier": 1.0,
+  "forward": "-Y Blender / +Z glTF",
+  "pivot": [
+    0,
+    0,
+    0
+  ],
+  "nonmanifold_edges": 0,
+  "degenerate_faces": 0,
+  "animations": [],
+  "collision": false,
+  "game_source_changed": false,
+  "art_scale": 0.3180582821827681,
+  "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+  "isolated_by_gdignore": true,
+  "previews": [
+    "three_quarter",
+    "game_top",
+    "back"
+  ]
+}

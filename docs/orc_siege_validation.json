@@ -1,0 +1,56 @@
+{
+  "status": "PASS",
+  "verified": 4,
+  "clips": 19,
+  "protected_files": 563,
+  "assets": [
+    {
+      "stem": "orc_catapult_v1",
+      "status": "PASS",
+      "triangles": 2772,
+      "wheels": 4,
+      "height_m": 1.8,
+      "clips": 4,
+      "geometry_signature": "baef0d37266e3b0a1e5f2fd859f76b65deeec31b41b59a04b9b878bcde7ea3e9",
+      "embedded_atlas_matches": true,
+      "finite_geometry": true,
+      "rigid_weights": true
+    },
+    {
+      "stem": "orc_trebuchet_v1",
+      "status": "PASS",
+      "triangles": 2808,
+      "wheels": 4,
+      "height_m": 1.8,
+      "clips": 5,
+      "geometry_signature": "4a7cc5c2837fca3e944aa5ebe6a5631343a868cd48e4736f2aa968a0ac281109",
+      "embedded_atlas_matches": true,
+      "finite_geometry": true,
+      "rigid_weights": true
+    },
+    {
+      "stem": "orc_bombard_v1",
+      "status": "PASS",
+      "triangles": 3300,
+      "wheels": 4,
+      "height_m": 1.8,
+      "clips": 5,
+      "geometry_signature": "2e64ff38de8510181018c424692210b444461592935c8d983be19e1df4523d19",
+      "embedded_atlas_matches": true,
+      "finite_geometry": true,
+      "rigid_weights": true
+    },
+    {
+      "stem": "orc_siege_colossus_v1",
+      "status": "PASS",
+      "triangles": 5560,
+      "wheels": 6,
+      "height_m": 2.0,
+      "clips": 5,
+      "geometry_signature": "05112590e31fcca4ec43e70156f6ee36d3581474d76667fa6367a45c2ae5eb86",
+      "embedded_atlas_matches": true,
+      "finite_geometry": true,
+      "rigid_weights": true
+    }
+  ]
+}

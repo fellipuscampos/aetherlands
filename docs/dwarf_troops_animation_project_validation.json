@@ -1,0 +1,60 @@
+{
+	"failures": [],
+	"families": [
+		{
+			"attack_recovery": true,
+			"family": "guardian",
+			"human_reference": true,
+			"idle_walk_attack": true,
+			"pause": true,
+			"shared_library": true,
+			"variants": 4
+		},
+		{
+			"attack_recovery": true,
+			"family": "warrior",
+			"human_reference": true,
+			"idle_walk_attack": true,
+			"pause": true,
+			"shared_library": true,
+			"variants": 4
+		},
+		{
+			"attack_recovery": true,
+			"family": "ranger",
+			"human_reference": true,
+			"idle_walk_attack": true,
+			"pause": true,
+			"shared_library": true,
+			"variants": 4
+		},
+		{
+			"attack_recovery": true,
+			"family": "cavalry",
+			"human_reference": true,
+			"idle_walk_attack": true,
+			"pause": true,
+			"shared_library": true,
+			"variants": 4
+		},
+		{
+			"attack_recovery": true,
+			"family": "rogue",
+			"human_reference": true,
+			"idle_walk_attack": true,
+			"pause": true,
+			"shared_library": true,
+			"variants": 4
+		},
+		{
+			"attack_recovery": true,
+			"family": "siege",
+			"human_reference": true,
+			"idle_walk_attack": true,
+			"pause": true,
+			"shared_library": true,
+			"variants": 4
+		}
+	],
+	"status": "PASS"
+}

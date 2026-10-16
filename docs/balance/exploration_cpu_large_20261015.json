@@ -1,0 +1,84 @@
+{
+  "flight_fully_seen": {
+    "after": {
+      "max_ms": 7.914,
+      "mean_ms": 7.2757,
+      "p95_ms": 7.914,
+      "route_length": 0,
+      "samples": 10
+    },
+    "before": {
+      "max_ms": 7.443,
+      "mean_ms": 7.0677,
+      "p95_ms": 7.443,
+      "route_length": 0,
+      "samples": 10
+    }
+  },
+  "flight_isolated_goal": {
+    "after": {
+      "max_ms": 7.521,
+      "mean_ms": 7.521,
+      "p95_ms": 7.521,
+      "route_length": 0,
+      "samples": 1
+    },
+    "before": {
+      "max_ms": 131.143,
+      "mean_ms": 131.143,
+      "p95_ms": 131.143,
+      "route_length": 0,
+      "samples": 1
+    }
+  },
+  "flight_open": {
+    "after": {
+      "max_ms": 3.307,
+      "mean_ms": 3.0812,
+      "p95_ms": 3.224,
+      "route_length": 3,
+      "samples": 30
+    },
+    "before": {
+      "max_ms": 200.925,
+      "mean_ms": 88.5874,
+      "p95_ms": 88.024,
+      "route_length": 5,
+      "samples": 30
+    }
+  },
+  "ground_open": {
+    "after": {
+      "max_ms": 88.291,
+      "mean_ms": 77.8414666666667,
+      "p95_ms": 81.239,
+      "route_length": 5,
+      "samples": 30
+    },
+    "before": {
+      "max_ms": 196.749,
+      "mean_ms": 87.3224333333333,
+      "p95_ms": 114.272,
+      "route_length": 5,
+      "samples": 30
+    }
+  },
+  "infiltration_open": {
+    "after": {
+      "max_ms": 1.918,
+      "mean_ms": 1.80256666666667,
+      "p95_ms": 1.885,
+      "route_length": 5,
+      "samples": 30
+    },
+    "before": {
+      "max_ms": 88.69,
+      "mean_ms": 86.8287333333333,
+      "p95_ms": 88.225,
+      "route_length": 5,
+      "samples": 30
+    }
+  },
+  "scope": "CPU planning only; no movement/fog/render",
+  "tiles": 26880
+}

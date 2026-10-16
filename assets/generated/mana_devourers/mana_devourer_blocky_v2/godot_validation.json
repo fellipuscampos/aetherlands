@@ -1,0 +1,39 @@
+{
+  "bones": 18,
+  "clips": {
+    "ManaDevourer_Attack": {
+      "duration_s": 1.5,
+      "floor_clearance_m": 0.147807493805885,
+      "poses_checked": 37,
+      "size_m": [
+        2.08652067184448,
+        1.75040899217129,
+        1.26398175954819
+      ]
+    },
+    "ManaDevourer_Idle": {
+      "duration_s": 4.0,
+      "floor_clearance_m": 0.165494248270988,
+      "poses_checked": 97,
+      "size_m": [
+        1.84439867734909,
+        1.73288412392139,
+        1.16147789359093
+      ]
+    },
+    "ManaDevourer_Walk": {
+      "duration_s": 2.0,
+      "floor_clearance_m": 0.16531266272068,
+      "poses_checked": 49,
+      "size_m": [
+        1.84439867734909,
+        1.75321577489376,
+        1.16061756014824
+      ]
+    }
+  },
+  "emission": true,
+  "meshes": 1,
+  "nearest": true,
+  "status": "PASS"
+}

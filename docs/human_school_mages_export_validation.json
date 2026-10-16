@@ -1,0 +1,87 @@
+{
+  "status": "PASS",
+  "verified": 6,
+  "triangles_total": 3400,
+  "pixel_density": 64,
+  "animations": 0,
+  "assets": [
+    {
+      "school": "sacred",
+      "status": "PASS",
+      "triangles": 552,
+      "meshes": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "animations": 0,
+      "ground_pivot": true,
+      "uv_density_max_error": 0.001218909967548143,
+      "source_preserved": true,
+      "geometry_sha256": "9ab39faac4febcd1620af5f0c4a1e5dab518d0f3a310ab5809726785699e7f6f"
+    },
+    {
+      "school": "infernal",
+      "status": "PASS",
+      "triangles": 528,
+      "meshes": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "animations": 0,
+      "ground_pivot": true,
+      "uv_density_max_error": 0.0015258803614415228,
+      "source_preserved": true,
+      "geometry_sha256": "75e482c8c78cf989bcc6970a7638d35fa83d5b1eb59c62893ea8bf39e15aa299"
+    },
+    {
+      "school": "necromancy",
+      "status": "PASS",
+      "triangles": 564,
+      "meshes": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "animations": 0,
+      "ground_pivot": true,
+      "uv_density_max_error": 0.0007898725035744292,
+      "source_preserved": true,
+      "geometry_sha256": "b03ff50e45a6fc3ab46c66ea17c712496c4c014a606037ecf7fbc0d301ec13ce"
+    },
+    {
+      "school": "druidism",
+      "status": "PASS",
+      "triangles": 588,
+      "meshes": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "animations": 0,
+      "ground_pivot": true,
+      "uv_density_max_error": 0.0006634255563966462,
+      "source_preserved": true,
+      "geometry_sha256": "c5efdf410fcba0e8767e441e735fb90720d1b8c1d214279359c4055d1fda4a93"
+    },
+    {
+      "school": "arcanism",
+      "status": "PASS",
+      "triangles": 584,
+      "meshes": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "animations": 0,
+      "ground_pivot": true,
+      "uv_density_max_error": 0.001958727464881349,
+      "source_preserved": true,
+      "geometry_sha256": "0a62af36121fe3c443ed35855caac8cc5ad7cb8a1497658aec359347ce8a5156"
+    },
+    {
+      "school": "elementalism",
+      "status": "PASS",
+      "triangles": 584,
+      "meshes": 1,
+      "surfaces": 1,
+      "materials": 1,
+      "animations": 0,
+      "ground_pivot": true,
+      "uv_density_max_error": 0.0011238244708380307,
+      "source_preserved": true,
+      "geometry_sha256": "d3653479fffdadceabe9db9e1d50949e4ba424ef6dc9590bf0d22e8138c59699"
+    }
+  ]
+}

@@ -1,0 +1,397 @@
+{
+  "stem": "human_elementalist_v1",
+  "name": "Elementalista — Elementalismo",
+  "school": "elementalism",
+  "race": "human",
+  "gameplay_unit_kind": "v2_unit_elementalist",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "source": "assets/generated/humans/human_settler_v1/human_settler_v1.blend",
+  "source_sha256": "433edafe622f077613783efc326c345fde0e134dbc8c7b0ec9f1840d3509ab4a",
+  "source_body": [
+    {
+      "part": "Pelvis",
+      "source": "Pelvis",
+      "dimensions": [
+        0.389189,
+        0.214054,
+        0.155676
+      ]
+    },
+    {
+      "part": "Belly",
+      "source": "Belly",
+      "dimensions": [
+        0.311351,
+        0.194595,
+        0.155676
+      ]
+    },
+    {
+      "part": "Chest",
+      "source": "Chest",
+      "dimensions": [
+        0.428108,
+        0.243243,
+        0.272432
+      ]
+    },
+    {
+      "part": "Head",
+      "source": "Head",
+      "dimensions": [
+        0.262703,
+        0.262703,
+        0.262703
+      ]
+    },
+    {
+      "part": "Shoulder_l",
+      "source": "Shoulder_l",
+      "dimensions": [
+        0.155676,
+        0.214054,
+        0.175135
+      ]
+    },
+    {
+      "part": "Shoulder_r",
+      "source": "Shoulder_r",
+      "dimensions": [
+        0.155676,
+        0.214054,
+        0.175135
+      ]
+    },
+    {
+      "part": "UpperArm_l",
+      "source": "UpperArm_l",
+      "dimensions": [
+        0.163096,
+        0.169008,
+        0.295673
+      ]
+    },
+    {
+      "part": "Forearm_l",
+      "source": "Forearm_l",
+      "dimensions": [
+        0.161031,
+        0.167269,
+        0.284804
+      ]
+    },
+    {
+      "part": "Hand_l",
+      "source": "Hand_l",
+      "dimensions": [
+        0.132696,
+        0.143408,
+        0.135671
+      ]
+    },
+    {
+      "part": "UpperArm_r",
+      "source": "UpperArm_r",
+      "dimensions": [
+        0.16379,
+        0.169593,
+        0.299326
+      ]
+    },
+    {
+      "part": "Forearm_r",
+      "source": "Forearm_r",
+      "dimensions": [
+        0.163532,
+        0.169375,
+        0.297966
+      ]
+    },
+    {
+      "part": "Hand_r",
+      "source": "Hand_r",
+      "dimensions": [
+        0.132696,
+        0.143408,
+        0.135671
+      ]
+    },
+    {
+      "part": "Foot_l",
+      "source": "Foot_l",
+      "dimensions": [
+        0.175135,
+        0.272432,
+        0.097297
+      ]
+    },
+    {
+      "part": "Shin_l",
+      "source": "Shin_l",
+      "dimensions": [
+        0.155676,
+        0.175135,
+        0.36973
+      ]
+    },
+    {
+      "part": "Thigh_l",
+      "source": "Thigh_l",
+      "dimensions": [
+        0.126486,
+        0.145946,
+        0.389189
+      ]
+    },
+    {
+      "part": "Foot_r",
+      "source": "Foot_r",
+      "dimensions": [
+        0.175135,
+        0.272432,
+        0.097297
+      ]
+    },
+    {
+      "part": "Shin_r",
+      "source": "Shin_r",
+      "dimensions": [
+        0.155676,
+        0.175135,
+        0.36973
+      ]
+    },
+    {
+      "part": "Thigh_r",
+      "source": "Thigh_r",
+      "dimensions": [
+        0.126486,
+        0.145946,
+        0.389189
+      ]
+    }
+  ],
+  "elderly_posture": {
+    "torso_forward_degrees": 9,
+    "head_counter_degrees": -3,
+    "shoulder_drop_m": 0.022,
+    "grey_beard_length_m": 0.08999999999999986
+  },
+  "geometry": {
+    "status": "PASS",
+    "editable_parts": 42,
+    "body_parts": 18,
+    "triangles": 488,
+    "dimensions": [
+      1.0020371079444885,
+      0.6585681587457657,
+      1.9364999556012785
+    ],
+    "bounds_min": [
+      -0.571453869342804,
+      -0.47837331891059875,
+      -2.331320025916739e-09
+    ],
+    "bounds_max": [
+      0.43058323860168457,
+      0.18019483983516693,
+      1.9364999532699585
+    ],
+    "closed_meshes": true,
+    "positive_volume": true,
+    "ground_pivot": true,
+    "identity_transforms": true,
+    "flat_shading": true,
+    "uv_density_max_error": 0.0011124071483550324,
+    "animations": 3,
+    "rigs": 1
+  },
+  "texture": "assets/generated/humans/human_elementalist_v1/human_elementalist_v1_albedo.png",
+  "animations": 3,
+  "rigging_deferred": false,
+  "style_revision": 4,
+  "books": 0,
+  "head_scalp_texture": "original_human_white_hair_or_painted_hood",
+  "facial_features": "approved_original_eyes_brows_nose_mouth_preserved",
+  "style_references": [
+    "human_settler_v1",
+    "squire_v1",
+    "archer_v1"
+  ],
+  "surface_validation": {
+    "school": "elementalism",
+    "exposed_coplanar_pairs": 0,
+    "hidden_coplanar_pairs": 0,
+    "staff_forearm_intersection": false,
+    "staff_hand_contact": true,
+    "issues": [],
+    "status": "PASS",
+    "backface_culling": true
+  },
+  "style_validation": {
+    "school": "elementalism",
+    "status": "PASS",
+    "original_head_geometry": true,
+    "head_scale": 1.0,
+    "source_head_dimensions_m": [
+      0.262702703,
+      0.262702703,
+      0.262702703
+    ],
+    "original_head_max_vertex_error_m": 1.1920928955078125e-07,
+    "original_facial_features_preserved": true,
+    "painted_white_hair": true,
+    "painted_hood": true,
+    "bulky_hood_shells": 0,
+    "separate_hair_shells": 0,
+    "hood_texture_pixels": 1410,
+    "beard_texture_pixels": 68,
+    "body_and_clothing_geometry_unchanged": true,
+    "preserved_non_head_texture_islands": 296,
+    "books": 0,
+    "relaxed_offhand": true,
+    "actual_head_texture_verified": true,
+    "actual_head_size_verified": true
+  },
+  "source_preserved": true,
+  "blend": "assets/generated/humans/human_elementalist_v1/human_elementalist_v1.blend",
+  "glb": "assets/generated/humans/human_elementalist_v1/human_elementalist_v1.glb",
+  "export": {
+    "status": "PASS",
+    "bytes": 256760,
+    "triangles": 488,
+    "meshes": 1,
+    "surfaces": 1,
+    "materials": 1,
+    "skins": 1,
+    "bones": 16,
+    "animations": 3,
+    "clips": [
+      "idle",
+      "walk",
+      "spell"
+    ],
+    "atlas_hashes": {
+      "albedo": "42e47398681ff2aa1d7b7d52a3ccb7bcc83917d61fdad77a1483817703b6f086",
+      "emission": "d8e5519370f46983144a1bb21d3d2892195abf92fff106d858e206c45bd7e5ae"
+    },
+    "editable_source_parts": 42,
+    "cameras": 0,
+    "lights": 0
+  },
+  "game_usage": {
+    "units": "meters",
+    "model_scale_multiplier": 1.0,
+    "pivot": "feet_at_origin",
+    "blender_front": "-Y",
+    "godot_front": "+Z",
+    "stage": "animated_review",
+    "game_database_changed": false,
+    "spell_clip": "spell",
+    "spell_release_seconds": 1.6800000000000002
+  },
+  "static_review": false,
+  "stage": "animated_review",
+  "animation": {
+    "status": "PASS",
+    "fps": 48,
+    "bones": 16,
+    "rigid_skinning": true,
+    "root_motion": false,
+    "arm_motion": "fixed_anatomical_elbow_hinge_with_forearm_following_hand",
+    "walk_speed_m_per_s": 0.2903225806451613,
+    "approved_geometry_and_uvs_preserved": true,
+    "choreography_revision": 3,
+    "casting_name": "Invocação cerimonial",
+    "casting_description": "Concentra com a mão livre, ergue o cetro, projeta a magia e recupera com calma.",
+    "same_casting_for_all_schools": true,
+    "spell_release_seconds": 1.6800000000000002,
+    "clips": {
+      "idle": {
+        "frames": 145,
+        "seconds": 3.0,
+        "loop": true,
+        "end_to_start_error": 0.0,
+        "min_ground_z": -2.331320025916739e-09,
+        "max_joint_gap_m": 2.403894931808364e-07,
+        "max_frame_step": 0.0016339427093043923,
+        "movement": 0.0744352787733078,
+        "max_planted_foot_z_error_m": 0,
+        "max_planted_foot_slide_m": 0,
+        "staff_forearm_intersections": 0,
+        "staff_hand_detachments": 0,
+        "max_elbow_axial_roll_degrees": 0,
+        "max_wrist_rotation_degrees": {
+          "l": 0,
+          "r": 1.8456180724711146
+        },
+        "max_arm_frame_rotation_degrees": 0.055952909680744456,
+        "max_arm_frame_acceleration_degrees": 0,
+        "hand_forearm_torso_intersections": 0
+      },
+      "walk": {
+        "frames": 73,
+        "seconds": 1.5,
+        "loop": true,
+        "end_to_start_error": 7.347880536484578e-19,
+        "min_ground_z": -2.331320025916739e-09,
+        "max_joint_gap_m": 2.9988008435812754e-07,
+        "max_frame_step": 0.05500650405883789,
+        "movement": 0.43669653683900833,
+        "max_planted_foot_z_error_m": 0,
+        "max_planted_foot_slide_m": 2.9802322387695312e-08,
+        "staff_forearm_intersections": 0,
+        "staff_hand_detachments": 0,
+        "max_elbow_axial_roll_degrees": 0,
+        "max_wrist_rotation_degrees": {
+          "l": 0,
+          "r": 17.966508668300477
+        },
+        "max_arm_frame_rotation_degrees": 1.0324825576772156,
+        "max_arm_frame_acceleration_degrees": 0.08846931922527276,
+        "hand_forearm_torso_intersections": 0
+      },
+      "spell": {
+        "frames": 145,
+        "seconds": 3.0,
+        "loop": false,
+        "end_to_start_error": 0.0,
+        "min_ground_z": -2.331320025916739e-09,
+        "max_joint_gap_m": 2.497889789080651e-07,
+        "max_frame_step": 0.05969132483005524,
+        "movement": 1.4277212917804718,
+        "max_planted_foot_z_error_m": 0,
+        "max_planted_foot_slide_m": 0,
+        "staff_forearm_intersections": 0,
+        "staff_hand_detachments": 0,
+        "max_elbow_axial_roll_degrees": 0,
+        "max_wrist_rotation_degrees": {
+          "l": 3.99936860340313,
+          "r": 0
+        },
+        "max_arm_frame_rotation_degrees": 3.5479710061105076,
+        "max_arm_frame_acceleration_degrees": 0.3753437076887948,
+        "hand_forearm_torso_intersections": 0
+      }
+    }
+  },
+  "clothing_cleanup": {
+    "status": "PASS",
+    "revision": 1,
+    "removed_parts": [
+      "Belt_clasp",
+      "Element_clasp_fire",
+      "Element_clasp_stone",
+      "Element_clasp_water",
+      "Element_clasp_wind",
+      "Human_blue_belt",
+      "Wind_hem_-1",
+      "Wind_hem_1"
+    ],
+    "retained_geometry_uvs_skinning_unchanged": true,
+    "school_colors_and_textures_unchanged": true,
+    "approved_animation_revision": 3,
+    "animations_unchanged": true,
+    "backup": "art_source/school_mages_animation_review/before_human_clothing_cleanup"
+  }
+}

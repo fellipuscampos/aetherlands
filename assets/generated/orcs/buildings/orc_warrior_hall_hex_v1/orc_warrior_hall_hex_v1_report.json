@@ -1,0 +1,105 @@
+{
+  "name": "Orc_Warrior_Hall_Hex_V1",
+  "display_name": "Salão de Armas dos Orcs",
+  "gameplay_building_id": "v2_building_warrior_hall",
+  "trains": [
+    "v2_unit_warrior",
+    "v2_unit_swordsman",
+    "v2_unit_weapon_master"
+  ],
+  "excludes": [
+    "v2_legendary_blade_hero"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 2244,
+  "editable_parts": 164,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.1970000267028809
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.1970000267028809
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units; pointy-top tile radius 1, military foundation radius .92; placement scale tile_radius. Asset only, no integration.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1053,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Orc warrior hall: broad low basalt-and-timber barracks, transverse stepped rust-red hide roof and horned ridge, prominent crossed heavy axes forward of roof. Open right lean-to armory with two axes and supply chest, two straw melee targets with slash marks in the wedge sparring yard, charcoal brazier and clan pennant. Shared warrior line and evolutions; supreme blade hero remains in the separate mastery building. No watchtower or shield training equipment.",
+  "door_clearance_m": [
+    0.226,
+    0.3
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "orc",
+  "unit_class": "warrior",
+  "asset_only": true,
+  "hex_tile": {
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "placement_scale": "tile_radius",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "faction_tint": "Emblem cloth and clan pennant isolated in Faction mesh for future owner tint; construction, blades, bone and flames keep their own colors. No runtime integration.",
+  "export": {
+    "file": "orc_warrior_hall_hex_v1.glb",
+    "bytes": 1014716,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2244,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "orc_warrior_hall_hex_v1_emission",
+        "bytes": 79344,
+        "sha256": "1afa90e0f10d69c09346b94976c6934bd55508822834eecbe220552585280156"
+      },
+      {
+        "image": "orc_warrior_hall_hex_v1_albedo",
+        "bytes": 772515,
+        "sha256": "b239f8fb5e8ad0c70d98da7f6db598060a03f0b94499ee0f7e434ea39ecdef3d"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

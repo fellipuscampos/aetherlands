@@ -1,0 +1,289 @@
+{
+  "status": "PASS",
+  "verified": 4,
+  "clips": 8,
+  "fps": 48,
+  "review_scene": "Settlers_V1_Four_Civilizations_Review",
+  "assets": [
+    {
+      "race": "human",
+      "animation": {
+        "status": "PASS",
+        "fps": 48,
+        "bones": 16,
+        "rigid_skinning": true,
+        "root_motion": false,
+        "walk_speed_m_per_s": 0.3870967741935483,
+        "clips": {
+          "idle": {
+            "frames": 145,
+            "seconds": 3.0,
+            "loop_error": 0.0,
+            "min_ground_z": -2.331320025916739e-09,
+            "max_joint_gap": 3.576472706796822e-07,
+            "max_pose_step": 0.0010481402277946472,
+            "max_planted_foot_z_error": 0,
+            "max_planted_foot_slide_at_recommended_speed": 0,
+            "movement": 0.028081893920898438
+          },
+          "walk": {
+            "frames": 73,
+            "seconds": 1.5,
+            "loop_error": 7.347880536484578e-19,
+            "min_ground_z": -2.331320025916739e-09,
+            "max_joint_gap": 2.4578447942743725e-07,
+            "max_pose_step": 0.07470215111970901,
+            "max_planted_foot_z_error": 2.331320025916739e-09,
+            "max_planted_foot_slide_at_recommended_speed": 2.9802322387695312e-08,
+            "movement": 0.578127309679985
+          }
+        }
+      },
+      "arm_correction": {
+        "changed_parts": [
+          "Forearm_l",
+          "Forearm_r"
+        ],
+        "dwarf_unchanged": false,
+        "details": [
+          {
+            "part": "Forearm_l",
+            "before": [
+              0.15567570885094445,
+              0.16540531214756604,
+              0.2569924111792198
+            ],
+            "after": [
+              0.11675677676237291,
+              0.12648646584536777,
+              0.25096244160005754
+            ],
+            "upper_arm": [
+              0.11675677654426264,
+              0.12648646584536777,
+              0.2621616425468892
+            ]
+          },
+          {
+            "part": "Forearm_r",
+            "before": [
+              0.15567570452184526,
+              0.16540547543336304,
+              0.27055428829557737
+            ],
+            "after": [
+              0.1167567763300472,
+              0.12648650346580043,
+              0.264524285115074
+            ],
+            "upper_arm": [
+              0.11675677611193694,
+              0.12648651082881956,
+              0.26592604914333634
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "race": "elf",
+      "animation": {
+        "status": "PASS",
+        "fps": 48,
+        "bones": 16,
+        "rigid_skinning": true,
+        "root_motion": false,
+        "walk_speed_m_per_s": 0.40860215053763443,
+        "clips": {
+          "idle": {
+            "frames": 145,
+            "seconds": 3.0,
+            "loop_error": 0.0,
+            "min_ground_z": -2.331320025916739e-09,
+            "max_joint_gap": 3.576472706796822e-07,
+            "max_pose_step": 0.0013480335474014282,
+            "max_planted_foot_z_error": 0,
+            "max_planted_foot_slide_at_recommended_speed": 0,
+            "movement": 0.0570811927318573
+          },
+          "walk": {
+            "frames": 73,
+            "seconds": 1.5,
+            "loop_error": 7.347880536484578e-19,
+            "min_ground_z": -2.331320025916739e-09,
+            "max_joint_gap": 2.4593265076725246e-07,
+            "max_pose_step": 0.07934783399105072,
+            "max_planted_foot_z_error": 2.331320025916739e-09,
+            "max_planted_foot_slide_at_recommended_speed": 5.960464477539063e-08,
+            "movement": 0.6242090836167336
+          }
+        }
+      },
+      "arm_correction": {
+        "changed_parts": [
+          "Forearm_l",
+          "Forearm_r"
+        ],
+        "dwarf_unchanged": false,
+        "details": [
+          {
+            "part": "Forearm_l",
+            "before": [
+              0.15567570885094445,
+              0.16540531214756604,
+              0.2569924111792198
+            ],
+            "after": [
+              0.11675677676237291,
+              0.12648646584536777,
+              0.25096244160005754
+            ],
+            "upper_arm": [
+              0.11675677654426264,
+              0.12648646584536777,
+              0.2621616425468892
+            ]
+          },
+          {
+            "part": "Forearm_r",
+            "before": [
+              0.15567570452184526,
+              0.16540547543336304,
+              0.27055428829557737
+            ],
+            "after": [
+              0.1167567763300472,
+              0.12648650346580043,
+              0.264524285115074
+            ],
+            "upper_arm": [
+              0.11675677611193694,
+              0.12648651082881956,
+              0.26592604914333634
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "race": "dwarf",
+      "animation": {
+        "status": "PASS",
+        "fps": 48,
+        "bones": 16,
+        "rigid_skinning": true,
+        "root_motion": false,
+        "walk_speed_m_per_s": 0.19354838709677416,
+        "clips": {
+          "idle": {
+            "frames": 145,
+            "seconds": 3.0,
+            "loop_error": 0.0,
+            "min_ground_z": 0.0,
+            "max_joint_gap": 1.7881393432617188e-07,
+            "max_pose_step": 0.0008923946879804134,
+            "max_planted_foot_z_error": 0,
+            "max_planted_foot_slide_at_recommended_speed": 0,
+            "movement": 0.024373024702072144
+          },
+          "walk": {
+            "frames": 73,
+            "seconds": 1.5,
+            "loop_error": 7.347880536484578e-19,
+            "min_ground_z": 0.0,
+            "max_joint_gap": 1.2489448945403256e-07,
+            "max_pose_step": 0.09616455435752869,
+            "max_planted_foot_z_error": 0,
+            "max_planted_foot_slide_at_recommended_speed": 2.9802322387695312e-08,
+            "movement": 0.7488256953656673
+          }
+        }
+      },
+      "arm_correction": {
+        "changed_parts": [],
+        "dwarf_unchanged": true,
+        "details": []
+      }
+    },
+    {
+      "race": "orc",
+      "animation": {
+        "status": "PASS",
+        "fps": 48,
+        "bones": 16,
+        "rigid_skinning": true,
+        "root_motion": false,
+        "walk_speed_m_per_s": 0.46236559139784944,
+        "clips": {
+          "idle": {
+            "frames": 145,
+            "seconds": 3.0,
+            "loop_error": 0.0,
+            "min_ground_z": -3.316330321467831e-09,
+            "max_joint_gap": 3.576472706796822e-07,
+            "max_pose_step": 0.0012191161513328552,
+            "max_planted_foot_z_error": 0,
+            "max_planted_foot_slide_at_recommended_speed": 0,
+            "movement": 0.03264820575714111
+          },
+          "walk": {
+            "frames": 73,
+            "seconds": 1.5,
+            "loop_error": 7.347880536484578e-19,
+            "min_ground_z": -3.316330321467831e-09,
+            "max_joint_gap": 2.4578447942743725e-07,
+            "max_pose_step": 0.0727333128452301,
+            "max_planted_foot_z_error": 3.316330321467831e-09,
+            "max_planted_foot_slide_at_recommended_speed": 5.960464477539063e-08,
+            "movement": 0.5786807611584663
+          }
+        }
+      },
+      "arm_correction": {
+        "changed_parts": [
+          "Forearm_l",
+          "Forearm_r"
+        ],
+        "dwarf_unchanged": false,
+        "details": [
+          {
+            "part": "Forearm_l",
+            "before": [
+              0.2990795785997573,
+              0.3081424482424115,
+              0.302149605872072
+            ],
+            "after": [
+              0.25149870166856203,
+              0.24300223781727778,
+              0.2961197417370748
+            ],
+            "upper_arm": [
+              0.25149870166856203,
+              0.24300223781727778,
+              0.30822717496642715
+            ]
+          },
+          {
+            "part": "Forearm_r",
+            "before": [
+              0.29907962583223857,
+              0.308142521910869,
+              0.3180945511195905
+            ],
+            "after": [
+              0.2514986997302254,
+              0.2430020840354625,
+              0.3120645473124128
+            ],
+            "upper_arm": [
+              0.2514986997302254,
+              0.24300206870518073,
+              0.3126531601877779
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

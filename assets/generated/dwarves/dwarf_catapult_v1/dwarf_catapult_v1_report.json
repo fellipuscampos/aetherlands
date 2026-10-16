@@ -1,0 +1,230 @@
+{
+  "stem": "dwarf_catapult_v1",
+  "key": "catapult",
+  "family": "siege",
+  "family_name": "Cerco",
+  "tier": 0,
+  "tier_name": "Básica",
+  "name": "Mangonel do Clã",
+  "gameplay_id": "v2_unit_catapult",
+  "status": "PASS",
+  "stage": "animated_troops",
+  "body_height_m": null,
+  "anatomy": {},
+  "anatomical_parts": 0,
+  "neck": false,
+  "style_revision": 5,
+  "created_via": "live_blender_mcp",
+  "geometry": {
+    "parts": 54,
+    "triangles": 1000,
+    "bounds_min": [
+      -0.5825000405311584,
+      -0.5939666032791138,
+      -2.076290916974699e-09
+    ],
+    "bounds_max": [
+      0.5825000405311584,
+      0.5939666032791138,
+      1.3670001029968262
+    ],
+    "dimensions": [
+      1.165000081062317,
+      1.1879332065582275,
+      1.3670001029968262
+    ],
+    "closed_meshes": true,
+    "uv_in_bounds": true
+  },
+  "atlas": {
+    "size": 512,
+    "density_px_per_m": 64,
+    "padding_px": 3,
+    "face_islands": 412,
+    "paint_revision": 7,
+    "sha256": "e4984efe1d45aab3da089eafed6a9f319abb3fb98510558310e82b37414a1ddd"
+  },
+  "export": {
+    "bytes": 184924,
+    "sha256": "da60e3dd805b87c8ec8aaf3493f24132f2b9ce366bbe531063a0be16f02ec186",
+    "meshes": 1,
+    "skins": 1,
+    "animations": 4,
+    "embedded_png_matches": true,
+    "nearest_filter": true
+  },
+  "held_grips": [],
+  "design": "balanced_hips_large_feet_one_hand_role_equipment_forged_materials",
+  "material_emblems": false,
+  "mount_leg_segments": 0,
+  "body_part_dimensions": {},
+  "animation": {
+    "stem": "dwarf_catapult_v1",
+    "status": "PASS",
+    "motion_revision": 2,
+    "approved_meshes_unchanged": true,
+    "shared_actions": {
+      "idle": "Dwarf_siege_idle",
+      "walk": "Dwarf_siege_walk",
+      "attack": "Dwarf_siege_attack"
+    },
+    "clips": {
+      "idle": {
+        "frames": 145,
+        "fps": 48,
+        "loop": true,
+        "loop_or_recovery_error": 0.0,
+        "min_ground_z": -2.076290916974699e-09,
+        "max_grip_error": 0.0,
+        "max_arm_joint_error": 0.0,
+        "max_motion": 0.0,
+        "joint_angular_span_degrees": {
+          "root": 0.0,
+          "chassis": 0.0,
+          "throwing_arm": 0.0,
+          "counterweight": 0.0,
+          "sling": 0.0,
+          "payload": 0.0,
+          "recoil_axis": 0.0,
+          "recoil": 0.0,
+          "piston_L": 0.0,
+          "piston_R": 0.0,
+          "wheel_L_front": 0.0,
+          "wheel_L_hind": 0.0,
+          "wheel_R_front": 0.0,
+          "wheel_R_hind": 0.0
+        },
+        "max_joint_step_degrees": {
+          "root": 0.0,
+          "chassis": 0.0,
+          "throwing_arm": 0.0,
+          "counterweight": 0.0,
+          "sling": 0.0,
+          "payload": 0.0,
+          "recoil_axis": 0.0,
+          "recoil": 0.0,
+          "piston_L": 0.0,
+          "piston_R": 0.0,
+          "wheel_L_front": 0.0,
+          "wheel_L_hind": 0.0,
+          "wheel_R_front": 0.0,
+          "wheel_R_hind": 0.0
+        },
+        "impact_frame": null
+      },
+      "walk": {
+        "frames": 97,
+        "fps": 48,
+        "loop": true,
+        "loop_or_recovery_error": 2.384185791015625e-07,
+        "min_ground_z": -5.079364484572579e-09,
+        "max_grip_error": 0.0,
+        "max_arm_joint_error": 0.0,
+        "max_motion": 2.0,
+        "joint_angular_span_degrees": {
+          "root": 0.0,
+          "chassis": 0.0,
+          "throwing_arm": 0.0,
+          "counterweight": 0.0,
+          "sling": 0.0,
+          "payload": 0.0,
+          "recoil_axis": 0.0,
+          "recoil": 0.0,
+          "piston_L": 0.0,
+          "piston_R": 0.0,
+          "wheel_L_front": 179.999991348578,
+          "wheel_L_hind": 179.999991348578,
+          "wheel_R_front": 179.999991348578,
+          "wheel_R_hind": 179.999991348578
+        },
+        "max_joint_step_degrees": {
+          "root": 0.0,
+          "chassis": 0.0,
+          "throwing_arm": 0.0,
+          "counterweight": 0.0,
+          "sling": 0.0,
+          "payload": 0.0,
+          "recoil_axis": 0.0,
+          "recoil": 0.0,
+          "piston_L": 0.0,
+          "piston_R": 0.0,
+          "wheel_L_front": 356.25015420130563,
+          "wheel_L_hind": 356.25015420130563,
+          "wheel_R_front": 356.25015420130563,
+          "wheel_R_hind": 356.25015420130563
+        },
+        "impact_frame": null
+      },
+      "attack": {
+        "frames": 121,
+        "fps": 48,
+        "loop": false,
+        "loop_or_recovery_error": 0.0,
+        "min_ground_z": -2.076290916974699e-09,
+        "max_grip_error": 0.0,
+        "max_arm_joint_error": 0.0,
+        "max_motion": 1.3588429689407349,
+        "joint_angular_span_degrees": {
+          "root": 0.0,
+          "chassis": 0.0,
+          "throwing_arm": 75.99999300797379,
+          "counterweight": 75.99999300797379,
+          "sling": 23.999952856536655,
+          "payload": 0.0,
+          "recoil_axis": 0.0,
+          "recoil": 0.0,
+          "piston_L": 0.0,
+          "piston_R": 0.0,
+          "wheel_L_front": 0.0,
+          "wheel_L_hind": 0.0,
+          "wheel_R_front": 0.0,
+          "wheel_R_hind": 0.0
+        },
+        "max_joint_step_degrees": {
+          "root": 0.0,
+          "chassis": 0.0,
+          "throwing_arm": 16.575989728765308,
+          "counterweight": 16.575989728765308,
+          "sling": 5.624040514951498,
+          "payload": 0.0,
+          "recoil_axis": 0.0,
+          "recoil": 0.0,
+          "piston_L": 0.0,
+          "piston_R": 0.0,
+          "wheel_L_front": 0.0,
+          "wheel_L_hind": 0.0,
+          "wheel_R_front": 0.0,
+          "wheel_R_hind": 0.0
+        },
+        "impact_frame": 47
+      }
+    }
+  },
+  "skills": {
+    "status": "PASS",
+    "revision": 1,
+    "source": "native_dwarf_rig",
+    "fps": 48,
+    "foreign_actions_used": false,
+    "basic_actions_preserved": true,
+    "approved_geometry_preserved": true,
+    "technique_clips": {
+      "v2_technique_demolition_ammo": "demolition_ammo"
+    },
+    "clips": {
+      "demolition_ammo": {
+        "seconds": 3.0,
+        "loop": false,
+        "frames": 145,
+        "min_ground_z": -2.076290916974699e-09,
+        "arm_joint_error": 0.0,
+        "recovery_error": 0.0,
+        "movement": 0.9996253848075867,
+        "max_frame_step": 0.9990000128746033,
+        "finite": true,
+        "action": "dwarf_catapult_v1_demolition_ammo",
+        "independently_authored_for": "dwarf_catapult_v1"
+      }
+    }
+  }
+}

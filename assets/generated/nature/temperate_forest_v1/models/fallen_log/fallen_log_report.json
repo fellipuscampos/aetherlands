@@ -1,0 +1,47 @@
+{
+  "asset": "fallen_log",
+  "name": "Temperate_Forest_V1_fallen_log",
+  "display_name": "Tronco caído",
+  "category": "fallen_log",
+  "species": "oak",
+  "triangles": 74,
+  "vertices": 39,
+  "polygons": 22,
+  "bounds_blender": {
+    "min": [
+      -0.3199999928474426,
+      -0.07999999821186066,
+      0.0
+    ],
+    "max": [
+      0.3199999928474426,
+      0.20000000298023224,
+      0.1599999964237213
+    ]
+  },
+  "dimensions": [
+    0.6399999856948853,
+    0.2800000011920929,
+    0.1599999964237213
+  ],
+  "pivot": "ground at base of trunk / center of prop",
+  "native_scale": 1,
+  "pixel_density_px_per_unit": 128,
+  "materials": 1,
+  "game_meshes": 1,
+  "atlas": "textures/forest_pixel_atlas.png",
+  "alpha_blending": false,
+  "voxel_cells": 227,
+  "surface_cells_removed": true,
+  "nonmanifold_edges": 0,
+  "mcp_only": true,
+  "export": {
+    "bytes": 132992,
+    "meshes": 1,
+    "surfaces": 1,
+    "materials": 1,
+    "triangles": 74,
+    "embedded_atlas_sha256": "e342704aebef8c3c1e5aadb81debd13eb20d44ff92de09b9e46e7e11c73fdbf9",
+    "no_studio": true
+  }
+}

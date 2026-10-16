@@ -1,0 +1,154 @@
+{
+  "name": "Ranger_Mastery_Hex_V1",
+  "display_name": "Torre dos Patrulheiros — Humanos",
+  "gameplay_building_id": "v2_building_ranger_mastery",
+  "trains": [
+    "v2_legendary_legend_hunter"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 1532,
+  "editable_parts": 110,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.7599999904632568
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.7599999904632568
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 713,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "human",
+  "military_role": "ranger",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_ranger_camp",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "human_ranger",
+  "material_reference": "assets/generated/humans/buildings/ranger_camp_hex_v1",
+  "roof_rgb": [
+    49,
+    79,
+    127
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 90,
+        "iterations": 8
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [
+        {
+          "prefix": "Lodge_Entry",
+          "x": -0.3999999910593033,
+          "front": -0.10400000214576721,
+          "bottom": 0.14800000190734863,
+          "top": 0.3458000123500824,
+          "width": 0.11399999260902405,
+          "blockers": []
+        }
+      ],
+      "open_passages": []
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "ranger_mastery_hex_v1.glb",
+    "bytes": 640680,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1532,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "ranger_mastery_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "ranger_mastery_hex_v1_albedo",
+        "bytes": 508034,
+        "sha256": "59dff065a9c6ccb53e43b65133d9b8a60d4a6762fc4f75cf7131512c0d2a6dba"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "human",
+    "design": "Alvenaria de blocos de pedra, pilares com bases e capitéis de cantaria, telhados azuis; madeira reservada a portas, cercas, móveis e mecanismos.",
+    "geometry_changes": [
+      "masonry:Scout_Timber_Top_Body",
+      "masonry:Archery_Lodge_Body",
+      "masonry:Scout_Gallery",
+      "masonry:Scout_Bracket_-1",
+      "masonry:Scout_Bracket_1"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

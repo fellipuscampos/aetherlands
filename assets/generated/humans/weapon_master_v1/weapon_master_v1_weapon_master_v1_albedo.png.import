@@ -3,23 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dsq58g8wx5aq2"
-path="res://.godot/imported/weapon_master_v1_weapon_master_v1_albedo.png-345a23182421127dfd1fe13f4e6177ff.ctex"
+path.bptc="res://.godot/imported/weapon_master_v1_weapon_master_v1_albedo.png-345a23182421127dfd1fe13f4e6177ff.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "b45f1bb4a3fd45dc263cf614c651e08b"
+"md5": "30682cb540ac262152a2987ab114947c"
 }
 
 [deps]
 
 source_file="res://assets/generated/humans/weapon_master_v1/weapon_master_v1_weapon_master_v1_albedo.png"
-dest_files=["res://.godot/imported/weapon_master_v1_weapon_master_v1_albedo.png-345a23182421127dfd1fe13f4e6177ff.ctex"]
+dest_files=["res://.godot/imported/weapon_master_v1_weapon_master_v1_albedo.png-345a23182421127dfd1fe13f4e6177ff.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

@@ -1,0 +1,227 @@
+{
+  "name": "Elf_Grand_Arsenal_Hex_V1",
+  "display_name": "Grande Arsenal — Elfos",
+  "gameplay_building_id": "v2_building_grand_arsenal",
+  "trains": [
+    "v2_legendary_siege_colossus"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 2228,
+  "editable_parts": 177,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.7141000032424927
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.7141000032424927
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1088,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Arsenal élfico botânico: dois pavilhões abertos com coberturas em alas, árvore-guindaste de galho vivo, grande balista de madeira e área de projetos. Amplia a oficina básica sem usar chaminés ou massas de granito das outras civilizações.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "military_role": "siege",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_siege_arsenal",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "elf_siege",
+  "material_reference": "assets/generated/elves/buildings/elf_siege_arsenal_hex_v1",
+  "roof_rgb": [
+    48,
+    122,
+    88
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "parts": [
+          "Great_Leaf_Ballista_Axle_-0.144",
+          "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_00",
+          "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_01",
+          "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_02",
+          "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_03",
+          "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_04",
+          "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_05",
+          "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_06",
+          "Great_Leaf_Ballista_Wheel_-1_-0.144_Rim_07",
+          "Great_Leaf_Ballista_Wheel_-1_-0.144_Hub",
+          "Great_Leaf_Ballista_Wheel_-1_-0.144_Spoke_Y",
+          "Great_Leaf_Ballista_Wheel_-1_-0.144_Spoke_Z",
+          "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_00",
+          "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_01",
+          "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_02",
+          "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_03",
+          "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_04",
+          "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_05",
+          "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_06",
+          "Great_Leaf_Ballista_Wheel_1_-0.144_Rim_07",
+          "Great_Leaf_Ballista_Wheel_1_-0.144_Hub",
+          "Great_Leaf_Ballista_Wheel_1_-0.144_Spoke_Y",
+          "Great_Leaf_Ballista_Wheel_1_-0.144_Spoke_Z",
+          "Great_Leaf_Ballista_Axle_0.144",
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_00",
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_01",
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_02",
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_03",
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_04",
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_05",
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_06",
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Rim_07",
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Hub",
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Spoke_Y",
+          "Great_Leaf_Ballista_Wheel_-1_0.144_Spoke_Z",
+          "Great_Leaf_Ballista_Wheel_1_0.144_Rim_00",
+          "Great_Leaf_Ballista_Wheel_1_0.144_Rim_01",
+          "Great_Leaf_Ballista_Wheel_1_0.144_Rim_02",
+          "Great_Leaf_Ballista_Wheel_1_0.144_Rim_03",
+          "Great_Leaf_Ballista_Wheel_1_0.144_Rim_04",
+          "Great_Leaf_Ballista_Wheel_1_0.144_Rim_05",
+          "Great_Leaf_Ballista_Wheel_1_0.144_Rim_06",
+          "Great_Leaf_Ballista_Wheel_1_0.144_Rim_07",
+          "Great_Leaf_Ballista_Wheel_1_0.144_Hub",
+          "Great_Leaf_Ballista_Wheel_1_0.144_Spoke_Y",
+          "Great_Leaf_Ballista_Wheel_1_0.144_Spoke_Z",
+          "Great_Leaf_Ballista_Rail_-1",
+          "Great_Leaf_Ballista_Rail_1",
+          "Great_Leaf_Ballista_Deck",
+          "Great_Leaf_Ballista_Pedestal",
+          "Great_Leaf_Ballista_Rail",
+          "Great_Leaf_Ballista_Bolt",
+          "Great_Leaf_Ballista_Bolt_Point",
+          "Great_Leaf_Ballista_Bow_-1",
+          "Great_Leaf_Ballista_String_-1",
+          "Great_Leaf_Ballista_Bow_Seat_-1",
+          "Great_Leaf_Ballista_Bow_1",
+          "Great_Leaf_Ballista_String_1",
+          "Great_Leaf_Ballista_Bow_Seat_1"
+        ],
+        "action": "move",
+        "delta": [
+          0.12999999523162842,
+          -0.03500000014901161,
+          0.0
+        ],
+        "reason": "demonstration ballista is beside the left assembly entrance"
+      },
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 75,
+        "iterations": 8
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [],
+      "open_passages": [
+        {
+          "name": "Living_Assembly_Left",
+          "lo": [
+            -0.4409999656677246,
+            -0.16499999165534973,
+            0.16200000405311585
+          ],
+          "hi": [
+            -0.25899999260902407,
+            0.04000000834465027,
+            0.5959999918937683
+          ],
+          "blockers": []
+        },
+        {
+          "name": "Living_Assembly_Right",
+          "lo": [
+            0.179000001847744,
+            0.11500000953674316,
+            0.16200000405311585
+          ],
+          "hi": [
+            0.46099994659423826,
+            0.3200000095367432,
+            0.5059999585151672
+          ],
+          "blockers": []
+        }
+      ]
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "elf_grand_arsenal_hex_v1.glb",
+    "bytes": 766556,
+    "meshes": 6,
+    "primitives": 6,
+    "triangles": 2228,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_grand_arsenal_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "elf_grand_arsenal_hex_v1_albedo",
+        "bytes": 579267,
+        "sha256": "48908a2425d5586a9f77f0abaa0b66d0198a797653b0379c9cc0a61d57e6b364"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

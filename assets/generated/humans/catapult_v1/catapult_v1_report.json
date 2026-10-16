@@ -1,0 +1,214 @@
+{
+  "name": "Catapult_V1",
+  "kind": "v2_unit_catapult",
+  "label": "Catapulta",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "height_m": 1.8,
+  "height_convention": "Body/rest geometry; animated equipment may exceed body height",
+  "triangles": 580,
+  "editable_parts": 31,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "density_px_per_meter": 64,
+    "filter": "NEAREST",
+    "padding": 2
+  },
+  "derivation": {
+    "predecessor": null,
+    "source_blend_sha256": null,
+    "copied_parts": [],
+    "inherited_actions": []
+  },
+  "notes": "Human timber/iron/blue heraldry, autonomous mechanical rig without visible crew. Chassis copied from predecessor; mechanisms upgraded.",
+  "rig": {
+    "bones": [
+      "root",
+      "body",
+      "weapon",
+      "loader",
+      "wheel_l_front",
+      "wheel_l_back",
+      "wheel_r_front",
+      "wheel_r_back"
+    ],
+    "hierarchy": "Flat rigid mechanical rig: body, wheels, weapon, loading mechanism; hanging counterweight in trebuchet",
+    "skinning": "Rigid, one bone per part (weight 1)",
+    "part_bones": {
+      "Chassis": "body",
+      "Wheel_l_front": "wheel_l_front",
+      "Hub_l_front": "wheel_l_front",
+      "Wheel_l_back": "wheel_l_back",
+      "Hub_l_back": "wheel_l_back",
+      "ChassisRail_l": "body",
+      "Wheel_r_front": "wheel_r_front",
+      "Hub_r_front": "wheel_r_front",
+      "Wheel_r_back": "wheel_r_back",
+      "Hub_r_back": "wheel_r_back",
+      "ChassisRail_r": "body",
+      "AxleFront": "body",
+      "AxleBack": "body",
+      "HumanPennant": "body",
+      "PennantCrossbar": "body",
+      "PennantBracket": "body",
+      "Upright_l": "body",
+      "Upright_r": "body",
+      "Pivot": "body",
+      "ThrowArm": "weapon",
+      "Spoon": "weapon",
+      "ReadyStone": "weapon",
+      "TorsionDrum": "body",
+      "Windlass": "loader",
+      "WinchRope": "body",
+      "RearMast": "body",
+      "Standard": "body",
+      "Bearing_Front_l": "body",
+      "Bearing_Front_r": "body",
+      "Bearing_Back_l": "body",
+      "Bearing_Back_r": "body"
+    }
+  },
+  "animations": {
+    "Catapult_Idle": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 1,
+      "description": "Mechanism at rest, slight taut-rope/crank tension",
+      "seconds": 2
+    },
+    "Catapult_Walk": {
+      "start": 1,
+      "end": 49,
+      "loop": true,
+      "nla_start": 58,
+      "description": "Wheels turn in place; return by a full revolution",
+      "seconds": 2
+    },
+    "Catapult_Attack": {
+      "start": 1,
+      "end": 49,
+      "loop": false,
+      "nla_start": 115,
+      "description": "Launch/recoil, mechanical recovery and reload",
+      "impact_frame": 27,
+      "seconds": 2
+    },
+    "Catapult_DemolitionAmmo": {
+      "start": 1,
+      "end": 73,
+      "loop": false,
+      "nla_start": 172,
+      "description": "Load heavy ammunition; amplified shot and recovery",
+      "impact_frame": 41,
+      "seconds": 3
+    }
+  },
+  "animation_validation": {
+    "problems": [],
+    "samples": {
+      "Catapult_Idle": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "7620f63039cfab147df9ef7f3039da64c07bce43b556b5f6e18d81f541f4fd8d"
+      },
+      "Catapult_Walk": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "bc4fabe4a53fafc5675209d550161e5831d38a8a492d8c62662609c1fbacdbc1"
+      },
+      "Catapult_Attack": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "ec5ad5f5cc4ff0320d2823620014d05fec3e7b3ae9355f1041cde4d132879333"
+      },
+      "Catapult_DemolitionAmmo": {
+        "min_z": -0.0,
+        "finite": true,
+        "loop_or_recovery_error": 0.0,
+        "curve_sha256": "7fb002d5a0955998659ec9530d1d98c79ea5c290b2f0fd06397e0f1df8a4e04b"
+      }
+    }
+  },
+  "glb": {
+    "file": "catapult_v1.glb",
+    "meshes": 1,
+    "materials": 1,
+    "skins": 1,
+    "joints": 8,
+    "triangles": 580,
+    "embedded_textures_match_png": true,
+    "clips": {
+      "Catapult_Idle": 2,
+      "Catapult_Walk": 2,
+      "Catapult_Attack": 2,
+      "Catapult_DemolitionAmmo": 3
+    },
+    "channels": "location, rotation on every bone"
+  },
+  "status": "Finished human Catapulta; rig, clips, nearest embedded textures and isolated editable source verified.",
+  "rig_bone_map": {
+    "Chassis": "body",
+    "Wheel_l_front": "wheel_l_front",
+    "Hub_l_front": "wheel_l_front",
+    "Wheel_l_back": "wheel_l_back",
+    "Hub_l_back": "wheel_l_back",
+    "ChassisRail_l": "body",
+    "Wheel_r_front": "wheel_r_front",
+    "Hub_r_front": "wheel_r_front",
+    "Wheel_r_back": "wheel_r_back",
+    "Hub_r_back": "wheel_r_back",
+    "ChassisRail_r": "body",
+    "AxleFront": "body",
+    "AxleBack": "body",
+    "HumanPennant": "body",
+    "PennantCrossbar": "body",
+    "PennantBracket": "body",
+    "Upright_l": "body",
+    "Upright_r": "body",
+    "Pivot": "body",
+    "ThrowArm": "weapon",
+    "Spoon": "weapon",
+    "ReadyStone": "weapon",
+    "TorsionDrum": "body",
+    "Windlass": "loader",
+    "WinchRope": "body",
+    "RearMast": "body",
+    "Standard": "body",
+    "Bearing_Front_l": "body",
+    "Bearing_Front_r": "body",
+    "Bearing_Back_l": "body",
+    "Bearing_Back_r": "body"
+  },
+  "source_validation": {
+    "scenes": [
+      "Catapult_V1"
+    ],
+    "actions": [
+      "Catapult_Walk",
+      "Catapult_Idle",
+      "Catapult_DemolitionAmmo",
+      "Catapult_Attack"
+    ],
+    "armatures": [
+      "Catapult_V1_Skeleton"
+    ]
+  },
+  "geometry_validation": {
+    "asset": "catapult_v1",
+    "nonmanifold_edges": 0,
+    "unattached_parts_candidates": [],
+    "same_normal_coplanar_candidates": [],
+    "mast_weapon_collisions": [],
+    "intersecting_wheels": [],
+    "attachment_check": "Rest-pose part AABB connectivity to approved body/chassis, tolerance 6 mm; mechanical mast sampled every frame."
+  }
+}

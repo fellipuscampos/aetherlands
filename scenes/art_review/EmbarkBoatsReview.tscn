@@ -1,0 +1,105 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/generated/humans/human_embark_boat_v1/human_embark_boat_v1.tscn" id="1_boat"]
+[ext_resource type="PackedScene" path="res://assets/generated/orcs/orc_embark_boat_v1/orc_embark_boat_v1.tscn" id="2_boat"]
+[ext_resource type="PackedScene" path="res://assets/generated/elves/elf_embark_boat_v1/elf_embark_boat_v1.tscn" id="3_boat"]
+[ext_resource type="PackedScene" path="res://assets/generated/dwarves/dwarf_embark_boat_v1/dwarf_embark_boat_v1.tscn" id="4_boat"]
+[ext_resource type="Script" path="res://scripts/art_review/EmbarkBoatsReview.gd" id="5_review"]
+
+[sub_resource type="Environment" id="Environment_review"]
+background_mode = 1
+background_color = Color(0.035, 0.075, 0.10, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.65, 0.77, 0.88, 1)
+ambient_light_energy = 0.65
+reflected_light_source = 2
+
+[sub_resource type="StandardMaterial3D" id="Material_water"]
+albedo_color = Color(0.06, 0.20, 0.26, 1)
+roughness = 0.44
+metallic = 0.15
+
+[sub_resource type="PlaneMesh" id="Mesh_water"]
+material = SubResource("Material_water")
+size = Vector2(20, 14)
+
+[node name="EmbarkBoatsReview" type="Node3D"]
+script = ExtResource("5_review")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_review")
+
+[node name="Water" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.003, 0)
+mesh = SubResource("Mesh_water")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -28, 0)
+light_color = Color(1, 0.94, 0.84, 1)
+light_energy = 1.25
+shadow_enabled = true
+
+[node name="Fill" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-32, 145, 0)
+light_color = Color(0.74, 0.85, 1, 1)
+light_energy = 0.45
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 5.3, -7.4)
+rotation_degrees = Vector3(-32, 180, 0)
+projection = 1
+size = 9.1
+current = true
+
+[node name="Human" parent="." instance=ExtResource("1_boat")]
+position = Vector3(-3.0, 0, 0)
+
+[node name="LabelHuman" type="Label3D" parent="."]
+position = Vector3(-3.0, 0.13, -1.35)
+billboard = 1
+font_size = 42
+pixel_size = 0.005
+modulate = Color(0.92, 0.88, 0.77, 1)
+text = "BARCO HUMANO"
+
+[node name="Orc" parent="." instance=ExtResource("2_boat")]
+position = Vector3(-1.0, 0, 0)
+
+[node name="LabelOrc" type="Label3D" parent="."]
+position = Vector3(-1.0, 0.13, -1.35)
+billboard = 1
+font_size = 42
+pixel_size = 0.005
+modulate = Color(0.92, 0.88, 0.77, 1)
+text = "BARCO ORC"
+
+[node name="Elf" parent="." instance=ExtResource("3_boat")]
+position = Vector3(1.0, 0, 0)
+
+[node name="LabelElf" type="Label3D" parent="."]
+position = Vector3(1.0, 0.13, -1.35)
+billboard = 1
+font_size = 42
+pixel_size = 0.005
+modulate = Color(0.92, 0.88, 0.77, 1)
+text = "BARCO ELFO"
+
+[node name="Dwarf" parent="." instance=ExtResource("4_boat")]
+position = Vector3(3.0, 0, 0)
+
+[node name="LabelDwarf" type="Label3D" parent="."]
+position = Vector3(3.0, 0.13, -1.35)
+billboard = 1
+font_size = 42
+pixel_size = 0.005
+modulate = Color(0.92, 0.88, 0.77, 1)
+text = "BARCO ANÃO"
+
+[node name="Instructions" type="CanvasLayer" parent="."]
+
+[node name="Label" type="Label" parent="Instructions"]
+offset_left = 24.0
+offset_top = 20.0
+theme_override_colors/font_color = Color(0.92, 0.88, 0.77, 1)
+theme_override_font_sizes/font_size = 22
+text = "ESPAÇO: alternar idle / walk"

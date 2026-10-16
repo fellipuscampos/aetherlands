@@ -1,0 +1,29 @@
+{
+	"comparison": "Same generator; only _build_terrain_multimesh uses the preserved pre-pixel implementation in the photographic baseline",
+	"limitations": "CPU measurements under background load; not an FPS benchmark",
+	"renderer": "forward_plus",
+	"samples": [
+		{
+			"generation_ms": 3667,
+			"material": "photographic",
+			"tiles": 10944
+		},
+		{
+			"generation_ms": 3361,
+			"material": "pixel",
+			"tiles": 10944
+		},
+		{
+			"generation_ms": 3806,
+			"material": "photographic",
+			"tiles": 10944
+		},
+		{
+			"generation_ms": 3434,
+			"material": "pixel",
+			"tiles": 10944
+		}
+	],
+	"seed": 12345,
+	"status": "MEASURED"
+}

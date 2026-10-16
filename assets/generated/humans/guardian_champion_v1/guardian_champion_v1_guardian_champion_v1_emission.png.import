@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bq1brfs01a2as"
-path="res://.godot/imported/guardian_champion_v1_guardian_champion_v1_emission.png-7645079b2331e945fa8337f6f2213a09.ctex"
+path.bptc="res://.godot/imported/guardian_champion_v1_guardian_champion_v1_emission.png-7645079b2331e945fa8337f6f2213a09.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "e3609de1022a164fe240a562c69367de"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/humans/guardian_champion_v1/guardian_champion_v1_guardian_champion_v1_emission.png"
-dest_files=["res://.godot/imported/guardian_champion_v1_guardian_champion_v1_emission.png-7645079b2331e945fa8337f6f2213a09.ctex"]
+dest_files=["res://.godot/imported/guardian_champion_v1_guardian_champion_v1_emission.png-7645079b2331e945fa8337f6f2213a09.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

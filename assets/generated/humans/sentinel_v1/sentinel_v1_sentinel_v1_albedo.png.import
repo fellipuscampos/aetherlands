@@ -3,23 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bexosd37rfe6y"
-path="res://.godot/imported/sentinel_v1_sentinel_v1_albedo.png-2b4661cfc96f85ea265d57a769eda912.ctex"
+path.bptc="res://.godot/imported/sentinel_v1_sentinel_v1_albedo.png-2b4661cfc96f85ea265d57a769eda912.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "ab1751084e814c594e594328b622f4ff"
+"md5": "ef6a0c18bf805f27b532b5f896cf0e63"
 }
 
 [deps]
 
 source_file="res://assets/generated/humans/sentinel_v1/sentinel_v1_sentinel_v1_albedo.png"
-dest_files=["res://.godot/imported/sentinel_v1_sentinel_v1_albedo.png-2b4661cfc96f85ea265d57a769eda912.ctex"]
+dest_files=["res://.godot/imported/sentinel_v1_sentinel_v1_albedo.png-2b4661cfc96f85ea265d57a769eda912.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

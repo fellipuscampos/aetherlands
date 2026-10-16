@@ -1,0 +1,86 @@
+{
+  "race": "elf",
+  "name": "Barco Elfo",
+  "stem": "elf_embark_boat_v1",
+  "scene": "Embark_Boats_V1_Elf",
+  "glb": "assets/generated/elves/elf_embark_boat_v1/elf_embark_boat_v1.glb",
+  "editable_parts": 77,
+  "triangles": 1100,
+  "game_meshes": 4,
+  "materials": 1,
+  "embedded_textures": 2,
+  "texture_size": [
+    512,
+    512
+  ],
+  "filter": "nearest",
+  "closed_source_meshes": true,
+  "bounds_blender": {
+    "min": [
+      -0.5224750638008118,
+      -1.5800000429153442,
+      -0.3450000286102295
+    ],
+    "max": [
+      0.863431990146637,
+      1.5359619855880737,
+      2.8299999237060547
+    ]
+  },
+  "waterline": 0,
+  "forward_godot": "-Z",
+  "recommended_map_scale": 0.52,
+  "unit_representation": "1 unit = 1 boat",
+  "source_preservation": "Existing scenes and assets retained; only new IDs created.",
+  "glb_sha256": "31b3e473b5d836b5c3061ed5a3c508259076f13e064b2d7345aee60da3b45937",
+  "sail_revision": 2,
+  "sail_symbols": false,
+  "sail_billow_direction": "Blender +Y / Godot -Z",
+  "removed_symbols": [
+    "Leaf_Vein",
+    "Leaf_Vein_Branch_0",
+    "Leaf_Vein_Branch_1",
+    "Leaf_Vein_Branch_2"
+  ],
+  "animations": {
+    "idle": {
+      "duration": 4.0,
+      "frames": 121,
+      "fps": 30,
+      "loop_error": 0.0,
+      "vertical_range_native": [
+        -0.023800000548362732,
+        0.0
+      ],
+      "vertical_range_map": [
+        -0.012376000285148622,
+        0.0
+      ],
+      "highest_keel_vertex": -0.25280269980430603,
+      "in_place": true,
+      "water_plane_static": true
+    },
+    "walk": {
+      "duration": 2.0,
+      "frames": 61,
+      "fps": 30,
+      "loop_error": 0.0,
+      "vertical_range_native": [
+        -0.05950000137090683,
+        0.0
+      ],
+      "vertical_range_map": [
+        -0.030940000712871552,
+        0.0
+      ],
+      "highest_keel_vertex": -0.25061267614364624,
+      "in_place": true,
+      "water_plane_static": true
+    }
+  },
+  "exported_clips": [
+    "idle",
+    "walk"
+  ],
+  "morph_targets": 1
+}

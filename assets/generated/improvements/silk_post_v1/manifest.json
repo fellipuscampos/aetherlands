@@ -1,0 +1,369 @@
+{
+  "asset": "silk_post_v1",
+  "improvement": "v2_improvement_silk_post",
+  "resource": "silk",
+  "method": "live Blender MCP localhost:9876",
+  "reuses_full_raw_resource_model": false,
+  "reuses_original_cocoon_and_foliage_primitives": true,
+  "source_sha256": "45ce5ee635b570d529e37311f6cef6965655793d6e399792cabb1d2c92a8d1b8",
+  "primitive_source": "tools\\art_pipeline\\build_silk_resource_mcp.py",
+  "concept": "Cultivated mulberry, stepped cocoons, open handloom, winding reel and folded silk",
+  "materials": 1,
+  "meshes": 1,
+  "vertices": 672,
+  "triangles": 1076,
+  "footprint_radius": 0.7140027997124969,
+  "height": 0.699999988079071,
+  "ground_origin": true,
+  "closed_components": true,
+  "texture_size": [
+    512,
+    512
+  ],
+  "texture_filter": "nearest",
+  "animations": 0,
+  "lights": 0,
+  "shared_civilizations": [
+    "human",
+    "elf",
+    "orc",
+    "dwarf"
+  ],
+  "parts": [
+    {
+      "name": "Silk_worksite_ground",
+      "vertices": 16,
+      "faces": 10
+    },
+    {
+      "name": "Mulberry_trunk",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Mulberry_branch_left",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Mulberry_branch_right",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Mulberry_front_branch",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Mulberry_main_leaves",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Mulberry_crown_leaves",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Mulberry_left_leaves",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Mulberry_right_leaves",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Mulberry_front_leaves",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Mulberry_cocoon_front_left",
+      "vertices": 24,
+      "faces": 22
+    },
+    {
+      "name": "Mulberry_cocoon_front_right",
+      "vertices": 24,
+      "faces": 22
+    },
+    {
+      "name": "Mulberry_cocoon_upper",
+      "vertices": 24,
+      "faces": 22
+    },
+    {
+      "name": "Mulberry_cocoon_left",
+      "vertices": 24,
+      "faces": 22
+    },
+    {
+      "name": "Mulberry_cocoon_right",
+      "vertices": 24,
+      "faces": 22
+    },
+    {
+      "name": "Loom_foot_-0.5",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_upright_-0.5",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_rear_leg_-0.5",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_side_brace_-0.5",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_foot_-0.055",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_upright_-0.055",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_rear_leg_-0.055",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_side_brace_-0.055",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_top_beam",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_bottom_beam",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_upper_roller",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_lower_roller",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_warp_0",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_warp_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_warp_2",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_warp_3",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_warp_4",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_warp_5",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_warp_6",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_warp_7",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_warp_8",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_warp_9",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_woven_silk",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_cloth_apron",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Loom_beater_crossbar",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Weaving_shuttle",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Winding_bench_leg_(-0.27, -0.46)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Winding_bench_leg_(-0.27, -0.26)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Winding_bench_leg_(0.01, -0.46)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Winding_bench_leg_(0.01, -0.26)",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Winding_bench_top",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Reel_support_-0.23",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Reel_support_-0.03",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Reel_axle",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Wound_silk",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Reel_flange_-0.22",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Reel_flange_-0.04",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Reel_crank",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Reel_crank_handle",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cocoon_tray_base",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cocoon_tray_side_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cocoon_tray_end_-1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cocoon_tray_side_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Cocoon_tray_end_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Harvested_cocoon_a",
+      "vertices": 24,
+      "faces": 22
+    },
+    {
+      "name": "Harvested_cocoon_b",
+      "vertices": 24,
+      "faces": 22
+    },
+    {
+      "name": "Harvested_cocoon_c",
+      "vertices": 24,
+      "faces": 22
+    },
+    {
+      "name": "Cloth_pallet",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Folded_silk_0",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Folded_silk_1",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Folded_silk_2",
+      "vertices": 8,
+      "faces": 6
+    },
+    {
+      "name": "Bundle_binding",
+      "vertices": 8,
+      "faces": 6
+    }
+  ]
+}

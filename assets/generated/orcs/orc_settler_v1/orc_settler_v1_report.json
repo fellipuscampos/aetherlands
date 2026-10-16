@@ -1,0 +1,549 @@
+{
+  "stem": "orc_settler_v1",
+  "name": "Colonizador Orc",
+  "race": "orc",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "source": "assets/generated/orcs/orc_squire_v1/orc_squire_v1.blend",
+  "source_sha256": "f3b41564233c4395dc3f0a1409ff5be1ceaec5b0285fac237627fe7eac879ac8",
+  "source_body": [
+    {
+      "part": "Pelvis",
+      "source": "Pelvis",
+      "dimensions": [
+        0.634411,
+        0.336464,
+        0.18126
+      ]
+    },
+    {
+      "part": "Belly",
+      "source": "Belly",
+      "dimensions": [
+        0.587283,
+        0.317206,
+        0.181261
+      ]
+    },
+    {
+      "part": "Chest",
+      "source": "Chest",
+      "dimensions": [
+        0.822469,
+        0.396507,
+        0.317206
+      ]
+    },
+    {
+      "part": "Head",
+      "source": "Head",
+      "dimensions": [
+        0.367052,
+        0.351758,
+        0.305877
+      ]
+    },
+    {
+      "part": "ElfEar_l_0",
+      "source": "ElfEar_l_0",
+      "dimensions": [
+        0.067973,
+        0.056644,
+        0.09063
+      ]
+    },
+    {
+      "part": "ElfEar_l_1",
+      "source": "ElfEar_l_1",
+      "dimensions": [
+        0.053245,
+        0.045315,
+        0.064574
+      ]
+    },
+    {
+      "part": "ElfEar_l_2",
+      "source": "ElfEar_l_2",
+      "dimensions": [
+        0.029455,
+        0.033986,
+        0.037385
+      ]
+    },
+    {
+      "part": "ElfEar_r_0",
+      "source": "ElfEar_r_0",
+      "dimensions": [
+        0.067973,
+        0.056644,
+        0.09063
+      ]
+    },
+    {
+      "part": "ElfEar_r_1",
+      "source": "ElfEar_r_1",
+      "dimensions": [
+        0.053245,
+        0.045315,
+        0.064574
+      ]
+    },
+    {
+      "part": "ElfEar_r_2",
+      "source": "ElfEar_r_2",
+      "dimensions": [
+        0.029455,
+        0.033986,
+        0.037385
+      ]
+    },
+    {
+      "part": "Tusk_l_0",
+      "source": "Tusk_l_0",
+      "dimensions": [
+        0.029109,
+        0.032602,
+        0.03493
+      ]
+    },
+    {
+      "part": "Tusk_l_1",
+      "source": "Tusk_l_1",
+      "dimensions": [
+        0.019794,
+        0.024451,
+        0.027944
+      ]
+    },
+    {
+      "part": "Tusk_r_0",
+      "source": "Tusk_r_0",
+      "dimensions": [
+        0.029109,
+        0.032602,
+        0.03493
+      ]
+    },
+    {
+      "part": "Tusk_r_1",
+      "source": "Tusk_r_1",
+      "dimensions": [
+        0.019794,
+        0.024451,
+        0.027944
+      ]
+    },
+    {
+      "part": "Brow_l",
+      "source": "Brow_l",
+      "dimensions": [
+        0.128399,
+        0.038423,
+        0.056653
+      ]
+    },
+    {
+      "part": "Brow_r",
+      "source": "Brow_r",
+      "dimensions": [
+        0.128399,
+        0.038423,
+        0.056653
+      ]
+    },
+    {
+      "part": "Shoulder_l",
+      "source": "Shoulder_l",
+      "dimensions": [
+        0.253765,
+        0.348926,
+        0.203918
+      ]
+    },
+    {
+      "part": "Shoulder_r",
+      "source": "Shoulder_r",
+      "dimensions": [
+        0.253765,
+        0.348926,
+        0.203918
+      ]
+    },
+    {
+      "part": "UpperArm_l",
+      "source": "UpperArm_l",
+      "dimensions": [
+        0.262765,
+        0.343483,
+        0.384899
+      ]
+    },
+    {
+      "part": "Forearm_l",
+      "source": "Forearm_l",
+      "dimensions": [
+        0.344544,
+        0.371461,
+        0.335899
+      ]
+    },
+    {
+      "part": "Hand_l",
+      "source": "Hand_l",
+      "dimensions": [
+        0.234249,
+        0.171302,
+        0.225607
+      ]
+    },
+    {
+      "part": "UpperArm_r",
+      "source": "UpperArm_r",
+      "dimensions": [
+        0.262769,
+        0.351963,
+        0.392274
+      ]
+    },
+    {
+      "part": "Forearm_r",
+      "source": "Forearm_r",
+      "dimensions": [
+        0.391237,
+        0.474547,
+        0.411692
+      ]
+    },
+    {
+      "part": "Hand_r",
+      "source": "Hand_r",
+      "dimensions": [
+        0.245737,
+        0.242279,
+        0.259043
+      ]
+    },
+    {
+      "part": "Foot_l",
+      "source": "Foot_l",
+      "dimensions": [
+        0.285485,
+        0.406023,
+        0.113288
+      ]
+    },
+    {
+      "part": "Shin_l",
+      "source": "Shin_l",
+      "dimensions": [
+        0.253764,
+        0.275289,
+        0.430493
+      ]
+    },
+    {
+      "part": "Thigh_l",
+      "source": "Thigh_l",
+      "dimensions": [
+        0.228275,
+        0.246401,
+        0.453151
+      ]
+    },
+    {
+      "part": "Foot_r",
+      "source": "Foot_r",
+      "dimensions": [
+        0.285485,
+        0.406023,
+        0.113288
+      ]
+    },
+    {
+      "part": "Shin_r",
+      "source": "Shin_r",
+      "dimensions": [
+        0.253764,
+        0.275289,
+        0.430493
+      ]
+    },
+    {
+      "part": "Thigh_r",
+      "source": "Thigh_r",
+      "dimensions": [
+        0.228275,
+        0.246401,
+        0.453151
+      ]
+    }
+  ],
+  "geometry": {
+    "status": "PASS",
+    "editable_parts": 74,
+    "body_parts": 18,
+    "triangles": 888,
+    "dimensions": [
+      1.608021,
+      1.04061,
+      2.0
+    ],
+    "bounds_min": [
+      -0.8756828308105469,
+      -0.5298569798469543,
+      -3.316330321467831e-09
+    ],
+    "bounds_max": [
+      0.7323377132415771,
+      0.5107535123825073,
+      2.0
+    ],
+    "closed_meshes": true,
+    "positive_volume": true,
+    "degenerate_faces": 0,
+    "uv_density_max_error": 0.0009531536465772206,
+    "ground_pivot": true,
+    "identity_transforms": true,
+    "flat_shading": true,
+    "animations": 2,
+    "rigs": 1
+  },
+  "texture": {
+    "size": [
+      512,
+      512
+    ],
+    "density_px_per_m": 64,
+    "padding_px": 3,
+    "face_islands": 444,
+    "materials": 1,
+    "nearest": true,
+    "opaque": true
+  },
+  "static_review": false,
+  "animations": 2,
+  "rigging_deferred": false,
+  "review_refinements": [
+    {
+      "race": "orc",
+      "part": "Bedroll_ties",
+      "fix": "Full rectangular strap wrap; inset cap ends avoid coincident faces"
+    }
+  ],
+  "surface_validation": {
+    "status": "PASS",
+    "exposed_coplanar_pairs": 0,
+    "hidden_coplanar_pairs": 0,
+    "backface_culling": true
+  },
+  "export": {
+    "bytes": 223784,
+    "triangles": 888,
+    "meshes": 1,
+    "surfaces": 1,
+    "materials": 1,
+    "skins": 1,
+    "bones": 16,
+    "animations": 2,
+    "clips": [
+      "idle",
+      "walk"
+    ],
+    "atlas_sha256": "9dd5ec5c0380e68e96a9052186dc662c197abe2b13450dea3c41a8cf2bd166c2",
+    "editable_source_parts": 74,
+    "cameras": 0,
+    "lights": 0
+  },
+  "source_preserved": true,
+  "arm_correction": {
+    "changed_parts": [
+      "Forearm_l",
+      "Forearm_r"
+    ],
+    "dwarf_unchanged": false,
+    "details": [
+      {
+        "part": "Forearm_l",
+        "before": [
+          0.2990795785997573,
+          0.3081424482424115,
+          0.302149605872072
+        ],
+        "after": [
+          0.25149870166856203,
+          0.24300223781727778,
+          0.2961197417370748
+        ],
+        "upper_arm": [
+          0.25149870166856203,
+          0.24300223781727778,
+          0.30822717496642715
+        ]
+      },
+      {
+        "part": "Forearm_r",
+        "before": [
+          0.29907962583223857,
+          0.308142521910869,
+          0.3180945511195905
+        ],
+        "after": [
+          0.2514986997302254,
+          0.2430020840354625,
+          0.3120645473124128
+        ],
+        "upper_arm": [
+          0.2514986997302254,
+          0.24300206870518073,
+          0.3126531601877779
+        ]
+      }
+    ]
+  },
+  "animation": {
+    "status": "PASS",
+    "fps": 48,
+    "bones": 16,
+    "rigid_skinning": true,
+    "root_motion": false,
+    "walk_speed_m_per_s": 0.46236559139784944,
+    "clips": {
+      "idle": {
+        "frames": 145,
+        "seconds": 3.0,
+        "loop_error": 0.0,
+        "min_ground_z": -3.316330321467831e-09,
+        "max_joint_gap": 3.576472706796822e-07,
+        "max_pose_step": 0.0012191161513328552,
+        "max_planted_foot_z_error": 0,
+        "max_planted_foot_slide_at_recommended_speed": 0,
+        "movement": 0.03264820575714111
+      },
+      "walk": {
+        "frames": 73,
+        "seconds": 1.5,
+        "loop_error": 7.347880536484578e-19,
+        "min_ground_z": -3.316330321467831e-09,
+        "max_joint_gap": 2.4578447942743725e-07,
+        "max_pose_step": 0.0727333128452301,
+        "max_planted_foot_z_error": 3.316330321467831e-09,
+        "max_planted_foot_slide_at_recommended_speed": 5.960464477539063e-08,
+        "movement": 0.5786807611584663
+      }
+    }
+  },
+  "stage": "animated_review",
+  "grip_correction": {
+    "status": "PASS",
+    "changed_geometry": [
+      "Mallet_handle",
+      "Mallet_stone_head",
+      "Mallet_binding_front",
+      "Mallet_binding_back",
+      "Mallet_binding_side_-1",
+      "Mallet_binding_side_1"
+    ],
+    "changed_animation_bones": [],
+    "clips": {
+      "idle": {
+        "frames": 145,
+        "samples": 289,
+        "minimum_clearance_m": 0.028434328438968204,
+        "pair_clearances_m": {
+          "Mallet_handle / Forearm_r": 0.028434328438968204,
+          "Mallet_handle / UpperArm_r": 0.34049908030258624,
+          "Mallet_handle / Chest": 0.5220979093059379,
+          "Mallet_handle / Belly": 0.4268917378383541,
+          "Mallet_handle / Pelvis": 0.25730615226927706,
+          "Mallet_handle / Thigh_r": 0.24597132205963135,
+          "Mallet_handle / Shin_r": 0.24867223673550476,
+          "Mallet_stone_head / Forearm_r": 0.10462468116301937,
+          "Mallet_stone_head / UpperArm_r": 0.3343017296264017,
+          "Mallet_stone_head / Chest": 0.4430105002602641,
+          "Mallet_stone_head / Belly": 0.33264158741891237,
+          "Mallet_stone_head / Pelvis": 0.2709094544811318,
+          "Mallet_stone_head / Thigh_r": 0.34876357649571194,
+          "Mallet_stone_head / Shin_r": 0.3953702693329801,
+          "Mallet_binding_front / Forearm_r": 0.17516194166404137,
+          "Mallet_binding_front / UpperArm_r": 0.4623065934267898,
+          "Mallet_binding_front / Chest": 0.5949482089766631,
+          "Mallet_binding_front / Belly": 0.5028991473598586,
+          "Mallet_binding_front / Pelvis": 0.35536614060401917,
+          "Mallet_binding_front / Thigh_r": 0.3841905541589104,
+          "Mallet_binding_front / Shin_r": 0.4078700579936667,
+          "Mallet_binding_back / Forearm_r": 0.12467348143515156,
+          "Mallet_binding_back / UpperArm_r": 0.32859772664957654,
+          "Mallet_binding_back / Chest": 0.4692200465442717,
+          "Mallet_binding_back / Belly": 0.3727850321275149,
+          "Mallet_binding_back / Pelvis": 0.3477107584476471,
+          "Mallet_binding_back / Thigh_r": 0.3595832449553473,
+          "Mallet_binding_back / Shin_r": 0.40842995305097585,
+          "Mallet_binding_side_-1 / Forearm_r": 0.12532834200128845,
+          "Mallet_binding_side_-1 / UpperArm_r": 0.343733224283372,
+          "Mallet_binding_side_-1 / Chest": 0.5080508768579026,
+          "Mallet_binding_side_-1 / Belly": 0.418918251991272,
+          "Mallet_binding_side_-1 / Pelvis": 0.39535441994667053,
+          "Mallet_binding_side_-1 / Thigh_r": 0.40410274267196655,
+          "Mallet_binding_side_-1 / Shin_r": 0.41247482761778487,
+          "Mallet_binding_side_1 / Forearm_r": 0.14028004714410347,
+          "Mallet_binding_side_1 / UpperArm_r": 0.3437332810217765,
+          "Mallet_binding_side_1 / Chest": 0.48322039521639054,
+          "Mallet_binding_side_1 / Belly": 0.3872749589066413,
+          "Mallet_binding_side_1 / Pelvis": 0.34875258803367615,
+          "Mallet_binding_side_1 / Thigh_r": 0.36293880744803914,
+          "Mallet_binding_side_1 / Shin_r": 0.4089904865184433
+        },
+        "hand_contact": true
+      },
+      "walk": {
+        "frames": 73,
+        "samples": 145,
+        "minimum_clearance_m": 0.028429275206330984,
+        "pair_clearances_m": {
+          "Mallet_handle / Forearm_r": 0.028429275206330984,
+          "Mallet_handle / UpperArm_r": 0.3377071911163071,
+          "Mallet_handle / Chest": 0.4590949514562246,
+          "Mallet_handle / Belly": 0.4173200495288343,
+          "Mallet_handle / Pelvis": 0.23772313659293215,
+          "Mallet_handle / Thigh_r": 0.24592309350019176,
+          "Mallet_handle / Shin_r": 0.24428470018409532,
+          "Mallet_stone_head / Forearm_r": 0.10462466931163517,
+          "Mallet_stone_head / UpperArm_r": 0.32478201651201843,
+          "Mallet_stone_head / Chest": 0.41459465961832986,
+          "Mallet_stone_head / Belly": 0.32150533650827323,
+          "Mallet_stone_head / Pelvis": 0.23119366052115092,
+          "Mallet_stone_head / Thigh_r": 0.2709540421193574,
+          "Mallet_stone_head / Shin_r": 0.2514777968076419,
+          "Mallet_binding_front / Forearm_r": 0.17515734427608798,
+          "Mallet_binding_front / UpperArm_r": 0.45355159747652035,
+          "Mallet_binding_front / Chest": 0.5485948811861752,
+          "Mallet_binding_front / Belly": 0.4721805734880018,
+          "Mallet_binding_front / Pelvis": 0.34551313063264183,
+          "Mallet_binding_front / Thigh_r": 0.3632970384948642,
+          "Mallet_binding_front / Shin_r": 0.3586816874312374,
+          "Mallet_binding_back / Forearm_r": 0.12467346771682575,
+          "Mallet_binding_back / UpperArm_r": 0.31876283975713043,
+          "Mallet_binding_back / Chest": 0.40677222922247647,
+          "Mallet_binding_back / Belly": 0.3712744246271421,
+          "Mallet_binding_back / Pelvis": 0.3383435215912786,
+          "Mallet_binding_back / Thigh_r": 0.35566420007196836,
+          "Mallet_binding_back / Shin_r": 0.3592167707251033,
+          "Mallet_binding_side_-1 / Forearm_r": 0.1253283163620249,
+          "Mallet_binding_side_-1 / UpperArm_r": 0.33400777030802165,
+          "Mallet_binding_side_-1 / Chest": 0.45452741290240206,
+          "Mallet_binding_side_-1 / Belly": 0.41891809021118853,
+          "Mallet_binding_side_-1 / Pelvis": 0.38634366581813345,
+          "Mallet_binding_side_-1 / Thigh_r": 0.4030929393330132,
+          "Mallet_binding_side_-1 / Shin_r": 0.40572659976473874,
+          "Mallet_binding_side_1 / Forearm_r": 0.14028004556788676,
+          "Mallet_binding_side_1 / UpperArm_r": 0.3340076614640766,
+          "Mallet_binding_side_1 / Chest": 0.41899471952181033,
+          "Mallet_binding_side_1 / Belly": 0.37675287955647496,
+          "Mallet_binding_side_1 / Pelvis": 0.33931373598203035,
+          "Mallet_binding_side_1 / Thigh_r": 0.356702129502614,
+          "Mallet_binding_side_1 / Shin_r": 0.359020819660917
+        },
+        "hand_contact": true
+      }
+    }
+  }
+}

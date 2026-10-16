@@ -1,0 +1,40 @@
+{
+	"assets": [
+		{
+			"asset": "siege_colossus_v1",
+			"bones": 10,
+			"clips": {
+				"SiegeColossus_Attack": {
+					"loop": false,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"SiegeColossus_DemolitionAmmo": {
+					"loop": false,
+					"samples": 73,
+					"seconds": 3.0
+				},
+				"SiegeColossus_Idle": {
+					"loop": true,
+					"samples": 49,
+					"seconds": 2.0
+				},
+				"SiegeColossus_PreparedBombardment": {
+					"loop": false,
+					"samples": 97,
+					"seconds": 4.0
+				},
+				"SiegeColossus_Walk": {
+					"loop": true,
+					"samples": 49,
+					"seconds": 2.0
+				}
+			},
+			"ground_y": 0.0,
+			"height_m": 2.0
+		}
+	],
+	"problems": [],
+	"status": "PASS",
+	"verified": 1
+}

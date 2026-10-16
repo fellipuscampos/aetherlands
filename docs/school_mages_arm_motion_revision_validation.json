@@ -1,0 +1,1774 @@
+{
+  "status": "PASS",
+  "revision": 3,
+  "verified": 24,
+  "clips": 72,
+  "baked_frames_checked": 8712,
+  "maximum_elbow_axial_roll_degrees": 0,
+  "maximum_arm_frame_rotation_degrees": 3.847528375511869,
+  "maximum_arm_frame_acceleration_degrees": 0.5787820126955353,
+  "torso_intersections": 0,
+  "staff_forearm_intersections": 0,
+  "staff_hand_detachments": 0,
+  "geometry_and_textures_preserved": true,
+  "before_after": [
+    {
+      "race": "human",
+      "before_free_elbow_roll_degrees": 91.22688889452004,
+      "after_max_elbow_roll_degrees": 0,
+      "before_free_wrist_angle_degrees": 87.31450189642338,
+      "after_max_free_wrist_angle_degrees": 3.999564117568122
+    },
+    {
+      "race": "elf",
+      "before_free_elbow_roll_degrees": 84.57295958622865,
+      "after_max_elbow_roll_degrees": 0,
+      "before_free_wrist_angle_degrees": 89.70187157739628,
+      "after_max_free_wrist_angle_degrees": 4.99746371993027
+    },
+    {
+      "race": "dwarf",
+      "before_free_elbow_roll_degrees": 131.8217357358973,
+      "after_max_elbow_roll_degrees": 0,
+      "before_free_wrist_angle_degrees": 100.98785759587192,
+      "after_max_free_wrist_angle_degrees": 2.999704464357591
+    },
+    {
+      "race": "orc",
+      "before_free_elbow_roll_degrees": 117.34215816719882,
+      "after_max_elbow_roll_degrees": 0,
+      "before_free_wrist_angle_degrees": 95.85047617013346,
+      "after_max_free_wrist_angle_degrees": 4.000151513836743
+    }
+  ],
+  "assets": [
+    {
+      "stem": "human_sacred_cleric_v1",
+      "race": "human",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.4586915969848633e-07,
+          "max_frame_step": 0.0016339427093043923,
+          "movement": 0.0744352787733078,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.8561901380892365
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 7.347880536484578e-19,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.407356265396403e-07,
+          "max_frame_step": 0.05500650405883789,
+          "movement": 0.43669653683900833,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 17.974686112284274
+          },
+          "max_arm_frame_rotation_degrees": 1.0324825576772156,
+          "max_arm_frame_acceleration_degrees": 0.08846931922527276,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.6151431761360534e-07,
+          "max_frame_step": 0.05969132483005524,
+          "movement": 1.4277210533618927,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 3.999564117568122,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.5477503056229516,
+          "max_arm_frame_acceleration_degrees": 0.3753437076887948,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "human_infernal_warlock_v1",
+      "race": "human",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 3.5762786865234375e-07,
+          "max_frame_step": 0.0016339427093043923,
+          "movement": 0.0744352787733078,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.8268625864536712
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 7.347880536484578e-19,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.425733297482089e-07,
+          "max_frame_step": 0.05500650405883789,
+          "movement": 0.43669653683900833,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 17.968914602435614
+          },
+          "max_arm_frame_rotation_degrees": 1.0324825576772156,
+          "max_arm_frame_acceleration_degrees": 0.08846931922527276,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 3.2816403427042423e-07,
+          "max_frame_step": 0.05969132483005524,
+          "movement": 1.4277210533618927,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 3.99936860340313,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.5477503056229516,
+          "max_arm_frame_acceleration_degrees": 0.3753437076887948,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "human_necromancer_v1",
+      "race": "human",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.4755668231600746e-07,
+          "max_frame_step": 0.0016339427093043923,
+          "movement": 0.0744352787733078,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.8195643158821009
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 7.347880536484578e-19,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.407356265396403e-07,
+          "max_frame_step": 0.05500650405883789,
+          "movement": 0.43669653683900833,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 17.979188914494603
+          },
+          "max_arm_frame_rotation_degrees": 1.0324825576772156,
+          "max_arm_frame_acceleration_degrees": 0.08846931922527276,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.980232238769531e-07,
+          "max_frame_step": 0.05969132483005524,
+          "movement": 1.4277212917804718,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 3.99936860340313,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.5479710061105076,
+          "max_arm_frame_acceleration_degrees": 0.37325262926613956,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "human_druid_v1",
+      "race": "human",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.407356265396403e-07,
+          "max_frame_step": 0.0016339427093043923,
+          "movement": 0.0744352787733078,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.836264128402782
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 7.347880536484578e-19,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 3.604110068812318e-07,
+          "max_frame_step": 0.05500650405883789,
+          "movement": 0.43669653683900833,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 17.964714036096055
+          },
+          "max_arm_frame_rotation_degrees": 1.0324825576772156,
+          "max_arm_frame_acceleration_degrees": 0.08846931922527276,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.682209014892578e-07,
+          "max_frame_step": 0.05969132483005524,
+          "movement": 1.4277212917804718,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 3.99936860340313,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.5479710061105076,
+          "max_arm_frame_acceleration_degrees": 0.37325262926613956,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "human_arcanist_v1",
+      "race": "human",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 3.5762786865234375e-07,
+          "max_frame_step": 0.0016339427093043923,
+          "movement": 0.0744352787733078,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.8679598346896378
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 7.347880536484578e-19,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.4131141216608354e-07,
+          "max_frame_step": 0.05500650405883789,
+          "movement": 0.43669653683900833,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 17.989326622770196
+          },
+          "max_arm_frame_rotation_degrees": 1.0324825576772156,
+          "max_arm_frame_acceleration_degrees": 0.08846931922527276,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.4596967965565414e-07,
+          "max_frame_step": 0.059691473841667175,
+          "movement": 1.427721530199051,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 3.999564117568122,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.5479710061105076,
+          "max_arm_frame_acceleration_degrees": 0.3753437076887948,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "human_elementalist_v1",
+      "race": "human",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.403894931808364e-07,
+          "max_frame_step": 0.0016339427093043923,
+          "movement": 0.0744352787733078,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.8456180724711146
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 7.347880536484578e-19,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.9988008435812754e-07,
+          "max_frame_step": 0.05500650405883789,
+          "movement": 0.43669653683900833,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 17.966508668300477
+          },
+          "max_arm_frame_rotation_degrees": 1.0324825576772156,
+          "max_arm_frame_acceleration_degrees": 0.08846931922527276,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.497889789080651e-07,
+          "max_frame_step": 0.05969132483005524,
+          "movement": 1.4277212917804718,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 3.99936860340313,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.5479710061105076,
+          "max_arm_frame_acceleration_degrees": 0.3753437076887948,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "elf_sacred_cleric_v1",
+      "race": "elf",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 3.5762786865234375e-07,
+          "max_frame_step": 0.0016339427093043923,
+          "movement": 0.0744352787733078,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.9147240055025996
+          },
+          "max_arm_frame_rotation_degrees": 0.06852804166478502,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 6.12323395273311e-19,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.457562461863554e-07,
+          "max_frame_step": 0.060454338788986206,
+          "movement": 0.48056901060044765,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 17.70563130049913
+          },
+          "max_arm_frame_rotation_degrees": 1.1204606235505632,
+          "max_arm_frame_acceleration_degrees": 0.09691328732904647,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.7516760397880357e-07,
+          "max_frame_step": 0.05360005795955658,
+          "movement": 1.3357160687446594,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 4.99746371993027,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.3003873208681234,
+          "max_arm_frame_acceleration_degrees": 0.37325262926613956,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "elf_infernal_warlock_v1",
+      "race": "elf",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.457562461863554e-07,
+          "max_frame_step": 0.0016339427093043923,
+          "movement": 0.0744352787733078,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.884230839396489
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 6.12323395273311e-19,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 3.6010283153040923e-07,
+          "max_frame_step": 0.060454338788986206,
+          "movement": 0.48056901060044765,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 17.63661736157803
+          },
+          "max_arm_frame_rotation_degrees": 1.1204606235505632,
+          "max_arm_frame_acceleration_degrees": 0.09691328732904647,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 3.5762786865234375e-07,
+          "max_frame_step": 0.053600192070007324,
+          "movement": 1.335716038942337,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 4.99746371993027,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.3003873208681234,
+          "max_arm_frame_acceleration_degrees": 0.37325262926613956,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "elf_necromancer_v1",
+      "race": "elf",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.457562461863554e-07,
+          "max_frame_step": 0.0016339427093043923,
+          "movement": 0.0744352787733078,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.884230839396489
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 6.12323395273311e-19,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 3.6010283153040923e-07,
+          "max_frame_step": 0.060454338788986206,
+          "movement": 0.48056901060044765,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 17.63661736157803
+          },
+          "max_arm_frame_rotation_degrees": 1.1204606235505632,
+          "max_arm_frame_acceleration_degrees": 0.09691328732904647,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 3.5762786865234375e-07,
+          "max_frame_step": 0.053600192070007324,
+          "movement": 1.335716038942337,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 4.99746371993027,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.3003873208681234,
+          "max_arm_frame_acceleration_degrees": 0.37325262926613956,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "elf_druid_v1",
+      "race": "elf",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.4586915969848633e-07,
+          "max_frame_step": 0.0016339427093043923,
+          "movement": 0.0744352787733078,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.898714255531501
+          },
+          "max_arm_frame_rotation_degrees": 0.06852804166478502,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 6.12323395273311e-19,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 3.6164108215306987e-07,
+          "max_frame_step": 0.060454338788986206,
+          "movement": 0.48056901060044765,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 17.667465910964392
+          },
+          "max_arm_frame_rotation_degrees": 1.1204606235505632,
+          "max_arm_frame_acceleration_degrees": 0.09691328732904647,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.6656007498500226e-07,
+          "max_frame_step": 0.05360005795955658,
+          "movement": 1.3357160687446594,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 4.997307052466183,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.3003873208681234,
+          "max_arm_frame_acceleration_degrees": 0.37325262926613956,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "elf_arcanist_v1",
+      "race": "elf",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 3.5762786865234375e-07,
+          "max_frame_step": 0.0016339427093043923,
+          "movement": 0.0744352787733078,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.9147240055025996
+          },
+          "max_arm_frame_rotation_degrees": 0.06852804166478502,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 6.12323395273311e-19,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.457562461863554e-07,
+          "max_frame_step": 0.060454338788986206,
+          "movement": 0.48056901060044765,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 17.70563130049913
+          },
+          "max_arm_frame_rotation_degrees": 1.1204606235505632,
+          "max_arm_frame_acceleration_degrees": 0.09691328732904647,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.7516760397880357e-07,
+          "max_frame_step": 0.05360005795955658,
+          "movement": 1.3357160687446594,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 4.99746371993027,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.3003873208681234,
+          "max_arm_frame_acceleration_degrees": 0.37325262926613956,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "elf_elementalist_v1",
+      "race": "elf",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.4586915969848633e-07,
+          "max_frame_step": 0.0016339427093043923,
+          "movement": 0.0744352787733078,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.898714255531501
+          },
+          "max_arm_frame_rotation_degrees": 0.06852804166478502,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 6.12323395273311e-19,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 3.6164108215306987e-07,
+          "max_frame_step": 0.060454338788986206,
+          "movement": 0.48056901060044765,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 17.667465910964392
+          },
+          "max_arm_frame_rotation_degrees": 1.1204606235505632,
+          "max_arm_frame_acceleration_degrees": 0.09691328732904647,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -2.331320025916739e-09,
+          "max_joint_gap_m": 2.6656007498500226e-07,
+          "max_frame_step": 0.05360005795955658,
+          "movement": 1.3357160687446594,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 4.997307052466183,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.3003873208681234,
+          "max_arm_frame_acceleration_degrees": 0.37325262926613956,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "dwarf_sacred_cleric_v1",
+      "race": "dwarf",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.3657139822709083e-07,
+          "max_frame_step": 0.002650192938745022,
+          "movement": 0.12093423306941986,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.9301954511897361
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 4.898587368981641e-19,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.3657139822709083e-07,
+          "max_frame_step": 0.0783073753118515,
+          "movement": 0.5960998088121414,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 1.4901161193847656e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 19.807068772247785
+          },
+          "max_arm_frame_rotation_degrees": 0.773286056741929,
+          "max_arm_frame_acceleration_degrees": 0.06852804166478502,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.7120130796843852e-07,
+          "max_frame_step": 0.05913703143596649,
+          "movement": 1.3310889601707458,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 2.999704464357591,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.5907371683814846,
+          "max_arm_frame_acceleration_degrees": 0.48938844347755556,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "dwarf_infernal_warlock_v1",
+      "race": "dwarf",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.3657139822709083e-07,
+          "max_frame_step": 0.002650192938745022,
+          "movement": 0.12093423306941986,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.9382887984693782
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 4.898587368981641e-19,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.4600096599955427e-07,
+          "max_frame_step": 0.0783073753118515,
+          "movement": 0.5960998088121414,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 1.4901161193847656e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 19.832984217506105
+          },
+          "max_arm_frame_rotation_degrees": 0.773286056741929,
+          "max_arm_frame_acceleration_degrees": 0.06852804166478502,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.7881393432617188e-07,
+          "max_frame_step": 0.05913703143596649,
+          "movement": 1.3310889601707458,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 2.999704464357591,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.5907371683814846,
+          "max_arm_frame_acceleration_degrees": 0.48938844347755556,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "dwarf_necromancer_v1",
+      "race": "dwarf",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.3657139822709083e-07,
+          "max_frame_step": 0.002650192938745022,
+          "movement": 0.12093423306941986,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.9382887984693782
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 4.898587368981641e-19,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.4600096599955427e-07,
+          "max_frame_step": 0.0783073753118515,
+          "movement": 0.5960998088121414,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 1.4901161193847656e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 19.832984217506105
+          },
+          "max_arm_frame_rotation_degrees": 0.773286056741929,
+          "max_arm_frame_acceleration_degrees": 0.06852804166478502,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.7881393432617188e-07,
+          "max_frame_step": 0.05913703143596649,
+          "movement": 1.3310889601707458,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 2.999704464357591,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.5907371683814846,
+          "max_arm_frame_acceleration_degrees": 0.48938844347755556,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "dwarf_druid_v1",
+      "race": "dwarf",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.3657139822709083e-07,
+          "max_frame_step": 0.002650192938745022,
+          "movement": 0.12093423306941986,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.9301954511897361
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 4.898587368981641e-19,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.3657139822709083e-07,
+          "max_frame_step": 0.0783073753118515,
+          "movement": 0.5960998088121414,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 1.4901161193847656e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 19.807068772247785
+          },
+          "max_arm_frame_rotation_degrees": 0.773286056741929,
+          "max_arm_frame_acceleration_degrees": 0.06852804166478502,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.7120130796843852e-07,
+          "max_frame_step": 0.05913703143596649,
+          "movement": 1.3310889601707458,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 2.999704464357591,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.5907371683814846,
+          "max_arm_frame_acceleration_degrees": 0.48938844347755556,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "dwarf_arcanist_v1",
+      "race": "dwarf",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.3657139822709083e-07,
+          "max_frame_step": 0.002650192938745022,
+          "movement": 0.12093423306941986,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.9301954511897361
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 4.898587368981641e-19,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.3657139822709083e-07,
+          "max_frame_step": 0.0783073753118515,
+          "movement": 0.5960998088121414,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 1.4901161193847656e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 19.807068772247785
+          },
+          "max_arm_frame_rotation_degrees": 0.773286056741929,
+          "max_arm_frame_acceleration_degrees": 0.06852804166478502,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.7120130796843852e-07,
+          "max_frame_step": 0.05913703143596649,
+          "movement": 1.3310889601707458,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 2.999704464357591,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.5907371683814846,
+          "max_arm_frame_acceleration_degrees": 0.48938844347755556,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "dwarf_elementalist_v1",
+      "race": "dwarf",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.3657139822709083e-07,
+          "max_frame_step": 0.002650192938745022,
+          "movement": 0.12093423306941986,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 1.9301954511897361
+          },
+          "max_arm_frame_rotation_degrees": 0.055952909680744456,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 4.898587368981641e-19,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.3657139822709083e-07,
+          "max_frame_step": 0.0783073753118515,
+          "movement": 0.5960998088121414,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 1.4901161193847656e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 19.807068772247785
+          },
+          "max_arm_frame_rotation_degrees": 0.773286056741929,
+          "max_arm_frame_acceleration_degrees": 0.06852804166478502,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": 0.0,
+          "max_joint_gap_m": 1.7120130796843852e-07,
+          "max_frame_step": 0.05913703143596649,
+          "movement": 1.3310889601707458,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 2.999704464357591,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.5907371683814846,
+          "max_arm_frame_acceleration_degrees": 0.48938844347755556,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "orc_sacred_cleric_v1",
+      "race": "orc",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 3.577054704474748e-07,
+          "max_frame_step": 0.0016698967665433884,
+          "movement": 0.06898888200521469,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 2.0725530286354923
+          },
+          "max_arm_frame_rotation_degrees": 0.07912936237050427,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 9.797174737963282e-19,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 2.4755668231600746e-07,
+          "max_frame_step": 0.05409909784793854,
+          "movement": 0.4301268719136715,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 13.451448829730335
+          },
+          "max_arm_frame_rotation_degrees": 0.9462522731794509,
+          "max_arm_frame_acceleration_degrees": 0.07912936237050427,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 3.7726726833498965e-07,
+          "max_frame_step": 0.06583642959594727,
+          "movement": 1.4623750448226929,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 3.999955572784928,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.847324750497238,
+          "max_arm_frame_acceleration_degrees": 0.5787820126955353,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "orc_infernal_warlock_v1",
+      "race": "orc",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 2.5288109106536417e-07,
+          "max_frame_step": 0.0016646930016577244,
+          "movement": 0.06898888200521469,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 2.078586860436964
+          },
+          "max_arm_frame_rotation_degrees": 0.07912936237050427,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 9.797174737963282e-19,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 2.4755668231600746e-07,
+          "max_frame_step": 0.05409909784793854,
+          "movement": 0.4301268719136715,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 13.476502817379588
+          },
+          "max_arm_frame_rotation_degrees": 0.9462522731794509,
+          "max_arm_frame_acceleration_degrees": 0.07912936237050427,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 2.8115454709698567e-07,
+          "max_frame_step": 0.06578338146209717,
+          "movement": 1.467573881149292,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 4.000151513836743,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.847528375511869,
+          "max_arm_frame_acceleration_degrees": 0.5787820126955353,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "orc_necromancer_v1",
+      "race": "orc",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 2.5288109106536417e-07,
+          "max_frame_step": 0.0016646930016577244,
+          "movement": 0.06898888200521469,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 2.078586860436964
+          },
+          "max_arm_frame_rotation_degrees": 0.07912936237050427,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 9.797174737963282e-19,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 2.4755668231600746e-07,
+          "max_frame_step": 0.05409909784793854,
+          "movement": 0.4301268719136715,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 13.476502817379588
+          },
+          "max_arm_frame_rotation_degrees": 0.9462522731794509,
+          "max_arm_frame_acceleration_degrees": 0.07912936237050427,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 2.8115454709698567e-07,
+          "max_frame_step": 0.06578338146209717,
+          "movement": 1.467573881149292,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 4.000151513836743,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.847528375511869,
+          "max_arm_frame_acceleration_degrees": 0.5787820126955353,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "orc_druid_v1",
+      "race": "orc",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 3.577054704474748e-07,
+          "max_frame_step": 0.0016698967665433884,
+          "movement": 0.06898888200521469,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 2.0725530286354923
+          },
+          "max_arm_frame_rotation_degrees": 0.07912936237050427,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 9.797174737963282e-19,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 2.4755668231600746e-07,
+          "max_frame_step": 0.05409909784793854,
+          "movement": 0.4301268719136715,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 13.451448829730335
+          },
+          "max_arm_frame_rotation_degrees": 0.9462522731794509,
+          "max_arm_frame_acceleration_degrees": 0.07912936237050427,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 3.7726726833498965e-07,
+          "max_frame_step": 0.06583642959594727,
+          "movement": 1.4623750448226929,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 3.999955572784928,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.847324750497238,
+          "max_arm_frame_acceleration_degrees": 0.5787820126955353,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "orc_arcanist_v1",
+      "race": "orc",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 3.577054704474748e-07,
+          "max_frame_step": 0.0016698967665433884,
+          "movement": 0.06898888200521469,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 2.0725530286354923
+          },
+          "max_arm_frame_rotation_degrees": 0.07912936237050427,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 9.797174737963282e-19,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 2.4755668231600746e-07,
+          "max_frame_step": 0.05409909784793854,
+          "movement": 0.4301268719136715,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 13.451448829730335
+          },
+          "max_arm_frame_rotation_degrees": 0.9462522731794509,
+          "max_arm_frame_acceleration_degrees": 0.07912936237050427,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 3.7726726833498965e-07,
+          "max_frame_step": 0.06583642959594727,
+          "movement": 1.4623750448226929,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 3.999955572784928,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.847324750497238,
+          "max_arm_frame_acceleration_degrees": 0.5787820126955353,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    },
+    {
+      "stem": "orc_elementalist_v1",
+      "race": "orc",
+      "clips": {
+        "idle": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": true,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 3.577054704474748e-07,
+          "max_frame_step": 0.0016698967665433884,
+          "movement": 0.06898888200521469,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 2.0725530286354923
+          },
+          "max_arm_frame_rotation_degrees": 0.07912936237050427,
+          "max_arm_frame_acceleration_degrees": 0,
+          "hand_forearm_torso_intersections": 0
+        },
+        "walk": {
+          "frames": 73,
+          "seconds": 1.5,
+          "loop": true,
+          "end_to_start_error": 9.797174737963282e-19,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 2.4755668231600746e-07,
+          "max_frame_step": 0.05409909784793854,
+          "movement": 0.4301268719136715,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 2.9802322387695312e-08,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 0,
+            "r": 13.451448829730335
+          },
+          "max_arm_frame_rotation_degrees": 0.9462522731794509,
+          "max_arm_frame_acceleration_degrees": 0.07912936237050427,
+          "hand_forearm_torso_intersections": 0
+        },
+        "spell": {
+          "frames": 145,
+          "seconds": 3.0,
+          "loop": false,
+          "end_to_start_error": 0.0,
+          "min_ground_z": -3.316330321467831e-09,
+          "max_joint_gap_m": 3.7726726833498965e-07,
+          "max_frame_step": 0.06583642959594727,
+          "movement": 1.4623750448226929,
+          "max_planted_foot_z_error_m": 0,
+          "max_planted_foot_slide_m": 0,
+          "staff_forearm_intersections": 0,
+          "staff_hand_detachments": 0,
+          "max_elbow_axial_roll_degrees": 0,
+          "max_wrist_rotation_degrees": {
+            "l": 3.999955572784928,
+            "r": 0
+          },
+          "max_arm_frame_rotation_degrees": 3.847324750497238,
+          "max_arm_frame_acceleration_degrees": 0.5787820126955353,
+          "hand_forearm_torso_intersections": 0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "distinct_animation_states": true,
+  "flying": true,
+  "gameplay_preserved": true,
+  "grand_manifestation": true,
+  "idle_playing_on_real_unit": true,
+  "one_shots_return_to_idle_or_walk": true,
+  "path_transition_continuity": false,
+  "real_unit_setup": true,
+  "runtime_scale": 1.0,
+  "status": "PASS",
+  "views": [
+    "godot_three_quarter",
+    "godot_front",
+    "godot_side",
+    "godot_back",
+    "godot_game_view"
+  ],
+  "walk_attack_spell_hooks": true
+}

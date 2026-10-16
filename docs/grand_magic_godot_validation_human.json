@@ -1,0 +1,67 @@
+{
+	"assets": [
+		{
+			"asset": "sacred_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.47500002384186,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2100
+		},
+		{
+			"asset": "infernal_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.29449987411499,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1352
+		},
+		{
+			"asset": "necromancy_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.73499989509583,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1740
+		},
+		{
+			"asset": "druidic_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.79500007629395,
+				1.8400000333786
+			],
+			"meshes": 7,
+			"triangles": 924
+		},
+		{
+			"asset": "arcane_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				2.2081081867218,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1492
+		},
+		{
+			"asset": "elemental_ritual_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.45652294158936,
+				1.8400000333786
+			],
+			"meshes": 7,
+			"triangles": 1392
+		}
+	],
+	"problems": [],
+	"status": "PASS",
+	"verified": 6
+}

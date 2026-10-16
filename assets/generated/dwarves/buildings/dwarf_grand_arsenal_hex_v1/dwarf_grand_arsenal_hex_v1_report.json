@@ -1,0 +1,143 @@
+{
+  "name": "Dwarf_Grand_Arsenal_Hex_V1",
+  "display_name": "Grande Arsenal — Anões",
+  "gameplay_building_id": "v2_building_grand_arsenal",
+  "trains": [
+    "v2_legendary_siege_colossus"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 1908,
+  "editable_parts": 157,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.4155000448226929
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.4155000448226929
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 948,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Arsenal anão de máquinas: abóbada aberta de granito, duas torres de fundição cintadas de cobre, pórtico de montagem e chassi de cerco com caldeira e pistões. Evolui a oficina básica para engenharia pesada, com volumetria industrial própria.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "dwarf",
+  "military_role": "siege",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_siege_arsenal",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "dwarf_siege",
+  "material_reference": "assets/generated/dwarves/buildings/dwarf_siege_arsenal_hex_v1",
+  "roof_rgb": [
+    67,
+    82,
+    89
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 85,
+        "iterations": 8
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [],
+      "open_passages": [
+        {
+          "name": "Colossus_Assembly_Vault",
+          "lo": [
+            -0.47,
+            -0.050000011920928955,
+            0.16200000405311585
+          ],
+          "hi": [
+            -0.35,
+            0.15499998807907106,
+            0.6359999537467956
+          ],
+          "blockers": []
+        }
+      ]
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "dwarf_grand_arsenal_hex_v1.glb",
+    "bytes": 720472,
+    "meshes": 7,
+    "primitives": 7,
+    "triangles": 1908,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "dwarf_grand_arsenal_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "dwarf_grand_arsenal_hex_v1_albedo",
+        "bytes": 556282,
+        "sha256": "def5e8b9f1fa05a11f1406ecbcd94dcfe540b9a8ed7c5a7ead834fc9a44da1e4"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

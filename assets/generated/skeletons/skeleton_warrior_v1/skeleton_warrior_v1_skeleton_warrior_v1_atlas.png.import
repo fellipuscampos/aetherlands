@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dfulw3fkmymex"
-path="res://.godot/imported/skeleton_warrior_v1_skeleton_warrior_v1_atlas.png-57fff9de9496318502c5f7155f50a0b4.ctex"
+path.bptc="res://.godot/imported/skeleton_warrior_v1_skeleton_warrior_v1_atlas.png-57fff9de9496318502c5f7155f50a0b4.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "a36011ea98f94be65fdc741345bc68ca"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/skeletons/skeleton_warrior_v1/skeleton_warrior_v1_skeleton_warrior_v1_atlas.png"
-dest_files=["res://.godot/imported/skeleton_warrior_v1_skeleton_warrior_v1_atlas.png-57fff9de9496318502c5f7155f50a0b4.ctex"]
+dest_files=["res://.godot/imported/skeleton_warrior_v1_skeleton_warrior_v1_atlas.png-57fff9de9496318502c5f7155f50a0b4.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

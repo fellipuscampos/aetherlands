@@ -1,0 +1,357 @@
+{
+  "stage": "pixel_terrain_v1",
+  "generator": "built-in image_gen",
+  "textures": 15,
+  "array_layers": 14,
+  "pixels_per_world_unit": 64,
+  "repeat_world_units": 2,
+  "filter": "nearest_mipmap",
+  "palette_colors_maximum": 24,
+  "assets": [
+    {
+      "stem": "grass",
+      "name": "Grama temperada",
+      "layer": 0,
+      "path": "assets/textures/terrain/pixel_v1/grass_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/grass_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "614e79758ff443be3672e9a8c04c12b920d25e0fd7ba08a2231f117647fa2c1e",
+      "bytes": 34095,
+      "linear_mean_luma": 0.17315606650230597,
+      "wrap_boundary_ratio": [
+        0.796,
+        0.824
+      ]
+    },
+    {
+      "stem": "dry_grass",
+      "name": "Capim seco",
+      "layer": 1,
+      "path": "assets/textures/terrain/pixel_v1/dry_grass_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/dry_grass_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "be582494e322177fd96b22e181c6527a2d9698f20b7d416314d34e16de3f7a82",
+      "bytes": 36086,
+      "linear_mean_luma": 0.2755573141033827,
+      "wrap_boundary_ratio": [
+        0.661,
+        0.854
+      ]
+    },
+    {
+      "stem": "forest_floor",
+      "name": "Chão de floresta",
+      "layer": 2,
+      "path": "assets/textures/terrain/pixel_v1/forest_floor_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/forest_floor_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "2ad0b0603bcdca92ca7080c22dfedb995bbaf494f4c791ab26d56d9764c69663",
+      "bytes": 35591,
+      "linear_mean_luma": 0.08061167767471783,
+      "wrap_boundary_ratio": [
+        0.565,
+        0.632
+      ]
+    },
+    {
+      "stem": "tundra",
+      "name": "Tundra",
+      "layer": 3,
+      "path": "assets/textures/terrain/pixel_v1/tundra_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/tundra_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "91c426e3eb48559297a7623d2dcab329a737e80a25e9a4487f2cb30f87e90e9c",
+      "bytes": 41398,
+      "linear_mean_luma": 0.21620669575796295,
+      "wrap_boundary_ratio": [
+        0.59,
+        0.649
+      ]
+    },
+    {
+      "stem": "dirt",
+      "name": "Terra e colinas",
+      "layer": 4,
+      "path": "assets/textures/terrain/pixel_v1/dirt_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/dirt_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "6c9016efbeb9c3768db68b2f69af2b6b784eed26a2ddabc4b28ede385754e66d",
+      "bytes": 28148,
+      "linear_mean_luma": 0.1505673367884625,
+      "wrap_boundary_ratio": [
+        1.023,
+        0.79
+      ]
+    },
+    {
+      "stem": "snow",
+      "name": "Neve",
+      "layer": 5,
+      "path": "assets/textures/terrain/pixel_v1/snow_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/snow_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "ed2b198734a9290762dda6fe262b0f021ffaf507929009e82395f4dcda1caf65",
+      "bytes": 18496,
+      "linear_mean_luma": 0.7690054312882464,
+      "wrap_boundary_ratio": [
+        0.735,
+        1.525
+      ]
+    },
+    {
+      "stem": "ice",
+      "name": "Gelo",
+      "layer": 6,
+      "path": "assets/textures/terrain/pixel_v1/ice_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/ice_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "c466041e370295f97c83b7f396be004c66d653c26464bd12065b408c7a75806d",
+      "bytes": 21095,
+      "linear_mean_luma": 0.48315295828833005,
+      "wrap_boundary_ratio": [
+        0.493,
+        1.01
+      ]
+    },
+    {
+      "stem": "sand",
+      "name": "Areia",
+      "layer": 7,
+      "path": "assets/textures/terrain/pixel_v1/sand_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/sand_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "6a59df9483a0f17efce96ea707df5ce5f592a91e28cc60751c5f7d460e34a58a",
+      "bytes": 25725,
+      "linear_mean_luma": 0.42414402533200307,
+      "wrap_boundary_ratio": [
+        0.821,
+        0.467
+      ]
+    },
+    {
+      "stem": "rock",
+      "name": "Rocha e falésias",
+      "layer": 8,
+      "path": "assets/textures/terrain/pixel_v1/rock_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/rock_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "6d70ce2f285ae37e459fd3c103dfdb3190ca38f22af3c6fcd5bdd999d9174ff7",
+      "bytes": 34382,
+      "linear_mean_luma": 0.2056197013403273,
+      "wrap_boundary_ratio": [
+        0.483,
+        0.746
+      ]
+    },
+    {
+      "stem": "basalt",
+      "name": "Basalto",
+      "layer": 9,
+      "path": "assets/textures/terrain/pixel_v1/basalt_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/basalt_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "7e006e3702d3a49c9d90240fb16536500806c2a2e2b5d920ef7746357147fc0f",
+      "bytes": 32670,
+      "linear_mean_luma": 0.06382195582396254,
+      "wrap_boundary_ratio": [
+        0.478,
+        0.848
+      ]
+    },
+    {
+      "stem": "ash",
+      "name": "Cinzas vulcânicas",
+      "layer": 10,
+      "path": "assets/textures/terrain/pixel_v1/ash_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/ash_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "17570ff3c1e9e9fbda8c98f77908d53d7a1606da1b174d666b7b55948b2b4fc0",
+      "bytes": 25949,
+      "linear_mean_luma": 0.20942328335571317,
+      "wrap_boundary_ratio": [
+        0.531,
+        1.045
+      ]
+    },
+    {
+      "stem": "crystal",
+      "name": "Cristal arcano",
+      "layer": 11,
+      "path": "assets/textures/terrain/pixel_v1/crystal_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/crystal_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "21adde29ce5a7f91784fb80f654b7a601486b8382fbca7a294783ff75dfbd471",
+      "bytes": 32862,
+      "linear_mean_luma": 0.22719478025596504,
+      "wrap_boundary_ratio": [
+        0.794,
+        0.754
+      ]
+    },
+    {
+      "stem": "mystic_soil",
+      "name": "Solo místico",
+      "layer": 12,
+      "path": "assets/textures/terrain/pixel_v1/mystic_soil_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/mystic_soil_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "ce78430e76e02bcabeb37209ea2630ff2b1ef218347d01a747dba59a2ed3e859",
+      "bytes": 33343,
+      "linear_mean_luma": 0.2412085732002886,
+      "wrap_boundary_ratio": [
+        0.882,
+        0.98
+      ]
+    },
+    {
+      "stem": "magma",
+      "name": "Crosta de magma",
+      "layer": 13,
+      "path": "assets/textures/terrain/pixel_v1/magma_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/magma_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "c596d536a3448de47bcd0ab5752b1011683eb5be52505df1836f33b428a0ef1f",
+      "bytes": 27590,
+      "linear_mean_luma": 0.0648262630546867,
+      "wrap_boundary_ratio": [
+        0.418,
+        0.721
+      ]
+    },
+    {
+      "stem": "water",
+      "name": "Detalhe de água",
+      "layer": null,
+      "path": "assets/textures/terrain/pixel_v1/water_albedo.png",
+      "source": "art_source/terrain_pixel_review/sources/water_source.png",
+      "source_resolution": [
+        1254,
+        1254
+      ],
+      "resolution": [
+        128,
+        128
+      ],
+      "colors": 24,
+      "sha256": "c7f32bedbc1441bb4e42c4583bb76ce66eb1fc5f1a2a266321dfd31fca6f91eb",
+      "bytes": 18012,
+      "linear_mean_luma": 0.17769242375132188,
+      "wrap_boundary_ratio": [
+        1.148,
+        0.874
+      ]
+    }
+  ]
+}

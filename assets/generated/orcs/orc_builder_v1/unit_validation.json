@@ -1,0 +1,11 @@
+{
+  "builder_path": "res://assets/generated/orcs/orc_builder_v1/orc_builder_v1.glb",
+  "consumed_visual_cleanup": true,
+  "idle_walk_work": true,
+  "mechanics_preserved": true,
+  "other_race_fallbacks_preserved": true,
+  "race": "orc",
+  "real_unit_setup": true,
+  "status": "PASS",
+  "work_returns_to_idle": true
+}

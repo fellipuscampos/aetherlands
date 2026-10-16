@@ -1,0 +1,218 @@
+{
+  "name": "Elf_Guardian_Hall_Hex_V1",
+  "display_name": "Salão dos Guardiões dos Elfos",
+  "gameplay_building_id": "v2_building_guardian_hall",
+  "trains": [
+    "v2_unit_shieldbearer",
+    "v2_unit_guardian",
+    "v2_unit_sentinel"
+  ],
+  "excludes": [
+    "v2_legendary_guardian_champion"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 2948,
+  "editable_parts": 162,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.457279920578003
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.457279920578003
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units; pointy-top tile radius 1, military foundation radius .92, placement scale tile_radius. Asset only, no integration.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1223,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Cantaria clara com armação esbelta de madeira, mãos-francesas em forma de galhos e coberturas verdes com cantos facetados e beirais ascendentes. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.222,
+    0.367
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "unit_class": "tank",
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "layout_source": "orc_guardian_hall_hex_v1",
+  "hex_tile": {
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "placement_scale": "tile_radius",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "faction_tint": "Clan cloth and shield/horse blanket accents isolated in Faction mesh; architecture keeps its civilization palette. No runtime integration.",
+  "export": {
+    "file": "elf_guardian_hall_hex_v1.glb",
+    "bytes": 1015976,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2948,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_guardian_hall_hex_v1_emission",
+        "bytes": 79236,
+        "sha256": "3e190e178b0ca762b55b5dbaf5c3f6e8714bed5fbcb3025dec971836373b8093"
+      },
+      {
+        "image": "elf_guardian_hall_hex_v1_albedo",
+        "bytes": 738226,
+        "sha256": "a1a6273b7b2d2b849908587ebc607972146b4fdcc1a03de12fa72d2d4c3234b5"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "elf",
+    "design": "Cantaria clara com armação esbelta de madeira, mãos-francesas em forma de galhos e coberturas verdes com cantos facetados e beirais ascendentes.",
+    "geometry_changes": [
+      "roof_geometry:Hide_Roof_Course_0",
+      "roof_geometry:Hide_Roof_Course_1",
+      "roof_geometry:Hide_Roof_Course_2",
+      "roof_geometry:Hide_Roof_Course_3",
+      "roof_geometry:Hide_Roof_Course_4",
+      "roof_geometry:Hide_Roof_Course_5",
+      "branch_pier:Hall_Heavy_Post_0",
+      "branch_pier:Hall_Heavy_Post_1",
+      "branch_pier:Hall_Heavy_Post_2",
+      "branch_pier:Hall_Heavy_Post_3",
+      "branch_pier:Hall_Heavy_Post_4",
+      "upper_structure_proportion:1.22",
+      "remove_inherited_roof_lashing:Roof_Iron_Front_Binding_0",
+      "remove_inherited_roof_lashing:Roof_Iron_Front_Binding_1",
+      "remove_inherited_roof_lashing:Roof_Iron_Front_Binding_2",
+      "remove_inherited_roof_lashing:Roof_Iron_Front_Binding_3",
+      "remove_inherited_roof_lashing:Roof_Iron_Front_Binding_4",
+      "remove_inherited_roof_lashing:Roof_Iron_Front_Binding_5"
+    ],
+    "roof_braces": [
+      {
+        "post": "Hall_Heavy_Post_0",
+        "roof": "Hide_Roof_Course_0",
+        "end": [
+          -0.15000000596046448,
+          0.011999999172985554,
+          0.7339999675750732
+        ]
+      },
+      {
+        "post": "Hall_Heavy_Post_0",
+        "roof": "Hide_Roof_Course_0",
+        "end": [
+          -0.2800000011920929,
+          0.1420000046491623,
+          0.7339999675750732
+        ]
+      },
+      {
+        "post": "Hall_Heavy_Post_1",
+        "roof": "Hide_Roof_Course_0",
+        "end": [
+          0.29500001668930054,
+          0.011999999172985554,
+          0.7339999675750732
+        ]
+      },
+      {
+        "post": "Hall_Heavy_Post_1",
+        "roof": "Hide_Roof_Course_0",
+        "end": [
+          0.42500001192092896,
+          0.1420000046491623,
+          0.7339999675750732
+        ]
+      },
+      {
+        "post": "Hall_Heavy_Post_2",
+        "roof": "Hide_Roof_Course_0",
+        "end": [
+          0.29500001668930054,
+          0.36000001430511475,
+          0.7339999675750732
+        ]
+      },
+      {
+        "post": "Hall_Heavy_Post_2",
+        "roof": "Hide_Roof_Course_0",
+        "end": [
+          0.42500001192092896,
+          0.32750001549720764,
+          0.7339999675750732
+        ]
+      },
+      {
+        "post": "Hall_Heavy_Post_3",
+        "roof": "Hide_Roof_Course_0",
+        "end": [
+          0.07500000298023224,
+          0.48000001907348633,
+          0.7339999675750732
+        ]
+      },
+      {
+        "post": "Hall_Heavy_Post_4",
+        "roof": "Hide_Roof_Course_0",
+        "end": [
+          -0.15000000596046448,
+          0.36000001430511475,
+          0.7339999675750732
+        ]
+      },
+      {
+        "post": "Hall_Heavy_Post_4",
+        "roof": "Hide_Roof_Course_0",
+        "end": [
+          -0.2800000011920929,
+          0.32750001549720764,
+          0.7339999675750732
+        ]
+      }
+    ],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "name": "City_Level_4_Hex_V1",
+  "display_name": "Centro da Cidade — Nível IV",
+  "gameplay_building_id": "city_center_level_4",
+  "trains": [],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 2944,
+  "editable_parts": 223,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7274613380432129,
+      -0.8399999737739563,
+      0.0
+    ],
+    "max": [
+      0.7274613380432129,
+      0.8399999737739563,
+      2.184999942779541
+    ]
+  },
+  "dimensions_m": [
+    1.4549226760864258,
+    1.6799999475479126,
+    2.184999942779541
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native map units, pointy-top tile radius 1; scales by City.tile_radius. Same .84 foundation and reserved fortification border as all previous city levels.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1405,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Final City IV royal palace: wider and taller central donjon, highest owner flag, three stepped blue tower roofs with gold caps, royal crowns and gold stonework fillets. Recognizable balcony, twin front turrets, original entrance and civic court. Small faction-colored entrance carpet. Same hex foundation; no perimeter walls or fortification geometry.",
+  "door_clearance_m": [
+    0.188,
+    0.296
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "hex_tile": {
+    "tile_circumradius": 1.0,
+    "foundation_circumradius": 0.84,
+    "orientation": "pointy-top",
+    "placement_scale": "tile_radius",
+    "max_half_plane_blender": 0.7274613380432129,
+    "reserved_border_for_fortification": true
+  },
+  "city_level": 4,
+  "remaining_levels": [],
+  "includes_perimeter_walls": false,
+  "evolved_from": "city_level_3_hex_v1",
+  "faction_tint": "Neutral cloth and entrance carpet in Faction mesh, tinted per owner in City.gd.",
+  "export": {
+    "file": "city_level_4_hex_v1.glb",
+    "bytes": 1058356,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2944,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "city_level_4_hex_v1_emission",
+        "bytes": 79091,
+        "sha256": "99a2b1e359c12c298ac5df49e61167307bd6ff686b6c7899e04acb27ccfbfd95"
+      },
+      {
+        "image": "city_level_4_hex_v1_albedo",
+        "bytes": 767864,
+        "sha256": "61cadd6df2a049415dd4ce1ddb80a74515c52a02a92e17d52db628a69f609db5"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "godot_validation": {
+    "comparison": "City III left, City IV right; both without fortification",
+    "dimensions_godot": [
+      1.45492279529572,
+      2.18499994277954,
+      1.67999994754791
+    ],
+    "faction_tint": true,
+    "ground_y": 0.0199999995529652,
+    "includes_perimeter_walls": false,
+    "inside_reserved_fortification_border": true,
+    "label_y": 2.48499989509583,
+    "life_bar_y": 2.73499989509583,
+    "max_half_plane": 0.727478034031046,
+    "meshes": 8,
+    "outside_hex_vertices": 0,
+    "problems": [],
+    "screenshot": "res://.godot/city_level_4_hex_v1_ingame_review.png",
+    "status": "PASS",
+    "tile_ground_y": 0.0199999995529652,
+    "triangles": 2944,
+    "wall_inner_apothem": 0.767063879557372,
+    "placement_path": "HexGrid.found_city, followed by City.apply_city_level(3) and City.apply_city_level(4)",
+    "non_headless_launches": 1,
+    "temporary_review_scene_removed": true
+  },
+  "tests": {
+    "scripts": [
+      "test_city_center_model.gd",
+      "test_city.gd",
+      "test_v2_city_level.gd",
+      "test_v2_fortification.gd"
+    ],
+    "passed": 117,
+    "assertions": 639,
+    "status": "PASS",
+    "covers": [
+      "all four city models selected by upgrade level",
+      "preserved city state and labels",
+      "tile radius scaling",
+      "independent purchased fortification",
+      "capture recolors only owner surfaces",
+      "shared atlas unchanged",
+      "name, HP and shield above final banner",
+      "restoring level I lowers UI again"
+    ]
+  }
+}

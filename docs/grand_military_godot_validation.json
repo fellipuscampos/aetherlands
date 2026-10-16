@@ -1,0 +1,247 @@
+{
+	"assets": [
+		{
+			"asset": "guardian_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.37699997425079,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1232
+		},
+		{
+			"asset": "warrior_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.16999983787537,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1652
+		},
+		{
+			"asset": "ranger_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.75999999046326,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1532
+		},
+		{
+			"asset": "cavalry_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.44249987602234,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2208
+		},
+		{
+			"asset": "rogue_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.47699999809265,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1696
+		},
+		{
+			"asset": "grand_arsenal_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.41999983787537,
+				1.8400000333786
+			],
+			"meshes": 7,
+			"triangles": 1956
+		},
+		{
+			"asset": "orc_guardian_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.692999958992,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1980
+		},
+		{
+			"asset": "orc_warrior_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.16999983787537,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1416
+		},
+		{
+			"asset": "orc_ranger_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.78299999237061,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1884
+		},
+		{
+			"asset": "orc_cavalry_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.375,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2492
+		},
+		{
+			"asset": "orc_rogue_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.32099997997284,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1948
+		},
+		{
+			"asset": "orc_grand_arsenal_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.40550005435944,
+				1.8400000333786
+			],
+			"meshes": 7,
+			"triangles": 2328
+		},
+		{
+			"asset": "dwarf_guardian_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.18999981880188,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1196
+		},
+		{
+			"asset": "dwarf_warrior_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.21999990940094,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1312
+		},
+		{
+			"asset": "dwarf_ranger_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.46200001239777,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1952
+		},
+		{
+			"asset": "dwarf_cavalry_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.47250008583069,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1668
+		},
+		{
+			"asset": "dwarf_rogue_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.16999983787537,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1256
+		},
+		{
+			"asset": "dwarf_grand_arsenal_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.41550004482269,
+				1.8400000333786
+			],
+			"meshes": 7,
+			"triangles": 1908
+		},
+		{
+			"asset": "elf_guardian_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.36099994182587,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2312
+		},
+		{
+			"asset": "elf_warrior_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.30750000476837,
+				1.8400000333786
+			],
+			"meshes": 7,
+			"triangles": 1852
+		},
+		{
+			"asset": "elf_ranger_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				2.27670001983643,
+				1.8400000333786
+			],
+			"meshes": 7,
+			"triangles": 2112
+		},
+		{
+			"asset": "elf_cavalry_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.60710000991821,
+				1.8400000333786
+			],
+			"meshes": 7,
+			"triangles": 2628
+		},
+		{
+			"asset": "elf_rogue_mastery_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.66059994697571,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 2448
+		},
+		{
+			"asset": "elf_grand_arsenal_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.71410000324249,
+				1.8400000333786
+			],
+			"meshes": 6,
+			"triangles": 2228
+		}
+	],
+	"problems": [],
+	"status": "PASS",
+	"verified": 24
+}

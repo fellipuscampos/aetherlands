@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://xq2cfni408lf"
-path="res://.godot/imported/troll_blocky_NailTex_human_default_R.png-5e0a47b33c871c786ce56fd655fa6fb9.ctex"
+path.bptc="res://.godot/imported/troll_blocky_NailTex_human_default_R.png-5e0a47b33c871c786ce56fd655fa6fb9.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "f7858b320e188b581b61d490c786baf1"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/trolls/troll_blocky/troll_blocky_NailTex_human_default_R.png"
-dest_files=["res://.godot/imported/troll_blocky_NailTex_human_default_R.png-5e0a47b33c871c786ce56fd655fa6fb9.ctex"]
+dest_files=["res://.godot/imported/troll_blocky_NailTex_human_default_R.png-5e0a47b33c871c786ce56fd655fa6fb9.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

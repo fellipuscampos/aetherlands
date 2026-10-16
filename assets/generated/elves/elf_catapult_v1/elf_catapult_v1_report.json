@@ -1,0 +1,262 @@
+{
+  "stem": "elf_catapult_v1",
+  "source_stem": "catapult_v1",
+  "family": "siege",
+  "family_name": "Cerco",
+  "tier": 0,
+  "name": "Catapulta Élfica",
+  "gameplay_id": "v2_unit_catapult",
+  "character_height_m": 1.8,
+  "path": "res://assets/generated/elves/elf_catapult_v1/elf_catapult_v1.glb",
+  "design": "ash_torsion_mangonel",
+  "prefix": "Catapult",
+  "status": "PASS",
+  "pipeline": "Open Blender MCP localhost:9876",
+  "revision": "elf_siege_v1",
+  "geometry": {
+    "parts": 106,
+    "triangles": 2536,
+    "bounds_min": [
+      -0.7118529081344604,
+      -0.7943564057350159,
+      0.0
+    ],
+    "bounds_max": [
+      0.7118529081344604,
+      0.7479038834571838,
+      1.8000000715255737
+    ],
+    "dimensions": [
+      1.423705816268921,
+      1.5422602891921997,
+      1.8000000715255737
+    ],
+    "closed_meshes": true,
+    "uv_in_bounds": true
+  },
+  "texture": {
+    "size": 1024,
+    "density_px_per_m": 64,
+    "padding_px": 3,
+    "face_islands": 1120,
+    "paint_revision": 7,
+    "sha256": "655f901dd0a98d013712f49b3174196e8a671c42f87367b6b620782a8be2ad1d"
+  },
+  "rig": {
+    "bones": [
+      "root",
+      "body",
+      "wheel_l_front",
+      "wheel_r_front",
+      "wheel_l_back",
+      "wheel_r_back",
+      "weapon",
+      "loader"
+    ],
+    "rigid_weights": true,
+    "part_bones": {
+      "BedRail_-1": "body",
+      "RailBronzeCap_-1": "body",
+      "BedRail_1": "body",
+      "RailBronzeCap_1": "body",
+      "Axle_front": "body",
+      "CrossBeam_front": "body",
+      "Bearing_lfront": "body",
+      "Tire_wheel_l_front": "wheel_l_front",
+      "Rim_wheel_l_front": "wheel_l_front",
+      "Hub_wheel_l_front": "wheel_l_front",
+      "Cap_wheel_l_front": "wheel_l_front",
+      "Spoke_wheel_l_front_0": "wheel_l_front",
+      "Spoke_wheel_l_front_1": "wheel_l_front",
+      "Spoke_wheel_l_front_2": "wheel_l_front",
+      "Spoke_wheel_l_front_3": "wheel_l_front",
+      "Spoke_wheel_l_front_4": "wheel_l_front",
+      "Spoke_wheel_l_front_5": "wheel_l_front",
+      "Spoke_wheel_l_front_6": "wheel_l_front",
+      "Spoke_wheel_l_front_7": "wheel_l_front",
+      "Bearing_rfront": "body",
+      "Tire_wheel_r_front": "wheel_r_front",
+      "Rim_wheel_r_front": "wheel_r_front",
+      "Hub_wheel_r_front": "wheel_r_front",
+      "Cap_wheel_r_front": "wheel_r_front",
+      "Spoke_wheel_r_front_0": "wheel_r_front",
+      "Spoke_wheel_r_front_1": "wheel_r_front",
+      "Spoke_wheel_r_front_2": "wheel_r_front",
+      "Spoke_wheel_r_front_3": "wheel_r_front",
+      "Spoke_wheel_r_front_4": "wheel_r_front",
+      "Spoke_wheel_r_front_5": "wheel_r_front",
+      "Spoke_wheel_r_front_6": "wheel_r_front",
+      "Spoke_wheel_r_front_7": "wheel_r_front",
+      "Axle_back": "body",
+      "CrossBeam_back": "body",
+      "Bearing_lback": "body",
+      "Tire_wheel_l_back": "wheel_l_back",
+      "Rim_wheel_l_back": "wheel_l_back",
+      "Hub_wheel_l_back": "wheel_l_back",
+      "Cap_wheel_l_back": "wheel_l_back",
+      "Spoke_wheel_l_back_0": "wheel_l_back",
+      "Spoke_wheel_l_back_1": "wheel_l_back",
+      "Spoke_wheel_l_back_2": "wheel_l_back",
+      "Spoke_wheel_l_back_3": "wheel_l_back",
+      "Spoke_wheel_l_back_4": "wheel_l_back",
+      "Spoke_wheel_l_back_5": "wheel_l_back",
+      "Spoke_wheel_l_back_6": "wheel_l_back",
+      "Spoke_wheel_l_back_7": "wheel_l_back",
+      "Bearing_rback": "body",
+      "Tire_wheel_r_back": "wheel_r_back",
+      "Rim_wheel_r_back": "wheel_r_back",
+      "Hub_wheel_r_back": "wheel_r_back",
+      "Cap_wheel_r_back": "wheel_r_back",
+      "Spoke_wheel_r_back_0": "wheel_r_back",
+      "Spoke_wheel_r_back_1": "wheel_r_back",
+      "Spoke_wheel_r_back_2": "wheel_r_back",
+      "Spoke_wheel_r_back_3": "wheel_r_back",
+      "Spoke_wheel_r_back_4": "wheel_r_back",
+      "Spoke_wheel_r_back_5": "wheel_r_back",
+      "Spoke_wheel_r_back_6": "wheel_r_back",
+      "Spoke_wheel_r_back_7": "wheel_r_back",
+      "DeckPlank_0": "body",
+      "DeckPlank_1": "body",
+      "DeckPlank_2": "body",
+      "DeckPlank_3": "body",
+      "DeckPlank_4": "body",
+      "DeckPlank_5": "body",
+      "DeckPlank_6": "body",
+      "DeckPlank_7": "body",
+      "TowShaft_-1": "body",
+      "BedStrap_(-1, -0.4644)": "body",
+      "BedStrap_(-1, 0.4644)": "body",
+      "TowShaft_1": "body",
+      "BedStrap_(1, -0.4644)": "body",
+      "BedStrap_(1, 0.4644)": "body",
+      "TorsionCheek_-1": "body",
+      "TorsionBundle_-1": "body",
+      "PivotCap_-1": "body",
+      "StopAFrame_-1": "body",
+      "StopFoot_-1": "body",
+      "TorsionCheek_1": "body",
+      "TorsionBundle_1": "body",
+      "PivotCap_1": "body",
+      "StopAFrame_1": "body",
+      "StopFoot_1": "body",
+      "PaddedStop": "body",
+      "ThrowingArm": "weapon",
+      "CupBase": "weapon",
+      "CupEdge_-1": "weapon",
+      "CupEdge_1": "weapon",
+      "LoadedStone": "weapon",
+      "ThrowingAxle": "weapon",
+      "Windlass_loader": "loader",
+      "WinchBearing_loader-1": "body",
+      "WinchEnd_loader-1": "loader",
+      "WinchBearing_loader1": "body",
+      "WinchEnd_loader1": "loader",
+      "Crank_loader": "loader",
+      "CrankGrip_loader": "loader",
+      "WoundCord_loader": "loader",
+      "LoadCord": "weapon",
+      "ToolChest": "body",
+      "ClothCover": "body"
+    },
+    "cord_endpoints_skinned": true
+  },
+  "clips": {
+    "Catapult_Idle": 2,
+    "Catapult_Walk": 2,
+    "Catapult_Attack": 2,
+    "Catapult_DemolitionAmmo": 3
+  },
+  "motion": {
+    "Catapult_Idle": {
+      "finite": true,
+      "minimum_z": 0.0,
+      "recovery_error": 0.0,
+      "movement": 0.0,
+      "samples": 6
+    },
+    "Catapult_Walk": {
+      "finite": true,
+      "minimum_z": 0.0,
+      "recovery_error": 0.0,
+      "movement": 1.9914451837539673,
+      "samples": 6
+    },
+    "Catapult_Attack": {
+      "finite": true,
+      "minimum_z": 0.0,
+      "recovery_error": 0.0,
+      "movement": 0.7720459699630737,
+      "samples": 6
+    },
+    "Catapult_DemolitionAmmo": {
+      "finite": true,
+      "minimum_z": 0.0,
+      "recovery_error": 0.0,
+      "movement": 0.8630978465080261,
+      "samples": 6
+    }
+  },
+  "height_convention": "Highest functional rest part: 1.80 m conventional / 2.00 m legendary",
+  "material_palette": {
+    "wood": [
+      173,
+      148,
+      100
+    ],
+    "heartwood": [
+      104,
+      89,
+      58
+    ],
+    "bronze": [
+      145,
+      117,
+      73
+    ],
+    "gold": [
+      195,
+      164,
+      91
+    ],
+    "steel": [
+      169,
+      184,
+      176
+    ],
+    "iron": [
+      70,
+      83,
+      79
+    ],
+    "rope": [
+      213,
+      201,
+      161
+    ],
+    "leather": [
+      94,
+      76,
+      49
+    ],
+    "green": [
+      61,
+      103,
+      82
+    ],
+    "ivory": [
+      204,
+      202,
+      173
+    ],
+    "stone": [
+      143,
+      151,
+      138
+    ]
+  },
+  "materials": 8,
+  "real_material_properties": true,
+  "animation_contract": "Human-equivalent clip names, durations and techniques; mechanism-specific choreography",
+  "anatomy_parts": 0,
+  "crew": false
+}

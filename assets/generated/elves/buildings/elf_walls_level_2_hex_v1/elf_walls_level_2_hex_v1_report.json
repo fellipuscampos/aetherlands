@@ -1,0 +1,63 @@
+{
+  "status": "PASS",
+  "name": "Elf_Walls_Level_2_Hex_V1",
+  "stem": "elf_walls_level_2_hex_v1",
+  "race": "elf",
+  "fortification_level": 2,
+  "display_name": "Muralhas II",
+  "pipeline": "Blender 5.2 MCP localhost:9876",
+  "material_source": "assets\\generated\\elves\\buildings\\elf_city_level_1_hex_v1\\elf_city_level_1_hex_v1.blend",
+  "texture_reuse": "Byte-identical approved elven city atlas; existing UV islands sampled",
+  "embedded_images": [
+    {
+      "name": "elf_city_level_1_hex_v1_emission",
+      "sha256": "97e3ec2cbf0234e74ce7d89a0789be3ed76abcaceffb0f3891b7b6d3e39abe30",
+      "bytes": 22162
+    },
+    {
+      "name": "elf_city_level_1_hex_v1_albedo",
+      "sha256": "2aa71f5d04384f88c479b051d9137c1c2b87689228f1783117abd9396a9504e1",
+      "bytes": 500898
+    }
+  ],
+  "triangles": 3924,
+  "editable_parts": 258,
+  "runtime_meshes": 2,
+  "source_boundary_sections": true,
+  "surface_cleanup": {
+    "removed_buried_and_shared_face_area": 5.367513379668585,
+    "source_parts": 258,
+    "visible_parts": 254,
+    "visible_faces": 1980,
+    "coplanar_overlaps_before": 415,
+    "coplanar_overlaps_after": 0,
+    "audit_includes_opposing_normals": true,
+    "atlas_bytes_unchanged": true
+  },
+  "shade": "Flat",
+  "height": 0.3330000042915344,
+  "native_tile_radius": 1.0,
+  "scales_with": "City.tile_radius",
+  "pointy_hex": true,
+  "wall_center_radius": 0.94,
+  "max_half_plane": 0.8530350923538208,
+  "tile_half_plane": 0.8660254037844386,
+  "minimum_city_foundation_clearance": 0.010105102118602716,
+  "city_foundation_radius": 0.84,
+  "includes_ground_plate": false,
+  "includes_city": false,
+  "bounds_blender": {
+    "min": [
+      -0.853035032749176,
+      -0.9850000143051147,
+      0.0
+    ],
+    "max": [
+      0.853035032749176,
+      0.9850000143051147,
+      0.3330000042915344
+    ]
+  },
+  "design": "Ivory stepped merlons, timber branch braces, emerald corner caps, leaf buds and an emerald portal.",
+  "mesh_vertex_compression": false
+}

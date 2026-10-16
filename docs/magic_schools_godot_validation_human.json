@@ -1,0 +1,67 @@
+{
+	"assets": [
+		{
+			"asset": "sacred_temple_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.21399998664856,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1452
+		},
+		{
+			"asset": "infernal_sanctum_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.08200001716614,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1444
+		},
+		{
+			"asset": "necromancy_ossuary_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.07700002193451,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1992
+		},
+		{
+			"asset": "druidic_circle_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.07700002193451,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1204
+		},
+		{
+			"asset": "arcane_conclave_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.51617622375488,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1852
+		},
+		{
+			"asset": "elemental_observatory_hex_v1",
+			"dimensions": [
+				1.59348678588867,
+				1.31759107112885,
+				1.8400000333786
+			],
+			"meshes": 8,
+			"triangles": 1820
+		}
+	],
+	"problems": [],
+	"status": "PASS",
+	"verified": 6
+}

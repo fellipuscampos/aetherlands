@@ -1,0 +1,98 @@
+{
+  "status": "PASS",
+  "verified": [
+    {
+      "race": "human",
+      "triangles": 1552,
+      "meshes": 4,
+      "embedded_textures_verified": true,
+      "waterline": true,
+      "map_footprint_fits_hex": true,
+      "clips": [
+        {
+          "clip": "idle",
+          "duration": 4.0,
+          "loop": true,
+          "flat_water": true
+        },
+        {
+          "clip": "walk",
+          "duration": 2.0,
+          "loop": true,
+          "flat_water": true
+        }
+      ],
+      "sail_symbols": false
+    },
+    {
+      "race": "orc",
+      "triangles": 1400,
+      "meshes": 5,
+      "embedded_textures_verified": true,
+      "waterline": true,
+      "map_footprint_fits_hex": true,
+      "clips": [
+        {
+          "clip": "idle",
+          "duration": 4.0,
+          "loop": true,
+          "flat_water": true
+        },
+        {
+          "clip": "walk",
+          "duration": 2.0,
+          "loop": true,
+          "flat_water": true
+        }
+      ],
+      "sail_symbols": false
+    },
+    {
+      "race": "elf",
+      "triangles": 1100,
+      "meshes": 4,
+      "embedded_textures_verified": true,
+      "waterline": true,
+      "map_footprint_fits_hex": true,
+      "clips": [
+        {
+          "clip": "idle",
+          "duration": 4.0,
+          "loop": true,
+          "flat_water": true
+        },
+        {
+          "clip": "walk",
+          "duration": 2.0,
+          "loop": true,
+          "flat_water": true
+        }
+      ],
+      "sail_symbols": false
+    },
+    {
+      "race": "dwarf",
+      "triangles": 1876,
+      "meshes": 5,
+      "embedded_textures_verified": true,
+      "waterline": true,
+      "map_footprint_fits_hex": true,
+      "clips": [
+        {
+          "clip": "idle",
+          "duration": 4.0,
+          "loop": true,
+          "flat_water": true
+        },
+        {
+          "clip": "walk",
+          "duration": 2.0,
+          "loop": true,
+          "flat_water": true
+        }
+      ],
+      "sail_symbols": false
+    }
+  ],
+  "original_scenes_retained": true
+}

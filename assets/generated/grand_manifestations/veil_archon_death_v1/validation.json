@@ -1,0 +1,69 @@
+{
+  "status": "PASS",
+  "via": "Blender MCP live",
+  "duration_s": 5,
+  "frames": 121,
+  "samples": 241,
+  "fps": 24,
+  "parts": 47,
+  "bones": 39,
+  "particles_included": false,
+  "root_motion": false,
+  "simulation": "Blender Bullet, gravity -9.81, 32 substeps, 50 solver iterations",
+  "initial_to_idle_vertex_error_m": 1.3328003749250113e-07,
+  "minimum_z_m": -0.006241416092962027,
+  "bounds_min": [
+    -1.6132087707519531,
+    -1.6494430303573608,
+    -0.006241416092962027
+  ],
+  "bounds_max": [
+    1.649148941040039,
+    1.6490213871002197,
+    3.276427745819092
+  ],
+  "maximum_half_frame_step_m": 0.14745198133409274,
+  "ground_rest_samples": {
+    "3.0": {
+      "minimum": [
+        -1.6041516065597534,
+        -1.6490362882614136,
+        0.0009635686874389648
+      ],
+      "maximum": [
+        1.6488786935806274,
+        1.6300933361053467,
+        0.8983505964279175
+      ]
+    },
+    "4.0": {
+      "minimum": [
+        -1.6090794801712036,
+        -1.6490366458892822,
+        0.0009233318269252777
+      ],
+      "maximum": [
+        1.6490302085876465,
+        1.6490212678909302,
+        0.7538771033287048
+      ]
+    }
+  },
+  "full_size_plates_until_s": 4.0,
+  "core_disappearance_starts_s": 0.1,
+  "core_completely_gone_s": 0.76,
+  "lattice_completely_gone_s": 1.13,
+  "plates_held_until_s": 1.1666666666666667,
+  "plates_hold_vertex_error_m": 1.3328003749250113e-07,
+  "gone_core_extent_m": 2.3119910624200435e-05,
+  "gone_lattice_extent_m": 1.701557683277648e-05,
+  "core_falls": false,
+  "plates_disappearance_starts_s": 4.0,
+  "final_maximum_piece_extent_m": 2.3119910624200435e-05,
+  "physics_helpers_exported": false,
+  "original_asset_files_unchanged": true,
+  "original_five_clips_preserved": true,
+  "serialized_original_clip_error": 0.0,
+  "serialized_death_to_idle_error": 5.960464477539063e-08,
+  "embedded_textures_preserved": true
+}

@@ -1,0 +1,38 @@
+"""Assemble the animated Avatar pipeline from the tested pixel-asset import/export helpers."""
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[2]; TOOLS=ROOT/'tools/art_pipeline'
+STEM='nature_avatar_blocky_v5_animated'; ASSET=ROOT/'assets/generated/grand_manifestations'/STEM
+def read(name): return (TOOLS/name).read_text(encoding='utf-8')
+def write(name,s): (TOOLS/name).write_text(s,encoding='utf-8')
+def names(s):
+ return s.replace('elder_lich_blocky_v3_animated',STEM).replace('Elder_Lich_Blocky_V3_Animated','Nature_Avatar_Blocky_V5_Animated').replace('ElderLichAnimationReview','NatureAvatarAnimationReview').replace('ELDER_LICH_ANIMATION_VALIDATION','NATURE_AVATAR_ANIMATION_VALIDATION').replace('elder_lich_animation_import','nature_avatar_animation_import').replace('elder_lich_animations_','nature_avatar_animations_').replace('Elder Lich Animation Review','Nature Avatar Animation Review').replace('animated elder lich','animated nature avatar')
+src=read('animate_elder_lich_v3_mcp.py').split('# Split only the existing cloth surfaces.')[0]
+src=names(src).replace("['elder_lich_blocky_v2']","['nature_avatar_blocky_v4']").replace('Ancient_Vestments_Bone_Spectral','Ancient_Roots_Green_Core')
+src=src.replace('Animate a preserved copy of Lich V2, with connected arms and articulated cloth.','Animate the approved floating Avatar V4 without changing its meshes or textures.')
+write('animate_nature_avatar_v5_mcp.py',src+read('nature_avatar_animation_motion.py'))
+src=read('export_elder_lich_v3_mcp.py')
+head=names(src[:src.index('rest={')]).replace('four animated Lich clips','four animated Avatar clips')
+head=head.replace("assert len(parts)==len(old['parts'])==79","assert len(parts)==len(old['parts'])==86")
+tail=names(src[src.index('# Export a temporary assembled mesh'):]).replace("source_model='elder_lich_blocky_v2'","source_model='nature_avatar_blocky_v4'")
+tail=tail.replace('cloth_surface_tessellation_only=True','suspended_root_geometry_preserved=True')
+tail=tail.replace('rest_height_m=3.', 'rest_crown_height_above_ground_m=3.,rest_height_m=2.5801127851')
+write('export_nature_avatar_v5_mcp.py',head+read('nature_avatar_animation_audit.py')+'\n'+tail)
+validator=names(read('validate_elder_lich_animations.py')).replace('verify_elder_lich_animations.gd','verify_nature_avatar_animations.gd')
+write('validate_nature_avatar_animations.py',validator)
+verify=names(read('verify_elder_lich_animations.gd')).replace('Lich animation validation','Avatar animation validation')
+verify=verify.replace('low.y>0.09','low.y>0.20')
+verify=verify.replace('"Idle":2.0,"Walk":0.5,"Attack":0.625,"Spell":1.45','"Idle":3.0,"Walk":1.0,"Attack":0.875,"Spell":1.75')
+verify=verify.replace('1.45 if clip=="Spell" else 0.625 if clip=="Attack" else 1.0','1.75 if clip=="Spell" else 0.875 if clip=="Attack" else 1.0')
+verify=verify.replace('var fps := 18 if clip=="Idle" else 24','var fps := 12 if clip in ["Idle","Walk"] else 24')
+verify=verify.replace('Interrupted spell must reset every cloth, arm, book and staff-focus transform.','Interrupted spell must reset every arm, core and suspended root transform.')
+write('verify_nature_avatar_animations.gd',verify)
+review=names((ROOT/'scripts/art_review/ElderLichAnimationReview.gd').read_text(encoding='utf-8')).replace('LICH ANCIÃO','AVATAR DA NATUREZA')
+(ROOT/'scripts/art_review/NatureAvatarAnimationReview.gd').write_text(review,encoding='utf-8')
+scene=names((ROOT/'scenes/art_review/ElderLichAnimationReview.tscn').read_text(encoding='utf-8'))
+(ROOT/'scenes/art_review/NatureAvatarAnimationReview.tscn').write_text(scene,encoding='utf-8')
+ASSET.mkdir(parents=True,exist_ok=True)
+post=(ROOT/'assets/generated/grand_manifestations/elder_lich_blocky_v3_animated/elder_lich_animation_import.gd').read_text(encoding='utf-8')
+(ASSET/'nature_avatar_animation_import.gd').write_text(post,encoding='utf-8')
+final=names(read('finalize_elder_lich_animations_mcp.py')).replace('independent animated elder lich','independent animated Avatar')
+write('finalize_nature_avatar_animations_mcp.py',final)
+print('Avatar exporter, native playback validator, review scene and import helper prepared.')

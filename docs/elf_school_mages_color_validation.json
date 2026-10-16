@@ -1,0 +1,127 @@
+{
+  "status": "PASS",
+  "models": 6,
+  "style_revision": 3,
+  "assets": [
+    {
+      "school": "sacred",
+      "status": "PASS",
+      "human_school_cloth": [
+        214,
+        204,
+        170
+      ],
+      "human_school_linen": [
+        235,
+        225,
+        189
+      ],
+      "green_elven_details": [
+        69,
+        111,
+        79
+      ],
+      "emission_unchanged": true
+    },
+    {
+      "school": "infernal",
+      "status": "PASS",
+      "human_school_cloth": [
+        77,
+        39,
+        40
+      ],
+      "human_school_linen": [
+        102,
+        48,
+        40
+      ],
+      "green_elven_details": [
+        69,
+        111,
+        79
+      ],
+      "emission_unchanged": true
+    },
+    {
+      "school": "necromancy",
+      "status": "PASS",
+      "human_school_cloth": [
+        55,
+        45,
+        69
+      ],
+      "human_school_linen": [
+        86,
+        59,
+        105
+      ],
+      "green_elven_details": [
+        69,
+        111,
+        79
+      ],
+      "emission_unchanged": true
+    },
+    {
+      "school": "druidism",
+      "status": "PASS",
+      "human_school_cloth": [
+        87,
+        111,
+        67
+      ],
+      "human_school_linen": [
+        115,
+        132,
+        79
+      ],
+      "green_elven_details": [
+        69,
+        111,
+        79
+      ],
+      "emission_unchanged": true
+    },
+    {
+      "school": "arcanism",
+      "status": "PASS",
+      "human_school_cloth": [
+        49,
+        72,
+        115
+      ],
+      "human_school_linen": [
+        69,
+        92,
+        137
+      ],
+      "green_elven_details": [
+        69,
+        111,
+        79
+      ],
+      "emission_unchanged": true
+    },
+    {
+      "school": "elementalism",
+      "status": "PASS",
+      "human_school_cloth": [
+        63,
+        107,
+        116
+      ],
+      "human_school_linen": [
+        93,
+        129,
+        130
+      ],
+      "green_elven_details": [
+        69,
+        111,
+        79
+      ],
+      "emission_unchanged": true
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "parts": 154,
+  "triangles": 2028,
+  "non_manifold_edges": 0,
+  "degenerate_faces": 0,
+  "non_finite_vertices": 0,
+  "bad_weights": 0,
+  "uv_outside_atlas": 0,
+  "other_models_unchanged": 318,
+  "sRGB_file_images": true
+}

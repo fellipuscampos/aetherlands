@@ -1,0 +1,172 @@
+{
+  "status": "PASS",
+  "reviewed_assets": 20,
+  "corrected_assets": 20,
+  "assets_with_corrected_roofs": 19,
+  "corrected_roofs": 23,
+  "surface_parts_repaired": 94,
+  "exposed_coplanar_overlaps": 0,
+  "immutable_backup_verified": true,
+  "assets": [
+    {
+      "asset": "market_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 2,
+      "approved_parts_preserved": 80,
+      "surface_parts_repaired": 0,
+      "new_support_contacts": 3
+    },
+    {
+      "asset": "elf_market_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 3,
+      "approved_parts_preserved": 94,
+      "surface_parts_repaired": 4,
+      "new_support_contacts": 10
+    },
+    {
+      "asset": "dwarf_market_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 75,
+      "surface_parts_repaired": 4,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "orc_market_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 2,
+      "approved_parts_preserved": 110,
+      "surface_parts_repaired": 1,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "farm_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 114,
+      "surface_parts_repaired": 17,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "elf_farm_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 138,
+      "surface_parts_repaired": 8,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "dwarf_farm_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 136,
+      "surface_parts_repaired": 10,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "orc_farm_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 145,
+      "surface_parts_repaired": 3,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "workshop_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 57,
+      "surface_parts_repaired": 0,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "elf_workshop_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 61,
+      "surface_parts_repaired": 4,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "dwarf_workshop_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 74,
+      "surface_parts_repaired": 6,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "orc_workshop_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 67,
+      "surface_parts_repaired": 3,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "university_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 94,
+      "surface_parts_repaired": 7,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "elf_university_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 107,
+      "surface_parts_repaired": 4,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "dwarf_university_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 92,
+      "surface_parts_repaired": 8,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "orc_university_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 0,
+      "approved_parts_preserved": 133,
+      "surface_parts_repaired": 2,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "arcane_shrine_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 46,
+      "surface_parts_repaired": 2,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "elf_arcane_shrine_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 49,
+      "surface_parts_repaired": 3,
+      "new_support_contacts": 0
+    },
+    {
+      "asset": "dwarf_arcane_shrine_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 67,
+      "surface_parts_repaired": 6,
+      "new_support_contacts": 4
+    },
+    {
+      "asset": "orc_arcane_shrine_hex_v1",
+      "status": "PASS",
+      "revised_roofs": 1,
+      "approved_parts_preserved": 77,
+      "surface_parts_repaired": 2,
+      "new_support_contacts": 0
+    }
+  ]
+}

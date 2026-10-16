@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://rgsu8o1frdde"
-path="res://.godot/imported/elder_lich_tex_wood.png-b87589964d6cf210a85f4e812caded27.ctex"
+path.bptc="res://.godot/imported/elder_lich_tex_wood.png-b87589964d6cf210a85f4e812caded27.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "5150e66f7297ef49b79f585d2874c6d5"
@@ -14,12 +15,12 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/generated/magic/elder_lich/elder_lich_tex_wood.png"
-dest_files=["res://.godot/imported/elder_lich_tex_wood.png-b87589964d6cf210a85f4e812caded27.ctex"]
+dest_files=["res://.godot/imported/elder_lich_tex_wood.png-b87589964d6cf210a85f4e812caded27.bptc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

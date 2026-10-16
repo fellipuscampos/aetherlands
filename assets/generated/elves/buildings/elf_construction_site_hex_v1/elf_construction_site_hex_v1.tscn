@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/generated/elves/buildings/elf_construction_site_hex_v1/elf_construction_site_hex_v1.glb" id="1_model"]
+[ext_resource type="Script" path="res://scripts/art_review/ElfConstructionSite.gd" id="2_loop"]
+
+[node name="ElfConstructionSite" type="Node3D"]
+script = ExtResource("2_loop")
+metadata/race = "elf"
+metadata/generic_construction = true
+
+[node name="Visual" parent="." instance=ExtResource("1_model")]

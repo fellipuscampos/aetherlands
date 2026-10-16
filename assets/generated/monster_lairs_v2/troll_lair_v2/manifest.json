@@ -1,0 +1,58 @@
+{
+  "kind": "troll",
+  "tier": "Intermediário",
+  "name": "Abrigo sob a laje",
+  "concept": "Caverna de blocos pesados, musgo, clava e restos de uma refeição.",
+  "stem": "troll_lair_v2",
+  "method": "Live Blender MCP localhost:9876",
+  "editable_parts": 54,
+  "vertices": 466,
+  "triangles": 716,
+  "materials": 1,
+  "draw_calls": 1,
+  "atlas": [
+    1024,
+    1024
+  ],
+  "pixels_per_meter": 64,
+  "measured_uv_density_range": [
+    63.99769862841478,
+    64.00101029961654
+  ],
+  "filter": "nearest",
+  "footprint_radius": 0.78,
+  "height": 0.7749765515327454,
+  "ground_min": 0.0,
+  "source_bounds_xyz": [
+    [
+      -0.6670807003974915,
+      -0.6639592051506042,
+      0.0
+    ],
+    [
+      0.6781691908836365,
+      0.6442774534225464,
+      0.7749765515327454
+    ]
+  ],
+  "scale_multiplier": 1.0,
+  "forward": "-Y Blender / +Z glTF",
+  "pivot": [
+    0,
+    0,
+    0
+  ],
+  "nonmanifold_edges": 0,
+  "degenerate_faces": 0,
+  "animations": [],
+  "collision": false,
+  "game_source_changed": false,
+  "art_scale": 0.32907708001566455,
+  "mesh_components": "Closed individual volumes; intentional intersections at structural joints.",
+  "isolated_by_gdignore": true,
+  "previews": [
+    "three_quarter",
+    "game_top",
+    "back"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "stem": "human_construction_site_hex_v1",
+  "race": "human",
+  "revision": 6,
+  "style": "Generic blocky human construction with shorter forearms and arcing mallet strikes onto a chisel; raised animated shoulders, gray masonry, blue slate, no ground plate",
+  "pipeline": "Live Blender MCP localhost:9876",
+  "workers": 3,
+  "jobs": [
+    "stone_chisel_and_hammer",
+    "timber_sawing_for_scaffold",
+    "mortar_trowel_on_wall"
+  ],
+  "geometry": {
+    "editable_parts": 343,
+    "triangles": 4116,
+    "closed_solids": true,
+    "flat_shading": true,
+    "all_content_cuboids": true,
+    "hex_radius": 1.0,
+    "footprint_radius": 0.9,
+    "ground_plate": false,
+    "ground_workers_feet_z": 0.0,
+    "specific_architecture": false,
+    "hex_corner_angle_degrees": -30,
+    "hex_orientation": "pointy-top virtual footprint; matches HexMetrics.corner",
+    "max_hex_half_plane": 0.7406129596185461,
+    "max_content_half_plane": 0.7406129596185461,
+    "footprint_margin": 0.03880990378744864,
+    "limiting_part": "Scaffold_foot",
+    "minimum_ground_z": -5.595167662519884e-10
+  },
+  "building_materials": {
+    "reference": "tools/art_pipeline/guardian_hall_paint_save.py",
+    "stone": [
+      131,
+      141,
+      145
+    ],
+    "cutstone": [
+      172,
+      179,
+      174
+    ],
+    "roof": [
+      49,
+      79,
+      127
+    ],
+    "roof_dark": [
+      37,
+      59,
+      95
+    ],
+    "loose_blue_roof_slates": 10
+  },
+  "human_style": {
+    "reference": "assets/generated/humans/human_settler_v1/human_settler_v1.blend",
+    "head_original_geometry": true,
+    "head_scale": 0.24,
+    "head_max_vertex_error": 0.0,
+    "original_face_pixels": true,
+    "facial_detail_meshes": 0,
+    "fixed_body_original_proportions": true,
+    "static_shoulder_blocks": 0,
+    "animated_shoulder_height": 0.334,
+    "shoulder_sleeve_cap_extension": 0.012,
+    "forearm_lengths": {
+      "Mason": {
+        "L": 0.08090872487439231,
+        "R": 0.08090872415496853
+      },
+      "Carpenter": {
+        "L": 0.07995129281707918,
+        "R": 0.07995129281707918
+      },
+      "Bricklayer": {
+        "L": 0.07995129281707918,
+        "R": 0.07995129281707918
+      }
+    }
+  },
+  "animation": {
+    "clip": "construction",
+    "seconds": 6.0,
+    "fps": 30,
+    "frames": 181,
+    "loop_error": 0.0,
+    "max_joint_error": 1.1151007970493857e-07,
+    "feet_stationary": true,
+    "root_motion": false,
+    "stable_elbow_planes": true,
+    "axial_twist_error": 6.990986714809066e-07,
+    "min_elbow_bend_degrees": 29.231963138131047,
+    "max_elbow_bend_degrees": 111.12244447501264,
+    "max_arm_rotation_step_degrees": 1.6989950418886854,
+    "min_hand_center_gap": 0.08271925256063144
+  },
+  "export": {
+    "bytes": 508920,
+    "meshes": 2,
+    "materials": 1,
+    "skins": 1,
+    "bones": 25,
+    "embedded_images": 1,
+    "cameras": 0,
+    "lights": 0
+  },
+  "status": "PASS",
+  "contacts": {
+    "status": "PASS",
+    "pose_samples": 61,
+    "hammer_chisel_contact_error": 0.0,
+    "hammer_handle_min_stone_clearance": 0.07250002026557922,
+    "hammer_grip_min_side_clearance": 0.010223418474197388,
+    "hammer_head_vertical_arc": 0.1272895336151123,
+    "saw_handle_min_clearance": 0.023625999689102173,
+    "mortar_trough_min_foot_clearance": 0.26712972670793533,
+    "trowel_contact_error": 0.0,
+    "saw_support_hand_contact_error": 0.0004999786615371704,
+    "generic_masonry": true,
+    "ground_workers_feet_z": 0.0,
+    "stable_elbow_planes": true
+  }
+}

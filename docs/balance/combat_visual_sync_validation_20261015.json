@@ -1,0 +1,108 @@
+{
+  "tests": {
+    "broad": {
+      "scripts": 20,
+      "tests": 473,
+      "passing": 473,
+      "assertions": 4240
+    },
+    "final_contact": {
+      "scripts": 4,
+      "tests": 134,
+      "passing": 134,
+      "assertions": 850
+    },
+    "distinct_passing": 474,
+    "feedback_contracts_final": 21,
+    "notes": [
+      "Combined fixtures report 46 objects and 7 resources at shutdown, deprecated assertions and one unfreed-child warning",
+      "Standalone feedback suite, graphical review, CPU bench and real match have no script/engine errors"
+    ]
+  },
+  "timings": {
+    "authored_models": 33,
+    "authored_clips": 59,
+    "fallback_fraction": 0.52,
+    "spell_flight_seconds": 0.38,
+    "pending_cap_per_map": 12
+  },
+  "cpu_bench": {
+    "21": {
+      "callbacks": 21,
+      "max_ms": 1.441,
+      "mean_ms": 0.313483999999999,
+      "p95_ms": 0.494,
+      "samples": 1000
+    },
+    "3": {
+      "callbacks": 3,
+      "max_ms": 0.742,
+      "mean_ms": 0.0844230000000002,
+      "p95_ms": 0.113,
+      "samples": 1000
+    }
+  },
+  "visual_review": {
+    "renderer": "Vulkan Forward+, RTX 3060",
+    "window": "1600x900",
+    "scenarios": [
+      "melee + counter",
+      "heal",
+      "silence"
+    ],
+    "captures": "docs/previews/combat_sync_20261015/",
+    "timeline": "docs/previews/combat_sync_20261015/timeline.json",
+    "observation": "Manual inspection: no silence aura during windup; aura visible at spell arrival; health feedback follows contact/arrival"
+  },
+  "campaign": {
+    "data": "user://balance/combat_visual_sync_20261015/smoke/F33B-001.json",
+    "seed": 33102,
+    "end": {
+      "end_reason": "TIMEOUT",
+      "timeout": true,
+      "turn": 120,
+      "turn_cap": 120,
+      "victory_type_raw": ""
+    },
+    "save_load": {
+      "load_ms": 2647.21,
+      "loaded": true,
+      "save_ms": 14.87,
+      "saved": true,
+      "turn": 60
+    },
+    "performance": {
+      "loop_ms": 22190.34,
+      "monitors_after": {
+        "nodes": 16,
+        "objects": 2760,
+        "orphan_nodes": 0,
+        "resources": 396,
+        "static_memory_mb": 112.44
+      },
+      "monitors_before": {
+        "nodes": 16,
+        "objects": 1876,
+        "orphan_nodes": 0,
+        "resources": 228,
+        "static_memory_mb": 84.3
+      },
+      "setup_ms": 3416.26,
+      "turn_ms": {
+        "first": 169.06,
+        "max": 340.1,
+        "mean": 157.89,
+        "n": 119,
+        "p50": 142.57,
+        "p95": 258.9
+      },
+      "turns_processed": 119,
+      "wall_ms": 25698
+    }
+  },
+  "limitations": [
+    "CPU microbenchmark excludes existing VFX and GPU",
+    "Concurrent balance/AI work invalidates whole-match before/after comparisons",
+    "Rule notifications and rewards remain immediate; authoritative logic never waits for visuals"
+  ]
+}

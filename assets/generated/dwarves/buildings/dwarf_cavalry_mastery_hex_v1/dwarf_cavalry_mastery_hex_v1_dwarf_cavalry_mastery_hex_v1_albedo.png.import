@@ -1,0 +1,44 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://crpg6qjvy6ov7"
+path.bptc="res://.godot/imported/dwarf_cavalry_mastery_hex_v1_dwarf_cavalry_mastery_hex_v1_albedo.png-7aaece55b58b24923c0e4487415baaa7.bptc.ctex"
+metadata={
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
+}
+generator_parameters={
+"md5": "de158b4e108bf9b0187352d4388e758c"
+}
+
+[deps]
+
+source_file="res://assets/generated/dwarves/buildings/dwarf_cavalry_mastery_hex_v1/dwarf_cavalry_mastery_hex_v1_dwarf_cavalry_mastery_hex_v1_albedo.png"
+dest_files=["res://.godot/imported/dwarf_cavalry_mastery_hex_v1_dwarf_cavalry_mastery_hex_v1_albedo.png-7aaece55b58b24923c0e4487415baaa7.bptc.ctex"]
+
+[params]
+
+compress/mode=2
+compress/high_quality=true
+compress/lossy_quality=0.7
+compress/uastc_level=0
+compress/rdo_quality_loss=0.0
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=0
+roughness/src_normal=""
+process/channel_remap/red=0
+process/channel_remap/green=1
+process/channel_remap/blue=2
+process/channel_remap/alpha=3
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=1

@@ -1,0 +1,143 @@
+{
+  "name": "Elf_Necromancy_Ossuary_Hex_V1",
+  "display_name": "Ossuário — Elfos",
+  "gameplay_building_id": "v2_building_necromancy_ossuary",
+  "trains": [
+    "v2_unit_necromancer"
+  ],
+  "excludes": [
+    "v2_building_necromancy_ritual"
+  ],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": true,
+  "triangles": 2872,
+  "editable_parts": 185,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.2568199634552002
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.2568199634552002
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex tile radius 1; foundation .92, placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1278,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Cantaria clara com armação esbelta de madeira, mãos-francesas em forma de galhos e coberturas verdes com cantos facetados e beirais ascendentes. Função e adereços do edifício original preservados.",
+  "door_clearance_m": [
+    0.23,
+    0.35
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "magic_school": "necromancy",
+  "asset_only": true,
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "ritual_building_separate": true,
+  "excluded_buildings": [
+    "v2_building_necromancy_ritual"
+  ],
+  "finish_pass": {
+    "revision": 1,
+    "original_structure_preserved": true,
+    "race_details": "Carved branches, attached vine foliage, pointed details and leaf-shaped mounts.",
+    "roof_rgb": [
+      48,
+      122,
+      88
+    ],
+    "physical_attachment_remaining": [],
+    "relic_source": "skeleton_warrior_v1"
+  },
+  "export": {
+    "file": "elf_necromancy_ossuary_hex_v1.glb",
+    "bytes": 763544,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2872,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_necromancy_ossuary_hex_v1_emission",
+        "bytes": 21947,
+        "sha256": "1430c125aa69ac4fbb93e59387c18d103dde1b0a429556f355822e1210115cdb"
+      },
+      {
+        "image": "elf_necromancy_ossuary_hex_v1_albedo",
+        "bytes": 542400,
+        "sha256": "fb04e9e17167e98e527fb005b2eb8f75bfc9f89c8c9236d2eeb56a47d758f9dd"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  },
+  "integration_source": "scripts/data/BuildingArtCatalog.gd",
+  "architecture_revision": {
+    "revision": 1,
+    "civilization": "elf",
+    "design": "Cantaria clara com armação esbelta de madeira, mãos-francesas em forma de galhos e coberturas verdes com cantos facetados e beirais ascendentes.",
+    "geometry_changes": [
+      "ivory:Crypt_Chamber",
+      "ivory:Ossuary_Niche_Tower_-1",
+      "ivory:Ossuary_Niche_Tower_1",
+      "roof_geometry:Mausoleum_Terrace_0",
+      "roof_geometry:Mausoleum_Terrace_1",
+      "roof_geometry:Mausoleum_Terrace_2",
+      "roof_geometry:Mausoleum_Terrace_3",
+      "roof_geometry:Niche_Cap_-1_Course_00",
+      "roof_geometry:Niche_Cap_-1_Course_01",
+      "roof_geometry:Niche_Cap_-1_Course_02",
+      "roof_geometry:Niche_Cap_1_Course_00",
+      "roof_geometry:Niche_Cap_1_Course_01",
+      "roof_geometry:Niche_Cap_1_Course_02",
+      "upper_structure_proportion:1.22"
+    ],
+    "roof_braces": [],
+    "max_tile_half_plane": 0.796743392944336,
+    "blender_mcp_only": true
+  }
+}

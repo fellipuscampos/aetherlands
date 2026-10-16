@@ -1,0 +1,74 @@
+{
+  "status": "PASS",
+  "race": "orc",
+  "revision": 1,
+  "bytes": 545492,
+  "triangles": 4356,
+  "meshes": 2,
+  "materials": 1,
+  "skins": 1,
+  "bones": 25,
+  "clip": "construction",
+  "seconds": 6,
+  "embedded_atlas_sha256": "475193fabdb7c7e9b00f221f05776ac75e131e2e593e6c06e828644fe8c17424",
+  "nearest": true,
+  "studio_excluded": true,
+  "ground_plate": false,
+  "generic_construction": true,
+  "jobs": [
+    "stone_dressing_hammer_and_chisel",
+    "timber_sawing",
+    "iron_strap_riveting"
+  ],
+  "loose_building_blocks": 6,
+  "raw_timber_logs": 3,
+  "original_ear_parts": 18,
+  "original_tusk_parts": 12,
+  "original_brow_parts": 6,
+  "building_materials": {
+    "reference": "tools/art_pipeline/orc_city_level_1_hex_v1_model.py",
+    "structure": "basalt_heavy_timber_and_iron",
+    "timber": [
+      78,
+      53,
+      35
+    ],
+    "raw_timber_logs": 3,
+    "raw_timber_continuous_bark": true,
+    "stone": [
+      91,
+      101,
+      98
+    ],
+    "cutstone": [
+      145,
+      141,
+      121
+    ],
+    "loose_building_blocks": 6,
+    "bone": [
+      225,
+      215,
+      174
+    ],
+    "iron": [
+      53,
+      65,
+      65
+    ],
+    "roof": [
+      130,
+      58,
+      39
+    ],
+    "roof_dark": [
+      83,
+      40,
+      30
+    ],
+    "loose_rust_hide_roof_shingles": 10,
+    "loose_bone_ornaments": 3,
+    "loose_iron_roof_straps": 3
+  },
+  "footprint_margin": 0.03880990378744864
+}

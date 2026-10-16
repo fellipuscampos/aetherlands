@@ -1,0 +1,128 @@
+{
+  "name": "Dragao vermelho escuro",
+  "pipeline": "live Blender MCP",
+  "stem": "dark_red_dragon_v5_animated",
+  "base_asset": "dark_red_dragon_v4",
+  "rest_geometry_height_m": 3.0,
+  "rest_geometry_unchanged": true,
+  "meshes": 1,
+  "materials": 1,
+  "triangles": 1584,
+  "bones": 53,
+  "animations": {
+    "Dragon_Idle_Ground": {
+      "start": 1,
+      "end": 73,
+      "duration_seconds": 3.0,
+      "loop": true,
+      "flying": false,
+      "walking": false,
+      "attack": false,
+      "nla_start": 1
+    },
+    "Dragon_Idle_Flying": {
+      "start": 1,
+      "end": 49,
+      "duration_seconds": 2.0,
+      "loop": true,
+      "flying": true,
+      "walking": false,
+      "attack": false,
+      "nla_start": 92
+    },
+    "Dragon_Walk_Ground": {
+      "start": 1,
+      "end": 37,
+      "duration_seconds": 1.5,
+      "loop": true,
+      "flying": false,
+      "walking": true,
+      "attack": false,
+      "nla_start": 159,
+      "suggested_translation_mps": 0.27083333333333337
+    },
+    "Dragon_Walk_Flying": {
+      "start": 1,
+      "end": 37,
+      "duration_seconds": 1.5,
+      "loop": true,
+      "flying": true,
+      "walking": true,
+      "attack": false,
+      "nla_start": 214
+    },
+    "Dragon_Attack_Ground": {
+      "start": 1,
+      "end": 73,
+      "duration_seconds": 3.0,
+      "loop": false,
+      "flying": false,
+      "walking": false,
+      "attack": true,
+      "nla_start": 269,
+      "fire_start_seconds": 0.75,
+      "fire_end_seconds": 2.0,
+      "fire_start_frame": 19,
+      "fire_end_frame": 49,
+      "mouth_socket": "mouth_fire"
+    },
+    "Dragon_Attack_Flying": {
+      "start": 1,
+      "end": 73,
+      "duration_seconds": 3.0,
+      "loop": false,
+      "flying": true,
+      "walking": false,
+      "attack": true,
+      "nla_start": 360,
+      "fire_start_seconds": 0.75,
+      "fire_end_seconds": 2.0,
+      "fire_start_frame": 19,
+      "fire_end_frame": 49,
+      "mouth_socket": "mouth_fire"
+    }
+  },
+  "mouth_socket": "mouth_fire",
+  "mouth_forward_axis": "bone local +Y",
+  "fire_particles": false,
+  "root_motion": false,
+  "fps": 24,
+  "validation": {
+    "Dragon_Idle_Ground": {
+      "samples": 73,
+      "minimum_geometry_z": 0.0020000165419099547,
+      "maximum_foot_target_error": 9.541398640621973e-08,
+      "loop_matrix_error": 3.847341519666321e-18
+    },
+    "Dragon_Idle_Flying": {
+      "samples": 49,
+      "minimum_geometry_z": 0.7652494571514261,
+      "maximum_foot_target_error": 0.0,
+      "loop_matrix_error": 1.3693745911785696e-17
+    },
+    "Dragon_Walk_Ground": {
+      "samples": 37,
+      "minimum_geometry_z": 0.002000055949113011,
+      "maximum_foot_target_error": 9.541398640621973e-08,
+      "loop_matrix_error": 6.00165360213157e-18
+    },
+    "Dragon_Walk_Flying": {
+      "samples": 37,
+      "minimum_geometry_z": 0.7289682273044085,
+      "maximum_foot_target_error": 0.0,
+      "loop_matrix_error": 8.869358918496746e-18
+    },
+    "Dragon_Attack_Ground": {
+      "samples": 73,
+      "minimum_geometry_z": -0.00019841789030994317,
+      "maximum_foot_target_error": 8.940696716308594e-08,
+      "loop_matrix_error": 3.847341519666321e-18
+    },
+    "Dragon_Attack_Flying": {
+      "samples": 73,
+      "minimum_geometry_z": 0.7531298872937645,
+      "maximum_foot_target_error": 0.0,
+      "loop_matrix_error": 1.4662314024900575e-17
+    }
+  }
+}

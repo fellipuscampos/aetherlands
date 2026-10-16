@@ -1,0 +1,63 @@
+{
+  "status": "PASS",
+  "name": "Orc_Walls_Level_2_Hex_V1",
+  "stem": "orc_walls_level_2_hex_v1",
+  "race": "orc",
+  "fortification_level": 2,
+  "display_name": "Muralhas II",
+  "pipeline": "Blender 5.2 MCP localhost:9876",
+  "material_source": "assets\\generated\\orcs\\buildings\\orc_city_level_1_hex_v1\\orc_city_level_1_hex_v1.blend",
+  "texture_reuse": "Byte-identical approved orc city atlas; existing UV islands sampled",
+  "embedded_images": [
+    {
+      "name": "orc_city_level_1_hex_v1_emission",
+      "sha256": "589c9824ab2dfaad2ec00529543124408f4f8ef0319eca1b5f713a1515be07bc",
+      "bytes": 22065
+    },
+    {
+      "name": "orc_city_level_1_hex_v1_albedo",
+      "sha256": "8354178f7d83f821084a317a77a441d55d5a5f2a6272cbba65d2307b0e45afc7",
+      "bytes": 556856
+    }
+  ],
+  "triangles": 4514,
+  "editable_parts": 339,
+  "runtime_meshes": 2,
+  "source_boundary_sections": true,
+  "surface_cleanup": {
+    "removed_buried_and_shared_face_area": 6.481860308976819,
+    "source_parts": 339,
+    "visible_parts": 335,
+    "visible_faces": 2263,
+    "coplanar_overlaps_before": 772,
+    "coplanar_overlaps_after": 0,
+    "audit_includes_opposing_normals": true,
+    "atlas_bytes_unchanged": true
+  },
+  "shade": "Flat",
+  "height": 0.3370000123977661,
+  "native_tile_radius": 1.0,
+  "scales_with": "City.tile_radius",
+  "pointy_hex": true,
+  "wall_center_radius": 0.94,
+  "max_half_plane": 0.8530350774526596,
+  "tile_half_plane": 0.8660254037844386,
+  "minimum_city_foundation_clearance": 0.012337120976797067,
+  "city_foundation_radius": 0.84,
+  "includes_ground_plate": false,
+  "includes_city": false,
+  "bounds_blender": {
+    "min": [
+      -0.853035032749176,
+      -0.9850000143051147,
+      0.0
+    ],
+    "max": [
+      0.853035032749176,
+      0.9850000143051147,
+      0.3370000123977661
+    ]
+  },
+  "design": "Basalt and timber wall, black iron straps and rivets, jagged parapet, ivory corner tusks and rust-red gate gable.",
+  "mesh_vertex_compression": false
+}

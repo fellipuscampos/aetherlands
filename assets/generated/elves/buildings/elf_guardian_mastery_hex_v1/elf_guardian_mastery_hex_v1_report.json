@@ -1,0 +1,198 @@
+{
+  "name": "Elf_Guardian_Mastery_Hex_V1",
+  "display_name": "Bastião de Maestria — Elfos",
+  "gameplay_building_id": "v2_building_guardian_mastery",
+  "trains": [
+    "v2_legendary_guardian_champion"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 2312,
+  "editable_parts": 173,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.3609999418258667
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.3609999418258667
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      2048,
+      2048
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 1097,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Bastião élfico de três pavilhões: salão hexagonal de escudos, duas alas abertas, árvores sentinelas e arco de galhos na aproximação. Evolui o pavilhão e o mirante vivo do salão élfico; não usa torres de ameias.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "elf",
+  "military_role": "guardian",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_guardian_hall",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "elf_guardian",
+  "material_reference": "assets/generated/elves/buildings/elf_guardian_hall_hex_v1",
+  "roof_rgb": [
+    48,
+    122,
+    88
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "part": "Leaf_Shield_Pavilion_Walls",
+        "action": "closed_clip",
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "plane": -0.06416000021994114,
+        "reason": "flat facade behind existing portal"
+      },
+      {
+        "part": "Leaf_Shield_Pavilion_Pier_5_Foot",
+        "action": "archive",
+        "reason": "front corner pillar blocked the portal; original jambs carry the lintel"
+      },
+      {
+        "part": "Leaf_Shield_Pavilion_Pier_5_Shaft",
+        "action": "archive",
+        "reason": "front corner pillar blocked the portal; original jambs carry the lintel"
+      },
+      {
+        "part": "Leaf_Shield_Pavilion_Pier_5_Capital",
+        "action": "archive",
+        "reason": "front corner pillar blocked the portal; original jambs carry the lintel"
+      },
+      {
+        "part": "Leaf_Shield_Pavilion_Pier_5_Branch",
+        "action": "archive",
+        "reason": "front corner pillar blocked the portal; original jambs carry the lintel"
+      },
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 20,
+        "iterations": 2
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [
+        {
+          "prefix": "Shield_Pavilion_Gate",
+          "x": 0.0,
+          "front": 0.02816000021994114,
+          "bottom": 0.14800000190734863,
+          "top": 0.48339998722076416,
+          "width": 0.19949999451637268,
+          "blockers": []
+        }
+      ],
+      "open_passages": [
+        {
+          "name": "Sentinel_Wing_-1",
+          "lo": [
+            -0.4510000157356262,
+            -0.20499999821186066,
+            0.16200000405311585
+          ],
+          "hi": [
+            -0.34899999618530275,
+            1.7881393449270533e-09,
+            0.5359999895095825
+          ],
+          "blockers": []
+        },
+        {
+          "name": "Sentinel_Wing_1",
+          "lo": [
+            0.34899999618530275,
+            -0.20499999821186066,
+            0.16200000405311585
+          ],
+          "hi": [
+            0.4510000157356262,
+            1.7881393449270533e-09,
+            0.5359999895095825
+          ],
+          "blockers": []
+        }
+      ]
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "elf_guardian_mastery_hex_v1.glb",
+    "bytes": 967224,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 2312,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "elf_guardian_mastery_hex_v1_emission",
+        "bytes": 78303,
+        "sha256": "98af1805c2d325e0d84b365ca83126f8297f3994debc43ee46b2cee121eb471a"
+      },
+      {
+        "image": "elf_guardian_mastery_hex_v1_albedo",
+        "bytes": 718321,
+        "sha256": "737eabb545142dd95099aee4c93ea601a59f19f2e7a8f7d6e5a72214d49d1985"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}

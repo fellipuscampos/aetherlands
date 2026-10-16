@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "game_import": "PASS",
+  "import_errors": 0,
+  "import_warnings": 0,
+  "verified_infrastructure_assets": 20,
+  "scripts": 2,
+  "tests_total": 25,
+  "tests_passed": 25,
+  "assertions_passed": 1374,
+  "tests": [
+    "test/unit/test_building_art_catalog.gd",
+    "test/unit/test_v2_economy_data.gd"
+  ],
+  "logs": {
+    "import": "art_source\\infrastructure_buildings_review\\game_import.log",
+    "tests": "art_source\\infrastructure_buildings_review\\game_tests.log"
+  },
+  "fixture_note": "Building catalog tests use a simple tree mesh fixture to isolate building art from the independent KayKit forest asset."
+}

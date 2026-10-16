@@ -1,0 +1,178 @@
+{
+  "name": "Orc_Warrior_Mastery_Hex_V1",
+  "display_name": "Arena dos Campeões — Orcs",
+  "gameplay_building_id": "v2_building_warrior_mastery",
+  "trains": [
+    "v2_legendary_blade_hero"
+  ],
+  "excludes": [],
+  "pipeline": "Blender 5.2 editor MCP localhost:9876",
+  "integrated_in_game": false,
+  "triangles": 1416,
+  "editable_parts": 110,
+  "nonmanifold_edges": 0,
+  "materials": 1,
+  "shade": "Flat",
+  "bounds_blender_m": {
+    "min": [
+      -0.7967433929443359,
+      -0.9200000166893005,
+      0.0
+    ],
+    "max": [
+      0.7967433929443359,
+      0.9200000166893005,
+      1.1699999570846558
+    ]
+  },
+  "dimensions_m": [
+    1.5934867858886719,
+    1.840000033378601,
+    1.1699999570846558
+  ],
+  "origin": "center of footprint on ground Z=0",
+  "front": "-Y in Blender / +Z in glTF (Godot)",
+  "scale": "Native 4X map units, pointy-top hex radius 1, foundation .92; placement scale 1.",
+  "texture": {
+    "size": [
+      1024,
+      1024
+    ],
+    "filter": "NEAREST",
+    "density_px_per_meter": 128,
+    "padding": 3,
+    "unique_uv_islands": 684,
+    "images": [
+      "albedo",
+      "emission"
+    ],
+    "emission_strength": 0.85
+  },
+  "rig": false,
+  "animations": [],
+  "design": "Arena orc aberta: fosso de areia, três arquibancadas pesadas separadas, tribuna do chefe e entrada baixa entre presas monumentais. Madeira, cintas de ferro e coberturas vermelhas evoluem o salão de armas do clã.",
+  "door_clearance_m": [
+    0.26,
+    0.4
+  ],
+  "notes": "Studio and scale reference excluded from export. Separate editable source parts; consolidated game meshes by architectural group.",
+  "civilization": "orc",
+  "military_role": "warrior",
+  "grand_military": true,
+  "asset_only": true,
+  "requires_building": "v2_building_warrior_hall",
+  "includes_perimeter_walls": false,
+  "hex_tile": {
+    "tile_circumradius": 1,
+    "foundation_circumradius": 0.92,
+    "orientation": "pointy-top",
+    "max_half_plane_blender": 0.796743392944336,
+    "tile_apothem": 0.8660254037844386
+  },
+  "architecture_key": "orc_warrior",
+  "material_reference": "assets/generated/orcs/buildings/orc_warrior_hall_hex_v1",
+  "roof_rgb": [
+    130,
+    58,
+    39
+  ],
+  "physical_attachment_remaining": [],
+  "finish_review": {
+    "revision": 1,
+    "method": "live Blender MCP; localized closed-mesh repairs",
+    "changes": [
+      {
+        "parts": [
+          "Pit_Axes_Backing",
+          "Pit_Axes_Cloth",
+          "Pit_Axes_Clan_Weapon_-1_Haft",
+          "Pit_Axes_Clan_Weapon_-1_Grip",
+          "Pit_Axes_Clan_Weapon_-1_Head",
+          "Pit_Axes_Clan_Weapon_-1_Hub",
+          "Pit_Axes_Clan_Weapon_1_Haft",
+          "Pit_Axes_Clan_Weapon_1_Grip",
+          "Pit_Axes_Clan_Weapon_1_Head",
+          "Pit_Axes_Clan_Weapon_1_Hub"
+        ],
+        "action": "move",
+        "delta": [
+          0.0,
+          0.0,
+          0.18000000715255737
+        ],
+        "reason": "tribune crest is mounted above the entrance"
+      },
+      {
+        "action": "recess_overlapping_faces",
+        "closed_mesh_clips": 41,
+        "iterations": 3
+      }
+    ],
+    "geometry_checks": {
+      "coplanar_faces": [],
+      "mast_roof_intersections": [],
+      "entrances": [],
+      "open_passages": [
+        {
+          "name": "Clan_Chief_Tribune",
+          "lo": [
+            -0.1309999930858612,
+            0.22499999403953552,
+            0.44499999642372134
+          ],
+          "hi": [
+            0.1309999930858612,
+            0.42999999403953554,
+            0.6289999842643738
+          ],
+          "blockers": []
+        },
+        {
+          "name": "Courtyard_Gate",
+          "lo": [
+            -0.1,
+            -0.61,
+            0.14
+          ],
+          "hi": [
+            0.1,
+            -0.25,
+            0.48
+          ],
+          "blockers": []
+        }
+      ]
+    },
+    "backup": "art_source/grand_military_before_finish_pass"
+  },
+  "export": {
+    "file": "orc_warrior_mastery_hex_v1.glb",
+    "bytes": 629476,
+    "meshes": 8,
+    "primitives": 8,
+    "triangles": 1416,
+    "materials": 1,
+    "nearest_samplers": [
+      {
+        "magFilter": 9728,
+        "minFilter": 9984,
+        "wrapS": 33071,
+        "wrapT": 33071
+      }
+    ],
+    "embedded_images_verified": [
+      {
+        "image": "orc_warrior_mastery_hex_v1_emission",
+        "bytes": 20726,
+        "sha256": "b423c3205b957f68b072235b9343520f84b1adde4b216bd44893a20e9398f704"
+      },
+      {
+        "image": "orc_warrior_mastery_hex_v1_albedo",
+        "bytes": 499673,
+        "sha256": "c89d3f39fe78b686f87c627acb33056ccbffb9e797e571e2abde41b7319d58ac"
+      }
+    ],
+    "includes_studio": false,
+    "includes_reference_unit": false
+  }
+}
