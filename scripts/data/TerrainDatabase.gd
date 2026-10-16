@@ -52,7 +52,6 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			data.food_yield = 1
 			data.production_yield = 2
 			data.gold_yield = 0
-			data.defense_bonus = 0.25
 			data.base_height = 0.15
 			data.color = Color(0.14, 0.32, 0.28)
 		HexTileData.TerrainType.DESERT:
@@ -77,7 +76,6 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			data.food_yield = 2
 			data.production_yield = 1
 			data.gold_yield = 0
-			data.defense_bonus = 0.25
 			data.base_height = 0.1
 			data.color = Color(0.08, 0.32, 0.14)
 		HexTileData.TerrainType.PLAINS:
@@ -102,7 +100,6 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			data.food_yield = 1
 			data.production_yield = 2
 			data.gold_yield = 0
-			data.defense_bonus = 0.25
 			data.base_height = 0.12
 			data.color = Color(0.16, 0.4, 0.18)
 		HexTileData.TerrainType.HILLS:
@@ -111,7 +108,6 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			data.food_yield = 1
 			data.production_yield = 2
 			data.gold_yield = 0
-			data.defense_bonus = 0.5
 			data.base_height = 0.3
 			data.color = Color(0.55, 0.45, 0.3)
 		HexTileData.TerrainType.MOUNTAINS:
@@ -120,7 +116,6 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			data.food_yield = 0
 			data.production_yield = 1
 			data.gold_yield = 0
-			data.defense_bonus = 1.0
 			data.base_height = 0.65
 			data.color = Color(0.45, 0.44, 0.46)
 		HexTileData.TerrainType.FROZEN_OCEAN:
@@ -158,8 +153,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			# planicie. Intransitavel pra unidade terrestre
 			# (HexTileData.blocks_land_units), entao nenhuma cidade consegue
 			# trabalha-lo — yield fica zerado de proposito (nao ha como
-			# coletar), so o defense_bonus fica pra eventual uso futuro (ex:
-			# se um dia houver unidade resistente a lava).
+			# coletar).
 			# base_height REBAIXADO (regressao reportada pelo usuario: "leitura
 			# visual 3D ficou pessima... nao ha contraste de... elevacao" — Lava
 			# solida agora fica visivelmente AFUNDADA/em fenda, abaixo do nivel
@@ -229,23 +223,22 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			# regressao "leitura visual 3D pessima... sem contraste de
 			# elevacao": "Colinas Vulcanicas: nivel de elevacao medio,
 			# adicione variacao de altura 3D"). Mesma faixa de custo/altura
-			# de Colinas normal, ganha CUPULA de verdade (elevation_kind=1,
-			# ver HexGrid._build_terrain_multimesh/terrain.gdshader
-			# elevation_height) — relevo 3D real, nao so um numero de
-			# altura mais alto. Cor mais quente/avermelhada que Terra
+			# de Colinas normal: o contraste vem do degrau de base_height —
+			# o topo e PLANO desde 2026-10-09 (a antiga cupula saiu, pedido
+			# do usuario: so Montanhas tem relevo, ver HexGrid.elevation_
+			# kind_for). Cor mais quente/avermelhada que Terra
 			# Vulcanica pura, sugerindo fluxo de lava ja solidificado.
 			data.display_name = "Colinas Vulcanicas"
 			data.movement_cost = 1
 			data.food_yield = 0
 			data.production_yield = 2
 			data.gold_yield = 1
-			data.defense_bonus = 0.5
 			data.base_height = 0.3
 			data.color = Color(0.4, 0.24, 0.2)
 		HexTileData.TerrainType.VOLCANIC_PEAKS:
 			# "Espinha dorsal" do continente Vulcanico (pedido do usuario:
 			# "gere cordilheiras de Montanhas Vulcanicas no centro") — mesma
-			# faixa de custo/defesa/altura de Montanhas normal (mesmo
+			# faixa de custo/altura de Montanhas normal (mesmo
 			# tratamento visual de cupula/pico, ver HexGrid.gd onde
 			# elevation_kind e atribuido — o shader ja exclui neve pra
 			# mat_kind 3, ver terrain.gdshader). Cor mais ESCURA que Terra
@@ -258,7 +251,6 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			data.food_yield = 0
 			data.production_yield = 1
 			data.gold_yield = 1
-			data.defense_bonus = 1.0
 			data.base_height = 0.65
 			data.color = Color(0.2, 0.16, 0.17)
 		HexTileData.TerrainType.VOLCANIC_ASH:
@@ -283,7 +275,7 @@ static func create_tile(terrain_type: int) -> HexTileData:
 		HexTileData.TerrainType.CRYSTAL_PEAKS:
 			# "Espinha dorsal" do continente de Cristal (pedido do usuario:
 			# "gere Picos/Montanhas de Cristal no interior") — mesma faixa
-			# de custo/defesa/altura de Montanhas normal (mesmo tratamento
+			# de custo/altura de Montanhas normal (mesmo tratamento
 			# visual de cupula/pico), mas ganha o brilho/textura animada de
 			# Cristal (ver HexGrid._material_kind_for) e ouro alto (cristal
 			# concentrado nos picos vale mais que nos campos abertos).
@@ -292,7 +284,6 @@ static func create_tile(terrain_type: int) -> HexTileData:
 			data.food_yield = 0
 			data.production_yield = 1
 			data.gold_yield = 4
-			data.defense_bonus = 1.0
 			data.base_height = 0.65
 			data.color = Color(0.68, 0.52, 0.88)
 		HexTileData.TerrainType.MYSTIC_SOIL:

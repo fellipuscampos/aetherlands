@@ -48,6 +48,8 @@ var completed_ids: Dictionary = {}
 ## id -> float, só de nós NÃO concluídos com progresso > 0 (inclui o ativo).
 var progress_by_id: Dictionary = {}
 var research_overflow: float = 0.0
+## Só durante load_dict: Conhecimento de nós retirados, somado ao overflow (ver _read_progress).
+var _refunded_progress: float = 0.0
 
 # --- Acesso por civilização ------------------------------------------------------
 
@@ -115,6 +117,28 @@ func status_text(id: String, include_reason: bool = true) -> String:
 	elif state == V2ResearchDatabase.NodeState.LOCKED and include_reason:
 		lines.append(unavailable_reason(id))
 	return "\n".join(lines)
+
+## O que o Conhecimento GUARDADO faria por `id` se ele fosse escolhido AGORA — select_research aplica o guardado
+## inteiro na hora (_apply_banked_knowledge), então uma pesquisa pode avançar muito ou até concluir no clique. Só
+## leitura, com a mesma conta de _advance; é o que a interface mostra antes de o jogador escolher (pedido do usuário
+## 2026-10-13: "faz sentido colocar alguma informação sobre os pontos de pesquisa que você tem acumulado").
+## `applies` = false quando não há nada guardado ou o nó não pode ser escolhido (bloqueado, concluído, ou já é o
+## ativo). {applies, banked, cost, progress_before, progress_after, ratio_after, completes, leftover}
+func banked_preview(id: String) -> Dictionary:
+	var node := V2ResearchDatabase.get_node(id)
+	var before := get_progress(id)
+	var preview := {"applies": false, "banked": research_overflow, "cost": node.cost if node != null else 0.0,
+		"progress_before": before, "progress_after": before, "ratio_after": get_progress_ratio(id),
+		"completes": false, "leftover": research_overflow}
+	if node == null or research_overflow <= 0.0 or id == active_id or not can_research(id):
+		return preview
+	var total := before + research_overflow
+	preview.applies = true
+	preview.completes = total >= node.cost
+	preview.progress_after = minf(total, node.cost)
+	preview.leftover = maxf(total - node.cost, 0.0)
+	preview.ratio_after = clampf(total / node.cost, 0.0, 1.0) if node.cost > 0.0 else 1.0
+	return preview
 
 # --- Ações --------------------------------------------------------------------------
 
@@ -232,6 +256,7 @@ func _clear() -> void:
 	completed_ids = {}
 	progress_by_id = {}
 	research_overflow = 0.0
+	_refunded_progress = 0.0
 
 ## "31" ou "7.5": inteiro sem casas, senão uma casa decimal (texto de UI).
 static func format_amount(value: float) -> String:
@@ -251,7 +276,9 @@ func to_dict() -> Dictionary:
 ## Substitui o estado NO LUGAR (quem escuta sinais continua conectado) a partir de
 ## `data` — que pode ser QUALQUER coisa (save antigo sem o bloco, tipos errados,
 ## ids que não existem mais). Nunca falha: o que não é confiável vira estado vazio.
-##  - ids inexistentes são ignorados;
+##  - ids inexistentes são ignorados — exceto o progresso de um nó RETIRADO da árvore
+##    (V2ResearchDatabase.is_retired_node_id, ex.: o N1 de portão das Doutrinas/Escolas), que volta
+##    ao Conhecimento guardado: mudança de estrutura nunca apaga Conhecimento já investido;
 ##  - progresso é limitado a [0, custo] e só vale pra nó existente e não concluído;
 ##  - Conhecimento guardado negativo/inválido vira 0;
 ##  - `active_id` só vale se existir, não estiver concluído e estiver disponível;
@@ -289,6 +316,9 @@ func _read_progress(value: Variant) -> void:
 		return
 	for key in value:
 		var node: V2ResearchNode = V2ResearchDatabase.get_node(key) if typeof(key) == TYPE_STRING else null
+		if node == null and typeof(key) == TYPE_STRING and V2ResearchDatabase.is_retired_node_id(key) and _is_number(value[key]):
+			_refunded_progress += maxf(float(value[key]), 0.0)
+			continue
 		if node == null or completed_ids.has(key) or not _is_number(value[key]):
 			continue
 		var clamped := clampf(float(value[key]), 0.0, node.cost)
@@ -298,6 +328,8 @@ func _read_progress(value: Variant) -> void:
 func _read_overflow(value: Variant) -> void:
 	if _is_number(value):
 		research_overflow = maxf(float(value), 0.0)
+	research_overflow += _refunded_progress
+	_refunded_progress = 0.0
 
 func _read_active(value: Variant) -> void:
 	if typeof(value) == TYPE_STRING and value != "" and can_research(value):

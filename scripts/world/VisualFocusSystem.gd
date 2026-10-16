@@ -27,6 +27,7 @@ const PROP_TRANSPARENCY := 0.65 # alpha ≈ 0.35
 const STRUCTURE_TRANSPARENCY := 0.55 # alpha ≈ 0.45
 const UNIT_TRANSPARENCY := 0.55
 const FADE_TIME := 0.15
+const CONSTRUCTION_BAR_GAP := 0.16 # folga entre o topo dos marcadores da unidade e o centro da barra de obra
 
 static var enabled_in_headless := false
 
@@ -141,6 +142,41 @@ func refresh() -> void:
 			_release(coord)
 	for coord in wanted:
 		_apply(coord, wanted[coord])
+	_refresh_construction_bars(wanted)
+
+## Barra de progresso de obra (Sprite3D sem teste de profundidade, HexGrid._build_construction_progress_bar): com o
+## canteiro semitransparente sob uma unidade visível, a barra na altura do canteiro atravessaria o corpo/rosto dela —
+## sobe para cima dos marcadores da unidade (barra de vida, ícone) e volta ao canteiro quando a unidade sai ou quando
+## o foco do inspetor passa para a estrutura. Só a altura muda; a textura continua sendo do HexGrid.
+func _refresh_construction_bars(wanted: Dictionary) -> void:
+	for coord in grid._construction_markers:
+		var marker: Node3D = grid._construction_markers[coord]
+		if not is_instance_valid(marker):
+			continue
+		var bar := marker.get_node_or_null("ProgressBar") as Sprite3D
+		if bar == null:
+			continue
+		if not bar.has_meta("site_y"):
+			bar.set_meta("site_y", bar.position.y)
+		var target := float(bar.get_meta("site_y"))
+		var unit := grid.get_unit_at(coord)
+		if unit != null and is_instance_valid(unit) and unit.visible and wanted.has(coord) and bool(wanted[coord].structure):
+			# Alturas LÓGICAS do tile (onde a unidade pisa × base do canteiro), não unit.position: ela ainda pode estar
+			# deslizando para cá.
+			var unit_top := grid.world_surface_for_coord(coord).y + unit.markers_top_height()
+			target = maxf(target, unit_top + CONSTRUCTION_BAR_GAP - grid.world_for_coord(coord).y)
+		if is_equal_approx(float(bar.get_meta("target_y", bar.position.y)), target):
+			continue
+		bar.set_meta("target_y", target)
+		var running: Tween = bar.get_meta("lift_tween") if bar.has_meta("lift_tween") else null
+		if running != null and running.is_valid():
+			running.kill()
+		if _motion():
+			var tween := create_tween()
+			tween.tween_property(bar, "position:y", target, FADE_TIME)
+			bar.set_meta("lift_tween", tween)
+		else:
+			bar.position.y = target
 
 func _apply(coord: Vector2i, want: Dictionary) -> void:
 	var entry: Dictionary = _applied.get(coord, {"props": [], "structure": [], "unit": null, "unit_meshes": [], "want": {}})
@@ -223,9 +259,12 @@ static func _collect_meshes(node: Node, out: Array) -> void:
 func _set_transparency(pairs: Array, on: bool, animate: bool, amount: float = 0.0) -> void:
 	var tween: Tween = null
 	for pair in pairs:
-		var mesh: GeometryInstance3D = pair[0]
-		if not is_instance_valid(mesh):
+		# Sem tipo até validar: a malha pode ter sido liberada (a cidade refaz o visual ao mudar de dono, a unidade morreu)
+		# e atribuir uma instância liberada a uma variável tipada é erro de script antes mesmo do teste abaixo.
+		var candidate = pair[0]
+		if not is_instance_valid(candidate):
 			continue
+		var mesh: GeometryInstance3D = candidate
 		var target: float = amount if on else float(pair[1])
 		if animate and _motion():
 			if tween == null:
@@ -244,10 +283,8 @@ func _motion() -> bool:
 ## [MultiMeshInstance3D de origem, índices do tile] para cada fonte de decoração com algo neste tile.
 func _prop_sources(coord: Vector2i) -> Array:
 	var sources: Array = []
-	if grid._props_tree_instance != null and grid._tree_coord_to_index.has(coord):
-		sources.append([grid._props_tree_instance, grid._tree_coord_to_index[coord]])
-	if grid._changed_tree_props.has(coord) and is_instance_valid(grid._changed_tree_props[coord]):
-		sources.append([grid._changed_tree_props[coord], [0, 1, 2]])
+	if grid.nature_decor != null:
+		sources.append_array(grid.nature_decor.sources_at(coord)) # vegetação: um par por (asset, região) no tile
 	if grid._props_ice_floe_instance != null and grid._ice_floe_coord_to_index.has(coord):
 		sources.append([grid._props_ice_floe_instance, grid._ice_floe_coord_to_index[coord]])
 	var props := grid._resource_props_manager
@@ -259,7 +296,7 @@ func _prop_sources(coord: Vector2i) -> Array:
 	return sources
 
 func _has_props(coord: Vector2i) -> bool:
-	if grid._tree_coord_to_index.has(coord) or grid._changed_tree_props.has(coord) or grid._ice_floe_coord_to_index.has(coord):
+	if (grid.nature_decor != null and grid.nature_decor.has_decor(coord)) or grid._ice_floe_coord_to_index.has(coord):
 		return true
 	var props := grid._resource_props_manager
 	if props != null:
@@ -286,12 +323,15 @@ func _hide_props(coord: Vector2i, entry: Dictionary) -> void:
 		var overlay_mm := MultiMesh.new()
 		overlay_mm.transform_format = MultiMesh.TRANSFORM_3D
 		overlay_mm.use_colors = mm.use_colors
+		overlay_mm.use_custom_data = mm.use_custom_data # dado por instância do material (ex.: brilho ligado, WorldGlow)
 		overlay_mm.mesh = mm.mesh
 		overlay_mm.instance_count = indices.size()
 		for i in indices.size():
 			overlay_mm.set_instance_transform(i, transforms[i])
 			if mm.use_colors:
 				overlay_mm.set_instance_color(i, colors[i])
+			if mm.use_custom_data:
+				overlay_mm.set_instance_custom_data(i, mm.get_instance_custom_data(int(indices[i])))
 		var overlay := MultiMeshInstance3D.new()
 		overlay.name = "FocusProps_%d_%d" % [coord.x, coord.y]
 		overlay.multimesh = overlay_mm

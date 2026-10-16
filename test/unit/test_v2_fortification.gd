@@ -86,7 +86,7 @@ func test_fortification_data_table_is_the_single_source():
 	assert_eq([0, 1, 2, 3].map(func(l): return V2FortificationData.gold_upkeep(l)), [0.0, 1.0, 2.0, 3.0])
 	assert_eq([0, 1, 2, 3].map(func(l): return V2FortificationData.shield_max(l)), [0.0, 8.0, 14.0, 22.0])
 	assert_eq([0, 1, 2, 3].map(func(l): return V2FortificationData.city_defense_bonus(l)), [0.0, 0.10, 0.20, 0.30])
-	assert_eq([0, 1, 2, 3].map(func(l): return V2FortificationData.city_attack_power(l)), [0.0, 3.0, 5.0, 7.0])
+	assert_eq([0, 1, 2, 3].map(func(l): return V2FortificationData.city_attack_power(l)), [0.0, 4.5, 7.5, 10.5])
 	assert_eq([0, 1, 2, 3].map(func(l): return V2FortificationData.city_attack_range(l)), [0, 2, 2, 3])
 	assert_eq([1, 2, 3].map(func(l): return V2FortificationData.required_city_level(l)), [2, 3, 4])
 	assert_eq([1, 2, 3].map(func(l): return V2FortificationData.required_research_id(l)), ["v2_city_level_2", "v2_city_level_3", "v2_city_level_4"])
@@ -243,7 +243,7 @@ func test_deficit_halves_only_the_city_attack_never_shield_or_defense():
 	city.fortification_level = 2
 	city.shield = city.max_shield()
 	_make_deficit(city)
-	assert_eq(CityDefense.city_attack_power(city), 2.5, "5 x 0,5")
+	assert_eq(CityDefense.city_attack_power(city), 3.75, "7,5 x 0,5")
 	assert_eq(city.max_shield(), 14.0, "escudo 100%")
 	assert_almost_eq(city.defense_bonus(), 0.20, 0.0001, "defesa 100%")
 
@@ -257,7 +257,7 @@ func test_capture_keeps_the_fortification_and_its_damaged_shield():
 	assert_eq(city.fortification_level, 2, "a muralha continua de pé")
 	assert_eq(city.shield, 4.0, "nunca reconstruída de graça")
 	assert_almost_eq(city.defense_bonus(), 0.20, 0.0001)
-	assert_eq(CityDefense.city_attack_power(city), 5.0)
+	assert_eq(CityDefense.city_attack_power(city), 7.5)
 
 func test_the_new_owner_pays_the_upkeep_and_cannot_advance_without_its_own_research():
 	var city := _city(rival, Vector2i(3, 0), 3)
@@ -271,7 +271,7 @@ func test_the_new_owner_pays_the_upkeep_and_cannot_advance_without_its_own_resea
 
 func test_city_max_hp_comes_from_city_level():
 	var city := _city(human, Vector2i.ZERO, 1)
-	assert_eq([1, 2, 3, 4].map(func(l): return V2CityLevelData.max_hp(l)), [24.0, 30.0, 36.0, 44.0])
+	assert_eq([1, 2, 3, 4].map(func(l): return V2CityLevelData.max_hp(l)), [30.0, 38.0, 46.0, 56.0])
 	for level in [1, 2, 3, 4]:
 		city.city_level = level
 		assert_eq(city.max_hp(), V2CityLevelData.max_hp(level))
@@ -283,9 +283,9 @@ func test_population_never_changes_city_hp():
 
 func test_city_level_up_preserves_the_hp_fraction():
 	var city := _city(human, Vector2i.ZERO, 2)
-	city.hp = 15.0
+	city.hp = 19.0
 	city.apply_city_level(3)
-	assert_eq(city.hp, 18.0, "15/30 -> 18/36")
+	assert_eq(city.hp, 23.0, "19/38 -> 23/46")
 
 func test_the_city_level_project_preserves_the_hp_fraction_too():
 	var city := _city(human, Vector2i.ZERO, 1)
@@ -365,7 +365,7 @@ func test_tile_inspector_shows_the_fortification_block_to_any_observer():
 	assert_string_contains(text, "Muralhas I")
 	assert_string_contains(text, "Escudo: 8 / 8")
 	assert_string_contains(text, "Defesa urbana: +10%")
-	assert_string_contains(text, "Ataque da Cidade: 3 | Alcance 2")
+	assert_string_contains(text, "Ataque da Cidade: 4.5 | Alcance 2")
 
 func test_tile_inspector_hides_the_block_without_fortification():
 	var city := _city(rival, Vector2i(2, 0), 2)

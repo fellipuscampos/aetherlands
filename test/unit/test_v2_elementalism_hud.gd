@@ -52,7 +52,7 @@ func after_each():
 	grid.queue_free()
 
 func _learn(tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		player.v2_research.complete_research("v2_magic_elementalism_%d" % i)
 
 func _unit(kind: String, owner: PlayerData, coord: Vector2i) -> Unit:
@@ -72,10 +72,10 @@ func test_elementalist_panel_lists_all_four_environmental_spells_from_data():
 	var row := _actions()
 	assert_eq(row.get_node("MagicHeader").text, "Magia — Escola de Elementalismo")
 	var expected := {
-		"v2_spell_dense_mist": "Névoa Cerrada — 6 Mana",
-		"v2_spell_gale": "Vendaval — 8 Mana",
-		"v2_spell_lightning_storm": "Tempestade Elétrica — 12 Mana",
-		"v2_spell_elemental_cataclysm": "Cataclismo Elemental — 20 Mana",
+		"v2_spell_dense_mist": "Névoa Cerrada — 5 Mana",
+		"v2_spell_gale": "Vendaval — 9 Mana",
+		"v2_spell_lightning_storm": "Tempestade Elétrica — 18 Mana",
+		"v2_spell_elemental_cataclysm": "Cataclismo Elemental — 36 Mana + 4 Vida",
 	}
 	for id in expected:
 		var button: Button = row.get_node("Spell_" + id)
@@ -83,7 +83,7 @@ func test_elementalist_panel_lists_all_four_environmental_spells_from_data():
 		assert_string_contains(button.tooltip_text, "rodadas globais")
 	assert_string_contains(row.get_node("Spell_v2_spell_dense_mist").tooltip_text, "Visão de unidades: -2")
 	assert_string_contains(row.get_node("Spell_v2_spell_gale").tooltip_text, "×0.70")
-	assert_string_contains(row.get_node("Spell_v2_spell_lightning_storm").tooltip_text, "Dano mágico ambiental por rodada: 4")
+	assert_string_contains(row.get_node("Spell_v2_spell_lightning_storm").tooltip_text, "Dano mágico ambiental por rodada: 6")
 	assert_string_contains(row.get_node("Spell_v2_spell_elemental_cataclysm").tooltip_text, "raio 2")
 
 func test_primordial_panel_shows_flight_and_elemental_heart_and_uses_longer_duration():

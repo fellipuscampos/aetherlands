@@ -39,6 +39,8 @@ var _cooldown_shade: ColorRect
 var _cooldown_big: Label
 var _texture_rect: TextureRect
 var _applied := false
+var _context_factor := 0.0
+const CHROME := preload("res://scripts/ui/HUDChromeTheme.gd")
 
 ## Tudo que é estático nasce no construtor: configurar antes de entrar na árvore
 ## evita propagação de tema repetida (medido na Fase 30: ~5x mais barato).
@@ -256,6 +258,9 @@ func _apply_state() -> void:
 		title_color = UIThemeTokens.COLOR_CANVAS
 		meta_color = UIThemeTokens.COLOR_CANVAS
 		meta = "Escolha o alvo"
+		if _context_factor > 0:
+			title_color = Color("fff2cd")
+			meta_color = Color("e6bc77")
 	elif active:
 		theme_type_variation = &"SecondaryButton"
 		glyph_color = UIThemeTokens.COLOR_SUCCESS
@@ -289,6 +294,41 @@ func _apply_state() -> void:
 	else:
 		remove_theme_stylebox_override("disabled")
 		remove_theme_stylebox_override("normal")
+	if _context_factor > 0:
+		_apply_context_layout()
+
+func set_context_style(factor: float) -> void:
+	_context_factor = factor
+	_build_overlays()
+	_apply_state()
+
+func _apply_context_layout() -> void:
+	var factor := _context_factor
+	custom_minimum_size = Vector2(144, 76) * factor
+	var row := get_node("Content") as HBoxContainer
+	row.offset_left = 10 * factor
+	row.offset_right = -10 * factor
+	row.offset_top = 8 * factor
+	row.offset_bottom = -8 * factor
+	row.add_theme_constant_override("separation", roundi(8 * factor))
+	glyph_panel.custom_minimum_size = Vector2(30,30) * factor
+	var slot := CHROME.meter(Color("0b2027"))
+	slot.border_color = accent.darkened(0.25)
+	slot.set_border_width_all(1)
+	slot.set_content_margin_all(0)
+	glyph_panel.add_theme_stylebox_override("panel", slot)
+	title_label.add_theme_font_override("font", CHROME.PIXEL)
+	title_label.set_meta("inspector_font_size", 16)
+	title_label.add_theme_font_size_override("font_size", roundi(16 * factor))
+	if ability_state in [AbilityState.DISABLED, AbilityState.COOLDOWN, AbilityState.COST]:
+		title_label.add_theme_color_override("font_color", Color("aebbb7"))
+	meta_label.set_meta("inspector_font_size", 11)
+	meta_label.add_theme_font_size_override("font_size", roundi(11 * factor))
+	if ability_state == AbilityState.ACTIVE:
+		add_theme_stylebox_override("normal", CHROME.panel(factor, "info", 8))
+		add_theme_stylebox_override("disabled", CHROME.panel(factor, "info", 8))
+	if _cooldown_badge != null:
+		_cooldown_badge.add_theme_stylebox_override("normal", CHROME.panel(factor, "warning", 2))
 
 func _on_pressed() -> void:
 	if view != null:

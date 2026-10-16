@@ -245,23 +245,23 @@ func test_supremacy_uses_v2_victory_conditions_exactly():
 
 func test_transcendence_detail_tracks_own_requirements_and_rival_only_public():
 	for branch in ["sacred", "infernal"]:
-		for tier in range(1, 10):
+		for tier in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 			player.v2_research.complete_research("v2_magic_%s_%d" % [branch, tier])
 	player.v2_research.complete_research("v2_transcendence")
 	var detail := VictoryPresenter.transcendence_detail(player)
 	var labels: Array = detail.checklist.map(func(row): return row.label)
-	for expected in ["Duas Escolas completas (N9)", "Transcendência pesquisada", "Grandes Manifestações ativas", "Estrutura Ritual utilizável", "Ritual Final"]:
+	for expected in ["Duas Escolas completas (N8)", "Transcendência pesquisada", "Grandes Manifestações ativas", "Estrutura Ritual utilizável", "Ritual Final"]:
 		assert_has(labels, expected)
 	assert_true(detail.checklist[0].done)
 	assert_true(detail.checklist[1].done)
-	for tier in range(1, 10):
+	for tier in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		rival.v2_research.complete_research("v2_magic_arcanism_%d" % tier)
 	var rival_card := VictoryPresenter.transcendence_card(player)
 	assert_eq(rival_card.threat, "", "pesquisa rival não aparece; só Ritual público")
 	var rival_city := grid.found_city(Vector2i(5, -5), rival, "Umbra", true)
 	rival_city.buildings["v2_building_infernal_ritual"] = true
 	for branch in ["sacred", "infernal"]:
-		for tier in range(1, 10):
+		for tier in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 			rival.v2_research.complete_research("v2_magic_%s_%d" % [branch, tier])
 	rival.v2_research.complete_research("v2_transcendence")
 	grid.spawn_unit(Vector2i(6, -5), UnitDatabase.create_unit(SERAPH), rival)
@@ -292,7 +292,7 @@ func test_research_board_compact_mode_keeps_names_readable_and_click_targets():
 	var board := _board()
 	board.set_compact(true)
 	var metrics := board.metrics()
-	assert_lt(metrics.card.x, V2ResearchBoard.CARD_SIZE.x)
+	assert_lt(metrics.card.x, V2ResearchBoard.CARD_SIZE.x * Settings.ui_scale_percent / 100.0)
 	assert_gte(metrics.name_font, 11, "nunca resolve 1280 com fonte minúscula")
 	assert_gte(metrics.meta_font, 10)
 	assert_gte(metrics.card.y, 60.0, "alvo de clique preservado")
@@ -300,7 +300,7 @@ func test_research_board_compact_mode_keeps_names_readable_and_click_targets():
 	var zoomed := board.metrics()
 	assert_lt(zoomed.card.x, metrics.card.x)
 	assert_gte(zoomed.name_font, 11)
-	assert_eq(board.card_count(), 55, "zoom não muda o conteúdo")
+	assert_eq(board.card_count(), 49, "zoom não muda o conteúdo")
 	board.set_zoom(1.0)
 	board.set_compact(false)
 
@@ -324,7 +324,7 @@ func test_research_board_has_sticky_tier_header_and_branch_column_outside_the_ca
 func test_research_board_jumps_are_deterministic():
 	var board := _board()
 	var first := board.first_available_id()
-	assert_eq(first, "v2_doctrine_guardian_1", "primeiro disponível da aba atual, em ordem")
+	assert_eq(first, "v2_doctrine_guardian_2", "primeiro disponível da aba atual, em ordem")
 	assert_eq(board.first_available_id(), first)
 	board.show_tree(V2ResearchNode.TreeType.MAGIC_SCHOOL)
 	assert_true(String(board.first_available_id()).begins_with("v2_magic_"), "prefere a aba atual")
@@ -361,7 +361,13 @@ func test_strategic_screens_are_exclusive_and_escape_closes_them():
 	assert_false(shell.overlay_dimmer.visible)
 
 func test_focus_returns_to_the_control_that_opened_the_screen():
+	# Let responsive navigation settle before choosing an actual visible opener.
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var opener: Button = shell.global_bar.navigation_row.get_node("EmpireButton")
+	if not opener.is_visible_in_tree():
+		opener = shell.global_bar.navigation_row.get_node("MoreNavigation")
+	assert_true(opener.is_visible_in_tree())
 	opener.grab_focus()
 	shell.open_destination(NavigationManager.EMPIRE)
 	shell.close_strategic_overlay()
@@ -385,3 +391,245 @@ func test_new_ui_state_is_runtime_only():
 	var save_source := FileAccess.get_file_as_string("res://scripts/autoload/SaveManager.gd")
 	for name in ["ContextRouter", "EmpireScreen", "VictoryScreen", "DiplomacyScreen", "UnitPresenter"]:
 		assert_false(save_source.contains(name), "save não conhece %s" % name)
+
+# --- Escolher o alvo do ataque: tropa ou cidade (2026-10-13) ----------------------------------------------------------
+## Pedido do usuário: "caso tenha uma tropa acima, eu possa escolher em quem estou atacando, a cidade ou a tropa".
+
+func _garrisoned_city() -> Array:
+	var city := grid.found_city(Vector2i(3, 0), rival, "Sombria", true)
+	var garrison := grid.spawn_unit(Vector2i(3, 0), UnitDatabase.create_unit("warrior"), rival)
+	var attacker := grid.spawn_unit(Vector2i(2, 0), UnitDatabase.create_unit("warrior"), player)
+	Diplomacy.declare_war(player, rival, "Fronteira", true)
+	SelectionManager._select_unit(attacker)
+	return [city, garrison, attacker]
+
+func test_attacking_a_garrisoned_city_opens_the_target_choice():
+	var setup := _garrisoned_city()
+	var city: City = setup[0]
+	var garrison: Unit = setup[1]
+	var total := city.hp + city.shield
+
+	SelectionManager._attack_from_selected(city.coord)
+
+	var modal := shell.attack_target_choice.current_modal()
+	assert_not_null(modal, "o jogo pergunta em quem bater")
+	assert_string_contains(modal.title_label.text, "Atacar quem?")
+	assert_not_null(modal.find_child("AttackUnitButton", true, false))
+	assert_not_null(modal.find_child("AttackCityButton", true, false))
+	assert_eq(city.hp + city.shield, total, "nada acontece antes da escolha")
+
+	modal.find_child("AttackCityButton", true, false).pressed.emit()
+
+	assert_false(shell.modal_manager.is_modal_open())
+	assert_lt(city.hp + city.shield, total, "a cidade leva o golpe")
+	assert_eq(garrison.hp, garrison.unit_data.max_hp, "a tropa em cima não é tocada")
+
+func test_escape_on_the_target_choice_cancels_the_attack():
+	var setup := _garrisoned_city()
+	var city: City = setup[0]
+	var attacker: Unit = setup[2]
+	var total := city.hp + city.shield
+	SelectionManager._attack_from_selected(city.coord)
+	assert_true(shell.modal_manager.is_modal_open())
+
+	shell.modal_manager.handle_escape()
+
+	assert_false(shell.modal_manager.is_modal_open())
+	assert_eq(SelectionManager.attack_choice_coord, City.NO_PENDING_COORD)
+	assert_eq(city.hp + city.shield, total)
+	assert_gt(attacker.movement_left, 0.0, "a unidade continua com a ação")
+
+func test_choosing_the_unit_in_the_modal_fights_the_garrison():
+	var setup := _garrisoned_city()
+	var city: City = setup[0]
+	var garrison: Unit = setup[1]
+	var total := city.hp + city.shield
+	SelectionManager._attack_from_selected(city.coord)
+	shell.attack_target_choice.current_modal().find_child("AttackUnitButton", true, false).pressed.emit()
+	assert_eq(city.hp + city.shield, total, "a cidade fica intacta")
+	assert_true(not is_instance_valid(garrison) or garrison.is_queued_for_deletion() or garrison.hp < garrison.unit_data.max_hp)
+
+# --- Fronteiras abertas: pedido na Diplomacia e modal ao jogador (2026-10-13) -----------------------------------------
+## Pedido do usuário: "solicitar fronteiras abertas, aparece pra pessoa que foi solicitada e ambos ficam com fronteiras
+## abertas entre si, mesmo sem estar em guerra".
+
+func test_the_diplomacy_screen_requests_and_ends_open_borders():
+	hud._on_diplomacy_pressed()
+	var screen := shell.diplomacy_screen
+	screen.select_rival(rival)
+	var request: Button = screen.find_child("RequestOpenBordersButton", true, false)
+	assert_not_null(request, "em paz, a ação está na tela")
+	assert_false(request.disabled)
+	assert_null(screen.find_child("EndOpenBordersButton", true, false))
+
+	request.pressed.emit()
+
+	assert_true(player.has_open_borders_with(rival) and rival.has_open_borders_with(player), "a IA aceitou na hora")
+	assert_false(player.is_at_war_with(rival), "sem guerra")
+	assert_string_contains(screen.last_peace_result, "aceitou abrir as fronteiras")
+	assert_true(UIEvents.get_history().any(func(event): return event.event_type == "open_borders"), "o acordo entra no histórico")
+	await wait_process_frames(1)
+	var end: Button = screen.find_child("EndOpenBordersButton", true, false)
+	assert_not_null(end, "com o acordo, a ação vira encerrar")
+
+	end.pressed.emit()
+
+	assert_false(player.has_open_borders_with(rival) or rival.has_open_borders_with(player))
+	assert_true(UIEvents.get_history().any(func(event): return event.event_type == "open_borders_ended"))
+
+func test_a_refused_request_explains_why_on_the_screen():
+	Diplomacy.declare_war(player, rival, "Fronteira", true)
+	Diplomacy.make_peace(player, rival) # trégua: a IA recusa
+	hud._on_diplomacy_pressed()
+	var screen := shell.diplomacy_screen
+	screen.select_rival(rival)
+	var request: Button = screen.find_child("RequestOpenBordersButton", true, false)
+	assert_string_contains(request.tooltip_text, "Devem recusar agora", "a previsão aparece antes de pedir")
+
+	request.pressed.emit()
+
+	assert_false(player.has_open_borders_with(rival))
+	assert_string_contains(screen.last_peace_result, "recusou abrir as fronteiras")
+	assert_string_contains(screen.last_peace_result, "trégua")
+	await wait_process_frames(1)
+	assert_true((screen.find_child("RequestOpenBordersButton", true, false) as Button).disabled, "espera antes de pedir de novo")
+	assert_not_null(screen.find_child("OpenBordersReason", true, false))
+
+func test_an_open_borders_request_from_a_rival_opens_a_modal_that_only_an_answer_closes():
+	assert_eq(Diplomacy.request_open_borders(rival, player), Diplomacy.OPEN_BORDERS_OFFERED)
+	await wait_process_frames(2)
+	var modal := shell.open_borders_offers.current_modal()
+	assert_not_null(modal, "o pedido abre o modal")
+	assert_eq(shell.open_borders_offers.current_proposer(), rival)
+	assert_string_contains(modal.title_label.text, "Crepúsculo")
+	assert_false(modal.close_button.visible, "sem botão de fechar")
+	shell.modal_manager.handle_escape()
+	assert_true(shell.modal_manager.is_modal_open(), "ESC não descarta o pedido")
+	assert_false(player.has_open_borders_with(rival), "nada muda enquanto ele não responde")
+
+	modal.find_child("AcceptButton", true, false).pressed.emit()
+
+	assert_true(player.has_open_borders_with(rival) and rival.has_open_borders_with(player))
+	assert_false(shell.modal_manager.is_modal_open())
+	assert_true(UIEvents.get_history().any(func(event): return event.event_type == "open_borders"))
+
+func test_refusing_the_request_in_the_modal_keeps_the_borders_closed():
+	Diplomacy.request_open_borders(rival, player)
+	await wait_process_frames(2)
+	shell.open_borders_offers.current_modal().find_child("RefuseButton", true, false).pressed.emit()
+	assert_false(player.has_open_borders_with(rival))
+	assert_false(shell.modal_manager.is_modal_open())
+	assert_false(Diplomacy.can_request_open_borders(rival, player), "eles esperam antes de pedir de novo")
+	await wait_process_frames(2)
+	assert_null(shell.open_borders_offers.current_modal(), "o modal não reabre sozinho")
+
+func test_a_peace_offer_and_a_borders_request_are_answered_one_at_a_time():
+	Diplomacy.declare_war(third, player, "Ambição")
+	assert_true(Diplomacy.offer_peace(third, player))
+	Diplomacy.request_open_borders(rival, player)
+	await wait_process_frames(2)
+	assert_eq(shell.modal_manager.modal_count(), 1, "um modal por vez")
+	if shell.peace_offers.current_modal() != null:
+		shell.peace_offers.accept()
+	else:
+		shell.open_borders_offers.accept()
+	await wait_process_frames(2)
+	assert_eq(shell.modal_manager.modal_count(), 1, "o outro pedido aparece em seguida")
+	if shell.peace_offers.current_modal() != null:
+		shell.peace_offers.accept()
+	else:
+		shell.open_borders_offers.accept()
+	await wait_process_frames(2)
+	assert_false(shell.modal_manager.is_modal_open())
+	assert_true(player.has_open_borders_with(rival))
+	assert_false(player.is_at_war_with(third))
+
+# --- Proposta de paz ao jogador: modal Aceitar / Recusar (2026-10-10) ------------------------------------------------
+## Relato do usuário: "quando alguém pede paz a você, ela é aceita automaticamente". Agora a proposta de um rival
+## (Diplomacy.offer_peace) abre um modal: aceitar começa a trégua, recusar mantém a guerra.
+
+func _offer_from(proposer: PlayerData) -> void:
+	Diplomacy.declare_war(proposer, player, "Ambição")
+	assert_true(Diplomacy.offer_peace(proposer, player), "pré-condição: proposta registrada")
+
+func test_a_peace_offer_opens_a_modal_that_only_an_answer_closes():
+	_offer_from(rival)
+	await wait_process_frames(2)
+	var modal := shell.peace_offers.current_modal()
+	assert_not_null(modal, "a proposta abre o modal")
+	assert_true(shell.modal_manager.is_modal_open())
+	assert_eq(shell.peace_offers.current_proposer(), rival)
+	assert_string_contains(modal.title_label.text, "Crepúsculo")
+	assert_not_null(modal.find_child("AcceptButton", true, false))
+	assert_not_null(modal.find_child("RefuseButton", true, false))
+	assert_false(modal.close_button.visible, "sem botão de fechar")
+	shell.modal_manager.handle_escape()
+	assert_true(shell.modal_manager.is_modal_open(), "ESC não descarta a proposta")
+	assert_true(player.is_at_war_with(rival), "nada muda enquanto ele não responde")
+
+func test_accepting_the_offer_ends_the_war_and_starts_the_truce():
+	_offer_from(rival)
+	await wait_process_frames(2)
+	shell.peace_offers.current_modal().find_child("AcceptButton", true, false).pressed.emit()
+	assert_false(player.is_at_war_with(rival))
+	assert_false(rival.is_at_war_with(player))
+	assert_eq(Diplomacy.truce_remaining(player, rival), Diplomacy.TRUCE_TURNS, "entramos em trégua")
+	assert_false(shell.modal_manager.is_modal_open())
+	assert_true(UIEvents.get_history().any(func(event): return event.event_type == "peace_made"), "o acordo entra no histórico")
+	assert_eq(DiplomacyPresenter.row(player, rival).state, DiplomacyPresenter.STATE_TRUCE)
+
+func test_refusing_the_offer_keeps_the_war_going():
+	_offer_from(rival)
+	await wait_process_frames(2)
+	shell.peace_offers.current_modal().find_child("RefuseButton", true, false).pressed.emit()
+	assert_true(player.is_at_war_with(rival), "a guerra continua")
+	assert_eq(Diplomacy.truce_remaining(player, rival), 0)
+	assert_false(shell.modal_manager.is_modal_open())
+	assert_false(Diplomacy.can_offer_peace(rival, player), "eles esperam antes de propor de novo")
+	assert_true(UIEvents.get_history().any(func(event): return event.event_type == "peace_refused"), "a recusa entra no histórico")
+	var facts: Array = DiplomacyPresenter.detail(player, rival).facts
+	assert_true(facts.any(func(fact): return String(fact.caption) == "Proposta de paz" and String(fact.text).contains("Recusada")))
+	await wait_process_frames(2)
+	assert_null(shell.peace_offers.current_modal(), "o modal não reabre sozinho")
+
+func test_the_modal_waits_for_the_players_turn():
+	# A proposta nasce no meio do processamento do turno. (GameManager parado: sozinho ele esvaziaria a fila vazia e
+	# encerraria o turno de verdade no quadro seguinte.)
+	GameManager.set_process(false)
+	GameManager.is_turn_processing = true
+	_offer_from(rival)
+	await wait_process_frames(3)
+	assert_null(shell.peace_offers.current_modal(), "não abre por cima do turno da IA")
+	var facts: Array = DiplomacyPresenter.detail(player, rival).facts
+	assert_true(facts.any(func(fact): return String(fact.caption) == "Proposta de paz" and String(fact.text).contains("Aguardando")))
+	GameManager.is_turn_processing = false
+	GameManager.set_process(true)
+	await wait_process_frames(2)
+	assert_not_null(shell.peace_offers.current_modal(), "abre quando o turno do jogador começa")
+	shell.peace_offers.refuse()
+
+func test_two_offers_are_answered_one_at_a_time():
+	_offer_from(rival)
+	_offer_from(third)
+	await wait_process_frames(2)
+	assert_eq(shell.peace_offers.current_proposer(), rival, "primeiro quem propôs primeiro")
+	assert_eq(shell.modal_manager.modal_count(), 1)
+	shell.peace_offers.accept()
+	await wait_process_frames(2)
+	assert_eq(shell.peace_offers.current_proposer(), third, "depois a outra proposta")
+	shell.peace_offers.refuse()
+	await wait_process_frames(2)
+	assert_false(shell.modal_manager.is_modal_open())
+	assert_false(player.is_at_war_with(rival), "aceita")
+	assert_true(player.is_at_war_with(third), "recusada")
+
+func test_an_offer_whose_war_ended_meanwhile_closes_without_side_effects():
+	_offer_from(rival)
+	await wait_process_frames(2)
+	Diplomacy.make_peace(player, rival) # a guerra acabou por outro caminho com o modal aberto
+	watch_signals(EventBus)
+	shell.peace_offers.refuse()
+	assert_false(shell.modal_manager.is_modal_open())
+	assert_false(player.is_at_war_with(rival))
+	assert_false(player.peace_refusals.has(rival), "uma resposta a uma proposta que já não existe não vale")
+	assert_signal_not_emitted(EventBus, "diplomacy_changed")

@@ -130,9 +130,19 @@ func _make_unit(kind: String, player: PlayerData, coord: Vector2i) -> Unit:
 	_created_units.append(unit)
 	return unit
 
+## Tiles do mapa gerado de terra (água = false) ou de água embarcável (true) — desde o embarque automático (2026-10-10)
+## o tile decide se a unidade está de barco, então o teste escolhe o terreno em vez de pegar coords arbitrárias.
+func _coords_of(water: bool) -> Array:
+	var result := []
+	for coord in hex_grid.tiles.keys():
+		var tile: HexTileData = hex_grid.tiles[coord]
+		if (water and tile.can_be_embarked_on()) or (not water and not tile.blocks_land_units()):
+			result.append(coord)
+	return result
+
 func test_current_save_keeps_war_and_unit_orders():
 	human.war_weariness = 23.0
-	var coords := hex_grid.tiles.keys()
+	var coords := _coords_of(false)
 	var unit := _make_unit("warrior", human, coords[0])
 	unit.fortified = true
 	unit.move_order_target = coords[2]
@@ -145,6 +155,51 @@ func test_current_save_keeps_war_and_unit_orders():
 	assert_eq(loaded.war_weariness, 23.0)
 	assert_true(loaded.units[0].fortified)
 	assert_eq(loaded.units[0].move_order_target, coords[2])
+
+## Partida salva ANTES da regra de eliminação (perder a última cidade): a civilização conquistada vem no arquivo com
+## tropas, em guerra e pronta para propor paz. Carregar acerta isso (HexGrid.reconcile_eliminations) — relato do
+## usuário 2026-10-12: "a gente continua em guerra e mesmo após estar morta e eliminada, ela pede paz".
+func test_loading_a_save_with_an_already_conquered_civilization_eliminates_it():
+	GameManager.players = [human, rival] as Array[PlayerData]
+	var coords := _coords_of(false)
+	hex_grid.found_city(coords[0], human, "Capital")
+	var fallen := hex_grid.found_city(coords[coords.size() - 1], rival, "Caída")
+	rival.cities.erase(fallen)
+	fallen.change_owner(human)
+	human.cities.append(fallen)
+	_make_unit("warrior", rival, coords[coords.size() / 2])
+	rival.war_weariness = 80.0
+	assert_true(human.is_at_war_with(rival) and V2VictoryConditions.has_fallen(rival), "pré-condição: conquistada, mas ainda em guerra e com tropa")
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+	assert_true(SaveManager.load_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_human := GameManager.human_player
+	var loaded_rival: PlayerData = GameManager.rival_players[0]
+	assert_eq(loaded_human.cities.size(), 2, "a cidade conquistada continua com quem a tomou")
+	assert_true(loaded_rival.units.is_empty(), "as tropas que tinham ficado no save somem")
+	assert_false(loaded_human.is_at_war_with(loaded_rival), "a guerra não volta do arquivo")
+	assert_false(Diplomacy.has_relations(loaded_rival, GameManager.players))
+	assert_true(V2VictoryConditions.is_eliminated(loaded_rival))
+
+## Fronteiras abertas (2026-10-13): o acordo, a espera depois de uma recusa e o estado simétrico voltam do arquivo.
+func test_save_and_load_restores_open_borders_agreements():
+	Diplomacy.make_peace(human, rival) # o before_each começa em guerra; o acordo só existe em paz
+	Diplomacy.make_open_borders(human, rival)
+	rival.open_border_refusals[human] = TurnManager.turn_number + 3
+	var coords := _coords_of(false)
+	_make_unit("warrior", human, coords[0])
+	_make_unit("warrior", rival, coords[1])
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+	assert_true(SaveManager.load_game(hex_grid, TEST_SAVE_PATH))
+
+	var loaded_human := GameManager.human_player
+	var loaded_rival: PlayerData = GameManager.rival_players[0]
+	assert_true(loaded_human.has_open_borders_with(loaded_rival), "o acordo volta do save")
+	assert_true(loaded_rival.has_open_borders_with(loaded_human), "dos dois lados")
+	assert_false(loaded_human.is_at_war_with(loaded_rival))
+	assert_eq(int(loaded_rival.open_border_refusals.get(loaded_human, 0)), TurnManager.turn_number + 3)
 
 func test_save_restores_transformed_land_and_pillage():
 	var coords := hex_grid.tiles.keys()
@@ -182,11 +237,11 @@ func test_save_and_load_restores_player_and_map_state():
 	city.hp = 17.5
 	city.shield = 6.0
 
-	human.v2_research.complete_research("v2_doctrine_guardian_1")
-	assert_true(human.v2_research.select_research("v2_doctrine_guardian_2"))
+	human.v2_research.complete_research("v2_doctrine_guardian_2")
+	assert_true(human.v2_research.select_research("v2_doctrine_guardian_3"))
 
-	var peace_accepted = Diplomacy.propose_peace(human, rival) # 1 unidade de cada lado, empate aceita a paz (ver Diplomacy._accepts_peace)
-	assert_true(peace_accepted, "pre-condicao do teste: paz devia ser aceita com exercitos empatados")
+	Diplomacy.make_peace(human, rival) # fixture em paz; a regra de aceitar paz é testada em test_diplomacy.gd
+	assert_false(human.is_at_war_with(rival), "pre-condicao do teste: em paz")
 
 	TurnManager.turn_number = 9
 	TurnManager.current_player_index = 0
@@ -223,8 +278,8 @@ func test_save_and_load_restores_player_and_map_state():
 	assert_almost_eq(loaded_city.shield, 6.0, 0.01, "escudo da cidade deveria sobreviver ao save/load")
 	assert_eq(loaded_city.fortification_level, 1, "nível de Fortificação deveria sobreviver ao save/load")
 
-	assert_true(GameManager.human_player.v2_research.is_completed("v2_doctrine_guardian_1"), "pesquisa concluída deveria sobreviver ao save/load")
-	assert_eq(GameManager.human_player.v2_research.active_id, "v2_doctrine_guardian_2")
+	assert_true(GameManager.human_player.v2_research.is_completed("v2_doctrine_guardian_2"), "pesquisa concluída deveria sobreviver ao save/load")
+	assert_eq(GameManager.human_player.v2_research.active_id, "v2_doctrine_guardian_3")
 
 	assert_eq(GameManager.rival_players.size(), 1)
 	assert_false(
@@ -513,17 +568,20 @@ func test_has_save_reflects_file_presence():
 	SaveManager.delete_save(TEST_SAVE_PATH)
 	assert_false(SaveManager.has_save(TEST_SAVE_PATH))
 
-## Roadmap 2.0 Parte 1 (C6) — EXCECAO deliberada: diferente de fortified/
-## exploring/move_order_target (que nao sobrevivem de proposito), perder
-## `embarked` deixaria uma unidade presa em pleno oceano tratada como
-## terrestre apos carregar. Unidade salva EMBARCADA sobre Oceano deveria
-## voltar embarcada apos carregar.
+## Embarque automatico (2026-10-10): `embarked` e derivado do tile — o load
+## re-deriva (HexGrid.sync_embarked) a partir do mundo regenerado pela seed.
+## Unidade salva no mar volta embarcada e de barco; um flag velho em terra
+## (save antigo/inconsistente) volta a pe.
 func test_save_and_load_preserves_embarked_state_on_a_unit_at_sea():
-	var coord := Vector2i(0, 0)
-	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+	var waters := _coords_of(true)
+	var lands := _coords_of(false)
+	assert_false(waters.is_empty(), "o mapa da fixture tem mar")
+	var coord: Vector2i = waters[0]
 	var warrior = _make_unit("warrior", human, coord)
 	warrior.embarked = true
-	_make_unit("warrior", rival, Vector2i(1, 0)) # so pra check_game_over() nao fechar o jogo no load
+	var stale = _make_unit("warrior", human, lands[0])
+	stale.embarked = true # flag inconsistente: em terra
+	_make_unit("warrior", rival, lands[1]) # so pra check_game_over() nao fechar o jogo no load
 
 	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
 
@@ -533,8 +591,11 @@ func test_save_and_load_preserves_embarked_state_on_a_unit_at_sea():
 	var ok = SaveManager.load_game(loaded_grid, TEST_SAVE_PATH)
 
 	assert_true(ok)
-	assert_eq(GameManager.human_player.units.size(), 1)
-	assert_true(GameManager.human_player.units[0].embarked, "unidade embarcada sobre agua deveria continuar embarcada apos carregar")
+	assert_eq(GameManager.human_player.units.size(), 2)
+	var at_sea: Unit = loaded_grid.get_unit_at(coord)
+	assert_true(at_sea.embarked, "unidade embarcada sobre agua deveria continuar embarcada apos carregar")
+	assert_true(at_sea.is_boat_visual(), "e volta de barco")
+	assert_false(loaded_grid.get_unit_at(lands[0]).embarked, "em terra, o tile manda: a pe")
 
 ## Roadmap "Parte C" C3 — diferente de B4 (personalidade, derivada do
 ## map_seed, ZERO codigo de serializacao novo), campanha de guerra e estado
@@ -579,7 +640,8 @@ func test_save_and_load_restores_campaign_abandoned_by_peace():
 		"target_coord": target_coord,
 		"status": RivalAI.CAMPAIGN_STATUS_ACTIVE,
 	}
-	assert_true(Diplomacy.propose_peace(rival, human), "pre-condicao: paz deveria ter sido aceita (humano em desvantagem numerica)")
+	Diplomacy.propose_peace(rival, human) # ao humano a proposta fica pendente: e ele quem responde
+	assert_true(Diplomacy.answer_peace_offer(human, rival, true), "pre-condicao: o humano aceitou a proposta")
 	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ABANDONED, "pre-condicao")
 
 	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
@@ -980,15 +1042,53 @@ func test_pre_phase26_save_with_only_the_race_id_receives_the_profile_automatica
 	assert_almost_eq(V2RaceBonusRuntime.knowledge_income_multiplier(GameManager.human_player), 1.10, 0.0001)
 	assert_almost_eq(V2RaceBonusRuntime.mana_income_multiplier(GameManager.human_player), 1.10, 0.0001)
 
+## O elenco de rivais depende da raça do jogador desde 2026-10-12 (GameManager.rival_races_for): o save guarda a raça
+## de cada rival e o load recria exatamente essas civilizações.
+func test_save_and_load_restores_the_rival_roster():
+	_prepare_minimal_save_setup()
+	human.civ.race = "orc"
+	rival.civ.race = "human"
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+	assert_eq(_read_test_save().rival_races, ["human"])
+
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	assert_true(SaveManager.load_game(loaded_grid, TEST_SAVE_PATH))
+
+	assert_eq(GameManager.human_player.civ.race, "orc")
+	assert_eq(GameManager.rival_players[0].civ.race, "human", "o reino humano de IA volta do save")
+	assert_eq(GameManager.rival_players[0].civ.civ_name, GameManager.AI_CIVS.human.name)
+
+## Save anterior ao elenco por raça (sem "rival_races"), ou com a chave estragada: a partida volta com as civilizações
+## com que foi jogada — o elenco fixo antigo (elfo, anão, orc), mesmo repetindo a raça do jogador.
+func test_save_without_a_rival_roster_loads_with_the_legacy_one():
+	_prepare_minimal_save_setup()
+	human.civ.race = "elf"
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+	var data := _read_test_save()
+	for broken in [null, ["dragon"], ["human", "orc"], "elf"]:
+		if broken == null:
+			data.erase("rival_races")
+		else:
+			data["rival_races"] = broken
+		_write_test_save(data)
+
+		assert_true(SaveManager.load_game(hex_grid, TEST_SAVE_PATH))
+
+		assert_eq(GameManager.human_player.civ.race, "elf")
+		assert_eq(GameManager.rival_players.size(), 1)
+		assert_eq(GameManager.rival_players[0].civ.race, "elf", "save antigo: o mesmo rival élfico de antes (%s)" % str(broken))
+
 func test_save_and_load_restores_v2_research_per_civilization():
 	_prepare_minimal_save_setup()
 	var mine := human.v2_research
-	mine.complete_research("v2_doctrine_guardian_1")
-	mine.select_research("v2_doctrine_guardian_2")
+	mine.complete_research("v2_doctrine_guardian_2")
+	mine.select_research("v2_doctrine_guardian_3")
 	mine.add_knowledge(7.5)
-	mine.select_research("v2_magic_sacred_1")
+	mine.select_research("v2_magic_sacred_2")
 	mine.add_knowledge(2.0)
-	mine.select_research("v2_doctrine_guardian_2") # ativo de novo; sacred_1 fica PARCIAL
+	mine.select_research("v2_doctrine_guardian_3") # ativo de novo; sacred_1 fica PARCIAL
 	var theirs := rival.v2_research
 	theirs.debug_complete_branch(V2ResearchNode.TreeType.MAGIC_SCHOOL, "sacred")
 	theirs.debug_complete_branch(V2ResearchNode.TreeType.MAGIC_SCHOOL, "infernal")
@@ -1001,11 +1101,11 @@ func test_save_and_load_restores_v2_research_per_civilization():
 	assert_true(SaveManager.load_game(loaded_grid, TEST_SAVE_PATH))
 
 	var loaded_mine := GameManager.human_player.v2_research
-	assert_eq(loaded_mine.active_id, "v2_doctrine_guardian_2")
-	assert_eq(loaded_mine.get_completed_ids(), ["v2_doctrine_guardian_1"])
-	assert_almost_eq(loaded_mine.get_progress("v2_doctrine_guardian_2"), 7.5, 0.001)
-	assert_almost_eq(loaded_mine.get_progress("v2_magic_sacred_1"), 2.0, 0.001, "vários progressos guardados")
-	assert_eq(loaded_mine.node_state("v2_magic_sacred_1"), V2ResearchDatabase.NodeState.PARTIAL)
+	assert_eq(loaded_mine.active_id, "v2_doctrine_guardian_3")
+	assert_eq(loaded_mine.get_completed_ids(), ["v2_doctrine_guardian_2"])
+	assert_almost_eq(loaded_mine.get_progress("v2_doctrine_guardian_3"), 7.5, 0.001)
+	assert_almost_eq(loaded_mine.get_progress("v2_magic_sacred_2"), 2.0, 0.001, "vários progressos guardados")
+	assert_eq(loaded_mine.node_state("v2_magic_sacred_2"), V2ResearchDatabase.NodeState.PARTIAL)
 	var loaded_theirs := GameManager.rival_players[0].v2_research
 	assert_eq(loaded_theirs.active_id, "")
 	assert_almost_eq(loaded_theirs.research_overflow, 12.0, 0.001, "Conhecimento guardado sobrevive")
@@ -1014,20 +1114,20 @@ func test_save_and_load_restores_v2_research_per_civilization():
 
 func test_save_file_has_a_v2_block_for_every_civilization_and_keeps_the_save_version():
 	_prepare_minimal_save_setup()
-	human.v2_research.complete_research("v2_doctrine_guardian_1")
+	human.v2_research.complete_research("v2_doctrine_guardian_2")
 	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
 
 	var data := _read_test_save()
 
 	assert_eq(int(data.version), SaveManager.SAVE_VERSION, "campo opcional: não exige bump de versão")
 	assert_true(data.human.has("v2_research"))
-	assert_eq(data.human.v2_research.completed_ids, ["v2_doctrine_guardian_1"])
+	assert_eq(data.human.v2_research.completed_ids, ["v2_doctrine_guardian_2"])
 	for rival_data in data.rivals:
 		assert_true(rival_data.has("v2_research"))
 
 func test_load_of_a_save_without_the_v2_block_starts_with_empty_state():
 	_prepare_minimal_save_setup()
-	human.v2_research.complete_research("v2_doctrine_guardian_1")
+	human.v2_research.complete_research("v2_doctrine_guardian_2")
 	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
 	var data := _read_test_save()
 	data.human.erase("v2_research") # como um save de antes da Fase 1
@@ -1046,9 +1146,9 @@ func test_load_survives_corrupt_and_invalid_v2_blocks():
 	var data := _read_test_save()
 	data.human.v2_research = "lixo"
 	data.rivals[0].v2_research = {
-		"active_id": "v2_doctrine_guardian_2",             # bloqueado: N1 não concluído
-		"completed_ids": ["v2_magic_sacred_1", "v2_id_que_nao_existe", 7],
-		"progress_by_id": {"v2_magic_infernal_1": -4.0, "v2_magic_druidism_1": 99999.0, "v2_fantasma": 3.0},
+		"active_id": "v2_doctrine_guardian_3",             # bloqueado: N1 não concluído
+		"completed_ids": ["v2_magic_sacred_2", "v2_id_que_nao_existe", 7],
+		"progress_by_id": {"v2_magic_infernal_2": -4.0, "v2_magic_druidism_2": 99999.0, "v2_fantasma": 3.0},
 		"research_overflow": -10.0,
 	}
 	_write_test_save(data)
@@ -1058,10 +1158,10 @@ func test_load_survives_corrupt_and_invalid_v2_blocks():
 	assert_eq(GameManager.human_player.v2_research.to_dict(), V2ResearchState.new().to_dict())
 	var sanitized := GameManager.rival_players[0].v2_research
 	assert_eq(sanitized.active_id, "", "ativo inválido descartado")
-	assert_eq(sanitized.get_completed_ids(), ["v2_magic_sacred_1"], "id inexistente e tipo errado ignorados")
-	assert_false(sanitized.progress_by_id.has("v2_magic_infernal_1"), "progresso negativo descartado")
-	var druidism_cost := V2ResearchDatabase.get_node("v2_magic_druidism_1").cost
-	assert_almost_eq(sanitized.get_progress("v2_magic_druidism_1"), druidism_cost, 0.001, "progresso limitado ao custo")
+	assert_eq(sanitized.get_completed_ids(), ["v2_magic_sacred_2"], "id inexistente e tipo errado ignorados")
+	assert_false(sanitized.progress_by_id.has("v2_magic_infernal_2"), "progresso negativo descartado")
+	var druidism_cost := V2ResearchDatabase.get_node("v2_magic_druidism_2").cost
+	assert_almost_eq(sanitized.get_progress("v2_magic_druidism_2"), druidism_cost, 0.001, "progresso limitado ao custo")
 	assert_false(sanitized.progress_by_id.has("v2_fantasma"))
 	assert_almost_eq(sanitized.research_overflow, 0.0, 0.001)
 
@@ -1125,6 +1225,37 @@ func test_save_and_load_restores_resource_improvements_by_coord_and_rebuilds_the
 	var marker: Node3D = loaded_grid.improvement_markers_by_coord[improved]
 	assert_eq(marker.get_child_count(), 2, "modelo KayKit reaproveitado da Mina de Gemas + o selo dourado")
 	assert_almost_eq(V2EconomyRuntime.city_income_breakdown(loaded_city, "gold").improvement_total, 4.0, 0.0001, "rendimento re-derivado (tier 1)")
+
+## Recurso de mapa destruído por uma obra (HexGrid.destroy_resource_at): o mapa é recriado do seed no load, então
+## sem `destroyed_resources` no save o recurso (e a melhoria que morreu com ele) voltaria a existir.
+func test_save_and_load_keeps_a_destroyed_map_resource_destroyed():
+	var with_resource: Array[Vector2i] = []
+	for coord in hex_grid.tiles:
+		var tile: HexTileData = hex_grid.get_tile(coord)
+		if tile.resource != "" and not tile.blocks_land_units():
+			with_resource.append(coord)
+	with_resource.sort()
+	assert_gt(with_resource.size(), 1, "pré-condição: o mapa do seed tem pelo menos dois recursos em terra")
+	var destroyed: Vector2i = with_resource[0]
+	var kept: Vector2i = with_resource[1]
+	var kept_resource: String = hex_grid.get_tile(kept).resource
+	var city = hex_grid.found_city(hex_grid.get_neighbors(destroyed)[0], human, "Capital")
+	city.resource_improvements[destroyed] = V2ResourceImprovementData.improvement_id_for_resource(hex_grid.get_tile(destroyed).resource)
+	assert_ne(city.start_building("v2_building_guardian_hall", destroyed, hex_grid), "", "a obra destrói o recurso")
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	assert_true(SaveManager.load_game(loaded_grid, TEST_SAVE_PATH))
+
+	assert_eq(loaded_grid.get_tile(destroyed).resource, "", "o seed recriou o recurso e o load o destruiu de novo")
+	assert_true(loaded_grid.destroyed_resources.has(destroyed), "e continua registrado para o próximo save")
+	assert_eq(loaded_grid.get_tile(kept).resource, kept_resource, "os outros recursos do mapa ficam intactos")
+	var loaded_city: City = GameManager.human_player.cities[0]
+	assert_false(loaded_city.resource_improvements.has(destroyed), "a melhoria não volta")
+	assert_false(loaded_grid.improvement_markers_by_coord.has(destroyed))
+	assert_eq(loaded_city.pending_building_coord, destroyed, "a obra em andamento segue no mesmo tile")
 
 func test_save_and_load_restores_the_builders_remaining_charges():
 	var coord: Vector2i = hex_grid.tiles.keys()[0]
@@ -1241,7 +1372,7 @@ func test_a_legacy_save_without_the_field_migrates_the_v1_wall_chain():
 	assert_true(SaveManager.load_game(loaded_grid, TEST_SAVE_PATH))
 	var loaded: City = GameManager.human_player.cities[0]
 	assert_eq(loaded.fortification_level, 2, "Muralhas II V1 -> Muralhas II V2")
-	assert_eq(loaded.hp, 36.0, "limitada ao máximo da Cidade III, nunca destruída")
+	assert_eq(loaded.hp, 46.0, "limitada ao máximo da Cidade III, nunca destruída")
 	assert_eq(loaded.shield, 14.0, "limitado ao máximo de Muralhas II")
 	assert_eq(loaded.last_city_attack_turn, -1)
 	assert_eq(loaded.v2_supremacy_captured_from, -1)
@@ -1276,7 +1407,7 @@ func _phase17_free_coord(near: Vector2i = Vector2i(999, 999)) -> Vector2i:
 func test_save_and_load_restores_spell_cooldown_aegis_mana_and_seraph_and_the_aegis_still_expires():
 	var majors: Array[PlayerData] = [human, rival]
 	GameManager.players = majors
-	for i in range(1, 10):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_magic_sacred_%d" % i)
 	var cleric_coord := _phase17_free_coord()
 	var cleric := _make_unit("v2_unit_sacred_cleric", human, cleric_coord)
@@ -1299,7 +1430,7 @@ func test_save_and_load_restores_spell_cooldown_aegis_mana_and_seraph_and_the_ae
 			loaded_ally = unit
 		elif unit.coord == seraph_coord:
 			loaded_seraph = unit
-	assert_eq(GameManager.human_player.mana, 44.0, "Mana sobrevive")
+	assert_eq(GameManager.human_player.mana, 42.0, "Mana sobrevive")
 	assert_eq(V2MagicRuntime.cooldown_remaining(loaded_cleric, "v2_spell_sacred_aegis"), 2, "recarga sobrevive")
 	assert_true(V2MagicRuntime.is_status_active(loaded_ally, "v2_spell_sacred_aegis"), "Égide ativa sobrevive")
 	assert_eq(V2MagicRuntime.spells_for_unit(loaded_cleric).size(), 4, "repertório re-derivado, nunca salvo")
@@ -1313,13 +1444,13 @@ func test_save_and_load_restores_spell_cooldown_aegis_mana_and_seraph_and_the_ae
 func test_save_and_load_keeps_a_seraph_production_waiting_for_mana_and_it_pays_once():
 	var majors: Array[PlayerData] = [human, rival]
 	GameManager.players = majors
-	for i in range(1, 10):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_magic_sacred_%d" % i)
 	var city := _phase16_city(human, "Catedral")
 	city.city_level = 3
 	city.buildings["v2_building_sacred_temple"] = true
 	city.buildings["v2_building_sacred_ritual"] = true
-	human.mana = 60.0
+	human.mana = 120.0
 	city.set_production("v2_manifestation_seraph")
 	human.mana = 10.0
 	city.stored_production = 100.0
@@ -1328,11 +1459,11 @@ func test_save_and_load_keeps_a_seraph_production_waiting_for_mana_and_it_pays_o
 	var loaded: City = GameManager.human_player.cities[0]
 	assert_eq(loaded.production_item, "v2_manifestation_seraph")
 	assert_eq(loaded.stored_production, 100.0)
-	assert_eq(loaded.production_waiting_for_mana(), 60, "continua esperando")
+	assert_eq(loaded.production_waiting_for_mana(), 120, "continua esperando")
 	var result := loaded.process_turn(loaded_grid)
 	assert_eq(result.spawn_unit_kind, "", "sem Mana não nasce")
-	assert_eq(loaded.stored_production, 100.0, "sem perder PP")
-	GameManager.human_player.mana = 70.0
+	assert_eq(loaded.stored_production, 84.0, "sem perder PP")
+	GameManager.human_player.mana = 130.0
 	result = loaded.process_turn(loaded_grid)
 	assert_eq(result.spawn_unit_kind, "v2_manifestation_seraph", "com Mana conclui (a cobrança é do GameManager, uma vez)")
 
@@ -1342,7 +1473,7 @@ func test_save_and_load_restores_both_v2_schools_without_serializing_the_school_
 	var majors: Array[PlayerData] = [human, rival]
 	GameManager.players = majors
 	for branch in ["sacred", "infernal"]:
-		for i in range(1, 10):
+		for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 			human.v2_research.complete_research("v2_magic_%s_%d" % [branch, i])
 	var cleric_coord := _phase17_free_coord()
 	var cleric := _make_unit("v2_unit_sacred_cleric", human, cleric_coord)
@@ -1386,14 +1517,14 @@ func test_save_and_load_restores_both_v2_schools_without_serializing_the_school_
 	assert_true(loaded_archdemon.unit_data.has_trait(UnitData.TRAIT_GRAND_MANIFESTATION))
 	assert_false(V2ManifestationSystem.slot_available(GameManager.human_player, "sacred"))
 	assert_false(V2ManifestationSystem.slot_available(GameManager.human_player, "infernal"))
-	assert_eq(GameManager.human_player.mana, 117.0, "Mana e custo da Égide sobrevivem")
+	assert_eq(GameManager.human_player.mana, 115.0, "Mana e custo da Égide sobrevivem")
 
 # --- Aetherlands V2, Fase 19: retinues e comando derivado ----------------------------------------
 
 func test_save_and_load_restores_hosts_and_rederives_command_without_saving_it():
 	var majors: Array[PlayerData] = [human, rival]
 	GameManager.players = majors
-	for i in range(1, 10):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_magic_necromancy_%d" % i)
 	var necro_coord := _phase17_free_coord()
 	_make_unit("v2_unit_necromancer", human, necro_coord)
@@ -1429,7 +1560,7 @@ func test_save_and_load_restores_hosts_and_rederives_command_without_saving_it()
 	assert_eq(V2RetinueSystem.command_capacity(GameManager.human_player, "necromancy"), 6)
 	assert_eq(V2RetinueSystem.command_used(GameManager.human_player, "necromancy"), 3)
 	assert_true(V2RetinueSystem.is_commanded(loaded_first) and V2RetinueSystem.is_commanded(loaded_macabre))
-	assert_almost_eq(V2MagicRuntime.attack_multiplier(loaded_macabre), 1.4, 0.0001)
+	assert_almost_eq(V2MagicRuntime.attack_multiplier(loaded_macabre), 1.5, 0.0001)
 	assert_false(V2ManifestationSystem.slot_available(GameManager.human_player, "necromancy"))
 
 # --- Aetherlands V2, Fase 20: modificação física de terreno (estado global do mapa) -------------
@@ -1475,7 +1606,7 @@ func test_save_and_load_restores_environmental_zones_with_owner_school_and_remai
 	assert_true(SaveManager.load_game(loaded_grid, TEST_SAVE_PATH))
 	var entry := V2EnvironmentalZoneSystem.zone_entry_at(coord, loaded_grid)
 	assert_eq([entry.zone_id, entry.owner_index, entry.school, entry.remaining_rounds], ["v2_zone_elemental_cataclysm", 0, "elementalism", 3])
-	assert_eq(V2EnvironmentalZoneSystem.zone_at(coord, loaded_grid).round_tick_magic_damage, 5.0)
+	assert_eq(V2EnvironmentalZoneSystem.zone_at(coord, loaded_grid).round_tick_magic_damage, 10.0)
 	assert_true(loaded_grid._v2_environmental_zone_markers.has(coord))
 
 func test_old_save_without_environmental_block_loads_with_empty_layer():
@@ -1502,7 +1633,7 @@ func _phase23_ready_ritual() -> City:
 	GameManager.hex_grid = hex_grid
 	GameManager.state = GameManager.GameState.PLAYING
 	for branch in ["sacred", "infernal"]:
-		for tier in range(1, 10):
+		for tier in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 			human.v2_research.complete_research("v2_magic_%s_%d" % [branch, tier])
 	human.v2_research.complete_research("v2_transcendence")
 	var city := _phase16_city(human, "Cidade Ritual")
@@ -1687,3 +1818,28 @@ func test_new_saves_never_write_v1_fields():
 	for key in ["researched_techs", "researched_magic", "current_research", "research_progress", "\"population\"", "stored_food", "worked_tiles", "trade_routes", "arcane_ritual", "territorial_streak", "victory_rules_version", "personality", "spell_cooldowns", "magic_effects"]:
 		assert_false(text.contains(key), key)
 	assert_eq(_read_test_save().version, float(SaveManager.SAVE_VERSION))
+
+## Proposta de paz sem resposta e a espera depois de uma recusa (2026-10-10) sobrevivem ao save: carregar reabre o
+## modal da proposta pendente (EventBus.peace_offered) e a IA nao volta a propor antes da hora.
+func test_save_and_load_restores_a_pending_peace_offer_and_the_refusal_wait():
+	_make_unit("warrior", human, hex_grid.tiles.keys()[0])
+	_make_unit("warrior", rival, hex_grid.tiles.keys()[1])
+	TurnManager.turn_number = 9
+	assert_true(rival.is_at_war_with(human), "pre-condicao: em guerra")
+	assert_true(Diplomacy.offer_peace(rival, human))
+	rival.peace_refusals[human] = 14 # espera de uma recusa (aqui do outro lado, so pra provar o campo)
+
+	assert_true(SaveManager.save_game(hex_grid, TEST_SAVE_PATH))
+	var loaded_grid := HexGrid.new()
+	loaded_grid._ready()
+	_created_hex_grids.append(loaded_grid)
+	watch_signals(EventBus)
+	assert_true(SaveManager.load_game(loaded_grid, TEST_SAVE_PATH))
+
+	var loaded_human: PlayerData = GameManager.human_player
+	var loaded_rival: PlayerData = GameManager.rival_players[0]
+	assert_true(Diplomacy.has_pending_peace_offer(loaded_human, loaded_rival), "a proposta continua aguardando resposta")
+	assert_eq(int(loaded_rival.peace_refusals.get(loaded_human, 0)), 14)
+	assert_signal_emitted_with_parameters(EventBus, "peace_offered", [loaded_rival, loaded_human])
+	assert_true(Diplomacy.answer_peace_offer(loaded_human, loaded_rival, true), "e pode ser respondida depois de carregar")
+	assert_false(loaded_human.is_at_war_with(loaded_rival))

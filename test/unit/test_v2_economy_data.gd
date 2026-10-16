@@ -10,8 +10,8 @@ extends GutTest
 func test_base_yields_per_city_match_the_documented_baseline():
 	assert_eq(V2InfrastructureEconomyData.BASE_GOLD_PER_CITY, 2.0)
 	assert_eq(V2InfrastructureEconomyData.BASE_SUPPLY_PER_CITY, 4.0)
-	assert_eq(V2InfrastructureEconomyData.BASE_PRODUCTION_PER_CITY, 4.0)
-	assert_eq(V2InfrastructureEconomyData.BASE_KNOWLEDGE_PER_CITY, 2.0)
+	assert_eq(V2InfrastructureEconomyData.BASE_PRODUCTION_PER_CITY, 5.0)
+	assert_eq(V2InfrastructureEconomyData.BASE_KNOWLEDGE_PER_CITY, 3.0)
 	assert_eq(V2InfrastructureEconomyData.BASE_MANA_PER_CITY, 1.0)
 
 func test_the_five_buildings_have_the_documented_ids_resources_and_costs():

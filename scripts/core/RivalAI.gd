@@ -75,10 +75,9 @@ const WAR_WEIGHT_VULNERABILITY := 1.0
 const WAR_WEIGHT_RESOURCES := 1.0
 const WAR_RESOURCE_RICHNESS_NORM := 4.0
 const WAR_SCORE_THRESHOLD := 1.5
-## So verificado DEPOIS do limiar acima passar — jitter pequeno, nunca o
-## unico fator (pedido explicito do usuario) — evita guerra "no instante
-## exato" em que a vantagem cruza o limiar, sem tornar a decisao um
-## sorteio disfarcado de avaliacao.
+## HISTÓRICO: até 2026-10-15 a guerra pronta ainda passava por este sorteio (20%/turno). Substituído pela preparação
+## determinística (WAR_PREPARATION_TURNS, ver decide_war) — mesma função de "não declarar no instante exato em que
+## a vantagem cruza o limiar", sem sorteio. Nenhum código lê mais esta constante.
 const WAR_DECLARE_CHANCE_WHEN_READY := 0.2
 const WAR_PROXIMITY_RANGE := 10 # cidade conhecida alem disso nao conta como "perto o bastante" pra abrir guerra
 ## Roadmap "Parte C" C2 — 2+ unidades do papel certo ja conta como "tenho o
@@ -387,26 +386,116 @@ static func _notify_human(opponent: PlayerData, text: String) -> void:
 		return
 	EventBus.notify.emit(text, "")
 
+## --- Decisão de guerra (2026-10-15) ---------------------------------------------------------------------------------
+## Pedido do usuário: "parecem tomar decisões aleatórias, como declarar guerra e um tempo depois pedir paz". O sorteio
+## (WAR_DECLARE_CHANCE_WHEN_READY) saiu da decisão: a guerra agora segue um PLANO determinístico em três passos.
+##   1. desejo = melhor objetivo (_best_war_objective, mesma fórmula de sempre) + pressão de Ritual público + memória
+##      diplomática (DiplomaticMemory.hostility: rancor soma até +1, boa vontade tira até −1);
+##   2. prontidão = desejo ≥ WAR_SCORE_THRESHOLD, exército mínimo (WAR_MIN_COMBAT_UNITS), força própria ≥
+##      WAR_MIN_STRENGTH_RATIO da dele, não amistoso, e fora da espera depois da última paz com o MESMO reino
+##      (WAR_RENEWAL_COOLDOWN_TURNS — rancor Hostil ou pior pula a espera);
+##   3. preparação: pronto por WAR_PREPARATION_TURNS turnos seguidos (Hostil: WAR_PREPARATION_TURNS_HOSTILE). Nesse
+##      meio-tempo a produção prioriza tropas (V2StrategicAI.war_production_pressure) e só então a guerra é declarada.
+## O contador vive em DiplomaticMemory ("war_plan"), salvo com a memória. decide_war roda UMA vez por par por turno
+## (GameManager._on_turn_changed), então cada chamada pronta conta um turno de preparação.
+const WAR_PREPARATION_TURNS := 4
+const WAR_PREPARATION_TURNS_HOSTILE := 2
+const WAR_MIN_COMBAT_UNITS := 3
+const WAR_RITUAL_MIN_COMBAT_UNITS := 2
+const WAR_MIN_STRENGTH_RATIO := 0.75
+const WAR_RENEWAL_COOLDOWN_TURNS := 25
+## O aviso "estão reunindo tropas" sai no máximo uma vez a cada tantos turnos por par (a prontidão pode oscilar).
+const WAR_WARNING_COOLDOWN_TURNS := 15
+
+## {score, best, ritual, hostility, ready, block} — o que decide_war enxerga contra `opponent` agora. `block` = por que
+## não está pronto ("" = pronto). Sem efeito colateral (exceto criar o registro de memória vazio).
+## Supremacia (2026-10-15 — gargalo medido: "mediana de 0 capturas qualificadas" depois do Exército Supremo): com o
+## acesso pesquisado e foco de Supremacia, todo rival ainda PENDENTE vira motivo de guerra — a condição exige tomar
+## uma cidade de nível máximo de cada um. Soma SUPREMACY_WAR_PRESSURE ao desejo e passa por cima da amizade e da
+## espera pós-paz (os outros freios — exército, força, preparação — continuam valendo).
+const SUPREMACY_WAR_PRESSURE := 1.0
+
+static func supremacy_target_against(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> Variant:
+	if player.v2_ai_strategy.victory_focus != V2AIStrategyState.VictoryFocus.MILITARY_SUPREMACY:
+		return null
+	if not player.has_unlocked(V2VictoryConditions.MILITARY_SUPREMACY_ACCESS) or V2VictoryConditions.is_eliminated(opponent) or V2VictoryConditions.rival_satisfied_by_conquest(player, opponent):
+		return null
+	var targets := V2VictoryConditions.known_supremacy_targets(player, opponent, hex_grid)
+	return targets[0].coord if not targets.is_empty() else null
+
+static func war_readiness(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> Dictionary:
+	var best = _best_war_objective(player, hex_grid, opponent)
+	var ritual := V2StrategicAI.public_ritual_info_for(opponent)
+	var hostility := DiplomaticMemory.hostility(player, opponent)
+	var supremacy := supremacy_target_against(player, hex_grid, opponent) != null
+	var score := (float(best.score) if best != null else 0.0) + V2StrategicAI.public_ritual_war_pressure(opponent) + hostility + (SUPREMACY_WAR_PRESSURE if supremacy else 0.0)
+	var result := {"score": score, "best": best, "ritual": ritual, "hostility": hostility, "supremacy": supremacy, "ready": false, "block": ""}
+	var level := DiplomaticMemory.level(player, opponent)
+	var hostile := level == DiplomaticMemory.LEVEL_HOSTILE or level == DiplomaticMemory.LEVEL_SWORN
+	if best == null and ritual.is_empty():
+		result.block = "no_known_target"
+	elif score < WAR_SCORE_THRESHOLD:
+		result.block = "low_desire"
+	elif V2StrategicAI.relevant_unit_count(player) < (WAR_RITUAL_MIN_COMBAT_UNITS if not ritual.is_empty() else WAR_MIN_COMBAT_UNITS):
+		result.block = "small_army"
+	elif ritual.is_empty() and _total_military_strength(player) < _total_military_strength(opponent) * WAR_MIN_STRENGTH_RATIO:
+		result.block = "weaker"
+	elif ritual.is_empty() and not supremacy and level == DiplomaticMemory.LEVEL_FRIENDLY:
+		result.block = "friendly"
+	elif ritual.is_empty() and not supremacy and not hostile and DiplomaticMemory.turns_since_peace(player, opponent) < WAR_RENEWAL_COOLDOWN_TURNS:
+		result.block = "recent_peace"
+	else:
+		result.ready = true
+	return result
+
+## A IA está se preparando para guerra contra alguém (V2StrategicAI usa isso para priorizar tropas)?
+static func is_preparing_war(player: PlayerData) -> bool:
+	for other in player.diplomatic_memory:
+		if int(player.diplomatic_memory[other].get("war_plan", 0)) > 0 and not player.is_at_war_with(other):
+			return true
+	return false
+
 static func decide_war(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
 	if player.is_at_war_with(opponent) or not Diplomacy.can_declare_war(player, opponent):
 		return
-	var best = _best_war_objective(player, hex_grid, opponent)
-	# O Ritual Final é público, mas só acrescenta pressão à decisão existente: tratados/cooldowns já
-	# foram validados acima, prontidão e RNG continuam obrigatórios. Não existe `if ritual: declare_war`.
-	var ritual := V2StrategicAI.public_ritual_info_for(opponent)
-	var ritual_pressure := V2StrategicAI.public_ritual_war_pressure(opponent)
-	var base_score := float(best.score) if best != null else 0.0
-	if not ritual.is_empty() and player.units.filter(func(u): return u.unit_data.attack > 0).size() >= 2 and base_score + ritual_pressure >= WAR_SCORE_THRESHOLD and player.ai_rng.randf() < WAR_DECLARE_CHANCE_WHEN_READY:
-		var ritual_site: Vector2i = ritual.site_coord
+	var readiness := war_readiness(player, hex_grid, opponent)
+	var plan := DiplomaticMemory.record(player, opponent)
+	if not bool(readiness.ready):
+		plan.war_plan = maxi(0, int(plan.war_plan) - 1)
+		return
+	plan.war_plan = int(plan.war_plan) + 1
+	var level := DiplomaticMemory.level(player, opponent)
+	var needed := WAR_PREPARATION_TURNS_HOSTILE if level in [DiplomaticMemory.LEVEL_HOSTILE, DiplomaticMemory.LEVEL_SWORN] else WAR_PREPARATION_TURNS
+	if not readiness.ritual.is_empty():
+		needed = 1 # Ritual público: cada rodada conta, não há tempo de preparar
+	if int(plan.war_plan) == 1 and needed > 1 and TurnManager.turn_number - int(plan.get("war_warned", -999)) >= WAR_WARNING_COOLDOWN_TURNS:
+		plan.war_warned = TurnManager.turn_number
+		_notify_human(opponent, "%s está reunindo tropas e parece se preparar para uma guerra contra você." % player.civ.civ_name)
+	if int(plan.war_plan) < needed:
+		return
+	var reason := _war_reason(player, opponent, readiness)
+	if not readiness.ritual.is_empty():
+		var ritual_site: Vector2i = readiness.ritual.site_coord
 		player.known_enemy_cities[ritual_site] = true
-		Diplomacy.declare_war(player, opponent, "Interromper ritual estratégico")
-		_notify_human(opponent, "%s declarou guerra para interromper seu ritual!" % player.civ.civ_name)
-		return
-	if best == null:
-		return
-	if best.score >= WAR_SCORE_THRESHOLD and player.ai_rng.randf() < WAR_DECLARE_CHANCE_WHEN_READY:
-		Diplomacy.declare_war(player, opponent, "Expansão territorial e recursos")
-		_notify_human(opponent, "%s declarou guerra!" % player.civ.civ_name)
+	Diplomacy.declare_war(player, opponent, reason)
+	_notify_human(opponent, "%s declarou guerra! Motivo: %s." % [player.civ.civ_name, reason])
+
+## Motivo público da guerra, do fato mais forte para o mais fraco (aparece na Diplomacia e na notificação).
+static func _war_reason(player: PlayerData, opponent: PlayerData, readiness: Dictionary) -> String:
+	if not readiness.ritual.is_empty():
+		return "Interromper ritual estratégico"
+	if bool(readiness.get("supremacy", false)):
+		return "Provar a supremacia militar"
+	if DiplomaticMemory.value(player, opponent, DiplomaticMemory.CONQUEST) >= 20.0:
+		return "Retomar as cidades perdidas"
+	if DiplomaticMemory.value(player, opponent, DiplomaticMemory.AGGRESSION) + DiplomaticMemory.value(player, opponent, DiplomaticMemory.BETRAYAL) >= 20.0:
+		return "Vingança por guerras passadas"
+	if DiplomaticMemory.value(player, opponent, DiplomaticMemory.WARMONGER) >= 15.0:
+		return "Conter um reino belicista"
+	var best = readiness.best
+	if best != null and best.objective == WAR_OBJECTIVE_SECURE_RESOURCES:
+		return "Controlar os recursos de %s" % best.city.city_name
+	return "Expansão territorial e recursos"
 
 const CAMPAIGN_STATUS_ACTIVE := "active"
 const CAMPAIGN_STATUS_COMPLETED := "completed"
@@ -455,6 +544,14 @@ static func decide_campaign(player: PlayerData, hex_grid: HexGrid, opponent: Pla
 ## fatia nao mexe em Diplomacy.gd), entao a guerra pode continuar e uma nova
 ## campanha nascer contra outro alvo no turno seguinte.
 static func _start_campaign(player: PlayerData, hex_grid: HexGrid, opponent: PlayerData) -> void:
+	# Supremacia (2026-10-15): a campanha mira a cidade que FECHA a condição (maior nível conhecido do rival), não a
+	# mais conveniente — senão a IA conquistava a cidade errada e a Supremacia nunca saía.
+	var supremacy_coord = supremacy_target_against(player, hex_grid, opponent)
+	if supremacy_coord != null:
+		var city := hex_grid.get_city_at(supremacy_coord)
+		player.war_campaigns[opponent] = {"objective": WAR_OBJECTIVE_CONQUER, "target_coord": supremacy_coord, "status": CAMPAIGN_STATUS_ACTIVE}
+		_notify_human(opponent, _campaign_start_message(player, WAR_OBJECTIVE_CONQUER, city))
+		return
 	var best = _best_war_objective(player, hex_grid, opponent)
 	if best == null or best.score < WAR_SCORE_THRESHOLD:
 		return
@@ -532,6 +629,10 @@ static func _advance_campaign(player: PlayerData, hex_grid: HexGrid, opponent: P
 			campaign.target_coord = best.coord
 		return
 
+	# Alvo de Supremacia não é "abandonável" por pontuação: é a cidade que a vitória exige (sem isto, abandonar e
+	# recriar a mesma campanha a cada turno).
+	if supremacy_target_against(player, hex_grid, opponent) == target_coord:
+		return
 	if not _campaign_still_viable(player, hex_grid, opponent, target_city, campaign.objective):
 		campaign.status = CAMPAIGN_STATUS_ABANDONED
 		_notify_campaign_abandoned(player, opponent)
@@ -588,10 +689,39 @@ static func _campaign_attack_target(player: PlayerData, hex_grid: HexGrid, oppon
 		return null
 	return target_coord
 
+## FRONTEIRAS ABERTAS — a IA também pede (Diplomacy.request_open_borders): a `other` que já tem cidade de fronteira
+## fechada, de tempos em tempos, e só o que ela mesma concederia (a mesma regra com que responde). Cadência fixa por
+## par, sem RNG (não perturba a sequência de sorteios da IA). Devolve o resultado do pedido, ou "" se nem pediu.
+const OPEN_BORDERS_REQUEST_INTERVAL := 12
+
+static func decide_open_borders(player: PlayerData, other: PlayerData) -> String:
+	if player == null or other == null or player == other or player.cities.is_empty():
+		return ""
+	var a := GameManager.players.find(player)
+	var b := GameManager.players.find(other)
+	if a < 0 or b < 0 or posmod(TurnManager.turn_number + a * 5 + b * 3, OPEN_BORDERS_REQUEST_INTERVAL) != 0:
+		return ""
+	var has_closed_city := false
+	for city in other.cities:
+		if city.city_level >= HexGrid.CLOSED_BORDERS_FROM_LEVEL:
+			has_closed_city = true
+			break
+	if not has_closed_city or not Diplomacy.can_request_open_borders(player, other):
+		return ""
+	if Diplomacy.open_borders_refusal_reason(player, other) != "":
+		return ""
+	return Diplomacy.request_open_borders(player, other)
+
 const PEACE_DECISION_NOT_AT_WAR := "not_at_war"
 const PEACE_DECISION_BELOW_THRESHOLD := "below_threshold"
 const PEACE_DECISION_ACCEPTED := "accepted"
 const PEACE_DECISION_REFUSED := "refused"
+## O oponente e o jogador humano: a proposta ficou PENDENTE da resposta dele (Diplomacy.offer_peace) — a guerra
+## continua ate ele aceitar no modal.
+const PEACE_DECISION_OFFERED := "offered"
+## Quer paz, mas nao pode propor agora: ja ha uma proposta sem resposta, ou o humano recusou ha pouco
+## (Diplomacy.PEACE_OFFER_COOLDOWN_TURNS).
+const PEACE_DECISION_WAITING := "waiting"
 ## Limiar de OFERTA de paz (Roadmap "Parte D", D1) — distinto de Diplomacy.
 ## WAR_WEARINESS_ACCEPTS_PEACE_THRESHOLD (40.0, "aceito SE me propuserem").
 ## Deliberadamente MAIOR: "estou cansado o bastante pra tomar a iniciativa"
@@ -612,10 +742,16 @@ const WAR_WEARINESS_OFFER_PEACE_THRESHOLD := 60.0
 ## Diplomacy._accepts_peace() NUNCA e tocado — continua significando so
 ## "aceito uma proposta que recebi", nunca "eu decido propor".
 ##
-## Recusa da proposta (Diplomacy.propose_peace -> _accepts_peace) e um
-## resultado NORMAL, nao um erro: guerra continua, nenhum estado novo
-## criado, tenta de novo no proximo turno se o desgaste continuar alto —
-## nao existe (nem precisa existir) um "peace_offer_pending".
+## Entre IAs, a recusa da proposta (Diplomacy.propose_peace -> _accepts_peace)
+## e um resultado NORMAL, nao um erro: guerra continua, nenhum estado novo
+## criado, tenta de novo no proximo turno se o desgaste continuar alto.
+##
+## Contra o JOGADOR HUMANO (2026-10-10) ninguem responde por ele: a proposta
+## fica PENDENTE (Diplomacy.offer_peace, PEACE_DECISION_OFFERED) ate ele
+## aceitar ou recusar no modal (PeaceOfferPresenter). Enquanto ela esta sem
+## resposta, ou durante a espera depois de uma recusa
+## (Diplomacy.PEACE_OFFER_COOLDOWN_TURNS), isto devolve PEACE_DECISION_WAITING
+## em vez de propor de novo.
 ##
 ## Ate o Roadmap "Parte E" E1, esta funcao NUNCA mexia em war_campaigns por
 ## conta propria (campanha e guerra eram conceitos separados desde C3).
@@ -629,11 +765,40 @@ const WAR_WEARINESS_OFFER_PEACE_THRESHOLD := 60.0
 ## Retorna um dos PEACE_DECISION_* acima — valor TRANSIENTE (nunca guardado
 ## em PlayerData), so pra quem chamou (harness/testes) poder observar o que
 ## aconteceu sem precisar reconstruir isso a partir de efeito colateral.
+## 2026-10-15 — oferecer paz deixou de ser "cansaço ≥ 60" (que fazia a IA pedir paz pouco depois de declarar, ganhando
+## ou perdendo). Agora oferece quando wants_peace: ela mesma aceitaria a paz (Diplomacy.peace_outlook do PRÓPRIO lado:
+## cansaço, força, rancor) e a guerra já durou PEACE_OFFER_MIN_WAR_TURNS — ou está perdendo feio (força abaixo de
+## PEACE_LOSING_STRENGTH_RATIO da dele). Uma campanha ativa e ainda viável segura a oferta até o cansaço chegar a
+## WAR_WEARINESS_OFFER_PEACE_THRESHOLD: ninguém pede paz no meio de um cerco que está dando certo.
+const PEACE_OFFER_MIN_WAR_TURNS := 12
+const PEACE_LOSING_STRENGTH_RATIO := 0.5
+
+static func wants_peace(player: PlayerData, opponent: PlayerData) -> bool:
+	var own := _total_military_strength(player)
+	var theirs := _total_military_strength(opponent)
+	if theirs > 0.0 and own < theirs * PEACE_LOSING_STRENGTH_RATIO:
+		return true
+	if player.cities.is_empty() and V2VictoryConditions.has_fallen(player):
+		return true # perdeu todas as cidades: continuar a guerra só termina em eliminação
+	if DiplomaticMemory.record(player, opponent).get("war_start", -1) >= 0 and DiplomaticMemory.turns_at_war(player, opponent) < PEACE_OFFER_MIN_WAR_TURNS:
+		return false
+	if not bool(Diplomacy.peace_outlook(player, opponent).accept):
+		return false
+	var campaign: Dictionary = player.war_campaigns.get(opponent, {})
+	if campaign.get("status", "") == CAMPAIGN_STATUS_ACTIVE and player.war_weariness < WAR_WEARINESS_OFFER_PEACE_THRESHOLD and GameManager.hex_grid != null:
+		var target := GameManager.hex_grid.get_city_at(campaign.target_coord)
+		if target != null and target.owner_player == opponent and _campaign_still_viable(player, GameManager.hex_grid, opponent, target, campaign.objective):
+			return false
+	return true
+
 static func decide_peace(player: PlayerData, opponent: PlayerData) -> String:
 	if not player.is_at_war_with(opponent):
 		return PEACE_DECISION_NOT_AT_WAR
-	if player.war_weariness < WAR_WEARINESS_OFFER_PEACE_THRESHOLD:
+	if not wants_peace(player, opponent):
 		return PEACE_DECISION_BELOW_THRESHOLD
+	# O jogador humano responde por conta propria (modal Aceitar/Recusar): nada de heuristica decidindo por ele.
+	if GameManager.is_human_controlled(opponent):
+		return PEACE_DECISION_OFFERED if Diplomacy.offer_peace(player, opponent) else PEACE_DECISION_WAITING
 	if Diplomacy.propose_peace(player, opponent):
 		_notify_human(opponent, "%s propôs paz e ela foi aceita." % player.civ.civ_name)
 		return PEACE_DECISION_ACCEPTED
@@ -667,6 +832,8 @@ static func _city_resource_richness(city: City, hex_grid: HexGrid) -> float:
 static func _total_military_strength(player: PlayerData) -> float:
 	var total := 0.0
 	for unit in player.units:
+		if unit == null or not is_instance_valid(unit):
+			continue
 		if unit.unit_data.attack > 0.0 and unit.unit_data.max_hp > 0.0:
 			total += unit.unit_data.attack * (unit.hp / unit.unit_data.max_hp)
 	return total
@@ -767,6 +934,9 @@ static func join_dragon_hunt(player: PlayerData, hex_grid: HexGrid, dragon_unit:
 ## continua sendo o unico limite (foge quando malferido, nunca luta ate' a
 ## morte certa repetidamente).
 static func react_to_dragon(unit: Unit, hex_grid: HexGrid, dragon_unit: Unit) -> void:
+	if V2ManifestationOrders.is_bound(unit):
+		V2ManifestationOrders.assign(unit, V2ManifestationOrders.ATTACK_UNIT, dragon_unit.coord, hex_grid)
+		return
 	if unit.unit_data.attack <= 0.0 or unit.hp < unit.unit_data.max_hp * RETREAT_HP_FRACTION:
 		return
 	if dragon_unit.coord in hex_grid.tiles_in_range(unit.coord, unit.unit_data.attack_range):
@@ -802,6 +972,10 @@ static func defend_against_dragon(player: PlayerData, hex_grid: HexGrid, dragon_
 	if dragon_unit == null or not is_instance_valid(dragon_unit):
 		return
 	for unit in player.units:
+		if V2ManifestationOrders.is_bound(unit):
+			var ward := _nearest_own_city(player, unit.coord)
+			if ward != null: V2ManifestationOrders.assign(unit, V2ManifestationOrders.PROTECT_CITY, ward.coord, hex_grid)
+			continue
 		if unit.unit_data.attack <= 0.0 or unit.hp < unit.unit_data.max_hp * RETREAT_HP_FRACTION:
 			continue
 		var nearest_city := _nearest_own_city(player, unit.coord)
@@ -843,6 +1017,10 @@ static func begin_turn(player: PlayerData, hex_grid: HexGrid, opponent: PlayerDa
 ## begin_turn() acima, pra poder ser chamada unidade-por-unidade em frames
 ## diferentes.
 static func act_for_unit(unit: Unit, hex_grid: HexGrid, player: PlayerData, opponent: PlayerData, visible: Dictionary) -> void:
+	if V2ManifestationOrders.is_bound(unit):
+		V2ManifestationOrders.choose_ai_order(unit, hex_grid, visible)
+		V2ManifestationOrders.act(unit, hex_grid, visible)
+		return
 	if unit.movement_left <= 0.0 or unit.hp <= 0.0:
 		return
 	# V3 / Etapa 2: perigo de criatura CONHECIDO (infecção/raiz explorada, Rastro Subterrâneo visível) — sai antes de agir.
@@ -856,7 +1034,12 @@ static func act_for_unit(unit: Unit, hex_grid: HexGrid, player: PlayerData, oppo
 	elif unit.unit_data.attack <= 0.0:
 		StrategicAI.move_support(unit, player, hex_grid)
 	elif unit.unit_data.attack > 0.0:
+		AIWarTactics.update_recovery(unit)
 		if StrategicAI.engage_nearby_monster(unit, player, hex_grid, visible):
+			return
+		# 2026-10-15 — exército de OUTRA civilização perto de uma cidade própria: quem está perto volta e luta
+		# (CityDefense só cobria monstros). Antes da defesa contra monstro: um cerco tira cidades, um goblin não.
+		if AIWarTactics.defend_against_invaders(unit, player, hex_grid, visible):
 			return
 		# Task 21 -- monstro ameacando uma cidade propria: guarnicao sai ao
 		# encontro / reforco proporcional (ver CityDefense.defend_turn).
@@ -864,9 +1047,6 @@ static func act_for_unit(unit: Unit, hex_grid: HexGrid, player: PlayerData, oppo
 			return
 		# Fase 33D2 — covil conhecido perto do reino (ameaça regional/Guardião) com força local suficiente.
 		if StrategicAI.respond_to_lair(unit, player, hex_grid):
-			return
-		# Fase 33D3 — Relicário público: vai quem tem força livre e perto (V2StrategicAI.reliquary_plan).
-		if StrategicAI.respond_to_reliquary(unit, player, hex_grid):
 			return
 		opponent = StrategicAI.choose_opponent(player, hex_grid, opponent)
 		_handle_attacker(unit, hex_grid, player, opponent, visible)
@@ -900,30 +1080,61 @@ static func _scout_enemy_cities(player: PlayerData, opponent: PlayerData, visibl
 ## de alcance/escolta/movimento abaixo) e identico ao caminho sem campanha,
 ## entao a unidade so fica parada esse turno, exatamente como ja acontecia
 ## quando _choose_target sozinho escolhia algo longe demais.
+## 2026-10-15 (AIWarTactics): recuo com histerese, melhor golpe do tile atual (foco de fogo), exército que espera o
+## grupo em campanha, unidade à distância que se posiciona no alcance (sem escolta, recua até a linha) e ataque
+## depois de andar. A ESCOLHA do alvo de marcha continua a mesma de sempre (Ritual → campanha → _choose_target).
 static func _handle_attacker(unit: Unit, hex_grid: HexGrid, player: PlayerData, opponent: PlayerData, visible: Dictionary) -> void:
-	if unit.hp < unit.unit_data.max_hp * RETREAT_HP_FRACTION:
-		_retreat(unit, hex_grid, player)
+	if AIWarTactics.update_recovery(unit):
+		var start := unit.coord
+		if not AIWarTactics.retreat(unit, player, hex_grid, visible):
+			_retreat(unit, hex_grid, player)
+		if is_instance_valid(unit) and unit.coord == start:
+			_hold_position(unit, hex_grid)
 		return
 
 	# Um Ritual Final público de rival tem prioridade sobre a campanha (substitui o antigo
 	# contra-ritual da magia V1); depois a campanha validada e, por fim, o alvo tático.
 	var target_coord = V2StrategicAI.public_ritual_target_coord(V2AITacticalAI.view_for(player, hex_grid))
+	var strategic := target_coord != null
 	if target_coord == null:
 		target_coord = _campaign_attack_target(player, hex_grid, opponent)
+		strategic = target_coord != null
 	if target_coord == null:
 		target_coord = _choose_target(unit, hex_grid, player, opponent, visible)
+
+	# O golpe mais útil daqui (pode não ser o alvo de marcha: um inimigo ferido ao lado vale mais); empate fica com ele.
+	if AIWarTactics.try_strike(unit, player, hex_grid, visible, target_coord):
+		return
 	if target_coord == null:
-		StrategicAI.explore(unit, player, hex_grid)
+		# Sem alvo: os batedores designados exploram, o resto guarnece as cidades (AIWarTactics.take_post).
+		if AIWarTactics.is_designated_scout(unit, player) or not AIWarTactics.take_post(unit, player, hex_grid):
+			unit.fortified = false # Explorar não anda fortificado (StrategicAI.explore)
+			StrategicAI.explore(unit, player, hex_grid)
+		return
+	# Já no alcance do alvo e nenhum golpe valeu a pena (troca ruim): segura a posição em vez de dançar ao redor.
+	if target_coord in hex_grid.tiles_in_range(unit.coord, unit.unit_data.attack_range) and not unit.embarked:
+		_hold_position(unit, hex_grid)
+		return
+	if strategic and AIWarTactics.should_hold_for_group(unit, player, target_coord):
+		_hold_position(unit, hex_grid)
 		return
 
-	if target_coord in hex_grid.tiles_in_range(unit.coord, unit.unit_data.attack_range):
-		_engage(unit, hex_grid, target_coord)
-		return
+	if unit.unit_data.attack_range > 1:
+		if not _has_melee_escort_nearby(unit, player):
+			AIWarTactics.fall_back_to_line(unit, player, hex_grid)
+			return
+		AIWarTactics.move_ranged(unit, player, hex_grid, visible, target_coord)
+	else:
+		move_unit_toward(unit, hex_grid, target_coord)
+	AIWarTactics.strike_after_move(unit, player, hex_grid, visible, target_coord)
 
-	if unit.unit_data.attack_range > 1 and not _has_melee_escort_nearby(unit, player):
+## Parada de propósito (esperando o grupo, curando fora da cidade, guarnição): Fortificar — a mesma ordem do jogador,
+## que dá Defesa e cura passiva fora da cidade. A IA nunca fortificava, então tropa ferida fora de cidade nunca curava.
+static func _hold_position(unit: Unit, _hex_grid: HexGrid) -> void:
+	if not is_instance_valid(unit) or unit.embarked or unit.fortified:
 		return
-
-	move_unit_toward(unit, hex_grid, target_coord)
+	unit.fortified = true
+	unit.exploring = false
 
 ## Ataca so se o combate parecer favoravel; cidade indefesa e sempre um
 ## alvo valido pra ATACAR (sem risco pro atacante — cidade nao contra-
@@ -932,11 +1143,19 @@ static func _handle_attacker(unit: Unit, hex_grid: HexGrid, player: PlayerData, 
 ## varios turnos ate a vida zerar e capturar de verdade).
 static func _engage(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i) -> void:
 	var defender = hex_grid.get_unit_at(target_coord)
-	if defender:
-		if is_favorable_attack(unit, defender, hex_grid):
-			CombatResolver.resolve(unit, defender, hex_grid)
-		return
 	var city = hex_grid.get_city_at(target_coord)
+	# Tropa em cima de uma cidade (guarnição): a IA escolhe o alvo como o jogador (2026-10-13). Toma a cidade se este
+	# golpe a captura; senão luta com a guarnição quando o combate é favorável; senão bate na cidade, que não revida —
+	# uma guarnição forte não serve mais de escudo para a cidade.
+	var city_is_target: bool = city != null and CombatResolver.can_attack_city(unit, city)
+	if defender:
+		if city_is_target and bool(CombatResolver.predict_city_attack(unit, city).captures):
+			CombatResolver.resolve_city_attack(unit, city, hex_grid)
+		elif is_favorable_attack(unit, defender, hex_grid):
+			CombatResolver.resolve(unit, defender, hex_grid)
+		elif city_is_target:
+			CombatResolver.resolve_city_attack(unit, city, hex_grid)
+		return
 	if city:
 		CombatResolver.resolve_city_attack(unit, city, hex_grid)
 
@@ -1017,12 +1236,21 @@ static func _nearest_known_target(from: Vector2i, hex_grid: HexGrid, player: Pla
 static func move_unit_toward(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i) -> void:
 	if unit.movement_left <= 0 or unit.coord == target_coord:
 		return
+	# Sair do lugar desfaz o Fortificar (mesma regra das ordens de movimento do jogador, SelectionManager).
+	unit.fortified = false
 	var destinations: Array[Vector2i] = [target_coord]
 	if hex_grid.get_unit_at(target_coord) != null or (hex_grid.get_city_at(target_coord) != null and hex_grid.get_city_at(target_coord).owner_player != unit.owner_player):
 		destinations = hex_grid.get_neighbors(target_coord)
-	destinations.sort_custom(func(a, b): return HexMetrics.axial_distance(unit.coord, a) < HexMetrics.axial_distance(unit.coord, b))
+	# Embarque automático: para se aproximar de um alvo ocupado, a casa vizinha em TERRA vem antes da água (embarcado não
+	# ataca), e só depois a distância.
+	destinations.sort_custom(func(a, b):
+		var water_a := _ends_embarked(unit, hex_grid, a)
+		var water_b := _ends_embarked(unit, hex_grid, b)
+		if water_a != water_b:
+			return water_b
+		return HexMetrics.axial_distance(unit.coord, a) < HexMetrics.axial_distance(unit.coord, b))
 	for destination in destinations:
-		var path := hex_grid.compute_path(unit.coord, destination, unit.owner_player, unit.unit_data.flies, unit.embarked)
+		var path := hex_grid.unit_path(unit, destination)
 		if path.is_empty():
 			continue
 		var first_step := true
@@ -1034,7 +1262,7 @@ static func move_unit_toward(unit: Unit, hex_grid: HexGrid, target_coord: Vector
 			first_step = false
 			hex_grid.move_unit(unit, step, cost)
 		return
-	var reachable = hex_grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies)
+	var reachable = hex_grid.unit_landing_reachable(unit) if unit.owner_player != null else hex_grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies)
 	var best_coord = null
 	var best_dist = HexMetrics.axial_distance(unit.coord, target_coord)
 	for coord in reachable.keys():
@@ -1044,6 +1272,10 @@ static func move_unit_toward(unit: Unit, hex_grid: HexGrid, target_coord: Vector
 			best_coord = coord
 	if best_coord != null:
 		hex_grid.move_unit(unit, best_coord, reachable[best_coord])
+
+static func _ends_embarked(unit: Unit, hex_grid: HexGrid, coord: Vector2i) -> bool:
+	var tile := hex_grid.get_tile(coord)
+	return unit.can_embark() and tile != null and tile.can_be_embarked_on()
 
 ## Foge pra perto da cidade mais proxima em vez de continuar brigando
 ## fraca — la ela cura (GameManager._heal_if_garrisoned).

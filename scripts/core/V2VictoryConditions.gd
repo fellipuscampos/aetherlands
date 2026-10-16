@@ -4,8 +4,10 @@ extends RefCounted
 ## Aetherlands V2, Fase 16 — fundação GENÉRICA das vitórias V2 (a Transcendência futura mora aqui
 ## também). Tudo DERIVADO a cada chamada (nada de "2/3" salvo): acesso vem da pesquisa, o crédito
 ## territorial vem de City.v2_supremacy_captured_from das cidades que o jogador POSSUI agora, e a
-## eliminação usa a MESMA definição da Dominação (VictoryConditions: sem unidades e sem cidades —
-## um Colonizador vivo mantém a civilização viva). A Fase 23 acrescenta a Transcendência pelo Ritual
+## eliminação usa a MESMA definição da Dominação (VictoryConditions: sem unidades e sem cidades).
+## Desde 2026-10-12 perder a ÚLTIMA cidade remove as unidades que restavam (HexGrid.eliminate_civilization),
+## então uma civilização conquistada fica eliminada na hora; só quem ainda não fundou a primeira cidade
+## continua viva apenas com unidades (o Colono do início). A Fase 23 acrescenta a Transcendência pelo Ritual
 ## Final. Fase 25: as vitórias V1/V1.5 (Territorial, Arcana, VictoryCampaign) foram removidas; a ordem
 ## de avaliação é Dominação -> Supremacia Militar -> Transcendência (GameManager.check_victories).
 
@@ -29,6 +31,24 @@ static func stable_id(player: PlayerData) -> int:
 
 static func is_eliminated(player: PlayerData) -> bool:
 	return player.units.is_empty() and player.cities.is_empty()
+
+## `player` JÁ TEVE cidade e não tem mais nenhuma — a condição da eliminação (HexGrid.eliminate_civilization), lida
+## do estado do mapa em vez de um evento: cidade nunca é destruída, só muda de dono (HexGrid.capture_city), então a
+## que ele fundou continua no mapa com `original_owner_index` dele. É o que separa a civilização conquistada de quem
+## ainda não fundou a primeira cidade (o Colono do início), e é o que HexGrid.reconcile_eliminations consulta.
+static func has_fallen(player: PlayerData) -> bool:
+	if player == null or not player.cities.is_empty():
+		return false
+	var index := stable_id(player)
+	if index < 0:
+		return false
+	for other in major_players():
+		if other == null:
+			continue
+		for city in other.cities:
+			if city.original_owner_index == index:
+				return true
+	return false
 
 ## Fase 33D3 — REGRA TERRITORIAL DA SUPREMACIA (fonte canônica). Uma captura de cidade de `owner` qualifica
 ## quando, NO INSTANTE DA CAPTURA, o City Level dela é igual ao MAIOR City Level que `owner` possui (a própria

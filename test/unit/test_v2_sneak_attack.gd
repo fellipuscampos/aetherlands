@@ -63,7 +63,7 @@ func test_the_multiplier_and_penetration_come_from_the_data_not_from_the_code():
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, SNEAK_ATTACK, d.foe, d.grid))
 	technique.strike_multiplier = original_mult
 	technique.strike_defense_penetration = original_pen
-	assert_almost_eq(before - d.foe.hp, _formula_damage(d.grid, 4.5, 2.0, d.foe, 1.0, 0.9), 0.0001)
+	assert_almost_eq(before - d.foe.hp, _formula_damage(d.grid, 7.0, 2.0, d.foe, 1.0, 0.9), 0.0001)
 
 # --- Disponibilidade por nível e por unidade ----------------------------------------------------------------------------------
 
@@ -143,15 +143,15 @@ func test_the_strike_hits_with_135_percent_of_the_basic_attack_and_40_percent_de
 	var foe: Unit = d.foe
 	var basic: float = CombatResolver.predict(unit, foe, d.grid).damage_to_defender
 	var furtive: float = CombatResolver.predict(unit, foe, d.grid, 1.35, 0.4).damage_to_defender
-	assert_eq(basic, _formula_damage(d.grid, 4.5, 1.0, foe), "ataque comum: 4,5 - 3,0/2")
-	assert_eq(furtive, _formula_damage(d.grid, 4.5, 1.35, foe, 1.0, 0.4), "furtivo: 4,5 x 1,35 - (3,0 x 0,6)/2")
+	assert_eq(basic, _formula_damage(d.grid, 7.0, 1.0, foe), "ataque comum: 4,5 - 3,0/2")
+	assert_eq(furtive, _formula_damage(d.grid, 7.0, 1.35, foe, 1.0, 0.4), "furtivo: 4,5 x 1,35 - (3,0 x 0,6)/2")
 	assert_gt(furtive, basic)
 	assert_eq(CombatResolver.predict(unit, foe, d.grid, 1.0, 0.0).damage_to_defender, basic, "1.0/0.0 é o ataque comum")
 
 func test_penetration_reduces_only_the_defense_contribution_never_a_flat_correction_after_the_fact():
 	var d := _duel(40.0, 10.0) # Defesa alta, pra a penetração fazer diferença clara
 	var predicted: float = CombatResolver.predict(d.unit, d.foe, d.grid, 1.35, 0.4).damage_to_defender
-	var manual := maxf(1.0, 4.5 * 1.35 - (10.0 * 0.6) * CombatResolver.DEFENSE_MITIGATION_FACTOR)
+	var manual := maxf(1.0, 7.0 * 1.35 - (10.0 * 0.6) * CombatResolver.DEFENSE_MITIGATION_FACTOR)
 	assert_almost_eq(predicted, manual, 0.0001, "só 60% da Defesa entra na MESMA fórmula, não uma correção separada")
 
 func test_prediction_and_real_resolution_agree_hp_loss_equals_the_predicted_damage():
@@ -303,11 +303,11 @@ func test_predict_reports_zero_damage_to_attacker_and_attacker_never_dies_from_t
 
 # --- A cadeia normal de combate segue valendo -------------------------------------------------------------------------------------
 
-func test_terrain_defense_of_the_target_tile_applies():
+## O terreno-base não protege o alvo (2026-10-09): em colina, só a Defesa da unidade e a penetração contam.
+func test_the_base_terrain_of_the_target_tile_gives_no_defense():
 	var d := _duel()
 	_set_terrain(d.grid, Vector2i(1, 0), HexTileData.TerrainType.HILLS)
-	assert_gt(d.grid.get_tile(Vector2i(1, 0)).defense_bonus, 0.0, "pré-condição: colina defende")
-	var expected := _formula_damage(d.grid, 4.5, 1.35, d.foe, 1.0, 0.4)
+	var expected := _formula_damage(d.grid, 7.0, 1.35, d.foe, 1.0, 0.4)
 	var before: float = d.foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, SNEAK_ATTACK, d.foe, d.grid))
 	assert_almost_eq(before - d.foe.hp, expected, 0.0001)
@@ -316,8 +316,8 @@ func test_a_shield_wall_on_the_target_reduces_the_damage_penetration_applies_on_
 	var d := _duel()
 	d.foe.magic_status[WALL] = TurnManager.turn_number + 2
 	var wall_bonus: float = 1.0 + _technique(WALL).self_defense_bonus
-	var expected := _formula_damage(d.grid, 4.5, 1.35, d.foe, wall_bonus, 0.4)
-	assert_lt(expected, _formula_damage(d.grid, 4.5, 1.35, d.foe, 1.0, 0.4), "a Muralha ainda ajuda, mesmo com a penetração")
+	var expected := _formula_damage(d.grid, 7.0, 1.35, d.foe, wall_bonus, 0.4)
+	assert_lt(expected, _formula_damage(d.grid, 7.0, 1.35, d.foe, 1.0, 0.4), "a Muralha ainda ajuda, mesmo com a penetração")
 	var before: float = d.foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, SNEAK_ATTACK, d.foe, d.grid))
 	assert_almost_eq(before - d.foe.hp, expected, 0.0001, "mesma cadeia de defesa do ataque normal")
@@ -339,7 +339,7 @@ func test_the_defenders_aura_from_a_command_champion_also_counts():
 	var aura: float = 1.0 + UnitDatabase.create_unit(CHAMPION).aura_defense_bonus
 	var before: float = d.foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, SNEAK_ATTACK, d.foe, d.grid))
-	assert_almost_eq(before - d.foe.hp, _formula_damage(d.grid, 4.5, 1.35, d.foe, aura, 0.4), 0.0001)
+	assert_almost_eq(before - d.foe.hp, _formula_damage(d.grid, 7.0, 1.35, d.foe, aura, 0.4), 0.0001)
 
 func test_the_existing_strike_techniques_keep_zero_penetration_and_normal_counterattack():
 	for id in [POWER, "v2_technique_cleave", PRECISE, VOLLEY, CHARGE]:

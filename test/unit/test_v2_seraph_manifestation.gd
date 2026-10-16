@@ -71,7 +71,7 @@ func _player(civ_name: String) -> PlayerData:
 	return player
 
 func _learn(player: PlayerData, tier: int = 9) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		if not player.v2_research.is_completed("v2_magic_sacred_%d" % i):
 			assert_true(player.v2_research.complete_research("v2_magic_sacred_%d" % i))
 
@@ -112,9 +112,9 @@ func _spawn_like_game_manager(city: City, kind: String) -> void:
 
 func test_seraph_data_and_traits():
 	var data := UnitDatabase.create_unit(SERAPH)
-	assert_eq([data.unit_name, data.max_hp, data.attack, data.defense, data.movement_points, data.vision_range], ["Serafim", 38.0, 0.0, 7.0, 3.0, 4])
-	assert_eq([data.production_cost, data.production_mana_cost, data.supply_cost], [100.0, 60.0, 0])
-	assert_false(data.can_basic_attack)
+	assert_eq([data.unit_name, data.max_hp, data.attack, data.defense, data.movement_points, data.vision_range], ["Serafim", 50.0, 12.0, 10.5, 3.0, 4])
+	assert_eq([data.production_cost, data.production_mana_cost, data.supply_cost], [84.0, 120.0, 0])
+	assert_true(data.can_basic_attack)
 	assert_eq(data.v2_magic_school, "sacred")
 	assert_eq(data.movement_profile, UnitData.MovementProfile.FLYING)
 	assert_eq(data.ranged_damage_taken_bonus, 0.0, "voar não implica a vulnerabilidade do Grifo")
@@ -145,15 +145,15 @@ func test_seraph_flies_and_lands_only_on_legal_tiles():
 	assert_false(reach.has(Vector2i(1, 0)), "nunca pousa na água")
 	assert_true(reach.has(Vector2i(2, 0)), "voa por cima")
 
-func test_seraph_knows_the_sacred_repertoire_and_never_attacks():
+func test_seraph_knows_the_sacred_repertoire_and_can_attack_autonomously():
 	_learn(human)
 	var seraph := _unit(SERAPH, human, Vector2i.ZERO)
 	assert_eq(V2MagicRuntime.spells_for_unit(seraph).size(), 4)
 	var enemy := _unit("warrior", rival, Vector2i(1, 0))
-	assert_false(CombatResolver.can_attack_unit(seraph, enemy, grid))
+	assert_true(CombatResolver.can_attack_unit(seraph, enemy, grid))
 	var hp := enemy.hp
 	CombatResolver.resolve(seraph, enemy, grid)
-	assert_eq(enemy.hp, hp)
+	assert_lt(enemy.hp, hp)
 
 func test_seraph_uses_no_supply_and_ignores_logistic_tension():
 	_learn(human)
@@ -166,9 +166,9 @@ func test_seraph_uses_no_supply_and_ignores_logistic_tension():
 	assert_eq(V2LogisticsRuntime.combat_multiplier(seraph), 1.0)
 
 func test_counters_dismantle_yes_legend_hunt_no_city_attack_plain():
-	for i in range(1, 7):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 7):
 		rival.v2_research.complete_research("v2_doctrine_rogue_%d" % i)
-	for i in range(1, 10):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		rival.v2_research.complete_research("v2_doctrine_ranger_%d" % i)
 	_learn(human)
 	var seraph := _unit(SERAPH, human, Vector2i.ZERO)
@@ -182,7 +182,7 @@ func test_counters_dismantle_yes_legend_hunt_no_city_attack_plain():
 	rival.gold = 500.0
 	var hp := seraph.hp
 	assert_true(CityDefense.resolve_city_defense_attack(city, seraph, grid))
-	assert_eq(hp - seraph.hp, 3.0, "sem +25% de voador")
+	assert_eq(hp - seraph.hp, 4.5, "sem +25% de voador")
 
 # --- Presença Sagrada ------------------------------------------------------------------------------------
 
@@ -263,7 +263,7 @@ func test_slot_is_per_school_not_global():
 	assert_false(V2ManifestationSystem.slot_available(human, "infernal"))
 
 func test_legendary_and_manifestation_slots_are_independent():
-	for i in range(1, 10):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % i)
 	_learn(human)
 	var city := _ritual_city(human, Vector2i(-4, 0))
@@ -282,13 +282,13 @@ func test_legendary_and_manifestation_slots_are_independent():
 func test_starting_needs_the_mana_but_never_charges_it():
 	var city := _ritual_city(human, Vector2i.ZERO)
 	_learn(human)
-	human.mana = 59.0
+	human.mana = 119.0
 	assert_false(city.can_train(SERAPH))
-	assert_eq(V2ManifestationSystem.training_soft_reason(human, city, SERAPH), "Requer 60 Mana.")
-	human.mana = 60.0
-	assert_true(city.can_train(SERAPH), "exatamente 60 pode iniciar")
+	assert_eq(V2ManifestationSystem.training_soft_reason(human, city, SERAPH), "Requer 120 Mana.")
+	human.mana = 120.0
+	assert_true(city.can_train(SERAPH), "exatamente 120 pode iniciar")
 	city.set_production(SERAPH)
-	assert_eq(human.mana, 60.0, "nada reservado nem descontado")
+	assert_eq(human.mana, 120.0, "nada reservado nem descontado")
 	human.mana = 5.0
 	assert_true(city.can_train(SERAPH), "gastar Mana durante a produção não cancela a ordem")
 
@@ -300,14 +300,14 @@ func test_completion_waits_for_mana_without_losing_production_and_pays_once():
 	_complete(city)
 	assert_eq(V2ManifestationSystem.active_units(human, "sacred").size(), 0, "não nasce sem Mana")
 	assert_eq(city.production_item, SERAPH)
-	assert_eq(city.stored_production, 100.0, "PP completos, sem perda")
-	assert_eq(city.production_waiting_for_mana(), 60)
+	assert_eq(city.stored_production, 84.0, "PP completos, sem perda")
+	assert_eq(city.production_waiting_for_mana(), 120)
 	assert_eq(human.mana, 10.0)
 	assert_false(V2ManifestationSystem.slot_available(human, "sacred", null), "o slot continua reservado")
-	human.mana = 70.0
+	human.mana = 130.0
 	_complete(city)
 	assert_eq(V2ManifestationSystem.active_units(human, "sacred").size(), 1, "nasce UMA vez")
-	assert_eq(human.mana, 10.0, "60 cobrados uma vez")
+	assert_eq(human.mana, 10.0, "120 cobrados uma vez")
 	assert_eq(city.production_item, "")
 	_complete(city)
 	assert_eq(V2ManifestationSystem.active_units(human, "sacred").size(), 1, "sem conclusão dupla")
@@ -326,23 +326,23 @@ func test_two_cities_completing_the_same_cycle_never_create_two_seraphs():
 	_learn(human)
 	a.production_item = SERAPH
 	b.production_item = SERAPH # estado inconsistente (save editado): as duas concluem no mesmo ciclo
-	human.mana = 200.0
+	human.mana = 400.0
 	_complete(a)
 	_complete(b)
 	assert_push_error("V2ManifestationSystem")
 	assert_eq(V2ManifestationSystem.active_units(human, "sacred").size(), 1, "fail-closed")
-	assert_eq(human.mana, 140.0, "só uma cobrança")
-	assert_gte(b.stored_production, 100.0, "os PP voltam à cidade recusada (mais a renda do turno)")
+	assert_eq(human.mana, 280.0, "só uma cobrança")
+	assert_gte(b.stored_production, 84.0, "os PP voltam à cidade recusada (mais a renda do turno)")
 
 func test_the_real_game_manager_turn_spawns_and_charges_once():
 	var city := _ritual_city(human, Vector2i.ZERO)
 	_learn(human)
 	city.set_production(SERAPH)
 	city.stored_production = 100.0
-	human.mana = 80.0
+	human.mana = 140.0
 	TurnManager.end_turn()
 	assert_eq(V2ManifestationSystem.active_units(human, "sacred").size(), 1)
-	assert_true(human.mana <= 80.0 - 60.0 + V2EconomyRuntime.player_mana_income(human) + 0.001, "60 cobrados (mais a renda do turno)")
+	assert_true(human.mana <= 140.0 - 120.0 + V2EconomyRuntime.player_mana_income(human) + 0.001, "120 cobrados (mais a renda do turno)")
 
 # --- Transcendência sem Ritual Final --------------------------------------------------------------------------
 

@@ -7,7 +7,7 @@ extends GutTest
 
 const DOCTRINE_BRANCH_IDS := ["guardian", "warrior", "ranger", "cavalry", "rogue", "siege"]
 const MAGIC_BRANCH_IDS := ["sacred", "infernal", "necromancy", "druidism", "arcanism", "elementalism"]
-const INFRASTRUCTURE_BRANCH_IDS := ["economy", "logistics", "industry", "academy", "arcane", "urbanization"]
+const INFRASTRUCTURE_BRANCH_IDS := ["economy", "logistics", "industry", "academy", "arcane", "urbanization", "colonization"]
 
 const MILITARY := V2ResearchNode.TreeType.MILITARY_DOCTRINE
 const MAGIC := V2ResearchNode.TreeType.MAGIC_SCHOOL
@@ -22,48 +22,51 @@ func _complete_branch(tree_type: int, branch: String, completed: Dictionary) -> 
 
 # --- Doutrinas ---------------------------------------------------------------
 
-func test_doctrine_tree_has_six_branches_of_nine_nodes_plus_supreme_army():
+## O antigo N1 ("Doutrina do X") era um portão sem efeito e saiu: cada linha tem 8 nós, tiers 2..9.
+func test_doctrine_tree_has_six_branches_of_eight_nodes_plus_supreme_army():
 	assert_eq(_branch_ids(MILITARY), DOCTRINE_BRANCH_IDS)
 	var normal := 0
 	for branch in DOCTRINE_BRANCH_IDS:
 		var nodes := V2ResearchDatabase.nodes_for_branch(MILITARY, branch)
-		assert_eq(nodes.size(), 9, "%s deveria ter 9 níveis" % branch)
+		assert_eq(nodes.size(), 8, "%s deveria ter 8 níveis" % branch)
 		normal += nodes.size()
-	assert_eq(normal, 54)
-	assert_eq(V2ResearchDatabase.nodes_for_tree(MILITARY).size(), 55, "6 x 9 + Exército Supremo")
+	assert_eq(normal, 48)
+	assert_eq(V2ResearchDatabase.nodes_for_tree(MILITARY).size(), 49, "6 x 8 + Exército Supremo")
 	assert_eq(V2ResearchDatabase.nodes_for_branch(MILITARY, V2ResearchNode.UNIVERSAL_BRANCH).size(), 1)
 
 func test_doctrine_tier_roles_are_the_fixed_design_roles_in_every_branch():
-	var expected := ["doctrine_unlock", "training_structure", "base_unit", "technique_1", "evolution_1", "technique_2", "elite_form", "mastery_structure", "legendary_candidate"]
+	var expected := ["training_structure", "base_unit", "technique_1", "evolution_1", "technique_2", "elite_form", "mastery_structure", "legendary_candidate"]
 	for branch in DOCTRINE_BRANCH_IDS:
 		var nodes := V2ResearchDatabase.nodes_for_branch(MILITARY, branch)
-		for i in range(9):
-			assert_eq(nodes[i].tier, i + 1)
+		for i in range(8):
+			assert_eq(nodes[i].tier, i + 2, "o tier estrutural (e o id) não mudou: só o N1 saiu")
 			assert_eq(nodes[i].tier_role, expected[i], "%s N%d" % [branch, i + 1])
-			assert_eq(nodes[i].id, "v2_doctrine_%s_%d" % [branch, i + 1])
+			assert_eq(nodes[i].id, "v2_doctrine_%s_%d" % [branch, i + 2])
+		assert_null(V2ResearchDatabase.get_node("v2_doctrine_%s_1" % branch), "o N1 de portão não existe mais")
 
 ## Fase 2: as Doutrinas têm nomes canônicos (o conteúdo completo é coberto por
 ## test_v2_doctrine_content.gd); aqui só a amostra estrutural.
 func test_doctrine_display_names_are_canonical_not_line_plus_numeral():
 	var guardian := V2ResearchDatabase.nodes_for_branch(MILITARY, "guardian")
-	assert_eq(guardian.map(func(n): return n.display_name), ["Doutrina do Guardião", "Salão dos Guardiões", "Escudeiro", "Muralha de Escudos", "Guardião", "Preparar Lanças", "Sentinela", "Bastião de Maestria", "Campeão Guardião"])
-	assert_eq(V2ResearchDatabase.get_node("v2_doctrine_siege_1").display_name, "Doutrina de Cerco")
+	assert_eq(guardian.map(func(n): return n.display_name), ["Salão dos Guardiões", "Escudeiro", "Muralha de Escudos", "Guardião", "Preparar Lanças", "Sentinela", "Bastião de Maestria", "Campeão Guardião"])
+	assert_eq(V2ResearchDatabase.get_node("v2_doctrine_siege_2").display_name, "Arsenal de Cerco")
 
 # --- Magia ---------------------------------------------------------------------
 
-func test_magic_tree_has_six_schools_of_nine_nodes_plus_transcendence():
+func test_magic_tree_has_six_schools_of_eight_nodes_plus_transcendence():
 	assert_eq(_branch_ids(MAGIC), MAGIC_BRANCH_IDS)
 	for branch in MAGIC_BRANCH_IDS:
-		assert_eq(V2ResearchDatabase.nodes_for_branch(MAGIC, branch).size(), 9, "%s deveria ter 9 níveis" % branch)
-	assert_eq(V2ResearchDatabase.nodes_for_tree(MAGIC).size(), 55, "6 x 9 + Transcendência")
+		assert_eq(V2ResearchDatabase.nodes_for_branch(MAGIC, branch).size(), 8, "%s deveria ter 8 níveis" % branch)
+	assert_eq(V2ResearchDatabase.nodes_for_tree(MAGIC).size(), 49, "6 x 8 + Transcendência")
 
 func test_magic_tier_roles_are_the_fixed_design_roles_in_every_school():
-	var expected := ["school_unlock", "school_building", "caster", "basic_spell", "intermediate_spell", "advanced_spell", "greater_spell", "ritual_structure", "grand_manifestation"]
+	var expected := ["school_building", "caster", "basic_spell", "intermediate_spell", "advanced_spell", "greater_spell", "ritual_structure", "grand_manifestation"]
 	for branch in MAGIC_BRANCH_IDS:
 		var nodes := V2ResearchDatabase.nodes_for_branch(MAGIC, branch)
-		for i in range(9):
+		for i in range(8):
 			assert_eq(nodes[i].tier_role, expected[i], "%s N%d" % [branch, i + 1])
-			assert_eq(nodes[i].id, "v2_magic_%s_%d" % [branch, i + 1])
+			assert_eq(nodes[i].id, "v2_magic_%s_%d" % [branch, i + 2])
+		assert_null(V2ResearchDatabase.get_node("v2_magic_%s_1" % branch), "o N1 de portão não existe mais")
 
 func test_each_school_keeps_its_conceptual_function_in_metadata():
 	var expected := {
@@ -83,7 +86,7 @@ func test_infrastructure_scaffold_has_six_branches_of_three_levels():
 		assert_eq(nodes.size(), 3, branch)
 		for i in range(3):
 			assert_eq(nodes[i].id, "v2_infrastructure_%s_%d" % [branch, i + 1])
-	assert_eq(V2ResearchDatabase.nodes_for_tree(INFRASTRUCTURE).size(), 18)
+	assert_eq(V2ResearchDatabase.nodes_for_tree(INFRASTRUCTURE).size(), 21)
 	assert_null(V2ResearchDatabase.capstone_for_tree(INFRASTRUCTURE), "Infraestrutura não tem vitória nem capstone")
 
 func test_each_infrastructure_line_points_at_its_future_system():
@@ -104,7 +107,7 @@ func test_infrastructure_names_are_canonical_since_phase_13():
 
 func test_total_node_count_and_unique_prefixed_ids():
 	var all := V2ResearchDatabase.all_nodes()
-	assert_eq(all.size(), 128, "55 + 55 + 18")
+	assert_eq(all.size(), 119, "49 + 49 + 21")
 	var seen := {}
 	for node in all:
 		assert_true(node.id.begins_with("v2_"), node.id)
@@ -112,6 +115,20 @@ func test_total_node_count_and_unique_prefixed_ids():
 		assert_false(seen.has(node.id), "id duplicado: %s" % node.id)
 		seen[node.id] = true
 		assert_same(V2ResearchDatabase.get_node(node.id), node, "get_node devolve o mesmo nó")
+
+## O jogador vê a posição na linha (N1..N8), nunca o tier estrutural (2..9).
+func test_display_tier_is_the_position_in_the_line():
+	for tree_type in [MILITARY, MAGIC]:
+		for info in V2ResearchDatabase.branches_for_tree(tree_type):
+			var nodes := V2ResearchDatabase.nodes_for_branch(tree_type, info.id)
+			for i in nodes.size():
+				assert_eq(V2ResearchDatabase.display_tier(tree_type, nodes[i].tier), i + 1)
+		assert_eq(V2ResearchDatabase.final_tier_label(tree_type), "N8")
+	var economy := V2ResearchDatabase.nodes_for_branch(INFRASTRUCTURE, "economy")
+	assert_eq(V2ResearchDatabase.display_tier(INFRASTRUCTURE, economy[0].tier), 1, "a Infraestrutura não muda")
+	var tooltip := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_doctrine_guardian_2"))
+	assert_true(tooltip.contains("Nível 1"), tooltip)
+	assert_true(tooltip.contains("Requer: nenhum (início da linha)"), tooltip)
 
 func test_legacy_and_unknown_ids_are_not_research_nodes():
 	assert_null(V2ResearchDatabase.get_node("guarda"), "id V1 não existe no banco V2")
@@ -139,15 +156,16 @@ func test_prerequisites_always_reference_existing_nodes_of_the_same_branch():
 # --- Custos provisórios -----------------------------------------------------------------
 
 func test_balanced_costs_follow_the_central_table():
-	var branch_costs := [8, 16, 24, 28, 40, 80, 128, 196, 268]
+	# Cada nó mantém o custo do seu tier (o primeiro existente, o antigo N2, custa 16).
+	var branch_costs := [16, 24, 28, 36, 60, 92, 132, 180]
 	for tree_type in [MILITARY, MAGIC]:
 		for info in V2ResearchDatabase.branches_for_tree(tree_type):
 			var nodes := V2ResearchDatabase.nodes_for_branch(tree_type, info.id)
-			for i in range(9):
+			for i in range(8):
 				assert_eq(int(nodes[i].cost), branch_costs[i], "%s N%d" % [info.id, i + 1])
 	for info in V2ResearchDatabase.branches_for_tree(INFRASTRUCTURE):
 		var nodes := V2ResearchDatabase.nodes_for_branch(INFRASTRUCTURE, info.id)
-		assert_eq(nodes.map(func(n): return int(n.cost)), [16, 48, 120], info.id)
+		assert_eq(nodes.map(func(n): return int(n.cost)), [16, 40, 96], info.id)
 
 # --- Metadata de unlock (só dados: nada é desbloqueado) -----------------------------------
 
@@ -163,6 +181,8 @@ func test_connected_trees_and_two_magic_schools_are_canonical():
 			assert_eq(node.unlock_type, V2ResearchDatabase.TIER_ROLE_UNLOCK_TYPES[node.tier_role], node.id)
 		elif is_urbanization:
 			assert_eq(node.unlock_type, "city_level", "%s: Urbanização troca o tipo estrutural" % node.id)
+		elif node.branch == "colonization":
+			assert_eq(node.unlock_type, "settler_limit", "%s: a Colonização declara o próprio tipo" % node.id)
 		else:
 			# Fase 14: as cinco linhas econômicas -- N1 vira "building", N2/N3 "infrastructure_upgrade" (§66).
 			var expected_type := "building" if node.tier == 1 else "infrastructure_upgrade"
@@ -239,20 +259,20 @@ func test_capstone_rule_needs_n9_and_only_counts_its_own_tree():
 	assert_true(V2ResearchDatabase.capstone_requirement_met("v2_transcendence", magic_only))
 
 func test_capstone_helpers_ignore_non_capstone_nodes():
-	assert_eq(V2ResearchDatabase.capstone_progress("v2_doctrine_guardian_1", {}), Vector2i.ZERO)
-	assert_false(V2ResearchDatabase.capstone_requirement_met("v2_doctrine_guardian_1", {}))
+	assert_eq(V2ResearchDatabase.capstone_progress("v2_doctrine_guardian_2", {}), Vector2i.ZERO)
+	assert_false(V2ResearchDatabase.capstone_requirement_met("v2_doctrine_guardian_2", {}))
 	assert_false(V2ResearchDatabase.capstone_requirement_met("nao_existe", {}))
 
 # --- Estados visuais ---------------------------------------------------------------------------------
 
 func test_node_state_covers_locked_available_researching_and_completed():
-	var completed := {"v2_doctrine_guardian_1": true}
+	var completed := {"v2_doctrine_guardian_2": true}
 	var states := V2ResearchDatabase.NodeState
-	assert_eq(V2ResearchDatabase.node_state("v2_doctrine_guardian_1", completed), states.COMPLETED)
-	assert_eq(V2ResearchDatabase.node_state("v2_doctrine_guardian_2", completed), states.AVAILABLE)
-	assert_eq(V2ResearchDatabase.node_state("v2_doctrine_guardian_3", completed), states.LOCKED)
-	assert_eq(V2ResearchDatabase.node_state("v2_doctrine_guardian_2", completed, "v2_doctrine_guardian_2"), states.RESEARCHING)
-	assert_eq(V2ResearchDatabase.node_state("v2_doctrine_warrior_1", {}), states.AVAILABLE, "o N1 de toda linha começa disponível")
+	assert_eq(V2ResearchDatabase.node_state("v2_doctrine_guardian_2", completed), states.COMPLETED)
+	assert_eq(V2ResearchDatabase.node_state("v2_doctrine_guardian_3", completed), states.AVAILABLE)
+	assert_eq(V2ResearchDatabase.node_state("v2_doctrine_guardian_4", completed), states.LOCKED)
+	assert_eq(V2ResearchDatabase.node_state("v2_doctrine_guardian_3", completed, "v2_doctrine_guardian_3"), states.RESEARCHING)
+	assert_eq(V2ResearchDatabase.node_state("v2_doctrine_warrior_2", {}), states.AVAILABLE, "o primeiro nó de toda linha começa disponível")
 	assert_eq(V2ResearchDatabase.node_state("v2_supreme_army", {}), states.LOCKED)
 
 # --- Consultas -----------------------------------------------------------------------------------------
@@ -260,22 +280,20 @@ func test_node_state_covers_locked_available_researching_and_completed():
 func test_queries_return_independent_copies():
 	var nodes := V2ResearchDatabase.nodes_for_tree(MILITARY)
 	nodes.clear()
-	assert_eq(V2ResearchDatabase.nodes_for_tree(MILITARY).size(), 55)
+	assert_eq(V2ResearchDatabase.nodes_for_tree(MILITARY).size(), 49)
 	var all := V2ResearchDatabase.all_nodes()
 	all.clear()
-	assert_eq(V2ResearchDatabase.all_nodes().size(), 128)
+	assert_eq(V2ResearchDatabase.all_nodes().size(), 119)
 
 func test_tooltip_shows_name_branch_tier_role_cost_prerequisite_and_description():
 	var tooltip := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_doctrine_guardian_3")).replace("\n", " ") # o texto longo quebra linha
-	for fragment in ["Escudeiro", "Doutrina do Guardião · Nível 3", "Unidade-base", "Custo: %d" % int(V2ResearchDatabase.BRANCH_TIER_COSTS[2]), "Requer: Salão dos Guardiões", "Linha de evolução: [Escudeiro] → Guardião → Sentinela", "Desbloqueio: Unidade", "Desbloqueia Escudeiro. Requer Salão dos Guardiões para treinamento."]:
+	for fragment in ["Escudeiro", "Doutrina do Guardião · Nível 2", "Unidade-base", "Custo: %d" % int(V2ResearchDatabase.BRANCH_TIER_COSTS[2]), "Requer: Salão dos Guardiões", "Linha de evolução: [Escudeiro] → Guardião → Sentinela", "Desbloqueio: Unidade", "Desbloqueia Escudeiro. Requer Salão dos Guardiões para treinamento."]:
 		assert_true(tooltip.contains(fragment), "tooltip sem '%s':\n%s" % [fragment, tooltip])
 	assert_false(tooltip.contains(V2ResearchDatabase.GAMEPLAY_NOTICE), "N3 está conectado desde a Fase 3")
 
-## Fase 3: N1-N3 mostram o unlock real; N4-N9 seguem avisando que o gameplay não existe.
+## Todo nó da linha mostra o unlock real (o antigo N1 "Desbloqueia a Doutrina..." saiu).
 func test_tooltip_unlock_line_of_connected_and_unconnected_guardian_nodes():
-	var n1 := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_doctrine_guardian_1"))
 	var n2 := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_doctrine_guardian_2"))
-	assert_true(n1.contains("Desbloqueia a Doutrina do Guardião."), n1)
 	assert_true(n2.contains("Desbloqueia Salão dos Guardiões."), n2)
 	# Fase 4: N4 (técnica) e N5 (evolução) também mostram o unlock real.
 	var n4 := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_doctrine_guardian_4")).replace("\n", " ")
@@ -300,22 +318,22 @@ func test_tooltip_unlock_line_of_connected_and_unconnected_guardian_nodes():
 		assert_false(text.contains(V2ResearchDatabase.GAMEPLAY_NOTICE))
 		assert_false(text.contains("Desbloqueio futuro"))
 	# Fase 11: a Doutrina de Cerco (última das seis) também mostra o unlock real.
-	var s1 := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_doctrine_siege_1"))
+	var s1 := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_doctrine_siege_2"))
 	var s9 := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_doctrine_siege_9")).replace("\n", " ")
-	assert_true(s1.contains("Desbloqueia a Doutrina de Cerco."), s1)
+	assert_true(s1.contains("Desbloqueia Arsenal de Cerco."), s1)
 	assert_true(s9.contains("Desbloqueia Colosso de Cerco, a Unidade Lendária da Doutrina. Treinamento em Grande Arsenal;"), s9)
 	assert_false(s1.contains(V2ResearchDatabase.GAMEPLAY_NOTICE))
 	assert_false(s9.contains(V2ResearchDatabase.GAMEPLAY_NOTICE))
 	# Fase 22: as seis Escolas também exibem seus desbloqueios reais; nenhum nó normal
 	# de Doutrina, Magia ou Infraestrutura continua placeholder.
-	var elementalism := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_magic_elementalism_1"))
-	assert_true(elementalism.contains("Desbloqueia a Escola do Elementalismo."), elementalism)
+	var elementalism := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_magic_elementalism_2"))
+	assert_true(elementalism.contains("Desbloqueia Observatório Elemental."), elementalism)
 	assert_false(elementalism.contains(V2ResearchDatabase.PLACEHOLDER_NOTICE))
 	assert_false(elementalism.contains(V2ResearchDatabase.GAMEPLAY_NOTICE))
 
 func test_tooltip_of_first_level_and_capstone_explain_their_requirement():
-	assert_true(V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_magic_sacred_1")).contains("Requer: nenhum"))
+	assert_true(V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_magic_sacred_2")).contains("Requer: nenhum"))
 	var army := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_supreme_army"))
 	assert_true(army.contains("Nó universal"))
-	assert_true(army.contains("Requer: 2 Doutrinas completas (N9)"))
-	assert_true(V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_transcendence")).contains("Requer: 2 Escolas completas (N9)"))
+	assert_true(army.contains("Requer: 2 Doutrinas completas (N8)"))
+	assert_true(V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_transcendence")).contains("Requer: 2 Escolas completas (N8)"))

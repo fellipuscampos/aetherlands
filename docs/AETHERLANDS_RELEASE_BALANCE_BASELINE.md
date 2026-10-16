@@ -1,5 +1,15 @@
 # Aetherlands — Release Balance Baseline (Fase 33B)
 
+> **2026-10-14 — rodada de balanceamento de valores:** unidades, monstros, feitiços (com custo em Vida), cidades,
+> pesquisa e economia-base mudaram. Os números das tabelas abaixo são de ANTES. Valores atuais, motivos e o
+> laboratório antes/depois: `docs/BALANCE_PASS_2026-10-14.md`.
+
+> **2026-10-10 — tamanho do laboratório:** `BalanceSeedSet` passou de 144×76 para o **Grande 128×72** (o novo tamanho
+> padrão). O Grande gera o **mesmo continente** do 144×76 (mesma área reservada 96×60, mesma escala de ruído; só a faixa
+> de oceano ao redor é menor), então a terra e os biomas são idênticos, mas números de laboratório anteriores só se
+> comparam com essa ressalva. Ver "Tamanhos de mapa" em `docs/AETHERLANDS_V3_IMPLEMENTATION.md`.
+
+
 **Baseline:** `RELEASE_BALANCE_BASELINE_PRE_TUNING` · **seed set:** `phase33b-v2` · **data:** 2026-09-28
 
 Documento vivo da Etapa B da Fase 33. Mede o jogo **como ele é**, com quatro civilizações automatizadas pelas
@@ -16,7 +26,7 @@ alterado.** As propostas de tuning (seção 17) são só candidatas para a F33C.
 > smokes da D2 (`docs/balance/F33D2_smoke_summary.json`) não são baseline; a F33E mede de novo.
 >
 > **Nota F33D3:** a D3 muda a regra territorial da Supremacia (captura da cidade de maior nível do rival no instante
-> da captura), o pacing/recompensa/participação do Dragão, adiciona o Relicário, marcos públicos e imperativos. A F33B
+> da captura), o pacing/recompensa/participação do Dragão, adiciona o Relicário (removido do jogo em 2026-10-12), marcos públicos e imperativos. A F33B
 > continua PRE-OBJECTIVES; vitórias e durações pós-D3 (`docs/balance/F33D3_smoke_summary.json`) não se comparam nem se
 > agregam aos dados F33B.
 
@@ -200,12 +210,19 @@ Tokens da IA: alvo `clamp(5 + 2·cidades + linhas completas + nível máx., 8, 2
 
 | Grandeza | Conhecimento |
 |---|---:|
-| Uma linha N1–N9 | 788 |
-| Duas linhas N9 | 1.576 |
-| **Lower bound Supremacia** (2 Doutrinas N9 + Exército Supremo) | **1.976** |
-| **Lower bound Transcendência** (2 Escolas N9 + Transcendência) | **1.976** |
+| Uma linha completa (8 nós, tiers 2–9) | 780 |
+| Duas linhas completas | 1.560 |
+| **Lower bound Supremacia** (2 Doutrinas completas + Exército Supremo) | **1.960** |
+| **Lower bound Transcendência** (2 Escolas completas + Transcendência) | **1.960** |
+
+> 2026-10-09: o N1 de portão (8 Conhecimento, sem efeito) saiu das Doutrinas/Escolas — cada linha custa 8 a
+> menos e o prédio de treino/da Escola é pesquisável desde o início. Os números da baseline F33B acima/abaixo
+> foram medidos COM o N1; rodar o laboratório de novo antes de qualquer tuning.
 | Urbanização para Cidade III / IV | 64 / 184 |
-| Infraestrutura completa | 1.104 |
+| Infraestrutura completa (7 linhas, com Colonização) | 1.288 |
+
+> 2026-10-09: nova linha de Colonização (16/48/120). Sem ela nenhum Colono é treinado (N1 = 1, N2 = 2, N3 = sem
+> limite, total na partida): a expansão de humano e IA agora passa por pesquisa. Baseline F33B medida antes disso.
 
 As duas Escolas N9 já incluem a Estrutura Ritual (N8) e a Manifestação (N9) de cada uma: nenhum nó extra é
 exigido para o Ritual. O lower bound é um limite matemático, não previsão de turno.

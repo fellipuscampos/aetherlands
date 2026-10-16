@@ -77,7 +77,7 @@ static func transcendence(player: PlayerData, grid: HexGrid = null) -> Dictionar
 	if not V2TranscendenceSystem.has_access(player):
 		if schools.x < schools.y:
 			result.step = "schools"
-			result.next = "Complete duas Escolas de Magia (N9): %d / %d." % [schools.x, schools.y]
+			result.next = "Complete duas Escolas de Magia (%s): %d / %d." % [V2ResearchDatabase.final_tier_label(V2ResearchNode.TreeType.MAGIC_SCHOOL), schools.x, schools.y]
 		else:
 			result.step = "research"
 			result.next = "Pesquise Transcendência."

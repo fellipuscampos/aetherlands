@@ -25,7 +25,7 @@ func test_only_the_shadow_master_has_the_infiltrator_profile_and_every_other_kin
 		var data := UnitDatabase.create_unit(kind)
 		if kind == SHADOW_MASTER:
 			assert_eq(data.movement_profile, UnitData.MovementProfile.INFILTRATOR)
-		elif kind in ["v2_legendary_griffon_rider", "v2_manifestation_seraph", "v2_manifestation_archdemon", "v2_manifestation_veil_archon", "v2_manifestation_elemental_primordial"]:
+		elif kind in ["v2_manifestation_seraph", "v2_manifestation_archdemon", "v2_manifestation_veil_archon", "v2_manifestation_elemental_primordial"]:
 			assert_eq(data.movement_profile, UnitData.MovementProfile.FLYING)
 		else:
 			assert_eq(data.movement_profile, UnitData.MovementProfile.GROUND, kind)
@@ -41,7 +41,7 @@ func test_a_ground_unit_reachable_call_is_byte_identical_to_before_this_phase():
 		var old := grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies, unit.embarked)
 		assert_eq(grid.unit_reachable(unit), old, kind)
 
-func test_the_v1_and_griffon_flight_are_unchanged_by_the_new_profile():
+func test_the_v1_and_tactical_flight_are_unchanged_by_the_new_profile():
 	var grid := _world()
 	var me := _rogue_player(0)
 	_set_terrain(grid, Vector2i(1, 0), HexTileData.TerrainType.OCEAN)
@@ -49,7 +49,7 @@ func test_the_v1_and_griffon_flight_are_unchanged_by_the_new_profile():
 	assert_true(monster.unit_data.flies)
 	var reach := grid.unit_reachable(monster)
 	assert_eq(reach, grid.compute_reachable(monster.coord, monster.movement_left, me, true, false))
-	var griffon := grid.spawn_unit(Vector2i(0, 3), UnitDatabase.create_unit(GRIFFON), me)
+	var griffon := _flyer(grid, me, Vector2i(0, 3)) # voador de teste (o Grifo anda pelo chão desde 2026-10-10)
 	_set_terrain(grid, Vector2i(1, 3), HexTileData.TerrainType.MOUNTAINS)
 	assert_eq(grid.unit_reachable(griffon), grid.flight_reachable(griffon, griffon.movement_left), "o voo tático continua flight_reachable")
 
@@ -80,25 +80,31 @@ func test_it_never_ends_on_an_occupied_tile_even_though_it_can_pass_through():
 	assert_false(reach.has(Vector2i(2, 0)), "ocupado: nunca um destino")
 	assert_true(reach.has(Vector2i(1, 0)) and reach.has(Vector2i(3, 0)), "mas passa por cima")
 
-func test_water_and_mountain_tiles_are_never_a_destination():
+## Embarque automático (2026-10-10): o Mestre das Sombras embarca como qualquer tropa — água é destino (de barco); montanha nunca.
+func test_water_is_a_destination_by_boat_and_a_mountain_never_is():
 	var s := _shadow()
 	_set_terrain(s.grid, Vector2i(2, 0), HexTileData.TerrainType.OCEAN)
 	var reach: Dictionary = s.grid.unit_reachable(s.unit)
-	assert_false(reach.has(Vector2i(2, 0)), "água nunca é destino")
+	assert_true(reach.has(Vector2i(2, 0)), "água: embarca")
 	assert_true(reach.has(Vector2i(1, 0)))
 	var s2 := _shadow()
 	_set_terrain(s2.grid, Vector2i(1, 1), HexTileData.TerrainType.MOUNTAINS)
 	var reach2: Dictionary = s2.grid.unit_reachable(s2.unit)
 	assert_false(reach2.has(Vector2i(1, 1)), "montanha nunca é destino")
 
-## Uma PAREDE de água (não um único tile: um único tile pode ser contornado, exatamente como o chão faria) barra o Passo Sombrio por completo —
-## a diferença real com FLYING é coberta em test_ground_infiltrator_and_flying_behave_differently_against_the_same_obstacle_course.
-func test_a_water_wall_fully_blocks_the_infiltrator_same_as_it_would_block_the_ground():
+## Uma PAREDE de montanha (não um único tile: um único tile pode ser contornado, exatamente como o chão faria) barra o Passo Sombrio por
+## completo — a diferença real com FLYING é coberta em test_ground_infiltrator_and_flying_behave_differently_against_the_same_obstacle_course.
+## Uma parede de ÁGUA não barra mais (embarque automático, 2026-10-10): atravessa de barco, ao custo normal.
+func test_a_mountain_wall_fully_blocks_the_infiltrator_and_a_water_wall_is_crossed_by_boat():
 	var s := _shadow()
-	_wall_of(s.grid, 2, HexTileData.TerrainType.OCEAN)
+	_wall_of(s.grid, 2, HexTileData.TerrainType.MOUNTAINS)
 	var reach: Dictionary = s.grid.unit_reachable(s.unit)
 	for coord in reach:
-		assert_lt(coord.x, 2, "nenhum tile do outro lado da parede de água é alcançável")
+		assert_lt(coord.x, 2, "nenhum tile do outro lado da parede de montanha é alcançável")
+	var w := _shadow()
+	_wall_of(w.grid, 2, HexTileData.TerrainType.OCEAN)
+	var by_boat: Dictionary = w.grid.unit_reachable(w.unit)
+	assert_true(by_boat.has(Vector2i(2, 0)) and by_boat.has(Vector2i(3, 0)), "a água vira travessia, e a terra além dela é alcançável")
 
 func test_an_enemy_city_still_blocks_and_an_own_city_is_a_legal_destination():
 	var s := _shadow()
@@ -142,7 +148,7 @@ func test_the_animation_route_really_passes_through_the_occupied_tile_not_a_stra
 	var s := _shadow()
 	_unit(s.grid, s.me, WARRIOR, Vector2i(1, 0))
 	var reach: Dictionary = s.grid.unit_reachable(s.unit)
-	var waypoints: Array[Vector3] = s.grid._animation_waypoints(Vector2i(0, 0), Vector2i(2, 0), s.unit, false)
+	var waypoints: Array[Vector3] = s.grid._animation_waypoints(Vector2i(0, 0), Vector2i(2, 0), s.unit)
 	assert_eq(waypoints.size(), 2, "dois passos reais, não um salto direto")
 	assert_true(reach.has(Vector2i(2, 0)))
 
@@ -150,7 +156,7 @@ func test_a_ground_unit_animation_is_unaffected_still_uses_compute_path():
 	var grid := _world()
 	var me := _rogue_player(9)
 	var ground := _unit(grid, me, ASSASSIN, Vector2i(0, 0))
-	assert_true(grid._animation_waypoints(Vector2i(0, 0), Vector2i(1, 0), ground, false).size() <= 1)
+	assert_true(grid._animation_waypoints(Vector2i(0, 0), Vector2i(1, 0), ground).size() <= 1)
 
 # --- Nenhuma ordem de vários turnos / pré-visualização longa para INFILTRATOR (mesma decisão do voo, Fase 9) ------------------------------------
 
@@ -176,7 +182,7 @@ func test_no_multi_turn_move_order_and_ground_assassin_keeps_them():
 
 # --- Diferença semântica: GROUND × INFILTRATOR × FLYING (cenário obrigatório) ---------------------------------------------------------------
 
-## Parede de unidades (q=1): bloqueia GROUND por completo; INFILTRATOR atravessa. Parede de ÁGUA (q=3, mais além): também bloqueia GROUND e
+## Parede de unidades (q=1): bloqueia GROUND por completo; INFILTRATOR atravessa. Parede de MONTANHA (q=3, mais além): também bloqueia GROUND e
 ## INFILTRATOR por completo (nenhum dos dois cruza terreno impassável); FLYING atravessa as duas. Isso prova semanticamente que os três perfis
 ## são distintos, não variações do mesmo código — cada unidade parte do MESMO tile (0,0), testada em separado no mesmo grid.
 func test_ground_infiltrator_and_flying_behave_differently_against_the_same_obstacle_course():
@@ -185,7 +191,7 @@ func test_ground_infiltrator_and_flying_behave_differently_against_the_same_obst
 	for r in range(-6, 7):
 		if grid.tiles.has(Vector2i(1, r)):
 			_unit(grid, me, WARRIOR, Vector2i(1, r)) # parede de unidades cobrindo toda a extensão do mapa em q=1
-	_wall_of(grid, 3, HexTileData.TerrainType.OCEAN) # parede de água mais além, em q=3
+	_wall_of(grid, 3, HexTileData.TerrainType.MOUNTAINS) # parede de montanha mais além, em q=3
 
 	var ground := _unit(grid, me, ASSASSIN, Vector2i(0, 0))
 	var ground_reach: Dictionary = grid.unit_reachable(ground)
@@ -197,23 +203,24 @@ func test_ground_infiltrator_and_flying_behave_differently_against_the_same_obst
 	var infiltrator_reach: Dictionary = grid.unit_reachable(infiltrator)
 	assert_true(infiltrator_reach.has(Vector2i(2, 0)), "INFILTRATOR atravessa a parede de unidades")
 	for coord in infiltrator_reach:
-		assert_lt(coord.x, 3, "mas a parede de água, mais além, continua bloqueando por completo")
+		assert_lt(coord.x, 3, "mas a parede de montanha, mais além, continua bloqueando por completo")
 	grid.remove_unit(infiltrator)
 
-	var flyer := _unit(grid, me, GRIFFON, Vector2i(0, 0))
+	var flyer := _flyer(grid, me, Vector2i(0, 0)) # voador de teste (o Grifo anda pelo chão desde 2026-10-10)
 	var flyer_reach: Dictionary = grid.unit_reachable(flyer)
 	assert_true(flyer_reach.has(Vector2i(2, 0)), "FLYING atravessa a parede de unidades")
-	assert_true(flyer_reach.has(Vector2i(4, 0)), "e também a parede de água (dentro do alcance de movimento)")
+	assert_true(flyer_reach.has(Vector2i(4, 0)), "e também a parede de montanha (dentro do alcance de movimento)")
 
 ## O mesmo obstáculo (só a formação, sem terreno) separado num teste dedicado e mais direto, como o cenário pedido: uma parede de unidades
-## bloqueia GROUND por completo; o Mestre das Sombras atravessa; nenhum dos dois atravessa água/montanha.
-func test_the_required_scenario_wall_of_units_water_and_mountain():
+## bloqueia GROUND por completo; o Mestre das Sombras atravessa; nenhum dos dois atravessa montanha (água, desde o embarque automático, é
+## travessia de barco para os dois — por isso a ponta da parede é fechada com montanha).
+func test_the_required_scenario_wall_of_units_and_mountain():
 	var grid := _world(6)
 	var me := _rogue_player(9)
 	for r in range(-3, 4):
 		if grid.tiles.has(Vector2i(1, r)):
 			_unit(grid, me, WARRIOR, Vector2i(1, r))
-	_set_terrain(grid, Vector2i(1, 4) if grid.tiles.has(Vector2i(1, 4)) else Vector2i(1, -4), HexTileData.TerrainType.OCEAN)
+	_set_terrain(grid, Vector2i(1, 4) if grid.tiles.has(Vector2i(1, 4)) else Vector2i(1, -4), HexTileData.TerrainType.MOUNTAINS)
 
 	var ground := _unit(grid, me, ASSASSIN, Vector2i(0, 0))
 	var infiltrator := _unit(grid, me, SHADOW_MASTER, Vector2i(0, 1))
@@ -251,7 +258,7 @@ func test_infiltrating_past_a_front_line_to_reach_a_caster_in_the_backline():
 	assert_eq(shadow.coord, landing)
 	assert_eq(HexMetrics.axial_distance(shadow.coord, backline_caster.coord), 1, "adjacente ao conjurador")
 	# Sem teleporte: a rota real passou por dentro da linha ocupada (não por cima, não ao redor por fora do raio).
-	var waypoints := grid._animation_waypoints(Vector2i(0, 1), landing, shadow, false)
+	var waypoints := grid._animation_waypoints(Vector2i(0, 1), landing, shadow)
 	assert_gt(waypoints.size(), 1, "vários passos reais")
 
 	# Em situação válida de turno (movimento não usado ainda), o Mestre usa o Ataque Furtivo contra o conjurador.
@@ -268,7 +275,7 @@ func test_no_teleport_is_used_the_move_is_a_real_sequence_of_tiles():
 	_unit(s.grid, s.me, WARRIOR, Vector2i(2, 0))
 	var reach: Dictionary = s.grid.unit_reachable(s.unit)
 	assert_true(reach.has(Vector2i(3, 0)))
-	var path: Array[Vector2i] = s.grid.reconstruct_path(Vector2i(0, 0), Vector2i(3, 0))
+	var path: Array[Vector2i] = s.grid.unit_route(s.unit, Vector2i(3, 0))
 	assert_eq(path.size(), 3, "três passos reais: (1,0), (2,0), (3,0)")
 	assert_eq(path, [Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)])
 
@@ -290,7 +297,8 @@ func test_the_panel_text_never_mentions_flight_for_the_infiltrator():
 	assert_eq(UnitAbilities.infiltration_text(data), "Passo Sombrio: atravessa unidades e ignora custo extra de terreno terrestre; não atravessa terreno impassável.")
 	assert_false(UnitAbilities.infiltration_text(data).to_lower().contains("voo"))
 	assert_eq(UnitAbilities.flight_text(data), "", "não é o perfil de voo")
-	assert_eq(UnitAbilities.infiltration_text(UnitDatabase.create_unit(GRIFFON)), "", "o Grifo é FLYING, não INFILTRATOR")
+	assert_eq(UnitAbilities.infiltration_text(_flyer_data()), "", "FLYING não é INFILTRATOR")
+	assert_eq(UnitAbilities.infiltration_text(UnitDatabase.create_unit(GRIFFON)), "", "o Grifo (terrestre) também não é INFILTRATOR")
 	for kind in [ROGUE, SABOTEUR, ASSASSIN, WARRIOR]:
 		assert_eq(UnitAbilities.infiltration_text(UnitDatabase.create_unit(kind)), "", kind)
 	assert_eq(UnitAbilities.infiltration_text(null), "")

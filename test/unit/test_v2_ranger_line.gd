@@ -22,10 +22,10 @@ func _trainable_forms(city: City) -> Array:
 func test_the_hunter_and_the_marksman_have_the_specified_baselines():
 	var hunter := UnitDatabase.create_unit(HUNTER)
 	assert_eq(hunter.unit_name, "Caçador")
-	assert_eq([hunter.max_hp, hunter.attack, hunter.defense, hunter.movement_points, hunter.attack_range, hunter.production_cost], [17.0, 6.5, 3.0, 2.0, 2, 32.0])
+	assert_eq([hunter.max_hp, hunter.attack, hunter.defense, hunter.movement_points, hunter.attack_range, hunter.production_cost], [17.0, 9.5, 4.5, 2.0, 2, 32.0])
 	var marksman := UnitDatabase.create_unit(MARKSMAN)
 	assert_eq(marksman.unit_name, "Atirador de Elite")
-	assert_eq([marksman.max_hp, marksman.attack, marksman.defense, marksman.movement_points, marksman.attack_range, marksman.production_cost], [22.0, 8.5, 3.5, 2.0, 3, 48.0])
+	assert_eq([marksman.max_hp, marksman.attack, marksman.defense, marksman.movement_points, marksman.attack_range, marksman.production_cost], [22.0, 12.5, 5.0, 2.0, 3, 48.0])
 	for data in [hunter, marksman]:
 		assert_false(data.has_trait(UnitData.TRAIT_LEGENDARY), "convencional, não Lendário")
 		assert_false(data.can_found_city)
@@ -116,7 +116,7 @@ func test_debug_reset_keeps_what_exists_and_production_follows_the_research():
 	player.v2_research.reset()
 	assert_true(city.buildings.has(R_CAMP))
 	assert_eq(_trainable_forms(city), [])
-	for n in range(1, 6):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 6):
 		player.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
 	assert_eq(_trainable_forms(city), [HUNTER])
 
@@ -187,7 +187,7 @@ func test_the_first_upgrade_preserves_everything_that_does_not_depend_on_the_for
 	assert_eq(c.player.units.size(), count, "sem duplicar")
 	assert_eq(c.player.units.filter(func(u): return u.unit_data.visual_kind == ARCHER).size(), 0, "sem Arqueiro fantasma")
 	assert_same(c.grid.get_unit_at(coord), unit)
-	assert_almost_eq(unit.hp, 8.5, 0.0001, "50% de 17")
+	assert_almost_eq(unit.hp, 17.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 17 pela forma + a cura da evolução")
 	assert_eq(unit.kills, 3)
 	assert_eq(unit.veterancy_level, 2)
 	assert_eq([int(unit.magic_cooldowns[PRECISE]), int(unit.magic_cooldowns[VOLLEY])], [8, 9], "recargas preservadas")
@@ -234,14 +234,14 @@ func test_the_full_chain_archer_hunter_marksman_on_the_same_unit_changes_the_ran
 	assert_true(V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid))
 	assert_eq(unit.unit_data.visual_kind, HUNTER)
 	assert_eq(unit.unit_data.attack_range, 2, "o Caçador ainda alcança 2")
-	assert_almost_eq(unit.hp, 8.5, 0.0001)
+	assert_almost_eq(unit.hp, 17.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 17 pela forma + a cura da evolução")
 	assert_false(V2UnitUpgrade.can_upgrade(c.player, unit, c.grid), "sem ação neste turno")
 	TurnManager.turn_number = 6
 	unit.movement_left = 2.0
 	assert_true(V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid))
 	assert_eq(unit.unit_data.visual_kind, MARKSMAN)
 	assert_eq(unit.unit_data.attack_range, 3, "o Atirador de Elite alcança 3")
-	assert_almost_eq(unit.hp, 11.0, 0.0001, "50% de 22")
+	assert_almost_eq(unit.hp, 22.0, 0.0001, "já estava em 80%: a cura da evolução completa a vida (22), sem passar do teto")
 	assert_eq(c.player.gold, gold - 24.0 - 32.0)
 	assert_eq(unit.get_instance_id(), id, "a MESMA unidade nas três formas")
 	assert_eq(unit.serial_id, serial)
@@ -260,7 +260,7 @@ func test_the_marksman_basic_attack_reaches_3_tiles_without_counterattack():
 	var prediction: Dictionary = CombatResolver.predict(marksman, foe, grid)
 	assert_false(prediction.is_melee_range)
 	assert_eq(prediction.damage_to_attacker, 0.0)
-	assert_eq(prediction.damage_to_defender, _formula_damage(grid, 8.5, 1.0, foe))
+	assert_eq(prediction.damage_to_defender, _formula_damage(grid, 12.5, 1.0, foe))
 	var original_grid := GameManager.hex_grid
 	var original_human := GameManager.human_player
 	GameManager.hex_grid = grid

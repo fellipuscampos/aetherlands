@@ -69,9 +69,8 @@ var geography: Dictionary = {}
 var world_phase_timeline: Dictionary = {}
 ## Fase 33D2 — ameaças do mundo no nível da partida (Guardiões e sobrevivência das regionais).
 var world_threats: Dictionary = {}
-## Fase 33D3 — grandes eventos (Dragão/Relicário) e sobreposição de pressões na Ascensão.
+## Fase 33D3 — grande evento (Dragão) e sobreposição de pressões na Ascensão.
 var dragon: Dictionary = {}
-var reliquary: Dictionary = {}
 var overlap: Dictionary = {}
 ## V3 / Combat Ecology — Etapa 1: seção "combat_ecology" (observador próprio, ver EcologyTelemetry).
 var ecology := EcologyTelemetry.new()
@@ -119,7 +118,6 @@ func start(match_config: Dictionary) -> void:
 	_connect(EventBus.world_event_announced, _on_world_event_announced)
 	_connect(EventBus.world_event_completed, _on_world_event_completed)
 	dragon = {"announced": false, "eligible_turn": -1, "forced": false, "announce_turn": -1, "target": -1, "participants": {}, "damage_by_civ": {}, "resolution_turn": -1, "result": "", "reward_by_civ": {}, "superseded_reason": "", "phase_at_start": "", "phase_at_end": "", "convergence_edge": false}
-	reliquary = {"announced": false, "eligible_turn": -1, "announce_turn": -1, "active_turn": -1, "site": [], "responders": {}, "guardian_clear_turn": -1, "max_control_progress": 0, "contested_rounds": 0, "resolved_turn": -1, "winner": -1, "reward_choice": "", "superseded_reason": "", "waited_for_dragon": false}
 	overlap = {"ascension_rounds": 0, "rounds_by_count": {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0}, "all_four_turns": []}
 	world_threats = {"regional_alive_at": {}, "regional_total": 0, "guardian_sites_spawned": 0, "guardian_resources": {}, "guardian_resolved": 0, "guardian_spawn_turn": -1, "guardian_stats": {}}
 	for record in WorldEventManager.regional_threats:
@@ -211,7 +209,6 @@ func finish(end_info: Dictionary) -> Dictionary:
 		"world_phase": world_phase_timeline.duplicate(),
 		"world_threats": world_threats.duplicate(true),
 		"dragon": _finish_dragon(),
-		"reliquary": _finish_reliquary(),
 		"event_overlap": overlap.duplicate(true),
 		"combat_ecology": ecology.finish(GameManager.hex_grid),
 		"civs": [],
@@ -1308,12 +1305,9 @@ func _on_world_threat_resolved(role: String, owner_player: PlayerData, lair_coor
 
 # --- Fase 33D3: grandes eventos, marcos públicos, imperativos, sobreposição ---------------------------
 
-## Uma vez por rodada: progresso do Relicário (respondentes a ≤ 3 do local, contestação) e, na Ascensão, a
-## sobreposição de pressões simultâneas (ameaça regional viva, Guardião ativo, grande evento ativo, guerra).
+## Uma vez por rodada: o Dragão ativo e, na Ascensão, a sobreposição de pressões simultâneas (ameaça regional
+## viva, Guardião ativo, grande evento ativo, guerra).
 func _observe_d3_round(turn: int) -> void:
-	var active_reliquary := WorldEventManager.active_event_of_type(ReliquaryEvent.EVENT_TYPE) as ReliquaryEvent
-	if active_reliquary != null:
-		_track_reliquary(active_reliquary, turn)
 	var active_dragon := WorldEventManager.active_event_of_type(DragonEvent.EVENT_TYPE) as DragonEvent
 	if active_dragon != null:
 		_track_dragon(active_dragon)
@@ -1345,34 +1339,12 @@ func _track_dragon(event: DragonEvent) -> void:
 	for index in event.damage_by_civ:
 		dragon.damage_by_civ[str(index)] = snappedf(float(event.damage_by_civ[index]), 0.01)
 
-func _track_reliquary(event: ReliquaryEvent, turn: int) -> void:
-	if event.phase == WorldEvent.PHASE_ACTIVE and int(reliquary.active_turn) < 0:
-		reliquary.active_turn = turn
-	reliquary.site = [event.site_coord.x, event.site_coord.y]
-	reliquary.guardian_clear_turn = event.guardians_cleared_turn
-	reliquary.max_control_progress = maxi(int(reliquary.max_control_progress), event.max_control_rounds)
-	reliquary.contested_rounds = event.contested_rounds
-	for civ in civs:
-		if (reliquary.responders as Dictionary).has(str(civ.index)):
-			continue
-		for unit in (civ.player as PlayerData).units:
-			if is_instance_valid(unit) and V2StrategicAI.is_lair_responder(unit) and HexMetrics.axial_distance(unit.coord, event.site_coord) <= 3:
-				reliquary.responders[str(civ.index)] = turn
-				civ._meaningful = true
-				break
-
 func _on_world_event_announced(event: WorldEvent) -> void:
 	var turn := TurnManager.turn_number
 	if event is DragonEvent:
 		dragon.announced = true
 		dragon.announce_turn = turn
 		dragon.phase_at_start = WorldPhaseRules.id_name(WorldEventManager.world_phase)
-		for civ in civs:
-			civ.objectives.issued = int(civ.objectives.issued) + 1
-	elif event is ReliquaryEvent:
-		reliquary.announced = true
-		reliquary.announce_turn = turn
-		reliquary.site = [(event as ReliquaryEvent).site_coord.x, (event as ReliquaryEvent).site_coord.y]
 		for civ in civs:
 			civ.objectives.issued = int(civ.objectives.issued) + 1
 
@@ -1389,18 +1361,6 @@ func _on_world_event_completed(event: WorldEvent, result: Dictionary) -> void:
 			if dragon.result == "defeated" and float(dragon.damage_by_civ.get(str(civ.index), 0.0)) > 0.0:
 				civ.objectives.resolved = int(civ.objectives.resolved) + 1
 			elif dragon.result == "defeated":
-				civ.objectives.resolved_by_other = int(civ.objectives.resolved_by_other) + 1
-	elif event is ReliquaryEvent:
-		var reliquary_event := event as ReliquaryEvent
-		_track_reliquary(reliquary_event, turn)
-		reliquary.resolved_turn = int(result.get("resolved_turn", turn))
-		reliquary.result = String(result.get("outcome", ""))
-		reliquary.winner = reliquary_event.winner_index
-		reliquary.reward_choice = reliquary_event.reward_choice
-		for civ in civs:
-			if int(civ.index) == reliquary_event.winner_index:
-				civ.objectives.resolved = int(civ.objectives.resolved) + 1
-			else:
 				civ.objectives.resolved_by_other = int(civ.objectives.resolved_by_other) + 1
 
 func _on_public_milestone_reached(player: PlayerData, milestone: String) -> void:
@@ -1421,20 +1381,6 @@ func _finish_dragon() -> Dictionary:
 		_track_dragon(active)
 		dragon.result = "active_at_end:%s" % active.phase
 	return dragon.duplicate(true)
-
-func _finish_reliquary() -> Dictionary:
-	var schedule := WorldEventManager.reliquary_schedule
-	reliquary.eligible_turn = int(schedule.get("eligible_turn", -1))
-	reliquary.waited_for_dragon = bool(schedule.get("waited_for_dragon", false))
-	if String(schedule.get("state", "")) == WorldEventManager.SCHEDULE_SUPERSEDED:
-		reliquary.superseded_reason = String(schedule.get("superseded_reason", ""))
-		for civ in civs:
-			civ.objectives.superseded = int(civ.objectives.superseded) + 1
-	var active := WorldEventManager.active_event_of_type(ReliquaryEvent.EVENT_TYPE) as ReliquaryEvent
-	if active != null:
-		_track_reliquary(active, TurnManager.turn_number)
-		reliquary.result = "active_at_end:%s" % active.phase
-	return reliquary.duplicate(true)
 
 static func _imperative_steps(player: PlayerData) -> Dictionary:
 	var result := {}

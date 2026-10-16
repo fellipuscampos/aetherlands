@@ -54,7 +54,7 @@ func _world() -> HexGrid:
 func _player(research_through: int = 4) -> PlayerData:
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
-	for n in range(1, research_through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, research_through + 1):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	return player
 
@@ -86,10 +86,9 @@ func _striker(grid: HexGrid, rival: PlayerData, coord: Vector2i) -> Unit:
 func _damage(grid: HexGrid, attacker: Unit, defender: Unit) -> float:
 	return CombatResolver.predict(attacker, defender, grid).damage_to_defender
 
-## Dano esperado de `attack` contra `defense` base, com o mesmo terreno do tile do defensor.
+## Dano esperado de `attack` contra `defense` base (o terreno-base não dá Defesa).
 func _expected(grid: HexGrid, attack: float, defender: Unit, extra: float) -> float:
-	var terrain := 1.0 + grid.get_tile(defender.coord).defense_bonus
-	return maxf(1.0, attack - defender.unit_data.defense * terrain * extra * CombatResolver.DEFENSE_MITIGATION_FACTOR)
+	return maxf(1.0, attack - defender.unit_data.defense * extra * CombatResolver.DEFENSE_MITIGATION_FACTOR)
 
 # --- Dados / framework ---------------------------------------------------------------------------
 

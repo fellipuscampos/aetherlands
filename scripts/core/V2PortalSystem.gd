@@ -189,7 +189,9 @@ static func traverse(unit: Unit, hex_grid: HexGrid = null) -> bool:
 	var destination := traversal_destination(unit, grid)
 	if destination == INVALID_COORD:
 		return false
+	var origin := unit.coord
 	grid.teleport_unit(unit, destination)
+	SpellVFX.portal_transit(unit,origin,destination,grid)
 	unit.movement_left = 0.0
 	unit.fortified = false
 	unit.exploring = false

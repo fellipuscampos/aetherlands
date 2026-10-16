@@ -49,6 +49,11 @@ func before_each():
 func after_each():
 	SelectionManager.reset()
 	SaveManager.delete_save(SAVE_PATH)
+	# O load cria outro conjunto de jogadores, fora de _players. Libera também as relações desse conjunto
+	# antes de restaurar os globais, evitando que as referências diplomáticas retenham as duas civilizações.
+	for player in GameManager.players:
+		if player not in _original_players:
+			player.release_relations()
 	GameManager.players = _original_players
 	GameManager.human_player = _original_human
 	GameManager.rival_players = _original_rivals

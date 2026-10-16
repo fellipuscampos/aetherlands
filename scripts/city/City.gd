@@ -32,9 +32,8 @@ const CITY_SHIELD_REGEN_FRACTION := 0.15 # fracao de max_shield recarregada por 
 ## intencao de cercar, nao deveria contar como sitio de verdade.
 const SIEGE_TURNS_TO_SUSPEND_REGEN := 2
 
-## Escala visual da cidade pelo City Level (Fase 25 — era pela população, removida): Cidade I =
-## aldeia (poucas casinhas + salão), Cidade II = vila, Cidade III+ = cidade com torre central. Teto de
-## estruturas fixo (ver _build_visual_procedural), então o número de meshes nunca cresce sem limite.
+## Os modelos do centro por City Level e por raça vivem em BuildingArtCatalog.CITY_ART (unidades de
+## tile de raio 1). Fallback procedural se uma fonte não puder ser carregada; teto de casinhas fixo.
 const HUTS_BY_CITY_LEVEL := {1: 3, 2: 5, 3: 7, 4: 8}
 
 var owner_player: PlayerData
@@ -124,7 +123,7 @@ var last_monster_warning_turn: int = -999
 var production_item: String = ""
 
 ## Tiles que a cidade REALMENTE possui (territorio, ver HexGrid.
-## city_territory_tiles/_build_city_tint_mesh — o tingimento de cor no chao
+## city_territory_tiles/_build_city_border_mesh — o contorno na cor da civ no chao
 ## de cada tile e o unico sinal visual disso hoje). Iniciado em
 ## HexGrid.found_city() (celula + 6 vizinhos) e depois só cresce por anexação
 ## manual (annex_tile, Pontos de Anexação do City Level) — Fase 13.
@@ -154,9 +153,8 @@ const NO_PENDING_COORD := Vector2i(999999, 999999)
 var pending_building_coord: Vector2i = NO_PENDING_COORD
 
 var _name_label: Label3D
-## Container so pras construcoes proceduais (ver _build_visual_procedural) —
-## separado do Label3D pra crescimento de populacao poder reconstruir SO as
-## construcoes (queue_free + reconstroi este container) sem afetar o label
+## Container para o centro urbano e a fortificação — separado do Label3D
+## para reconstruir as construções ao subir de nível sem afetar o rótulo
 ## (change_owner() continua livre pra derrubar TUDO, ela ja reconstroi os
 ## dois de qualquer forma).
 var _buildings_root: Node3D
@@ -246,6 +244,10 @@ func production_cost() -> float:
 ## max_building_slots), a única fonte.
 func max_building_slots() -> int:
 	return V2CityLevelData.max_building_slots(city_level)
+
+## Raio de visão da cidade: cresce +1 por City Level (V2CityLevelData.vision_range).
+func vision_range() -> int:
+	return V2CityLevelData.vision_range(city_level)
 
 ## Aetherlands V2, Fase 13 — cada CÓPIA de um prédio repetível (BuildingData.CopyLimitMode.
 ## CITY_LEVEL) ocupa seu próprio slot: uma cidade com 3 Fazendas ocupa 3 slots, não 1 (§26 do
@@ -461,6 +463,10 @@ func can_train(kind: String) -> bool:
 			return false
 	elif not kind in UnitDatabase.CORE_TRAINABLE_KINDS:
 		return false
+	# 2026-10-09 — Colono: limite de Colonos treinados na partida (linha de Colonização). Reconhecido por dado
+	# (can_found_city), e a reserva por produção em OUTRAS cidades conta, como no slot Lendário.
+	if not V2ColonizationRuntime.can_start_settler(owner_player, self, kind):
+		return false
 	var required: BuildingData = BuildingDatabase.building_that_trains(kind)
 	if required == null:
 		return true
@@ -510,6 +516,8 @@ func production_eligibility_reason() -> String:
 			return "manifestation_slot"
 	elif not production_item in UnitDatabase.CORE_TRAINABLE_KINDS:
 		return "not_trainable"
+	if not V2ColonizationRuntime.can_start_settler(player, self, production_item):
+		return "settler_limit"
 	var trainer := BuildingDatabase.building_that_trains(production_item)
 	if trainer != null and not buildings.has(trainer.id):
 		return "trainer_building"
@@ -529,8 +537,20 @@ func revalidate_production_for_owner() -> bool:
 
 ## Tile valido pra POSICIONAR um predio: precisa ser vizinho imediato da
 ## cidade ou parte do território dela (owned_tiles), terra
-## firme, sem unidade/cidade em cima, e sem outro predio (desta cidade ou
+## firme, sem cidade em cima, e sem outro predio (desta cidade ou
 ## de qualquer outra, ver HexGrid.is_tile_building_site) ja la.
+##
+## UNIDADE em cima NAO bloqueia (aliada, inimiga ou monstro) — pedido do
+## usuario: "nao da pra construir em um tile se tiver uma tropa em cima...
+## quero que a construcao funcione". A trava antiga so valia no INSTANTE
+## do clique: predio e obra nunca ocuparam o tile (qualquer unidade ja
+## podia andar pra cima de uma obra em andamento ou de um predio pronto, e
+## a obra seguia/concluia normalmente), entao ela nao protegia regra
+## nenhuma — so obrigava a tirar a tropa do tile, clicar e voltar. Pior
+## com monstro/inimigo parado no territorio: o tile ficava inutilizavel
+## ate alguem mata-lo. A leitura visual de "tropa + obra no mesmo tile" e
+## do VisualFocusSystem (a obra/predio fica semitransparente, a tropa
+## opaca), o mesmo que ja valia pra quem entrava no tile depois.
 func is_valid_building_tile(target: Vector2i, hex_grid: HexGrid) -> bool:
 	if target == coord or (not target in hex_grid.get_neighbors(coord) and not target in owned_tiles):
 		return false
@@ -540,11 +560,32 @@ func is_valid_building_tile(target: Vector2i, hex_grid: HexGrid) -> bool:
 	var data: HexTileData = hex_grid.get_tile(target)
 	if data == null or data.blocks_land_units():
 		return false
-	if hex_grid.get_unit_at(target) != null or hex_grid.get_city_at(target) != null:
+	if hex_grid.get_city_at(target) != null:
 		return false
 	if hex_grid.is_tile_building_site(target):
 		return false
 	return true
+
+## O que construir em `target` DESTRÓI: {} se nada, senão {"resource": id do recurso de mapa, "improvement": id da
+## melhoria do Construtor ou ""}. Fonte única do aviso ao jogador (modal de confirmação e rótulo do hover no
+## posicionamento) e da preferência da IA por tiles sem recurso.
+func building_site_loss(target: Vector2i, hex_grid: HexGrid) -> Dictionary:
+	var data: HexTileData = hex_grid.get_tile(target)
+	if data == null or data.resource == "":
+		return {}
+	var tile_owner := hex_grid.city_owning_tile(target)
+	return {"resource": data.resource, "improvement": String(tile_owner.resource_improvements.get(target, "")) if tile_owner != null else ""}
+
+## Inicia a obra de `building_id` em `target`: a MESMA entrada para o jogador (SelectionManager, depois de confirmar
+## o aviso quando há recurso) e para a IA (V2StrategicAI). O recurso de mapa do tile é destruído AQUI, quando a obra
+## começa — pedido do usuário: "se a pessoa aceitar o prédio começa a ser construído e o recurso daquele tile some" —
+## e não volta se a obra for cancelada. Devolve o id do recurso destruído ("" se o tile não tinha).
+func start_building(building_id: String, target: Vector2i, hex_grid: HexGrid) -> String:
+	# Antes de set_production: quem redesenha no sinal de produção já enxerga o tile sem o recurso.
+	var destroyed := hex_grid.destroy_resource_at(target) if target != NO_PENDING_COORD else ""
+	set_production(building_id)
+	pending_building_coord = target
+	return destroyed
 
 ## Usado na conquista: a cidade muda de dono e reconstroi a visual com a
 ## cor da nova civilizacao. Progresso de producao e mantido de proposito.
@@ -750,6 +791,29 @@ func _build_visual() -> void:
 	_refresh_label()
 
 	_build_life_bars()
+	_refresh_visual_ui_positions()
+
+## Os castelos mais altos precisam de espaço para nome, HP e escudo.
+## Mede só na reconstrução do visual, incluindo a escala real do tile.
+func _refresh_visual_ui_positions() -> void:
+	var top := 0.0
+	var model := _buildings_root.get_node_or_null("CityCenterModel") as Node3D
+	if model != null:
+		for part: MeshInstance3D in model.find_children("*","MeshInstance3D",true,false):
+			var relative := part.transform
+			var ancestor := part.get_parent() as Node3D
+			while ancestor != null and ancestor != self:
+				relative = ancestor.transform * relative
+				ancestor = ancestor.get_parent() as Node3D
+			var bounds: AABB = relative * part.get_aabb()
+			top = maxf(top,bounds.end.y)
+	var offset := maxf(0.0,top + 0.30 * tile_radius - LABEL_HEIGHT)
+	if _name_label != null:
+		_name_label.position.y = LABEL_HEIGHT + offset
+	if _life_bar != null:
+		_life_bar.position.y = LIFE_BAR_Y + offset
+	if _shield_bar != null:
+		_shield_bar.position.y = SHIELD_BAR_Y + offset
 
 ## Duas barras Sprite3D empilhadas, SEMPRE visiveis (nao so quando
 ## danificada, diferente da barra de HP de unidade — ver Unit._build_hp_
@@ -796,6 +860,7 @@ func _build_life_bars() -> void:
 ## em tamanho/posicao (mesmo motivo da barra de progresso de construcao,
 ## ver HexGrid._update_construction_marker_progress).
 func _update_life_bars() -> void:
+	if preload("res://scripts/vfx/CombatFeedback.gd").defer_call(self, &"_update_life_bars", [], true): return
 	if _life_bar == null:
 		return
 	var hp_frac = clamp(hp / max_hp(), 0.0, 1.0) if max_hp() > 0.0 else 1.0
@@ -831,17 +896,20 @@ func _build_life_bar_texture(frac: float, fill_color: Color, empty_color: Color)
 			img.set_pixel(x, y, color)
 	return ImageTexture.create_from_image(img)
 
-## Reconstroi o CLUSTER de construcoes (nao o label, ver _buildings_root)
-## a partir do City Level atual — chamado na fundacao (_build_visual), ao subir
-## de nível (apply_city_level) e ao concluir Fortificação. RNG seedado pelo
-## proprio `coord` (nao randi() puro): a disposicao das casinhas fica
-## ESTAVEL entre reconstrucoes (subir de nível so ACRESCENTA casinhas, as
-## antigas nao pulam de lugar).
+## Reconstrói o centro e a fortificação sem recriar o rótulo. Usa o modelo
+## próprio do City Level quando disponível; nos demais níveis, mantém o
+## cluster procedural com RNG seedado por coord. Chamado na fundação,
+## no upgrade, na conclusão de Fortificação e no carregamento de uma partida.
 func _build_visual_procedural() -> void:
 	if _buildings_root:
 		_buildings_root.queue_free()
 	_buildings_root = Node3D.new()
 	add_child(_buildings_root)
+	if _add_city_center_model():
+		if has_fortification():
+			_add_walls()
+		_refresh_visual_ui_positions()
+		return
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(coord)
@@ -868,6 +936,29 @@ func _build_visual_procedural() -> void:
 	# do City Level, uma aldeia murada é tão válida quanto uma cidade grande sem muralha.
 	if has_fortification():
 		_add_walls()
+	_refresh_visual_ui_positions()
+
+## Cena do centro para o nível atual e a raça do dono ATUAL (captura chama change_owner, que refaz o visual).
+func city_center_model_path() -> String:
+	return BuildingArtCatalog.city_model_path(V2CityLevelData.clamp_level(city_level), BuildingArtCatalog.race_of(owner_player))
+
+func _add_city_center_model() -> bool:
+	var model_path := city_center_model_path()
+	if model_path == "":
+		return false
+	var packed_scene := load(model_path) as PackedScene
+	if packed_scene == null:
+		return false
+	var model := packed_scene.instantiate() as Node3D
+	model.name = "CityCenterModel"
+	# Fonte em escala nativa, acompanhando hex_size sem normalizar pela altura.
+	model.scale = Vector3.ONE * tile_radius
+	_buildings_root.add_child(model)
+	# Apenas as superfícies neutras da bandeira/placa recebem a cor do dono.
+	# Pedra, telhas e metais preservam a pintura e o atlas compartilhado.
+	var civ_color := owner_player.civ.color.lightened(0.1) if owner_player else Color(0.6,0.6,0.6)
+	BuildingArtCatalog.apply_owner_color(model, civ_color)
+	return true
 
 func _add_hut(local_pos: Vector3, scale: float, rng: RandomNumberGenerator) -> void:
 	var body := MeshInstance3D.new()
@@ -979,6 +1070,8 @@ const WALL_PILLAR_RADIUS_FACTOR := 0.065
 const WALL_PILLAR_HEIGHT_FACTOR := 0.32
 
 func _add_walls() -> void:
+	if _add_fortification_model():
+		return
 	var wall_radius = tile_radius * WALL_RADIUS_FACTOR
 	var wall_apothem = wall_radius * 0.8660254 # cos(30°) — hexagono regular
 	var wall_segment_length = wall_radius * WALL_SEGMENT_LENGTH_FACTOR
@@ -1026,6 +1119,24 @@ func _add_walls() -> void:
 		pillar.material_override = pillar_mat
 		pillar.position = Vector3(corner_pos.x, wall_pillar_height * 0.5, corner_pos.z)
 		_buildings_root.add_child(pillar)
+
+func fortification_model_path() -> String:
+	return BuildingArtCatalog.fortification_model_path(fortification_level, BuildingArtCatalog.race_of(owner_player))
+
+func _add_fortification_model() -> bool:
+	var model_path := fortification_model_path()
+	if model_path == "" or not ResourceLoader.exists(model_path):
+		return false
+	var packed_scene := load(model_path) as PackedScene
+	if packed_scene == null:
+		return false
+	var model := packed_scene.instantiate() as Node3D
+	model.name = "FortificationModel"
+	model.scale = Vector3.ONE * tile_radius
+	_buildings_root.add_child(model)
+	var civ_color := owner_player.civ.color.lightened(0.1) if owner_player else Color(0.6, 0.6, 0.6)
+	BuildingArtCatalog.apply_owner_color(model, civ_color)
+	return true
 
 func _refresh_label() -> void:
 	if _name_label:

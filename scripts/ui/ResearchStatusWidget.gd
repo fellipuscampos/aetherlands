@@ -20,6 +20,8 @@ func _ready() -> void:
 	add_theme_stylebox_override("panel", compact_style)
 	custom_minimum_size = Vector2(230, UIThemeTokens.TARGET_MIN)
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	focus_mode = Control.FOCUS_ALL
+	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_build()
 	gui_input.connect(_on_gui_input)
 
@@ -58,6 +60,10 @@ func refresh() -> void:
 		progress.visible = false
 		attention_badge.visible = not complete
 		tooltip_text = detail_label.text
+		if not complete and state.research_overflow > 0.0:
+			var banked_income := V2EconomyRuntime.player_knowledge_income(_player)
+			tooltip_text = "%s Conhecimento guardado%s.\nA próxima pesquisa que você iniciar recebe tudo de uma vez, na hora — pode avançar bastante ou concluir no mesmo instante." % [
+				_number(state.research_overflow), " (+%s por turno)" % _number(banked_income) if banked_income > 0.0 else ""]
 		return
 	var node := V2ResearchDatabase.get_node(state.active_id)
 	if node == null:
@@ -67,7 +73,7 @@ func refresh() -> void:
 	var income := V2EconomyRuntime.player_knowledge_income(_player)
 	var eta := "Sem progresso" if income <= 0.0 else "≈%d turnos" % maxi(int(ceil(remaining / income)), 1)
 	name_label.text = _truncate(node.display_name, 18 if _compact else 28)
-	detail_label.text = "%d%% · %s" % [int(round(state.get_progress_ratio(state.active_id) * 100.0)), eta] if _compact else "%s / %s · faltam %s · %s" % [_number(current), _number(node.cost), _number(remaining), eta]
+	detail_label.text = "%s / %s · %d%%" % [_number(current), _number(node.cost), int(round(state.get_progress_ratio(state.active_id) * 100.0))] if _compact else "%s / %s · faltam %s · %s" % [_number(current), _number(node.cost), _number(remaining), eta]
 	progress.visible = true
 	progress.set_progress("", current, node.cost)
 	progress.title_label.visible = false
@@ -106,7 +112,8 @@ func _build() -> void:
 	row.add_child(attention_badge)
 
 func _on_gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+	if (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed) or event.is_action_pressed("ui_accept"):
+		accept_event()
 		pressed.emit()
 
 func _truncate(value: String, limit: int) -> String:

@@ -38,7 +38,7 @@ func _city_for(player: PlayerData) -> City:
 	return city
 
 func _research_guardian(player: PlayerData, through_tier: int) -> void:
-	for n in range(1, through_tier + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through_tier + 1):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 
 # --- Dados da unidade ------------------------------------------------------------------------------
@@ -56,15 +56,16 @@ func test_it_is_a_trainable_kind_exactly_once():
 
 func test_shieldbearer_is_tankier_but_hits_softer_than_the_guard():
 	var shield := UnitDatabase.create_unit(KIND)
-	var guard := UnitDatabase.create_unit("warrior")
+	var guard := UnitDatabase.create_unit("v2_unit_warrior") # o Guarda V1 saiu do jogo; o par de hoje é o Guerreiro
 	assert_gt(shield.max_hp, guard.max_hp, "mais vida")
 	assert_gt(shield.defense, guard.defense, "mais defesa")
 	assert_lt(shield.attack, guard.attack, "ataque menor")
 	assert_gt(shield.attack, 0.0, "ainda ataca")
 
-func test_shieldbearer_does_not_eclipse_the_v1_men_at_arms():
+## O Homem de Armas V1 saiu do jogo (Fase 25): a régua de "não eclipsar" passou a ser a forma seguinte da própria linha.
+func test_shieldbearer_does_not_eclipse_the_guardian():
 	var shield := UnitDatabase.create_unit(KIND)
-	var men := UnitDatabase.create_unit("men_at_arms")
+	var men := UnitDatabase.create_unit("v2_unit_guardian")
 	assert_lt(shield.attack, men.attack)
 	assert_lte(shield.defense, men.defense)
 
@@ -167,6 +168,7 @@ func test_a_civilization_without_the_research_cannot_train_even_in_a_city_with_t
 ## Fase 25: fora da V2 só o Colonizador é treinável; nenhuma tropa V1 abre fila, nem com o Quartel vestigial.
 func test_only_the_settler_is_trainable_outside_the_v2_lines():
 	var city := _city_for(_player())
+	city.owner_player.v2_research.complete_research("v2_infrastructure_colonization_1") # o Colono exige a linha de Colonização (2026-10-09)
 	assert_true(city.can_train("settler"))
 	assert_false(city.can_train("warrior"))
 	assert_false(city.can_train("men_at_arms"))

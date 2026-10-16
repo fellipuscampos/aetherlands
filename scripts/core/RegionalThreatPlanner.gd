@@ -79,6 +79,9 @@ static func place_regional(grid: HexGrid, player: PlayerData, player_index: int,
 			close_neighbors.append(other)
 	result.corridor_neighbors = close_neighbors.size()
 	var visible := grid.compute_visible_tiles(player)
+	var unified := MonsterEcologySystem.enabled
+	var blocked := MonsterEcologyPlanner.refill_blocked_tiles(grid, GameManager.players) if unified else {}
+	var has_budget := not unified or int(MonsterEcologySystem.deficits_by_tier().get(MonsterEcologyData.TIER_BASIC, 0)) > 0
 	var anchors: Array[Vector2i] = [capital]
 	anchors.append_array(others)
 	_clear_close_wild_lairs(grid, player, capital, anchors, component, rng, result)
@@ -87,11 +90,17 @@ static func place_regional(grid: HexGrid, player: PlayerData, player_index: int,
 	# só como último recurso (península estreita cujo anel é todo recurso): o anel nunca é ampliado.
 	var best_new: Dictionary = {}
 	for allow_resource in [false, true]:
+		if not has_budget:
+			break
 		for coord in _sorted(HexMetrics.coords_within(capital, RING_MAX)):
 			var distance := HexMetrics.axial_distance(capital, coord)
 			if distance < RING_MIN:
 				continue
 			if not _is_legal_new_site(grid, coord, component, anchors, capital, allow_resource):
+				continue
+			if unified and (blocked.has(coord) or not MonsterEcologyPlanner.depletion_ok(coord, MonsterEcologySystem.depleted, turn)):
+				continue
+			if _safe_opening_boss_tiles(grid, coord, blocked, anchors, turn).is_empty():
 				continue
 			var tile: HexTileData = grid.get_tile(coord)
 			var ideal := tile.terrain_type in GOBLIN_BIOMES or tile.terrain_type in SKELETON_BIOMES
@@ -106,12 +115,19 @@ static func place_regional(grid: HexGrid, player: PlayerData, player_index: int,
 	var best_reuse: Dictionary = {}
 	for lair_coord in _sorted(grid.lair_coords.duplicate()):
 		var kind := String(grid.lair_kind_by_coord.get(lair_coord, ""))
-		if kind not in [GOBLIN, SKELETON] or grid.lair_role(lair_coord) != HexGrid.LAIR_ROLE_WILD:
+		var reusable_roles := [HexGrid.LAIR_ROLE_WILD, HexGrid.LAIR_ROLE_ECOLOGY] if unified else [HexGrid.LAIR_ROLE_WILD]
+		if kind not in [GOBLIN, SKELETON] or grid.lair_role(lair_coord) not in reusable_roles:
 			continue
 		var distance := HexMetrics.axial_distance(capital, lair_coord)
 		if distance < RING_MIN or distance > RING_MAX or grid._land_components.get(lair_coord, -2) != component:
 			continue
 		if _min_distance(lair_coord, others) < OTHER_CAPITAL_MIN or is_touched(grid, lair_coord, player):
+			continue
+		var safe_members := true
+		for member in grid.lair_members(lair_coord):
+			if not MonsterEcologyPlanner.capital_distance_ok(member.coord, MonsterEcologyData.TIER_BASIC, anchors):
+				safe_members = false
+		if not safe_members:
 			continue
 		var rank := _rank(lair_coord, capital, others, close_neighbors, visible, player.explored_tiles, true, rng.randf())
 		if best_reuse.is_empty() or _rank_less(rank, best_reuse.rank):
@@ -132,7 +148,8 @@ static func place_regional(grid: HexGrid, player: PlayerData, player_index: int,
 	elif not best_new.is_empty():
 		var coord: Vector2i = best_new.coord
 		var tile: HexTileData = grid.get_tile(coord)
-		var boss_coord := _pick_boss_tile(grid, coord, rng)
+		var safe := _safe_opening_boss_tiles(grid, coord, blocked, anchors, turn)
+		var boss_coord: Vector2i = safe[rng.randi_range(0, safe.size() - 1)]
 		result.coord = coord
 		result.kind = SKELETON if tile.terrain_type in SKELETON_BIOMES else GOBLIN
 		result.source = "created"
@@ -146,6 +163,14 @@ static func place_regional(grid: HexGrid, player: PlayerData, player_index: int,
 	for neighbor in close_neighbors:
 		if corridor_relation(capital, neighbor, result.coord) == 2:
 			result.corridor_violation = true
+	return result
+
+static func _safe_opening_boss_tiles(grid: HexGrid, coord: Vector2i, blocked: Dictionary, anchors: Array[Vector2i], turn: int) -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	for option in _free_boss_tiles(grid, coord):
+		if not blocked.has(option) and MonsterEcologyPlanner.capital_distance_ok(option, MonsterEcologyData.TIER_BASIC, anchors) \
+			and MonsterEcologyPlanner.depletion_ok(option, MonsterEcologySystem.depleted, turn):
+			result.append(option)
 	return result
 
 ## 0 = hemisfério oposto ao vizinho (ângulo ≥ 90° visto da capital); 1 = mesmo hemisfério, fora da faixa

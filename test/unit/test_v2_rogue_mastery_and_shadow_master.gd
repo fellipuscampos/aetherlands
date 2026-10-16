@@ -97,7 +97,7 @@ func test_the_shadow_master_stays_blocked_with_the_refuge_but_without_n9():
 func test_the_shadow_master_has_the_specified_baseline():
 	var data := UnitDatabase.create_unit(SHADOW_MASTER)
 	assert_eq(data.unit_name, "Mestre das Sombras")
-	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points, data.production_cost], [30.0, 10.5, 4.5, 4.0, 95.0])
+	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points, data.production_cost], [34.0, 17.5, 8.0, 4.0, 90.0])
 	assert_eq(data.vision_range, 5)
 	assert_eq(data.attack_range, 1, "corpo a corpo")
 	assert_eq(data.visual_kind, SHADOW_MASTER, "o SaveManager recria a unidade por ele")
@@ -160,7 +160,7 @@ func test_producing_it_needs_n9_the_refuge_and_a_free_slot_and_costs_95():
 	assert_false(_standalone_city(player, [ROGUE_GUILD]).can_train(SHADOW_MASTER), "sem o Refúgio")
 	assert_false(_standalone_city(player, [G_HALL, G_MASTERY, W_HALL, ARENA, R_CAMP, R_TOWER, C_STABLE, C_ORDER]).can_train(SHADOW_MASTER), "nenhum outro prédio de maestria o treina")
 	city.set_production(SHADOW_MASTER)
-	assert_eq(city.production_cost(), 95.0)
+	assert_eq(city.production_cost(), 90.0)
 
 func test_the_other_masteries_do_not_train_it_and_the_refuge_does_not_train_the_others():
 	var player := _player(9, 9, 9, 9, 9)

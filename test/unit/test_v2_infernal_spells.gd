@@ -63,7 +63,7 @@ func _player(civ_name: String) -> PlayerData:
 	return player
 
 func _learn(player: PlayerData, tier: int = 7) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		if not player.v2_research.is_completed("v2_magic_infernal_%d" % i):
 			assert_true(player.v2_research.complete_research("v2_magic_infernal_%d" % i))
 
@@ -91,11 +91,11 @@ func test_infernal_spell_records_are_canonical_and_ordered():
 	for spell in [flame, devouring, blast, damnation]:
 		assert_eq(spell.school_branch, "infernal")
 		assert_eq(spell.target_mode, V2SpellData.TargetMode.HOSTILE_UNIT)
-	assert_eq([flame.mana_cost, flame.cast_range, flame.cooldown_turns, flame.damage_amount, flame.splash_radius], [5.0, 3, 0, 6.0, 0])
-	assert_eq([devouring.mana_cost, devouring.cast_range, devouring.cooldown_turns, devouring.damage_amount], [8.0, 3, 2, 8.0])
+	assert_eq([flame.mana_cost, flame.cast_range, flame.cooldown_turns, flame.damage_amount, flame.splash_radius], [6.0, 3, 0, 9.0, 0])
+	assert_eq([devouring.mana_cost, devouring.cast_range, devouring.cooldown_turns, devouring.damage_amount], [12.0, 3, 2, 13.0])
 	assert_eq([devouring.low_hp_threshold, devouring.low_hp_damage_bonus], [0.5, 0.5])
-	assert_eq([blast.mana_cost, blast.cast_range, blast.cooldown_turns, blast.damage_amount, blast.splash_radius], [11.0, 3, 3, 5.0, 1])
-	assert_eq([damnation.mana_cost, damnation.cast_range, damnation.cooldown_turns, damnation.damage_amount, damnation.splash_radius], [18.0, 4, 5, 15.0, 0])
+	assert_eq([blast.mana_cost, blast.cast_range, blast.cooldown_turns, blast.damage_amount, blast.splash_radius], [18.0, 3, 3, 9.0, 1])
+	assert_eq([damnation.mana_cost, damnation.cast_range, damnation.cooldown_turns, damnation.damage_amount, damnation.splash_radius], [34.0, 4, 5, 32.0, 0])
 
 func test_repertoire_is_derived_from_owner_research_in_n4_to_n7_order():
 	_learn(human, 3)
@@ -113,9 +113,9 @@ func test_flame_damages_six_costs_five_and_spends_action_without_retaliation():
 	var enemy_hp := enemy.hp
 	var caster_hp := warlock.hp
 	assert_true(V2MagicRuntime.cast(warlock, FLAME, enemy.coord, grid))
-	assert_eq(enemy.hp, enemy_hp - 6.0)
+	assert_eq(enemy.hp, enemy_hp - 9.0)
 	assert_eq(warlock.hp, caster_hp, "feitiço não causa revide")
-	assert_eq(human.mana, 195.0)
+	assert_eq(human.mana, 194.0)
 	assert_eq(warlock.movement_left, 0.0)
 	assert_eq(V2MagicRuntime.cooldown_remaining(warlock, FLAME), 0)
 
@@ -161,7 +161,7 @@ func test_magical_damage_ignores_every_physical_defense_input():
 	grid.tiles[enemy.coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS)
 	var predicted := V2MagicRuntime.predict_damage(warlock, enemy, V2SpellDatabase.get_spell(FLAME))
 	var before := enemy.hp
-	assert_eq(predicted, 6.0)
+	assert_eq(predicted, 9.0)
 	assert_true(V2MagicRuntime.cast(warlock, FLAME, enemy.coord, grid))
 	assert_eq(before - enemy.hp, predicted)
 
@@ -170,23 +170,23 @@ func test_devouring_fire_threshold_is_inclusive_and_uses_the_same_prediction_for
 	var target := _unit("warrior", rival, Vector2i(2, 0))
 	var spell := V2SpellDatabase.get_spell(DEVOURING)
 	target.hp = target.unit_data.max_hp * 0.501
-	assert_eq(V2MagicRuntime.predict_damage(warlock, target, spell), 8.0, "50,1% não recebe bônus")
+	assert_eq(V2MagicRuntime.predict_damage(warlock, target, spell), 13.0, "50,1% não recebe bônus")
 	target.hp = target.unit_data.max_hp * 0.5
-	assert_eq(V2MagicRuntime.predict_damage(warlock, target, spell), 12.0, "50% exato recebe bônus")
+	assert_eq(V2MagicRuntime.predict_damage(warlock, target, spell), 19.5, "50% exato recebe bônus")
 	target.hp = target.unit_data.max_hp * 0.49
-	assert_eq(V2MagicRuntime.predict_damage(warlock, target, spell), 12.0)
+	assert_eq(V2MagicRuntime.predict_damage(warlock, target, spell), 19.5)
 
 func test_archdemon_multiplier_applies_only_as_spell_damage_data():
 	_learn(human, 7)
 	var archdemon := _unit(ARCHDEMON, human, Vector2i.ZERO)
 	var target := _unit("v2_legendary_guardian_champion", rival, Vector2i(2, 0))
 	var devouring := V2SpellDatabase.get_spell(DEVOURING)
-	assert_eq(V2MagicRuntime.predict_damage(archdemon, target, V2SpellDatabase.get_spell(FLAME)), 7.5)
-	assert_eq(V2MagicRuntime.predict_damage(archdemon, target, devouring), 10.0)
+	assert_eq(V2MagicRuntime.predict_damage(archdemon, target, V2SpellDatabase.get_spell(FLAME)), 11.25)
+	assert_eq(V2MagicRuntime.predict_damage(archdemon, target, devouring), 16.25)
 	target.hp = target.unit_data.max_hp * 0.5
-	assert_eq(V2MagicRuntime.predict_damage(archdemon, target, devouring), 15.0)
-	assert_eq(V2MagicRuntime.predict_damage(archdemon, target, V2SpellDatabase.get_spell(BLAST)), 6.25)
-	assert_eq(V2MagicRuntime.predict_damage(archdemon, target, V2SpellDatabase.get_spell(DAMNATION)), 18.75)
+	assert_eq(V2MagicRuntime.predict_damage(archdemon, target, devouring), 24.375)
+	assert_eq(V2MagicRuntime.predict_damage(archdemon, target, V2SpellDatabase.get_spell(BLAST)), 11.25)
+	assert_eq(V2MagicRuntime.predict_damage(archdemon, target, V2SpellDatabase.get_spell(DAMNATION)), 40.0)
 
 func test_blast_primary_is_first_and_secondaries_are_hp_ratio_then_serial():
 	var warlock := _warlock(6)
@@ -209,9 +209,9 @@ func test_blast_hits_all_hostiles_once_without_friendly_fire_or_peace_targets():
 	var peace := _unit("warrior", peaceful, Vector2i(2, -1))
 	var before := [primary.hp, hostile_a.hp, hostile_b.hp, own.hp, peace.hp]
 	assert_true(V2MagicRuntime.cast(warlock, BLAST, primary.coord, grid))
-	assert_eq([before[0] - primary.hp, before[1] - hostile_a.hp, before[2] - hostile_b.hp], [5.0, 5.0, 5.0])
+	assert_eq([before[0] - primary.hp, before[1] - hostile_a.hp, before[2] - hostile_b.hp], [9.0, 9.0, 9.0])
 	assert_eq([own.hp, peace.hp], [before[3], before[4]])
-	assert_eq(human.mana, 189.0, "uma cobrança, não por vítima")
+	assert_eq(human.mana, 182.0, "uma cobrança, não por vítima")
 
 func test_blast_resolves_secondaries_after_primary_dies_and_credits_each_kill_once():
 	var warlock := _warlock(6)
@@ -234,7 +234,7 @@ func test_hidden_blast_secondary_is_not_damaged_for_the_human():
 	var hidden_hp := hidden.hp
 	assert_true(V2MagicRuntime.cast(warlock, BLAST, primary.coord, grid))
 	assert_eq(hidden.hp, hidden_hp)
-	assert_eq(shown.hp, shown.unit_data.max_hp - 5.0)
+	assert_eq(shown.hp, shown.unit_data.max_hp - 9.0)
 
 func test_damnation_uses_range_four_when_another_source_reveals_the_target():
 	var warlock := _warlock(7)
@@ -242,8 +242,8 @@ func test_damnation_uses_range_four_when_another_source_reveals_the_target():
 	grid.visibility[target.coord] = HexGrid.Visibility.VISIBLE
 	var before := target.hp
 	assert_true(V2MagicRuntime.cast(warlock, DAMNATION, target.coord, grid))
-	assert_eq(before - target.hp, 15.0)
-	assert_eq(human.mana, 182.0)
+	assert_eq(before - target.hp, 32.0)
+	assert_eq(human.mana, 166.0)
 	assert_eq(V2MagicRuntime.cooldown_remaining(warlock, DAMNATION), 5)
 
 func test_damnation_at_range_four_is_blocked_while_hidden():
@@ -266,9 +266,9 @@ func test_effect_text_is_generated_from_generic_spell_data():
 	var flame := V2SpellDatabase.effect_text(V2SpellDatabase.get_spell(FLAME))
 	var devouring := V2SpellDatabase.effect_text(V2SpellDatabase.get_spell(DEVOURING))
 	var blast := V2SpellDatabase.effect_text(V2SpellDatabase.get_spell(BLAST))
-	assert_string_contains(flame, "6 de dano mágico")
+	assert_string_contains(flame, "9 de dano mágico")
 	assert_string_contains(devouring, "+50% contra alvos com 50% de Vida ou menos")
-	assert_string_contains(blast, "5 de dano mágico ao alvo")
+	assert_string_contains(blast, "9 de dano mágico ao alvo")
 	assert_string_contains(blast, "inimigos adjacentes")
 
 func test_offensive_targeting_mode_keeps_the_hostile_coords_and_cancels_cleanly():

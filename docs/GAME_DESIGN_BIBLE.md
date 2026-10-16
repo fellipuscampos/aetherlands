@@ -56,6 +56,14 @@ Não "Dragon spawned. +50% monster damage." — e sim "O Dragão despertou. Ele 
 
 O catálogo reúne o elenco original, 21 unidades da progressão mundana e dez unidades mágicas V1. As quatro exclusivas raciais continuam condicionadas à raça; entradas legadas são preservadas para compatibilidade. Existem também seis tipos invocados, incluindo Lich Ancião e Arquidemônio. General concede apoio próximo, Engenheiro repara cerco e Mercador estabelece comércio; armas contra cavalaria, blindagem e cidades possuem efeitos próprios no combate.
 
+### Grandes Manifestações vinculadas V2
+
+As seis entidades N9 recebem ordens persistentes de atacar/proteger cidade ou unidade e decidem movimento,
+ataque e habilidades ao encerrar o turno. Invocação custa 120–150 Mana e 84–92 PP; feitiços comuns são gratuitos,
+Hostes mantêm custos/Comando, e recargas/sacrifícios de Vida continuam valendo. Uma por Escola. Proteção tem
+perseguição limitada, respeita neblina/diplomacia e acompanha seu alvo. Regras, atributos, persistência e medições
+em [BOUND_MANIFESTATIONS.md](BOUND_MANIFESTATIONS.md).
+
 ### Edifícios — 43 entradas (`BuildingDatabase.gd`)
 
 Infraestrutura econômica, militar, comercial e mágica, com treinamento, requisitos e especializações. Melhorias reutilizam o espaço e a coordenada do prédio anterior. Cada escola possui estrutura inicial e estrutura ritual; o Santuário da Transcendência exige pesquisa própria. Construções são escolhidas na cidade e posicionadas em terreno elegível.
@@ -68,9 +76,9 @@ Infraestrutura econômica, militar, comercial e mágica, com treinamento, requis
 
 26 poderes V1, incluindo seis Grandes Rituais, além dos quatro feitiços legados. Conjuradores têm ação, recarga, alcance, manutenção e vulnerabilidade a silêncio. Regiões podem curar, ocultar, causar dano, alterar terreno ou transportar tropas. Rituais comprometem unidades durante vários turnos e anunciam sua sede ao mundo; podem ser interrompidos. Regras, custos e resultados estão em [MAGIC_IMPLEMENTATION.md](MAGIC_IMPLEMENTATION.md).
 
-### Monstros e covis — 5 tipos (`MonsterDatabase.gd`, `MonsterAI.gd`, `HexGrid.gd`)
+### Monstros e covis — 12 espécies + Dragão (`MonsterDatabase.gd`, `MonsterEcologySystem.gd`, `MonsterAI.gd`)
 
-Goblin, Troll, Wyvern, Esqueleto, Dragão — cada um com bioma, limites de população (por covil e globais) e um de 3 comportamentos: **guardião** (protege o covil, pode ser promovido a invasor), **invasor** (marcha sobre cidades, pilha tiles) ou **caçador** (patrulha caçando presas isoladas/fracas — Wyvern e Dragão). Perigo de covil escala tanto por distância do centro do mapa quanto por número do turno (o mundo fica mais perigoso no espaço E no tempo). Dragão é o mais forte (atk 16, HP 50) e o mais raro (1 por mapa).
+Quatro espécies básicas, quatro intermediárias e quatro avançadas ocupam covis distribuídos por habitat, com atividade por era e um único controlador de população regional. Cada covil tem um líder: sua morte interrompe reforços e permite destruir a estrutura com um golpe. A destruição bloqueia novos spawns em raio 8 por 20 rodadas; depois, áreas selvagens fora de visão podem voltar a ser ocupadas. A abertura por capital e os guardiões de recursos são políticas desse mesmo sistema. O Dragão Ancião continua um evento mundial separado. Atributos de combate mantidos. Regras, migração de saves e validação em [UNIFIED_MONSTER_LAIRS.md](UNIFIED_MONSTER_LAIRS.md).
 
 ### Território e economia
 
@@ -78,7 +86,7 @@ Território (`City.owned_tiles`) cresce organicamente, um tile por ponto de popu
 
 ### Diplomacia e guerra (`Diplomacy.gd`, `TradeManager.gd`)
 
-Guerra, paz e comércio funcionam entre todos os participantes, incluindo pares de IAs. Cansaço de guerra incentiva acordos; a paz aceita estabelece trégua de dez turnos. A interface informa motivo da guerra, cansaço, trégua e rotas. Declarar guerra invalida comércio entre os envolvidos. Unidades militares custam ouro em guerra. Transcendência e rituais ofensivos públicos podem provocar reação militar.
+Guerra, paz e comércio funcionam entre todos os participantes, incluindo pares de IAs. Cansaço de guerra incentiva acordos; a paz aceita estabelece trégua de dez turnos. Quando uma IA propõe paz ao jogador, a decisão é dele: um modal oferece aceitar (trégua) ou recusar (a guerra continua, e a IA espera cinco turnos antes de propor de novo); entre IAs a resposta é imediata. A interface informa motivo da guerra, cansaço, trégua e rotas. Declarar guerra invalida comércio entre os envolvidos. Unidades militares custam ouro em guerra. Transcendência e rituais ofensivos públicos podem provocar reação militar.
 
 ### IA Rival (`RivalAI.gd`, `StrategicAI.gd`, `MagicAI.gd`)
 

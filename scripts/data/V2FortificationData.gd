@@ -19,9 +19,9 @@ const MAX_LEVEL := 3
 ## pesquisa, nunca um nó novo).
 const LEVELS := {
 	0: {"name": "Nenhuma", "production": 0.0, "upkeep": 0.0, "shield": 0.0, "defense": 0.0, "attack": 0.0, "range": 0, "city_level": 1, "research_unlock": ""},
-	1: {"name": "Muralhas I", "production": 40.0, "upkeep": 1.0, "shield": 8.0, "defense": 0.10, "attack": 3.0, "range": 2, "city_level": 2, "research_unlock": "v2_city_level_2"},
-	2: {"name": "Muralhas II", "production": 70.0, "upkeep": 2.0, "shield": 14.0, "defense": 0.20, "attack": 5.0, "range": 2, "city_level": 3, "research_unlock": "v2_city_level_3"},
-	3: {"name": "Fortaleza", "production": 110.0, "upkeep": 3.0, "shield": 22.0, "defense": 0.30, "attack": 7.0, "range": 3, "city_level": 4, "research_unlock": "v2_city_level_4"},
+	1: {"name": "Muralhas I", "production": 40.0, "upkeep": 1.0, "shield": 8.0, "defense": 0.10, "attack": 4.5, "range": 2, "city_level": 2, "research_unlock": "v2_city_level_2"},
+	2: {"name": "Muralhas II", "production": 70.0, "upkeep": 2.0, "shield": 14.0, "defense": 0.20, "attack": 7.5, "range": 2, "city_level": 3, "research_unlock": "v2_city_level_3"},
+	3: {"name": "Fortaleza", "production": 110.0, "upkeep": 3.0, "shield": 22.0, "defense": 0.30, "attack": 10.5, "range": 3, "city_level": 4, "research_unlock": "v2_city_level_4"},
 }
 
 ## id do PROJETO de produção local que leva a cidade ao nível (1..3) — nunca um BuildingData.

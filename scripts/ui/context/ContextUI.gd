@@ -87,9 +87,9 @@ static func meter(title: String, value: float, maximum: float, color: Color, val
 	bar.custom_minimum_size = Vector2(0, height)
 	bar.max_value = maxf(maximum, 0.001)
 	bar.value = clampf(value, 0.0, bar.max_value)
-	var back := UITheme.panel_style(UIThemeTokens.COLOR_CANVAS, Color(UIThemeTokens.COLOR_BORDER, 0.6), 1, 3, false)
+	var back := UITheme.panel_style(UIThemeTokens.COLOR_CANVAS, Color(UIThemeTokens.COLOR_BORDER, 0.6), 1, 0, false)
 	back.set_content_margin_all(0)
-	var fill := UITheme.panel_style(color, color, 0, 3, false)
+	var fill := UITheme.panel_style(color, color, 0, 0, false)
 	fill.set_content_margin_all(0)
 	bar.add_theme_stylebox_override("background", back)
 	bar.add_theme_stylebox_override("fill", fill)
@@ -107,14 +107,14 @@ static func hp_color(value: float, maximum: float) -> Color:
 ## Surface interna (card) com borda de acento opcional.
 static func card(accent: Color = UIThemeTokens.COLOR_BORDER, fill: Color = UIThemeTokens.COLOR_CANVAS) -> PanelContainer:
 	var panel := PanelContainer.new()
-	var style := UITheme.panel_style(fill, accent, 1, UIThemeTokens.RADIUS_CONTROL, false)
-	style.set_content_margin_all(UIThemeTokens.SPACE_2)
+	var chrome := preload("res://scripts/ui/HUDChromeTheme.gd")
+	var style := chrome.panel(Settings.ui_scale_percent / 100.0, chrome.color_tone(accent), 8)
 	panel.add_theme_stylebox_override("panel", style)
 	return panel
 
-static func chip(text: String, tone: int = AEStatusChip.Tone.NEUTRAL, turns: int = -1, tooltip: String = "") -> AEStatusChip:
+static func chip(text: String, tone: int = AEStatusChip.Tone.NEUTRAL, turns: int = -1, tooltip: String = "", duration_text: String = "") -> AEStatusChip:
 	var value := AEStatusChip.new()
-	value.set_status(text, tone, turns)
+	value.set_status(text, tone, turns, "", duration_text)
 	value.tooltip_text = tooltip
 	value.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return value

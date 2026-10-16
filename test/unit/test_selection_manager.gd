@@ -22,12 +22,17 @@ var _original_hex_grid: HexGrid
 var _original_human_player: PlayerData
 var _original_turn_number: int
 var _original_game_state: int
+var _original_match_players: Array[PlayerData]
+var _original_match_rivals: Array[PlayerData]
 
 func before_each():
 	_original_hex_grid = GameManager.hex_grid
 	_original_human_player = GameManager.human_player
 	_original_turn_number = TurnManager.turn_number
 	_original_game_state = GameManager.state
+	_original_match_players = GameManager.players
+	_original_match_rivals = GameManager.rival_players
+	GameManager.state = GameManager.GameState.PLAYING
 	_created_units = []
 
 	hex_grid = HexGrid.new()
@@ -42,6 +47,8 @@ func before_each():
 	Diplomacy.declare_war(human, rival) # attackable agora exige guerra (Diplomacy.gd)
 	GameManager.hex_grid = hex_grid
 	GameManager.human_player = human
+	GameManager.players = [human, rival]
+	GameManager.rival_players = [rival]
 
 func after_each():
 	for player in _owned_players:
@@ -50,6 +57,8 @@ func after_each():
 	SelectionManager.reset()
 	GameManager.hex_grid = _original_hex_grid
 	GameManager.human_player = _original_human_player
+	GameManager.players = _original_match_players
+	GameManager.rival_players = _original_match_rivals
 	TurnManager.turn_number = _original_turn_number
 	# _attack_from_selected chama GameManager.check_victories() sempre (ver
 	# SelectionManager.gd) -- e este arquivo nunca preenche GameManager.
@@ -132,7 +141,7 @@ func test_peaceful_units_and_cities_are_never_attackable():
 	var enemy_city_coord = Vector2i(-1, 0)
 	var city = hex_grid.found_city(enemy_city_coord, third, "Cidade C")
 
-	Diplomacy.propose_peace(human, rival) # 1 unidade cada lado, empate aceita a paz
+	Diplomacy.make_peace(human, rival) # fixture em paz; negociação pertence aos testes de Diplomacy
 
 	SelectionManager._select_unit(attacker)
 
@@ -499,18 +508,41 @@ func test_attacking_cancels_fortified_and_exploring():
 
 func test_start_building_placement_lists_only_valid_neighbor_tiles():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
-	var occupied = HexGrid.NEIGHBOR_DIRS[0]
-	_make_unit("warrior", human, occupied) # um vizinho ocupado, nao deveria entrar na lista
+	var built = HexGrid.NEIGHBOR_DIRS[0]
+	hex_grid.place_building(built, "v2_building_guardian_hall", human) # um vizinho ja com predio, nao deveria entrar na lista
 
 	_unlock_guardian_hall()
 	SelectionManager.start_building_placement(city, "v2_building_guardian_hall")
 
-	assert_false(occupied in SelectionManager.placeable_coords, "vizinho ocupado por unidade nao deveria ser um destino valido")
+	assert_false(built in SelectionManager.placeable_coords, "vizinho ja usado por outro predio nao deveria ser um destino valido")
 	assert_eq(SelectionManager.placeable_coords.size(), HexGrid.NEIGHBOR_DIRS.size() - 1)
+
+## Pedido do usuario: tropa em cima do tile (aliada, inimiga ou monstro) nao
+## impede a construcao. O clique no tile ocupado precisa CONFIRMAR a obra —
+## nunca selecionar/atacar a unidade que esta ali — e deixar a unidade
+## exatamente onde estava.
+func test_building_placement_accepts_tiles_occupied_by_units():
+	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	var ally = _make_unit("warrior", human, HexGrid.NEIGHBOR_DIRS[0])
+	var enemy = _make_unit("warrior", rival, HexGrid.NEIGHBOR_DIRS[1])
+	var monster = hex_grid.spawn_monster_at(HexGrid.NEIGHBOR_DIRS[2], "goblin")
+	_unlock_guardian_hall()
+
+	for unit in [ally, enemy, monster]:
+		SelectionManager.start_building_placement(city, "v2_building_guardian_hall")
+		assert_eq(SelectionManager.placeable_coords.size(), HexGrid.NEIGHBOR_DIRS.size(), "todo vizinho de terra continua valido, ocupado ou nao")
+
+		SelectionManager.handle_world_click(HexMetrics.axial_to_world(unit.coord.x, unit.coord.y, hex_grid.hex_size))
+
+		assert_eq(city.production_item, "v2_building_guardian_hall")
+		assert_eq(city.pending_building_coord, unit.coord, "a obra comeca no tile ocupado")
+		assert_true(hex_grid._construction_markers.has(unit.coord), "o canteiro aparece no tile, junto da unidade")
+		assert_null(SelectionManager.selected_unit, "o clique confirma a obra, nao seleciona a unidade")
+		assert_eq(hex_grid.get_unit_at(unit.coord), unit, "a unidade continua no tile")
+		city.set_production("") # proxima rodada: outro tile ocupado
 
 ## Fase 25: todo prédio construível é V2 e exige a pesquisa do dono.
 func _unlock_guardian_hall() -> void:
-	human.v2_research.complete_research("v2_doctrine_guardian_1")
 	human.v2_research.complete_research("v2_doctrine_guardian_2")
 
 func test_clicking_a_valid_tile_confirms_building_placement():

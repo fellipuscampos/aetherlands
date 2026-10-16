@@ -98,7 +98,7 @@ func _count(action: String) -> int:
 func _forest_world() -> Array:
 	_world(6, HexTileData.TerrainType.FOREST)
 	grid._rebuild_props()
-	var coords: Array = grid._tree_coord_to_index.keys()
+	var coords: Array = grid.nature_decor.decorated_coords()
 	coords.sort()
 	return coords
 
@@ -107,7 +107,7 @@ func _forest_world() -> Array:
 func _enter(unit_owner: PlayerData, coord: Vector2i) -> Unit:
 	var start := HexGrid.NO_LAIR
 	for other in MonsterEcologyPlanner.sorted_coords(grid.tiles.keys()):
-		if grid.get_unit_at(other) == null and not grid._tree_coord_to_index.has(other):
+		if grid.get_unit_at(other) == null and not grid.nature_decor.has_decor(other):
 			start = other
 			break
 	if start == HexGrid.NO_LAIR:
@@ -124,15 +124,18 @@ func _overlay(coord: Vector2i) -> MultiMeshInstance3D:
 
 func test_standard_world_profile_is_main_continent_only_and_special_profile_is_preserved():
 	var standard := WorldProfile.for_dimensions(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height)
-	assert_eq(String(standard.id), "standard_1_0", "novo jogo usa o padrão 1.0")
+	assert_eq(String(standard.id), String(WorldProfile.default_size().id), "novo jogo usa o tamanho padrão (Grande)")
 	assert_false(bool(standard.volcanic_continent))
 	assert_false(bool(standard.crystal_continent))
+	var legacy := WorldProfile.for_dimensions(144, 76)
+	assert_eq(String(legacy.id), "standard_1_0", "save antigo 144x76 continua no perfil legado")
+	assert_false(bool(legacy.volcanic_continent) or bool(legacy.crystal_continent))
 	var special := WorldProfile.for_dimensions(WorldProfile.SPECIAL_CONTINENTS.width, WorldProfile.SPECIAL_CONTINENTS.height)
 	assert_eq(String(special.id), "special_continents", "save antigo 320x84 continua com os continentes especiais")
 	assert_true(bool(special.volcanic_continent) and bool(special.crystal_continent))
-	assert_eq(String(WorldProfile.for_dimensions(41, 41).id), "small")
-	assert_eq(BalanceSeedSet.MAP_WIDTH, WorldProfile.STANDARD_1_0.width, "laboratório mede o mundo padrão")
-	assert_eq(BalanceSeedSet.MAP_HEIGHT, WorldProfile.STANDARD_1_0.height)
+	assert_eq(String(WorldProfile.for_dimensions(41, 41).id), "test_fixture")
+	assert_eq(BalanceSeedSet.MAP_WIDTH, WorldProfile.default_size().width, "laboratório mede o mundo padrão")
+	assert_eq(BalanceSeedSet.MAP_HEIGHT, WorldProfile.default_size().height)
 
 # --- Foco visual ---------------------------------------------------------------------------------
 
@@ -144,26 +147,30 @@ func test_focus_hides_trees_only_on_the_unit_tile_with_an_own_overlay_and_never_
 	assert_gt(coords.size(), 2, "precisa de tiles com árvore")
 	var target: Vector2i = coords[0]
 	var other: Vector2i = coords[coords.size() - 1]
-	var shared := grid._props_tree_instance.material_override as StandardMaterial3D
-	var shared_transparency := shared.transparency
-	var shared_alpha := shared.albedo_color.a
-	var shared_scissor := shared.alpha_scissor_threshold
+	var sources := grid.nature_decor.sources_at(target)
+	# 2026-10-10: a vegetação usa nature_kit.gdshader (neve cosmética). O foco translúcido continua vindo de
+	# GeometryInstance3D.transparency no overlay — o shader multiplica ALPHA (não sobrescreve), como o material antigo.
+	var shared := (sources[0][0] as MultiMeshInstance3D).material_override as ShaderMaterial
+	assert_true(shared.shader.code.contains("ALPHA *= "), "o shader respeita a transparência da instância (foco)")
+	var shared_texture = shared.get_shader_parameter("albedo_texture")
+	var shared_roughness = shared.get_shader_parameter("roughness")
 	var unit := _enter(human, target)
 	grid.visual_focus.refresh()
 	assert_true(grid.visual_focus.is_focused(target))
 	var entry: Dictionary = grid.visual_focus._applied[target]
-	assert_eq(entry.props.size(), 1, "uma fonte de decoração (árvores) escondida neste tile")
-	assert_eq(entry.props[0].source, grid._props_tree_instance)
-	assert_eq(entry.props[0].indices, grid._tree_coord_to_index[target], "exatamente as árvores deste tile")
+	assert_eq(entry.props.size(), sources.size(), "uma fonte por grupo de vegetação (asset) escondida neste tile")
+	for i in sources.size():
+		assert_eq(entry.props[i].source, sources[i][0])
+		assert_eq(entry.props[i].indices, sources[i][1], "exatamente a vegetação deste tile")
 	var overlay := _overlay(target)
 	assert_not_null(overlay, "overlay próprio do tile")
-	assert_eq(overlay.multimesh.instance_count, (grid._tree_coord_to_index[target] as Array).size())
+	assert_eq(overlay.multimesh.instance_count, (sources[0][1] as Array).size())
 	assert_eq(overlay.material_override, shared, "mesmo material, reaproveitado sem cópia")
 	assert_between(1.0 - overlay.transparency, 0.3, 0.5, "alpha entre 0.30 e 0.50")
-	assert_eq(shared.transparency, shared_transparency, "material compartilhado intacto")
-	assert_eq(shared.albedo_color.a, shared_alpha)
-	assert_eq(shared.alpha_scissor_threshold, shared_scissor)
-	assert_eq(grid._props_tree_instance.transparency, 0.0, "o MultiMesh do mapa inteiro continua opaco")
+	assert_eq(shared.get_shader_parameter("albedo_texture"), shared_texture, "material compartilhado intacto")
+	assert_eq(shared.get_shader_parameter("roughness"), shared_roughness)
+	for source in sources:
+		assert_eq((source[0] as MultiMeshInstance3D).transparency, 0.0, "os MultiMesh de vegetação do mapa continuam opacos")
 	assert_false(grid.visual_focus.is_focused(other), "outros tiles de floresta intocados")
 	assert_null(_overlay(other))
 	grid.remove_unit(unit)
@@ -192,7 +199,7 @@ func test_clearing_decor_under_a_focused_tile_releases_first_and_never_resurrect
 	assert_true(grid.visual_focus.is_focused(target))
 	grid._clear_tree_props_at(target) # cidade/estrada/spawn limpando a decoração
 	assert_null(_overlay(target), "o foco devolve a instância ANTES da limpeza zerar")
-	assert_false(grid._tree_coord_to_index.has(target))
+	assert_false(grid.nature_decor.has_decor(target))
 	grid.visual_focus.refresh()
 	assert_false(grid.visual_focus.is_focused(target), "sem decoração nem estrutura: nada a focar")
 	assert_true(grid.visual_focus._pending_restore.is_empty())
@@ -252,6 +259,54 @@ func test_structure_and_terrain_focus_modes_swap_who_is_transparent():
 	grid.visual_focus.refresh()
 	assert_true(_mesh_transparency(city).all(func(t): return t == 0.0), "sem unidade: tudo volta ao original")
 	assert_true(_mesh_transparency(unit._visual_root).all(func(t): return t == 0.0))
+
+## Construir num tile com tropa em cima (City.is_valid_building_tile não barra mais unidade): o canteiro nasce
+## semitransparente embaixo dela, e o prédio pronto herda a mesma regra — a tropa nunca some atrás da obra.
+func test_construction_site_placed_under_a_unit_is_faded_and_so_is_the_finished_building():
+	VisualFocusSystem.enabled_in_headless = true
+	_world(8)
+	var city := grid.found_city(Vector2i.ZERO, human, "Capital", true)
+	var site := Vector2i(1, 0)
+	var unit := _soldier(site, rival)
+	assert_true(city.is_valid_building_tile(site, grid))
+	city.set_production("v2_building_market")
+	city.pending_building_coord = site
+	grid.refresh_construction_markers()
+	grid.visual_focus.refresh()
+	var marker: Node3D = grid._construction_markers[site]
+	assert_false(_mesh_transparency(marker).is_empty(), "o canteiro tem malhas")
+	assert_true(_mesh_transparency(marker).all(func(t): return t > 0.3), "canteiro semitransparente sob a tropa")
+	assert_true(_mesh_transparency(unit._visual_root).all(func(t): return t == 0.0), "a tropa fica opaca")
+	# A barra de progresso (sem teste de profundidade) não pode atravessar o corpo da tropa: sobe para cima dos
+	# marcadores dela e volta ao canteiro quando a tropa sai ou quando o inspetor foca a estrutura.
+	var bar := marker.get_node("ProgressBar") as Sprite3D
+	var site_y := float(bar.get_meta("site_y"))
+	assert_true(bar.visible, "a barra de progresso continua legível")
+	assert_gt(bar.position.y, unit.markers_top_height(), "barra acima da barra de vida/ícone da tropa")
+	grid.visual_focus.set_focus(site, VisualFocusSystem.MODE_STRUCTURE)
+	grid.visual_focus.refresh()
+	assert_eq(bar.position.y, site_y, "foco na estrutura: a barra volta ao canteiro")
+	grid.visual_focus.clear_focus()
+	grid.visual_focus.refresh()
+	assert_gt(bar.position.y, unit.markers_top_height())
+	grid.move_unit(unit, Vector2i(2, 0), 0.0)
+	grid.visual_focus.refresh()
+	assert_eq(bar.position.y, site_y, "a tropa saiu: a barra volta ao canteiro")
+	assert_true(_mesh_transparency(marker).all(func(t): return t == 0.0), "e o canteiro volta a ficar opaco")
+	grid.move_unit(unit, site, 0.0)
+	grid.visual_focus.refresh()
+	assert_gt(bar.position.y, unit.markers_top_height(), "a tropa voltou para cima da obra em andamento")
+
+	city.stored_production = city.production_cost()
+	var result := city.process_turn(grid)
+	var building := grid.place_building(result.built_coord, result.built_kind, human)
+	assert_false(grid._construction_markers.has(site), "o prédio pronto tira o canteiro do tile na hora")
+	grid.visual_focus.refresh()
+	assert_true(_mesh_transparency(building).all(func(t): return t > 0.3), "prédio concluído sob a tropa: semitransparente")
+
+	grid.move_unit(unit, Vector2i(2, 0), 0.0)
+	grid.visual_focus.refresh()
+	assert_true(_mesh_transparency(building).all(func(t): return t == 0.0), "a tropa saiu: o prédio volta a ficar opaco")
 
 func test_focus_is_inert_in_headless_simulation():
 	_world(4)
@@ -491,9 +546,16 @@ func test_minimap_terrain_is_continuous_and_camera_polygon_is_finite_and_clipped
 	var rect: Rect2 = minimap.map_rect()
 	var center: Vector2 = minimap._project(Vector2i.ZERO, grid.hex_size)
 	var holes := 0
+	# Só conta pixel cujo ponto do mundo cai num tile EXISTENTE: depois que o enquadramento do minimapa encolheu
+	# (2026-10-13), a janela de ±30 px passou a alcançar os cantos inclinados da borda do mapa — fora de qualquer tile,
+	# transparente por definição. Buraco ENTRE tiles continua sendo pego.
 	for dy in range(-12, 13):
 		for dx in range(-30, 31):
-			if minimap._terrain_image.get_pixel(int(center.x) + dx, int(center.y) + dy).a < 0.5:
+			var pixel := Vector2i(int(center.x) + dx, int(center.y) + dy)
+			var world: Vector2 = minimap.minimap_to_world(Vector2(pixel) + Vector2(0.5, 0.5))
+			if not grid.tiles.has(HexMetrics.world_to_axial(world.x, world.y, grid.hex_size)):
+				continue
+			if minimap._terrain_image.get_pixel(pixel.x, pixel.y).a < 0.5:
 				holes += 1
 	assert_eq(holes, 0, "geografia contínua: sem buracos entre tiles no miolo do mapa")
 	var camera := Camera3D.new()

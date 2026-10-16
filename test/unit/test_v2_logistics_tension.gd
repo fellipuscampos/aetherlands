@@ -31,7 +31,7 @@ func _grid_with_city() -> Dictionary:
 			if absi(q + r) <= 3:
 				grid.tiles[Vector2i(q, r)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	var player := PlayerData.new(CivilizationData.new())
-	for n in range(1, 4):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 4):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	_players.append(player)
 	_grids.append(grid)

@@ -17,19 +17,19 @@ static func _build_all() -> Array[V2SpellData]:
 	var light := V2SpellData.new()
 	light.id = "v2_spell_restoring_light"
 	light.school_branch = "sacred"
-	light.mana_cost = 4.0
+	light.mana_cost = 5.0
 	light.cooldown_turns = 0
 	light.cast_range = 2
-	light.heal_amount = 8.0
+	light.heal_amount = 12.0
 	result.append(light)
 
 	var aegis := V2SpellData.new()
 	aegis.id = "v2_spell_sacred_aegis"
 	aegis.school_branch = "sacred"
-	aegis.mana_cost = 6.0
+	aegis.mana_cost = 8.0
 	aegis.cooldown_turns = 2
 	aegis.cast_range = 2
-	aegis.defense_bonus = 0.35
+	aegis.defense_bonus = 0.4
 	aegis.duration = 1
 	aegis.status_polarity = V2SpellData.StatusPolarity.BENEFICIAL
 	aegis.status_dispellable = true
@@ -38,40 +38,41 @@ static func _build_all() -> Array[V2SpellData]:
 	var wave := V2SpellData.new()
 	wave.id = "v2_spell_healing_wave"
 	wave.school_branch = "sacred"
-	wave.mana_cost = 9.0
+	wave.mana_cost = 16.0
 	wave.cooldown_turns = 3
 	wave.cast_range = 3
-	wave.heal_amount = 6.0
+	wave.heal_amount = 12.0
 	wave.splash_radius = 1
 	result.append(wave)
 
 	var miracle := V2SpellData.new()
 	miracle.id = "v2_spell_miracle"
 	miracle.school_branch = "sacred"
-	miracle.mana_cost = 16.0
+	miracle.mana_cost = 36.0
 	miracle.cooldown_turns = 5
 	miracle.cast_range = 3
 	miracle.heal_to_full = true
+	miracle.splash_radius = 1
 	result.append(miracle)
 
 	var flame := V2SpellData.new()
 	flame.id = "v2_spell_infernal_flame"
 	flame.school_branch = "infernal"
 	flame.target_mode = V2SpellData.TargetMode.HOSTILE_UNIT
-	flame.mana_cost = 5.0
+	flame.mana_cost = 6.0
 	flame.cooldown_turns = 0
 	flame.cast_range = 3
-	flame.damage_amount = 6.0
+	flame.damage_amount = 9.0
 	result.append(flame)
 
 	var devouring := V2SpellData.new()
 	devouring.id = "v2_spell_devouring_fire"
 	devouring.school_branch = "infernal"
 	devouring.target_mode = V2SpellData.TargetMode.HOSTILE_UNIT
-	devouring.mana_cost = 8.0
+	devouring.mana_cost = 12.0
 	devouring.cooldown_turns = 2
 	devouring.cast_range = 3
-	devouring.damage_amount = 8.0
+	devouring.damage_amount = 13.0
 	devouring.low_hp_threshold = 0.5
 	devouring.low_hp_damage_bonus = 0.5
 	result.append(devouring)
@@ -80,10 +81,10 @@ static func _build_all() -> Array[V2SpellData]:
 	blast.id = "v2_spell_infernal_blast"
 	blast.school_branch = "infernal"
 	blast.target_mode = V2SpellData.TargetMode.HOSTILE_UNIT
-	blast.mana_cost = 11.0
+	blast.mana_cost = 18.0
 	blast.cooldown_turns = 3
 	blast.cast_range = 3
-	blast.damage_amount = 5.0
+	blast.damage_amount = 9.0
 	blast.splash_radius = 1
 	result.append(blast)
 
@@ -91,10 +92,11 @@ static func _build_all() -> Array[V2SpellData]:
 	damnation.id = "v2_spell_damnation"
 	damnation.school_branch = "infernal"
 	damnation.target_mode = V2SpellData.TargetMode.HOSTILE_UNIT
-	damnation.mana_cost = 18.0
+	damnation.mana_cost = 34.0
 	damnation.cooldown_turns = 5
 	damnation.cast_range = 4
-	damnation.damage_amount = 15.0
+	damnation.damage_amount = 32.0
+	damnation.health_cost_fraction = 0.35
 	result.append(damnation)
 
 	# Fase 19 — Necromancia: invocação (EMPTY_TILE + summon_unit_id), cura só de undead (required_target_trait) e
@@ -103,7 +105,7 @@ static func _build_all() -> Array[V2SpellData]:
 	raise_dead.id = "v2_spell_raise_dead"
 	raise_dead.school_branch = "necromancy"
 	raise_dead.target_mode = V2SpellData.TargetMode.EMPTY_TILE
-	raise_dead.mana_cost = 7.0
+	raise_dead.mana_cost = 10.0
 	raise_dead.cooldown_turns = 2
 	raise_dead.cast_range = 2
 	raise_dead.summon_unit_id = "v2_unit_skeleton_host"
@@ -115,17 +117,17 @@ static func _build_all() -> Array[V2SpellData]:
 	mend.mana_cost = 6.0
 	mend.cooldown_turns = 1
 	mend.cast_range = 3
-	mend.heal_amount = 8.0
+	mend.heal_amount = 12.0
 	mend.required_target_trait = UnitData.TRAIT_UNDEAD
 	result.append(mend)
 
 	var macabre := V2SpellData.new()
 	macabre.id = "v2_spell_macabre_command"
 	macabre.school_branch = "necromancy"
-	macabre.mana_cost = 7.0
+	macabre.mana_cost = 9.0
 	macabre.cooldown_turns = 2
 	macabre.cast_range = 3
-	macabre.attack_bonus = 0.4
+	macabre.attack_bonus = 0.5
 	macabre.duration = 1
 	macabre.required_target_trait = UnitData.TRAIT_RETINUE
 	macabre.status_polarity = V2SpellData.StatusPolarity.BENEFICIAL
@@ -136,8 +138,8 @@ static func _build_all() -> Array[V2SpellData]:
 	legion.id = "v2_spell_raise_legion"
 	legion.school_branch = "necromancy"
 	legion.target_mode = V2SpellData.TargetMode.EMPTY_TILE
-	legion.mana_cost = 15.0
-	legion.cooldown_turns = 4
+	legion.mana_cost = 30.0
+	legion.cooldown_turns = 5
 	legion.cast_range = 2
 	legion.summon_unit_id = "v2_unit_macabre_host"
 	result.append(legion)
@@ -148,7 +150,7 @@ static func _build_all() -> Array[V2SpellData]:
 	grow.id = "v2_spell_grow_grove"
 	grow.school_branch = "druidism"
 	grow.target_mode = V2SpellData.TargetMode.EMPTY_TILE
-	grow.mana_cost = 6.0
+	grow.mana_cost = 5.0
 	grow.cooldown_turns = 1
 	grow.cast_range = 3
 	grow.terrain_modification_id = "v2_terrain_dense_grove"
@@ -158,7 +160,7 @@ static func _build_all() -> Array[V2SpellData]:
 	restore.id = "v2_spell_restore_terrain"
 	restore.school_branch = "druidism"
 	restore.target_mode = V2SpellData.TargetMode.TILE
-	restore.mana_cost = 5.0
+	restore.mana_cost = 4.0
 	restore.cooldown_turns = 1
 	restore.cast_range = 3
 	restore.requires_existing_terrain_modification = true
@@ -169,7 +171,7 @@ static func _build_all() -> Array[V2SpellData]:
 	raise_ground.id = "v2_spell_raise_ground"
 	raise_ground.school_branch = "druidism"
 	raise_ground.target_mode = V2SpellData.TargetMode.EMPTY_TILE
-	raise_ground.mana_cost = 9.0
+	raise_ground.mana_cost = 12.0
 	raise_ground.cooldown_turns = 3
 	raise_ground.cast_range = 3
 	raise_ground.terrain_modification_id = "v2_terrain_raised_ground"
@@ -179,7 +181,7 @@ static func _build_all() -> Array[V2SpellData]:
 	awaken.id = "v2_spell_awaken_forest"
 	awaken.school_branch = "druidism"
 	awaken.target_mode = V2SpellData.TargetMode.EMPTY_TILE
-	awaken.mana_cost = 16.0
+	awaken.mana_cost = 24.0
 	awaken.cooldown_turns = 5
 	awaken.cast_range = 4
 	awaken.terrain_modification_id = "v2_terrain_dense_grove"
@@ -202,7 +204,7 @@ static func _build_all() -> Array[V2SpellData]:
 	silence.id = "v2_spell_silence"
 	silence.school_branch = "arcanism"
 	silence.target_mode = V2SpellData.TargetMode.HOSTILE_UNIT
-	silence.mana_cost = 8.0
+	silence.mana_cost = 10.0
 	silence.cooldown_turns = 3
 	silence.cast_range = 3
 	silence.duration = 1
@@ -217,7 +219,7 @@ static func _build_all() -> Array[V2SpellData]:
 	dispel.id = "v2_spell_dispel"
 	dispel.school_branch = "arcanism"
 	dispel.target_mode = V2SpellData.TargetMode.TILE
-	dispel.mana_cost = 7.0
+	dispel.mana_cost = 9.0
 	dispel.cooldown_turns = 2
 	dispel.cast_range = 3
 	dispel.dispel_at_tile = true
@@ -227,7 +229,7 @@ static func _build_all() -> Array[V2SpellData]:
 	portal.id = "v2_spell_veil_portal"
 	portal.school_branch = "arcanism"
 	portal.target_mode = V2SpellData.TargetMode.EMPTY_TILE
-	portal.mana_cost = 18.0
+	portal.mana_cost = 26.0
 	portal.cooldown_turns = 5
 	portal.cast_range = 6
 	portal.creates_portal_pair = true
@@ -239,7 +241,7 @@ static func _build_all() -> Array[V2SpellData]:
 	mist.id = "v2_spell_dense_mist"
 	mist.school_branch = "elementalism"
 	mist.target_mode = V2SpellData.TargetMode.TILE
-	mist.mana_cost = 6.0
+	mist.mana_cost = 5.0
 	mist.cooldown_turns = 2
 	mist.cast_range = 4
 	mist.splash_radius = 1
@@ -250,7 +252,7 @@ static func _build_all() -> Array[V2SpellData]:
 	gale.id = "v2_spell_gale"
 	gale.school_branch = "elementalism"
 	gale.target_mode = V2SpellData.TargetMode.TILE
-	gale.mana_cost = 8.0
+	gale.mana_cost = 9.0
 	gale.cooldown_turns = 2
 	gale.cast_range = 4
 	gale.splash_radius = 1
@@ -261,7 +263,7 @@ static func _build_all() -> Array[V2SpellData]:
 	storm.id = "v2_spell_lightning_storm"
 	storm.school_branch = "elementalism"
 	storm.target_mode = V2SpellData.TargetMode.TILE
-	storm.mana_cost = 12.0
+	storm.mana_cost = 18.0
 	storm.cooldown_turns = 3
 	storm.cast_range = 4
 	storm.splash_radius = 1
@@ -272,11 +274,12 @@ static func _build_all() -> Array[V2SpellData]:
 	cataclysm.id = "v2_spell_elemental_cataclysm"
 	cataclysm.school_branch = "elementalism"
 	cataclysm.target_mode = V2SpellData.TargetMode.TILE
-	cataclysm.mana_cost = 20.0
+	cataclysm.mana_cost = 36.0
 	cataclysm.cooldown_turns = 5
 	cataclysm.cast_range = 5
 	cataclysm.splash_radius = 2
 	cataclysm.environmental_zone_id = "v2_zone_elemental_cataclysm"
+	cataclysm.health_cost_fraction = 0.35
 	result.append(cataclysm)
 
 	return result
@@ -357,7 +360,7 @@ static func effect_text(spell: V2SpellData) -> String:
 	elif spell.teleport_caster:
 		parts.append("Teleporta o próprio conjurador para um destino legal, vazio e visível a até %d tiles. Gasta %d Mana; não calcula caminho nem captura cidade." % [spell.cast_range, int(spell.mana_cost)])
 	elif spell.silences_spellcasting:
-		parts.append("Gasta %d Mana para impedir um conjurador hostil a até %d tiles de lançar feitiços até o início do próximo turno do dono." % [int(spell.mana_cost), spell.cast_range])
+		parts.append("Gasta %d Mana para impedir um conjurador hostil a até %d tiles de lançar feitiços durante o próximo turno dele (o efeito termina quando o seu próximo turno começa)." % [int(spell.mana_cost), spell.cast_range])
 	elif spell.dispel_at_tile:
 		parts.append("Gasta %d Mana para dissipar efeitos mágicos elegíveis num tile a até %d tiles: status, Portais e zonas ambientais. Modificações físicas de terreno permanecem." % [int(spell.mana_cost), spell.cast_range])
 	elif spell.creates_portal_pair:
@@ -379,6 +382,8 @@ static func effect_text(spell: V2SpellData) -> String:
 		if spell.low_hp_threshold > 0.0 and spell.low_hp_damage_bonus > 0.0:
 			damage_text += " +%d%% contra alvos com %d%% de Vida ou menos." % [int(round(spell.low_hp_damage_bonus * 100.0)), int(round(spell.low_hp_threshold * 100.0))]
 		parts.append(damage_text)
+	elif spell.heal_to_full and spell.splash_radius > 0:
+		parts.append("Gasta %d Mana para restaurar ao máximo de Vida %s a até %d tiles e todas as unidades próprias a até %d tile(s) dela." % [int(spell.mana_cost), own_target, spell.cast_range, spell.splash_radius])
 	elif spell.heal_to_full:
 		parts.append("Gasta %d Mana para restaurar %s a até %d tiles ao máximo de Vida." % [int(spell.mana_cost), own_target, spell.cast_range])
 	elif spell.heal_amount > 0.0 and spell.splash_radius > 0:
@@ -386,9 +391,11 @@ static func effect_text(spell: V2SpellData) -> String:
 	elif spell.heal_amount > 0.0:
 		parts.append("Gasta %d Mana para curar %d de Vida de %s a até %d tiles." % [int(spell.mana_cost), int(spell.heal_amount), own_target, spell.cast_range])
 	if spell.defense_bonus > 0.0:
-		parts.append("Gasta %d Mana para conceder +%d%% Defesa a %s a até %d tiles, até o início do próximo turno do dono." % [int(spell.mana_cost), int(round(spell.defense_bonus * 100.0)), own_target, spell.cast_range])
+		parts.append("Gasta %d Mana para conceder +%d%% Defesa a %s a até %d tiles, %s." % [int(spell.mana_cost), int(round(spell.defense_bonus * 100.0)), own_target, spell.cast_range, V2OwnerTurnEffect.DURATION_FOR_CASTER])
 	if spell.attack_bonus > 0.0:
-		parts.append("Gasta %d Mana para conceder +%d%% Ataque a %s a até %d tiles, até o início do próximo turno do dono." % [int(spell.mana_cost), int(round(spell.attack_bonus * 100.0)), own_target, spell.cast_range])
+		parts.append("Gasta %d Mana para conceder +%d%% Ataque a %s a até %d tiles, até o início do seu próximo turno: vale para os ataques dele ainda neste turno e para os revides no turno dos inimigos." % [int(spell.mana_cost), int(round(spell.attack_bonus * 100.0)), own_target, spell.cast_range])
+	if spell.health_cost_fraction > 0.0:
+		parts.append("Também custa %d%% da Vida máxima do conjurador (indisponível se a Vida atual não bastar; nunca mata)." % int(round(spell.health_cost_fraction * 100.0)))
 	if spell.cooldown_turns > 0:
 		parts.append("Recarga %d." % spell.cooldown_turns)
 	return " ".join(parts)

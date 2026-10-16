@@ -87,7 +87,7 @@ func test_phase27_economy_supply_combat_magic_and_save_benchmarks():
 	_measure_us("full player income (Gold)", 50000, func(): V2EconomyRuntime.player_gold_income(dwarf))
 	_measure_us("Supply capacity", 50000, func(): V2EconomyRuntime.player_supply_capacity(orc))
 	_measure_us("city Production", 50000, func(): V2EconomyRuntime.city_production_income(city))
-	_measure_us("research availability", 50000, func(): human.v2_research.is_available("v2_doctrine_guardian_1"))
+	_measure_us("research availability", 50000, func(): human.v2_research.is_available("v2_doctrine_guardian_2"))
 
 	var pair := _adjacent_free_land_pair()
 	assert_eq(pair.size(), 2)

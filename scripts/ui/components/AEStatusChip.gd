@@ -27,7 +27,9 @@ func _ensure_label() -> void:
 		label.theme_type_variation = &"CaptionLabel"
 		add_child(label)
 
-func set_status(title: String, value_tone: Tone = Tone.NEUTRAL, turns: int = -1, icon_text: String = "") -> void:
+## `duration_text`: rótulo de duração no lugar do contador "Nt" — para efeitos que não se contam em turnos próprios
+## (os de V2OwnerTurnEffect duram o turno dos inimigos: "até o próx. turno").
+func set_status(title: String, value_tone: Tone = Tone.NEUTRAL, turns: int = -1, icon_text: String = "", duration_text: String = "") -> void:
 	_ensure_label()
 	tone = value_tone
 	duration_turns = turns
@@ -35,7 +37,9 @@ func set_status(title: String, value_tone: Tone = Tone.NEUTRAL, turns: int = -1,
 	if not icon_text.is_empty():
 		parts.append(icon_text)
 	parts.append(title)
-	if turns >= 0:
+	if not duration_text.is_empty():
+		parts.append("· %s" % duration_text)
+	elif turns >= 0:
 		parts.append("· %dt" % turns) # V3 / Etapa 4: "Envenenado · 2t" (sem duração, sem contador)
 	label.text = " ".join(parts)
 	_apply_tone()
@@ -56,7 +60,7 @@ func _apply_tone() -> void:
 			color = UIThemeTokens.COLOR_WARNING
 		Tone.TRAIT:
 			color = UIThemeTokens.COLOR_BORDER
-	var style := UITheme.panel_style(color.darkened(fill_factor), color, 1, UIThemeTokens.RADIUS_CONTROL, false)
+	var style := UITheme.panel_style(color.darkened(fill_factor), color, 1, 0, false)
 	if tone == Tone.TRAIT:
 		style.bg_color = Color(0, 0, 0, 0)
 	style.content_margin_left = UIThemeTokens.SPACE_2

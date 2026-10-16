@@ -54,6 +54,8 @@ var _original_current_save_slot: String
 var _original_kingdom_name: String
 
 func before_each():
+	# Conta unidades/Suprimentos exatos da linha: sem a escolta inicial (fixture, ver GameManager).
+	GameManager.starting_escort_on_new_match = false
 	_original_state = GameManager.state
 	_original_players = GameManager.players
 	_original_human_player = GameManager.human_player
@@ -82,6 +84,7 @@ func before_each():
 	GameManager.debug_mode = true
 
 func after_each():
+	GameManager.starting_escort_on_new_match = true
 	GameManager.regional_threats_on_new_match = true
 	SelectionManager.reset()
 	for player in GameManager.players:
@@ -277,7 +280,7 @@ func _short_setup(through: int = 4, kind: String = ROGUE) -> Dictionary:
 	var rival: PlayerData = GameManager.rival_players[0]
 	Diplomacy.declare_war(human, rival)
 	var city := _found_human_city(grid)
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_rogue_%d" % n)
 	city.buildings[GUILD] = true
 	# Aetherlands V2, Fase 15 — vários testes deste arquivo constroem Guilda/Refúgio (upkeep de
@@ -324,8 +327,6 @@ func test_rogue_n1_to_n9_flow_from_the_guild_to_the_shadow_master_across_save_an
 	assert_false(V2UnlockSystem.is_unlocked(human, "v2_doctrine_rogue"))
 
 	# 2. N1: estabelece a linha, sem bônus; só o N2 fica disponível.
-	_research(state, "v2_doctrine_rogue_1")
-	assert_eq(V2UnlockSystem.unlocked_ids(human), ["v2_doctrine_rogue"], "2. o N1 não libera nada além da Doutrina")
 	assert_false(city.can_build(GUILD))
 	assert_true(state.is_available("v2_doctrine_rogue_2"))
 
@@ -341,12 +342,12 @@ func test_rogue_n1_to_n9_flow_from_the_guild_to_the_shadow_master_across_save_an
 	var rogues := _units_of_kind(human, ROGUE)
 	assert_eq(rogues.size(), 1)
 	var unit: Unit = rogues[0]
-	assert_eq([unit.unit_data.max_hp, unit.unit_data.attack, unit.unit_data.defense, unit.unit_data.movement_points], [14.0, 4.5, 2.5, 3.0])
+	assert_eq([unit.unit_data.max_hp, unit.unit_data.attack, unit.unit_data.defense, unit.unit_data.movement_points], [15.0, 7.0, 4.0, 3.0])
 	assert_true(unit.unit_data.movement_points == 3.0)
 	unit.movement_left = unit.unit_data.movement_points
 	grid.recompute_fog(human)
 	SelectionManager._select_unit(unit)
-	assert_eq(SelectionManager.reachable, grid.compute_reachable(unit.coord, unit.movement_left, human, false, false), "7. o alcance é o Dijkstra terrestre normal")
+	assert_eq(SelectionManager.reachable, grid.compute_reachable(unit.coord, unit.movement_left, human, false, true), "7. o alcance é o Dijkstra terrestre normal (água de barco, embarque automático)")
 	for coord in SelectionManager.reachable:
 		assert_lte(HexMetrics.axial_distance(unit.coord, coord), 3, "nada além do movimento 3")
 
@@ -399,7 +400,7 @@ func test_rogue_n1_to_n9_flow_from_the_guild_to_the_shadow_master_across_save_an
 	assert_eq(unit.unit_data.visual_kind, SABOTEUR, "15. evoluiu para Sabotador")
 	assert_eq(human.gold, 100.0 - 24.0, "2 x (32 - 20) = 24 Ouro")
 	assert_eq(V2TechniqueRuntime.cooldown_remaining(unit, SNEAK), 2, "16. a recarga do Ataque Furtivo foi preservada pela evolução")
-	assert_eq([unit.unit_data.max_hp, unit.unit_data.attack, unit.unit_data.movement_points], [18.0, 6.0, 3.0], "mesmo movimento, mais Ataque e vida")
+	assert_eq([unit.unit_data.max_hp, unit.unit_data.attack, unit.unit_data.movement_points], [20.0, 10.0, 3.0], "mesmo movimento, mais Ataque e vida")
 
 	# 17-22. N6 e Desmantelar: alvo normal, fixture conjurador, fixture Cerco — passiva sem botão.
 	_research(state, "v2_doctrine_rogue_6")
@@ -441,7 +442,7 @@ func test_rogue_n1_to_n9_flow_from_the_guild_to_the_shadow_master_across_save_an
 	SelectionManager.upgrade_selected()
 	assert_eq(unit.unit_data.visual_kind, ASSASSIN, "24. evoluiu para Assassino")
 	assert_eq(human.gold, 100.0 - 32.0, "2 x (48 - 32) = 32 Ouro")
-	assert_eq([unit.unit_data.max_hp, unit.unit_data.defense, unit.unit_data.movement_points], [23.0, 3.5, 3.0], "25. mais resistente, mobilidade preservada")
+	assert_eq([unit.unit_data.max_hp, unit.unit_data.defense, unit.unit_data.movement_points], [26.0, 5.5, 3.0], "25. mais resistente, mobilidade preservada")
 	assert_lt(unit.unit_data.defense, UnitDatabase.create_unit("v2_unit_weapon_master").defense, "nunca supera o Mestre de Armas")
 	assert_eq(V2TechniqueRuntime.techniques_for_unit(unit).map(func(t): return t.id), [SNEAK, DISMANTLE], "herda as duas técnicas")
 
@@ -486,11 +487,11 @@ func test_rogue_n1_to_n9_flow_from_the_guild_to_the_shadow_master_across_save_an
 	shadow.movement_left = shadow.unit_data.movement_points
 	var shadow_reach: Dictionary = grid.unit_reachable(shadow)
 	assert_true(shadow_reach.has(center + Vector2i(2, 0)), "33. o Mestre das Sombras atravessa a formação")
-	_wall_of_water(grid, center, center.x + 4)
+	_wall_of_mountains(grid, center, center.x + 4)
 	shadow.movement_left = shadow.unit_data.movement_points
-	var blocked_by_water: Dictionary = grid.unit_reachable(shadow)
-	for coord in blocked_by_water:
-		assert_lt(coord.x, center.x + 4, "34. mas não atravessa água")
+	var blocked_by_mountains: Dictionary = grid.unit_reachable(shadow)
+	for coord in blocked_by_mountains:
+		assert_lt(coord.x, center.x + 4, "34. mas não atravessa montanha")
 	SelectionManager._select_unit(shadow)
 	SelectionManager._move_selected_to(center + Vector2i(2, 0))
 	assert_eq(shadow.coord, center + Vector2i(2, 0), "35. moveu de verdade através da formação")
@@ -517,7 +518,7 @@ func test_rogue_n1_to_n9_flow_from_the_guild_to_the_shadow_master_across_save_an
 	assert_gt(shadow_sneak_left, 0, "pré-condição: o Ataque Furtivo do Mestre está em recarga")
 	var loaded_grid := _save_and_reload()
 	var loaded := GameManager.human_player
-	assert_eq(loaded.v2_research.get_completed_ids().size(), 9, "40. as 9 pesquisas do Ladino")
+	assert_eq(loaded.v2_research.get_completed_ids().size(), 8, "40. as 8 pesquisas do Ladino")
 	var loaded_city: City = loaded.cities[0]
 	assert_true(loaded_city.buildings.has(GUILD) and loaded_city.buildings.has(REFUGE), "41. Guilda e Refúgio restaurados")
 	var loaded_assassins := _units_of_kind(loaded, ASSASSIN)
@@ -527,7 +528,7 @@ func test_rogue_n1_to_n9_flow_from_the_guild_to_the_shadow_master_across_save_an
 	assert_eq(loaded_shadows.size(), 1, "43. o Mestre das Sombras voltou")
 	var loaded_shadow: Unit = loaded_shadows[0]
 	assert_eq(loaded_shadow.coord, shadow_coord)
-	assert_eq([loaded_shadow.unit_data.max_hp, loaded_shadow.unit_data.movement_points], [30.0, 4.0])
+	assert_eq([loaded_shadow.unit_data.max_hp, loaded_shadow.unit_data.movement_points], [34.0, 4.0])
 	assert_eq(loaded_shadow.unit_data.movement_profile, UnitData.MovementProfile.INFILTRATOR, "44. o perfil de infiltração vem do dado")
 	assert_true(loaded_shadow.unit_data.has_trait(UnitData.TRAIT_LEGENDARY))
 	assert_eq(V2TechniqueRuntime.cooldown_remaining(loaded_shadow, SNEAK), shadow_sneak_left, "45. recarga do Ataque Furtivo")
@@ -538,7 +539,7 @@ func test_rogue_n1_to_n9_flow_from_the_guild_to_the_shadow_master_across_save_an
 	assert_eq(loaded_grid.unit_reachable(loaded_assassins[0]), loaded_grid.compute_reachable(assassin_coord, 3.0, loaded, false, false), "e o chão continua chão")
 	# Slot global: com o Mestre vivo, o Campeão, o Herói, o Caçador de Lendas e o Cavaleiro de Grifo estão bloqueados, mesmo com os prédios e as pesquisas das outras Doutrinas.
 	assert_true(V2LegendarySystem.has_active_legendary(loaded), "o slot continua ocupado")
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		loaded.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 		loaded.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 		loaded.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
@@ -554,8 +555,7 @@ func test_rogue_n1_to_n9_flow_from_the_guild_to_the_shadow_master_across_save_an
 
 ## Helper local (o mesmo cálculo de v2_combat_fixture, sem herdar dela — este arquivo estende GutTest puro pra ter estado próprio de save/load).
 func _formula_damage_local(grid: HexGrid, attack: float, multiplier: float, defender: Unit, extra_defense: float = 1.0, defense_penetration: float = 0.0) -> float:
-	var terrain := 1.0 + grid.get_tile(defender.coord).defense_bonus
-	var effective_defense := defender.unit_data.defense * terrain * extra_defense * (1.0 - defense_penetration)
+	var effective_defense := defender.unit_data.defense * extra_defense * (1.0 - defense_penetration)
 	return maxf(1.0, attack * multiplier - effective_defense * CombatResolver.DEFENSE_MITIGATION_FACTOR)
 
 ## Uma civilização de teste, só para possuir a fileira de bloqueio de infiltração (nunca em guerra com o humano: a fileira é neutra/estrangeira em paz,
@@ -567,10 +567,11 @@ func _rogue_player_for_wall(human: PlayerData) -> PlayerData:
 
 ## Só dentro do disco de raio 6 ao redor de `center` (a mesma área que _arena já limpou de unidades estrangeiras) — evita um "buraco" na parede
 ## por causa de uma unidade neutra distante que _wall_of_water não conseguiria sobrescrever.
-func _wall_of_water(grid: HexGrid, center: Vector2i, q: int) -> void:
+## Parede de montanha (terreno impassável para quem anda — a água, desde o embarque automático de 2026-10-10, é travessia de barco).
+func _wall_of_mountains(grid: HexGrid, center: Vector2i, q: int) -> void:
 	for coord in HexMetrics.coords_within(center, 6):
 		if coord.x == q and grid.tiles.has(coord) and grid.get_unit_at(coord) == null and grid.get_city_at(coord) == null:
-			grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
+			grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS)
 
 func _technique(id: String) -> V2DoctrineTechniqueData:
 	return V2DoctrineTechniqueDatabase.get_technique(id)
@@ -653,7 +654,7 @@ func test_the_cooldown_and_the_dismantle_bonus_survive_save_and_load():
 func test_a_shadow_master_in_production_survives_save_and_load_and_blocks_the_others_in_another_city():
 	var c := _short_setup(9)
 	var human: PlayerData = c.human
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 		human.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 		human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
@@ -679,7 +680,7 @@ func test_a_shadow_master_in_production_survives_save_and_load_and_blocks_the_ot
 func test_a_shadow_master_and_a_champion_finishing_in_the_same_turn_never_create_two_legendaries():
 	var c := _short_setup(9)
 	var human: PlayerData = c.human
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	var city: City = c.city
 	city.buildings[REFUGE] = true
@@ -742,7 +743,7 @@ func test_ai_civilizations_keep_playing_with_the_rogue_content_present():
 func test_an_ai_civilization_given_the_research_by_debug_builds_trains_sneak_attacks_infiltrates_and_respects_the_slot():
 	var c := _short_setup(3)
 	var rival: PlayerData = c.rival
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		rival.v2_research.complete_research("v2_doctrine_rogue_%d" % n)
 	var rival_city: City = rival.cities[0]
 	rival_city.city_level = 3

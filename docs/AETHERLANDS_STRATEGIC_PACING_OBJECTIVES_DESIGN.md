@@ -1,5 +1,12 @@
 # Aetherlands — Strategic Pacing & Objectives Design (Fase 33C)
 
+> **Atualização 2026-10-12 — o Relicário Desperto foi REMOVIDO do jogo** (decisão do dono do produto). Tudo o que
+> este documento descreve sobre ele (agendamento, local, guardiões, disputa, recompensa, IA, chips, telemetria) é
+> registro histórico e não existe mais no código: `ReliquaryEvent`, `WorldEventManager.maybe_start_reliquary`/
+> `reliquary_schedule`, `V2StrategicAI.reliquary_plan`, `Unit.source_event_id` e a seção `reliquary` da telemetria
+> saíram. O único grande evento da Ascensão é o Dragão. Saves que ainda tragam o Relicário carregam sem ele
+> (`WorldEventManager.RETIRED_EVENT_TYPES`).
+
 **Status:** design fechado para implementação na F33D. **Nada foi implementado nesta etapa**: nenhuma regra, custo,
 peso de IA, geração de mundo ou save mudou. A única adição de código é uma análise somente leitura
 (`tools/balance/BalanceWorldSurvey.gd`, `--world-survey`) usada para medir covis/Dragão por capital.

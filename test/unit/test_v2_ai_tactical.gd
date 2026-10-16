@@ -50,11 +50,11 @@ func _player(name: String) -> PlayerData:
 	return PlayerData.new(civ)
 
 func _learn_doctrine(branch: String, tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		ai.v2_research.complete_research("v2_doctrine_%s_%d" % [branch, i])
 
 func _learn_magic(branch: String, tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		ai.v2_research.complete_research("v2_magic_%s_%d" % [branch, i])
 
 func _unit(owner: PlayerData, kind: String, coord: Vector2i) -> Unit:

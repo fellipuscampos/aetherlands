@@ -57,7 +57,7 @@ static func domination_detail(player: PlayerData) -> Dictionary:
 		"title": "Dominação",
 		"checklist": rows,
 		"sections": [],
-		"how_to": ["Vence quem for a última civilização restante.", "Uma civilização é eliminada ao perder todas as cidades e unidades.", "Civilizações restantes agora: %d." % VictoryConditions.civilizations_remaining(V2VictoryConditions.major_players())],
+		"how_to": ["Vence quem for a última civilização restante.", "Uma civilização é eliminada ao perder a última cidade: as tropas que restarem somem do mapa.", "Civilizações restantes agora: %d." % VictoryConditions.civilizations_remaining(V2VictoryConditions.major_players())],
 	}
 
 # --- Supremacia Militar --------------------------------------------------------------------
@@ -169,7 +169,7 @@ static func transcendence_detail(player: PlayerData) -> Dictionary:
 		var site := V2TranscendenceSystem.ritual_site(player, GameManager.hex_grid)
 		ritual_text = "Ativo em %s — %d rodada(s) restante(s)" % [site.city_name if site != null else "?", int(status.remaining_rounds)]
 	var checklist: Array = [
-		{"label": "Duas Escolas completas (N9)", "done": schools.x >= schools.y and schools.y > 0, "status": "%d / %d" % [schools.x, schools.y]},
+		{"label": "Duas Escolas completas (%s)" % V2ResearchDatabase.final_tier_label(V2ResearchNode.TreeType.MAGIC_SCHOOL), "done": schools.x >= schools.y and schools.y > 0, "status": "%d / %d" % [schools.x, schools.y]},
 		{"label": "Transcendência pesquisada", "done": status.access, "status": "Pesquisada" if status.access else "Pendente"},
 		{"label": "Grandes Manifestações ativas", "done": int(status.manifestation_count) >= int(status.manifestation_required), "status": "%d / %d" % [mini(status.manifestation_count, status.manifestation_required), status.manifestation_required]},
 		{"label": "Estrutura Ritual utilizável", "done": not ready_cities.is_empty(), "status": ", ".join(ready_cities) if not ready_cities.is_empty() else "Nenhuma cidade"},

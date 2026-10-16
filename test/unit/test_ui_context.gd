@@ -25,8 +25,11 @@ var _original_human: PlayerData
 var _original_players: Array[PlayerData]
 var _original_rivals: Array[PlayerData]
 var _original_turn: int
+var _original_state: int
 
 func before_each():
+	_original_state = GameManager.state
+	GameManager.state = GameManager.GameState.PLAYING
 	_original_grid = GameManager.hex_grid
 	_original_human = GameManager.human_player
 	_original_players = GameManager.players
@@ -55,6 +58,7 @@ func before_each():
 	router = hud.ui_shell.context_router
 
 func after_each():
+	GameManager.state = _original_state
 	SelectionManager.reset()
 	GameManager.hex_grid = _original_grid
 	GameManager.human_player = _original_human
@@ -148,11 +152,120 @@ func test_garrisoned_city_uses_a_compact_selector_instead_of_stacked_panels():
 	router.selector_button("tile").pressed.emit()
 	assert_eq(router.mode, ContextRouter.MODE_TILE)
 
+## --- Aba lembrada por tile (2026-10-12) ------------------------------------------------------------------
+## Pedido do usuário: "às vezes uma tropa fica em cima de algum prédio como a cidade, eu seleciono a tropa na aba,
+## mas todas as vezes que dou próximo turno ele abre na cidade e eu tenho que mudar pra tropa de novo e de novo...
+## quero que a aba abra, ao clicar no tile, na última aba que eu abri ali".
+
+## Clique real no mundo (seleciona a unidade própria do tile, como o jogador faz) + roteamento do contexto.
+func _world_click(coord: Vector2i) -> void:
+	SelectionManager.handle_world_click(HexMetrics.axial_to_world(coord.x, coord.y, grid.hex_size))
+	router.flush()
+
+func _next_turn() -> void:
+	router._on_turn_changed(TurnManager.turn_number + 1, 0)
+	router.flush()
+
+func test_the_tab_chosen_on_a_tile_is_remembered_across_other_clicks_and_turns():
+	var city := grid.found_city(Vector2i(0, 0), player, "Capital")
+	_unit(SHIELDBEARER, city.coord)
+	_world_click(city.coord)
+	assert_eq(router.mode, ContextRouter.MODE_CITY, "sem escolha, a cidade é o contexto principal")
+	router.selector_button("unit").pressed.emit()
+	router.flush()
+	assert_eq(router.mode, ContextRouter.MODE_UNIT)
+
+	_world_click(Vector2i(4, 0)) # o jogador vai cuidar de outra coisa
+	assert_eq(router.mode, ContextRouter.MODE_TILE)
+	_world_click(city.coord)
+	assert_eq(router.mode, ContextRouter.MODE_UNIT, "volta ao tile: abre na aba escolhida ali")
+	assert_true(router.selector_button("unit").button_pressed, "e o seletor marca a aba certa")
+
+	for turn in 3:
+		_next_turn()
+		assert_eq(router.mode, ContextRouter.MODE_UNIT, "virar o turno com o painel aberto não troca a aba")
+		_world_click(Vector2i(4, 0))
+		_world_click(city.coord)
+		assert_eq(router.mode, ContextRouter.MODE_UNIT, "turno %d: continua abrindo na tropa" % turn)
+
+	router.selector_button("city").pressed.emit()
+	router.flush()
+	_world_click(Vector2i(4, 0))
+	_world_click(city.coord)
+	assert_eq(router.mode, ContextRouter.MODE_CITY, "escolher Cidade de volta também é lembrado")
+
+func test_each_tile_remembers_its_own_tab():
+	var first := grid.found_city(Vector2i(-4, 0), player, "Primeira", true)
+	var second := grid.found_city(Vector2i(4, 0), player, "Segunda", true)
+	_unit(SHIELDBEARER, first.coord)
+	_unit(SHIELDBEARER, second.coord)
+	_world_click(first.coord)
+	router.selector_button("unit").pressed.emit()
+	router.flush()
+	_world_click(second.coord)
+	assert_eq(router.mode, ContextRouter.MODE_CITY, "a escolha vale para o tile em que foi feita, não para todos")
+	_world_click(first.coord)
+	assert_eq(router.mode, ContextRouter.MODE_UNIT)
+
+func test_a_deep_link_wins_once_and_does_not_erase_the_remembered_tab():
+	var city := grid.found_city(Vector2i(0, 0), player, "Capital")
+	_unit(SHIELDBEARER, city.coord)
+	_world_click(city.coord)
+	router.selector_button("unit").pressed.emit()
+	router.flush()
+	router.open_city(city, "production") # "cidade ociosa": o link pede a Cidade
+	assert_eq(router.mode, ContextRouter.MODE_CITY, "o pedido explícito vence a aba lembrada")
+	_world_click(city.coord)
+	assert_eq(router.mode, ContextRouter.MODE_UNIT, "no clique seguinte volta a valer a escolha do jogador")
+
+func test_a_remembered_tab_that_no_longer_exists_is_forgotten():
+	var city := grid.found_city(Vector2i(0, 0), player, "Capital")
+	var guard := _unit(SHIELDBEARER, city.coord)
+	_world_click(city.coord)
+	router.selector_button("unit").pressed.emit()
+	router.flush()
+	grid.teleport_unit(guard, Vector2i(3, 0)) # a tropa saiu da cidade
+	_world_click(city.coord)
+	assert_eq(router.mode, ContextRouter.MODE_CITY, "sem unidade no tile, a aba Unidade não existe")
+	_unit(SHIELDBEARER, city.coord) # outra tropa entra depois
+	_world_click(Vector2i(5, 0))
+	_world_click(city.coord)
+	assert_eq(router.mode, ContextRouter.MODE_CITY, "a escolha antiga não ressuscita com outro ocupante")
+
+func test_the_structure_tab_is_remembered_too():
+	var site := Vector2i(2, 0)
+	grid.place_building(site, "v2_building_market", player)
+	_unit(SHIELDBEARER, site)
+	_world_click(site)
+	assert_eq(router.mode, ContextRouter.MODE_UNIT, "tropa sobre prédio: o padrão é a tropa")
+	router.selector_button("structure").pressed.emit()
+	router.flush()
+	assert_eq(router.mode, ContextRouter.MODE_STRUCTURE)
+	_world_click(Vector2i(5, 0))
+	_world_click(site)
+	assert_eq(router.mode, ContextRouter.MODE_STRUCTURE)
+
+func test_remembered_tabs_do_not_survive_a_new_match():
+	var city := grid.found_city(Vector2i(0, 0), player, "Capital")
+	_unit(SHIELDBEARER, city.coord)
+	_world_click(city.coord)
+	router.selector_button("unit").pressed.emit()
+	router.flush()
+	grid.map_seed += 1 # outro mapa: as mesmas coordenadas são outros tiles
+	_world_click(Vector2i(4, 0))
+	_world_click(city.coord)
+	assert_eq(router.mode, ContextRouter.MODE_CITY)
+	router.selector_button("unit").pressed.emit()
+	router.flush()
+	router.reset() # "Jogar de novo"
+	_world_click(city.coord)
+	assert_eq(router.mode, ContextRouter.MODE_CITY)
+
 func test_context_width_stays_below_forty_percent_at_baselines():
 	for size in [Vector2(1920, 1080), Vector2(1600, 900), Vector2(1280, 720)]:
 		hud.ui_shell.apply_viewport_size(size)
 		assert_lt(hud.ui_shell.context_width, size.x * 0.4)
-		assert_lte(hud.ui_shell.context_width, 440.0)
+		assert_lte(hud.ui_shell.context_width, 440.0 * Settings.ui_scale_percent / 100.0)
 
 # --- Unit Panel ----------------------------------------------------------------------
 
@@ -239,6 +352,16 @@ func test_manifestation_has_school_badge_supply_zero_and_is_not_legendary():
 	assert_eq(seraph.unit_data.supply_cost, 0)
 	assert_false(panel.view.footer.any(func(entry): return entry.caption == "Suprimentos"))
 
+func test_manifestation_panel_prioritizes_four_orders_before_secondary_stats():
+	var seraph := _unit(SERAPH, Vector2i.ZERO)
+	var panel := _select(seraph)
+	assert_eq(panel.command_buttons.size(), 4)
+	assert_eq(panel.body.get_child(0).name, "Commands")
+	assert_eq(panel.body.get_child(1).name, "Stats")
+	for button in panel.command_buttons:
+		assert_eq(button.view.action_kind, "manifestation_order")
+	assert_null(panel.get_node_or_null("VitalsHost/Vitals/Stats"), "orders stay above the fold on small viewports")
+
 func test_legendary_champion_shows_badge_aura_and_techniques_in_the_same_architecture():
 	_learn("v2_doctrine_guardian", 9)
 	var champion := _unit(CHAMPION, Vector2i.ZERO)
@@ -293,7 +416,10 @@ func test_siege_and_flying_badges_come_from_unit_data():
 	assert_true(panel.view.badges.any(func(badge): return badge.text == "Cerco"))
 	var griffon := _unit(GRIFFON, Vector2i(2, 0))
 	panel = _select(griffon)
-	assert_true(panel.view.badges.any(func(badge): return badge.text == "Voadora"))
+	assert_false(panel.view.badges.any(func(badge): return badge.text == "Voadora"), "o Grifo não voa desde 2026-10-10")
+	griffon.unit_data.movement_profile = UnitData.MovementProfile.FLYING # perfil de voo (como as Manifestações)
+	panel = _select(griffon)
+	assert_true(panel.view.badges.any(func(badge): return badge.text == "Voadora"), "o selo vem do perfil de voo")
 
 func test_enemy_unit_is_read_only_and_hides_private_state():
 	_learn("v2_doctrine_guardian", 6, rival)

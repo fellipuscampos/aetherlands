@@ -145,8 +145,8 @@ func test_it_works_with_one_two_and_three_targets_each_at_070_of_the_attack():
 	for count in [0, 1, 2]:
 		var d := _cluster(count)
 		var foes := _all(d)
-		var expected := _formula_damage(d.grid, 4.5, 0.7, foes[0])
-		assert_almost_eq(expected, 4.5 * 0.7 - 1.5, 0.0001, "0,70 x 4,5 - 3,0/2")
+		var expected := _formula_damage(d.grid, 6.5, 0.7, foes[0])
+		assert_almost_eq(expected, 6.5 * 0.7 - 1.5, 0.0001, "0,70 x 6,5 - 3,0/2")
 		assert_true(V2TechniqueRuntime.perform_strike(d.unit, VOLLEY, d.primary, d.grid), "%d secundário(s)" % count)
 		for foe in foes:
 			assert_almost_eq(40.0 - foe.hp, expected, 0.0001, "cada alvo perde o dano de 0,70x (%d secundários)" % count)
@@ -282,9 +282,9 @@ func test_each_target_uses_its_own_defense_wall_and_command_aura():
 	var wall: float = 1.0 + _technique(WALL).self_defense_bonus
 	var aura: float = 1.0 + UnitDatabase.create_unit(CHAMPION).aura_defense_bonus
 	# A aura (raio 2) chega ao primário (distância 2), ao duro (1) e ao com Muralha (2): todos protegidos; calcula cada um.
-	var expected_soft := _formula_damage(d.grid, 4.5, 0.7, soft, aura)
-	var expected_hard := _formula_damage(d.grid, 4.5, 0.7, hard, aura)
-	var expected_walled := _formula_damage(d.grid, 4.5, 0.7, walled, wall * aura)
+	var expected_soft := _formula_damage(d.grid, 6.5, 0.7, soft, aura)
+	var expected_hard := _formula_damage(d.grid, 6.5, 0.7, hard, aura)
+	var expected_walled := _formula_damage(d.grid, 6.5, 0.7, walled, wall * aura)
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, VOLLEY, soft, d.grid))
 	assert_almost_eq(40.0 - soft.hp, expected_soft, 0.0001)
 	assert_almost_eq(40.0 - hard.hp, expected_hard, 0.0001)
@@ -299,8 +299,8 @@ func test_the_command_aura_reaches_only_the_units_inside_it():
 	var aura: float = 1.0 + UnitDatabase.create_unit(CHAMPION).aura_defense_bonus
 	var champion_coord := PRIMARY + Vector2i(-1, 1)
 	var in_range := HexMetrics.axial_distance(champion_coord, outside.coord) <= 2
-	var expected_inside := _formula_damage(d.grid, 4.5, 0.7, inside, aura)
-	var expected_outside := _formula_damage(d.grid, 4.5, 0.7, outside, aura if in_range else 1.0)
+	var expected_inside := _formula_damage(d.grid, 6.5, 0.7, inside, aura)
+	var expected_outside := _formula_damage(d.grid, 6.5, 0.7, outside, aura if in_range else 1.0)
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, VOLLEY, d.primary, d.grid))
 	assert_almost_eq(40.0 - inside.hp, expected_inside, 0.0001)
 	assert_almost_eq(40.0 - outside.hp, expected_outside, 0.0001)

@@ -96,7 +96,7 @@ func test_the_legend_hunter_stays_blocked_with_the_tower_but_without_n9():
 func test_the_legend_hunter_has_the_specified_baseline():
 	var data := UnitDatabase.create_unit(LEGEND_HUNTER)
 	assert_eq(data.unit_name, "Caçador de Lendas")
-	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points, data.attack_range, data.production_cost], [30.0, 11.0, 4.5, 2.0, 3, 90.0])
+	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points, data.attack_range, data.production_cost], [30.0, 16.5, 7.0, 2.0, 3, 90.0])
 	assert_eq(data.visual_kind, LEGEND_HUNTER)
 	assert_true(data.has_trait(UnitData.TRAIT_LEGENDARY))
 	assert_false(data.has_aura(), "a aura é do Campeão")
@@ -193,7 +193,7 @@ func test_the_basic_ranged_attack_reaches_3_tiles_without_counterattack():
 	var foe := _foe_at(grid, rival, unit, 3, 60.0, 14.0)
 	var prediction: Dictionary = CombatResolver.predict(unit, foe, grid)
 	assert_eq(prediction.damage_to_attacker, 0.0)
-	assert_eq(prediction.damage_to_defender, _formula_damage(grid, 11.0, 1.0, foe))
+	assert_eq(prediction.damage_to_defender, _formula_damage(grid, 16.5, 1.0, foe))
 
 # --- O slot GLOBAL entre as TRÊS Doutrinas (cenário obrigatório) --------------------------------------------------------------------------------
 

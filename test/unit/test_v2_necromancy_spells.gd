@@ -71,7 +71,7 @@ func _player(civ_name: String) -> PlayerData:
 	return player
 
 func _learn(player: PlayerData, branch: String = "necromancy", tier: int = 7) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		if not player.v2_research.is_completed("v2_magic_%s_%d" % [branch, i]):
 			assert_true(player.v2_research.complete_research("v2_magic_%s_%d" % [branch, i]))
 
@@ -165,7 +165,7 @@ func test_raise_dead_summons_a_skeleton_host_with_movement_zero_and_charges_once
 	assert_eq(host.hp, host.unit_data.max_hp)
 	assert_eq(host.movement_left, 0.0, "não age no turno em que nasce")
 	assert_gt(host.serial_id, necromancer.serial_id, "serial normal")
-	assert_eq(human.mana, mana - 7.0, "Mana uma vez")
+	assert_eq(human.mana, mana - 10.0, "Mana uma vez")
 	assert_eq(V2MagicRuntime.cooldown_remaining(necromancer, RAISE), 2)
 	assert_eq(necromancer.movement_left, 0.0, "ação gasta")
 	assert_eq(V2RetinueSystem.command_used(human, SCHOOL), 1)
@@ -269,7 +269,7 @@ func test_mend_undead_heals_only_injured_own_undead():
 	assert_eq(V2MagicRuntime.target_reason(necromancer, spell, full), "O alvo já está com a Vida máxima.")
 	var mana := human.mana
 	assert_true(V2MagicRuntime.cast(necromancer, MEND, skeleton.coord))
-	assert_eq(skeleton.hp, 13.0, "cura 8")
+	assert_eq(skeleton.hp, 17.0, "cura 12")
 	assert_eq(human.mana, mana - 6.0)
 	assert_eq(V2MagicRuntime.cooldown_remaining(necromancer, MEND), 1)
 	_ready_caster(necromancer)
@@ -277,7 +277,7 @@ func test_mend_undead_heals_only_injured_own_undead():
 	assert_eq(macabre.hp, 30.0, "sem overheal")
 	_ready_caster(necromancer)
 	assert_true(V2MagicRuntime.cast(necromancer, MEND, lich.coord))
-	assert_eq(lich.hp, 28.0, "o Lich é undead")
+	assert_eq(lich.hp, 32.0, "o Lich é undead")
 
 func test_mend_without_any_injured_undead_disables_the_button():
 	var necromancer := _necromancer(5)
@@ -298,12 +298,12 @@ func test_macabre_command_targets_only_retinues_and_adds_forty_percent_attack():
 	assert_eq(V2MagicRuntime.attack_multiplier(host), 1.0)
 	var mana := human.mana
 	assert_true(V2MagicRuntime.cast(necromancer, COMMAND, host.coord))
-	assert_eq(human.mana, mana - 7.0)
+	assert_eq(human.mana, mana - 9.0)
 	assert_eq(V2MagicRuntime.cooldown_remaining(necromancer, COMMAND), 2)
-	assert_almost_eq(V2MagicRuntime.attack_multiplier(host), 1.4, 0.0001)
+	assert_almost_eq(V2MagicRuntime.attack_multiplier(host), 1.5, 0.0001)
 	assert_eq(V2MagicRuntime.defense_multiplier(host), 1.0, "buff ofensivo não mexe na Defesa")
-	assert_not_null(host.get_node_or_null(Unit.TECHNIQUE_MARKER_NAME), "estado ativo é fato público (anel)")
-	assert_true("Comando Macabro — Ativa (até o início do próximo turno do dono)" in V2MagicRuntime.status_lines(host))
+	assert_not_null(host.get_node_or_null("SchoolStatus_v2_spell_macabre_command"), "estado ativo é fato público (marcador da escola)")
+	assert_true("Comando Macabro — Ativa (%s)" % V2OwnerTurnEffect.DURATION_ON_UNIT in V2MagicRuntime.status_lines(host))
 
 func test_macabre_command_enters_physical_combat_and_predict_matches_resolve():
 	var necromancer := _necromancer(6)
@@ -324,7 +324,7 @@ func test_macabre_command_also_strengthens_retaliation():
 	var base := CombatResolver.predict(attacker, host, grid)
 	assert_true(V2MagicRuntime.cast(necromancer, COMMAND, host.coord))
 	var buffed := CombatResolver.predict(attacker, host, grid)
-	assert_almost_eq(buffed.damage_to_attacker, base.damage_to_attacker * 1.4, 0.0001)
+	assert_almost_eq(buffed.damage_to_attacker, base.damage_to_attacker * 1.5, 0.0001)
 	var attacker_hp := attacker.hp
 	CombatResolver.resolve(attacker, host, grid)
 	assert_almost_eq(attacker_hp - attacker.hp, buffed.damage_to_attacker, 0.0001)
@@ -335,9 +335,9 @@ func test_macabre_command_refreshes_never_stacks_and_expires_on_owner_turn():
 	var host := _unit(SKELETON, human, Vector2i(1, 0))
 	assert_true(V2MagicRuntime.cast(necromancer, COMMAND, host.coord))
 	assert_true(V2MagicRuntime.cast(second, COMMAND, host.coord), "segundo conjurador refresca")
-	assert_almost_eq(V2MagicRuntime.attack_multiplier(host), 1.4, 0.0001, "nunca 1,4 x 1,4")
+	assert_almost_eq(V2MagicRuntime.attack_multiplier(host), 1.5, 0.0001, "nunca 1,5 x 1,5")
 	TurnManager.turn_number += 1 # a fase dos rivais acontece com turn+1
-	assert_almost_eq(V2MagicRuntime.attack_multiplier(host), 1.4, 0.0001, "vale durante a fase dos rivais (revide)")
+	assert_almost_eq(V2MagicRuntime.attack_multiplier(host), 1.5, 0.0001, "vale durante a fase dos rivais (revide)")
 	assert_eq(V2MagicRuntime.expire_finished(human), 1, "o dono volta a jogar: termina")
 	assert_eq(V2MagicRuntime.attack_multiplier(host), 1.0)
 	assert_null(host.get_node_or_null(Unit.TECHNIQUE_MARKER_NAME))
@@ -349,11 +349,11 @@ func test_uncommanded_host_keeps_the_buff_but_cannot_initiate_until_command_retu
 	assert_true(V2MagicRuntime.cast(necromancer, COMMAND, host.coord))
 	grid.remove_unit(necromancer)
 	assert_false(V2RetinueSystem.is_commanded(host))
-	assert_almost_eq(V2MagicRuntime.attack_multiplier(host), 1.4, 0.0001, "mantém o estado")
+	assert_almost_eq(V2MagicRuntime.attack_multiplier(host), 1.5, 0.0001, "mantém o estado")
 	assert_false(CombatResolver.can_attack_unit(host, enemy, grid))
 	_unit(NECROMANCER, human, Vector2i(-2, 0))
 	assert_true(CombatResolver.can_attack_unit(host, enemy, grid), "comando voltou antes de expirar: o buff vale")
-	assert_almost_eq(V2MagicRuntime.attack_multiplier(host), 1.4, 0.0001)
+	assert_almost_eq(V2MagicRuntime.attack_multiplier(host), 1.5, 0.0001)
 
 func test_macabre_command_status_survives_save_and_load_and_still_expires():
 	var necromancer := _necromancer(6)
@@ -368,7 +368,7 @@ func test_macabre_command_status_survives_save_and_load_and_still_expires():
 	GameManager.hex_grid = loaded
 	human = GameManager.human_player
 	var loaded_host := loaded.get_unit_at(Vector2i(1, 0))
-	assert_almost_eq(V2MagicRuntime.attack_multiplier(loaded_host), 1.4, 0.0001)
+	assert_almost_eq(V2MagicRuntime.attack_multiplier(loaded_host), 1.5, 0.0001)
 	assert_eq(V2MagicRuntime.cooldown_remaining(loaded.get_unit_at(Vector2i.ZERO), COMMAND), 2)
 	TurnManager.turn_number += 2
 	V2MagicRuntime.expire_finished(human)
@@ -395,8 +395,8 @@ func test_raise_legion_summons_a_macabre_host_that_costs_two():
 	var host := grid.get_unit_at(Vector2i(0, 2))
 	assert_eq(host.unit_data.visual_kind, MACABRE)
 	assert_eq([host.hp, host.movement_left], [30.0, 0.0])
-	assert_eq(human.mana, mana - 15.0)
-	assert_eq(V2MagicRuntime.cooldown_remaining(necromancer, LEGION), 4)
+	assert_eq(human.mana, mana - 30.0)
+	assert_eq(V2MagicRuntime.cooldown_remaining(necromancer, LEGION), 5)
 	assert_eq(V2RetinueSystem.command_used(human, SCHOOL), 2, "capacidade 2 exatamente")
 	TurnManager.turn_number += 10
 	V2MagicRuntime.expire_finished(human)
@@ -452,7 +452,7 @@ func test_research_reset_keeps_units_and_capacity_but_removes_the_repertoire():
 	assert_eq(_ids(V2MagicRuntime.spells_for_unit(necromancer)), [], "repertório some")
 	_ready_caster(necromancer)
 	assert_false(V2MagicRuntime.cast(necromancer, RAISE, Vector2i(-1, 0)), "não invoca de novo")
-	assert_almost_eq(V2MagicRuntime.attack_multiplier(host), 1.4, 0.0001, "buff ativo segue até expirar")
+	assert_almost_eq(V2MagicRuntime.attack_multiplier(host), 1.5, 0.0001, "buff ativo segue até expirar")
 	TurnManager.turn_number += 2
 	V2MagicRuntime.expire_finished(human)
 	assert_eq(V2MagicRuntime.attack_multiplier(host), 1.0)
@@ -466,13 +466,13 @@ func test_sacred_heals_protects_and_waves_over_hosts():
 	var b := _unit(SKELETON, human, Vector2i(2, 0), 5.0)
 	var c := _unit(MACABRE, human, Vector2i(2, -1), 10.0)
 	assert_true(V2MagicRuntime.cast(cleric, "v2_spell_restoring_light", a.coord))
-	assert_eq(a.hp, 13.0, "Luz cura Hoste própria")
+	assert_eq(a.hp, 17.0, "Luz cura Hoste própria")
 	_ready_caster(cleric)
 	assert_true(V2MagicRuntime.cast(cleric, "v2_spell_sacred_aegis", a.coord))
 	assert_gt(V2MagicRuntime.defense_multiplier(a), 1.0, "Égide protege")
 	_ready_caster(cleric)
 	assert_true(V2MagicRuntime.cast(cleric, "v2_spell_healing_wave", b.coord))
-	assert_eq([b.hp, c.hp], [11.0, 16.0], "Onda cura várias Hostes")
+	assert_eq([b.hp, c.hp], [17.0, 22.0], "Onda cura várias Hostes")
 	_ready_caster(cleric)
 	assert_true(V2MagicRuntime.cast(cleric, "v2_spell_miracle", c.coord))
 	assert_eq(c.hp, 30.0, "Milagre")
@@ -483,13 +483,13 @@ func test_infernal_spells_hit_hosts_ignoring_their_defense():
 	_learn(human, "infernal", 6)
 	var warlock := _unit("v2_unit_infernal_warlock", human, Vector2i.ZERO)
 	assert_true(V2MagicRuntime.cast(warlock, "v2_spell_infernal_flame", rival_host.coord))
-	assert_eq(rival_host.hp, 12.0, "Chama 6, a Defesa 3 da Hoste não reduz")
+	assert_eq(rival_host.hp, 9.0, "Chama 9, a Defesa 4,5 da Hoste não reduz")
 	_ready_caster(warlock)
 	assert_true(V2MagicRuntime.cast(warlock, "v2_spell_infernal_blast", rival_host.coord))
-	assert_eq([rival_host.hp, second.hp], [7.0, 13.0], "Explosão atinge várias Hostes, sem exceção undead")
+	assert_eq([rival_host.hp, second.hp], [0.0, 9.0], "Explosão atinge várias Hostes, sem exceção undead")
 
 func test_rogue_dismantle_hits_necromancer_and_lich_but_not_hosts_by_caster():
-	for i in range(1, 7):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 7):
 		assert_true(human.v2_research.complete_research("v2_doctrine_rogue_%d" % i)) # Desmantelar (N6)
 	var saboteur := _unit("v2_unit_saboteur", human, Vector2i.ZERO)
 	var necromancer := _unit(NECROMANCER, rival, Vector2i(1, 0))

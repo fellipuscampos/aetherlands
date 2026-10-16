@@ -50,12 +50,6 @@ var is_turn_processing: bool = false
 
 var _ai_turn_queue: Array = [] # ver _build_rival_turn_items/_build_monster_turn_items/_process
 var _ai_batch_timer: float = 0.0 # acumula delta ate AI_BATCH_INTERVAL, ver _process
-## Coords de predios concluidos NESTE turno (ver loop de City.process_turn
-## abaixo), consumido e limpo por _finish_turn() ao chamar hex_grid.
-## refresh_construction_markers() — precisa ser campo (nao variavel local)
-## porque _finish_turn() pode rodar em um frame POSTERIOR ao loop, quando
-## stagger_ai_turns esta ligado (ver _process).
-var _completed_building_coords_this_turn: Array[Vector2i] = []
 
 var state: GameState = GameState.MENU
 var map_width: int = 25
@@ -67,6 +61,10 @@ var hex_grid: HexGrid
 ## tem referencia direta a Main/CameraRig por nenhum outro caminho, mesma
 ## situacao que ja existia pra hex_grid antes desta mudanca.
 var camera_rig: RTSCamera
+## Ciclo de dia e noite e clima cosméticos (setados por Main._ready, mesmo motivo do camera_rig: a HUD — painel de
+## Debug — não tem outro caminho até eles). null fora da cena real (testes GUT).
+var day_night: DayNightController
+var weather: WeatherController
 
 var players: Array[PlayerData] = []
 var human_player: PlayerData
@@ -107,25 +105,47 @@ var human_kingdom_name: String = ""
 ## direto sem passar por TitleScreen).
 var human_race: String = "human"
 
-## Escolhido na tela de titulo (1 a RIVAL_CIVS.size()); setup_players()
+## Escolhido na tela de titulo (1 a MAX_RIVALS); setup_players()
 ## limita (clamp) pro caso de vir de um save antigo com mais civs do que
 ## o pool atual suporta.
 var rival_count: int = 1
 
-## Cada rival agora e uma civilizacao de fantasia de verdade, nao mais uma
-## copia do reino do jogador so trocando nome/cor — pedido do usuario:
-## "insira outras civilizacoes de fantasia, tipo os anoes, os orcs, os
-## elfos...". `race` é a identidade canônica (nome/estilo visual) e, desde a Fase 26, também a
-## chave única do perfil sistêmico derivado por V2RaceBonusRuntime.
-const RIVAL_CIVS := [
-	{"name": "Reino Elfico de Verdemata", "leader": "Rainha Aelaria", "color": Color(0.25, 0.55, 0.35), "race": "elf"},
-	{"name": "Reino de Ferroeste", "leader": "Rei Bramwell", "color": Color(0.55, 0.42, 0.18), "race": "dwarf"},
-	{"name": "Horda das Brumas", "leader": "Xama Skarn", "color": Color(0.4, 0.5, 0.25), "race": "orc"},
-]
+## As raças jogáveis, na ordem canônica — a ordem em que os rivais entram na partida (rival_races_for).
+const RACES: Array[String] = ["human", "elf", "dwarf", "orc"]
 
-## Só "normal" hoje (o seletor saiu da tela de nova partida): o multiplicador antigo agia sobre a
-## economia V1 dos rivais, removida. Continua salvo para compatibilidade; a dificuldade V2 é uma fase
-## futura (Fase 25).
+## A civilização de IA de CADA raça — pedido do usuario: "insira outras civilizacoes de fantasia, tipo os anoes, os
+## orcs, os elfos...". `race` (a chave) é a identidade canônica (nome/estilo visual) e, desde a Fase 26, também a
+## chave única do perfil sistêmico derivado por V2RaceBonusRuntime.
+## A humana entrou em 2026-10-12 (relato do usuário: "os jogadores inimigos nunca são humanos... se escolho orc tem 2
+## orcs, 1 elfo e 1 anão, nunca tem humanos, eles devem ser a IA também, pra nunca repetir uma civ"): antes a lista
+## era só elfo/anão/orc, escolhida por índice sem olhar a raça do jogador.
+## Cores: nenhuma repete o azul do jogador (setup_players) nem o vermelho-escuro dos monstros (Unit.MONSTER_COLOR).
+const AI_CIVS := {
+	"human": {"name": "Reino de Valmere", "leader": "Rei Aldric", "color": Color(0.52, 0.32, 0.72)},
+	"elf": {"name": "Reino Elfico de Verdemata", "leader": "Rainha Aelaria", "color": Color(0.25, 0.55, 0.35)},
+	"dwarf": {"name": "Reino de Ferroeste", "leader": "Rei Bramwell", "color": Color(0.55, 0.42, 0.18)},
+	"orc": {"name": "Horda das Brumas", "leader": "Xama Skarn", "color": Color(0.4, 0.5, 0.25)},
+}
+
+## Uma civilização por raça e o jogador ocupa uma: no máximo as outras três.
+const MAX_RIVALS := 3
+
+## O elenco FIXO de antes de 2026-10-12 (elfo, anão, orc por índice, qualquer que fosse a raça do jogador). Só para
+## carregar um save daquela época exatamente como foi jogado (SaveManager.load_game) — nunca em partida nova.
+const LEGACY_RIVAL_RACES: Array[String] = ["elf", "dwarf", "orc"]
+
+## As raças dos rivais de um jogador de `player_race`: todas as OUTRAS, na ordem canônica — nenhuma civilização se
+## repete na partida. Com menos de MAX_RIVALS rivais entram as primeiras da lista (jogador humano: elfo, anão, orc,
+## como sempre foi; jogador elfo: humano, anão, orc).
+func rival_races_for(player_race: String) -> Array[String]:
+	var result: Array[String] = []
+	for race in RACES:
+		if race != player_race:
+			result.append(race)
+	return result.slice(0, MAX_RIVALS)
+
+## Dificuldade das IAs ("easy"/"normal"/"hard", 2026-10-15): multiplica só a economia dos rivais — a inteligência
+## é a mesma nos três (V2AIDifficulty). Escolhida na tela de nova partida; salva no save desde sempre.
 var difficulty: String = "normal"
 
 ## Id do slot desta partida (ver SaveManager.new_slot_id/save_to_slot) --
@@ -136,6 +156,9 @@ var current_save_slot: String = ""
 
 func _ready() -> void:
 	TurnManager.turn_changed.connect(_on_turn_changed)
+	# Memória diplomática (DiplomaticMemory): cidade tomada e ataque entre civilizações em guerra viram rancor.
+	EventBus.city_captured.connect(func(old_owner: PlayerData, new_owner: PlayerData, _city_name: String, _coord: Vector2i) -> void: DiplomaticMemory.on_city_captured(old_owner, new_owner))
+	EventBus.combat_engagement.connect(func(attacker_owner: PlayerData, defender_owner: PlayerData, target_kind: String, _coord: Vector2i) -> void: DiplomaticMemory.on_combat(attacker_owner, defender_owner, target_kind))
 
 func start_new_game(grid: HexGrid) -> void:
 	setup_players(grid)
@@ -169,7 +192,6 @@ func end_match() -> void:
 	is_turn_processing = false
 	_ai_turn_queue.clear()
 	_ai_batch_timer = 0.0
-	_completed_building_coords_this_turn.clear()
 	WorldEventManager.reset_for_new_match()
 	if hex_grid != null:
 		hex_grid.reset_to_empty()
@@ -199,11 +221,12 @@ func _default_kingdom_name_for_race(race: String) -> String:
 ## por start_new_game() (jogo novo, spawna forcas iniciais em seguida) quanto
 ## por SaveManager.load_game() (que reconstroi unidades/cidades a partir do
 ## arquivo salvo em vez de usar o spawn padrao).
-func setup_players(grid: HexGrid) -> void:
+## `rival_races`: o elenco de rivais a recriar, uma raça por rival, na ordem — só o load passa (o que estava no save).
+## Vazio (partida nova) = as raças que o jogador NÃO escolheu (rival_races_for).
+func setup_players(grid: HexGrid, rival_races: Array[String] = []) -> void:
 	_release_player_relations()
 	is_turn_processing = false
 	_ai_turn_queue.clear()
-	_completed_building_coords_this_turn.clear()
 	hex_grid = grid
 	state = GameState.PLAYING
 	players.clear()
@@ -213,18 +236,19 @@ func setup_players(grid: HexGrid) -> void:
 	human_civ.civ_name = human_kingdom_name if human_kingdom_name != "" else _default_kingdom_name_for_race(human_race)
 	human_civ.leader_name = "Rainha Elara"
 	human_civ.color = Color(0.2, 0.45, 0.85)
-	human_civ.race = human_race if human_race in ["human", "elf", "dwarf", "orc"] else "human"
+	human_civ.race = human_race if human_race in RACES else "human"
 	human_player = PlayerData.new(human_civ)
 	players.append(human_player)
 
-	var count = clamp(rival_count, 1, RIVAL_CIVS.size())
+	var roster: Array[String] = rival_races if not rival_races.is_empty() else rival_races_for(human_civ.race)
+	var count = clamp(rival_count, 1, mini(MAX_RIVALS, roster.size()))
 	for i in range(count):
-		var info: Dictionary = RIVAL_CIVS[i]
+		var info: Dictionary = AI_CIVS[roster[i]]
 		var rival_civ := CivilizationData.new()
 		rival_civ.civ_name = info.name
 		rival_civ.leader_name = info.leader
 		rival_civ.color = info.color
-		rival_civ.race = info.get("race", "")
+		rival_civ.race = roster[i]
 		var rival := PlayerData.new(rival_civ)
 		players.append(rival)
 		rival_players.append(rival)
@@ -296,6 +320,21 @@ var regional_threats_on_new_match := true
 ## testes de conteúdo que dependem do mapa sem monstros desligam e restauram no after_each.
 var combat_ecology_on_new_match := true
 
+## Escolta inicial de toda civilização (UnitDatabase.STARTING_ESCORT_KINDS), no tile livre mais próximo.
+## Flag de FIXTURE de teste (default true, nunca salva, sem UI), no mesmo molde das duas acima: só testes de
+## conteúdo que contam unidades/Suprimentos exatos de uma linha de Doutrina desligam e restauram no after_each.
+var starting_escort_on_new_match := true
+
+func _spawn_starting_escort(origin: Vector2i, player: PlayerData) -> void:
+	if not starting_escort_on_new_match:
+		return
+	for kind in UnitDatabase.STARTING_ESCORT_KINDS:
+		var spawn_coord := WorldSetup.find_spawn_tile(hex_grid, origin)
+		if spawn_coord == WorldSetup.NO_SPAWN_COORD:
+			push_warning("GameManager: sem tile livre para a escolta inicial (%s) de %s." % [kind, player.civ.civ_name])
+			return
+		hex_grid.spawn_unit(spawn_coord, UnitDatabase.create_unit(kind), player)
+
 func _spawn_starting_forces() -> void:
 	# claimed_starts impede que duas capitais (do humano ou de rivais
 	# diferentes) acabem escolhendo o mesmo tile inicial — ver comentario
@@ -306,14 +345,12 @@ func _spawn_starting_forces() -> void:
 	WorldEventManager.regional_threats_enabled = regional_threats_on_new_match
 	RegionalThreatSystem.defer_planning = true
 
-	# Forças iniciais (núcleo compartilhado, Fase 25): o Colonizador e o Guarda ("warrior") são as
-	# únicas unidades fora da progressão V2 que uma partida nova cria — o Guarda é só a escolta
-	# inicial, nunca uma linha de produção (UnitDatabase.CORE_TRAINABLE_KINDS).
+	# Forças iniciais: o Colonizador e a escolta STARTING_ESCORT_KINDS. O rival funda a capital com o
+	# próprio Colonizador já no setup; o humano funda quando quiser.
 	var human_start = WorldSetup.find_start_tile(hex_grid, Vector2i(0, 0), claimed_starts)
 	claimed_starts.append(human_start)
 	hex_grid.spawn_unit(human_start, UnitDatabase.create_unit("settler"), human_player)
-	var warrior_coord = WorldSetup.find_spawn_tile(hex_grid, human_start)
-	hex_grid.spawn_unit(warrior_coord, UnitDatabase.create_unit("warrior"), human_player)
+	_spawn_starting_escort(human_start, human_player)
 
 	for i in range(rival_players.size()):
 		var rival = rival_players[i]
@@ -321,8 +358,7 @@ func _spawn_starting_forces() -> void:
 		var rival_start = WorldSetup.find_start_tile(hex_grid, rival_origin, claimed_starts)
 		claimed_starts.append(rival_start)
 		hex_grid.found_city(rival_start, rival, rival.civ.civ_name + " - Capital")
-		var guard_coord = WorldSetup.find_spawn_tile(hex_grid, rival_start)
-		hex_grid.spawn_unit(guard_coord, UnitDatabase.create_unit("warrior"), rival)
+		_spawn_starting_escort(rival_start, rival)
 	RegionalThreatSystem.defer_planning = false
 	RegionalThreatSystem.plan_pending(hex_grid)
 	# V3 / Combat Ecology: mapa, capitais/tiles iniciais e ameaças regionais do setup já existem — a ecologia
@@ -331,7 +367,7 @@ func _spawn_starting_forces() -> void:
 
 ## Espalha os rivais em angulos igualmente espacados ao redor do centro do
 ## mapa (onde o humano comeca), numa elipse escalada pela largura/altura
-## da pegada FIXA do continente Principal (TitleScreen.MAIN_ZONE_SIZE, nao
+## da AREA RESERVADA do continente Principal (WorldProfile.main_frame do tamanho, nao
 ## mais map_width/map_height ao vivo — pedido do usuario: "expandir o
 ## tamanho fixo do mapa pra acomodar dois novos continentes especiais").
 ## Sem essa trava, os rivais se espalhariam pelo canvas TOTAL (agora bem
@@ -342,8 +378,12 @@ func _spawn_starting_forces() -> void:
 ## centro que a formula antiga usava.
 func _rival_origin(index: int, count: int) -> Vector2i:
 	var angle = TAU * float(index) / float(max(count, 1))
-	var dist_q = float(TitleScreen.MAIN_ZONE_SIZE.width) * 0.35
-	var dist_r = float(TitleScreen.MAIN_ZONE_SIZE.height) * 0.35
+	# 2026-10-10: a área reservada vem do perfil do tamanho do mapa (Pequeno/Médio/Grande ou legado). Fixtures de teste
+	# continuam com a pegada histórica 96×60 (comportamento de sempre — WorldSetup acha o tile válido mais perto).
+	var profile := WorldProfile.for_dimensions(map_width, map_height)
+	var frame: Vector2i = profile.main_frame if bool(profile.fixed_main_frame) else WorldProfile.MAP_LARGE.main_frame
+	var dist_q = float(frame.x) * 0.35
+	var dist_r = float(frame.y) * 0.35
 	var q = int(round(cos(angle) * dist_q))
 	var r = int(round(sin(angle) * dist_r))
 	return Vector2i(q, r)
@@ -359,26 +399,26 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 	if is_turn_processing:
 		return
 
+	# Antes de qualquer coisa agir: civilização que já caiu (sem cidade depois de ter tido) não entra na rodada com
+	# tropas, guerras ou propostas de paz penduradas (HexGrid.reconcile_eliminations).
+	hex_grid.reconcile_eliminations()
+	# Fronteiras fechadas: ninguém começa a rodada dentro de um território onde não pode estar (HexGrid.enforce_closed_borders).
+	hex_grid.enforce_closed_borders()
+
 	for player in players:
 		for unit in player.units:
+			# Ordens permanentes (marcha "mover ate" e Explorar — pedido do
+			# usuario: "no civilization eu posso colocar pra ela se mover pra
+			# um lugar longe... o movimento fica gravado e todo turno essa
+			# tropa vai se movendo") andam com o movimento que SOBROU do turno
+			# que esta acabando, por isso ANTES de reset_movement(): no turno
+			# do jogador a unidade esta inteira e ele pode atacar/redirecionar
+			# em vez de encontra-la sempre com 0 de movimento (ver HexGrid.
+			# run_standing_orders). So o jogador humano liga essas ordens (a IA
+			# rival decide movimento do proprio jeito, RivalAI.move_unit_toward),
+			# entao isto e um no-op de graca pros units dela.
+			hex_grid.run_standing_orders(unit)
 			unit.reset_movement()
-			# Continua um pedido de "mover ate" pendente (Unit.move_order_
-			# target, ver SelectionManager._try_queue_move_order/HexGrid.
-			# continue_move_order) — pedido do usuario: "no civilization eu
-			# posso colocar pra ela se mover pra um lugar longe... o
-			# movimento fica gravado e todo turno essa tropa vai se
-			# movendo". So a IA rival nunca seta esse campo (continua
-			# decidindo movimento do proprio jeito, ver RivalAI.
-			# move_unit_toward), entao isto e um no-op de graca pros
-			# units dela — nao precisa checar humano vs rival aqui.
-			hex_grid.continue_move_order(unit)
-			# Continua "Explorar" (Unit.exploring) pelo mesmo motivo — so o
-			# jogador humano liga isso (SelectionManager.toggle_explore_
-			# selected), entao e um no-op pra IA/monstro tambem. Mutuamente
-			# exclusivo com move_order_target por construcao (as duas
-			# funcoes de toggle desligam uma a outra), entao chamar as duas
-			# sempre e seguro.
-			hex_grid.explore_step(unit)
 			_heal_if_garrisoned(unit)
 			_apply_regen(unit)
 
@@ -392,6 +432,10 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		unit.reset_movement()
 
 	for rival in ai_controlled_players():
+		# Civilização eliminada (HexGrid.eliminate_civilization) não joga mais: não pesquisa, não declara guerra, não
+		# propõe paz. No turno 1 ninguém está eliminado (todos têm o Colono).
+		if V2VictoryConditions.is_eliminated(rival):
+			continue
 		var rival_civ_index: int = players.find(rival)
 		# Roadmap "Fase Macro" 5B.3-G -- "Preparation = tempo de preparacao
 		# militar" / "IA precisa reagir ao Dragao". Calculado UMA vez aqui
@@ -422,12 +466,15 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 		# "decisao ve o mundo ate o fim do turno anterior" que decide_war/
 		# decide_campaign ja seguem.
 		RivalAI.decide_peace(rival, human_player)
+		RivalAI.decide_open_borders(rival, human_player)
 		for other in players:
-			if other == rival or other == human_player:
+			# Nenhuma decisão diplomática contra uma civilização que já saiu da partida.
+			if other == rival or other == human_player or V2VictoryConditions.is_eliminated(other):
 				continue
 			RivalAI.decide_war(rival, hex_grid, other)
 			RivalAI.decide_campaign(rival, hex_grid, other)
 			RivalAI.decide_peace(rival, other)
+			RivalAI.decide_open_borders(rival, other)
 		# Roadmap "Fase Macro" 5B.2 -- generico por proposito (qualquer
 		# WorldEvent em Preparation, nao so DragonEvent especificamente).
 		for event in WorldEventManager.active_events:
@@ -480,6 +527,9 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 				elif not V2ManifestationSystem.spawn_allowed(player, result.spawn_unit_kind):
 					# Fail-closed (Fase 17): jamais duas Grandes Manifestações da MESMA Escola — não nasce, os PP voltam, Mana intacta.
 					V2ManifestationSystem.refuse_spawn(city, result.spawn_unit_kind, player == human_player)
+				elif not V2ColonizationRuntime.spawn_allowed(player, result.spawn_unit_kind):
+					# Fail-closed (2026-10-09): nunca passa do limite de Colonos da linha de Colonização — os PP voltam.
+					V2ColonizationRuntime.refuse_spawn(city, result.spawn_unit_kind, player == human_player)
 				elif spawn_mana_cost > 0.0 and player.mana < spawn_mana_cost:
 					# Fase 17: a Mana mudou entre a checagem da cidade e o nascimento (duas conclusões no mesmo ciclo):
 					# volta a ESPERAR completa, sem perder PP e sem Mana negativa.
@@ -492,6 +542,7 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 					var spawn_coord = WorldSetup.find_spawn_tile(hex_grid, city.coord)
 					var spawned := hex_grid.spawn_unit(spawn_coord, UnitDatabase.create_unit(result.spawn_unit_kind), player)
 					if spawned != null:
+						V2ColonizationRuntime.record_trained(player, result.spawn_unit_kind)
 						EventBus.ui_production_completed.emit(player, city.city_name, result.spawn_unit_kind, spawned.unit_data.unit_name, city.coord)
 					if spawned != null and player == human_player and V2LegendarySystem.is_legendary_unit(spawned):
 						EventBus.notify.emit("Unidade Lendária pronta: %s" % spawned.unit_data.unit_name, "confirm")
@@ -504,8 +555,8 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 						spawned.work_charges_remaining = V2ConstructorRuntime.charges_for_new_builder(player)
 			if result.built_kind != "":
 				if result.built_coord != City.NO_PENDING_COORD:
+					# O prédio nasce e o canteiro sai do tile no mesmo passo (HexGrid.place_building).
 					hex_grid.place_building(result.built_coord, result.built_kind, player)
-					_completed_building_coords_this_turn.append(result.built_coord)
 				if player == human_player:
 					var building: BuildingData = BuildingDatabase.get_building(result.built_kind)
 					EventBus.notify.emit("%s concluiu: %s" % [city.city_name, building.display_name], "confirm")
@@ -514,9 +565,18 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 			# de process_turn; aqui só o feedback, mesmo padrão de built_kind acima).
 			if result.city_level_up > 0 and player == human_player:
 				EventBus.notify.emit("%s alcançou %s." % [city.city_name, V2CityLevelData.level_name(result.city_level_up)], "confirm")
+				if int(result.city_level_up) == HexGrid.CLOSED_BORDERS_FROM_LEVEL:
+					EventBus.notify.emit("%s fechou as fronteiras: unidades de outros reinos só entram no território dela em guerra." % city.city_name, "city")
 			if result.get("fortification_level_up", 0) > 0 and player == human_player:
 				EventBus.notify.emit("%s concluiu %s." % [city.city_name, V2FortificationData.display_name(result.fortification_level_up)], "confirm")
 		Diplomacy.process_war_weariness_and_upkeep(player)
+
+	# A produção de todas as cidades já andou: os canteiros mostram o progresso NOVO agora, junto com os prédios que
+	# acabaram de nascer — não só depois da fase da IA (que pode levar segundos com stagger_ai_turns).
+	hex_grid.refresh_construction_markers()
+	# Cidades evoluíram e territórios cresceram neste passo: quem ficou dentro de uma fronteira que acabou de fechar sai
+	# antes de a IA agir.
+	hex_grid.enforce_closed_borders()
 
 	# Pedido do usuario: "Civilization nao faz tudo acontecer no mapa ao
 	# mesmo tempo... em pequenos grupos... diminui o lag na passada de
@@ -534,6 +594,7 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 	# casos (mesma ordem de sempre — um monstro recem-nascido ainda
 	# precisa poder agir no mesmo turno em que aparece).
 	if stagger_ai_turns:
+		_ai_turn_queue.append_array(_build_manifestation_turn_items())
 		_ai_turn_queue.append_array(_build_rival_turn_items())
 		hex_grid.process_monster_lairs(TurnManager.turn_number)
 		_ai_turn_queue.append_array(_build_monster_turn_items())
@@ -543,16 +604,30 @@ func _on_turn_changed(_turn_number: int, _player_index: int) -> void:
 			_ai_batch_timer = 0.0
 			is_turn_processing = true
 	else:
+		for item in _build_manifestation_turn_items():
+			V2ManifestationOrders.act(item.unit, hex_grid, item.visible)
 		for rival in ai_controlled_players():
 			RivalAI.take_turn(rival, hex_grid, human_player)
 		hex_grid.process_monster_lairs(TurnManager.turn_number)
 		MonsterAI.take_turn(hex_grid, TurnManager.turn_number)
 		_finish_turn()
 
-## Uma acao pendente por unidade rival ainda viva, com o "contexto" dela
-## (visibilidade atual, ja calculada UMA vez por rival, nao por unidade —
-## ver RivalAI.begin_turn) pronto pra _process() so chamar RivalAI.
-## act_for_unit() aos poucos depois.
+## Human-owned bound entities share the existing turn queue. Vision is
+## computed only for owners who have entities, once per owner, not per unit.
+func _build_manifestation_turn_items() -> Array:
+	var items: Array = []
+	var rivals := ai_controlled_players()
+	for player in players:
+		if player in rivals or V2VictoryConditions.is_eliminated(player): continue
+		var entities: Array[Unit] = []
+		for unit in player.units:
+			if is_instance_valid(unit) and V2ManifestationOrders.is_bound(unit): entities.append(unit)
+		if entities.is_empty(): continue
+		var visible := hex_grid.compute_visible_tiles(player)
+		for unit in entities: items.append({"kind":"manifestation", "unit":unit, "visible":visible})
+	return items
+
+## One item per rival unit; RivalAI.begin_turn builds owner visibility once.
 func _build_rival_turn_items() -> Array:
 	var items: Array = []
 	for rival in ai_controlled_players():
@@ -600,9 +675,12 @@ func _process(delta: float) -> void:
 		var item: Dictionary = _ai_turn_queue.pop_front()
 		processed += 1
 		var unit: Unit = item.unit
-		if not is_instance_valid(unit):
+		# Removida (morta, ou a civilização dela foi eliminada) neste mesmo lote: queue_free só libera no fim do quadro.
+		if not is_instance_valid(unit) or unit.is_queued_for_deletion() or unit.get_meta("feedback_retired", false):
 			continue
-		if item.kind == "rival":
+		if item.kind == "manifestation":
+			V2ManifestationOrders.act(unit, hex_grid, item.visible)
+		elif item.kind == "rival":
 			RivalAI.act_for_unit(unit, hex_grid, item.player, item.opponent, item.visible)
 		else:
 			MonsterAI.act_for_unit(unit, hex_grid, item.turn)
@@ -615,16 +693,11 @@ func _process(delta: float) -> void:
 ## _process acima), nunca no meio, senao recompute_fog/check_game_over
 ## reagiriam a um estado do mapa so PARCIALMENTE atualizado.
 func _finish_turn() -> void:
-	# predios concluidos neste turno ganham uma "volta de graca" com a barra
-	# travada em 100% antes de sumir do "em obra" (ver comentario de
-	# just_completed em refresh_construction_markers). Roda ANTES de
-	# recompute_fog de proposito: recompute_fog e quem aplica a nevoa a
-	# CADA marcador (ver _apply_fog_to_entities) — se rodasse antes, um
-	# marcador criado/atualizado NESTE refresh so seria gateado corretamente
-	# no PROXIMO turno, deixando uma obra inimiga vazando visivel por um
-	# turno inteiro sempre que comecava ou terminava.
-	hex_grid.refresh_construction_markers(_completed_building_coords_this_turn)
-	_completed_building_coords_this_turn.clear()
+	# A IA e os monstros já agiram: uma cidade capturada nesta fase pode ter perdido a obra (HexGrid.capture_city
+	# revalida a fila). Reconciliação pura — a conclusão de prédio não depende deste ponto (ver _on_turn_changed).
+	hex_grid.refresh_construction_markers()
+	# Paz e anexações da fase da IA: o jogador recebe o turno com as fronteiras fechadas já respeitadas.
+	hex_grid.enforce_closed_borders()
 	# V2 (Fase 4): o mundo já agiu (IA/monstros) — é o "início do próximo turno do dono",
 	# quando as Técnicas Militares ativadas no turno anterior terminam.
 	for player in players:
@@ -658,33 +731,12 @@ func _finish_turn() -> void:
 	# turn_started/turn_deadline (Blocker #2, 5B.2) vierem a assumir sobre
 	# "em que turno o relogio do evento comeca a contar".
 	WorldEventManager.maybe_spawn_dragon(hex_grid, TurnManager.turn_number)
-	WorldEventManager.maybe_start_reliquary(hex_grid, TurnManager.turn_number) # Fase 33D3 (Dragão tem prioridade)
 	WorldEventManager.advance_turn(hex_grid, players)
 	# Fase 33D1: era do mundo avaliada UMA vez por rodada global, depois dos eventos e antes da vitória.
 	WorldEventManager.advance_world_phase(players, TurnManager.turn_number)
 	PublicVictoryMilestones.evaluate_round(players, TurnManager.turn_number) # Fase 33D3: fatos públicos, uma vez
 	check_victories()
 	EventBus.ui_state_changed.emit("turn_finished")
-
-## Acao explicita do jogador humano (futura UI: prompt de Preparation, ver
-## docs/DRAGON_EVENT_DESIGN.md) -- decide participar ou nao do PRIMEIRO
-## WorldEvent em Preparation que o humano ainda nao respondeu. Generico
-## por proposito (opera sobre WorldEvent/participants, nunca sabe que
-## "event" e' especificamente um DragonEvent) -- mesmo principio do lado
-## IA (RivalAI.decide_world_event_participation). Retorna false sem mutar
-## nada se nao houver evento elegivel (nenhum em Preparation, ou o humano
-## ja decidiu).
-func respond_to_world_event(participate: bool) -> bool:
-	var human_civ_index: int = players.find(human_player)
-	for event in WorldEventManager.active_events:
-		if event.phase != WorldEvent.PHASE_PREPARATION:
-			continue
-		if event.participants.has(human_civ_index):
-			continue
-		event.participants[human_civ_index] = {"decision": participate}
-		EventBus.ui_state_changed.emit("world_event_decision")
-		return true
-	return false
 
 ## Autoridade ÚNICA de vitória (Fase 25). Só três condições encerram uma partida normal, verificadas
 ## nesta ordem FIXA de precedência — a primeira verdadeira vence e uma única chamada nunca produz duas

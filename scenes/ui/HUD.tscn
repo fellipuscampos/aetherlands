@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="HUD_gd"]
 [ext_resource type="Script" path="res://scripts/ui/Minimap.gd" id="Minimap_gd"]
 [ext_resource type="PackedScene" path="res://scenes/ui/UIShell.tscn" id="UIShell_scn"]
+[ext_resource type="PackedScene" path="res://scenes/ui/GameOverPanel.tscn" id="GameOver_scn"]
 [node name="HUD" type="Control"]
 layout_mode = 1
 anchor_right = 1.0
@@ -261,47 +262,6 @@ mouse_filter = 0
 color = Color(0.01, 0.01, 0.01, 0.65)
 visible = false
 
-[node name="WorldEventPanel" type="PanelContainer" parent="."]
-layout_mode = 1
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -240.0
-offset_top = -170.0
-offset_right = 240.0
-offset_bottom = 170.0
-grow_horizontal = 2
-grow_vertical = 2
-visible = false
-
-[node name="WorldEventBox" type="VBoxContainer" parent="WorldEventPanel"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="WorldEventTitleLabel" type="Label" parent="WorldEventPanel/WorldEventBox"]
-layout_mode = 2
-theme_type_variation = &"PanelTitle"
-text = "Evento Mundial"
-
-[node name="WorldEventTextLabel" type="Label" parent="WorldEventPanel/WorldEventBox"]
-layout_mode = 2
-autowrap_mode = 3
-
-[node name="WorldEventButtons" type="HBoxContainer" parent="WorldEventPanel/WorldEventBox"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="WorldEventParticipateButton" type="Button" parent="WorldEventPanel/WorldEventBox/WorldEventButtons"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Participar"
-
-[node name="WorldEventDeclineButton" type="Button" parent="WorldEventPanel/WorldEventBox/WorldEventButtons"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Não participar"
-
 [node name="DragonAnnouncementPanel" type="PanelContainer" parent="."]
 layout_mode = 1
 anchor_left = 0.5
@@ -513,64 +473,5 @@ text = "Perder Agora"
 layout_mode = 2
 text = "Forçar Dragão (World Event)"
 
-[node name="GameOverPanel" type="PanelContainer" parent="."]
+[node name="GameOverPanel" parent="." instance=ExtResource("GameOver_scn")]
 layout_mode = 1
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -340.0
-offset_top = -325.0
-offset_right = 340.0
-offset_bottom = 325.0
-grow_horizontal = 2
-grow_vertical = 2
-visible = false
-
-[node name="GameOverBox" type="VBoxContainer" parent="GameOverPanel"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="GameOverLabel" type="Label" parent="GameOverPanel/GameOverBox"]
-layout_mode = 2
-theme_type_variation = &"PanelTitle"
-text = ""
-horizontal_alignment = 1
-autowrap_mode = 3
-
-[node name="GameOverTitleLabel" type="Label" parent="GameOverPanel/GameOverBox"]
-layout_mode = 2
-horizontal_alignment = 1
-autowrap_mode = 3
-text = ""
-
-[node name="GameOverSummaryLabel" type="Label" parent="GameOverPanel/GameOverBox"]
-layout_mode = 2
-horizontal_alignment = 1
-autowrap_mode = 3
-text = ""
-
-[node name="GameOverSnapshotScroll" type="ScrollContainer" parent="GameOverPanel/GameOverBox"]
-custom_minimum_size = Vector2(0, 220)
-layout_mode = 2
-size_flags_vertical = 3
-horizontal_scroll_mode = 0
-
-[node name="GameOverSnapshotRows" type="VBoxContainer" parent="GameOverPanel/GameOverBox/GameOverSnapshotScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
-
-[node name="RestartButton" type="Button" parent="GameOverPanel/GameOverBox"]
-layout_mode = 2
-theme_type_variation = &"PrimaryButton"
-text = "Jogar Novamente"
-
-[node name="LoadButton" type="Button" parent="GameOverPanel/GameOverBox"]
-layout_mode = 2
-text = "Carregar Partida"
-
-[node name="MainMenuButton" type="Button" parent="GameOverPanel/GameOverBox"]
-layout_mode = 2
-theme_type_variation = &"SecondaryButton"
-text = "Menu Principal"

@@ -51,12 +51,30 @@ func test_compute_visible_tiles_includes_unit_vision_range():
 	assert_false(visible.has(Vector2i(4, 0)), "tile a 4 de distancia deveria estar fora do alcance de visao do guerreiro")
 
 func test_compute_visible_tiles_includes_city_vision():
-	hex_grid.found_city(Vector2i(0, 0), human, "Capital") # cidade sempre enxerga HexGrid.CITY_VISION_RANGE (4) tiles
+	hex_grid.found_city(Vector2i(0, 0), human, "Capital") # cidade de nível I enxerga V2CityLevelData.vision_range(1) (4) tiles
 
 	var visible = hex_grid.compute_visible_tiles(human)
 
 	assert_true(visible.has(Vector2i(4, 0)))
 	assert_false(visible.has(Vector2i(5, 0)))
+
+## Pedido do usuario 2026-10-09: cada evolução de City Level soma +1 de visão (I = 4, II = 5, III = 6, IV = 7), pela
+## mesma névoa real (recompute_fog) — e a evolução usa o caminho de verdade (City.apply_city_level).
+func test_each_city_level_adds_one_tile_of_vision():
+	for i in range(6, 9):
+		hex_grid.tiles[Vector2i(i, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	var city := hex_grid.found_city(Vector2i(0, 0), human, "Capital")
+	var expected := {1: 4, 2: 5, 3: 6, 4: 7}
+	for level in [1, 2, 3, 4]:
+		if level > 1:
+			city.apply_city_level(level)
+		assert_eq(city.vision_range(), expected[level], "nível %d" % level)
+		assert_eq(V2CityLevelData.vision_range(level), expected[level])
+		hex_grid.recompute_fog(human)
+		var edge := Vector2i(expected[level], 0)
+		assert_eq(hex_grid.visibility.get(edge), HexGrid.Visibility.VISIBLE, "nível %d enxerga %d tiles" % [level, expected[level]])
+		assert_ne(hex_grid.visibility.get(edge + Vector2i(1, 0)), HexGrid.Visibility.VISIBLE, "nível %d não passa de %d tiles" % [level, expected[level]])
+	assert_eq(V2CityLevelData.vision_range(99), 7, "nível fora da faixa é limitado ao IV")
 
 func test_recompute_fog_marks_currently_visible_tiles():
 	_make_unit("warrior", human, Vector2i(0, 0))

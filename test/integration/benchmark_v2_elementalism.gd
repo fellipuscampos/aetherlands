@@ -36,7 +36,7 @@ func before_each():
 	GameManager.rival_players = [rival] as Array[PlayerData]
 	GameManager.human_player = human
 	GameManager.hex_grid = grid
-	for tier in range(1, 10):
+	for tier in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_magic_elementalism_%d" % tier)
 	caster = grid.spawn_unit(Vector2i.ZERO, UnitDatabase.create_unit("v2_unit_elementalist"), human)
 	caster.movement_left = caster.unit_data.movement_points

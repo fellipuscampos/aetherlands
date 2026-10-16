@@ -75,8 +75,8 @@ func test_the_basic_attack_gets_the_bonus_and_prediction_matches_the_real_resolu
 	var hero: Unit = d.hero
 	var foe: Unit = d.foes[0]
 	foe.hp = 18.0
-	var expected := _formula_damage(d.grid, 12.0, 1.3, foe)
-	assert_almost_eq(expected, 12.0 * 1.3 - 1.5, 0.0001)
+	var expected := _formula_damage(d.grid, 18.0, 1.3, foe)
+	assert_almost_eq(expected, 18.0 * 1.3 - 1.5, 0.0001)
 	var predicted: float = CombatResolver.predict(hero, foe, d.grid).damage_to_defender
 	assert_almost_eq(predicted, expected, 0.0001)
 	var before := foe.hp
@@ -86,7 +86,7 @@ func test_the_basic_attack_gets_the_bonus_and_prediction_matches_the_real_resolu
 func test_a_healthy_target_takes_the_plain_basic_attack():
 	var d := _hero_vs()
 	var foe: Unit = d.foes[0]
-	assert_almost_eq(CombatResolver.predict(d.hero, foe, d.grid).damage_to_defender, _formula_damage(d.grid, 12.0, 1.0, foe), 0.0001)
+	assert_almost_eq(CombatResolver.predict(d.hero, foe, d.grid).damage_to_defender, _formula_damage(d.grid, 18.0, 1.0, foe), 0.0001)
 
 func test_the_power_strike_combines_with_the_execution_multiplicatively():
 	var d := _hero_vs()
@@ -94,29 +94,29 @@ func test_the_power_strike_combines_with_the_execution_multiplicatively():
 	var foe: Unit = d.foes[0]
 	var strike := _technique(POWER).strike_multiplier
 	# Alvo saudável: só o 1,60x. Alvo <= 50%: 1,60x E o +30% (nada do valor combinado escrito à mão).
-	assert_almost_eq(CombatResolver.predict(hero, foe, d.grid, strike).damage_to_defender, _formula_damage(d.grid, 12.0, strike, foe), 0.0001)
+	assert_almost_eq(CombatResolver.predict(hero, foe, d.grid, strike).damage_to_defender, _formula_damage(d.grid, 18.0, strike, foe), 0.0001)
 	foe.hp = 20.0
 	var execution := 1.0 + hero.unit_data.low_hp_attack_bonus # lido do dado, não escrito à mão
-	var combined := _formula_damage(d.grid, 12.0, strike * execution, foe)
+	var combined := _formula_damage(d.grid, 18.0, strike * execution, foe)
 	assert_almost_eq(CombatResolver.predict(hero, foe, d.grid, strike).damage_to_defender, combined, 0.0001)
 	var before := foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(hero, POWER, foe, d.grid))
 	assert_almost_eq(before - foe.hp, combined, 0.0001, "o golpe real usa os dois")
-	assert_almost_eq(combined, 12.0 * 1.6 * 1.3 - 1.5, 0.0001, "12 x 1,6 x 1,3 - 3/2")
+	assert_almost_eq(combined, 18.0 * 1.6 * 1.3 - 1.5, 0.0001, "18 x 1,6 x 1,3 - 3/2")
 
 func test_the_cleave_evaluates_the_execution_per_victim():
 	var d := _hero_vs(3)
 	var foes: Array = d.foes
-	foes[0].hp = 12.0 # 30% -> Execução
+	foes[0].hp = 19.0 # 47,5% -> Execução, e SOBREVIVE: um abate no meio do Arco daria veterania ao Herói e mudaria o dano dos alvos seguintes
 	foes[1].hp = 32.0 # 80% -> sem
 	foes[2].hp = 18.0 # 45% -> Execução
 	var arc := _technique(CLEAVE).strike_multiplier
-	var expected_low_a := _formula_damage(d.grid, 12.0, arc * 1.3, foes[0])
-	var expected_healthy := _formula_damage(d.grid, 12.0, arc, foes[1])
-	var expected_low_c := _formula_damage(d.grid, 12.0, arc * 1.3, foes[2])
+	var expected_low_a := _formula_damage(d.grid, 18.0, arc * 1.3, foes[0])
+	var expected_healthy := _formula_damage(d.grid, 18.0, arc, foes[1])
+	var expected_low_c := _formula_damage(d.grid, 18.0, arc * 1.3, foes[2])
 	assert_gt(expected_low_a, expected_healthy)
 	assert_true(V2TechniqueRuntime.perform_strike(d.hero, CLEAVE, null, d.grid))
-	assert_almost_eq(12.0 - foes[0].hp, expected_low_a, 0.0001, "alvo A (30%): Execução")
+	assert_almost_eq(19.0 - foes[0].hp, expected_low_a, 0.0001, "alvo A (47,5%): Execução")
 	assert_almost_eq(32.0 - foes[1].hp, expected_healthy, 0.0001, "alvo B (80%): sem")
 	assert_almost_eq(18.0 - foes[2].hp, expected_low_c, 0.0001, "alvo C (45%): Execução")
 
@@ -179,7 +179,7 @@ func test_the_bonus_does_not_reach_damage_dealt_by_third_parties():
 	assert_eq(UnitAbilities.low_hp_attack_multiplier(ally, foe), 1.0, "o dano do aliado nunca ganha a Execução do Herói")
 	# Único bônus do aliado: o flanco (+15%, o Herói também está adjacente ao alvo) — nenhum +30%.
 	var flank := 1.0 + CombatResolver.FLANKING_BONUS_PER_ALLY
-	assert_almost_eq(CombatResolver.predict(ally, foe, d.grid).damage_to_defender, _formula_damage(d.grid, 5.0, flank, foe), 0.0001)
+	assert_almost_eq(CombatResolver.predict(ally, foe, d.grid).damage_to_defender, _formula_damage(d.grid, 7.5, flank, foe), 0.0001)
 	assert_true(hero.unit_data.has_low_hp_attack_bonus())
 
 # --- Generalidade (dado, não código) ---------------------------------------------------------------------------

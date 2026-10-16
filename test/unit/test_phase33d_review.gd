@@ -14,9 +14,6 @@ func before_each():
 	_original.events = WorldEventManager.to_save_dict()
 
 func after_each():
-	for event in WorldEventManager.active_events:
-		if event is ReliquaryEvent:
-			(event as ReliquaryEvent)._remove_marker()
 	for player in players:
 		player.release_relations()
 	if grid != null and is_instance_valid(grid):
@@ -59,58 +56,13 @@ func _world(ascension: int, map_seed: int = 1) -> void:
 	WorldEventManager.world_phase = WorldPhaseRules.Phase.ASCENSION
 	WorldEventManager.phase_history.append({"phase": WorldPhaseRules.Phase.ASCENSION, "turn": ascension, "cause": "PROGRESS"})
 
-func _seed_without_dragon_roll(from_turn: int, to_turn: int) -> int:
-	for candidate in range(1, 5000):
-		var hit := false
-		for turn in range(from_turn, to_turn + 1):
-			if WorldEventTrigger.should_spawn_dragon(candidate, turn):
-				hit = true
-				break
-		if not hit:
-			return candidate
-	return -1
-
-func _round(turn: int) -> void:
-	TurnManager.turn_number = turn
-	WorldEventManager.maybe_spawn_dragon(grid, turn)
-	WorldEventManager.maybe_start_reliquary(grid, turn)
-	WorldEventManager.advance_turn(grid, players)
-
-# --- Relicário × virada para a Convergência -----------------------------------------------------------
+# --- Dragão: prazo da garantia ---------------------------------------------------------------------------
 
 func test_dragon_guarantee_deadline_is_the_earlier_of_ascension_35_and_the_convergence_floor():
 	_world(40)
 	assert_eq(WorldEventManager.dragon_guarantee_deadline(), 40 + WorldEventManager.DRAGON_GUARANTEE_AFTER)
 	WorldEventManager.phase_history[-1].turn = 68
 	assert_eq(WorldEventManager.dragon_guarantee_deadline(), WorldPhaseRules.CONVERGENCE_FLOOR_TURN, "Ascensão tardia: a Convergência pode chegar antes de +35")
-
-## Sem a correção: Ascensão no T68, Relicário anunciado no T83 (83+18 < 103) e ainda ativo quando a Convergência
-## chega no piso (T100) — o Dragão pendente era SUPERSEDED pela exclusividade, nunca acontecia na partida.
-func test_pre_dragon_reliquary_never_occupies_the_convergence_edge():
-	var asc := 68
-	_world(asc, _seed_without_dragon_roll(asc + WorldEventManager.DRAGON_ELIGIBLE_AFTER, WorldPhaseRules.CONVERGENCE_FLOOR_TURN))
-	for turn in range(asc + WorldEventManager.DRAGON_ELIGIBLE_AFTER, WorldPhaseRules.CONVERGENCE_FLOOR_TURN):
-		_round(turn)
-	assert_null(WorldEventManager.active_event_of_type(ReliquaryEvent.EVENT_TYPE), "não cabe antes da Convergência mais cedo: espera o Dragão")
-	assert_true(bool(WorldEventManager.reliquary_schedule.get("waited_for_dragon", false)))
-	TurnManager.turn_number = WorldPhaseRules.CONVERGENCE_FLOOR_TURN
-	WorldEventManager._close_ascension_events(grid, players, WorldPhaseRules.CONVERGENCE_FLOOR_TURN)
-	assert_not_null(WorldEventManager.active_event_of_type(DragonEvent.EVENT_TYPE), "a virada anuncia o Dragão")
-	assert_eq(String(WorldEventManager.dragon_schedule.state), WorldEventManager.SCHEDULE_ANNOUNCED)
-	assert_eq(String(WorldEventManager.reliquary_schedule.state), WorldEventManager.SCHEDULE_SUPERSEDED)
-
-func test_pre_dragon_reliquary_that_fits_before_the_convergence_floor_still_happens():
-	var asc := 66
-	_world(asc, _seed_without_dragon_roll(asc + WorldEventManager.DRAGON_ELIGIBLE_AFTER, WorldPhaseRules.CONVERGENCE_FLOOR_TURN))
-	for turn in range(asc + WorldEventManager.DRAGON_ELIGIBLE_AFTER, asc + WorldEventManager.RELIQUARY_ELIGIBLE_AFTER + 1):
-		_round(turn)
-	var reliquary := WorldEventManager.active_event_of_type(ReliquaryEvent.EVENT_TYPE)
-	assert_not_null(reliquary, "81 + 18 < 100: cabe inteiro antes da Convergência")
-	for turn in range(asc + WorldEventManager.RELIQUARY_ELIGIBLE_AFTER + 1, WorldPhaseRules.CONVERGENCE_FLOOR_TURN):
-		_round(turn)
-	assert_null(WorldEventManager.active_event_of_type(ReliquaryEvent.EVENT_TYPE), "terminou antes da virada")
-	WorldEventManager._close_ascension_events(grid, players, WorldPhaseRules.CONVERGENCE_FLOOR_TURN)
-	assert_not_null(WorldEventManager.active_event_of_type(DragonEvent.EVENT_TYPE), "o Dragão continua garantido")
 
 # --- Dragão: a perseguição respeita a elegibilidade -----------------------------------------------------
 
@@ -128,20 +80,3 @@ func test_dragon_drops_a_chase_when_the_owner_falls_to_one_city():
 	for other in [players[0], players[2], players[3]]:
 		other.cities.resize(1)
 	assert_null(dragon._choose_target_city(players), "nenhuma civ elegível: sem alvo (o evento fecha como no_target)")
-
-# --- Ciclo de vida: marcador do Relicário -------------------------------------------------------------
-
-func test_reliquary_marker_never_survives_a_map_reset():
-	_world(40)
-	var reliquary := ReliquaryEvent.new()
-	reliquary.site_coord = Vector2i(0, 0)
-	WorldEventManager.register_event(reliquary)
-	TurnManager.turn_number = 60
-	reliquary.advance_turn(grid, players) # anunciado: marcador público
-	var marker := reliquary._marker
-	assert_not_null(marker)
-	assert_true(marker.is_in_group(HexGrid.WORLD_EVENT_MARKER_GROUP))
-	# Novo jogo / load / volta ao menu: o evento é descartado sem _remove_marker; o reset do mapa o limpa.
-	WorldEventManager.reset_for_new_match()
-	grid.reset_to_empty()
-	assert_true(marker.is_queued_for_deletion(), "nenhum pilar fantasma na partida seguinte")

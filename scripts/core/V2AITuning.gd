@@ -24,6 +24,12 @@ const LOCAL_THREAT_RADIUS := 6
 const CITY_SLOT_PRESSURE := 0.70
 const INFRA_FOUNDATION_BRANCHES := 2
 const INFRA_FOUNDATION_BONUS := 55.0
+## 2026-10-09 — urgência da linha de Colonização quando a meta de expansão pede um Colono que o limite barra
+## (comparável às urgências econômicas de déficit/Suprimentos: expandir é a base de toda a economia).
+const EXPANSION_RESEARCH_URGENCY := 80.0
+## Antecedência: a IA pesquisa o próximo nível de Colonização quando a meta de expansão vai pedir um Colono dentro
+## deste número de turnos — o Colono fica liberado no mesmo turno em que antes (sem a linha) já seria produzido.
+const EXPANSION_RESEARCH_LEAD_TURNS := 12
 ## Fase 27: prioridade economica geral de Conhecimento, medida no balance lab.
 ## Nao depende de raca/orientacao e continua competindo com necessidades urgentes.
 const KNOWLEDGE_RESEARCH_URGENCY := 32.0
@@ -34,6 +40,22 @@ const ORIENTATION_RESEARCH := {
 	"ARCANE": {"military": 8.0, "magic": 34.0, "infrastructure": 20.0},
 	"BALANCED": {"military": 22.0, "magic": 22.0, "infrastructure": 24.0},
 }
+
+## Produção de guerra (2026-10-15, relato do usuário: "não produz unidades pra se defender quando está em guerra").
+## Sob pressão de guerra (V2StrategicAI.war_production_pressure, 0..1) o teto de exército desejado sobe até
+## WAR_EXTRA_TOKENS (nunca acima de HARD_TOKEN_CAP) e acompanha o exército inimigo VISTO × WAR_ENEMY_ARMY_MATCH;
+## tropas ganham WAR_UNIT_BONUS × pressão e prédios civis perdem WAR_CIVIL_PENALTY × pressão.
+const WAR_EXTRA_TOKENS := 6
+const WAR_ENEMY_ARMY_MATCH := 1.2
+const WAR_UNIT_BONUS := 35.0
+const WAR_CIVIL_PENALTY := 18.0
+
+static func war_target_relevant_units(player: PlayerData, pressure: float, visible_enemy_army: int) -> int:
+	var base := target_relevant_units(player)
+	if pressure <= 0.0:
+		return base
+	var wanted := maxi(base + int(round(WAR_EXTRA_TOKENS * pressure)), int(ceil(visible_enemy_army * WAR_ENEMY_ARMY_MATCH)))
+	return mini(wanted, HARD_TOKEN_CAP)
 
 static func gold_reserve(player: PlayerData) -> float:
 	return GOLD_RESERVE_BASE + GOLD_RESERVE_PER_CITY * player.cities.size()

@@ -41,8 +41,9 @@ contra-ataque     = max(0, DEF − 0,5 × ATQ) × 0,5      (só se o defensor so
 - **Flanco:** +15% de ataque por aliado adjacente ao alvo (máx. 2 → +30%).
 - **Fortificar:** +25% de defesa e cura 10% do HP máx./turno.
 - **Guarnição em cidade própria:** cura 25% do HP máx./turno.
+- **Evolução de unidade (desde 12/10/2026):** além de preservar o percentual de vida, cura 30% do HP máx. da forma nova, sem passar do teto (`V2UnitUpgrade.UPGRADE_HEAL_FRACTION`). Promoção de veterania: 20%.
 - **Ignora terreno e prédio** (`ignores_terrain_defense`): todos os conjuradores, Lich, Arquidemônio, Elemental da Tempestade, Golem Arcano, Convocador de Sombras, Mago legado. Também ignoram o bônus de Fortificar.
-- **Bônus de terreno na defesa:** Taiga/Selva/Floresta +25%, Colinas/Colinas Vulcânicas +50%, Montanhas/Montanhas Vulcânicas/Picos de Cristal +100%.
+- **Bônus de terreno na defesa:** **nenhum** desde 2026-10-09 (antes: Floresta +25%, Colinas +50%, Montanhas +100%). O terreno-base só custa movimento; a Defesa é a da própria unidade e dos efeitos dela, mais as fontes explícitas (Defesa urbana, Fortificar, Bosque Denso/Terreno Elevado druídicos).
 - **Bônus de prédio na defesa** (só cidade própria, soma de todos): Muralhas +50%, Torre de Vigia +20%, Guarnição +20%, Muralhas II +35%, Fortaleza +75%, Fortaleza Imperial +100%. Máximo somado: **+300%** (defesa ×4).
 - **Cerco a cidade** (`resolve_city_attack`): dano = `ATQ × mult. de cerco ÷ (1 + bônus de prédio)`, mínimo 1. Vai primeiro ao **escudo** (15, só com Muralhas, recarrega 15%/turno) e depois à **vida da cidade** (20 + 4 × população, regenera 8%/turno; a regeneração para depois de 2 turnos de cerco). Vida 0 = captura.
 - **Milícia da cidade:** golpe automático em monstro adjacente: 1,5 + 0,25 × população (máx. 3, +1 com Muralhas). Nunca dá recompensa.

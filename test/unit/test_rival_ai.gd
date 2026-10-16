@@ -210,8 +210,8 @@ func test_choose_target_returns_null_when_at_peace():
 	var scout = _make_unit("warrior", rival, Vector2i(0, 0))
 	_make_unit("warrior", human, Vector2i(3, 0))
 	var visible := {Vector2i(3, 0): true}
-	var accepted = Diplomacy.propose_peace(human, rival) # 1 unidade cada lado, empate aceita
-	assert_true(accepted, "pre-condicao do teste: paz devia ser aceita")
+	Diplomacy.make_peace(human, rival)
+	assert_false(rival.is_at_war_with(human), "pre-condicao do teste: em paz")
 
 	var target = RivalAI._choose_target(scout, hex_grid, rival, human, visible)
 
@@ -774,6 +774,39 @@ func test_handle_attacker_falls_back_when_campaign_target_invalidated():
 ## decide hoje (contagem de unidade) — decide_peace nao reimplementa essa
 ## heuristica, so decide SE tenta.
 
+## 2026-10-15 — oferecer paz deixou de ser "cansaço ≥ 60" (RivalAI.wants_peace): a IA oferece quando ela mesma
+## aceitaria (Diplomacy.peace_outlook) e a guerra já durou PEACE_OFFER_MIN_WAR_TURNS. Este helper deixa o rival
+## pronto para isso — guerra velha, cansaço no teto e sem rancor contra `target` — para os testes que só olham o
+## FLUXO da proposta (modal, espera, campanha), não a regra de querer paz (coberta nos testes de wants_peace abaixo).
+func _rival_wants_peace(target: PlayerData) -> void:
+	rival.war_weariness = Diplomacy.WAR_WEARINESS_MAX
+	DiplomaticMemory.record(rival, target).war_start = TurnManager.turn_number - 20
+	DiplomaticMemory.record(target, rival).war_start = TurnManager.turn_number - 20
+	DiplomaticMemory.record(rival, target)[DiplomaticMemory.AGGRESSION] = 0.0
+
+func test_wants_peace_never_right_after_the_war_starts():
+	_make_unit("warrior", rival, Vector2i(0, 0))
+	rival.war_weariness = Diplomacy.WAR_WEARINESS_MAX
+	assert_false(RivalAI.wants_peace(rival, human), "declarou/entrou na guerra agora: não pede paz no mesmo turno")
+
+func test_wants_peace_when_losing_badly_even_in_a_young_war():
+	_make_unit("warrior", human, Vector2i(0, 0))
+	_make_unit("warrior", human, Vector2i(1, 0))
+	_make_unit("warrior", human, Vector2i(1, -1))
+	_make_unit("warrior", rival, Vector2i(3, 0))
+	assert_true(RivalAI.wants_peace(rival, human), "um contra três: pede paz mesmo com a guerra jovem")
+
+func test_wants_peace_holds_while_a_viable_campaign_is_running():
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	_make_unit("warrior", rival, Vector2i(1, 0))
+	_make_unit("warrior", human, Vector2i(4, 0)) # forças iguais: sem a campanha, aceitaria a paz
+	_rival_wants_peace(human)
+	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD - 5.0
+	assert_true(Diplomacy.peace_outlook(rival, human).accept, "pre-condicao: a conta de paz sozinha aceitaria")
+	rival.war_campaigns[human] = {"objective": RivalAI.WAR_OBJECTIVE_CONQUER, "target_coord": target.coord, "status": RivalAI.CAMPAIGN_STATUS_ACTIVE}
+	assert_false(RivalAI.wants_peace(rival, human), "cerco viável em andamento: ninguém pede paz no meio dele")
+
 func test_decide_peace_does_nothing_at_peace():
 	human.enemies.erase(rival)
 	rival.enemies.erase(human)
@@ -794,26 +827,88 @@ func test_decide_peace_does_not_propose_below_offer_threshold():
 	assert_eq(result, RivalAI.PEACE_DECISION_BELOW_THRESHOLD)
 	assert_true(rival.is_at_war_with(human), "abaixo do limiar de oferta, nao deveria nem tentar propor (mesmo que a proposta fosse aceita)")
 
-func test_decide_peace_proposes_at_offer_threshold_and_ends_war_when_accepted():
+## 2026-10-10 (relato do usuario: "quando alguem pede paz a voce, ela e aceita automaticamente"): contra o jogador
+## HUMANO, decide_peace nunca mais resolve a paz sozinho -- so registra a proposta (Diplomacy.offer_peace) e a guerra
+## continua ate ele responder no modal, tenha o humano mais ou menos unidades que o rival.
+func test_decide_peace_offers_peace_to_the_human_and_the_war_continues_until_the_answer():
 	_make_unit("warrior", rival, Vector2i(0, 0))
-	_make_unit("warrior", rival, Vector2i(1, 0)) # rival mais forte -- humano aceita
-	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+	_make_unit("warrior", rival, Vector2i(1, 0)) # rival mais forte: a heuristica antiga aceitaria pelo humano
+	_rival_wants_peace(human)
 
 	var result = RivalAI.decide_peace(rival, human)
 
-	assert_eq(result, RivalAI.PEACE_DECISION_ACCEPTED)
+	assert_eq(result, RivalAI.PEACE_DECISION_OFFERED)
+	assert_true(rival.is_at_war_with(human), "ninguem aceita pelo jogador: a guerra continua")
+	assert_true(human.is_at_war_with(rival))
+	assert_true(Diplomacy.has_pending_peace_offer(human, rival), "a proposta fica aguardando a resposta dele")
+
+func test_decide_peace_offers_even_when_the_human_is_stronger():
+	_make_unit("warrior", human, Vector2i(0, 0))
+	_make_unit("warrior", human, Vector2i(1, 0)) # humano mais forte: a heuristica antiga recusaria pelo humano
+	_rival_wants_peace(human)
+
+	assert_eq(RivalAI.decide_peace(rival, human), RivalAI.PEACE_DECISION_OFFERED)
+	assert_true(Diplomacy.has_pending_peace_offer(human, rival))
+
+func test_the_human_accepting_the_offer_ends_the_war_symmetrically_with_a_truce():
+	_rival_wants_peace(human)
+	RivalAI.decide_peace(rival, human)
+
+	assert_true(Diplomacy.answer_peace_offer(human, rival, true))
+
 	assert_false(rival.is_at_war_with(human))
 	assert_false(human.is_at_war_with(rival), "paz precisa ser simetrica nos dois lados")
+	assert_eq(Diplomacy.truce_remaining(human, rival), Diplomacy.TRUCE_TURNS, "aceitar comeca a tregua")
+	assert_false(Diplomacy.can_declare_war(rival, human))
 
-func test_decide_peace_leaves_war_active_when_refused():
-	_make_unit("warrior", human, Vector2i(0, 0))
-	_make_unit("warrior", human, Vector2i(1, 0)) # humano mais forte -- recusa
-	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+func test_the_human_refusing_keeps_the_war_and_the_rival_waits_before_offering_again():
+	var original_turn := TurnManager.turn_number
+	_rival_wants_peace(human)
+	RivalAI.decide_peace(rival, human)
+	assert_eq(RivalAI.decide_peace(rival, human), RivalAI.PEACE_DECISION_WAITING, "proposta sem resposta: nao repete")
 
-	var result = RivalAI.decide_peace(rival, human)
+	assert_true(Diplomacy.answer_peace_offer(human, rival, false))
 
-	assert_eq(result, RivalAI.PEACE_DECISION_REFUSED)
-	assert_true(rival.is_at_war_with(human), "humano em vantagem numerica deveria recusar -- guerra continua, sem erro nem estado novo")
+	assert_true(rival.is_at_war_with(human), "recusar mantem a guerra")
+	assert_eq(Diplomacy.truce_remaining(human, rival), 0, "sem tregua")
+	TurnManager.turn_number = original_turn + Diplomacy.PEACE_OFFER_COOLDOWN_TURNS - 1
+	assert_eq(RivalAI.decide_peace(rival, human), RivalAI.PEACE_DECISION_WAITING, "dentro da espera: nenhum modal novo a cada turno")
+	TurnManager.turn_number = original_turn + Diplomacy.PEACE_OFFER_COOLDOWN_TURNS
+	assert_eq(RivalAI.decide_peace(rival, human), RivalAI.PEACE_DECISION_OFFERED, "passada a espera, propoe de novo")
+	TurnManager.turn_number = original_turn
+
+func test_an_unanswered_offer_expires_with_the_turn_and_can_be_made_again():
+	var original_turn := TurnManager.turn_number
+	_rival_wants_peace(human)
+	RivalAI.decide_peace(rival, human)
+
+	TurnManager.turn_number = original_turn + 1
+
+	assert_false(Diplomacy.has_pending_peace_offer(human, rival), "caduca sozinha na troca de turno")
+	assert_false(Diplomacy.answer_peace_offer(human, rival, true), "e nao pode mais ser respondida")
+	assert_true(rival.is_at_war_with(human))
+	assert_eq(RivalAI.decide_peace(rival, human), RivalAI.PEACE_DECISION_OFFERED, "caducar nao e recusa: sem espera")
+	TurnManager.turn_number = original_turn
+
+## Entre duas IAs nada muda: quem recebe responde na hora pela heuristica (Diplomacy._accepts_peace).
+func test_decide_peace_between_two_ais_is_still_answered_on_the_spot():
+	var other := _track_player(CivilizationData.new())
+	Diplomacy.declare_war(rival, other)
+	_make_unit("warrior", rival, Vector2i(0, 0))
+	_rival_wants_peace(other)
+
+	assert_eq(RivalAI.decide_peace(rival, other), RivalAI.PEACE_DECISION_ACCEPTED, "o outro rival, em desvantagem, aceita")
+	assert_false(rival.is_at_war_with(other))
+	assert_true(other.peace_offers.is_empty(), "IA nunca acumula proposta pendente")
+
+func test_decide_peace_between_two_ais_can_still_be_refused():
+	var other := _track_player(CivilizationData.new())
+	Diplomacy.declare_war(rival, other)
+	_make_unit("warrior", other, Vector2i(0, 0))
+	_rival_wants_peace(other)
+
+	assert_eq(RivalAI.decide_peace(rival, other), RivalAI.PEACE_DECISION_REFUSED, "o outro rival, em vantagem, recusa")
+	assert_true(rival.is_at_war_with(other))
 
 ## Roadmap "Parte E" E1 -- ANTES desta fatia, uma campanha ACTIVE
 ## sobrevivia intacta a uma paz aceita (era o comportamento documentado e
@@ -825,7 +920,7 @@ func test_decide_peace_leaves_war_active_when_refused():
 func test_decide_peace_abandons_active_war_campaign_on_acceptance():
 	_make_unit("warrior", rival, Vector2i(0, 0))
 	_make_unit("warrior", rival, Vector2i(1, 0))
-	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+	_rival_wants_peace(human)
 	rival.war_campaigns[human] = {
 		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
 		"target_coord": Vector2i(5, 0),
@@ -834,13 +929,15 @@ func test_decide_peace_abandons_active_war_campaign_on_acceptance():
 
 	var result = RivalAI.decide_peace(rival, human)
 
-	assert_eq(result, RivalAI.PEACE_DECISION_ACCEPTED, "pre-condicao: paz deveria ter sido aceita")
+	assert_eq(result, RivalAI.PEACE_DECISION_OFFERED, "pre-condicao: a proposta chegou ao humano")
+	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ACTIVE, "proposta sem resposta nao mexe na campanha")
+	assert_true(Diplomacy.answer_peace_offer(human, rival, true))
 	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ABANDONED, "paz aceita deveria abandonar a campanha ACTIVE contra o novo parceiro de paz (E1)")
 
 func test_decide_peace_ignores_terminal_campaign_status():
 	_make_unit("warrior", rival, Vector2i(0, 0))
 	_make_unit("warrior", rival, Vector2i(1, 0))
-	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+	_rival_wants_peace(human)
 	rival.war_campaigns[human] = {
 		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
 		"target_coord": Vector2i(5, 0),
@@ -849,7 +946,7 @@ func test_decide_peace_ignores_terminal_campaign_status():
 
 	var result = RivalAI.decide_peace(rival, human)
 
-	assert_eq(result, RivalAI.PEACE_DECISION_ACCEPTED, "campanha abandonada nao deveria impedir a decisao de paz")
+	assert_eq(result, RivalAI.PEACE_DECISION_OFFERED, "campanha abandonada nao deveria impedir a decisao de paz")
 
 ## Documenta a escolha de ordem em GameManager.gd (decide_peace roda ANTES
 ## de Diplomacy.process_war_weariness_and_upkeep no mesmo turno) em vez de
@@ -881,6 +978,7 @@ func test_decide_war_notifies_human_when_rival_declares_war():
 	rival.known_enemy_cities[target.coord] = true
 	human.enemies.erase(rival)
 	rival.enemies.erase(human) # comeca em paz -- decide_war precisa decidir declarar
+	_give_army(rival, 3) # 2026-10-15: sem exército mínimo (WAR_MIN_COMBAT_UNITS) a IA não declara
 
 	watch_signals(EventBus) # DEPOIS do found_city (que ja emite "Cidade fundada" pro dono humano) -- so queremos contar o notify de decide_war
 	for i in range(300):
@@ -889,13 +987,86 @@ func test_decide_war_notifies_human_when_rival_declares_war():
 			break
 
 	assert_true(rival.is_at_war_with(human), "pre-condicao: guerra deveria ter sido declarada")
-	assert_signal_emit_count(EventBus, "notify", 1)
+	assert_signal_emit_count(EventBus, "notify", 2, "um aviso quando a preparação começa e outro na declaração")
+
+## 2026-10-15 — guerra sem sorteio: pronta, a IA se prepara WAR_PREPARATION_TURNS turnos e só então declara —
+## sempre no mesmo turno para os mesmos fatos.
+func test_decide_war_is_deterministic_and_waits_the_preparation_turns():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.known_enemy_cities[target.coord] = true
+	Diplomacy.make_peace(human, rival)
+	DiplomaticMemory.record(rival, human).last_peace = -1 # sem a espera de renovação pós-paz
+	DiplomaticMemory.record(rival, human)[DiplomaticMemory.PEACE] = 0.0
+	TurnManager.turn_number += Diplomacy.TRUCE_TURNS
+	_give_army(rival, 3)
+	assert_true(RivalAI.war_readiness(rival, hex_grid, human).ready, "pre-condicao: pronto para a guerra")
+
+	for i in range(RivalAI.WAR_PREPARATION_TURNS - 1):
+		RivalAI.decide_war(rival, hex_grid, human)
+		assert_false(rival.is_at_war_with(human), "turno %d de preparação: ainda não declarou" % (i + 1))
+	assert_true(RivalAI.is_preparing_war(rival), "a preparação é visível para a produção")
+	RivalAI.decide_war(rival, hex_grid, human)
+	assert_true(rival.is_at_war_with(human), "no último turno de preparação declara")
+	TurnManager.turn_number -= Diplomacy.TRUCE_TURNS
+
+func test_decide_war_without_an_army_never_declares():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.known_enemy_cities[target.coord] = true
+	human.enemies.erase(rival)
+	rival.enemies.erase(human)
+	for i in range(20):
+		RivalAI.decide_war(rival, hex_grid, human)
+	assert_false(rival.is_at_war_with(human))
+	assert_eq(String(RivalAI.war_readiness(rival, hex_grid, human).block), "small_army")
+
+func test_a_friendly_rival_never_declares_war():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	rival.known_enemy_cities[target.coord] = true
+	human.enemies.erase(rival)
+	rival.enemies.erase(human)
+	_give_army(rival, 3)
+	var memory := DiplomaticMemory.record(rival, human)
+	memory[DiplomaticMemory.AGGRESSION] = 0.0
+	memory[DiplomaticMemory.PEACE] = 20.0
+	memory[DiplomaticMemory.BORDERS] = 10.0
+	for i in range(20):
+		RivalAI.decide_war(rival, hex_grid, human)
+	assert_false(rival.is_at_war_with(human), "amistoso: a memória tira a guerra de cogitação")
+
+func test_grudge_makes_war_come_sooner():
+	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
+	var target := hex_grid.found_city(Vector2i(5, 0), human, "Alvo")
+	target.fortification_level = 1 # vulnerabilidade 0: o score base sozinho (1.0 + força) fica abaixo do limiar
+	rival.known_enemy_cities[target.coord] = true
+	human.enemies.erase(rival)
+	rival.enemies.erase(human)
+	_give_army(rival, 3)
+	_give_army(human, 3)
+	DiplomaticMemory.record(rival, human)[DiplomaticMemory.AGGRESSION] = 0.0
+	assert_false(RivalAI.war_readiness(rival, hex_grid, human).ready, "sem rancor, o alvo murado não justifica a guerra")
+	DiplomaticMemory.on_city_captured(rival, human)
+	DiplomaticMemory.on_city_captured(rival, human)
+	assert_true(RivalAI.war_readiness(rival, hex_grid, human).ready, "duas cidades tomadas: o rancor empurra para a guerra")
+	assert_eq(RivalAI._war_reason(rival, human, RivalAI.war_readiness(rival, hex_grid, human)), "Retomar as cidades perdidas")
+
+func _give_army(player: PlayerData, count: int) -> void:
+	var placed := 0
+	for coord in [Vector2i(1, -1), Vector2i(0, 1), Vector2i(-1, 1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(2, 0), Vector2i(3, 0), Vector2i(4, 0), Vector2i(6, 0)]:
+		if placed >= count:
+			return
+		if hex_grid.get_unit_at(coord) == null and hex_grid.get_city_at(coord) == null:
+			_make_unit("warrior", player, coord)
+			placed += 1
 
 func test_decide_war_does_not_notify_when_opponent_is_not_the_human():
 	var third := _track_player(CivilizationData.new())
 	hex_grid.found_city(Vector2i(0, 0), rival, "Capital Rival")
 	var target := hex_grid.found_city(Vector2i(5, 0), third, "Alvo")
 	rival.known_enemy_cities[target.coord] = true
+	_give_army(rival, 3)
 
 	watch_signals(EventBus)
 	for i in range(300):
@@ -989,25 +1160,28 @@ func test_decide_campaign_does_not_notify_for_non_human_opponent():
 	assert_true(rival.war_campaigns.has(third), "pre-condicao: campanha deveria ter sido criada")
 	assert_signal_emit_count(EventBus, "notify", 0)
 
-func test_decide_peace_notifies_human_on_acceptance():
+## A proposta ao humano chega pelo sinal proprio (a UI abre o modal), nunca por um toast de "foi aceita/recusada".
+func test_decide_peace_announces_the_offer_to_the_human_through_the_offer_signal():
 	watch_signals(EventBus)
 	_make_unit("warrior", rival, Vector2i(0, 0))
-	_make_unit("warrior", rival, Vector2i(1, 0)) # rival mais forte -- humano aceita
-	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+	_make_unit("warrior", rival, Vector2i(1, 0))
+	_rival_wants_peace(human)
 
 	RivalAI.decide_peace(rival, human)
+	RivalAI.decide_peace(rival, human) # repetir no mesmo turno nao duplica a proposta
 
-	assert_signal_emit_count(EventBus, "notify", 1)
+	assert_signal_emit_count(EventBus, "peace_offered", 1)
+	assert_signal_emit_count(EventBus, "notify", 0)
+	assert_signal_emit_count(EventBus, "diplomacy_changed", 0, "nada mudou ainda")
 
-func test_decide_peace_notifies_human_on_refusal():
+func test_refusing_the_offer_is_recorded_as_a_diplomacy_event():
+	_rival_wants_peace(human)
+	RivalAI.decide_peace(rival, human)
 	watch_signals(EventBus)
-	_make_unit("warrior", human, Vector2i(0, 0))
-	_make_unit("warrior", human, Vector2i(1, 0)) # humano mais forte -- recusa
-	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
 
-	RivalAI.decide_peace(rival, human)
+	Diplomacy.answer_peace_offer(human, rival, false)
 
-	assert_signal_emit_count(EventBus, "notify", 1)
+	assert_signal_emitted_with_parameters(EventBus, "diplomacy_changed", ["peace_refused", rival, human, "Proposta de paz recusada"])
 
 ## Roadmap "Parte E" E1 -- paz aceita com uma campanha ACTIVE do rival
 ## contra o humano deveria gerar DOIS toasts distintos (paz + abandono),
@@ -1018,7 +1192,7 @@ func test_decide_peace_also_notifies_campaign_abandoned_when_active():
 	watch_signals(EventBus)
 	_make_unit("warrior", rival, Vector2i(0, 0))
 	_make_unit("warrior", rival, Vector2i(1, 0)) # rival mais forte -- humano aceita
-	rival.war_weariness = RivalAI.WAR_WEARINESS_OFFER_PEACE_THRESHOLD
+	_rival_wants_peace(human)
 	rival.war_campaigns[human] = {
 		"objective": RivalAI.WAR_OBJECTIVE_CONQUER,
 		"target_coord": Vector2i(5, 0),
@@ -1026,9 +1200,11 @@ func test_decide_peace_also_notifies_campaign_abandoned_when_active():
 	}
 
 	RivalAI.decide_peace(rival, human)
+	Diplomacy.answer_peace_offer(human, rival, true)
 
 	assert_eq(rival.war_campaigns[human].status, RivalAI.CAMPAIGN_STATUS_ABANDONED, "pre-condicao")
-	assert_signal_emit_count(EventBus, "notify", 2, "paz aceita + campanha abandonada -- dois eventos distintos, um toast cada")
+	assert_signal_emit_count(EventBus, "notify", 1, "so o abandono da campanha vira toast; a paz em si sai como evento de diplomacia")
+	assert_signal_emitted_with_parameters(EventBus, "diplomacy_changed", ["peace", rival, human, "Acordo de paz"])
 
 func test_decide_peace_does_not_notify_below_threshold():
 	watch_signals(EventBus)
@@ -1061,6 +1237,8 @@ func test_decide_war_eventually_declares_only_once_target_city_is_resource_rich(
 	var target_city := hex_grid.found_city(target_coord, opponent, "Capital Alvo")
 	target_city.fortification_level = 1 # Fase 16 (Fortificação V2): vulnerabilidade 0, isola o termo de recursos
 	attacker.known_enemy_cities[target_coord] = true
+	_give_army(attacker, 3) # 2026-10-15: exército mínimo para declarar; forças IGUAIS para o termo de força ficar 0
+	_give_army(opponent, 3)
 
 	var declared_without_resources := false
 	for i in range(300):

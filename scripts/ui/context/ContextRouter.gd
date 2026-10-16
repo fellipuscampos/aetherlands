@@ -34,8 +34,19 @@ var _suppressed := false
 
 var _unit: Unit
 var _city: City
+## Pedido EXPLÍCITO do roteamento em curso (deep link de cidade/unidade, unidade recém-selecionada, clique no
+## seletor): vale só para `_preferred_coord` e vence a aba lembrada abaixo.
 var _preferred_mode := ""
 var _preferred_coord := NO_COORD
+## ABA LEMBRADA POR TILE (coord -> modo) — pedido do usuário: "às vezes uma tropa fica em cima de algum prédio como a
+## cidade, eu seleciono a tropa na aba, mas todas as vezes que dou próximo turno ele abre na cidade e eu tenho que
+## mudar pra tropa de novo e de novo... quero que a aba abra, ao clicar no tile, na última aba que eu abri ali".
+## Antes só existia `_preferred_mode`, um único espaço que qualquer clique em OUTRO tile apagava — num turno normal
+## (mexer nas outras unidades e voltar) a escolha nunca sobrevivia. Só o clique do jogador no seletor escreve aqui
+## (_on_selector_pressed); deep links e seleção automática não. Estado de interface: nunca vai para o save, e vale
+## para o mapa em que foi criada (`_remembered_map_seed`).
+var _remembered_tabs: Dictionary = {}
+var _remembered_map_seed := 0
 var _pending_tile := false
 var _pending_tile_coord := NO_COORD
 var _pending_tile_data_null := false
@@ -71,6 +82,7 @@ func setup(context_host: PanelContainer) -> void:
 		# Texto com quebra só tem altura final depois do layout: o conteúdo avisa e a
 		# shell reajusta a altura do host (coalescido, sem polling).
 		(panel.get_node("Scroll/Body") as Control).minimum_size_changed.connect(_on_content_resized)
+		(panel as Control).minimum_size_changed.connect(_on_content_resized)
 	selector.minimum_size_changed.connect(_on_content_resized)
 	host.visible = false
 	_connect_signals()
@@ -149,7 +161,9 @@ func open_unit(unit: Unit) -> void:
 		SelectionManager.select_unit(unit)
 		flush()
 	else:
-		_show_unit(unit)
+		_preferred_mode = MODE_UNIT
+		_preferred_coord = unit.coord
+		_route_tile(unit.coord)
 
 func close_context() -> void:
 	SelectionManager.cancel_active_targeting()
@@ -163,6 +177,7 @@ func reset() -> void:
 	_city = null
 	_preferred_mode = ""
 	_preferred_coord = NO_COORD
+	_remembered_tabs.clear()
 	_pending_tile = false
 	_pending_unit = false
 	_pending_refresh = false
@@ -316,6 +331,10 @@ func _route_tile(target: Vector2i) -> void:
 	options.append(MODE_TILE)
 	var own_selected := unit_visible and unit.owner_player == human and SelectionManager.selected_unit == unit
 	var wanted := _preferred_mode
+	if wanted == "":
+		wanted = _remembered_tab(grid, target)
+	# Unidade PRÓPRIA só abre o painel dela quando está selecionada (os comandos agem sobre a seleção): o clique no
+	# mundo já a seleciona; num roteamento sem seleção (foco de evento, refresh) cai no padrão, sem esquecer a aba.
 	if wanted == "" or not wanted in options or (wanted == MODE_UNIT and unit_visible and unit.owner_player == human and not own_selected):
 		if city_visible:
 			wanted = MODE_CITY
@@ -333,7 +352,29 @@ func _route_tile(target: Vector2i) -> void:
 		_:
 			_show_tile(target)
 	_pending_city_tab = ""
+	# O pedido explícito vale para ESTE roteamento: no próximo clique no mesmo tile quem decide é a aba lembrada
+	# (senão um deep link de cidade — "cidade ociosa" — prenderia o tile na Cidade até o jogador clicar em outro).
+	_preferred_mode = ""
 	_rebuild_selector(city if city_visible else null, unit if unit_visible else null)
+
+## Aba que o jogador escolheu por último em `target` ("" = nenhuma). Escolha que deixou de existir no tile (a unidade
+## saiu, a cidade caiu) é esquecida aqui, para não reaparecer turnos depois com outro ocupante.
+func _remembered_tab(grid: HexGrid, target: Vector2i) -> String:
+	if grid.map_seed != _remembered_map_seed:
+		_remembered_tabs.clear() # outra partida: as coordenadas não significam mais nada
+		_remembered_map_seed = grid.map_seed
+	var remembered := String(_remembered_tabs.get(target, ""))
+	if remembered != "" and not remembered in options:
+		_remembered_tabs.erase(target)
+		return ""
+	return remembered
+
+func _remember_tab(target: Vector2i, chosen: String) -> void:
+	var grid := GameManager.hex_grid
+	if grid != null and grid.map_seed != _remembered_map_seed:
+		_remembered_tabs.clear()
+		_remembered_map_seed = grid.map_seed
+	_remembered_tabs[target] = chosen
 
 func _show_city(city: City, tab: String) -> void:
 	_city = city
@@ -464,8 +505,7 @@ func _rebuild_selector(city: City, unit: Unit) -> void:
 		button.focus_mode = Control.FOCUS_ALL
 		button.theme_type_variation = &"GhostButton"
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.add_theme_font_size_override("font_size", UIThemeTokens.FONT_CAPTION)
-		button.custom_minimum_size.y = 32
+		button.custom_minimum_size.y = 34
 		button.clip_text = true
 		match option:
 			MODE_CITY:
@@ -481,18 +521,15 @@ func _rebuild_selector(city: City, unit: Unit) -> void:
 				button.name = "Select_tile"
 				button.text = "Terreno"
 		button.set_pressed_no_signal(option == mode)
-		var accent := UIThemeTokens.COLOR_ACCENT if option == mode else Color(UIThemeTokens.COLOR_BORDER, 0.7)
-		var style := UITheme.panel_style(UIThemeTokens.COLOR_SURFACE_RAISED if option == mode else Color(0, 0, 0, 0), accent, 1, UIThemeTokens.RADIUS_CONTROL, false)
-		style.content_margin_top = 2
-		style.content_margin_bottom = 2
-		button.add_theme_stylebox_override("normal", style)
-		button.add_theme_stylebox_override("pressed", style)
+		preload("res://scripts/ui/HUDChromeTheme.gd").style_tab(button, option == mode, Settings.ui_scale_percent / 100.0)
+		button.tooltip_text = button.text
 		button.pressed.connect(_on_selector_pressed.bind(option))
 		selector.add_child(button)
 
 func _on_selector_pressed(option: String) -> void:
 	_preferred_mode = option
 	_preferred_coord = coord
+	_remember_tab(coord, option)
 	var grid := GameManager.hex_grid
 	if option == MODE_UNIT and grid != null:
 		var unit: Unit = grid.get_unit_at(coord)

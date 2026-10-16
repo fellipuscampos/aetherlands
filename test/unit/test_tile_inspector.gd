@@ -283,16 +283,30 @@ func test_empty_tile_shows_only_terrain():
 	assert_string_contains(text, "Mov. ")
 	assert_false("Comida" in text, "Fase 25: rendimento V1 do terreno não aparece")
 
+## Trio que existe de verdade no mesmo tile: unidade + perigo temporário + recurso. (Prédio + recurso não coexistem
+## mais: a obra destrói o recurso — ver o teste seguinte.)
 func test_multiple_entities_keep_priority_order_and_are_all_reachable():
+	hex_grid.tiles[Vector2i(1, 0)].resource = "horses"
+	MonsterHazardSystem.roots[Vector2i(1, 0)] = TurnManager.turn_number + 3
+	_unit("warrior", human, Vector2i(1, 0))
+	var inspection := _inspect(Vector2i(1, 0))
+	MonsterHazardSystem.roots.erase(Vector2i(1, 0))
+	assert_eq(_kinds(inspection), [TileInspector.KIND_UNIT, TileInspector.KIND_HAZARD, TileInspector.KIND_RESOURCE])
+	assert_string_contains(_text(inspection, "hazard:roots"), "Raízes do Mundo")
+	assert_string_contains(_text(inspection, "resource"), "Recurso: Cavalos")
+	assert_string_contains(_text(inspection, "no-such-key"), "Guarda", "chave desconhecida cai na entidade principal")
+	assert_string_contains(TileInspector.summary_line(inspection), "também aqui: ")
+
+## Prédio em cima de recurso: o recurso foi destruído (HexGrid.destroy_resource_at), então o tile lista a unidade e o
+## prédio — nunca um recurso fantasma embaixo dele.
+func test_a_building_over_a_resource_leaves_no_resource_entry():
 	hex_grid.tiles[Vector2i(1, 0)].resource = "horses"
 	hex_grid.place_building(Vector2i(1, 0), "v2_building_market", human)
 	_unit("warrior", human, Vector2i(1, 0))
 	var inspection := _inspect(Vector2i(1, 0))
-	assert_eq(_kinds(inspection), [TileInspector.KIND_UNIT, TileInspector.KIND_BUILDING, TileInspector.KIND_RESOURCE])
+	assert_eq(_kinds(inspection), [TileInspector.KIND_UNIT, TileInspector.KIND_BUILDING])
 	assert_string_contains(_text(inspection, "building"), "Rendimento")
-	assert_string_contains(_text(inspection, "resource"), "Recurso: Cavalos")
-	assert_string_contains(_text(inspection, "no-such-key"), "Guarda", "chave desconhecida cai na entidade principal")
-	assert_string_contains(TileInspector.summary_line(inspection), "também aqui: ")
+	assert_false("Recurso:" in _text(inspection, "resource"), "aba de recurso não existe: cai na entidade principal")
 
 func test_city_outranks_a_garrisoned_unit_and_both_are_listed():
 	hex_grid.found_city(Vector2i(0, 0), human, "Alvorada")

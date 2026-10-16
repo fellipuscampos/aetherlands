@@ -27,13 +27,13 @@ const BRANCHES := {
 		"base": "v2_unit_cavalier", "evolution": "v2_unit_shock_cavalier", "elite": "v2_unit_armored_cavalier",
 		"hall": "v2_building_war_stable", "mastery": "v2_building_cavalry_mastery", "legend": "v2_legendary_griffon_rider",
 		"techniques": ["v2_technique_charge", "v2_technique_tactical_retreat"],
-		"costs": [24.0, 38.0, 56.0], "legend_cost": 100.0,
+		"costs": [26.0, 42.0, 60.0], "legend_cost": 95.0,
 	},
 	"rogue": {
 		"base": "v2_unit_rogue", "evolution": "v2_unit_saboteur", "elite": "v2_unit_assassin",
 		"hall": "v2_building_rogue_guild", "mastery": "v2_building_rogue_mastery", "legend": "v2_legendary_shadow_master",
 		"techniques": ["v2_technique_sneak_attack", "v2_technique_dismantle"],
-		"costs": [20.0, 32.0, 48.0], "legend_cost": 95.0,
+		"costs": [20.0, 32.0, 48.0], "legend_cost": 90.0,
 	},
 	"siege": {
 		"base": "v2_unit_catapult", "evolution": "v2_unit_trebuchet", "elite": "v2_unit_bombard",
@@ -47,7 +47,7 @@ const BRANCHES := {
 func _branch_player(branch: String, through: int) -> PlayerData:
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		player.v2_research.complete_research("v2_doctrine_%s_%d" % [branch, n])
 	return player
 
@@ -182,7 +182,7 @@ func test_the_unlock_system_connects_all_six_doctrines_by_the_same_type_table():
 		for node in V2ResearchDatabase.nodes_for_branch(V2ResearchNode.TreeType.MILITARY_DOCTRINE, branch):
 			assert_true(node.gameplay_connected, node.id)
 			assert_true(node.unlock_type in V2UnlockSystem.CONNECTED_TYPES, "%s (%s)" % [node.id, node.unlock_type])
-	assert_eq(V2DoctrineContent.CONNECTED_UNLOCK_IDS.size(), 55, "9 do Guardião + 9 do Guerreiro + 9 do Patrulheiro + 9 da Cavalaria + 9 do Ladino + 9 do Cerco + 1 capstone (Fase 12)")
+	assert_eq(V2DoctrineContent.CONNECTED_UNLOCK_IDS.size(), 49, "8 do Guardião + 8 do Guerreiro + 8 do Patrulheiro + 8 da Cavalaria + 8 do Ladino + 8 do Cerco + 1 capstone (Fase 12)")
 
 func test_each_doctrine_announces_its_unlocks_with_the_same_generic_texts():
 	assert_eq(V2UnlockSystem.announcement_text("building", "Salão de Armas"), "Novo prédio disponível: Salão de Armas")

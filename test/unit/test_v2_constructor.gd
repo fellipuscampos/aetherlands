@@ -123,7 +123,8 @@ func test_improving_a_resource_is_instant_never_touches_production_gold_mana_or_
 	assert_eq(s.city.resource_improvements[Vector2i(1, 0)], "v2_improvement_iron_mine")
 	var marker: Node3D = s.grid.improvement_markers_by_coord.get(Vector2i(1, 0))
 	assert_not_null(marker, "indicação visual no mapa")
-	assert_eq(marker.get_child_count(), 2, "modelo KayKit existente (mina) + selo dourado -- nenhum asset novo")
+	assert_eq(marker.get_child_count(), 1, "a mina completa substitui o selo dourado legado")
+	assert_eq(marker.get_child(0).scene_file_path, V2ResourceImprovementData.model_scene_path_for_resource("iron"), "a melhoria usa a arte de ferro registrada no catálogo")
 
 func test_improving_consumes_the_charge_and_the_units_action():
 	var s := _grid_with_city()

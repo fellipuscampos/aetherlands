@@ -84,9 +84,19 @@ Nomes visíveis provisórios: `Guardião I … IX`, `Sagrada I … IX`, `Economi
 
 ### `tier_role` (design oficial, NÃO placeholder)
 
+> **Mudança 2026-10-09 — o N1 de portão saiu.** `doctrine_unlock`/`school_unlock` ("Doutrina do X"/"Escola X")
+> não liberavam nada além do próprio N2 (sem bônus nem mecânica) e foram removidos das 12 linhas. Cada linha
+> começa no tier 2 (prédio de treino / prédio da Escola), sem pré-requisito: 49 + 49 + 18 = **116 nós**.
+> Ids e tiers dos demais nós **não mudaram** (saves, conteúdo e a semântica N3 = unidade-base / N9 = Lendário
+> continuam válidos); o jogador vê a POSIÇÃO na linha (`V2ResearchDatabase.display_tier`: "N1".."N8"). Os tipos de
+> unlock `doctrine`/`school` saíram de `V2UnlockSystem.CONNECTED_TYPES`. Saves antigos: o N1 concluído é ignorado
+> e o Conhecimento investido num N1 inacabado volta ao saldo guardado (`V2ResearchDatabase.is_retired_node_id` +
+> `V2ResearchState._read_progress`). A IA não tem caso especial: escolhe entre os nós disponíveis como sempre.
+> As tabelas e fases abaixo são o registro histórico (com o N1).
+
 | Nível | Doutrinas | Escolas |
 |---|---|---|
-| N1 | `doctrine_unlock` | `school_unlock` |
+| N1 | ~~`doctrine_unlock`~~ (removido) | ~~`school_unlock`~~ (removido) |
 | N2 | `training_structure` | `school_building` |
 | N3 | `base_unit` | `caster` |
 | N4 | `technique_1` | `basic_spell` |
@@ -1824,6 +1834,12 @@ Uma unidade cercada de terreno impassável **não** consegue recuar (o terrestre
 
 ### Voo tático (Cavaleiro de Grifo)
 
+> **2026-10-10 — o Cavaleiro de Grifo NÃO voa mais** (pedido do usuário, nas 4 raças): perfil de movimento terrestre
+> comum, como o resto da cavalaria (Carga e Retirada Tática pelas regras terrestres; aceita ordem de vários turnos). Mantém
+> os números (36 / 10,0 / 6,5 / mov. 5), os traços montado + Lendário e a vulnerabilidade de +25% a ataques à distância.
+> O perfil FLYING continua existindo e hoje é usado só pelas Manifestações; os testes do sistema de voo usam a unidade
+> voadora de teste `_flyer` (`test/unit/v2_combat_fixture.gd`). O texto abaixo é o histórico da Fase 9.
+
 Regras (decisões abaixo):
 
 - **Alcance:** até o Movimento (5) em **distância geométrica** (`HexMetrics.coords_within`, só o raio de movimento — **sem BFS global**), por cima de **qualquer terreno e de qualquer unidade no meio do caminho**.
@@ -2777,12 +2793,17 @@ como descrição conceitual, não como símbolos reais) — confirmado por busca
 Nenhuma outra classe hardcoda slots/limite repetível/raio/Pontos de Anexação/custo — todas
 consultam aqui. **BALANCE PLACEHOLDER** (nenhum número balanceado):
 
-| Nível | Slots | Cópias/prédio repetível | Raio territorial | Pontos de Anexação ao chegar | Pesquisa exigida |
-|---|---:|---:|---:|---:|---|
-| I | 4 | 1 | 1 | 0 (nasce nele) | nenhuma |
-| II | 7 | 2 | 2 | 4 | Planejamento Urbano (N1) |
-| III | 10 | 3 | 3 | 5 | Cidade Fortificada (N2) |
-| IV | 13 | 4 | 4 | 6 | Metrópole (N3) |
+| Nível | Slots | Cópias/prédio repetível | Raio territorial | Visão | Pontos de Anexação ao chegar | Pesquisa exigida |
+|---|---:|---:|---:|---:|---:|---|
+| I | 4 | 1 | 1 | 4 | 0 (nasce nele) | nenhuma |
+| II | 7 | 2 | 2 | 5 | 4 | Planejamento Urbano (N1) |
+| III | 10 | 3 | 3 | 6 | 5 | Cidade Fortificada (N2) |
+| IV | 13 | 4 | 4 | 7 | 6 | Metrópole (N3) |
+
+Visão (2026-10-09, pedido do usuário): cada evolução soma +1 tile —
+`V2CityLevelData.vision_range(level) = BASE_VISION_RANGE (4) + (level - 1)`, consumida por
+`City.vision_range()` em `HexGrid.compute_visible_tiles` (névoa do humano, visão da IA, defesa e
+ecologia de monstros usam a mesma função). A antiga `HexGrid.CITY_VISION_RANGE` saiu.
 
 Custo do **projeto local** (produção da própria cidade) por transição: I→II = 60 PP + 30 Ouro;
 II→III = 120 PP + 70 Ouro; III→IV = 220 PP + 140 Ouro. `is_developed(level) = level >= 3` — única
@@ -2988,8 +3009,8 @@ um tile ou quando level/pontos mudam — nunca por frame.
   Fase 14; o mecanismo `CopyLimitMode.CITY_LEVEL` só foi provado com fixture de teste.
 - **UI de anexação sem clique de mouse simulado de verdade** nos testes automatizados (mira,
   realce e ESC reais; o clique em si foi chamado direto, mesmo padrão das Fases 7-11).
-- **City Level não afeta visão, HP/Defesa, Produção ou geração de recurso** — intencional, fora do
-  escopo desta fase (§53-56 do pedido).
+- **City Level não afeta Produção nem geração de recurso** — intencional, fora do escopo desta
+  fase (§53-56 do pedido). HP passou a escalar na Fase 16 e visão em 2026-10-09 (+1 por nível).
 - **A IA não pesquisa Urbanização nem produz City Project** — comportamento estratégico é fase
   futura.
 - Fora do escopo, **não implementado:** Mercado, Fazenda, Oficina, Academia, Santuário Arcano,
@@ -4408,8 +4429,9 @@ dono de terreno, bônus de recurso, Transcendência funcional, Ritual Final, IA 
   explorar, IA), os laços passo a passo de `continue_move_order` e `explore_step`, e `RivalAI.move_unit_toward`.
   `flight_reachable` (voo tático) usa distância geométrica, `infiltrate_reachable` (Passo Sombrio) e `flat_cost`
   (Retirada Tática) custam 1 por passo, e o voo V1 (`flies`) paga 1 — **todos já ignoram o custo do terreno-base**.
-- **Defesa:** `CombatResolver.predict` soma o `defense_bonus` do terreno do defensor (voadores inclusive); o Mago V1
-  (`ignores_terrain_defense`) ignora terreno/prédio/Fortificar. O dano mágico V2 (`predict_damage`) nunca lê Defesa.
+- **Defesa:** (2026-10-09) o terreno-base **não** dá Defesa — `HexTileData.defense_bonus` foi removido; só a modificação
+  druídica (fator próprio) e a Defesa urbana/Fortificar contam como proteção de lugar. O Mago V1
+  (`ignores_terrain_defense`, nome mantido) ignora essas três. O dano mágico V2 (`predict_damage`) nunca lê Defesa.
 - **Estruturas:** `buildings_by_coord` (prédios), `City.resource_improvements` + `improvement_markers_by_coord`
   (melhorias V2), `lairs_by_coord` (covis), `cities_by_coord`. Colocação: `HexGrid.place_building` (fila e load),
   `V2ConstructorRuntime.improve_resource`, `HexGrid.found_city`.
@@ -5735,8 +5757,9 @@ prédio, pesquisa, feitiço, vitória ou regra de IA exclusiva.
 ## Auditoria do roster racial
 
 O código, e não um arquétipo presumido, foi usado como autoridade. `GameSetupScreen.RACE_INFO` e os quatro botões
-da tela de nova partida formam o roster jogável; `GameManager.RIVAL_CIVS` fornece as mesmas três raças rivais quando
-o humano ocupa uma delas. O id canônico vive em `CivilizationData.race`: o humano o escolhe no setup e ele é salvo
+da tela de nova partida formam o roster jogável; `GameManager.AI_CIVS` tem uma civilização de IA por raça e os
+rivais são as raças que o jogador não escolheu (`rival_races_for`; até 2026-10-12 a lista era fixa em elfo/anão/orc e
+repetia a raça do jogador). O id canônico vive em `CivilizationData.race`: o humano o escolhe no setup e ele é salvo
 em `human_race`; rivais são reconstruídos pelas entradas canônicas do `GameManager`. `RaceTheme` continua cuidando
 somente de nomes/cores/escala visual.
 
@@ -8221,3 +8244,26 @@ Nenhum número de balanceamento mudou.
 - Testes: +5 (`test_phase33d_review.gd`); suíte completa 3546/3546, 175 scripts, 372.490 asserts (antes 3541/174/372.473); smokes D3 até T200: 24/24 sem erro; 23 idênticas aos registros pré-revisão; só F33B-014 mudou (efeito de R1: TIMEOUT T200 → Supremacia T197), com reexecução idêntica (determinismo); R2 não foi acionada em nenhum smoke.
 
 **CLEARED AFTER FIXES — FIXES APPLIED AND VERIFIED.**
+
+## Linha de Colonização (2026-10-09)
+
+Sétima linha de Infraestrutura (`colonization`, `branch_role = "expansion"`), mesma curva de custo (16/48/120):
+
+| Nível | Nó | `unlock_id` | Efeito |
+|---|---|---|---|
+| I | Expedições | `v2_settler_limit_1` | até 1 Colono treinado na partida |
+| II | Colônias | `v2_settler_limit_2` | até 2 Colonos treinados na partida |
+| III | Expansão Territorial | `v2_settler_limit_unlimited` | sem limite |
+
+- **Sem nenhum nível, nenhuma cidade treina Colono.** O Colono inicial é grátis e não conta.
+- O limite é do MAIOR nível concluído (`V2ColonizationData.SETTLER_LIMIT_BY_UNLOCK`); o uso é
+  `PlayerData.settlers_trained` (Colonos nascidos de produção, salvo como `"settlers_trained"`; save antigo = 0)
+  + cidades produzindo um Colono agora. Fundar cidade ou perder o Colono **não** devolve a vaga.
+- `V2ColonizationRuntime` segue o molde do slot Lendário: `City.can_train` barra ao iniciar (reserva por produção em
+  outras cidades), `production_eligibility_reason` revalida na captura (`"settler_limit"`), `GameManager` recusa
+  fail-closed no nascimento (PP devolvidos) e registra o treino. Colono reconhecido por dado (`can_found_city`).
+- Tipo de unlock próprio `settler_limit` (declarado na entrada de `V2InfrastructureContent`; toast "Colonização
+  ampliada: …"). A HUD mostra o Colono desabilitado com o motivo (`training_soft_reason`).
+- IA: `V2StrategicAI.wants_more_cities` (a mesma meta que decide produzir Colono) + urgência `"expansion"`
+  (`V2AITuning.EXPANSION_RESEARCH_URGENCY`) quando a meta pede um Colono que o limite barra.
+- Árvore: 49 + 49 + 21 = **119 nós**. Testes: `test_v2_colonization.gd`.

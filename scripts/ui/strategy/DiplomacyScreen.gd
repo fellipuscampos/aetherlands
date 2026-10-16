@@ -210,8 +210,30 @@ func _render_detail(data: Dictionary) -> void:
 		war.tooltip_text = AETooltip.compose("Declarar Guerra", "Pede confirmação antes de mudar o estado.", [], String(data.declare_reason))
 		war.pressed.connect(request_declare_war.bind(rival))
 		row.add_child(war)
+		# Fronteiras abertas: pedir (a civilização aceita ou recusa na hora) ou encerrar o acordo que existe.
+		var borders := AEButton.new()
+		if bool(data.has_open_borders):
+			borders.name = "EndOpenBordersButton"
+			borders.kind = AEButton.Kind.GHOST
+			borders.text = "Encerrar Fronteiras Abertas"
+			borders.disabled = not data.can_end_open_borders
+			borders.tooltip_text = AETooltip.compose("Encerrar Fronteiras Abertas", "As fronteiras fechadas voltam a valer e as tropas de cada reino saem do território do outro.")
+			borders.pressed.connect(_on_end_open_borders.bind(rival))
+		else:
+			borders.name = "RequestOpenBordersButton"
+			borders.kind = AEButton.Kind.PRIMARY
+			borders.text = "Solicitar Fronteiras Abertas"
+			borders.disabled = not data.can_request_open_borders
+			var forecast := String(data.open_borders_forecast)
+			borders.tooltip_text = AETooltip.compose("Solicitar Fronteiras Abertas", "Se aceitarem, as unidades dos dois reinos passam a entrar no território um do outro mesmo em paz. %s" % ("Devem recusar agora: %s." % forecast if forecast != "" else "Devem aceitar agora."), [], String(data.open_borders_reason))
+			borders.pressed.connect(_on_request_open_borders.bind(rival))
+		row.add_child(borders)
 		if String(data.declare_reason) != "" and not data.can_declare_war:
 			actions.add_child(ContextUI.label(String(data.declare_reason), UIThemeTokens.FONT_CAPTION, UIThemeTokens.COLOR_WARNING))
+		if String(data.open_borders_reason) != "" and not bool(data.has_open_borders):
+			var borders_reason := ContextUI.label(String(data.open_borders_reason), UIThemeTokens.FONT_CAPTION, UIThemeTokens.COLOR_WARNING)
+			borders_reason.name = "OpenBordersReason"
+			actions.add_child(borders_reason)
 	else:
 		actions.add_child(ContextUI.caption("Nenhuma ação diplomática com uma civilização eliminada."))
 	if not last_peace_result.is_empty():
@@ -234,6 +256,34 @@ func _on_propose_peace(rival: PlayerData) -> void:
 	if not accepted:
 		# Recusa não gera evento de domínio; o toast legado segue como confirmação curta.
 		EventBus.notify.emit(last_peace_result, "")
+	refresh()
+
+## Pede fronteiras abertas: a IA responde na hora (Diplomacy.request_open_borders) e o resultado aparece na própria
+## tela (mesmo rótulo do resultado da paz) e no histórico de eventos.
+func _on_request_open_borders(rival: PlayerData) -> void:
+	var human := GameManager.human_player
+	if human == null or rival == null or GameManager.is_turn_processing:
+		return
+	var forecast := Diplomacy.open_borders_refusal_reason(rival, human)
+	match Diplomacy.request_open_borders(human, rival):
+		Diplomacy.OPEN_BORDERS_ACCEPTED:
+			last_peace_result = "%s aceitou abrir as fronteiras." % rival.civ.civ_name
+		Diplomacy.OPEN_BORDERS_REFUSED:
+			last_peace_result = "%s recusou abrir as fronteiras: %s." % [rival.civ.civ_name, forecast]
+		Diplomacy.OPEN_BORDERS_OFFERED:
+			last_peace_result = "Pedido enviado a %s." % rival.civ.civ_name
+		_:
+			last_peace_result = ""
+	selected_rival = rival
+	refresh()
+
+func _on_end_open_borders(rival: PlayerData) -> void:
+	var human := GameManager.human_player
+	if human == null or rival == null or GameManager.is_turn_processing:
+		return
+	if Diplomacy.end_open_borders(human, rival):
+		last_peace_result = "Fronteiras abertas com %s encerradas." % rival.civ.civ_name
+	selected_rival = rival
 	refresh()
 
 ## Abre a confirmação curta via ModalManager (Cancelar / Declarar Guerra).

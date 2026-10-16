@@ -2,7 +2,8 @@ class_name CombatResolver
 extends RefCounted
 
 ## Combate simples: dano proporcional a diferenca entre ataque e defesa
-## (defesa multiplicada pelo bonus de terreno do defensor). O atacante
+## (a Defesa da propria unidade; o terreno-base nao protege ninguem desde
+## 2026-10-09, ver HexTileData). O atacante
 ## sempre gasta todo o movimento restante ao atacar. Unidades a distancia
 ## (attack_range >= 2, ex: arqueiro) atacando de fora do alcance
 ## corpo-a-corpo do defensor nao sofrem contra-ataque — o defensor
@@ -16,9 +17,9 @@ extends RefCounted
 ## detalhes"); bonus de defesa e o efeito CLASSICO do Fortificar em jogos
 ## de estrategia por turnos — sem ele, "Fortificar" seria so um sinonimo
 ## de "nao fazer nada". Reusa o mesmo "ignore_fortification" do Mago
-## abaixo (unit_data.ignores_terrain_defense) que ja ignora terreno/
-## Muralhas — fortificar tambem e uma fortificacao, magia ignora do mesmo
-## jeito.
+## abaixo (unit_data.ignores_terrain_defense) que ja ignora a Defesa urbana e
+## a modificacao druidica de terreno — fortificar tambem e uma fortificacao,
+## magia ignora do mesmo jeito.
 const FORTIFY_DEFENSE_BONUS := 0.25
 
 ## Defesa so MITIGA metade do proprio valor (nao anula ataque bruto 1 pra
@@ -53,19 +54,18 @@ const FLANKING_MAX_ALLIES := 2
 ## `defense_penetration` (0..1) reduz a CONTRIBUIÇÃO da Defesa do defensor antes da mitigação, só nesta resolução (o defensor não fica mais fraco
 ## depois); `prevents_counterattack` zera o revide desta resolução (o defensor, se sobreviver, continua sem nenhum estado). 0.0/false = idêntico a antes.
 static func predict(attacker: Unit, defender: Unit, hex_grid: HexGrid, strike_multiplier: float = 1.0, defense_penetration: float = 0.0, prevents_counterattack: bool = false) -> Dictionary:
-	var terrain: HexTileData = hex_grid.get_tile(defender.coord)
-	# Mago (unit_data.ignores_terrain_defense) atira magia: colinas/floresta/
-	# montanha (bonus de terreno) e Muralhas (bonus de predio) nao protegem
-	# o defensor contra isso.
+	# O terreno-base (floresta/colina/montanha) NÃO entra na Defesa (2026-10-09): só a Defesa da própria unidade e
+	# fontes explícitas — Defesa urbana, Fortificar, modificação druídica, técnicas, auras, feitiços e estados.
+	# Mago (unit_data.ignores_terrain_defense) atira magia: Defesa urbana, Fortificar e o terreno modificado pelos
+	# druidas não protegem o defensor contra isso.
 	var ignore_fortification := attacker.unit_data.ignores_terrain_defense
-	var terrain_bonus = terrain.defense_bonus if (terrain and not ignore_fortification) else 0.0
 	var building_bonus := 0.0
 	if not ignore_fortification:
 		var city = hex_grid.get_city_at(defender.coord)
 		if city and city.owner_player == defender.owner_player:
 			building_bonus = city.defense_bonus() # Fase 16: inclui a Fortificação V2
 	var fortify_bonus = FORTIFY_DEFENSE_BONUS if (defender.fortified and not ignore_fortification) else 0.0
-	var defense_multiplier = 1.0 + terrain_bonus + building_bonus + fortify_bonus
+	var defense_multiplier = 1.0 + building_bonus + fortify_bonus
 	# `strike_multiplier` (Fase 7): o multiplicador da TÉCNICA de ataque em curso (Golpe Poderoso 1,60; Ataque em
 	# Arco 0,75); 1.0 num ataque comum. É só mais um fator da mesma conta — nada de segunda fórmula.
 	# V2LogisticsRuntime.combat_multiplier (Fase 15): 0,85 em Ataque E Defesa se o DONO da unidade
@@ -76,8 +76,8 @@ static func predict(attacker: Unit, defender: Unit, hex_grid: HexGrid, strike_mu
 	var atk = attacker.unit_data.attack * attacker.veterancy_multiplier() * _flanking_multiplier(attacker, defender, hex_grid) * UnitAbilities.attack_multiplier(attacker, defender) * V2MagicRuntime.attack_multiplier(attacker) * V2EnvironmentalZoneSystem.physical_ranged_attack_multiplier(attacker, hex_grid) * strike_multiplier * V2LogisticsRuntime.combat_multiplier(attacker) * V2RaceBonusRuntime.combat_attack_multiplier(attacker)
 	# V2MagicRuntime.defense_multiplier (Fase 17, Égide Sagrada): UM fator a mais da mesma conta; sem estado mágico no
 	# defensor devolve 1.0 sem olhar feitiço nenhum.
-	# V2TerrainRuntime (Fase 20, modificação física de terreno sem dono): UM fator na Defesa física, pela MESMA regra do
-	# bônus do terreno-base (quem ignora o terreno — o Mago V1 — ignora também); 1.0 sem modificação no tile.
+	# V2TerrainRuntime (Fase 20, modificação física de terreno sem dono — feitiços druídicos): UM fator na Defesa física
+	# (quem ignora fortificação — o Mago V1 — ignora também); 1.0 sem modificação no tile.
 	var terrain_modification = 1.0 if ignore_fortification else V2TerrainRuntime.defense_multiplier_at(hex_grid, defender.coord)
 	var def = defender.unit_data.defense * defense_multiplier * terrain_modification * defender.veterancy_multiplier() * UnitAbilities.command_multiplier(defender) * V2TechniqueRuntime.defense_multiplier(defender, hex_grid) * V2UnitAuras.defense_multiplier(defender) * V2MagicRuntime.defense_multiplier(defender) * V2LogisticsRuntime.combat_multiplier(defender) * UnitStatusEffects.defense_multiplier(defender) # V3: Abalado/Petrificação
 	# Penetração de Defesa (Fase 10): só a contribuição da Defesa NESTE golpe é reduzida — o revide (abaixo) e qualquer outra resolução seguem com a
@@ -144,7 +144,7 @@ static func is_hostile_unit_target(owner: PlayerData, target: Unit, hex_grid: He
 static func can_attack_unit(attacker: Unit, target: Unit, hex_grid: HexGrid) -> bool:
 	if attacker == null or target == null or target == attacker or attacker.owner_player == null or not attacker.unit_data.can_basic_attack:
 		return false
-	if not attacker.can_receive_orders():
+	if not attacker.can_receive_orders() or attacker.embarked: # embarque automático: unidade de barco não ataca
 		return false
 	return is_hostile_unit_target(attacker.owner_player, target, hex_grid)
 
@@ -167,6 +167,7 @@ static func apply_direct_unit_damage(source: Unit, target: Unit, damage: float, 
 		hex_grid.spawn_damage_popup(target_coord, applied)
 	if target.owner_player == null and source.owner_player != null:
 		hex_grid.alert_lair_near(target_coord, TurnManager.turn_number)
+		MonsterAI.note_attacked(target, source, hex_grid, TurnManager.turn_number)
 	if target.hp > 0.0:
 		return false
 	source.register_kill()
@@ -201,19 +202,30 @@ static func apply_environmental_unit_damage(target: Unit, damage: float, hex_gri
 	hex_grid.remove_unit(target)
 	return true
 
+## " Protegido por Égide Sagrada." — os efeitos TEMPORÁRIOS de Defesa (feitiço ou Técnica) que estavam valendo em
+## `defender` neste golpe; "" se nenhum. Entra no aviso "foi atacado e resistiu": é no turno dos inimigos que esses
+## efeitos trabalham, e sem isto o jogador nunca via que o efeito ativado no turno dele tinha servido.
+static func defense_effects_note(defender: Unit, hex_grid: HexGrid) -> String:
+	if defender == null or not is_instance_valid(defender):
+		return ""
+	var names: Array[String] = V2MagicRuntime.active_defense_names(defender)
+	names.append_array(V2TechniqueRuntime.active_defense_names(defender, hex_grid))
+	return " Protegido por %s." % ", ".join(names) if not names.is_empty() else ""
+
 ## Regra ÚNICA de "esta CIDADE pode ser atacada por `attacker` agora" (Fase 11): dono diferente e em guerra — a MESMA condição
 ## que já valia embutida em SelectionManager._select_unit (attackable) desde antes desta fase; agora também usada pelas
 ## Técnicas de Cerco com alvo de cidade (Bombardeio Preparado). Sem neblina aqui: a visibilidade de alcance > 1 é
 ## responsabilidade de quem chama.
 static func can_attack_city(attacker: Unit, city: City) -> bool:
-	return attacker != null and city != null and attacker.owner_player != null and attacker.unit_data.can_basic_attack and attacker.can_receive_orders() and city.owner_player != attacker.owner_player and attacker.owner_player.is_at_war_with(city.owner_player)
+	return attacker != null and city != null and attacker.owner_player != null and attacker.unit_data.can_basic_attack and attacker.can_receive_orders() and not attacker.embarked and city.owner_player != attacker.owner_player and attacker.owner_player.is_at_war_with(city.owner_player)
 
 ## `strike_multiplier` (Fase 7), `defense_penetration`/`prevents_counterattack` (Fase 10): ver predict(). Só o Ataque/Defesa/revide DESTE golpe
 ## mudam; morte, abate, recompensa, notificações e o resto do combate são exatamente os do ataque normal.
 static func resolve(attacker: Unit, defender: Unit, hex_grid: HexGrid, strike_multiplier: float = 1.0, defense_penetration: float = 0.0, prevents_counterattack: bool = false) -> void:
 	# Fase 17: fail-closed — unidade sem ataque básico nunca resolve um ataque comum, venha de onde vier (seleção, IA...).
 	# Fase 19: idem para retinue sem comando (não inicia ataque; o revide dela é resolvido do lado do defensor).
-	if not attacker.unit_data.can_basic_attack or not attacker.can_receive_orders():
+	# Embarque automático: idem para quem está de barco (a IA e qualquer caminho futuro caem aqui, não só a seleção).
+	if not attacker.unit_data.can_basic_attack or not attacker.can_receive_orders() or attacker.embarked:
 		return
 	EventBus.combat_engagement.emit(attacker.owner_player, defender.owner_player, "unit", defender.coord) # Fase 33B: observabilidade
 	if attacker.unit_data.visual_kind == "catapult":
@@ -222,6 +234,14 @@ static func resolve(attacker: Unit, defender: Unit, hex_grid: HexGrid, strike_mu
 		_resolve_primary(attacker, defender, hex_grid, strike_multiplier, defense_penetration, prevents_counterattack)
 
 static func _resolve_primary(attacker: Unit, defender: Unit, hex_grid: HexGrid, strike_multiplier: float = 1.0, defense_penetration: float = 0.0, prevents_counterattack: bool = false) -> void:
+	var current_feedback := preload("res://scripts/vfx/CombatFeedback.gd").current()
+	if current_feedback == null or current_feedback.source_ref.get_ref() != attacker:
+		attacker.play_attack_visual(defender)
+	var feedback := preload("res://scripts/vfx/CombatFeedback.gd").begin_attack(attacker, hex_grid)
+	_resolve_primary_now(attacker, defender, hex_grid, strike_multiplier, defense_penetration, prevents_counterattack)
+	preload("res://scripts/vfx/CombatFeedback.gd").finish(feedback)
+
+static func _resolve_primary_now(attacker: Unit, defender: Unit, hex_grid: HexGrid, strike_multiplier: float, defense_penetration: float, prevents_counterattack: bool) -> void:
 	var result = predict(attacker, defender, hex_grid, strike_multiplier, defense_penetration, prevents_counterattack)
 
 	# So unidades com UnitData.attack_animation_override tem attack_animation
@@ -233,8 +253,6 @@ static func _resolve_primary(attacker: Unit, defender: Unit, hex_grid: HexGrid, 
 	# slide_to() ja e aceitavel visualmente sem precisar de timer.
 	# O atacante vira para o defensor (sem isso o golpe sai apontando pro lado que sobrou do ultimo slide_to() -- "ele nao
 	# usa a lanca", usuario) e toca o Attack -- ou o clipe proprio da tecnica em curso, uma vez por uso (Unit.play_attack_visual).
-	attacker.play_attack_visual(defender)
-
 	var attacker_name = attacker.unit_data.unit_name
 	var defender_name = defender.unit_data.unit_name
 	var attacker_is_human = attacker.owner_player == GameManager.human_player
@@ -250,7 +268,7 @@ static func _resolve_primary(attacker: Unit, defender: Unit, hex_grid: HexGrid, 
 
 	if not result.is_melee_range:
 		if defender_is_human:
-			EventBus.notify.emit("Seu %s foi atacado a distancia e resistiu!" % defender_name, "combat")
+			EventBus.notify.emit("Seu %s foi atacado a distancia e resistiu!%s" % [defender_name, defense_effects_note(defender, hex_grid)], "combat")
 		return
 
 	var attacker_coord = attacker.coord
@@ -270,7 +288,7 @@ static func _resolve_primary(attacker: Unit, defender: Unit, hex_grid: HexGrid, 
 			else:
 				EventBus.notify.emit("Seu %s foi derrotado ao atacar!" % attacker_name, "combat")
 	elif defender_is_human:
-		EventBus.notify.emit("Seu %s foi atacado e resistiu!" % defender_name, "combat")
+		EventBus.notify.emit("Seu %s foi atacado e resistiu!%s" % [defender_name, defense_effects_note(defender, hex_grid)], "combat")
 
 ## Dano em area (Roadmap "Fase Macro" 5B.3-D, Dragon World Event — item 4
 ## do pedido do usuario: "dano em area... reutilizar sistema existente de
@@ -286,6 +304,12 @@ static func _resolve_primary(attacker: Unit, defender: Unit, hex_grid: HexGrid, 
 ## hardcoded aqui) — DragonEvent e' o unico chamador hoje, mas nada aqui e'
 ## especifico de Dragao.
 static func resolve_with_splash(attacker: Unit, primary_defender: Unit, hex_grid: HexGrid, splash_radius: int, splash_damage_fraction: float) -> void:
+	attacker.play_attack_visual(primary_defender)
+	var feedback := preload("res://scripts/vfx/CombatFeedback.gd").begin_attack(attacker, hex_grid)
+	_resolve_splash_now(attacker, primary_defender, hex_grid, splash_radius, splash_damage_fraction)
+	preload("res://scripts/vfx/CombatFeedback.gd").finish(feedback)
+
+static func _resolve_splash_now(attacker: Unit, primary_defender: Unit, hex_grid: HexGrid, splash_radius: int, splash_damage_fraction: float) -> void:
 	var primary_coord := primary_defender.coord
 	_resolve_primary(attacker, primary_defender, hex_grid)
 	# Dragao morto pelo contra-ataque do proprio alvo primario -- nao
@@ -331,8 +355,38 @@ static func resolve_with_splash(attacker: Unit, primary_defender: Unit, hex_grid
 ## ataque comum — mais um fator da MESMA fórmula abaixo, nunca uma segunda fórmula de dano urbano. Munição Demolidora (Fase 11,
 ## `V2TechniqueRuntime.city_attack_multiplier`) entra pela mesma linha, incondicionalmente (1.0 pra quem não a tem/pesquisou):
 ## vale pro ataque básico de Cerco E pro Bombardeio, nunca pra covil (resolve_lair_attack não chama city_attack_multiplier).
+## O dano de UM golpe de `attacker` em `city` — a conta única do ataque a cidade (resolve_city_attack a aplica; a UI e
+## a IA a consultam por predict_city_attack). Ataque x veterania x bônus de cerco x técnica, reduzido pela Defesa
+## urbana (prédios defensivos + Fortificação V2, City.defense_bonus); nunca abaixo de 1.
+static func city_attack_damage(attacker: Unit, city: City, max_damage_fraction_of_current_hp: float = 1.0, strike_multiplier: float = 1.0) -> float:
+	var defense_bonus := city.defense_bonus() # Fase 16: prédios defensivos + Fortificação V2, mesma fórmula
+	var damage: float = max(1.0, (attacker.unit_data.attack * attacker.veterancy_multiplier() * UnitAbilities.city_attack_multiplier(attacker) * strike_multiplier * V2TechniqueRuntime.city_attack_multiplier(attacker)) / (1.0 + defense_bonus))
+	# Capa (se pedida) -- nunca abaixo de 1.0 mesmo assim, pra sempre
+	# continuar sendo um ataque de verdade (mesma convencao de "dano
+	# minimo 1.0" ja usada na linha acima).
+	return max(1.0, min(damage, city.hp * max_damage_fraction_of_current_hp))
+
+## O que um ataque comum de `attacker` faria a `city` AGORA, sem aplicar nada: {damage, shield_damage, hp_damage,
+## captures}. Mesmas regras de resolve_city_attack (o escudo absorve primeiro; a Torre de Cerco o ignora; atacante sem
+## dono nunca captura).
+static func predict_city_attack(attacker: Unit, city: City) -> Dictionary:
+	var damage := city_attack_damage(attacker, city)
+	var shield_damage := 0.0
+	if city.shield > 0.0 and attacker.unit_data.visual_kind != "torre_de_cerco":
+		shield_damage = minf(city.shield, damage)
+	var hp_damage := damage - shield_damage
+	return {"damage": damage, "shield_damage": shield_damage, "hp_damage": hp_damage,
+		"captures": attacker.owner_player != null and city.hp - hp_damage <= 0.0}
+
 static func resolve_city_attack(attacker: Unit, city: City, hex_grid: HexGrid, max_damage_fraction_of_current_hp: float = 1.0, strike_multiplier: float = 1.0) -> void:
-	if not attacker.unit_data.can_basic_attack or not attacker.can_receive_orders(): # Fase 17: sem ataque básico, sem ataque a cidade; Fase 19: sem comando, idem
+	if not attacker.unit_data.can_basic_attack or not attacker.can_receive_orders() or attacker.embarked: return
+	attacker.play_city_attack_visual(city)
+	var feedback := preload("res://scripts/vfx/CombatFeedback.gd").begin_attack(attacker, hex_grid)
+	_resolve_city_now(attacker, city, hex_grid, max_damage_fraction_of_current_hp, strike_multiplier)
+	preload("res://scripts/vfx/CombatFeedback.gd").finish(feedback)
+
+static func _resolve_city_now(attacker: Unit, city: City, hex_grid: HexGrid, max_damage_fraction_of_current_hp: float, strike_multiplier: float) -> void:
+	if not attacker.unit_data.can_basic_attack or not attacker.can_receive_orders() or attacker.embarked: # Fase 17: sem ataque básico, sem ataque a cidade; Fase 19: sem comando, idem; embarcado, idem
 		return
 	EventBus.combat_engagement.emit(attacker.owner_player, city.owner_player, "city", city.coord) # Fase 33B: observabilidade
 	var attacker_name = attacker.unit_data.unit_name
@@ -348,12 +402,7 @@ static func resolve_city_attack(attacker: Unit, city: City, hex_grid: HexGrid, m
 	# dano bruto tambem aqui (dividindo em vez de multiplicar um "defense"
 	# que uma cidade nao tem) — sem Muralhas, defense_bonus_for({})==0.0 e
 	# o resultado e IDENTICO ao de antes.
-	var defense_bonus := city.defense_bonus() # Fase 16: prédios defensivos + Fortificação V2, mesma fórmula
-	var damage = max(1.0, (attacker.unit_data.attack * attacker.veterancy_multiplier() * UnitAbilities.city_attack_multiplier(attacker) * strike_multiplier * V2TechniqueRuntime.city_attack_multiplier(attacker)) / (1.0 + defense_bonus))
-	# Capa (se pedida) -- nunca abaixo de 1.0 mesmo assim, pra sempre
-	# continuar sendo um ataque de verdade (mesma convencao de "dano
-	# minimo 1.0" ja usada na linha acima).
-	damage = max(1.0, min(damage, city.hp * max_damage_fraction_of_current_hp))
+	var damage := city_attack_damage(attacker, city, max_damage_fraction_of_current_hp, strike_multiplier)
 	attacker.movement_left = 0.0
 
 	var remaining_damage = damage
@@ -389,57 +438,51 @@ static func resolve_city_attack(attacker: Unit, city: City, hex_grid: HexGrid, m
 	elif attacker_is_human:
 		EventBus.notify.emit("Seu %s enfraqueceu %s!" % [attacker_name, city.city_name], "combat")
 
-## COVIS DE MONSTROS -- DESTRUICAO (pedido do usuario: "quero transformar
-## covis em alvos reais... HP; defesa; ataque ao covil; destruicao;
-## recompensa"). Mesma arquitetura de resolve_city_attack acima (estrutura
-## com HP/defesa proprios, dano reduz HP, HP<=0 destroi e concede
-## recompensa), reaproveitada em vez de inventar um sistema paralelo. So'
-## deveria ser chamada quando o covil ja esta SEM nenhum guardiao/reforco
-## vivo na area (ver SelectionManager._select_unit, que so marca a
-## estrutura como atacavel nessa condicao) -- a estrutura em si nunca
-## revida (sem contra-ataque, diferente de resolve() entre Units), so'
-## absorve dano ate estourar. Defesa vem do proprio kind (MonsterDatabase.
-## KIND_DATA) -- "a tenda de Goblin ainda cai facil, a caverna de Troll
-## resiste mais", sem precisar de uma tabela de defesa separada pra
-## estrutura.
-## Fase 33D2 — regra CANÔNICA de "esta unidade pode atacar a estrutura deste covil agora", compartilhada
-## pelo humano (SelectionManager: destaque de alvo) e pela IA (StrategicAI.respond_to_lair): unidade de
-## jogador que aceita ordem, com ataque básico, movimento restante e fora de embarque; estrutura de pé,
-## tile sem unidade (além do próprio atacante) nem cidade, dentro do alcance de ataque real (sem
-## teleporte) e covil genuinamente indefeso (nenhum monstro vivo na área, HexGrid._count_live_monsters_
-## near_lair — o mesmo critério do bloqueio de movimento).
+## Regra única para humano e IA: combatente com ação disponível, alcance real, porta livre
+## e líder derrotado. Companheiros sobreviventes não dão invulnerabilidade à estrutura. Líder fora
+## da porta ou subterrâneo continua protegendo o covil. Covis legados sem registro usam os defensores.
 static func can_attack_lair(attacker: Unit, lair_coord: Vector2i, hex_grid: HexGrid) -> bool:
 	if attacker == null or hex_grid == null or not is_instance_valid(attacker) or attacker.owner_player == null:
 		return false
-	if not attacker.can_receive_orders() or not attacker.unit_data.can_basic_attack or attacker.unit_data.attack <= 0.0:
+	var physical_attack := attacker.unit_data.can_basic_attack and attacker.unit_data.attack > 0.0
+	var dismantler := attacker.unit_data.is_caster()
+	if not attacker.can_receive_orders() or not (physical_attack or dismantler):
 		return false
 	if attacker.movement_left <= 0.0 or attacker.embarked or not hex_grid.lairs_by_coord.has(lair_coord):
 		return false
 	var occupant := hex_grid.get_unit_at(lair_coord)
 	if (occupant != null and occupant != attacker) or hex_grid.get_city_at(lair_coord) != null:
 		return false
-	if HexMetrics.axial_distance(attacker.coord, lair_coord) > attacker.unit_data.attack_range:
+	# Um conjurador sem ataque básico desmantela de perto; não recebe um ataque físico à distância.
+	var reach := attacker.unit_data.attack_range if physical_attack else 1
+	if HexMetrics.axial_distance(attacker.coord, lair_coord) > reach:
 		return false
+	if not MonsterEcologySystem.site_for_lair(lair_coord).is_empty():
+		return MonsterEcologySystem.leader_for_lair(lair_coord) == null
+	# Compatibilidade dos covis antigos sem registro: chefe vivo protege mesmo longe da porta.
+	for member in hex_grid.lair_members(lair_coord):
+		if member.is_camp_boss and member.hp > 0.0 and not member.is_queued_for_deletion():
+			return false
 	return hex_grid._count_live_monsters_near_lair(lair_coord) == 0
 
 static func resolve_lair_attack(attacker: Unit, lair_coord: Vector2i, hex_grid: HexGrid) -> void:
+	if not can_attack_lair(attacker, lair_coord, hex_grid): return
+	attacker.face_toward(hex_grid.world_surface_for_coord(lair_coord))
+	attacker.play_attack_visual(null)
+	var feedback := preload("res://scripts/vfx/CombatFeedback.gd").begin_attack(attacker, hex_grid)
+	_resolve_lair_now(attacker, lair_coord, hex_grid)
+	preload("res://scripts/vfx/CombatFeedback.gd").finish(feedback)
+
+static func _resolve_lair_now(attacker: Unit, lair_coord: Vector2i, hex_grid: HexGrid) -> void:
 	# Defesa em profundidade: a mesma regra canônica que decide o destaque do humano e a ação da IA —
 	# nenhum caminho, direto ou indireto, ataca a estrutura fora dela (inclusive com guardião vivo).
 	if not can_attack_lair(attacker, lair_coord, hex_grid):
 		return
 	EventBus.combat_engagement.emit(attacker.owner_player, null, "lair", lair_coord) # Fase 33D1: observabilidade
 	var structure: LairStructure = hex_grid.lairs_by_coord[lair_coord]
-	var info: Dictionary = MonsterDatabase.KIND_DATA.get(structure.kind, {})
-	var defense: float = info.get("defense", 0.0)
-	var damage = max(1.0, attacker.unit_data.attack * attacker.veterancy_multiplier() * UnitAbilities.city_attack_multiplier(attacker) - defense * DEFENSE_MITIGATION_FACTOR)
+	# O desafio é derrotar o líder. A estrutura vulnerável consome só um golpe adicional.
+	var damage := structure.hp
 	attacker.movement_left = 0.0
-	structure.hp = max(0.0, structure.hp - damage)
+	structure.hp = 0.0
 	hex_grid.spawn_damage_popup(lair_coord, damage)
-
-	var attacker_is_human = attacker.owner_player == GameManager.human_player
-	if structure.hp <= 0.0:
-		hex_grid._grant_lair_clear_reward(attacker, lair_coord)
-		return
-	if attacker_is_human:
-		var display_name: String = info.get("unit_name", "Covil")
-		EventBus.notify.emit("Voce atacou o covil de %s! Estrutura: %d/%d" % [display_name, int(structure.hp), int(structure.max_hp)], "combat")
+	hex_grid._grant_lair_clear_reward(attacker, lair_coord)

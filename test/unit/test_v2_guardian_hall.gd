@@ -28,7 +28,7 @@ func _player(race: String = "human") -> PlayerData:
 
 ## Só até o N3: com o N5 o Salão passa a oferecer o Guardião no lugar do Escudeiro (Fase 4).
 func _research_through(player: PlayerData, tier: int) -> void:
-	for n in range(1, tier + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 
 func _city_for(player: PlayerData) -> City:
@@ -85,16 +85,17 @@ func test_cannot_build_without_the_research():
 	assert_false(city.can_build(HALL))
 	assert_false(city._research_unlocked_for_building(HALL))
 
-func test_cannot_build_with_only_n1():
+## O antigo N1 ("Doutrina do Guardião") saiu: o Salão é o primeiro nó e não exige pesquisa anterior.
+func test_the_hall_is_the_first_node_of_the_line():
 	var player := _player()
 	var city := _city_for(player)
-	player.v2_research.complete_research("v2_doctrine_guardian_1")
-	assert_false(city.can_build(HALL))
+	assert_null(V2ResearchDatabase.get_node("v2_doctrine_guardian_1"))
+	assert_true(player.v2_research.is_available("v2_doctrine_guardian_2"))
+	assert_false(city.can_build(HALL), "sem pesquisar o Salão, nada feito")
 
 func test_can_build_once_n2_is_researched():
 	var player := _player()
 	var city := _city_for(player)
-	player.v2_research.complete_research("v2_doctrine_guardian_1")
 	player.v2_research.complete_research("v2_doctrine_guardian_2")
 	assert_true(city.can_build(HALL))
 
@@ -120,14 +121,12 @@ func test_the_unlock_belongs_to_the_researching_civilization_only():
 	var a := _player()
 	var b := _player()
 	var city_b := _city_for(b)
-	a.v2_research.complete_research("v2_doctrine_guardian_1")
 	a.v2_research.complete_research("v2_doctrine_guardian_2")
 	assert_false(city_b.can_build(HALL))
 
 func test_building_the_hall_uses_a_normal_building_slot():
 	var player := _player()
 	var city := _city_for(player)
-	player.v2_research.complete_research("v2_doctrine_guardian_1")
 	player.v2_research.complete_research("v2_doctrine_guardian_2")
 	assert_eq(city.used_building_slots(), 0)
 	city.buildings[HALL] = true
@@ -137,7 +136,6 @@ func test_building_the_hall_uses_a_normal_building_slot():
 func test_a_full_city_cannot_build_the_hall_even_with_the_research():
 	var player := _player()
 	var city := _city_for(player)
-	player.v2_research.complete_research("v2_doctrine_guardian_1")
 	player.v2_research.complete_research("v2_doctrine_guardian_2")
 	city.city_level = 1 # Fase 13: 4 slots (não é mais população)
 	for id in ["granary", "workshop", "market", "walls"]:

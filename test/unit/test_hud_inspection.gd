@@ -128,8 +128,9 @@ func test_empty_tile_shows_terrain_without_tabs():
 	assert_false(hud._inspect_tabs.visible)
 
 func test_multiple_entities_get_one_tab_each_and_tabs_switch_the_text():
+	# Unidade + perigo temporário + recurso (prédio + recurso não coexistem mais: a obra destrói o recurso).
 	hex_grid.tiles[Vector2i(1, 0)].resource = "horses"
-	hex_grid.place_building(Vector2i(1, 0), "v2_building_market", rival)
+	MonsterHazardSystem.roots[Vector2i(1, 0)] = TurnManager.turn_number + 3
 	_unit("warrior", rival, Vector2i(1, 0))
 	_select(Vector2i(1, 0))
 	assert_true(hud._inspect_tabs.visible)
@@ -138,8 +139,9 @@ func test_multiple_entities_get_one_tab_each_and_tabs_switch_the_text():
 	hud._on_inspect_tab_pressed("resource")
 	assert_string_contains(hud.tile_info_label.text, "Recurso: Cavalos")
 	assert_string_contains(hud.tile_info_label.text, "Terreno: Selva", "o terreno acompanha qualquer aba")
-	hud._on_inspect_tab_pressed("building")
-	assert_string_contains(hud.tile_info_label.text, "Rendimento:")
+	hud._on_inspect_tab_pressed("hazard:roots")
+	assert_string_contains(hud.tile_info_label.text, "Raízes do Mundo")
+	MonsterHazardSystem.roots.erase(Vector2i(1, 0))
 
 func test_selected_tab_survives_a_reclick_of_the_same_tile_but_resets_on_another_tile():
 	hex_grid.tiles[Vector2i(1, 0)].resource = "horses"

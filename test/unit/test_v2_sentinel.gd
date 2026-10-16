@@ -54,7 +54,7 @@ func _player(through: int, gold: float = 200.0) -> PlayerData:
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
 	player.gold = gold
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	return player
 
@@ -89,9 +89,9 @@ func _trainable_forms(city: City) -> Array:
 func test_the_sentinel_has_the_specified_baseline():
 	var data := UnitDatabase.create_unit(SENTINEL)
 	assert_eq(data.unit_name, "Sentinela")
-	assert_eq(data.max_hp, 32.0)
-	assert_eq(data.attack, 5.0)
-	assert_eq(data.defense, 8.0)
+	assert_eq(data.max_hp, 34.0)
+	assert_eq(data.attack, 7.5)
+	assert_eq(data.defense, 12.5)
 	assert_eq(data.movement_points, 2.0)
 	assert_eq(data.vision_range, 3)
 	assert_eq(data.attack_range, 1, "corpo a corpo")
@@ -108,7 +108,7 @@ func test_relations_the_sentinel_holds_the_line_and_is_not_dps_or_mobility():
 	assert_gt(sentinel.attack, guardian.attack, "ataque cresce")
 	assert_lt(sentinel.attack / guardian.attack, sentinel.defense / guardian.defense + 0.0001, "moderadamente: menos que a defesa")
 	assert_lt(sentinel.attack, sentinel.defense, "ataque continua secundário à Defesa")
-	assert_lt(sentinel.attack, UnitDatabase.create_unit("men_at_arms").attack, "não vira DPS")
+	assert_lt(sentinel.attack, UnitDatabase.create_unit("v2_unit_weapon_master").attack, "não vira DPS: bate menos que o N7 de dano (o Homem de Armas V1 saiu do jogo)")
 	assert_eq(sentinel.movement_points, guardian.movement_points, "mobilidade não cresce")
 	assert_eq(sentinel.vision_range, guardian.vision_range)
 	assert_gt(sentinel.production_cost, guardian.production_cost)
@@ -148,8 +148,8 @@ func test_the_hall_is_the_trainer_and_the_mastery_building_is_not_required():
 
 func test_v1_units_are_untouched():
 	assert_eq(UnitDatabase.create_unit("warrior").attack, 4.0)
-	assert_eq(UnitDatabase.create_unit(SHIELD).max_hp, 18.0)
-	assert_eq(UnitDatabase.create_unit(GUARDIAN).max_hp, 24.0)
+	assert_eq(UnitDatabase.create_unit(SHIELD).max_hp, 20.0)
+	assert_eq(UnitDatabase.create_unit(GUARDIAN).max_hp, 26.0)
 
 # --- Herança de Técnicas por linha ----------------------------------------------------------------------------
 
@@ -219,7 +219,7 @@ func test_debug_reset_keeps_what_exists_and_production_follows_the_research():
 	player.v2_research.reset()
 	assert_true(city.buildings.has(HALL))
 	assert_eq(_trainable_forms(city), [])
-	for n in range(1, 6):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 6):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	assert_eq(_trainable_forms(city), [GUARDIAN], "a produção volta a respeitar a pesquisa atual")
 
@@ -282,7 +282,7 @@ func test_the_same_requirements_as_the_first_upgrade_apply():
 func test_the_second_upgrade_preserves_everything_that_does_not_depend_on_the_form():
 	var c := _case(7, GUARDIAN)
 	var unit: Unit = c.unit
-	unit.hp = 12.0 # 12/24 = 50%
+	unit.hp = 13.0 # 13/26 = 50%
 	unit.kills = 3
 	unit.veterancy_level = 2
 	V2TechniqueRuntime.activate(unit, WALL)
@@ -307,8 +307,8 @@ func test_the_second_upgrade_preserves_everything_that_does_not_depend_on_the_fo
 	assert_eq(c.player.units.size(), count, "sem duplicar")
 	assert_eq(c.player.units.filter(func(u): return u.unit_data.visual_kind == GUARDIAN).size(), 0, "sem Guardião fantasma")
 	assert_same(c.grid.get_unit_at(coord), unit)
-	assert_almost_eq(unit.hp, 16.0, 0.0001, "50% de 32")
-	assert_eq(unit.unit_data.max_hp, 32.0)
+	assert_almost_eq(unit.hp, 34.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 34 pela forma + a cura da evolução")
+	assert_eq(unit.unit_data.max_hp, 34.0)
 	assert_eq(unit.kills, 3)
 	assert_eq(unit.veterancy_level, 2)
 	assert_eq(V2TechniqueRuntime.cooldown_remaining(unit, WALL), remaining, "recarga da Muralha preservada")
@@ -322,13 +322,13 @@ func test_the_full_chain_shieldbearer_guardian_sentinel_on_the_same_unit():
 	var serial := unit.serial_id
 	unit.kills = 4
 	unit.veterancy_level = 2
-	unit.hp = 9.0 # 9/18 = 50%
+	unit.hp = 10.0 # 10/20 = 50%
 	var gold: float = c.player.gold
 	assert_eq(V2UnitUpgrade.get_upgrade_target(unit), GUARDIAN, "um passo por vez: Escudeiro só vai pra Guardião")
 
 	assert_true(V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid))
 	assert_eq(unit.unit_data.visual_kind, GUARDIAN)
-	assert_almost_eq(unit.hp, 12.0, 0.0001, "50% de 24")
+	assert_almost_eq(unit.hp, 26.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 26 pela forma + a cura da evolução")
 	assert_eq(c.player.gold, gold - 24.0)
 	assert_false(V2UnitUpgrade.can_upgrade(c.player, unit, c.grid), "sem ação neste turno")
 
@@ -337,7 +337,7 @@ func test_the_full_chain_shieldbearer_guardian_sentinel_on_the_same_unit():
 	assert_eq(V2UnitUpgrade.get_upgrade_target(unit), SENTINEL)
 	assert_true(V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid))
 	assert_eq(unit.unit_data.visual_kind, SENTINEL)
-	assert_almost_eq(unit.hp, 16.0, 0.0001, "50% de 32")
+	assert_almost_eq(unit.hp, 34.0, 0.0001, "já estava em 80%: a cura da evolução completa a vida (34), sem passar do teto")
 	assert_eq(c.player.gold, gold - 24.0 - 32.0)
 
 	assert_eq(unit.get_instance_id(), id, "a MESMA unidade nas três formas")

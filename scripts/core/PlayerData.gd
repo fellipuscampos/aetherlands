@@ -30,6 +30,10 @@ var known_enemy_city_levels: Dictionary = {} # Vector2i -> int
 var explored_tiles: Dictionary = {} # conhecimento individual da IA
 ## Task 22 -- IA: ate que turno nao adianta procurar local de cidade de novo (ver RivalAI._has_settle_site). Estado de sessao, nao salvo.
 var settle_search_blocked_until: int = -1
+## 2026-10-09 — Colonos que já NASCERAM de produção de cidade nesta partida (o Colono inicial não conta). Comparado ao
+## limite da linha de Colonização por V2ColonizationRuntime; incrementado só por V2ColonizationRuntime.record_trained.
+## Persistido pelo SaveManager ("settlers_trained"); save antigo sem o campo começa em 0.
+var settlers_trained: int = 0
 
 ## Pesquisa desta civilização (um projeto ativo, concluídos, progresso por nó, overflow de
 ## Conhecimento) — ver V2ResearchState. É a ÚNICA progressão do jogo desde a Fase 25 (a pesquisa
@@ -84,10 +88,35 @@ func release_relations() -> void:
 	war_campaigns.clear()
 	truces.clear()
 	war_reasons.clear()
+	peace_offers.clear()
+	peace_refusals.clear()
+	open_borders.clear()
+	open_border_offers.clear()
+	open_border_refusals.clear()
+	diplomatic_memory.clear()
+
+## MEMÓRIA DIPLOMÁTICA (DiplomaticMemory, 2026-10-15): o que ESTA civilização pensa de cada outra — rancores
+## (guerras, conquistas, ataques, traição, recusas, belicismo) e boa vontade (paz, fronteiras, inimigo comum),
+## cada um com o seu motivo. Só DiplomaticMemory escreve aqui. Salvo no bloco de relações (chave "memory").
+var diplomatic_memory: Dictionary = {} # PlayerData -> Dictionary (DiplomaticMemory.record)
 
 var ai_rng := RandomNumberGenerator.new()
 var truces: Dictionary = {} # PlayerData -> primeiro turno em que guerra volta a ser permitida
 var war_reasons: Dictionary = {} # PlayerData -> motivo público
+## Propostas de paz RECEBIDAS e ainda sem resposta (Diplomacy.offer_peace/answer_peace_offer): quem propôs -> turno da
+## proposta. Só o jogador humano acumula isto — a IA responde na hora (Diplomacy._accepts_peace).
+var peace_offers: Dictionary = {} # PlayerData -> turno em que a proposta chegou
+## Propostas de paz que ESTE jogador recusou: quem propôs -> primeiro turno em que pode propor de novo.
+var peace_refusals: Dictionary = {} # PlayerData -> turno
+## FRONTEIRAS ABERTAS (Diplomacy.request_open_borders, 2026-10-13): acordo SIMÉTRICO com outra civilização — as
+## unidades de cada uma entram no território de fronteira fechada da outra mesmo em paz (HexGrid.closed_tiles_for).
+## Acaba quando um dos lados o encerra ou quando há guerra entre os dois.
+var open_borders: Dictionary = {} # PlayerData -> true
+## Pedidos de fronteiras abertas RECEBIDOS e ainda sem resposta: quem pediu -> turno do pedido. Só o jogador humano
+## acumula isto — a IA responde na hora (Diplomacy.open_borders_refusal_reason).
+var open_border_offers: Dictionary = {} # PlayerData -> turno em que o pedido chegou
+## Pedidos que ESTE jogador recusou: quem pediu -> primeiro turno em que pode pedir de novo.
+var open_border_refusals: Dictionary = {} # PlayerData -> turno
 
 func _init(civ_data: CivilizationData) -> void:
 	civ = civ_data
@@ -96,6 +125,8 @@ func _init(civ_data: CivilizationData) -> void:
 	v2_research.research_completed.connect(_on_v2_research_completed_event)
 
 func _on_v2_research_completed_event(research_id: String) -> void:
+	# Debug spell preparation reports one inline confirmation instead of a toast per unlock.
+	if v2_research.get_meta("debug_silent_research",false): return
 	var node := V2ResearchDatabase.get_node(research_id)
 	EventBus.ui_research_completed.emit(self, research_id, node.display_name if node != null else research_id)
 
@@ -113,7 +144,8 @@ func _on_v2_unlock_applied(_node_id: String, unlock_type: String, unlock_id: Str
 	var node := V2UnlockSystem.node_for_unlock(unlock_id)
 	if node == null:
 		return
-	EventBus.notify.emit(V2UnlockSystem.announcement_text(unlock_type, node.display_name, unlock_id), "confirm")
+	if not v2_research.get_meta("debug_silent_research",false):
+		EventBus.notify.emit(V2UnlockSystem.announcement_text(unlock_type, node.display_name, unlock_id), "confirm")
 	EventBus.v2_unlock_applied.emit(self, unlock_type, unlock_id)
 
 ## `kind` (unidade) ou unlock id V2 liberado para esta civilização. Unidade/unlock V2 é liberado pela
@@ -126,3 +158,6 @@ func has_unlocked(kind: String) -> bool:
 
 func is_at_war_with(other: PlayerData) -> bool:
 	return enemies.has(other)
+
+func has_open_borders_with(other: PlayerData) -> bool:
+	return open_borders.has(other)

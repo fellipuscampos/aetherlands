@@ -41,6 +41,8 @@ var _original_current_save_slot: String
 var _original_kingdom_name: String
 
 func before_each():
+	# Conta unidades/Suprimentos exatos da linha: sem a escolta inicial (fixture, ver GameManager).
+	GameManager.starting_escort_on_new_match = false
 	_original_state = GameManager.state
 	_original_players = GameManager.players
 	_original_human_player = GameManager.human_player
@@ -69,6 +71,7 @@ func before_each():
 	GameManager.debug_mode = true
 
 func after_each():
+	GameManager.starting_escort_on_new_match = true
 	GameManager.combat_ecology_on_new_match = true
 	SelectionManager.reset()
 	for player in GameManager.players:
@@ -176,8 +179,7 @@ func test_guardian_n1_to_n3_flow_from_research_to_a_working_shieldbearer_across_
 	assert_false(human.has_unlocked(KIND))
 
 	# 3. Pesquisa N1 e N2 (a única regra de ordem é a do próprio nó: N2 exige N1).
-	assert_false(state.can_research("v2_doctrine_guardian_2"), "N2 exige N1")
-	_research(state, "v2_doctrine_guardian_1")
+	assert_true(state.can_research("v2_doctrine_guardian_2"), "o Salão é o primeiro nó: sem pesquisa anterior")
 	_research(state, "v2_doctrine_guardian_2")
 	assert_true(city.can_build(HALL), "N2 libera a construção")
 	assert_false(city.can_train(KIND), "ainda sem N3 nem Salão")
@@ -200,7 +202,7 @@ func test_guardian_n1_to_n3_flow_from_research_to_a_working_shieldbearer_across_
 	_research(state, "v2_doctrine_guardian_3")
 	assert_true(human.has_unlocked(KIND))
 	assert_true(city.can_train(KIND))
-	assert_eq(V2UnlockSystem.unlocked_ids(human), ["v2_doctrine_guardian", "v2_building_guardian_hall", "v2_unit_shieldbearer"])
+	assert_eq(V2UnlockSystem.unlocked_ids(human), ["v2_building_guardian_hall", "v2_unit_shieldbearer"])
 
 	# 6-7. Produz e treina o Escudeiro (fila normal), a unidade nasce.
 	var before := _units_of_kind(human, KIND).size()
@@ -222,7 +224,8 @@ func test_guardian_n1_to_n3_flow_from_research_to_a_working_shieldbearer_across_
 	assert_false(SelectionManager.reachable.is_empty(), "o Escudeiro tem pra onde ir")
 	var destination := Vector2i.ZERO
 	for coord in SelectionManager.reachable:
-		if grid.get_unit_at(coord) == null and grid.get_city_at(coord) == null:
+		# Em terra: o passo 9 ataca daqui, e de barco não se ataca (embarque automático, 2026-10-10).
+		if grid.get_unit_at(coord) == null and grid.get_city_at(coord) == null and not grid.get_tile(coord).can_be_embarked_on():
 			destination = coord
 			break
 	assert_ne(destination, Vector2i.ZERO)
@@ -257,8 +260,8 @@ func test_guardian_n1_to_n3_flow_from_research_to_a_working_shieldbearer_across_
 
 	# 11. Pesquisas, Salão e unidade voltaram.
 	assert_not_same(loaded_human, human, "o jogador carregado é outro objeto")
-	assert_eq(loaded_human.v2_research.get_completed_ids(), ["v2_doctrine_guardian_1", "v2_doctrine_guardian_2", "v2_doctrine_guardian_3"])
-	assert_eq(V2UnlockSystem.unlocked_ids(loaded_human), ["v2_doctrine_guardian", "v2_building_guardian_hall", "v2_unit_shieldbearer"])
+	assert_eq(loaded_human.v2_research.get_completed_ids(), ["v2_doctrine_guardian_2", "v2_doctrine_guardian_3"])
+	assert_eq(V2UnlockSystem.unlocked_ids(loaded_human), ["v2_building_guardian_hall", "v2_unit_shieldbearer"])
 	assert_eq(loaded_human.cities.size(), 1)
 	var loaded_city: City = loaded_human.cities[0]
 	assert_true(loaded_city.buildings.has(HALL), "o Salão foi restaurado")
@@ -285,7 +288,13 @@ func test_after_a_new_game_nothing_v2_is_unlocked_and_no_building_or_unit_leaks(
 	assert_false(city.can_train(KIND))
 
 func test_ai_civilizations_keep_playing_without_ever_using_v2_content():
+	# Partida normal, com a escolta inicial (Escudeiro + Guerreiro): o que se verifica é que a IA não TREINA mais.
+	GameManager.starting_escort_on_new_match = true
 	var grid := _new_game()
+	var starting := {}
+	for rival in GameManager.rival_players:
+		starting[rival] = _units_of_kind(rival, KIND).size()
+		assert_eq(starting[rival], 1, "pré-condição: o Escudeiro da escolta inicial")
 	for i in 8:
 		_end_turn()
 	for rival in GameManager.rival_players:
@@ -294,7 +303,7 @@ func test_ai_civilizations_keep_playing_without_ever_using_v2_content():
 			assert_ne(city.production_item, HALL)
 			assert_ne(city.production_item, KIND)
 			assert_false(city.buildings.has(HALL) or city.can_train(KIND), "sem a pesquisa, nem o Salão nem o Escudeiro são opção de produção")
-		assert_eq(_units_of_kind(rival, KIND).size(), 0, "a IA não treina Escudeiro sem a pesquisa V2")
+		assert_lte(_units_of_kind(rival, KIND).size(), starting[rival], "a IA não treina Escudeiro sem a pesquisa V2")
 	assert_eq(GameManager.state, GameManager.GameState.PLAYING, "o jogo segue rodando")
 
 func test_an_old_save_without_v2_data_loads_with_nothing_unlocked():
@@ -326,7 +335,6 @@ func test_a_save_taken_between_n2_and_the_hall_keeps_the_hall_available_but_not_
 	var grid := _new_game()
 	var city := _found_human_city(grid)
 	var state := GameManager.human_player.v2_research
-	_research(state, "v2_doctrine_guardian_1")
 	_research(state, "v2_doctrine_guardian_2")
 	assert_true(city.can_build(HALL))
 

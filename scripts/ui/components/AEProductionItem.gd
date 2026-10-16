@@ -18,6 +18,7 @@ var state_label: Label
 var _texts: VBoxContainer
 var _row: HBoxContainer
 var _style_state := ""
+const CHROME := preload("res://scripts/ui/HUDChromeTheme.gd")
 
 ## Motivo e estado só existem quando há o que dizer (Label é o custo dominante).
 func _ensure_reason() -> void:
@@ -139,3 +140,28 @@ func configure(value: Dictionary) -> void:
 
 func _make_custom_tooltip(for_text: String) -> Object:
 	return AETooltip.make_card(for_text)
+
+func set_context_style(factor: float) -> void:
+	_build()
+	custom_minimum_size.y = (76 if reason_label != null and reason_label.visible else 64) * factor
+	_row.offset_left = 10 * factor
+	_row.offset_right = -10 * factor
+	_row.offset_top = 8 * factor
+	_row.offset_bottom = -8 * factor
+	_row.add_theme_constant_override("separation", roundi(10 * factor))
+	var slot := _row.get_node("IconSlot") as PanelContainer
+	slot.custom_minimum_size = Vector2(30,30) * factor
+	var frame := CHROME.meter(Color("0b2027"))
+	frame.border_color = Color("36565a")
+	frame.set_border_width_all(1)
+	frame.set_content_margin_all(0)
+	slot.add_theme_stylebox_override("panel", frame)
+	title_label.add_theme_font_override("font", CHROME.PIXEL)
+	title_label.set_meta("inspector_font_size", 16)
+	title_label.add_theme_font_size_override("font_size", roundi(16 * factor))
+	title_label.add_theme_color_override("font_color", Color("aebbb7") if item.get("state", "") == "blocked" else Color("f4e9d3"))
+	if state_label != null:
+		state_label.text = "Atual" if item.get("state", "") == "current" else ""
+		state_label.visible = item.get("state", "") == "current"
+	if item.get("state", "") == "current":
+		add_theme_stylebox_override("disabled", CHROME.panel(factor, "info", 8))

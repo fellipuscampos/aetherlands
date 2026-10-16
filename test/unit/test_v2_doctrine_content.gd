@@ -7,43 +7,44 @@ extends GutTest
 const MILITARY := V2ResearchNode.TreeType.MILITARY_DOCTRINE
 const LINES := ["guardian", "warrior", "ranger", "cavalry", "rogue", "siege"]
 
-const ROLES := ["doctrine_unlock", "training_structure", "base_unit", "technique_1", "evolution_1", "technique_2", "elite_form", "mastery_structure", "legendary_candidate"]
-const TYPES := ["doctrine", "building", "unit", "technique", "unit_upgrade", "technique", "unit_upgrade", "mastery_building", "legendary_candidate"]
+const ROLES := ["training_structure", "base_unit", "technique_1", "evolution_1", "technique_2", "elite_form", "mastery_structure", "legendary_candidate"]
+const TYPES := ["building", "unit", "technique", "unit_upgrade", "technique", "unit_upgrade", "mastery_building", "legendary_candidate"]
 
-## Nome canônico e unlock_id de cada tier, por linha (N1..N9) — a tabela do pedido.
+## Nome canônico e unlock_id de cada nó, por linha, na ordem dos tiers 2..9 (o N1 de portão
+## "Doutrina do X" saiu: não liberava nada além do próprio N2).
 const CANON := {
 	"guardian": [
-		["Doutrina do Guardião", "v2_doctrine_guardian"], ["Salão dos Guardiões", "v2_building_guardian_hall"],
+		["Salão dos Guardiões", "v2_building_guardian_hall"],
 		["Escudeiro", "v2_unit_shieldbearer"], ["Muralha de Escudos", "v2_technique_shield_wall"],
 		["Guardião", "v2_unit_guardian"], ["Preparar Lanças", "v2_technique_brace_spears"],
 		["Sentinela", "v2_unit_sentinel"], ["Bastião de Maestria", "v2_building_guardian_mastery"],
 		["Campeão Guardião", "v2_legendary_guardian_champion"]],
 	"warrior": [
-		["Doutrina do Guerreiro", "v2_doctrine_warrior"], ["Salão de Armas", "v2_building_warrior_hall"],
+		["Salão de Armas", "v2_building_warrior_hall"],
 		["Guerreiro", "v2_unit_warrior"], ["Golpe Poderoso", "v2_technique_power_strike"],
 		["Espadachim", "v2_unit_swordsman"], ["Ataque em Arco", "v2_technique_cleave"],
 		["Mestre de Armas", "v2_unit_weapon_master"], ["Arena dos Campeões", "v2_building_warrior_mastery"],
 		["Herói da Lâmina", "v2_legendary_blade_hero"]],
 	"ranger": [
-		["Doutrina do Patrulheiro", "v2_doctrine_ranger"], ["Campo dos Patrulheiros", "v2_building_ranger_camp"],
+		["Campo dos Patrulheiros", "v2_building_ranger_camp"],
 		["Arqueiro", "v2_unit_archer"], ["Disparo Preciso", "v2_technique_precise_shot"],
 		["Caçador", "v2_unit_hunter"], ["Saraivada", "v2_technique_volley"],
 		["Atirador de Elite", "v2_unit_elite_marksman"], ["Torre dos Patrulheiros", "v2_building_ranger_mastery"],
 		["Caçador de Lendas", "v2_legendary_legend_hunter"]],
 	"cavalry": [
-		["Doutrina da Cavalaria", "v2_doctrine_cavalry"], ["Estábulo de Guerra", "v2_building_war_stable"],
+		["Estábulo de Guerra", "v2_building_war_stable"],
 		["Cavaleiro", "v2_unit_cavalier"], ["Carga", "v2_technique_charge"],
 		["Cavaleiro de Choque", "v2_unit_shock_cavalier"], ["Retirada Tática", "v2_technique_tactical_retreat"],
 		["Cavaleiro Blindado", "v2_unit_armored_cavalier"], ["Ordem da Cavalaria", "v2_building_cavalry_mastery"],
 		["Cavaleiro de Grifo", "v2_legendary_griffon_rider"]],
 	"rogue": [
-		["Doutrina do Ladino", "v2_doctrine_rogue"], ["Guilda dos Ladinos", "v2_building_rogue_guild"],
+		["Guilda dos Ladinos", "v2_building_rogue_guild"],
 		["Ladino", "v2_unit_rogue"], ["Ataque Furtivo", "v2_technique_sneak_attack"],
 		["Sabotador", "v2_unit_saboteur"], ["Desmantelar", "v2_technique_dismantle"],
 		["Assassino", "v2_unit_assassin"], ["Refúgio das Sombras", "v2_building_rogue_mastery"],
 		["Mestre das Sombras", "v2_legendary_shadow_master"]],
 	"siege": [
-		["Doutrina de Cerco", "v2_doctrine_siege"], ["Arsenal de Cerco", "v2_building_siege_arsenal"],
+		["Arsenal de Cerco", "v2_building_siege_arsenal"],
 		["Catapulta", "v2_unit_catapult"], ["Munição Demolidora", "v2_technique_demolition_ammo"],
 		["Trebuchet", "v2_unit_trebuchet"], ["Bombardeio Preparado", "v2_technique_prepared_bombardment"],
 		["Bombarda", "v2_unit_bombard"], ["Grande Arsenal", "v2_building_grand_arsenal"],
@@ -55,27 +56,27 @@ func _nodes(line: String) -> Array[V2ResearchNode]:
 
 # --- Estrutura preservada -----------------------------------------------------------------
 
-func test_military_tree_keeps_its_55_nodes_research_ids_and_tier_roles():
-	assert_eq(V2ResearchDatabase.nodes_for_tree(MILITARY).size(), 55)
+func test_military_tree_keeps_its_49_nodes_research_ids_and_tier_roles():
+	assert_eq(V2ResearchDatabase.nodes_for_tree(MILITARY).size(), 49)
 	for line in LINES:
 		var nodes := _nodes(line)
-		assert_eq(nodes.size(), 9, line)
-		for i in range(9):
-			assert_eq(nodes[i].id, "v2_doctrine_%s_%d" % [line, i + 1], "o id de PESQUISA não muda")
-			assert_eq(nodes[i].tier, i + 1)
+		assert_eq(nodes.size(), 8, line)
+		for i in range(8):
+			assert_eq(nodes[i].id, "v2_doctrine_%s_%d" % [line, i + 2], "o id de PESQUISA não muda")
+			assert_eq(nodes[i].tier, i + 2)
 			assert_eq(nodes[i].tier_role, ROLES[i], "%s N%d: tier_role preservado" % [line, i + 1])
 	assert_not_null(V2ResearchDatabase.get_node("v2_supreme_army"))
 
 func test_research_costs_follow_the_phase27_balanced_curve():
 	for line in LINES:
-		assert_eq(_nodes(line).map(func(n): return int(n.cost)), [8, 16, 24, 28, 40, 80, 128, 196, 268], line)
-	assert_eq(int(V2ResearchDatabase.get_node("v2_supreme_army").cost), 400)
+		assert_eq(_nodes(line).map(func(n): return int(n.cost)), [16, 24, 28, 36, 60, 92, 132, 180], line)
+	assert_eq(int(V2ResearchDatabase.get_node("v2_supreme_army").cost), 280)
 
 func test_prerequisites_are_unchanged_linear_chains():
 	for line in LINES:
 		var nodes := _nodes(line)
 		assert_true(nodes[0].prerequisites.is_empty())
-		for i in range(1, 9):
+		for i in range(1, 8):
 			assert_eq(nodes[i].prerequisites, [nodes[i - 1].id])
 
 # --- Nomes canônicos ------------------------------------------------------------------------
@@ -83,7 +84,7 @@ func test_prerequisites_are_unchanged_linear_chains():
 func test_every_node_has_its_canonical_name():
 	for line in LINES:
 		var nodes := _nodes(line)
-		for i in range(9):
+		for i in range(8):
 			assert_eq(nodes[i].display_name, CANON[line][i][0], "%s N%d" % [line, i + 1])
 
 func test_no_normal_doctrine_node_is_still_named_line_plus_numeral():
@@ -126,13 +127,13 @@ func test_descriptions_state_the_role_in_the_composition():
 func test_unlock_types_follow_the_canonical_vocabulary_by_tier():
 	for line in LINES:
 		var nodes := _nodes(line)
-		for i in range(9):
+		for i in range(8):
 			assert_eq(nodes[i].unlock_type, TYPES[i], "%s N%d" % [line, i + 1])
 
 func test_unlock_ids_are_exactly_the_specified_ones():
 	for line in LINES:
 		var nodes := _nodes(line)
-		for i in range(9):
+		for i in range(8):
 			assert_eq(nodes[i].unlock_id, CANON[line][i][1], "%s N%d" % [line, i + 1])
 
 func test_unlock_ids_are_unique_stable_v2_ids_and_never_research_or_v1_ids():
@@ -175,7 +176,7 @@ func test_the_six_n9_nodes_are_legendary_candidates_and_only_them():
 	var candidates := V2ResearchDatabase.legendary_candidates()
 	assert_eq(candidates.size(), 6)
 	for line in LINES:
-		var n9 := _nodes(line)[8]
+		var n9 := _nodes(line)[-1]
 		assert_eq(n9.unlock_type, "legendary_candidate", line)
 		assert_true(n9 in candidates)
 		assert_true(n9.unlock_id.begins_with("v2_legendary_"))
@@ -283,20 +284,21 @@ func test_the_node_type_defines_no_combat_or_economy_numbers():
 func test_the_six_military_doctrines_and_the_supreme_army_capstone_are_connected_to_gameplay():
 	var connected: Array[String] = ["v2_supreme_army"]
 	for line in ["guardian", "warrior", "ranger", "cavalry", "rogue", "siege"]:
-		for n in range(1, 10):
+		for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 			connected.append("v2_doctrine_%s_%d" % [line, n])
 	# Fase 13: a linha de Urbanização (Infraestrutura) também está conectada. Fase 14: as cinco
 	# linhas econômicas de Infraestrutura também -- juntas, as exceções fora da árvore Militar
 	# (ver test_v2_city_level.gd/test_v2_economy_data.gd pra cobertura dedicada).
 	connected.append_array(["v2_infrastructure_urbanization_1", "v2_infrastructure_urbanization_2", "v2_infrastructure_urbanization_3"])
-	for branch in ["economy", "logistics", "industry", "academy", "arcane"]:
+	# 2026-10-09: a linha de Colonização (limite de Colonos) também.
+	for branch in ["economy", "logistics", "industry", "academy", "arcane", "colonization"]:
 		for n in range(1, 4):
 			connected.append("v2_infrastructure_%s_%d" % [branch, n])
-	# Fases 17-22: as seis Escolas de Magia (54 nós normais) também estão conectadas.
+	# Fases 17-22: as seis Escolas de Magia (48 nós normais) também estão conectadas.
 	for branch in ["sacred", "infernal", "necromancy", "druidism", "arcanism", "elementalism"]:
-		for n in range(1, 10):
+		for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 			connected.append("v2_magic_%s_%d" % [branch, n])
-	# Fase 23: o capstone magico deixa de ser a unica excecao; os 128 nos estao conectados.
+	# Fase 23: o capstone magico deixa de ser a unica excecao; os 119 nos estao conectados.
 	connected.append("v2_transcendence")
 	for node in V2ResearchDatabase.all_nodes():
 		assert_eq(node.gameplay_connected, node.id in connected, node.id)
@@ -308,7 +310,7 @@ func test_completing_every_military_node_changes_nothing_outside_the_research_st
 		player.v2_research.debug_complete_branch(MILITARY, line)
 	player.v2_research.complete_research("v2_supreme_army")
 
-	assert_eq(player.v2_research.completed_ids.size(), 55, "pesquisa V2 conclui normalmente")
+	assert_eq(player.v2_research.completed_ids.size(), 49, "pesquisa V2 conclui normalmente")
 	assert_eq([player.units.size(), player.cities.size(), player.gold, player.mana], v1_before)
 	player.release_relations()
 
@@ -320,12 +322,14 @@ func test_magic_and_infrastructure_names_and_ids_are_canonical():
 	assert_eq(V2ResearchDatabase.get_node("v2_transcendence").unlock_id, V2TranscendenceSystem.ACCESS_ID)
 	assert_false(V2ResearchDatabase.get_node("v2_transcendence").is_placeholder)
 	assert_true(V2ResearchDatabase.get_node("v2_transcendence").gameplay_connected)
-	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.MAGIC_SCHOOL).size(), 55)
-	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.INFRASTRUCTURE).size(), 18)
+	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.MAGIC_SCHOOL).size(), 49)
+	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.INFRASTRUCTURE).size(), 21, "7 linhas x 3 (com Colonização)")
 
 # --- Runtime e saves da Fase 1 continuam valendo -------------------------------------------------------------------
 
-## Bloco "v2_research" exatamente como a Fase 1 salvava (ids de PESQUISA, que não mudaram).
+## Bloco "v2_research" exatamente como a Fase 1 salvava (ids de PESQUISA, que não mudaram). Os N1 de
+## portão que esse save cita saíram da árvore: o concluído some sem efeito e o progresso investido num N1
+## inacabado volta ao Conhecimento guardado (V2ResearchState._read_progress).
 func test_a_phase_1_save_block_still_loads_with_the_canonical_content():
 	var phase_1_block := {
 		"active_id": "v2_doctrine_guardian_3",
@@ -337,18 +341,17 @@ func test_a_phase_1_save_block_still_loads_with_the_canonical_content():
 
 	assert_eq(state.active_id, "v2_doctrine_guardian_3")
 	assert_eq(V2ResearchDatabase.get_node(state.active_id).display_name, "Escudeiro", "o mesmo id agora tem o nome canônico")
-	assert_eq(state.get_completed_ids(), ["v2_doctrine_guardian_1", "v2_doctrine_guardian_2", "v2_magic_sacred_1"])
-	assert_almost_eq(state.get_progress("v2_doctrine_guardian_3"), 12.5, 0.001)
-	assert_almost_eq(state.get_progress("v2_doctrine_warrior_1"), 4.0, 0.001)
-	state.add_knowledge(17.5)
-	assert_true(state.is_completed("v2_doctrine_guardian_3"), "12.5 + 17.5 = custo 30: continua de onde parou")
+	assert_eq(state.get_completed_ids(), ["v2_doctrine_guardian_2"], "só o nó que ainda existe")
+	# Com projeto ativo, o Conhecimento devolvido do warrior_1 (4) é aplicado ao ativo no load: 12,5 + 4.
+	assert_almost_eq(state.get_progress("v2_doctrine_guardian_3"), 16.5, 0.001)
+	assert_almost_eq(state.research_overflow, 0.0, 0.001)
+	state.add_knowledge(7.5)
+	assert_true(state.is_completed("v2_doctrine_guardian_3"), "16.5 + 7.5 = custo 24: continua de onde parou")
 
 func test_the_research_runtime_works_on_canonical_nodes():
 	var state := V2ResearchState.new()
-	assert_true(state.select_research("v2_doctrine_guardian_1"))
-	state.add_knowledge(10.0)
 	assert_true(state.select_research("v2_doctrine_guardian_2"))
-	state.add_knowledge(20.0)
+	state.add_knowledge(16.0)
 	assert_true(state.select_research("v2_doctrine_guardian_3"))
 	assert_eq(state.node_state("v2_doctrine_guardian_3"), V2ResearchDatabase.NodeState.RESEARCHING)
 	assert_true(state.status_text("v2_doctrine_guardian_3").begins_with("Estado: Pesquisando"))
@@ -378,7 +381,7 @@ func test_tooltips_are_readable_and_carry_the_unlock_and_the_dev_notice_when_not
 
 func test_tooltip_of_a_unit_shows_the_evolution_line_and_the_doctrine_it_belongs_to():
 	var tooltip := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node("v2_doctrine_ranger_5"))
-	assert_true(tooltip.contains("Doutrina do Patrulheiro · Nível 5"))
+	assert_true(tooltip.contains("Doutrina do Patrulheiro · Nível 4"), "nível exibido: posição na linha")
 	assert_true(tooltip.contains("Linha de evolução: Arqueiro → [Caçador] → Atirador de Elite"))
 	assert_false(tooltip.contains("Requer: Saraivada"), "N5 exige o N4, não o N6")
 	assert_true(tooltip.contains("Requer: Disparo Preciso"))

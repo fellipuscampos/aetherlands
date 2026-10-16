@@ -74,9 +74,9 @@ func test_the_four_levels_have_the_documented_baseline_numbers():
 	assert_eq([V2CityLevelData.annexation_grant(1), V2CityLevelData.annexation_grant(2), V2CityLevelData.annexation_grant(3), V2CityLevelData.annexation_grant(4)], [0, 4, 5, 6])
 
 func test_upgrade_costs_are_the_documented_baseline():
-	assert_eq([V2CityLevelData.upgrade_production_cost(2), V2CityLevelData.upgrade_gold_cost(2)], [60.0, 30.0])
-	assert_eq([V2CityLevelData.upgrade_production_cost(3), V2CityLevelData.upgrade_gold_cost(3)], [120.0, 70.0])
-	assert_eq([V2CityLevelData.upgrade_production_cost(4), V2CityLevelData.upgrade_gold_cost(4)], [220.0, 140.0])
+	assert_eq([V2CityLevelData.upgrade_production_cost(2), V2CityLevelData.upgrade_gold_cost(2)], [45.0, 25.0])
+	assert_eq([V2CityLevelData.upgrade_production_cost(3), V2CityLevelData.upgrade_gold_cost(3)], [90.0, 55.0])
+	assert_eq([V2CityLevelData.upgrade_production_cost(4), V2CityLevelData.upgrade_gold_cost(4)], [165.0, 110.0])
 
 func test_research_requirement_per_level():
 	assert_eq(V2CityLevelData.research_required_for_level(1), "", "nível I nunca exige pesquisa")
@@ -114,15 +114,15 @@ func test_project_and_unlock_ids_are_distinct_concepts():
 
 # --- §57-65/§76: conteúdo canônico das 18 pesquisas de Infraestrutura --------------------------
 
-func test_infrastructure_has_six_branches_of_three_nodes_each_eighteen_total():
-	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.INFRASTRUCTURE).size(), 18)
+func test_infrastructure_has_seven_branches_of_three_nodes_each_twenty_one_total():
+	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.INFRASTRUCTURE).size(), 21, "7 linhas x 3 (com Colonização)")
 	for branch in ["economy", "logistics", "industry", "academy", "arcane", "urbanization"]:
 		assert_eq(V2ResearchDatabase.nodes_for_branch(V2ResearchNode.TreeType.INFRASTRUCTURE, branch).size(), 3, branch)
 
 func test_all_eighteen_nodes_have_canonical_names_and_costs_but_are_not_placeholders():
 	for branch in ["economy", "logistics", "industry", "academy", "arcane", "urbanization"]:
 		var nodes := V2ResearchDatabase.nodes_for_branch(V2ResearchNode.TreeType.INFRASTRUCTURE, branch)
-		var expected_costs := [16, 48, 120]
+		var expected_costs := [16, 40, 96]
 		for i in nodes.size():
 			var node: V2ResearchNode = nodes[i]
 			assert_false(node.is_placeholder, node.id)
@@ -245,10 +245,10 @@ func test_city_upgrade_becomes_available_once_researched_and_gold_is_on_hand():
 func test_city_upgrade_requires_gold_on_hand_to_start_not_just_to_finish():
 	var player := _player()
 	player.v2_research.complete_research(URBANIZATION_1)
-	player.gold = 10.0 # menos que os 30 exigidos
+	player.gold = 10.0 # menos que os 25 exigidos
 	var city := _city(player)
 	var reason := city.city_upgrade_unavailable_reason()
-	assert_true(reason.contains("30"), reason)
+	assert_true(reason.contains("25"), reason)
 	assert_false(city.can_start_city_upgrade())
 
 func test_starting_the_upgrade_does_not_deduct_gold_immediately():
@@ -272,7 +272,7 @@ func test_full_upgrade_flow_level_1_to_2():
 	assert_eq(city.max_copies_for_building(BuildingData.new()), 1) # UNIQUE não muda, mas o CAP repetível (repeatable_building_limit) sim -- ver teste dedicado
 	assert_eq(V2CityLevelData.repeatable_building_limit(city.city_level), 2)
 	assert_eq(city.annexation_points, 4)
-	assert_eq(player.gold, 70.0, "100 - 30 do custo de Cidade II")
+	assert_eq(player.gold, 75.0, "100 - 25 do custo de Cidade II")
 	assert_eq(city.production_item, "", "projeto concluído deixa a cidade ociosa, como qualquer produção")
 	assert_eq(result.city_level_up, 2)
 
@@ -292,7 +292,7 @@ func test_full_upgrade_flow_level_2_to_3_requires_n2_not_just_n1():
 	assert_eq(city.max_building_slots(), 10)
 	assert_eq(V2CityLevelData.repeatable_building_limit(3), 3)
 	assert_eq(city.annexation_points, 5)
-	assert_eq(player.gold, 130.0, "200 - 70 do custo de Cidade III")
+	assert_eq(player.gold, 145.0, "200 - 55 do custo de Cidade III")
 	assert_true(city.is_developed_v2(), "Cidade III já é 'Desenvolvida'")
 
 func test_full_upgrade_flow_level_3_to_4_has_no_further_upgrade_after():
@@ -309,7 +309,7 @@ func test_full_upgrade_flow_level_3_to_4_has_no_further_upgrade_after():
 	assert_eq(city.max_building_slots(), 13)
 	assert_eq(V2CityLevelData.repeatable_building_limit(4), 4)
 	assert_eq(city.annexation_points, 6)
-	assert_eq(player.gold, 160.0, "300 - 140 do custo de Cidade IV")
+	assert_eq(player.gold, 190.0, "300 - 110 do custo de Cidade IV")
 	assert_eq(city.city_upgrade_unavailable_reason(), "Cidade já está no nível máximo.")
 	assert_false(city.can_start_city_upgrade())
 
@@ -322,7 +322,7 @@ func test_insufficient_gold_at_completion_waits_without_losing_production_points
 	var grid := _grid()
 	var city := _founded_city(player, grid)
 	city.set_production("v2_city_upgrade_2")
-	player.gold = 5.0 # o jogador gastou o Ouro depois de iniciar -- menos que os 30 exigidos
+	player.gold = 5.0 # o jogador gastou o Ouro depois de iniciar -- menos que os 25 exigidos
 	var result := city.process_turn(grid)
 	for i in 60:
 		if city.stored_production >= city.production_cost():
@@ -337,7 +337,7 @@ func test_insufficient_gold_at_completion_waits_without_losing_production_points
 	player.gold = 100.0
 	result = city.process_turn(grid)
 	assert_eq(city.city_level, 2)
-	assert_eq(player.gold, 70.0, "cobrado exatamente uma vez (100 - 30), nunca duas")
+	assert_eq(player.gold, 75.0, "cobrado exatamente uma vez (100 - 25), nunca duas")
 	assert_eq(result.city_level_up, 2)
 
 func test_city_project_competes_for_the_same_local_production_slot_as_units_and_buildings():

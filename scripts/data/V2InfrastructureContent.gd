@@ -17,6 +17,9 @@ extends RefCounted
 ## econômicas usam `unlock_type = "building"` no N1 e `"infrastructure_upgrade"` no N2/N3 (§66).
 
 ## FASE 14: as 18 pesquisas de Infraestrutura têm gameplay real (3 Urbanização + 15 econômicas).
+## 2026-10-09: + a linha de Colonização (3 pesquisas, `unlock_type = "settler_limit"`, limite em
+## V2ColonizationData) — 21 no total. Uma entrada pode declarar o próprio `unlock_type`; sem ele vale a
+## regra estrutural de V2ResearchDatabase._apply_infrastructure_content.
 const CONNECTED_UNLOCK_IDS: Array[String] = [
 	"v2_city_level_2",
 	"v2_city_level_3",
@@ -36,6 +39,9 @@ const CONNECTED_UNLOCK_IDS: Array[String] = [
 	"v2_building_arcane_shrine",
 	"v2_arcane_shrine_efficiency_2",
 	"v2_arcane_shrine_efficiency_3",
+	"v2_settler_limit_1",
+	"v2_settler_limit_2",
+	"v2_settler_limit_unlimited",
 ]
 
 const BRANCHES := {
@@ -86,6 +92,14 @@ const BRANCHES := {
 			"description": "Permite que cidades evoluam para Cidade III e reforcem as defesas para Muralhas II."},
 		{"name": "Metrópole", "intent": "Permitir Cidade IV.", "unlock_id": "v2_city_level_4",
 			"description": "Permite que cidades evoluam para Cidade IV e ergam uma Fortaleza, o ápice do desenvolvimento urbano."},
+	],
+	"colonization": [
+		{"name": "Expedições", "intent": "Permitir treinar o primeiro Colono.", "unlock_id": "v2_settler_limit_1", "unlock_type": "settler_limit",
+			"description": "Organiza as primeiras expedições: a civilização passa a poder treinar 1 Colono na partida. Sem esta pesquisa, nenhuma cidade treina Colonos."},
+		{"name": "Colônias", "intent": "Permitir um segundo Colono.", "unlock_id": "v2_settler_limit_2", "unlock_type": "settler_limit",
+			"description": "Consolida as rotas de colonização: o limite sobe para 2 Colonos treinados na partida."},
+		{"name": "Expansão Territorial", "intent": "Remover o limite de Colonos.", "unlock_id": "v2_settler_limit_unlimited", "unlock_type": "settler_limit",
+			"description": "Topo da linha de Colonização: a civilização pode treinar Colonos sem limite."},
 	],
 }
 

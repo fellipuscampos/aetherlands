@@ -57,7 +57,7 @@ func _player(name: String) -> PlayerData:
 	return PlayerData.new(civ)
 
 func _complete_branch(player: PlayerData, branch: String) -> void:
-	assert_eq(player.v2_research.debug_complete_branch(V2ResearchNode.TreeType.MAGIC_SCHOOL, branch), 9)
+	assert_eq(player.v2_research.debug_complete_branch(V2ResearchNode.TreeType.MAGIC_SCHOOL, branch), V2ResearchDatabase.nodes_for_branch(V2ResearchNode.TreeType.MAGIC_SCHOOL, branch).size())
 
 func _unlock_transcendence(player: PlayerData = human) -> void:
 	_complete_branch(player, "sacred")
@@ -74,7 +74,7 @@ func _make_ready() -> void:
 	_manifestation(ARCHDEMON, Vector2i(-1, 0))
 	human.mana = 300.0
 
-func test_capstone_is_connected_and_all_128_nodes_are_connected():
+func test_capstone_is_connected_and_all_119_nodes_are_connected():
 	var node := V2ResearchDatabase.get_node(V2ResearchDatabase.TRANSCENDENCE_ID)
 	assert_true(node.gameplay_connected)
 	assert_false(node.is_placeholder)
@@ -84,10 +84,10 @@ func test_capstone_is_connected_and_all_128_nodes_are_connected():
 	assert_eq(node.requirement.branch_count, 2)
 	assert_eq(node.requirement.at_tier, 9)
 	assert_eq(V2UnlockSystem.announcement_text(node.unlock_type, node.display_name), "Via de vitória desbloqueada: Transcendência")
-	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.MILITARY_DOCTRINE).filter(func(n): return n.gameplay_connected).size(), 55)
-	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.MAGIC_SCHOOL).filter(func(n): return n.gameplay_connected).size(), 55)
-	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.INFRASTRUCTURE).filter(func(n): return n.gameplay_connected).size(), 18)
-	assert_eq(V2ResearchDatabase.all_nodes().filter(func(n): return n.gameplay_connected).size(), 128)
+	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.MILITARY_DOCTRINE).filter(func(n): return n.gameplay_connected).size(), 49)
+	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.MAGIC_SCHOOL).filter(func(n): return n.gameplay_connected).size(), 49)
+	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.INFRASTRUCTURE).filter(func(n): return n.gameplay_connected).size(), 21)
+	assert_eq(V2ResearchDatabase.all_nodes().filter(func(n): return n.gameplay_connected).size(), 119)
 
 func test_access_is_derived_only_from_capstone_research_and_reset_removes_it():
 	assert_false(V2TranscendenceSystem.has_access(human))

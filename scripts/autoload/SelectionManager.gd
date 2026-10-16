@@ -5,6 +5,8 @@ extends Node
 ## posicao clicada para ca; a UI so escuta os sinais do EventBus.
 
 var selected_unit: Unit = null
+var manifestation_targeting_mode: String = ""
+var manifestation_target_coords: Array[Vector2i] = []
 var reachable: Dictionary = {} # Vector2i -> custo de movimento
 var attackable: Array[Vector2i] = []
 var _hovered_coord := Vector2i(999999, 999999) # sentinela: nunca bate com um tile real
@@ -31,6 +33,15 @@ var move_mode: bool = false
 var placing_city: City = null
 var placing_building_id: String = ""
 var placeable_coords: Array[Vector2i] = []
+## Tile escolhido que ainda espera a resposta do jogador ao aviso "construir aqui destrói o recurso" (ver
+## _handle_building_placement_click); NO_PENDING_COORD = nenhum. O posicionamento continua ativo enquanto isso.
+var placement_confirmation_coord: Vector2i = City.NO_PENDING_COORD
+## ALVO DO ATAQUE (2026-10-13): tile atacado que tem uma tropa E uma cidade atacáveis e ainda espera o jogador dizer
+## em quem bate (EventBus.attack_target_choice_requested -> choose_attack_target/decline_attack_target);
+## NO_PENDING_COORD = nenhum. Nada foi atacado nem gasto enquanto isso.
+const ATTACK_TARGET_UNIT := "unit"
+const ATTACK_TARGET_CITY := "city"
+var attack_choice_coord: Vector2i = City.NO_PENDING_COORD
 
 ## Modo de mira de TÉCNICA DE ATAQUE V2 de alvo único (Golpe Poderoso, Fase 7): o botão da técnica NÃO gasta nada —
 ## só entra neste modo e destaca os inimigos adjacentes válidos; o PRÓXIMO clique num deles resolve o golpe (recarga +
@@ -79,6 +90,9 @@ func reset() -> void:
 func handle_world_hover(world_pos: Vector3) -> void:
 	if GameManager.state == GameManager.GameState.GAME_OVER:
 		return
+	if manifestation_targeting_mode != "":
+		_handle_manifestation_hover(world_pos)
+		return
 	if technique_targeting_id != "":
 		_handle_technique_targeting_hover(world_pos)
 		return
@@ -110,22 +124,26 @@ func handle_world_hover(world_pos: Vector3) -> void:
 		return
 
 	if move_mode and reachable.has(coord):
-		var path = hex_grid.reconstruct_path(selected_unit.coord, coord)
+		var path = hex_grid.unit_route(selected_unit, coord) # a MESMA rota que move_unit vai animar
 		hex_grid.set_highlight(reachable.keys(), attackable, path)
 		hex_grid.show_hover_label(coord, "%.0f PM" % ceil(reachable[coord]), Color(1.0, 1.0, 0.5))
 	elif coord in attackable:
 		hex_grid.set_highlight(reachable.keys(), attackable)
 		hex_grid.show_hover_label(coord, "ATACAR %s" % _attack_target_name(hex_grid, coord), Color(1.0, 0.4, 0.35))
+	elif move_mode and hex_grid.is_border_closed_to(coord, selected_unit.owner_player):
+		# Fronteira fechada: o tile não é destino nem passagem — diz por quê, em vez de só não mostrar rota.
+		hex_grid.set_highlight(reachable.keys(), attackable)
+		hex_grid.show_hover_label(coord, closed_border_label(hex_grid, coord, selected_unit.owner_player), Color(1.0, 0.55, 0.35))
 	elif move_mode and hex_grid.get_unit_at(coord) == null and selected_unit.unit_data.movement_profile == UnitData.MovementProfile.GROUND:
 		# Previa de "mover ate" tipo Civilization pra destino FORA do
 		# alcance deste turno (pedido do usuario: "quero que apareça o
 		# rastro mesmo antes de clicar, pra ver qual que é o caminho que
 		# vai ser tomado até onde o mouse tá em cima"). compute_path e um
 		# Dijkstra SEM teto de movimento (ver HexGrid.compute_path) — mais
-		# caro que reconstruct_path acima, mas so roda quando o mouse muda
+		# caro que a rota curta do alcance acima, mas so roda quando o mouse muda
 		# de TILE (ja debounced por _hovered_coord no topo desta funcao),
 		# nunca por frame.
-		var long_path = hex_grid.compute_path(selected_unit.coord, coord, selected_unit.owner_player, selected_unit.unit_data.flies, selected_unit.embarked)
+		var long_path = hex_grid.unit_path(selected_unit, coord)
 		if long_path.is_empty():
 			hex_grid.set_highlight(reachable.keys(), attackable)
 			hex_grid.hide_hover_label()
@@ -146,6 +164,9 @@ func handle_world_click(world_pos: Vector3) -> void:
 	if not hex_grid.tiles.has(coord):
 		return
 
+	if manifestation_targeting_mode != "":
+		_handle_manifestation_click(coord)
+		return
 	if technique_targeting_id != "":
 		_handle_technique_targeting_click(coord)
 		return
@@ -252,7 +273,7 @@ func start_building_placement(city: City, building_id: String) -> void:
 			placeable_coords.append(n)
 	if placeable_coords.is_empty():
 		cancel_building_placement()
-		EventBus.notify.emit("Nenhum terreno livre para construir. Expanda a cidade ou libere um terreno ocupado.", "")
+		EventBus.notify.emit("Nenhum terreno livre para construir. Anexe mais território à cidade.", "")
 		return
 	hex_grid.set_highlight([], [], [], placeable_coords)
 	EventBus.targeting_changed.emit()
@@ -262,6 +283,7 @@ func cancel_building_placement() -> bool:
 	var was_active := placing_city != null
 	placing_city = null
 	placing_building_id = ""
+	placement_confirmation_coord = City.NO_PENDING_COORD
 	placeable_coords.clear()
 	if GameManager.hex_grid:
 		GameManager.hex_grid.clear_highlight()
@@ -276,7 +298,12 @@ func _handle_building_placement_hover(world_pos: Vector3) -> void:
 	var coord = HexMetrics.world_to_axial(world_pos.x, world_pos.z, hex_grid.hex_size)
 	if coord in placeable_coords:
 		var building_name = BuildingDatabase.get_building(placing_building_id).display_name
-		hex_grid.show_hover_label(coord, "CONSTRUIR %s" % building_name, Color(0.4, 0.75, 1.0))
+		# Tile com recurso de mapa: o aviso já aparece no hover, antes do clique que abre a confirmação.
+		var loss := placing_city.building_site_loss(coord, hex_grid)
+		if loss.is_empty():
+			hex_grid.show_hover_label(coord, "CONSTRUIR %s" % building_name, Color(0.4, 0.75, 1.0))
+		else:
+			hex_grid.show_hover_label(coord, "CONSTRUIR %s — destrói %s" % [building_name, ResourceDatabase.display_name(loss.resource)], Color(1.0, 0.62, 0.25))
 	else:
 		hex_grid.hide_hover_label()
 
@@ -286,18 +313,66 @@ func _handle_building_placement_hover(world_pos: Vector3) -> void:
 ## pro painel da propria cidade (era o que estava sendo visto antes de
 ## comecar a posicionar), em vez de deixar o painel desatualizado ou
 ## pulando pro tile clicado.
+##
+## Tile com RECURSO de mapa (pedido do usuario: "deve aparecer um modal,
+## falando que construir um predio ali destruira o recurso"): o clique nao
+## inicia nada — guarda o tile em placement_confirmation_coord e pede a
+## confirmacao pela UI (EventBus.building_placement_confirmation_requested
+## -> BuildingSiteConfirmPresenter). O posicionamento continua ativo ate a
+## resposta: confirm_building_placement() inicia a obra e destroi o
+## recurso; decline_building_placement() volta pra escolha do tile, sem
+## gastar nem destruir nada. Sem interface escutando (testes headless) nao
+## ha a quem perguntar: o clique vale como a propria confirmacao, mesmo
+## padrao de DiplomacyScreen.request_declare_war sem ModalManager.
 func _handle_building_placement_click(coord: Vector2i) -> void:
 	var hex_grid = GameManager.hex_grid
 	var city = placing_city
 	if coord in placeable_coords:
-		var building_id = placing_building_id
-		city.set_production(building_id)
-		city.pending_building_coord = coord
-		hex_grid.refresh_construction_markers()
-		var building_name = BuildingDatabase.get_building(building_id).display_name
-		EventBus.notify.emit("Construcao de %s iniciada em %s" % [building_name, city.city_name], "confirm")
+		if not city.building_site_loss(coord, hex_grid).is_empty() and not EventBus.building_placement_confirmation_requested.get_connections().is_empty():
+			placement_confirmation_coord = coord
+			hex_grid.hide_hover_label()
+			EventBus.building_placement_confirmation_requested.emit(city, placing_building_id, coord)
+			return
+		_begin_building_at(coord)
 	else:
 		EventBus.targeting_rejected.emit("Posicionamento cancelado: tile fora das opções. Nada foi gasto.")
+	_finish_building_placement(city)
+
+## Resposta "sim" ao aviso de destruição de recurso. Revalida o tile (o modal bloqueia a jogada, mas a resposta
+## nunca confia em estado antigo); devolve false, sem alterar nada, se não havia confirmação pendente.
+func confirm_building_placement() -> bool:
+	var city := placing_city
+	var coord := placement_confirmation_coord
+	if city == null or coord == City.NO_PENDING_COORD:
+		return false
+	placement_confirmation_coord = City.NO_PENDING_COORD
+	if coord in placeable_coords and city.is_valid_building_tile(coord, GameManager.hex_grid):
+		_begin_building_at(coord)
+	else:
+		EventBus.targeting_rejected.emit("Posicionamento cancelado: o tile deixou de ser válido. Nada foi gasto.")
+	_finish_building_placement(city)
+	return true
+
+## Resposta "não": o tile fica como estava e o jogador continua escolhendo onde construir (ESC sai do modo).
+func decline_building_placement() -> bool:
+	if placement_confirmation_coord == City.NO_PENDING_COORD:
+		return false
+	placement_confirmation_coord = City.NO_PENDING_COORD
+	return true
+
+func _begin_building_at(coord: Vector2i) -> void:
+	var hex_grid = GameManager.hex_grid
+	var city := placing_city
+	var building_name: String = BuildingDatabase.get_building(placing_building_id).display_name
+	var destroyed := city.start_building(placing_building_id, coord, hex_grid)
+	hex_grid.refresh_construction_markers()
+	var message := "Construcao de %s iniciada em %s" % [building_name, city.city_name]
+	if destroyed != "":
+		message += " — %s destruído" % ResourceDatabase.display_name(destroyed)
+	EventBus.notify.emit(message, "confirm")
+
+func _finish_building_placement(city: City) -> void:
+	var hex_grid = GameManager.hex_grid
 	cancel_building_placement()
 	hex_grid.show_selection_marker(city.coord)
 	EventBus.tile_selected.emit(city.coord, hex_grid.get_tile(city.coord))
@@ -364,6 +439,7 @@ func _handle_city_annexation_click(coord: Vector2i) -> void:
 		return
 	if not city.annex_tile(coord, hex_grid):
 		return
+	hex_grid.enforce_closed_borders() # o tile anexado pode ter uma unidade de outro reino em cima
 	hex_grid.recompute_fog(city.owner_player)
 	EventBus.notify.emit("%s anexou um novo tile ao território." % city.city_name, "confirm")
 	EventBus.tile_selected.emit(city.coord, hex_grid.get_tile(city.coord)) # HUD atualiza Anexação: N
@@ -434,13 +510,14 @@ func _handle_city_attack_click(coord: Vector2i) -> void:
 	EventBus.tile_selected.emit(city.coord, hex_grid.get_tile(city.coord)) # HUD mostra "Usado neste turno"
 
 func _select_unit(unit: Unit) -> void:
+	_end_manifestation_targeting()
 	_end_technique_targeting()
 	_end_v2_spell_targeting()
 	selected_unit = unit
 	move_mode = false
 	_hovered_coord = Vector2i(999999, 999999)
 	var hex_grid = GameManager.hex_grid
-	reachable = hex_grid.unit_reachable(unit) # pelo PERFIL de movimento (voo tático ou o Dijkstra de sempre — igual ao de antes p/ terrestres)
+	reachable = {} if V2ManifestationOrders.is_bound(unit) else hex_grid.unit_reachable(unit) # pelo PERFIL de movimento (voo tático ou o Dijkstra de sempre — igual ao de antes p/ terrestres)
 	attackable.clear()
 	# unit.movement_left > 0 e o que garante que uma unidade so age uma vez
 	# por turno: atacar zera o movimento (CombatResolver.resolve()), entao
@@ -452,8 +529,10 @@ func _select_unit(unit: Unit) -> void:
 	# attack (efeito colateral de reduzir a vida da cidade a zero atacando,
 	# nao uma acao propria) — sem alvo atacavel, nao ha como capturar.
 	# Fase 17: `can_basic_attack` (Clérigo/Serafim = false) é a semântica EXPLÍCITA de "esta unidade ataca"; Ataque > 0 continua valendo.
-	if _accepts_manual_orders(unit) and unit.unit_data.can_basic_attack and unit.unit_data.attack > 0.0 and unit.movement_left > 0.0 and not unit.embarked:
-		for n in hex_grid.tiles_in_range(unit.coord, unit.unit_data.attack_range):
+	# As regras canônicas abaixo validam cada ação. Conjurador pode desmantelar covil indefeso
+	# adjacente mesmo sem ataque básico; unidades e cidades continuam exigindo ataque físico.
+	if _accepts_manual_orders(unit) and unit.movement_left > 0.0 and not unit.embarked:
+		for n in hex_grid.tiles_in_range(unit.coord, maxi(1, unit.unit_data.attack_range)):
 			var occ_unit = hex_grid.get_unit_at(n)
 			var occ_city = hex_grid.get_city_at(n)
 			# Fora de guerra (Diplomacy.gd), nem unidade nem cidade contam como
@@ -476,6 +555,8 @@ func _select_unit(unit: Unit) -> void:
 	EventBus.unit_selected.emit(unit)
 
 func _clear_selection() -> void:
+	_end_manifestation_targeting()
+	attack_choice_coord = City.NO_PENDING_COORD
 	_end_technique_targeting()
 	_end_v2_spell_targeting()
 	cancel_city_annexation()
@@ -509,7 +590,8 @@ func clear_selection() -> void:
 ## Fase 30 — encerra QUALQUER mira ativa sem gastar nada (overlay estratégico abrindo,
 ## troca de contexto). true se havia alguma.
 func cancel_active_targeting() -> bool:
-	var cancelled := cancel_technique_targeting()
+	var cancelled := cancel_manifestation_targeting()
+	cancelled = cancel_technique_targeting() or cancelled
 	cancelled = cancel_v2_spell_targeting() or cancelled
 	cancelled = cancel_city_annexation() or cancelled
 	cancelled = cancel_city_attack_targeting() or cancelled
@@ -517,7 +599,7 @@ func cancel_active_targeting() -> bool:
 	return cancelled
 
 func is_targeting() -> bool:
-	return technique_targeting_id != "" or v2_spell_targeting_id != "" or placing_city != null or annexing_city != null or city_attack_city != null
+	return manifestation_targeting_mode != "" or technique_targeting_id != "" or v2_spell_targeting_id != "" or placing_city != null or annexing_city != null or city_attack_city != null
 
 ## SO MODO DEBUG (GameManager.debug_mode) -- pedido do usuario: "eu nao
 ## tenho limite de andar e ao clicar num lugar com a movimentacao meu
@@ -572,13 +654,26 @@ func _move_selected_to(coord: Vector2i) -> void:
 ## clique nao for um destino valido — ex: tile com outra unidade, que
 ## deveria tentar SELECIONAR aquela unidade em vez de virar ordem de
 ## movimento.
+## Rótulo do hover sobre um tile de fronteira fechada: "FRONTEIRA FECHADA — <reino>".
+static func closed_border_label(hex_grid: HexGrid, coord: Vector2i, owner: PlayerData) -> String:
+	var city: City = hex_grid.closed_border_city(coord, owner)
+	return "FRONTEIRA FECHADA — %s" % _realm_name(city.owner_player) if city != null else ""
+
+static func _realm_name(player: PlayerData) -> String:
+	return player.civ.civ_name if player != null and player.civ != null else "outro reino"
+
 func _try_queue_move_order(unit: Unit, coord: Vector2i) -> bool:
 	if not _accepts_manual_orders(unit):
 		return false
 	var hex_grid = GameManager.hex_grid
 	if hex_grid.get_unit_at(coord) != null or unit.unit_data.movement_profile != UnitData.MovementProfile.GROUND:
 		return false # (voo tático/infiltração, Fases 9-10: sem ordens de vários turnos — só destinos alcançáveis NESTE turno, pelo perfil da unidade)
-	var path = hex_grid.compute_path(unit.coord, coord, unit.owner_player, unit.unit_data.flies, unit.embarked)
+	# Fronteira fechada: não vira ordem de marcha, e o jogador fica sabendo o motivo (o clique segue o fluxo normal).
+	var closed_city: City = hex_grid.closed_border_city(coord, unit.owner_player)
+	if closed_city != null:
+		EventBus.notify.emit("Fronteiras fechadas: para entrar no território de %s é preciso estar em guerra com %s ou ter fronteiras abertas (Diplomacia)." % [closed_city.city_name, _realm_name(closed_city.owner_player)], "")
+		return false
+	var path = hex_grid.unit_path(unit, coord)
 	if path.is_empty():
 		return false
 	unit.fortified = false
@@ -663,6 +758,7 @@ func use_technique_selected(technique_id: String) -> void:
 
 ## Entra no modo de mira da técnica `technique_id` de `unit` (alvo = unidade ou tile, pelo `target_mode` do dado). Não gasta ação nem recarga.
 func start_technique_targeting(unit: Unit, technique_id: String) -> void:
+	if unit == null or not _accepts_manual_orders(unit): return
 	var hex_grid: HexGrid = GameManager.hex_grid
 	var technique := V2DoctrineTechniqueDatabase.get_technique(technique_id)
 	if unit == null or hex_grid == null or technique == null or not technique.needs_target() or GameManager.is_turn_processing:
@@ -693,8 +789,10 @@ func cancel_technique_targeting() -> bool:
 	_end_technique_targeting()
 	if GameManager.hex_grid:
 		GameManager.hex_grid.hide_hover_label()
-	if unit != null and is_instance_valid(unit) and unit.hp > 0.0:
+	if _targeting_unit_is_live(unit) and selected_unit == unit:
 		_select_unit(unit)
+	elif selected_unit == unit:
+		_clear_selection()
 	return true
 
 ## Só zera o estado da mira (sem tocar na seleção/realce) — usado por _select_unit/_clear_selection.
@@ -732,11 +830,12 @@ func _handle_technique_targeting_click(coord: Vector2i) -> void:
 		return
 	_end_technique_targeting()
 	hex_grid.hide_hover_label()
-	if unit == null or not is_instance_valid(unit) or not _perform_technique(unit, technique_id, coord):
-		if unit != null and is_instance_valid(unit) and unit.hp > 0.0:
+	if not _targeting_unit_is_live(unit) or not _perform_technique(unit, technique_id, coord):
+		if _targeting_unit_is_live(unit):
 			_select_unit(unit) # o alvo deixou de ser válido: nada foi gasto
-	hex_grid.show_selection_marker(coord)
-	EventBus.tile_selected.emit(coord, hex_grid.get_tile(coord))
+		else:
+			_clear_selection()
+	_show_targeted_action_result(unit, coord)
 
 ## Executa a técnica escolhida (V2TechniqueRuntime.perform_targeted: golpe ou reposicionamento) e fecha o turno da unidade como uma ação comum:
 ## recalcula a neblina, checa vitórias e reseleciona (ou limpa, se ela caiu no contra-ataque).
@@ -764,6 +863,7 @@ func use_v2_spell_selected(spell_id: String) -> void:
 
 ## Entra na mira do feitiço `spell_id` de `unit`. Não gasta Mana, recarga nem ação.
 func start_v2_spell_targeting(unit: Unit, spell_id: String) -> void:
+	if unit == null or not _accepts_manual_orders(unit): return
 	var hex_grid: HexGrid = GameManager.hex_grid
 	var spell := V2SpellDatabase.get_spell(spell_id)
 	if unit == null or hex_grid == null or spell == null or GameManager.is_turn_processing:
@@ -797,8 +897,10 @@ func cancel_v2_spell_targeting() -> bool:
 	_end_v2_spell_targeting()
 	if GameManager.hex_grid:
 		GameManager.hex_grid.hide_hover_label()
-	if unit != null and is_instance_valid(unit) and unit.hp > 0.0 and selected_unit == unit:
+	if _targeting_unit_is_live(unit) and selected_unit == unit:
 		_select_unit(unit)
+	elif selected_unit == unit:
+		_clear_selection()
 	return true
 
 func _end_v2_spell_targeting() -> void:
@@ -835,19 +937,39 @@ func _handle_v2_spell_targeting_click(coord: Vector2i) -> void:
 		return
 	_end_v2_spell_targeting()
 	hex_grid.hide_hover_label()
-	if unit != null and is_instance_valid(unit) and V2MagicRuntime.cast(unit, spell_id, coord, hex_grid):
+	if _targeting_unit_is_live(unit) and V2MagicRuntime.cast(unit, spell_id, coord, hex_grid):
 		EventBus.notify.emit("%s conjurou %s." % [unit.unit_data.unit_name, V2SpellDatabase.get_spell(spell_id).display_name], "magic")
 		hex_grid.recompute_fog(GameManager.human_player) # atualiza a Mana na barra superior (a HUD ouve fog_updated)
-	if unit != null and is_instance_valid(unit) and unit.hp > 0.0:
+	if _targeting_unit_is_live(unit):
 		_select_unit(unit)
-	hex_grid.show_selection_marker(coord)
-	EventBus.tile_selected.emit(coord, hex_grid.get_tile(coord))
+	else:
+		_clear_selection()
+	_show_targeted_action_result(unit, coord)
+
+## O clique confirmou uma ação, não uma troca de seleção. O unit_selected já emitido restaura o painel da unidade
+## atuante (e segue sua posição atual após teleporte/Carga). Emitir tile_selected do alvo aqui sobrepunha esse
+## painel e focava o chão sob aliados não selecionados, ou reabria a Cidade/Terreno lembrados no próprio tile.
+## Se a unidade caiu, a inspeção do local atingido continua sendo o fallback natural.
+func _show_targeted_action_result(unit, target_coord: Vector2i) -> void:
+	var hex_grid: HexGrid = GameManager.hex_grid
+	if _targeting_unit_is_live(unit) and selected_unit == unit:
+		hex_grid.show_selection_marker(unit.coord)
+		return
+	hex_grid.show_selection_marker(target_coord)
+	EventBus.tile_selected.emit(target_coord, hex_grid.get_tile(target_coord))
+
+## A remoção lógica pode anteceder queue_free (ou a queda visual no impacto). Não restaura nem executa uma mira
+## guardada para uma unidade que já saiu do índice do mapa; consulta O(1), sem percorrer tropas/tiles.
+func _targeting_unit_is_live(unit) -> bool:
+	var hex_grid: HexGrid = GameManager.hex_grid
+	return is_instance_valid(unit) and not unit.is_queued_for_deletion() and unit.hp > 0.0 and hex_grid != null and hex_grid.get_unit_at(unit.coord) == unit
 
 ## Fase 21 — ação EXPLÍCITA de travessia. Não é spellcast: Silêncio, Mana e cooldowns
 ## não participam. O runtime valida dono, comando, movimento, visão e landing novamente.
 func traverse_selected_portal() -> void:
 	if selected_unit == null or selected_unit.owner_player != GameManager.human_player or GameManager.is_turn_processing:
 		return
+	if V2ManifestationOrders.is_bound(selected_unit): return
 	var unit := selected_unit
 	if V2PortalSystem.traverse(unit, GameManager.hex_grid):
 		GameManager.hex_grid.recompute_fog(GameManager.human_player)
@@ -879,7 +1001,7 @@ func toggle_explore_selected() -> void:
 	if selected_unit == null or not _accepts_manual_orders(selected_unit):
 		return
 	var unit = selected_unit
-	if unit.embarked: # Roadmap 2.0 Parte 1 (C2) — unidade em transito nao explora
+	if unit.embarked and not unit.exploring: # não inicia na água; pode cancelar a ordem iniciada em terra
 		return
 	unit.exploring = not unit.exploring
 	move_mode = false
@@ -890,15 +1012,23 @@ func toggle_explore_selected() -> void:
 	unit.move_order_target = Unit.NO_MOVE_ORDER
 	var hex_grid = GameManager.hex_grid
 	hex_grid.explore_step(unit)
+	if not unit.exploring:
+		EventBus.notify.emit("%s: nenhuma área inexplorada acessível para explorar." % unit.unit_data.unit_name, "")
 	hex_grid.recompute_fog(GameManager.human_player)
 	if is_instance_valid(unit) and not unit.is_queued_for_deletion():
 		_select_unit(unit)
+		hex_grid.show_selection_marker(unit.coord)
 
 ## Nome mostrado no aviso "ATACAR" ao passar o mouse — deixa claro o que
 ## esta no alcance ANTES de clicar, principalmente pros Covis de Monstro
 ## (Goblin/Troll/Vivern tem risco bem diferente entre si).
 func _attack_target_name(hex_grid: HexGrid, coord: Vector2i) -> String:
 	var target_unit = hex_grid.get_unit_at(coord)
+	# Tropa em cima de uma cidade, as duas atacáveis: o clique vai perguntar em quem bater.
+	if selected_unit != null:
+		var both := attack_targets_at(selected_unit, coord, hex_grid)
+		if both.unit != null and both.city != null:
+			return "%s ou %s" % [(both.unit as Unit).unit_data.unit_name, (both.city as City).city_name]
 	if target_unit:
 		return target_unit.unit_data.unit_name
 	var target_city = hex_grid.get_city_at(coord)
@@ -906,9 +1036,53 @@ func _attack_target_name(hex_grid: HexGrid, coord: Vector2i) -> String:
 		return target_city.city_name
 	return ""
 
+## O que `attacker` pode atacar em `coord`: {"unit": Unit ou null, "city": City ou null}, cada um pela regra de
+## sempre (CombatResolver.can_attack_unit / can_attack_city). Os dois presentes = uma tropa guarnecendo uma cidade:
+## o jogador escolhe o alvo.
+static func attack_targets_at(attacker: Unit, coord: Vector2i, hex_grid: HexGrid) -> Dictionary:
+	var targets := {"unit": null, "city": null}
+	if attacker == null or hex_grid == null:
+		return targets
+	var unit_here: Unit = hex_grid.get_unit_at(coord)
+	if unit_here != null and CombatResolver.can_attack_unit(attacker, unit_here, hex_grid):
+		targets.unit = unit_here
+	var city_here: City = hex_grid.get_city_at(coord)
+	if city_here != null and CombatResolver.can_attack_city(attacker, city_here):
+		targets.city = city_here
+	return targets
+
+## Clique num tile atacável. Com uma tropa E uma cidade atacáveis ali, o ataque espera a escolha do jogador (pedido do
+## usuário 2026-10-13: "caso tenha uma tropa acima, eu possa escolher em quem estou atacando, a cidade ou a tropa" —
+## antes o golpe ia sempre na tropa, que servia de escudo para a cidade). Sem ninguém para perguntar (nenhuma UI
+## ligada ao sinal), vale o alvo de sempre.
 func _attack_from_selected(coord: Vector2i) -> void:
 	if selected_unit == null or not _accepts_manual_orders(selected_unit):
 		return
+	var both := attack_targets_at(selected_unit, coord, GameManager.hex_grid)
+	if both.unit != null and both.city != null and not EventBus.attack_target_choice_requested.get_connections().is_empty():
+		attack_choice_coord = coord
+		EventBus.attack_target_choice_requested.emit(selected_unit, coord)
+		return
+	_resolve_attack_from_selected(coord, "")
+
+## A resposta do jogador: ATTACK_TARGET_UNIT ou ATTACK_TARGET_CITY ("" = o alvo de sempre). false, sem atacar nada, se
+## não havia escolha pendente ou ela deixou de valer (a unidade não aceita mais ordens, o alvo sumiu).
+func choose_attack_target(target: String) -> bool:
+	var coord := attack_choice_coord
+	attack_choice_coord = City.NO_PENDING_COORD
+	if coord == City.NO_PENDING_COORD or selected_unit == null or not _accepts_manual_orders(selected_unit) or not coord in attackable:
+		return false
+	_resolve_attack_from_selected(coord, target)
+	return true
+
+## Desistiu de atacar: nada é gasto, a unidade continua selecionada com a ação dela.
+func decline_attack_target() -> bool:
+	if attack_choice_coord == City.NO_PENDING_COORD:
+		return false
+	attack_choice_coord = City.NO_PENDING_COORD
+	return true
+
+func _resolve_attack_from_selected(coord: Vector2i, forced_target: String) -> void:
 	var hex_grid = GameManager.hex_grid
 	var attacker = selected_unit
 	# Atacar cancela qualquer ordem/modo automatico pendente (ver
@@ -920,7 +1094,12 @@ func _attack_from_selected(coord: Vector2i) -> void:
 	attacker.fortified = false
 	attacker.exploring = false
 	var defender_unit = hex_grid.get_unit_at(coord)
-	if defender_unit:
+	var forced_city: City = hex_grid.get_city_at(coord) if forced_target == ATTACK_TARGET_CITY else null
+	if forced_city != null and CombatResolver.can_attack_city(attacker, forced_city):
+		# O jogador escolheu a cidade mesmo com a tropa em cima: a guarnição não é tocada (e recua se a cidade cair —
+		# HexGrid._withdraw_garrison).
+		CombatResolver.resolve_city_attack(attacker, forced_city, hex_grid)
+	elif defender_unit:
 		CombatResolver.resolve(attacker, defender_unit, hex_grid)
 	else:
 		var defender_city = hex_grid.get_city_at(coord)
@@ -946,7 +1125,7 @@ func _attack_from_selected(coord: Vector2i) -> void:
 func _accepts_manual_orders(unit: Unit) -> bool:
 	# Fase 19: Unit.can_receive_orders (retinue sem comando = false; caminho rápido true para o resto) — o gate real
 	# também está em HexGrid.move_unit / CombatResolver; aqui só evita oferecer a ordem.
-	return not GameManager.is_turn_processing and unit.can_receive_orders()
+	return not GameManager.is_turn_processing and not V2ManifestationOrders.is_bound(unit) and unit.can_receive_orders()
 
 ## Fase 19 — botão "Dissolver Hoste": remove a retinue SELECIONADA do humano (V2RetinueSystem.dissolve: sem abate,
 ## XP, saque nem Mana; a capacidade volta por derivação). Vale MESMO sem comando — é justamente o jeito de liberar
@@ -963,3 +1142,55 @@ func dissolve_selected_retinue() -> void:
 	_clear_selection()
 	EventBus.notify.emit("%s dissolvida." % unit_name, "")
 	GameManager.hex_grid.recompute_fog(GameManager.human_player)
+
+## Bound entities accept strategic targets, not individual movement or spell clicks.
+func start_manifestation_targeting(mode: String) -> void:
+	var unit := selected_unit
+	if GameManager.is_turn_processing or not V2ManifestationOrders.is_bound(unit) or unit.owner_player != GameManager.human_player or not mode in V2ManifestationOrders.MODES: return
+	if manifestation_targeting_mode == mode:
+		cancel_manifestation_targeting()
+		return
+	cancel_active_targeting()
+	move_mode = false
+	manifestation_targeting_mode = mode
+	manifestation_target_coords = V2ManifestationOrders.target_coords(unit,mode,GameManager.hex_grid)
+	_hovered_coord = Vector2i(999999,999999)
+	GameManager.hex_grid.set_highlight(manifestation_target_coords,[])
+	EventBus.targeting_changed.emit()
+	EventBus.unit_selected.emit(unit)
+
+func _end_manifestation_targeting() -> void:
+	var was_active := manifestation_targeting_mode != ""
+	manifestation_targeting_mode = ""
+	manifestation_target_coords.clear()
+	if was_active:
+		if GameManager.hex_grid != null: GameManager.hex_grid.hide_hover_label()
+		EventBus.targeting_changed.emit()
+
+func cancel_manifestation_targeting() -> bool:
+	if manifestation_targeting_mode == "": return false
+	_end_manifestation_targeting()
+	if is_instance_valid(selected_unit) and GameManager.hex_grid != null: _select_unit(selected_unit)
+	return true
+
+func _handle_manifestation_hover(world_pos: Vector3) -> void:
+	var grid := GameManager.hex_grid
+	var coord := HexMetrics.world_to_axial(world_pos.x,world_pos.z,grid.hex_size)
+	if coord == _hovered_coord: return
+	_hovered_coord = coord
+	grid.set_highlight(manifestation_target_coords,[])
+	grid.show_hover_label(coord,String(V2ManifestationOrders.LABELS.get(manifestation_targeting_mode,"Escolher alvo")) if coord in manifestation_target_coords else "Escolha um alvo destacado · ESC cancela",Color(.9,.78,.48))
+
+func _handle_manifestation_click(coord: Vector2i) -> void:
+	var unit := selected_unit
+	var grid := GameManager.hex_grid
+	var reason := V2ManifestationOrders.target_reason(unit,manifestation_targeting_mode,coord,grid)
+	if reason != "":
+		EventBus.targeting_rejected.emit(reason)
+		EventBus.notify.emit(reason,"")
+		return
+	if V2ManifestationOrders.assign(unit,manifestation_targeting_mode,coord,grid):
+		_select_unit(unit)
+		grid.show_selection_marker(unit.coord)
+		EventBus.tile_selected.emit(unit.coord,grid.get_tile(unit.coord))
+		EventBus.notify.emit("%s: %s. Agirá ao encerrar o turno." % [unit.unit_data.unit_name,V2ManifestationOrders.describe(unit)],"confirm")

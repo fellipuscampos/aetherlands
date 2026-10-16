@@ -32,6 +32,8 @@ var _original_turn: int
 var _original_turn_player: int
 
 func before_each():
+	# Conta unidades/Suprimentos exatos da linha: sem a escolta inicial (fixture, ver GameManager).
+	GameManager.starting_escort_on_new_match = false
 	_original_state = GameManager.state
 	_original_players = GameManager.players
 	_original_human = GameManager.human_player
@@ -57,6 +59,7 @@ func before_each():
 	GameManager.start_new_game(_grid)
 
 func after_each():
+	GameManager.starting_escort_on_new_match = true
 	GameManager.combat_ecology_on_new_match = true
 	SelectionManager.reset()
 	SaveManager.delete_save(SAVE_PATH)
@@ -88,7 +91,7 @@ func _end_turn() -> void:
 	assert_false(GameManager.is_turn_processing)
 
 func _learn(branch: String, tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		var id := "v2_magic_%s_%d" % [branch, i]
 		if not GameManager.human_player.v2_research.is_completed(id):
 			assert_true(GameManager.human_player.v2_research.complete_research(id), id)
@@ -148,6 +151,11 @@ func _train(city: City, kind: String) -> Unit:
 
 ## Mira pela SelectionManager e clica: prova o fluxo de UI (não o runtime direto).
 func _aim_and_click(caster: Unit, spell_id: String, coord: Vector2i) -> void:
+	# Repertoire regression through the executor; bound entities no longer expose manual spell targeting.
+	if V2ManifestationOrders.is_bound(caster):
+		caster.movement_left = caster.unit_data.movement_points
+		assert_true(V2MagicRuntime.cast(caster, spell_id, coord, _grid))
+		return
 	caster.movement_left = caster.unit_data.movement_points
 	caster.magic_cooldowns.erase(spell_id)
 	SelectionManager._select_unit(caster)
@@ -176,9 +184,9 @@ func test_154_necromancy_end_to_end_with_command_loss_three_manifestations_and_s
 	assert_not_null(city)
 	city.city_level = 3 # atalho de slot; City Level tem fluxo próprio.
 	var mana_before: float = human.mana
-	assert_true(human.v2_research.select_research("v2_magic_necromancy_1"))
+	assert_true(human.v2_research.select_research("v2_magic_necromancy_2"))
 	_end_turn()
-	assert_gt(human.v2_research.get_progress("v2_magic_necromancy_1"), 0.0, "Conhecimento real")
+	assert_gt(human.v2_research.get_progress("v2_magic_necromancy_2"), 0.0, "Conhecimento real")
 	assert_gt(human.mana, mana_before, "Mana real")
 
 	# 4–6: Escola + Ossuário pela fila.
@@ -207,7 +215,7 @@ func test_154_necromancy_end_to_end_with_command_loss_three_manifestations_and_s
 	assert_not_null(skeleton)
 	assert_eq(skeleton.unit_data.visual_kind, SKELETON)
 	assert_eq(skeleton.movement_left, 0.0)
-	assert_eq(human.mana, 93.0)
+	assert_eq(human.mana, 90.0)
 	assert_eq(_command_line(necromancer), "Comando Necromântico: 1 / 2")
 
 	# 21–23: próximo turno a Hoste move e combate fisicamente.
@@ -249,14 +257,14 @@ func test_154_necromancy_end_to_end_with_command_loss_three_manifestations_and_s
 	_learn(SCHOOL, 5)
 	skeleton_b.hp = 6.0
 	_aim_and_click(necromancer, MEND, skeleton_b.coord)
-	assert_eq(skeleton_b.hp, 14.0)
+	assert_eq(skeleton_b.hp, 18.0)
 
 	# 30–32: Comando Macabro: +40% no combate físico real.
 	_learn(SCHOOL, 6)
 	var target := _spawn("v2_unit_guardian", rival, _free_coord(skeleton_b.coord, 1, 1))
 	var plain := CombatResolver.predict(skeleton_b, target, _grid)
 	_aim_and_click(necromancer, COMMAND, skeleton_b.coord)
-	assert_almost_eq(V2MagicRuntime.attack_multiplier(skeleton_b), 1.4, 0.0001)
+	assert_almost_eq(V2MagicRuntime.attack_multiplier(skeleton_b), 1.5, 0.0001)
 	var buffed := CombatResolver.predict(skeleton_b, target, _grid)
 	assert_gt(buffed.damage_to_defender, plain.damage_to_defender)
 	skeleton_b.movement_left = skeleton_b.unit_data.movement_points
@@ -322,7 +330,7 @@ func test_154_necromancy_end_to_end_with_command_loss_three_manifestations_and_s
 	_build(city, MAUSOLEUM)
 	_learn(SCHOOL, 9)
 	GameManager.debug_mode = false
-	human.mana = 65.0
+	human.mana = 130.0
 	_clear_city_ring(city)
 	assert_true(city.can_train(LICH), V2ManifestationSystem.training_soft_reason(human, city, LICH))
 	city.set_production(LICH)
@@ -331,7 +339,7 @@ func test_154_necromancy_end_to_end_with_command_loss_three_manifestations_and_s
 	_end_turn()
 	assert_null(_find(LICH), "espera a Mana")
 	assert_eq(city.production_item, LICH)
-	human.mana = 80.0
+	human.mana = 150.0
 	_end_turn()
 	var lich := _find(LICH)
 	assert_not_null(lich)
@@ -374,7 +382,7 @@ func test_154_necromancy_end_to_end_with_command_loss_three_manifestations_and_s
 	assert_true(human.v2_research.is_completed("v2_magic_necromancy_9"))
 	assert_eq(human.mana, mana_saved)
 	assert_eq(V2MagicRuntime.cooldown_remaining(loaded_lich, LEGION), 3)
-	assert_almost_eq(V2MagicRuntime.attack_multiplier(_find(MACABRE)), 1.4, 0.0001)
+	assert_almost_eq(V2MagicRuntime.attack_multiplier(_find(MACABRE)), 1.5, 0.0001)
 	for school in ["sacred", "infernal", SCHOOL]:
 		assert_false(V2ManifestationSystem.slot_available(human, school), school)
 	assert_true(V2ResearchDatabase.get_node("v2_transcendence").gameplay_connected)

@@ -93,6 +93,7 @@ func _active() -> bool:
 func _on_event(action: String, info: Dictionary) -> void:
 	if not _active():
 		return
+	if action == "ability" and preload("res://scripts/vfx/CombatFeedback.gd").defer_call(self, &"_on_event", [action, info]): return
 	var source := _coord(info.get("source"))
 	var target := _coord(info.get("target_coord"))
 	match action:

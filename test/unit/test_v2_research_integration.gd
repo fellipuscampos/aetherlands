@@ -115,49 +115,49 @@ func _save_and_reload() -> V2ResearchState:
 
 func test_full_research_flow_with_save_and_load():
 	var state := human.v2_research
-	var guardian_1_cost := V2ResearchDatabase.get_node("v2_doctrine_guardian_1").cost
-	var guardian_2_cost := V2ResearchDatabase.get_node("v2_doctrine_guardian_2").cost
-	var sacred_1_cost := V2ResearchDatabase.get_node("v2_magic_sacred_1").cost
+	var guardian_1_cost := V2ResearchDatabase.get_node("v2_doctrine_guardian_2").cost
+	var guardian_2_cost := V2ResearchDatabase.get_node("v2_doctrine_guardian_3").cost
+	var sacred_1_cost := V2ResearchDatabase.get_node("v2_magic_sacred_2").cost
 	var guardian_2_partial := guardian_2_cost * 0.4
 	var completed_in_order: Array[String] = []
 	state.research_completed.connect(func(id): completed_in_order.append(id))
 	assert_true(state.completed_ids.is_empty(), "1. estado V2 vazio")
 	assert_eq(state.active_id, "")
 
-	# 2-4. Guardião I: seleciona, paga e conclui.
-	assert_true(state.select_research("v2_doctrine_guardian_1"))
+	# 2-4. Primeiro nó do Guardião (o Salão): seleciona, paga e conclui.
+	assert_true(state.select_research("v2_doctrine_guardian_2"))
 	state.add_knowledge(guardian_1_cost)
-	assert_true(state.is_completed("v2_doctrine_guardian_1"))
+	assert_true(state.is_completed("v2_doctrine_guardian_2"))
 	assert_eq(state.active_id, "", "nada é escolhido sozinho")
 
-	# 5-6. Guardião II com progresso parcial.
-	assert_true(state.select_research("v2_doctrine_guardian_2"))
+	# 5-6. Segundo nó (o Escudeiro) com progresso parcial.
+	assert_true(state.select_research("v2_doctrine_guardian_3"))
 	state.add_knowledge(guardian_2_partial)
-	assert_almost_eq(state.get_progress_ratio("v2_doctrine_guardian_2"), 0.4, 0.001)
+	assert_almost_eq(state.get_progress_ratio("v2_doctrine_guardian_3"), 0.4, 0.001)
 
 	# 7-8. Troca pra outra ÁRVORE (Magia): Sagrada I, e avança.
-	assert_true(state.select_research("v2_magic_sacred_1"))
-	assert_eq(state.active_id, "v2_magic_sacred_1", "um único projeto ativo")
+	assert_true(state.select_research("v2_magic_sacred_2"))
+	assert_eq(state.active_id, "v2_magic_sacred_2", "um único projeto ativo")
 	state.add_knowledge(sacred_1_cost)
-	assert_true(state.is_completed("v2_magic_sacred_1"))
+	assert_true(state.is_completed("v2_magic_sacred_2"))
 
 	# 9-10. Volta pro Guardião II: o progresso estava guardado.
-	assert_true(state.select_research("v2_doctrine_guardian_2"))
-	assert_almost_eq(state.get_progress("v2_doctrine_guardian_2"), guardian_2_partial, 0.001, "preservado entre árvores")
+	assert_true(state.select_research("v2_doctrine_guardian_3"))
+	assert_almost_eq(state.get_progress("v2_doctrine_guardian_3"), guardian_2_partial, 0.001, "preservado entre árvores")
 
 	# 11-13. Salva, carrega e confere.
 	var loaded := _save_and_reload()
 	assert_not_same(loaded, state, "o jogador carregado é outro objeto")
-	assert_eq(loaded.active_id, "v2_doctrine_guardian_2")
-	assert_eq(loaded.get_completed_ids(), ["v2_doctrine_guardian_1", "v2_magic_sacred_1"])
-	assert_almost_eq(loaded.get_progress("v2_doctrine_guardian_2"), guardian_2_partial, 0.001)
+	assert_eq(loaded.active_id, "v2_doctrine_guardian_3")
+	assert_eq(loaded.get_completed_ids(), ["v2_doctrine_guardian_2", "v2_magic_sacred_2"])
+	assert_almost_eq(loaded.get_progress("v2_doctrine_guardian_3"), guardian_2_partial, 0.001)
 
 	# 14. Continua a pesquisa exatamente de onde parou.
 	var after_load: Array[String] = []
 	loaded.research_completed.connect(func(id): after_load.append(id))
 	loaded.add_knowledge(guardian_2_cost - guardian_2_partial)
-	assert_true(loaded.is_completed("v2_doctrine_guardian_2"), "o progresso parcial mais o restante conclui o nó")
-	assert_eq(after_load, ["v2_doctrine_guardian_2"])
+	assert_true(loaded.is_completed("v2_doctrine_guardian_3"), "o progresso parcial mais o restante conclui o nó")
+	assert_eq(after_load, ["v2_doctrine_guardian_3"])
 
 	# 15-17. Completa duas linhas (modo de teste) e o capstone abre.
 	assert_false(loaded.is_available("v2_supreme_army"))
@@ -165,7 +165,7 @@ func test_full_research_flow_with_save_and_load():
 	assert_false(loaded.is_available("v2_supreme_army"), "uma Doutrina só")
 	loaded.debug_complete_branch(MILITARY, "warrior")
 	assert_true(loaded.is_available("v2_supreme_army"), "duas Doutrinas até o N9")
-	assert_eq(completed_in_order, ["v2_doctrine_guardian_1", "v2_magic_sacred_1"], "o estado antigo não recebeu eventos do novo")
+	assert_eq(completed_in_order, ["v2_doctrine_guardian_2", "v2_magic_sacred_2"], "o estado antigo não recebeu eventos do novo")
 
 func test_the_flow_grants_no_v1_gameplay_unlock_of_any_kind():
 	var state := human.v2_research
@@ -199,14 +199,14 @@ func test_capstone_availability_and_overflow_survive_the_round_trip():
 	assert_almost_eq(loaded.research_overflow, 0.0, 0.001)
 
 func test_each_civilization_keeps_its_own_state_through_the_round_trip():
-	human.v2_research.select_research("v2_doctrine_guardian_1")
+	human.v2_research.select_research("v2_doctrine_guardian_2")
 	human.v2_research.add_knowledge(4.0)
-	rival.v2_research.select_research("v2_magic_infernal_1")
+	rival.v2_research.select_research("v2_magic_infernal_2")
 	rival.v2_research.add_knowledge(6.0)
 
 	_save_and_reload()
 
-	assert_eq(GameManager.human_player.v2_research.active_id, "v2_doctrine_guardian_1")
-	assert_eq(GameManager.rival_players[0].v2_research.active_id, "v2_magic_infernal_1")
-	assert_almost_eq(GameManager.human_player.v2_research.get_progress("v2_magic_infernal_1"), 0.0, 0.001)
-	assert_almost_eq(GameManager.rival_players[0].v2_research.get_progress("v2_magic_infernal_1"), 6.0, 0.001)
+	assert_eq(GameManager.human_player.v2_research.active_id, "v2_doctrine_guardian_2")
+	assert_eq(GameManager.rival_players[0].v2_research.active_id, "v2_magic_infernal_2")
+	assert_almost_eq(GameManager.human_player.v2_research.get_progress("v2_magic_infernal_2"), 0.0, 0.001)
+	assert_almost_eq(GameManager.rival_players[0].v2_research.get_progress("v2_magic_infernal_2"), 6.0, 0.001)

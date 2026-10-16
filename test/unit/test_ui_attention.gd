@@ -83,7 +83,7 @@ func test_research_idle_is_required_and_primary():
 	assert_true(service.next_required().blocking_end_turn)
 
 func test_selecting_research_removes_idle_attention():
-	assert_true(human.v2_research.select_research("v2_doctrine_guardian_1"))
+	assert_true(human.v2_research.select_research("v2_doctrine_guardian_2"))
 	assert_false(_ids(service.items()).has("research_idle"))
 
 func test_all_128_research_nodes_complete_never_requests_impossible_choice():
@@ -105,6 +105,7 @@ func test_idle_cities_are_required_in_stable_player_order():
 
 func test_only_settler_is_a_non_blocking_idle_warning():
 	_city("Aldenmark", Vector2i(4, -1))
+	assert_true(human.v2_research.complete_research("v2_infrastructure_colonization_1"), "o Colono exige a linha de Colonização")
 	service.refresh()
 	var idle := service.items().filter(func(item: AttentionItem): return item.id == "city_idle:4,-1")
 	assert_eq(idle.size(), 1)
@@ -217,7 +218,7 @@ func test_turn_controller_routes_required_instead_of_ending_turn():
 	assert_eq(ended[0], 0)
 
 func test_turn_controller_ends_normally_when_only_warnings_exist():
-	assert_true(human.v2_research.select_research("v2_doctrine_guardian_1"))
+	assert_true(human.v2_research.select_research("v2_doctrine_guardian_2"))
 	_city("Aldenmark", Vector2i(4, -1))
 	service.refresh()
 	var controller := TurnController.new()
@@ -236,7 +237,7 @@ func test_rebinding_same_player_is_idempotent_and_does_not_duplicate_callbacks()
 	service.bind_player(human)
 	service.bind_player(human)
 	changes[0] = 0
-	assert_true(human.v2_research.select_research("v2_doctrine_guardian_1"))
+	assert_true(human.v2_research.select_research("v2_doctrine_guardian_2"))
 	assert_eq(changes[0], 1)
 
 func test_rebinding_replaces_old_player_research_connections():
@@ -250,9 +251,9 @@ func test_rebinding_replaces_old_player_research_connections():
 	service.bind_player(replacement)
 	var changes := [0]
 	service.items_changed.connect(func(_items): changes[0] += 1)
-	assert_true(human.v2_research.select_research("v2_doctrine_guardian_1"))
+	assert_true(human.v2_research.select_research("v2_doctrine_guardian_2"))
 	assert_eq(changes[0], 0)
-	assert_true(replacement.v2_research.select_research("v2_doctrine_guardian_1"))
+	assert_true(replacement.v2_research.select_research("v2_doctrine_guardian_2"))
 	assert_eq(changes[0], 1)
 
 func test_turn_controller_override_confirms_once_without_resolving_attention():
@@ -305,7 +306,7 @@ func test_research_widget_shows_idle_active_eta_and_zero_income():
 	add_child_autofree(widget)
 	widget.bind_player(human)
 	assert_true(widget.name_label.text.contains("Escolher"))
-	assert_true(human.v2_research.select_research("v2_doctrine_guardian_1"))
+	assert_true(human.v2_research.select_research("v2_doctrine_guardian_2"))
 	# Renda zero: sem cidade a pesquisa já ativa continua (só não progride) — V3 / Etapa 2.
 	human.cities.erase(capital)
 	capital.free()
@@ -338,7 +339,7 @@ func test_attention_sort_is_deterministic_after_repeated_refresh():
 	assert_eq(_ids(service.items()), first)
 
 func test_ten_city_refresh_keeps_only_settler_states_non_blocking():
-	assert_true(human.v2_research.select_research("v2_doctrine_guardian_1"))
+	assert_true(human.v2_research.select_research("v2_doctrine_guardian_2"))
 	for index in 10:
 		_city("Cidade %d" % index, Vector2i(index, -index))
 	var started := Time.get_ticks_usec()

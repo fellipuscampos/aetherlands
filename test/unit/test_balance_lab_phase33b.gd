@@ -86,7 +86,7 @@ func _manual_world(ai_seat: bool) -> Array[PlayerData]:
 	return [human, rival] as Array[PlayerData]
 
 func _complete_branch(player: PlayerData, tree: int, branch: String) -> void:
-	assert_eq(player.v2_research.debug_complete_branch(tree, branch), 9)
+	assert_eq(player.v2_research.debug_complete_branch(tree, branch), V2ResearchDatabase.nodes_for_branch(tree, branch).size())
 
 # --- Seed set / rotação ------------------------------------------------------------------------
 
@@ -102,8 +102,8 @@ func test_seed_set_is_explicit_versioned_and_reproducible():
 	assert_eq(first.match_id, "F33B-008")
 	assert_eq(first.baseline_id, "RELEASE_BALANCE_BASELINE_PRE_TUNING")
 	# V3 / Etapa 3: o laboratório mede o mundo padrão 1.0 (só o continente principal; 320x84 = perfil especial).
-	assert_eq(first.map_width, WorldProfile.STANDARD_1_0.width)
-	assert_eq(first.map_height, WorldProfile.STANDARD_1_0.height)
+	assert_eq(first.map_width, WorldProfile.default_size().width)
+	assert_eq(first.map_height, WorldProfile.default_size().height)
 	assert_eq(first.turn_cap, 240)
 	for key in ["seed", "races", "orientations", "seed_set_version"]:
 		assert_true(first.has(key), "config registra %s" % key)
@@ -220,8 +220,9 @@ func test_setup_grants_nothing_and_first_turn_resources_come_only_from_runtime()
 		assert_eq(player.mana, 0.0, "sem Mana grátis")
 		assert_eq(player.v2_research.completed_ids.size(), 0, "sem pesquisa grátis")
 		assert_eq(player.cities.size(), 1, "exatamente a capital do spawn")
-		assert_eq(player.units.size(), 1, "exatamente o Guarda inicial")
-		assert_eq(player.units[0].unit_data.visual_kind, "warrior")
+		var kinds := player.units.map(func(unit: Unit) -> String: return unit.unit_data.visual_kind)
+		kinds.sort()
+		assert_eq(kinds, Array(UnitDatabase.STARTING_ESCORT_KINDS), "exatamente a escolta inicial (Escudeiro + Guerreiro)")
 		assert_eq(player.cities[0].stored_production, 0.0, "sem Produção grátis")
 		assert_eq(player.cities[0].production_item, "")
 		before.append({

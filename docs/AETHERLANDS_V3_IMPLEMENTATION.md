@@ -9,6 +9,11 @@ F33E/F33F adiadas porque a V3 altera gameplay o bastante para invalidar uma base
 
 ## V3 — Combat Ecology
 
+**Revisão de 15/10/2026 — covis unificados:** a separação histórica abaixo entre ameaça regional e
+origens ecológicas sem estrutura foi substituída por um registro/controlador único de covis, líderes,
+reforços e trégua regional. As etapas abaixo permanecem como histórico; o contrato atual está em
+[`UNIFIED_MONSTER_LAIRS.md`](UNIFIED_MONSTER_LAIRS.md). Save v27, compatível com v26 e anteriores.
+
 Plano original: Etapa 1 Foundation → Etapa 2 BASIC deep dive → Etapa 3 INTERMEDIATE → Etapa 4 ADVANCED → Etapa 5
 Review. **Superado por decisão de produto:** a Etapa 2 passou a ser "Monster Identity & Abilities + Opening
 Corrections" (habilidades e comportamento das 12 espécies de uma vez); o escopo seguinte fica aberto ao product owner.
@@ -58,7 +63,7 @@ da seed adotado (estrutura + papel `HexGrid.LAIR_ROLE_ECOLOGY`) ou `NO_LAIR` (â
 sem estrutura e sem recompensa de estrutura, então a ecologia não injeta ouro de covil no mapa). O monstro
 aponta para o sítio por `Unit.ecology_site_id`. O tier é sempre derivado da espécie (não é salvo).
 
-**Tier ≠ papel.** Covis regionais, Guardiões Troll e guardiões do Relicário mantêm o papel e o
+**Tier ≠ papel.** Covis regionais e Guardiões Troll (e, até 2026-10-12, os guardiões do Relicário, removido) mantêm o papel e o
 comportamento próprios; o tier é da espécie (Goblin regional = BASIC + REGIONAL; Troll Guardião =
 INTERMEDIATE + GUARDIAN; Esqueleto do Relicário = BASIC + EVENT). A diretiva ecológica só vale para
 `ecology_site_id >= 0`.
@@ -252,7 +257,7 @@ opções de setup e tuning F33E ficam fora.
   sempre por `CombatResolver.predict/resolve/apply_direct_unit_damage`; a Investida usa o `strike_multiplier` existente.
   Zonas ambientais (têm dono conjurador) e modificações de terreno (permanentes) não servem semanticamente para
   raízes/infecção — por isso `MonsterHazardSystem`, pequeno e fixo.
-- **Só a ecologia usa habilidades.** Ameaça regional, Guardião Troll e guardiões do Relicário mantêm as regras D2/D3
+- **Só a ecologia usa habilidades.** Ameaça regional e Guardião Troll mantêm as regras D2/D3
   (exceção documentada: nenhuma habilidade nesses papéis; Esqueleto de evento/regional nunca multiplica).
 - **Duração justa (humano × IA):** a IA joga antes dos monstros e o humano depois do `_finish_turn`. Um estado com
   duração k cobre exatamente k turnos PRÓPRIOS da vítima (expiração N+k para o humano, N+k+1 para a IA); dano
@@ -416,6 +421,15 @@ Construtor, monstros novos, habitat final, dificuldade/velocidade, balanceamento
 - **Foco do inspetor** (`ContextRouter._sync_visual_focus`): Unidade = regra padrão; Cidade/**Estrutura** (aba nova
   quando uma unidade divide o tile com prédio/covil/melhoria/obra) = estrutura opaca e unidade semitransparente;
   Terreno escolhido no seletor = tudo em cima do tile semitransparente. Fechar o contexto volta à regra padrão.
+- **Aba lembrada por tile (2026-10-12):** a aba que o jogador escolhe no seletor de ocupantes (Cidade / Unidade /
+  Estrutura / Terreno) fica guardada POR TILE em `ContextRouter._remembered_tabs`; clicar de novo naquele tile —
+  no mesmo turno ou turnos depois, tendo clicado em outros tiles no meio — abre nessa aba. Antes a escolha morava
+  num único espaço (`_preferred_mode`) que qualquer clique em outro tile apagava, então a tropa guarnecida numa
+  cidade voltava a abrir na Cidade a cada turno. Precedência no roteamento: pedido explícito do roteamento em curso
+  (deep link `open_city`/`open_unit`, unidade recém-selecionada — vale uma vez) > aba lembrada > padrão (Cidade,
+  senão Unidade, senão Terreno). Só o clique no seletor grava; deep link não grava nem apaga. Aba que deixou de
+  existir no tile (a unidade saiu) é esquecida. Estado de interface: não vai para o save e é descartado quando o
+  mapa muda (`map_seed`) ou em `reset()`.
 - **Sem tocar em material compartilhado:** nós usam `GeometryInstance3D.transparency` por instância (valor original
   guardado e devolvido; rótulos Label3D/Sprite3D nunca são afetados). Decoração em MultiMesh: as instâncias do tile
   são escondidas (escala zero, transform guardado) e copiadas para um `MultiMeshInstance3D` pequeno próprio do tile,
@@ -426,6 +440,256 @@ Construtor, monstros novos, habitat final, dificuldade/velocidade, balanceamento
   covil, névoa e Verme mergulhar/emergir marcam sujo; o recálculo roda uma vez no fim do frame (`call_deferred`),
   O(unidades), nunca em `_process`. Fade 0,15 s; Reduced Motion = instantâneo. Sem tela (laboratório/testes headless)
   o sistema fica inerte. Nada é salvo (o load só reconstrói a partir do estado).
+- **Obra com tropa em cima (2026-10-12):** unidade não bloqueia mais a escolha do tile de um prédio
+  (`City.is_valid_building_tile` — aliada, inimiga ou monstro; a trava só existia no clique, já que qualquer unidade
+  sempre pôde andar para cima de uma obra em andamento). O canteiro nasce semitransparente sob a tropa pela regra
+  padrão acima, e o prédio pronto também. A barra de progresso da obra (Sprite3D sem teste de profundidade) sobe
+  para cima dos marcadores da unidade (`Unit.markers_top_height()` + folga) enquanto a unidade está em foco no tile, e
+  volta à altura do canteiro quando ela sai ou quando o inspetor foca a Estrutura (`_refresh_construction_bars`).
+  A IA (`V2StrategicAI._building_site`) só usa tile ocupado quando não sobra tile livre — com tile livre a escolha é
+  idêntica à anterior, então o baseline do laboratório de balanceamento não muda.
+- **Cura na evolução (2026-10-12):** evoluir uma unidade (`V2UnitUpgrade.perform_upgrade`) recupera 30% da Vida
+  MÁXIMA da forma nova (`UPGRADE_HEAL_FRACTION`), somada ao percentual que a troca de forma já preservava e
+  limitada ao máximo. Fração do máximo — e não número fixo nem % da vida que falta — porque dá a mesma quantidade
+  com a tropa quase morta ou quase cheia, acompanha os tiers e é o modelo de toda cura do jogo (guarnição 25%/turno,
+  Fortificar 10%/turno, promoção 20%, Cura Sagrada 30%). 30% porque evoluir custa Ouro e a ação da unidade: vale
+  mais que um turno na guarnição, sem ser cura completa. Respeita a penalidade de cura do tile (infecção micótica).
+  O botão Evoluir mostra quanto cura agora; a IA recebe a mesma cura. **Muda o baseline do laboratório** (tropas
+  evoluídas saem mais inteiras). Antes: "nunca cura de graça" (9/18 virava 12/24 e só). Testes:
+  `test/unit/test_v2_unit_upgrade.gd`.
+- **Eliminação ao perder a última cidade (2026-10-12):** uma civilização cuja ÚLTIMA cidade é capturada sai da
+  partida na hora — `HexGrid.capture_city` → `eliminate_civilization`: todas as unidades que restavam são removidas
+  (pelo `remove_unit` de sempre), `Diplomacy.dissolve_relations` encerra guerras, tréguas, propostas de paz e
+  campanhas dela dos dois lados (sem trégua: não é um acordo de paz) e sai `EventBus.civilization_eliminated`
+  (evento estruturado no histórico/toast). Vale para rivais e para o jogador; só dispara na captura — quem ainda não
+  fundou a primeira cidade (o Colono do turno 1) não está eliminado. Antes a eliminação exigia também matar a última
+  unidade: um reino sem cidades seguia vivo com tropas soltas, a Dominação não fechava e o conquistador continuava em
+  guerra (pagando manutenção) com um reino que não existia. `V2VictoryConditions.is_eliminated` (sem cidades e sem
+  unidades) não mudou, então Dominação, Supremacia e a derrota do jogador seguem pela mesma checagem.
+  `GameManager` pula civilização eliminada no planejamento da IA e não deixa agir, no mesmo lote, uma unidade já
+  removida. **Muda o baseline do laboratório:** civilizações passam a cair antes. Testes:
+  `test/unit/test_civilization_elimination.gd`.
+  **A regra é de estado, não só um evento da captura (2026-10-12):** `V2VictoryConditions.has_fallen` (já teve cidade
+  — existe no mapa uma com o `original_owner_index` dela — e não tem mais nenhuma) + `HexGrid.reconcile_eliminations`,
+  que elimina pelo mesmo caminho toda civilização caída que ainda tenha unidades ou relações
+  (`Diplomacy.has_relations`). Roda ao carregar um save (`SaveManager.load_game`) e no começo de cada virada de rodada
+  (`GameManager._on_turn_changed`); idempotente, uma passada pelas cidades. Sem isso uma partida salva antes da regra
+  seguia com a civilização conquistada em guerra e propondo paz todo turno (nenhuma captura futura passaria por ela).
+  Depende de cidade nunca ser destruída, só capturada: quem um dia criar destruição de cidade precisa chamar
+  `eliminate_civilization` quando a última sair.
+- **Grandes Manifestações em jogo (2026-10-13):** as seis usam os modelos animados de
+  `assets/generated/grand_manifestations/` — Serafim e Primordial dos Elementos já usavam; entraram Arquidemônio
+  (`archdemon_blocky_v5_animated`), Lich Soberano (`elder_lich_blocky_v3_animated`), Avatar da Natureza
+  (`nature_avatar_blocky_v5_animated`, no lugar do Ent procedural 1,7×) e Arconte do Véu
+  (`veil_archon_blocky_v9_animated`, no lugar do conjurador arcano 1,45×). Fonte única:
+  `UnitDatabase.MANIFESTATION_MODELS` + `_apply_manifestation_model` — o MESMO modelo para as quatro raças
+  (`UnitArtCatalog` não tem entrada para elas, de propósito), escala nativa de 3 m (multiplicador 1,0, yaw 0), Idle e
+  Walk em ciclo, Spell em todo feitiço (`Unit.play_cast_visual`), Attack ligado mas sem uso em jogo (nenhuma tem
+  ataque básico). Só arte: nenhum número de regra mudou.
+  - **Transições suaves:** `UnitData.pose_transition_time` (+ `pose_transition_walk_time` para entrar/sair do Andar)
+    liga a transição por CAPTURA DE POSE (`scripts/units/PoseCaptureTransition.gd`, o antigo
+    `ElementalSerpentTransition` generalizado): a troca parte da pose em que o esqueleto está naquele instante e
+    chega ao clipe novo com curva seno, enquanto ele já corre — interromper um gesto ou conjurar duas vezes seguidas
+    não dá salto. Substitui o crossfade linear (`animation_blend_time`, ignorado quando a captura está ligada; o
+    Serafim usava 0,2 s, que lia como tranco num corpo de Idle de 24 s). Tempos: 0,5 s para as cinco, 0,6 s/0,9 s
+    (andar) para o Primordial, os aprovados com o modelo dele. Vale porque os quatro clipes de cada modelo animam o
+    mesmo conjunto de ossos (conferido em teste). Custo: as trilhas 3D viram trilhas de valor em cópias dos clipes,
+    por unidade — aceitável para poucas unidades grandes, não ligar em tropa comum.
+  - **Debug:** painel de Debug → "Invocar Grande Manifestação" (quantidade 1–50 + um botão por Manifestação): nascem
+    para o jogador nos tiles livres mais próximos da unidade selecionada (ou da primeira cidade), sem custo, sem
+    pesquisa e sem o limite de uma por Escola (`scripts/core/DebugSummon.gd`). "Animação da unidade selecionada"
+    toca Parado/Andar/Atacar/Conjurar com a transição normal (`Unit.debug_play_state`) — é o único jeito de ver o
+    Attack delas. O painel agora rola (`DebugScroll`) em vez de passar da altura da janela.
+  - Testes: `test/unit/test_grand_manifestations_in_game.gd` — inclui a medida de "nenhum osso salta" (posição,
+    ângulo e escala de todo osso um quadro depois de cada troca de estado, com um teste de controle provando que um
+    corte seco reprovaria) — e `test_seraph_blocky_model.gd`.
+- **Dragão modelado no lugar do procedural (2026-10-13):** o Dragão do evento usa
+  `assets/generated/dragons/dark_red_dragon_v5_animated` (3 m, seis clipes: parado/andar/atacar no ar e em terra).
+  Posturas `flying`/`ground` guiadas pelo `travel_mode` do `DragonEvent` (`Unit.set_posture`,
+  `UnitData.posture_animations`, `MonsterDatabase.DRAGON_POSTURES`), sopro de fogo no osso `mouth_fire`
+  (`Unit._build_fire_breath` / `play_fire_breath`, janela 0,75–2,0 s), tombo de morte (`Unit.play_death_topple`).
+  O corpo de caixas montado em código (`Unit._build_dragon_body` + cinco clipes procedurais) foi removido. Só arte:
+  as regras do evento não mudaram. Detalhes em `docs/DRAGON_EVENT_DESIGN.md` e `docs/ASSET_FACTORY_GUIDE.md`;
+  testes em `test/unit/test_dragon_model.gd`.
+- **Núcleos das Manifestações iluminam + opções de vídeo (2026-10-13):** o efeito dos cristais (`WorldGlow`) nos
+  núcleos das seis Grandes Manifestações — luz sem sombra presa ao osso do núcleo (`WorldGlow.attach_light`,
+  `Unit._build_core_glow`, `UnitData.glow_profile`/`glow_bone`, `UnitDatabase.MANIFESTATION_CORES`) e o mapa de
+  emissão do modelo crescendo com a escuridão (`WorldGlow.track_emission`, `GlowProfiles.emission_factor`: de dia o
+  modelo aprovado, à noite ×1,8–2,2). Duas opções novas em Configurações → Vídeo, ligadas por padrão: "Luzes do
+  mapa" e "Luzes das criaturas" (`Settings.map_lighting_enabled` / `creature_lighting_enabled`, camadas
+  `WorldGlow.LAYER_MAP` / `LAYER_CREATURES`); desligam só as luzes, o brilho do modelo continua. Detalhes em
+  `docs/GRAPHICS_SETTINGS.md` (seção "Brilho do mundo"), medição em `docs/PERFORMANCE_GUIDE.md` 2.15. Testes:
+  `test/unit/test_core_glow.gd`.
+- **Ícones por tipo (2026-10-13, refeitos no mesmo dia):** o selo único de "espadas cruzadas" sobre toda unidade e
+  os selos abstratos de recurso deram lugar a 39 pictogramas. `scripts/data/IconCatalog.gd` decide qual pictograma,
+  qual cor e como o selo é desenhado: **tropa** = um pictograma por CLASSE (escudo/Guardião, espada/Guerreiro,
+  arco/Patrulheiro, cavalo/Cavalaria, capuz/Ladino, catapulta/Cerco) com 1–3 pontos pela forma da linha e aro
+  dourado na Lendária; **conjurador** = símbolo da Escola; **Grande Manifestação** = pictograma próprio com aro
+  dourado; Colonizador = tenda, Construtor = martelo, Hostes = mão erguida; **monstro** = um pictograma por espécie
+  (as 13 de `MonsterDatabase`). Por classe e não por unidade de propósito: 24 silhuetas de tropa não se distinguem
+  num selo pequeno sobre o mapa.
+  - **Arte:** a primeira versão (pixel art 16×16 desenhada à mão) foi rejeitada ("parece algo amador que eu abri o
+    paint e fiz"). Os desenhos agora são ícones vetoriais de https://game-icons.net — **CC BY 3.0, crédito ao autor
+    obrigatório em qualquer distribuição** (`assets/icons/CREDITS.txt`, gerado; falta levar o crédito a uma tela de
+    créditos quando o jogo tiver uma). Fontes versionadas em `tools/art_pipeline/icon_sources/` (`manifest.json`: id
+    → "autor/nome"; `svg/`; pasta com `.gdignore`). `fetch_icon_sources.py` baixa o que mudou no manifesto;
+    `build_icon_glyphs.gd` rasteriza cada SVG numa MÁSCARA sem cor (`assets/icons/glyphs/<id>.png`, 128×128, branco
+    + alfa suavizado, recortada e encaixada na mesma moldura) e reescreve o CREDITS. Pictograma novo ou trocado: uma
+    linha no manifesto, os dois scripts, `--import`, mapear no catálogo.
+  - **Cor é parâmetro, não arquivo** (preparado para a mecânica de escolher a cor do reino): o selo inteiro sai de
+    UMA cor base — `IconCatalog.badge(pictograma, cor, pontos, elite, formato)`. Degradê, aro (a própria cor
+    escurecida), fio de relevo e sombra são camadas sem cor (branco/preto translúcidos) por cima dela, e a tinta do
+    desenho é escolhida pelo contraste (`ink_for`: clara se der ≥ 3:1, senão escura — amarelo e branco ganham
+    desenho escuro). Nenhuma cor de reino exige arte nova: basta `CivilizationData.color` mudar
+    (`color_for_owner`); unidades já no mapa pegam a cor nova com `Unit.refresh_troop_icon()` (só troca a
+    textura). Composição quase toda em operações nativas de `Image` sobre camadas em cache, ~2–3
+    ms por combinação nova, uma textura por combinação. Para ver/exportar variações:
+    `godot --headless --path . -s tools/art_pipeline/export_icon_variations.gd -- --out=<pasta> [--colors=#rrggbb,...] [--files]`
+    (folha de contato + opcionalmente um PNG por selo e cor).
+  - **Formato = tipo de coisa:** placa quadrada (tropa de um reino, na cor dele — a mesma da borda/minimapa),
+    hexágono (monstro neutro, sempre `MONSTER_COLOR`), medalhão redondo escuro com o desenho na cor do recurso
+    (recurso de mapa). O formato existe porque a cor será livre: um reino vermelho-escuro não pode parecer monstro.
+  - **Usos:** `Unit._build_troop_icon` (o emblema de duas letras da Escola sobre os magos saiu),
+    `ResourceIconManager` e o retrato do card da unidade (`AEPortrait.set_icon`). Sprite3D com filtro linear +
+    mipmaps e transparência por mistura (a arte tem borda suave e sombra; nada de `alpha_cut`). Ainda não usam o
+    selo: minimapa e lista de produção (`IconCatalog.kind_badge` já existe para ela). Testes:
+    `test/unit/test_icon_catalog.gd`.
+- **Dragão: aviso, sem pergunta (2026-10-13):** o jogador não é mais perguntado se quer participar da caçada (o
+  Dragão ataca os reinos por onde passa, queira ele ou não). Saíram da HUD o `WorldEventPanel` (cena e código),
+  `format_world_event_title/prompt`, os botões Participar/Não participar, o item de Attention
+  `world_event_decision` e `GameManager.respond_to_world_event`. O aviso da Preparação virou afirmação ("Prepare
+  suas defesas: o Dragão ataca os reinos por onde passa") e o Tracker conta a chegada (`HUD.preparation_objective`).
+  O modal de anúncio e o resto do evento não mudaram. Sem mudança de regra: a recompensa já dependia só do dano
+  causado; a IA mantém a decisão interna de mandar ou não uma força à caçada. Testes: `test_hud.gd`,
+  `test_phase33d3_events.gd`.
+- **Duração dos efeitos de 1 turno — comunicação (2026-10-13):** relato do usuário: "eu ativo o efeito no meu turno,
+  dou próximo, e o efeito já acabou". A regra (`V2OwnerTurnEffect`: Técnicas e feitiços de estado duram "até o início
+  do próximo turno do dono") SEMPRE cobriu o turno dos inimigos — `test_buff_duration.gd` passa pela troca de turno
+  de verdade e confere que Égide/Muralha de Escudos estão ativas no instante em que a IA ataca, e que o Silêncio
+  cobre o turno do mago inimigo. O defeito era de comunicação, e foi isso que mudou (nenhuma regra/balanceamento):
+  (1) textos numa fonte única (`DURATION_FOR_CASTER`, `DURATION_ON_UNIT`): "até o início do seu próximo turno — vale
+  durante todo o turno dos inimigos"; o buff de Ataque diz que vale para os ataques deste turno e os revides;
+  (2) o chip do card troca "· 1t" por "· até o próx. turno" (`AEStatusChip.set_status(..., duration_text)`); os
+  estados de criatura (Veneno etc.), contados em turnos próprios, seguem com "2t"; (3) o aviso de combate diz o
+  que protegeu: "Seu Guerreiro foi atacado e resistiu! Protegido por Égide Sagrada."
+  (`CombatResolver.defense_effects_note`, inclusive a Muralha projetada por um aliado ao lado).
+- **Escolher o alvo: tropa ou cidade (2026-10-13):** atacar um tile com uma tropa guarnecendo uma cidade não bate
+  mais sempre na tropa (que servia de escudo). `SelectionManager.attack_targets_at` devolve os dois alvos atacáveis;
+  havendo os dois, o clique emite `EventBus.attack_target_choice_requested` e o `AttackTargetChoicePresenter` abre o
+  modal "Atacar quem?" com a previsão de cada golpe (`CombatResolver.predict` / `predict_city_attack` — a conta do
+  dano à cidade virou `city_attack_damage`, usada também por `resolve_city_attack`). Cancelar/ESC não gasta nada;
+  sem UI ligada ao sinal vale o alvo de sempre (a tropa). O hover mostra "ATACAR <tropa> ou <cidade>". A cidade
+  não revida. **Guarnição de cidade capturada:** `HexGrid._withdraw_garrison` (em `capture_city`) faz a tropa do
+  antigo dono recuar para o tile livre mais próximo; sem tile livre, ela cai com a cidade — o Bombardeio de Cerco
+  já podia capturar uma cidade guarnecida e deixava a tropa inimiga dentro dela. **IA** (`RivalAI._engage`): toma a
+  cidade se o golpe a captura; senão luta com a guarnição quando é favorável; senão bate na cidade (antes desistia
+  do ataque — uma guarnição forte protegia a cidade contra a IA). **Muda o baseline do laboratório.** Testes:
+  `test/unit/test_attack_target_choice.gd`, `test_ui_strategy.gd`.
+- **Rota de marcha visível (2026-10-13):** toda unidade do jogador com ordem de marcha pendente
+  (`Unit.move_order_target`) tem a rota desenhada no mapa até chegar — `MarchRouteOverlay` (`HexGrid.march_routes`):
+  uma marca por tile do caminho e um anel no destino, na cor do reino, mais forte na tropa selecionada. Só para o
+  dono: apenas unidades de `GameManager.human_player`, e só com uma pessoa no assento (`is_human_controlled`).
+  A rota é `HexGrid.unit_path` (a mesma de `continue_move_order`), replanejada quando a unidade anda, o destino muda
+  ou o turno vira; sem caminho no momento, o destino continua marcado. Sem estado próprio nem save: é o reflexo de
+  `move_order_target`, que virou propriedade com setter e emite `EventBus.unit_move_order_changed`. Orientada a
+  evento (ordem mudou, unidade removida, névoa recalculada, seleção), uma reconstrução adiada por quadro, A* em
+  cache por (posição, destino, turno), duas MultiMesh. Marcas em tile nunca visto ficam sobre a camada de névoa.
+  Medido em partida real com 2 marchas: reconstrução de ~72 µs com o cache, ~770 µs replanejando as rotas.
+  Testes: `test/unit/test_march_route_overlay.gd`.
+- **Fronteiras abertas — acordo diplomático (2026-10-13):** `Diplomacy.request_open_borders(proposer, receiver)` cria
+  um acordo SIMÉTRICO (`PlayerData.open_borders`) que suspende, entre os dois, as fronteiras fechadas mesmo em paz
+  (`HexGrid.closed_tiles_for` consulta o acordo). Quem responde: a IA, na hora, por regra pública
+  (`open_borders_refusal_reason`: recusa com trégua em vigor ou quando o exército de quem pede é o dobro do dela e
+  tem 4+ unidades a mais); o jogador, no modal `OpenBordersOfferPresenter` (Aceitar/Recusar, não cancelável, mesmo
+  desenho do modal de paz; pedido sem resposta caduca na troca de turno). Recusa = espera de
+  `OPEN_BORDERS_COOLDOWN_TURNS` (5) quando a IA recusa, `OPEN_BORDERS_PLAYER_REFUSAL_TURNS` (30) quando o jogador
+  recusa (a IA não volta a incomodar tão cedo). A IA também pede (`RivalAI.decide_open_borders`): cadência fixa por par a cada
+  12 turnos, sem RNG, só a quem já tem cidade de fronteira fechada e só o que ela mesma concederia. O acordo não
+  tem prazo; acaba por `end_open_borders` (qualquer lado, na Diplomacia) ou por guerra — `declare_war` encerra o
+  acordo e retira as tropas ANTES de a guerra começar (o acordo nunca serve para estacionar um exército dentro do
+  reino alheio e atacar). Em qualquer fim, `enforce_closed_borders` retira quem ficou dentro. Save: chaves
+  opcionais `open_borders`/`open_border_offers`/`open_border_refusals` em `relations` (sem bump de versão).
+  Interface: botões "Solicitar/Encerrar Fronteiras Abertas" na Diplomacia com a previsão da resposta no tooltip,
+  fato "Fronteiras" e chip "Fronteiras abertas" na lista, eventos no histórico, e o inspetor de tile diz
+  "Fronteiras abertas por acordo". **Muda o baseline do laboratório** (IAs fecham acordos entre si). Testes:
+  `test/unit/test_open_borders.gd`, `test_ui_strategy.gd`, `test_save_manager.gd`.
+- **Fronteiras fechadas (2026-10-13):** o território (`City.owned_tiles`) de uma cidade que já evoluiu ao menos uma
+  vez (City Level >= `HexGrid.CLOSED_BORDERS_FROM_LEVEL` = 2) é fechado a toda civilização que não seja a dona e não
+  esteja em guerra com ela: as unidades dela não andam para dentro, não atravessam, não pousam (voo tático
+  sobrevoa) e não terminam uma infiltração ali. Em guerra a fronteira não existe para os dois lados; monstros nunca
+  são barrados. A regra é POR CIDADE (uma colônia nível I continua aberta) e vale igual para jogador e IA, porque
+  mora nas funções de passagem comuns: `compute_reachable`, `flight_reachable`, `infiltrate_reachable`,
+  `_find_route` (destino fechado é rejeitado antes da busca; o A* contorna). Nada é salvo — deriva de nível,
+  território e guerras (`closed_tiles_for(owner)`, mapa por civilização remontado só quando o carimbo de cidades/
+  tiles muda). **Retirada:** quem fica dentro quando a fronteira fecha (cidade evoluiu, paz, anexação por cima da
+  unidade, captura, save antigo) vai para o tile livre mais próximo fora dela — `enforce_closed_borders`, chamado na
+  virada de rodada, depois das cidades, no fim da fase da IA, em `Diplomacy.make_peace`, na anexação do jogador, em
+  `capture_city` e no load. Interface: o alcance não destaca tiles fechados, o hover diz "FRONTEIRA FECHADA —
+  <reino>", mandar marchar para dentro avisa o motivo, o inspetor de tile/cidade mostra o estado da fronteira, a
+  Diplomacia explica a consequência de guerra/paz e a cidade do jogador avisa quando fecha. **Muda o baseline do
+  laboratório** (rotas da IA em paz contornam reinos evoluídos). Testes: `test/unit/test_closed_borders.gd`.
+- **Conhecimento guardado à vista (2026-10-13):** o Conhecimento que entra sem projeto ativo (ou sobra de uma
+  pesquisa concluída) fica em `V2ResearchState.research_overflow` e entra INTEIRO, na hora, na próxima pesquisa
+  escolhida — podendo concluí-la no clique. A regra não mudou; a interface passou a mostrar isso antes da escolha.
+  `V2ResearchState.banked_preview(id)` é a conta (só leitura, a mesma de `_advance`). No `V2ResearchBoard`: chip
+  "Guardado: N · +X por turno" no cabeçalho (antes o valor só existia no fim da linha de status, cortada com
+  reticências), prévia em cada nó que pode ser escolhido (barra azul + "Com guardado: 8 / 16" ou "Com guardado:
+  conclui") e uma frase no rodapé/tooltip do nó selecionado (até onde vai, quanto falta e ≈ turnos, ou "conclui
+  na hora e sobram N"). `ResearchStatusWidget` e o item de Attention explicam o mesmo. Na barra superior
+  (`GlobalBarPresenter`) o chip de Conhecimento passou de só "+2" para "8  +2" (guardado + por turno, o formato do
+  Ouro e da Mana), com tooltip dizendo para onde a renda vai; a barra escuta o estado de pesquisa do jogador
+  (`_bind_research`), então guardado e progresso atualizam na hora da escolha, não só na virada de turno. Testes:
+  `test_v2_research_state.gd`, `test_v2_research_board.gd`, `test_ui_foundation.gd`.
+- **Relicário Desperto removido (2026-10-12, "apague o evento relicário do game"):** saíram `ReliquaryEvent`, o
+  agendador (`maybe_start_reliquary`, `reliquary_schedule`), a escolha de recompensa no painel de evento, o item de
+  Attention, o chip de objetivo, os avisos do Event Center, o plano da IA (`V2StrategicAI.reliquary_plan`,
+  `StrategicAI.respond_to_reliquary`), o campo `Unit.source_event_id` (só o Relicário gerava monstros de evento), o
+  marcador `WORLD_EVENT_MARKER_GROUP` e a seção `reliquary` da telemetria do laboratório. O único grande evento da
+  Ascensão passa a ser o Dragão. **Saves:** `WorldEventManager.RETIRED_EVENT_TYPES = ["reliquary"]` — um save com o
+  Relicário ativo carrega sem o evento e sem os guardiões dele (`SaveManager._deserialize_neutral_units` não restaura
+  monstro com `source_event`); uma recompensa que estivesse aguardando escolha é perdida. `SAVE_VERSION` não mudou.
+  **Muda o baseline do laboratório:** some a recompensa única de 90 Ouro/60 Mana e o deslocamento de tropas da IA
+  até o local. Testes: `test_phase33d3_events.gd` (Dragão + save com o evento removido), `test_phase33d_review.gd`.
+- **Rivais nunca repetem a raça do jogador (2026-10-12):** `GameManager.AI_CIVS` tem uma civilização de IA por
+  raça (a humana, Reino de Valmere, é nova) e `rival_races_for(raça do jogador)` devolve as outras, na ordem canônica
+  `RACES` (humano, elfo, anão, orc) — jogador humano continua com elfo/anão/orc; jogador elfo recebe humano/anão/orc;
+  com menos de 3 rivais entram as primeiras da lista. Antes a lista era fixa (elfo, anão, orc por índice) e nunca
+  havia IA humana. O save grava `rival_races` (chave opcional) e `setup_players(grid, rival_races)` recria o elenco
+  salvo; save sem a chave carrega com o elenco fixo antigo (`LEGACY_RIVAL_RACES`), exatamente como foi jogado. O
+  laboratório 4-IA não muda (ele sobrescreve raça/nome por assento). Testes: `test_game_manager.gd`,
+  `test_save_manager.gd`.
+- **Conclusão de obra atômica (2026-10-12):** o canteiro (modelo animado + barra) existe exatamente enquanto alguma
+  cidade tem `pending_building_coord` e ainda não há prédio no tile. Quem cria o prédio retira o canteiro:
+  `HexGrid.place_building` → `_retire_construction_marker` — some do jogo naquele instante (foco visual, inspetor e
+  névoa não o veem mais) e sobra um aceno de <1 s (barra em 100% que sobe e some; nada com Reduced Motion ou fora da
+  visão). `refresh_construction_markers()` virou reconciliação pura, sem parâmetro: nunca cria canteiro onde há
+  prédio, remove obra cancelada na hora, só refaz a textura de uma barra cujo valor mudou e já aplica a névoa ao
+  criar. `GameManager` chama logo depois da produção das cidades (a barra anda no Encerrar Turno, não depois da
+  fase da IA) e de novo no fim da rodada (cidade capturada pode ter perdido a obra). Antes o prédio nascia na hora
+  mas o canteiro só era avisado depois, por uma lista de coordenadas passada do `GameManager` ao `HexGrid`, em duas
+  etapas: fim da fase da IA (até lá, prédio + canteiro + barra do turno anterior no mesmo tile) e um turno inteiro
+  depois (barra parada em 100% sobre o prédio pronto). Testes: `test/unit/test_construction_completion.gd` (turno
+  real, com a fila de IA escalonada).
+- **Obra sobre recurso de mapa (2026-10-12):** construir um prédio num tile com recurso DESTRÓI o recurso — e, com
+  ele, a melhoria do Construtor (rendimento, marcador, pilhagem pendente), o prop 3D e o ícone. Antes o prédio só
+  escondia o prop/ícone e `HexTileData.resource` continuava nos dados, inaproveitável (Construtor não melhora tile com
+  prédio) e ainda listado no inspetor.
+  - **Regra, um ponto só:** `HexGrid.destroy_resource_at(coord)` (idempotente, devolve o id destruído). É chamado por
+    `City.start_building` — a entrada única de "iniciar obra" do jogador e da IA; o recurso some quando a obra
+    COMEÇA e não volta se ela for cancelada — e por `place_building` (rede de segurança: prédio de pé nunca tem
+    recurso embaixo; também saneia save antigo com prédio sobre recurso).
+  - **Jogador:** no posicionamento, o hover do tile mostra "CONSTRUIR X — destrói Y". O clique não inicia nada:
+    `SelectionManager` guarda `placement_confirmation_coord` e emite
+    `EventBus.building_placement_confirmation_requested`; `BuildingSiteConfirmPresenter` (UIShell) abre o modal com o
+    recurso e a melhoria perdida/possível (rendimento pelo dono). "Construir e destruir" →
+    `confirm_building_placement()`; "Escolher outro tile", fechar ou ESC → `decline_building_placement()`: nada é
+    gasto nem destruído e o posicionamento continua ativo. Sem interface escutando (testes headless) o clique vale
+    como a confirmação.
+  - **IA:** `_building_site` prefere tile SEM recurso (depois desocupado, depois coordenada); só constrói sobre um
+    recurso quando não sobra outro tile, e aí vale a mesma regra. **Isto muda o baseline do laboratório:** antes a IA
+    escolhia o tile de menor coordenada mesmo com recurso (e o deixava inaproveitável).
+  - **Save:** `destroyed_resources` (lista esparsa `[x, y, id]`, campo opcional, sem bump de versão). O mapa é
+    recriado do seed no load; a lista é reaplicada logo depois de `terrain_changes`/`terrain_resources`.
 
 ### Minimapa (`scripts/ui/Minimap.gd`)
 
@@ -655,8 +919,8 @@ foco/marcadores/feedback são derivados; perfil de mundo derivado das dimensões
 "tropical") e continuar a Combat Ecology com habitat data-driven. Fora: economia do Colonizador, Construtor, monstros
 novos, worldgen, macrobiomas, multi-tile real, continentes especiais no padrão, tuning F33E/F33F.
 
-> **Tamanho do mundo padrão — decisão de produto pendente.** `STANDARD_1_0` = **144×76** (definido na Etapa 3) **não
-> é decisão final**: o product owner pode manter, aumentar ou restaurar outro tamanho. Esta etapa não mexeu no tamanho.
+> **Tamanho do mundo — DECIDIDO em 2026-10-10** (ver "Tamanhos de mapa" no fim deste doc): Pequeno 96×56, Médio
+> 112×64 e **Grande 128×72 (padrão)**. `STANDARD_1_0` (144×76) virou perfil legado, só para saves antigos.
 > Números de laboratório 144×76 (Etapa 3 em diante) **não se comparam** 1:1 com F33B/Etapa 2 (320×84).
 
 ### Minimapa (`scripts/ui/Minimap.gd`) — playtest humano sobrepõe o PASS da Etapa 3
@@ -951,3 +1215,89 @@ A Contaminação Micótica (`MonsterHazardSystem`, `MYCOTIC_CONTAMINATION`) fico
 nenhuma espécie a tem. O código e os testes de infecção (que passam a âncora direto) foram
 mantidos para reuso. As tabelas de telemetria e balanceamento acima ainda citam a Colmeia;
 elas são histórico e só mudam quando o laboratório rodar de novo.
+
+## Tamanhos de mapa (2026-10-10)
+
+Proposta do product owner, aplicada: o oceano grande existia para aventuras navais e outros continentes, que não
+existem; cada tamanho é "uma versão menor do mesmo continente" na lógica de biomas. Código: `scripts/world/WorldProfile.gd`
+(perfis), `HexGrid.generate_map` / `_main_half_extents` (área reservada e escala do ruído), seletor em
+`GameSetupScreen`. Testes: `test/unit/test_map_sizes.gd`.
+
+| Tamanho | Grade | Área reservada | Terra (média 4 seeds) | Água | Geração |
+|---|---|---|---|---|---|
+| Pequeno | 96 × 56 | 72 × 44 | 1.698 | 68,4% | 1,0 s |
+| Médio | 112 × 64 | 84 × 52 | 2.352 | 67,2% | 1,4 s |
+| **Grande (padrão)** | 128 × 72 | 96 × 60 | 3.113 | 66,2% | 1,9 s |
+| legado 144 × 76 | 144 × 76 | 96 × 60 | 3.113 | 71,5% | 2,0 s |
+
+- **Área reservada por tamanho** (`WorldProfile.main_frame`): substitui a pegada fixa 96×60 (`TitleScreen.MAIN_ZONE_SIZE`
+  e `HexGrid.MAIN_ZONE_HALF_*`, removidas) no falloff da borda, na zona principal, na latitude (clima), na distância
+  mínima dos covis ao centro e na elipse de origem dos rivais (fixtures de teste continuam como antes).
+- **Mesmo continente em escala:** `noise_scale = 96 / largura da área` multiplica as frequências de todo o ruído da
+  geração e divide `warp_strength`. Mesma seed = mesmo desenho e mesma mistura de biomas (medido: cada bioma fica a
+  ±2 pontos percentuais do Grande; o esqueleto terra/água em pontos normalizados coincide > 85%).
+- **O Grande novo é o MESMO continente do 144×76** (escala 1, mesma área): mesma terra e mesmos biomas, só com 16 em
+  vez de 24 colunas de oceano em volta e menos Mar Gelado.
+- **Saves antigos:** 144×76 e 320×84 continuam registrados (perfis legados) e regeneram o mundo idêntico — teste com
+  hash do terreno capturado antes da mudança. Dimensões desconhecidas seguem a regra antiga (fixture abaixo de 144×76).
+- **Já escalam sozinhos:** covis (por terra elegível), recursos, distância entre capitais (12). Rivais: 1–3 em todos.
+- **Pendência registrada (fora deste escopo):** a Costa cobre ~43% do mapa, inclusive longe da terra — a reclassificação
+  Oceano→Costa parece se espalhar demais; investigar à parte.
+
+
+## Embarque automático: a tropa vira barquinho (2026-10-10)
+
+Pedido do product owner: "quando uma tropa entra na água, ela vira o barquinho e quando sai da água vira a tropa de
+novo", com transições suaves. Decisões dele: **automático**, **desde o início** (sem tecnologia), **custo normal** da
+água, **IA também**. Testes: `test/unit/test_embark_boats.gd`.
+
+**Regras**
+- **Quem embarca** (`Unit.can_embark()`): toda unidade de civilização que anda pelo chão — tropas, colonos,
+  construtores, magos, retinue, invocações, o Mestre das Sombras e o Cavaleiro de Grifo (que não voa mais). Monstros
+  neutros não embarcam; quem voa (perfil `FLYING` ou voo legado) sobrevoa.
+- **Movimento:** Oceano, Mar Gelado e Costa (`HexTileData.can_be_embarked_on()`) viram terreno atravessável ao custo
+  do tile (1). Lava e montanha continuam bloqueando. Um mesmo trajeto pode ir terra → água → terra (a antiga regra
+  "terra só como último passo" do embarque manual saiu).
+- **Estado derivado do tile:** `Unit.embarked` é true sempre que uma unidade que embarca está na água. Um único ponto
+  liga e desliga: `HexGrid.move_unit` / `HexGrid.sync_embarked` (andar, teleporte, spawn, load do save, terreno
+  transformado embaixo da unidade). O campo continua no save, mas o load re-deriva.
+- **Na água:** não ataca (central em `CombatResolver.can_attack_unit` / `can_attack_city` / `resolve` /
+  `resolve_city_attack`, vale para a IA), não fortifica (entrar na água desfaz), não funda cidade, não conjura nem usa
+  técnica que consome ação, não constrói, não evolui. Pode ser atacada normalmente. Explorar continua ligado: a rota
+  pode cruzar água, o alvo é sempre terra.
+- **Técnicas de deslocamento** (Carga, Retirada) e Portal/teleporte continuam só por terra
+  (`unit_reachable(..., allow_water = false)`).
+
+**API de rota** (`HexGrid`): `compute_reachable` / `compute_path` têm o parâmetro `amphibious` (antes `embarked`).
+`unit_path(unit, dest)` e `unit_reachable(unit)` usam as regras da unidade e são o caminho padrão para seleção, marcha,
+sítio de cidade e IA. `unit_landing_reachable(unit)` é para as escolhas "gulosas" da IA (melhor tile por pontuação): a
+rota pode passar pela água, mas o destino é terra (exceto para quem já está no mar). Para se aproximar de um alvo, a IA
+prefere a casa vizinha em terra (`RivalAI.move_unit_toward`) e, embarcada, não tenta atacar.
+
+**Visual** (`Unit.gd`, seção "EMBARQUE AUTOMÁTICO: o barquinho"; arte em `UnitArtCatalog.boat_scene_path`):
+- Um barco por raça (`assets/generated/<raça>/<raça>_embark_boat_v1/*.tscn`, manifesto
+  `assets/generated/embark_boats_manifest.json`). A cena já aplica a escala de mapa 0,52; a origem é a linha d'água;
+  o modelo gira 180° (frente −Z → +Z). Montado sob demanda na primeira vez que a unidade entra na água.
+- Na água a unidade fica no plano d'água visível (`HexGrid.LIQUID_LEVEL_Y`), via `world_surface_for_coord`.
+- A troca acontece **no meio do passo** que cruza a margem (`walk_path` recebe a flag de água de cada waypoint):
+  escala cruzada de 0,25 s com curva `TRANS_BACK` (a tropa encolhe, o barco cresce), sem transparência. No fim, o lado
+  escondido sai da renderização e o `AnimationPlayer` dele para. Spawn, load e unidade fora da visão trocam na hora.
+- Animação do barco: `idle` e `walk` em loop, crossfade de 0,2 s, guiados pelo estado de andar da unidade. A barra de
+  vida e o ícone sobem acima do mastro enquanto a unidade está de barco, se o barco for mais alto que a tropa. O
+  emblema de Escola dos magos continua visível.
+
+**IA com barco — A/B no laboratório 4-IA** (12 partidas, `--matches=0-11`, mapa Grande 128×72, mesmas seeds; "sem barco"
+= `can_embark()` forçado a false só para a medição; dados em `user://balance/embark/{noembark,smoke}`; não é baseline):
+
+| | Sem barco | Com barco |
+|---|---|---|
+| Fins | 8 timeout, 3 Transcendência, 1 Supremacia | 7 timeout, 5 Transcendência |
+| Turno final médio | 230,8 | 227,8 |
+| Cidades no fim (soma das 4 civs) | 15,3 | 16,7 |
+| Cidades capturadas | 7,3 | 6,7 |
+| Unidades mortas | 63,5 | 64,1 |
+| Turno p95 (mediana das partidas) | 485 ms | 503 ms |
+| Pior turno | 1,49 s | 1,13 s |
+
+Nenhuma partida travou, nenhum laço de IA; a IA usa a água como atalho e funda um pouco mais de cidades. Custo de CPU
+dentro do ruído (+4% no p95).

@@ -1,5 +1,10 @@
 # Guia de Performance
 
+> **Rodada mais recente: §6 (14/10/2026, otimização geral).** Benchmark permanente em `tools/perf/PerfBench.tscn`,
+> animação pausada fora da tela, sombras do tamanho da vista, vegetação sob névoa sem draw call, `recompute_fog` por
+> delta, texturas de modelo em BC7 (VRAM do fim de jogo 705 → 432 MB), exportação sem material de desenvolvimento e
+> opções de vídeo para máquina fraca. Leia a §6.5 antes de procurar o próximo gargalo.
+
 ## Rodada de lag pós-monstros/defesa/cidades — 19/09/2026
 
 Sintoma reportado: lag em jogo depois das features de monstros, defesa de
@@ -242,6 +247,32 @@ alguns datam de "usuário reportou 140→15/20fps na troca de turno").
   "heap com custo puro" foi copiado outras vezes no código
   (`compute_reachable` não precisa, já que não tem UM destino só; mas
   qualquer future busca ponto-a-ponto deveria nascer já como A*).
+- **2026-10-10 — rota canônica (`HexGrid._find_route`)**: `compute_path`
+  virou fachada de `_find_route`, o roteador único (prévia, marcha, IA e
+  animação). Motivo não foi performance, foi um bug visual ("rodopios"):
+  com todo terreno custando 1 há muitas rotas de mesmo custo e o desempate
+  era a ordem do heap — rota em zigue-zague, corpo virando 60° a cada tile.
+  Agora o estado do A* é (tile, direção de chegada) e cada curva soma
+  `ROUTE_TURN_COST` (1/1024) ao `g`: entre as rotas de menor custo sai a de
+  menos curvas, e o custo devolvido não muda. Três coisas mantêm a busca
+  barata — **não remova nenhuma sem medir**: (1) o heap desempata `f` igual
+  pelo menor `h` (segue a rota em vez de inundar o paralelogramo de
+  empates); (2) um estado que chega num tile com uma curva a mais que o
+  melhor já expandido ali é descartado (dominado); (3) o custo de entrar em
+  cada tile (`_route_enter_cost`) é avaliado uma vez por busca. Benchmark
+  sintético (campo de raio 40, 150 rotas de ~33 passos, ms por rota):
+
+  | Montanhas | Antes | Depois | Curvas antes → depois |
+  |---|---|---|---|
+  | 0% | 8,8 | 2,3 | 1272 → 145 |
+  | 12% | 8,1 | 7,1 | 1416 → 500 |
+  | 25% | 7,7 | 6,4 | 1806 → 1176 |
+
+  `compute_reachable`/`infiltrate_reachable` não guardam mais árvore de
+  predecessores (`_last_came_from`/`reconstruct_path` saíram: era estado
+  global que qualquer outra busca de alcance sobrescrevia); a rota de um
+  destino do alcance vem de `unit_route`, um A* curto, só quando alguém
+  precisa dela (hover de um tile novo, unidade visível andando).
 
 ### 2.2 `HexGrid._rebuild_water_overlay` — reconstrução completa a cada hover → só os pixels destacados (`scripts/world/HexGrid.gd:4031`)
 
@@ -448,7 +479,154 @@ alguns datam de "usuário reportou 140→15/20fps na troca de turno").
   pesquisa abrir+fechar **1,8 ms**; save **4,1 ms**; load **665 ms** (regenera o
   mapa pela semente).
 
+### 2.11 Vegetação composta por bioma (kit `temperate_forest_v1`) — 09/10/2026
+
+A árvore KayKit única (um `MultiMeshInstance3D` com ~1,9–2,5 mil cópias) deu
+lugar a `NatureDecorManager` + `NatureComposer` (10 assets, composição por
+bioma; desenho em `docs/TEMPERATE_FOREST_KIT.md`). Mapa padrão 144×76:
+
+| Medida | Seed 101 | Seed 202 |
+|---|---|---|
+| Instâncias | 7.282 | 5.580 |
+| Grupos `MultiMeshInstance3D` (asset × região 12×12 tiles) | 327 | 298 |
+| `rebuild` (tela de carregamento, uma vez; antes da otimização abaixo) | ~467 ms | ~380 ms |
+| Névoa completa (primeira aplicação) | 26,5 ms | 20,9 ms |
+| Névoa por passo de unidade | **1,75 ms** | **0,92 ms** |
+
+- **Névoa incremental** (`NatureDecorManager.apply_fog`): guarda a última
+  visibilidade aplicada por tile (`_fog_state`) e só repinta os tiles cuja
+  visibilidade mudou. A primeira versão repintava tudo a cada `recompute_fog`
+  (todo passo do humano) e custava **14–21 ms por passo** — não volte a ela.
+  Tile limpo/recomposto (`clear_at`/`refresh_tile`) perde o estado e sempre
+  recebe a névoa na próxima aplicação.
+- **Regiões 12×12**: um MultiMesh do mapa inteiro nunca sai do frustum; por
+  região o culling por AABB funciona. Mais grupos = mais draw calls, mas cada
+  um só é desenhado quando a região está em vista.
+- **`rebuild`** é custo único da tela de carregamento (ver seção 5). No mapa
+  Grande 320×84 (seed 999, 6.480 instâncias) caiu de **438 ms para 325 ms**:
+  `NatureDecorManager.context_for` refazia `world_for_coord` + `get_neighbors`
+  por tile (~41 µs/tile) só para obter a direção de cada vizinho, que é
+  constante da malha axial. Agora são 6 direções pré-calculadas
+  (`_neighbor_dirs`); o contexto de todos os tiles caiu de 1.107 ms para
+  350 ms. O resultado é idêntico (mesmas 6.480 instâncias). O que sobra é a
+  composição (~250 ms, amostragem por dardo em `NatureComposer._try_place`)
+  mais o preenchimento dos MultiMesh (~75 ms). O teste de tempo do mapa Grande
+  (`test_generate_map_at_large_radius_completes_quickly`, < 5 s) passa.
+- O RenderingServer headless não devolve cor nem transform de MultiMesh. Os
+  testes (`test/unit/test_nature_composition.gd`) verificam `fog_state()`,
+  `fog_color()` e `compose()`, nunca a leitura do buffer.
+
 ---
+
+### 2.12 Ciclo de dia e noite (`DayNightController`) — 09/10/2026
+
+Partida real (mapa padrão), V-Sync desligado, 300 quadros por medida, 1600×900, Blender aberto em segundo plano
+(ruído de ±5 FPS entre rodadas):
+
+| Versão | Desligado | Ligado | Custo |
+|---|---|---|---|
+| Sol reaplicado em todo quadro, céu a cada 0,25 s | ~248 | ~230 | ~7% (~0,3 ms/quadro) |
+| Sol em passos de 0,1 s, céu a cada 2 s (atual) | ~243–252 | ~235–241 | ~2–4% (~0,1–0,2 ms/quadro) |
+
+- O custo era o **update** do sol, não o estado de luz: com o ciclo congelado na manhã o FPS era igual ao desligado.
+  Espaçar o céu de 0,25 s para 2 s quase não mudou nada; espaçar o sol para 10 Hz foi o que reduziu.
+- Num ciclo de 20 min o sol anda no máximo ~1°/s (à noite, sombra fraca) e ~0,1°/s de dia: passos de 0,1 s são
+  invisíveis. Não vale baixar mais: o restante está dentro do ruído da medição.
+
+### 2.13 Chuva e neve (`WeatherController`) — 09–10/10/2026
+
+- Até 6.000 gotas (`GPUParticles3D`, `amount_ratio` = intensidade × área coberta, então de perto há menos gotas com a
+  mesma densidade). Sem colisão nem respingos. CPU por quadro: avançar a agenda e ajustar 3 valores; o parâmetro global
+  do chão molhado só é enviado quando muda.
+- Primeira medição (09/10) com o Blender usando 92% da GPU: inválida (variação maior que o efeito).
+- **Medição com a GPU livre (10/10)**, mapa padrão, V-Sync desligado, 400 quadros por medida, 2 rodadas, ruído de
+  ±20 FPS entre rodadas:
+
+| Cena | Zoom padrão | Zoom máximo |
+|---|---|---|
+| Seco, vegetação com o material antigo | 244–270 | 249–266 |
+| Seco, vegetação com `nature_kit.gdshader` (neve) | 201*–271 | 263–266 |
+| Chuva no pico (até 6.000 gotas) | 239–246 | 214–248 |
+| Neve no pico (até 3.000 flocos + chão e copas esbranquiçados) | 225–240 | 261–263 |
+
+  \* um ponto fora da curva na 2ª rodada; na 1ª, o shader novo e o material antigo empataram (270,8 × 269,6 e
+  266,0 × 265,9). Conclusão: o shader da vegetação não tem custo mensurável; chuva e neve no pico custam algo entre
+  0 e ~10%, só enquanto acontecem (alguns minutos a cada ~25 min / ~1 h 30).
+
+### 2.14 Embarque automático (rotas anfíbias) — 10/10/2026
+
+- Toda tropa de civilização atravessa água, então o atalho de rejeição rápida de `compute_path` (componentes conexos
+  de terra, `_land_route_possible`) ganhou a variante anfíbia: `_amphibious_components` (terra + água embarcável),
+  calculada sob demanda uma vez e invalidada junto com os componentes de terra (geração, `transform_tile_terrain`
+  quando a passagem do tile muda). Mesma ideia, nenhum A* pelo mapa inteiro para um destino impossível (lago fechado,
+  ilha cercada de lava/montanha).
+- A regra antiga "embarcado não expande a partir de terra" saiu das duas buscas (menos um teste por nó).
+- Medido no laboratório 4-IA (12 partidas, mesmas seeds, A/B): turno p95 485 → 503 ms (ruído), pior turno 1,49 → 1,13 s.
+- Visual: o barco é montado só na primeira entrada na água; terminada a troca, o lado escondido fica invisível e com o
+  `AnimationPlayer` parado (`active = false`) — custo zero de skinning da tropa enquanto navega.
+
+### 2.15 Brilho do mundo (`WorldGlow`) — 12/10/2026
+
+- Um `OmniLight3D` sem sombra por recurso que brilha (Gemas, Nódulo Arcano): 36 no mapa padrão 128×72 (18 + 18).
+  Forward+ agrupa luzes por cluster; sem sombra, cada uma só pesa nos pixels que alcança (alcance 2,6–3,0).
+- Nada por quadro: a energia das luzes só é reenviada quando a escuridão da cena muda mais de 0,01 (o anoitecer
+  inteiro vira ~100 passos), e a névoa só reenvia o brilho dos tiles que mudaram de estado. Luz apagada pela névoa ou
+  de energia desprezível fica `visible = false`.
+- **Medição** (partida real, mapa padrão, 3 rivais, névoa desligada = as 36 luzes acesas, V-Sync desligado, 300
+  quadros por medida, 1920×1017; havia outro processo do Godot usando a GPU, por isso o FPS absoluto baixo):
+
+| Cena | Zoom padrão (19) | Zoom máximo (30) |
+|---|---|---|
+| Meio-dia, brilho ligado | 96,5 | 91,0 |
+| Noite, brilho ligado | 96,3 / 95,8 | 92,1 / 93,1 |
+| Noite, luzes desligadas | 95,4 | 91,7 |
+
+  Diferença dentro do ruído (±1 FPS). Se o número de fontes crescer muito (dezenas de prédios iluminados por cidade),
+  medir de novo: o primeiro limite a olhar é o de elementos por cluster do Forward+ (512 por quadro).
+- **Núcleos das Grandes Manifestações (13/10/2026):** uma luz sem sombra por Manifestação, presa ao osso do núcleo
+  (alcance 4,2–4,6, maior que o dos recursos). No máximo 24 numa partida (6 por reino × 4). Medição do pior caso —
+  as 24 juntas na tela, noite profunda, mapa padrão 128×72 com 3 rivais, névoa desligada (36 luzes de recurso
+  acesas), V-Sync desligado, 400 quadros por medida, 1920×1080:
+
+| Luzes das criaturas | 1ª medida | 2ª medida |
+|---|---|---|
+| Ligadas | 100,5 FPS | 92,6 FPS |
+| Desligadas | 99,5 FPS | 95,4 FPS |
+
+  A variação entre as duas rodadas (±4 FPS) é maior que a diferença ligado/desligado: sem custo mensurável. As
+  opções de vídeo "Luzes do mapa" e "Luzes das criaturas" existem por preferência visual e para máquinas fracas, não
+  porque a medição pediu. Nada por quadro em GDScript: a luz segue o osso pelo `BoneAttachment3D` do motor.
+
+### 2.16 Névoa de guerra como camada física (`FogLayer`) — 12/10/2026
+
+- **O que desenha:** um bloco hexagonal (18 triângulos) por tile nunca visto, em pedaços de 16×16 tiles (48 pedaços
+  no mapa padrão 128×72). Só os pedaços na câmera são enviados; pedaço sem tile nunca visto fica `visible = false`.
+  Em compensação, o terreno nunca visto deixou de ser desenhado (prisma recolhido no vértice) e a água embaixo da
+  camada é rejeitada pelo teste de profundidade — antes os dois rodavam o shader completo só para pintar a cor da névoa.
+- **CPU do recálculo (`recompute_fog`, mapa padrão, headless, melhor de 25):** 11,3 ms sem mudança de visão, 12,6 ms
+  ao mover 1 tile — o mesmo de antes dentro do ruído (8–10 ms na medição anterior, com a máquina livre). Do total, a
+  parte nova custa ~0,13 ms (`_apply_fog_to_entities` com a regra única) e ~0,001 ms (`_rebuild_fog_state` sem
+  mudança). O resto é o que já existia: varrer todos os tiles (5,6 ms), devolver a cor crua do terreno
+  (`_apply_terrain_fog`, 2,5 ms), névoa dos props (2,1 ms) e contorno de território (1,3 ms). Se um dia o recálculo
+  pesar, é aí que há ganho (varrer só os tiles que eram ou passaram a ser visíveis) — não mexido nesta rodada porque
+  40 arquivos de teste escrevem em `visibility` direto.
+- **Geração do mapa:** montar os blocos (`FogLayer.rebuild`) custa ~80 ms no mapa de 320×84 (26.880 tiles, 120
+  pedaços), uma vez por partida. O passe por tile do estado é pulado em mapa recém-gerado (tudo nunca visto = buffer
+  zerado); antes desse atalho eram mais ~100 ms. Para comparar: `generate_map` inteiro levou ~6,0 s nessa mesma
+  medição, com a máquina ocupada (o normal documentado é 2,7–2,9 s) — por isso o teste de tempo
+  `test_terrain_generation` (limite de 5 s) falhou nesta rodada; a camada responde por ~1–3% disso.
+- **FPS (partida real, 1920×1017, V-Sync desligado, 300 quadros por medida, zoom máximo sobre o início da partida):**
+
+| Medição | Com névoa (quase tudo nunca visto) | Mapa inteiro visível (controle) |
+|---|---|---|
+| Névoa antiga, máquina livre | 196,7 FPS (5,08 ms) | 89,9 FPS (11,12 ms) |
+| Névoa nova, Blender usando 64–100% da CPU, 3 rodadas intercaladas | 129–132 FPS (7,6 ms) | 69,5–71,9 FPS (14,2 ms) |
+
+  As duas medições não são comparáveis em valor absoluto: na segunda o Blender estava ocupando a CPU. O controle
+  (sem névoa nenhuma) piorou ~3,1 ms por quadro pela carga da máquina e a vista com névoa ~2,6 ms — a mesma ordem, ou
+  seja, nenhum custo próprio da camada aparece acima do ruído. **Falta repetir com a máquina livre** para ter o número
+  limpo (cena descartável: instanciar `Main.tscn`, medir a vista inicial no zoom máximo com e sem
+  `set_debug_fog_disabled`).
 
 ## 3. `_process`/`_physics_process` já auditados (nenhuma mudança feita, documentando pra não re-auditar)
 
@@ -506,7 +684,8 @@ lugares completamente diferentes da seção 2:
   custo de GPU).
 - Contagem de instâncias `MultiMeshInstance3D` (terreno + árvores/pedras/
   props por tipo de recurso) — não medida quanto cada uma custa de
-  desenho.
+  desenho. Desde a 2.11 a vegetação sozinha tem ~300 grupos regionais
+  (com culling por região), o primeiro candidato se o custo de GPU for medido.
 - Complexidade dos shaders (`shaders/terrain.gdshader` 650 linhas,
   `shaders/water_shader.gdshader` 743 linhas) — não perfilada.
 - `config/features` do projeto usa `"Forward Plus"` (o método de
@@ -527,3 +706,264 @@ lugares completamente diferentes da seção 2:
   desta rodada, pra resolver um problema que já tem solução de UX
   aceitável. Só vale revisitar se o pedido for especificamente "carregar
   partida nova está demorando demais", não "o jogo está com lag".
+
+---
+
+## 6. Rodada de otimização geral — 14/10/2026 ("jogo leve em qualquer máquina")
+
+Pedido: deixar o jogo o mais leve possível **sem mudar conteúdo, gameplay, balanceamento nem visual**. Regra seguida em
+todo item: o resultado na tela e no estado do jogo é idêntico ao anterior (verificado por comparação com o algoritmo
+antigo ou por medição de erro), ou a mudança só existe como opção nova com padrão igual ao de sempre.
+
+### 6.1 Ferramenta de medição (permanente): `tools/perf/PerfBench.tscn`
+
+Não é referenciada pelo jogo e fica fora da exportação (`tools/*` no `exclude_filter`).
+
+```
+# janela (GPU + CPU por quadro, VRAM, draw calls, triângulos, censo de texturas/malhas/animadores)
+godot --path . res://tools/perf/PerfBench.tscn -- --out=user://perf.json
+# headless (só CPU: geração, névoa, turnos)
+godot --headless --path . res://tools/perf/PerfBench.tscn -- --out=user://perf_cpu.json
+```
+
+Opções depois de `--`: `--seed=4242 --size=large --rivals=3 --late_turns=40 --frames=300`,
+`--scenarios=start_default,start_zoom_max,start_zoom_min,revealed_zoom_max,features,late_default,late_revealed,late_night,turn_spikes`
+(padrão: todos), `--feat_zoom=default|max --feat_reveal=1|0` (cenário `features`: desliga um efeito de cada vez —
+SSAO, SSR, glow, névoa do ambiente, sombras, MSAA, sombras da vegetação, vegetação, HUD, animações — e mede de novo).
+O cenário "late" joga N turnos com a IA em todos os assentos (`GameManager.ai_controls_human_seat`) antes de medir.
+`turn_spikes` mede o que o jogador sente no Encerrar Turno com a IA espalhada (`stagger_ai_turns`): o quadro do clique
+e os quadros da fila de IA. Saída: JSON em `user://` (`%APPDATA%/Godot/app_userdata/Aetherlands/`) + resumo no console.
+O campo `process_ms` (monitor `TIME_PROCESS`) não é confiável nessa leitura por quadro — use `frame_ms`.
+
+**Ruído:** com outro processo do Godot ou o Blender aberto, a mesma cena varia ±1 ms entre rodadas. Compare sempre
+A/B **dentro da mesma rodada** (o cenário `features` existe para isso), nunca entre rodadas em horários diferentes.
+Rode o headless antes: erro de script na janela deixa a janela aberta até o watchdog (900 s).
+
+### 6.2 Linha de base (antes desta rodada)
+
+RTX 3060 + i5-9600K, 1600×900, V-Sync desligado, mapa Grande 128×72, seed 4242, 3 rivais.
+
+| Cenário | FPS | Quadro | GPU | CPU de render | Draw calls | Triângulos/quadro | VRAM |
+|---|---|---|---|---|---|---|---|
+| Início, zoom padrão | 263 | 3,80 ms | 2,34 ms | 0,92 ms | 708 | 2,53 M | 405 MB |
+| Mapa revelado, zoom padrão | 101 | 9,88 ms | 3,16 ms | 4,28 ms | 2.628 | 2,66 M | 407 MB |
+| Mapa revelado, zoom máximo | 122 | 8,20 ms | 3,09 ms | 3,59 ms | 2.721 | 2,37 M | 407 MB |
+| Turno 40, revelado | 108 | 9,29 ms | 3,25 ms | 4,35 ms | 3.131 | 2,49 M | **705 MB** |
+
+Custo de cada efeito (mapa revelado, zoom padrão, desligando um de cada vez): sombras **−4,2 ms de quadro** (2.628 →
+452 draw calls; 2,66 M → 0,50 M triângulos), animações **−4,0 ms** de CPU, vegetação −1,3 ms, sombras da vegetação
+−1,0 ms; SSAO/SSR/glow/MSAA/névoa ≈ −0,1 a −0,4 ms de GPU cada. Conclusão: o quadro era limitado por CPU (draw calls
+das cascatas de sombra + esqueletos animados), não por pós-processamento.
+
+### 6.3 O que mudou
+
+**a) Animação só onde alguém vê** (`Unit._build_animation_culling`). Censo no início da partida: 208 `AnimationPlayer`
+de unidades ativos, 10 visíveis — o resto na névoa ou fora da câmera, avançando esqueleto todo quadro. Agora cada
+unidade animada tem um `VisibleOnScreenNotifier3D` com a caixa do modelo + 4 de folga (a sombra de quem está logo fora
+da borda continua animando); fora da tela ou escondida pela névoa, o player fica com `process_mode = DISABLED` (não
+`active = false`, que limpa caches) e volta a `INHERIT` ao entrar na tela, continuando de onde parou. Um clipe de uma
+vez (golpe, feitiço, trabalho, pouso) nunca é pausado: termina e só então a unidade, já em repouso, para — inclusive
+quando ele começa com a unidade já pausada (`current_animation_changed` é emitido pelo `play()` mesmo com o player
+desligado; conferido no motor). Headless (testes, laboratório de balanceamento) não cria o notifier: comportamento
+antigo. Custo das animações no cenário revelado: ~4 ms → indistinguível de zero.
+
+**b) Sombras do tamanho da vista** (`GraphicsQuality.fit_shadows_to_view`, chamado a cada zoom). Ver
+`docs/GRAPHICS_SETTINGS.md`: cascatas próximas com as mesmas distâncias absolutas (8/16/40 na Média), só a última
+encolhe até o chão visível + folga, com o esmaecimento além da borda. No zoom padrão o alcance cai de 80 para ~46.
+Mapa revelado, zoom padrão, mesma rodada: 3.527 → 2.120 draw calls quando comparado ao alcance fixo.
+**Conferência visual** (uma vez, janela, capturas apagadas): não é bit a bit idêntico — o Godot estabiliza cada
+cascata pela faixa de profundidade da luz, então bordas de sombra deslocam menos de 1 texel. Pixels com diferença
+> 8/255 contra o alcance fixo: 4,5 % no zoom padrão e 9,9 % no máximo, contra 1,9 % e 6,3 % entre dois quadros
+seguidos com a MESMA configuração (animação e reflexo da água); lado a lado, indistinguível. O excesso fica em
+contornos de sombra de 1 px espalhados, sem sombra a mais ou a menos (diferença média com sinal ≈ 0).
+
+**c) Vegetação sob névoa total não é desenhada** (`NatureDecorManager.apply_fog`). Um grupo (asset × região 12×12) com
+todas as instâncias em tile nunca visto já era invisível (alfa 0, recortado em todos os passes), mas gastava draw call
+no pré-passe, na cor e em cada cascata. Agora o grupo conta as instâncias aparentes e fica `visible = false` em zero.
+No teste de equivalência, até 217 dos 343 grupos ficaram desligados. A névoa da vegetação também passou a repintar só
+os tiles do `changed` (+ os ainda sem névoa) em vez dos ~5 mil tiles decorados a cada passo.
+
+**d) `recompute_fog` por delta** (`HexGrid.recompute_fog`, a cada passo de unidade do jogador): 11,1 → ~4 ms no mapa
+padrão (headless, melhor de 7).
+- Laço de visibilidade: depois de um recálculo os tiles VISÍVEIS são exatamente os vistos naquele recálculo
+  (`_fog_visible_coords`); se `visibility == _last_fog_visibility` (comparação nativa — pega escrita externa de load,
+  Debug e dos ~40 testes que escrevem em `visibility`), só esses e os vistos agora podem mudar. Senão, o laço completo
+  antigo. A cópia `_last_fog_visibility` é atualizada só nos tiles mudados nesse caminho (sem `duplicate()` do mapa).
+- `_apply_terrain_fog` repintava as ~5 mil instâncias do terreno só para desfazer o destaque de movimento; agora desfaz
+  só os tiles registrados em `_last_highlighted_land_coords` (mesmo buffer: a cor do terreno só sai da cor crua por
+  `_highlight_coords`, e `transform_tile_terrain` grava a cor nova na hora).
+- Contorno de território: assinatura por cidade (tiles, tipo de cada aresta, névoa de cada tile, cor) guardada no meta
+  da malha; igual = a malha continua valendo e o `SurfaceTool` não roda. `transform_tile_terrain` (muda alturas) apaga
+  as assinaturas. 1,4 → 0,1 ms com 4 cidades (cresce com o número de cidades).
+- **Verificação** (script descartável, apagado): 325 recálculos (150 passos de unidades antes e depois de 25 turnos de
+  IA, escrita externa em `visibility`, Debug liga/desliga) comparando com uma reimplementação literal do algoritmo
+  antigo: 0 divergências em `visibility`, `last_fog_changed` e `_last_fog_visibility`; 975 malhas de contorno idênticas à
+  reconstruída do zero; estado de névoa de cada tile decorado e visibilidade de cada grupo de vegetação corretos.
+
+**e) Texturas de modelo em BC7** (580 texturas, `tools/perf/texture_import_audit.gd`). Todas estavam em *Lossless*, que
+na GPU é RGBA8 descomprimido (um atlas 2048² com mipmaps = 21 MB). BC7 (*VRAM Compressed* + alta qualidade) = 1 byte por
+pixel: 4× menos VRAM. Erro medido contra o original (`Image.compress(BPTC)` + `decompress`): PSNR 49–51 dB (81 dB nos
+mapas de emissão), pixels com diferença > 8/255: 0,004–0,05 %. BC1/BC3 (o *VRAM Compressed* sem alta qualidade) foi
+descartado: 34–36 dB e 3–15 % dos pixels com erro visível nas bordas da pixel art. UI, ícones e terreno ficam de fora
+(não são materiais de modelo; o terreno é `Texture2DArray` montado em código). Regra para arte nova em
+`docs/ASSET_FACTORY_GUIDE.md` §3.1. A reimportação das 580 levou 20,5 min (BC7 é lento de codificar; custo só da importação, não do jogo). Auditoria
+depois: 580 texturas, 0 fora da regra.
+
+**f) Exportação sem material de desenvolvimento** (`export_presets.cfg`, `exclude_filter`): `art_source/` (12 GB, 5.477
+arquivos importados), `test/`, `tools/`, `addons/gut/`, `scenes/art_review/`, cenas `_*` da raiz, previews de arte,
+`*_report.json`, `*.md`, `*.log`, `*.blend`. Conferido que o jogo não carrega nada disso (`scripts/art_review/` fica:
+os canteiros de obra usam scripts de lá).
+
+**g) Spawn de unidade sem instanciar o modelo duas vezes** (`Unit._copy_animations_into`): cada unidade instanciava a
+cena de animação inteira só para ler as bibliotecas. Agora os clipes ficam em cache por cena (as mesmas `Animation`
+compartilhadas). Trabalho a menos em todo spawn; no `start_new_game` o ganho fica no ruído (o custo dominante é outro,
+ver 6.5).
+
+**h) Opções novas para máquina fraca** (padrão = visual de sempre): Resolução 3D com FSR 1.0 (100/85/75/67/50 %) e
+"Oclusão de ambiente e reflexos". Ver `docs/GRAPHICS_SETTINGS.md`.
+
+### 6.4 Resultado final
+
+Mesma máquina, mesma cena e semente da 6.2 (havia um Blender aberto na rodada final; o ruído é ±1 ms).
+
+| Cenário | FPS | Quadro | GPU | CPU de render | Draw calls | Triângulos/quadro | VRAM |
+|---|---|---|---|---|---|---|---|
+| Início, zoom padrão | 263 → **408** | 3,80 → 2,45 ms | 2,34 → 1,90 | 0,92 → 0,42 | 708 → **170** | 2,53 M → **0,91 M** | 405 → 333 MB |
+| Início, zoom máximo | 251 → **402** | 3,98 → 2,49 ms | 2,35 → 1,92 | 0,94 → 0,41 | 655 → 161 | 2,25 M → 0,86 M | 405 → 333 MB |
+| Mapa revelado, zoom padrão¹ | 101 → **217** | 9,88 → 4,61 ms | 3,16 → 2,88 | 4,28 → 2,41 | 2.628 → 2.120 | 2,66 M → 2,53 M | 407 → 335 MB |
+| Mapa revelado, zoom máximo | 122 → **170** | 8,20 → 5,89 ms | 3,09 → 3,00 | 3,59 → 3,02 | 2.721 → 2.624 | igual | 406 → 335 MB |
+| Turno 40, zoom padrão | 197 → **299** | 5,07 → 3,35 ms | 2,74 → 2,82 | 1,72 → 1,49 | 1.315 → 1.194 | 2,67 M → 2,56 M | **705 → 432 MB** |
+| Turno 40, revelado, zoom máximo | 108 → **148** | 9,29 → 6,78 ms | 3,25 → 3,08 | 4,35 → 3,72 | 3.130 → 3.048 | igual | 705 → 432 MB |
+| Turno 40, noite, revelado | 108 → **151** | 9,27 → 6,62 ms | 3,28 → 3,05 | 4,29 → 3,58 | 3.009 → 2.877 | igual | 705 → 432 MB |
+
+¹ cenário `features` (`--feat_zoom=default`), comparado dentro da mesma rodada.
+
+Memória de texturas na GPU: 331 → 262 MB no início e **605 → 334 MB** no turno 40 (o resto do total é alvo de
+render: atlas de sombra 4096², buffers de SSAO/SSR/glow/MSAA, que não mudaram). Se todos os 580 modelos fossem
+carregados, seriam ~3,4 GB em RGBA8 contra ~0,84 GB em BC7. RAM estática no headless (onde as texturas ficam na CPU):
+600 → 318 MB.
+
+CPU (headless, mesma semente; `tools/perf/PerfBench.tscn --late_turns=40`):
+
+| Medida | Antes | Depois |
+|---|---|---|
+| `recompute_fog` (a cada passo de unidade), início | 9,2 ms | **3,0 ms** |
+| `recompute_fog`, turno 40 | 13,0 ms | **4,1 ms** |
+| `start_new_game` (tela de carregamento) | 1.032 ms | 723 ms |
+| Turno síncrono completo (média / p95, IA em todos os assentos) | 123 / 199 ms | 99 / 167 ms |
+| Abertura (`Main.tscn`) | 2,9 s | 2,7–3,0 s (ruído; ver 6.5) |
+
+Encerrar Turno no jogo real (IA espalhada, janela, turnos 41–45): quadro do clique média 46 ms (máx. 112 ms), quadros
+da fila de IA p95 3,7 ms (máx. 51 ms). Sem linha de base (cenário criado nesta rodada) — é a referência para a próxima.
+
+### 6.5 Medido e NÃO mexido (candidatos para a próxima rodada)
+
+- **Abertura do jogo ~2,9 s** (`Main.tscn`): é compilação de GDScript (HexGrid.gd + dependências 486 ms, HUD.gd 547 ms,
+  UIShell/Minimap/GlobalBar 100–170 ms cada). Custo único atrás da tela de título; reduzir exigiria reestruturar
+  dependências de classe.
+- **`start_new_game` ~1,0 s** (tela de carregamento): `MonsterEcologySystem.populate_new_match` ~630 ms (planejamento de
+  habitat + criação dos covis), capitais rivais ~290 ms (`found_city` ~37 ms cada), primeira névoa ~85 ms.
+- **Quadro do Encerrar Turno**: `V2StrategicAI.plan_turn` ~8 ms por rival (escolha de pesquisa e captura do WorldView),
+  mais economia/cidades. Engasgo único por turno, já sob o estado "processando" da HUD. Mexer exigiria provar que a IA
+  toma as mesmas decisões (risco de balanceamento).
+- **`GlobalBarPresenter.refresh`** ~1,2 ms, chamado em cada `fog_updated`/`notify`/evento estruturado. Agrupar por quadro
+  não ajuda o caso comum (1 passo = 1 refresh) e um teste espera a atualização imediata nos sinais de pesquisa.
+- **HUD** (~0,2–0,4 ms por quadro no cenário `features`): não mexido nesta rodada porque outro agente estava editando
+  `HUD.gd` ao mesmo tempo.
+- **Terreno em um MultiMesh só** (nunca recortado pela câmera): ~90 mil triângulos × cada passe. Dividir em regiões
+  cortaria vértices e somaria draw calls — não compensa enquanto o gargalo for draw call.
+- **Faces internas dos modelos de blocos** (vegetação ~780 mil triângulos no mapa inteiro): remover faces escondidas
+  entre cubos encostados reduziria triângulos sem mudar a silhueta; precisa de um passo no pipeline do Blender.
+
+### 6.6 Covis regionais unificados — 15/10/2026
+
+Feature de gameplay, sem mexer nas otimizações da §6.3. `MonsterEcologySystem` controla as 12 espécies e os
+covis da abertura/recursos num registro só. Nenhum `_process`; contagem por origem uma vez por rodada,
+índices para consultas de líder/covil, visão por civilização somente quando há reposição pendente,
+candidatos/habitat em cache e até 96 amostras para uma origem nova. Reposição limitada a 3 nascimentos/rodada.
+Modelos novos: uma malha/material por covil, estáticos, 24 texturas em BC7, compartilhando malhas/texturas.
+
+Benchmark permanente isolado (CPU, sem IA/render):
+
+```
+godot --headless --path . res://tools/perf/MonsterLairBench.tscn
+```
+
+Grande 128×72, seed 33102, 100 rodadas com conquista/reposição no meio: controlador média 0,85 ms,
+p95 0,81 ms, máximo 8,95 ms; 50 covis e 86 criaturas no fim. Saída `user://lair_round_bench.json`.
+PerfBench seed 4242 / 3 rivais / 12 turnos: média 105 → 101 ms, p95 159 → 168 ms, setup 719 → 807 ms,
+RAM estática headless 239 → 268 MB. O acréscimo é arte/carregamento. A comparação é curta, com gameplay
+diferente e outros Godot abertos; não demonstra ganho estatístico nem FPS. Duas campanhas 4-IA até T120,
+com save/load em T60, completaram sem erros (média de turno 94/100 ms, p95 170/188 ms).
+Contrato, compatibilidade e resultados de testes em [UNIFIED_MONSTER_LAIRS.md](UNIFIED_MONSTER_LAIRS.md).
+
+### 6.7 Acabamento da reação dos monstros — 15/10/2026
+
+Reação ao dano é um evento; auxiliares do mesmo covil são consultados no raio 2. O agressor é mantido por
+serial/coordenada em busca local. Os desvios de defesa ficam dentro do raio fixo 4–6 do confronto, usando
+os custos canônicos do HexGrid e no máximo a arena de 127 tiles; não procuram uma volta pelo continente.
+Movimento zero retorna antes de qualquer cálculo de desvio. Nenhum `_process` novo nem recomputação de
+visão por criatura. Vegetação/props verificam ocupação nos índices durante composição/rebuild/refresh.
+
+PerfBench headless, seed 4242, Grande, 3 rivais e 40 turnos, cenários padrão: média 131,89 → 99,06 ms,
+p95 214,07 → 204,98 ms, máximo 219,91 → 247,46 ms. Controlador isolado, 100 rodadas, média 1,00 ms,
+p95 0,95 ms, máximo 9,90 ms (50 covis/86 criaturas). São smokes com gameplay diferente e caches/processos
+não isolados; não provam ganho estatístico nem FPS. A campanha final T140 com save/load em T60 completou
+sem erros. Método, limitações, 369 testes e artefato numérico em
+[MONSTER_SYSTEM_REFINEMENT_2026-10-15.md](MONSTER_SYSTEM_REFINEMENT_2026-10-15.md).
+
+### 6.8 Contato das animações e feedback — 15/10/2026
+
+`CombatFeedback.gd` mantém regras síncronas e agenda somente os sinais visuais de ações visíveis. Não espera
+animação na IA nem adiciona `_process`. Tabela gerada com 59 pontos de impacto, um timer principal por ação,
+máximo de 12 agendas por mapa, referências fracas, cancelamento na troca de mapa e modelo existente reaproveitado
+na morte. O headless não cria agendas. Culling, caches de animação, malhas/texturas e limites do VFX foram mantidos.
+RNG dos números continua consumido na chamada original, antes da publicação visual.
+
+Benchmark da camada nova: 1.000 amostras, 3 callbacks por ação → média 0,084 ms, p95 0,113 ms;
+21 callbacks → 0,313 ms / 0,494 ms. Não inclui GPU/efeitos existentes; não equivale a FPS. Ferramenta:
+`tools/perf/CombatFeedbackBench.tscn`. Decisão, limites, capturas reais e testes em
+[COMBAT_VISUAL_SYNC.md](COMBAT_VISUAL_SYNC.md).
+
+### 6.9 Explorar com voo e infiltração — 15/10/2026
+
+`ExplorationPlanner.gd` corrige a navegação automática dos perfis especiais sem alterar a seleção terrestre
+habitual (heap de 24 candidatos + A*). Só se os candidatos terrestres falharem entra uma busca complementar;
+o limite não é mais confundido com “nenhuma fronteira acessível”. Voo planeja pousos válidos por turno;
+infiltração nunca termina sobre outro ocupante. Sem movimento disponível não há busca.
+
+Caches locais de passagem, heap e rejeição reversa de pequenos bolsões isolados; nenhum `_process`, timer ou
+estado novo de save. Reutiliza `unit_route` para executar/animação. CPU de planejamento, mapa 320×84, 30 amostras:
+voo aberto média 3,08 ms / p95 3,22 ms; infiltração 1,80 ms / p95 1,89 ms. Somente planejamento, com outros
+processos ativos e caches aquecendo; não mede GPU/FPS nem o custo de movimento/névoa.
+Benchmark: `tools/perf/ExplorationBench.tscn` (`-- --large` para 320×84).
+Método, cobertura e limitações em [EXPLORATION_FIX_2026-10-15.md](EXPLORATION_FIX_2026-10-15.md).
+
+### 6.10 Grandes Manifestações por objetivos — 15/10/2026
+
+`V2ManifestationOrders.gd` decide uma vez por entidade/rodada, usando a fila gradual existente
+(dois itens a cada 0,12 s). Nenhum novo trabalho contínuo por frame. Visão de dono uma vez por rodada;
+movimento acrescenta somente o raio local. Candidatos de feitiços são locais, com validação final canônica;
+a consulta preliminar de disponibilidade evita recalcular a mesma lista de alvos.
+
+Avanço usa alcançáveis; contorno terrestre consulta uma rota A* e conserva seu restante entre rodadas,
+revalidando o trecho alcançável. Mudança de alvo/obstrução invalida o cache transitório. Falhas alternam
+aproximações e recuam para uma tentativa a cada terceira rodada. Selecionar a entidade não calcula
+alcance de movimento manual, pois oferece somente quatro objetivos.
+
+`tools/balance/BoundManifestationProbe.tscn`: 6 entidades, repertórios completos, proteção ociosa,
+128×72, 20 rodadas: mediana **9,31 ms**, p95 **10,99 ms**, maior rodada **69,65 ms**.
+A amostra inclui inicialização de rotas/alocações e uma varredura de visão do dono por rodada.
+Nas arenas, 71 decisões de combate: mediana **2,45 ms**, p95 **15,30 ms**, incluindo os efeitos existentes.
+São tempos locais de CPU headless, sem equivalência a FPS ou custo de GPU. Não extrapolar para todos
+os cenários. Regras, método, testes, três partidas completas e dados brutos:
+[BOUND_MANIFESTATIONS.md](BOUND_MANIFESTATIONS.md).
+
+Tuning de 16/10: alvo por identidade consulta o último ocupante ou o índice esparso de unidades,
+sem varrer todos os tiles visíveis; Passo Arcano ocioso não enumera destinos; a UI das habilidades
+automáticas valida custo/recarga sem procurar alvos manuais. Navegação compara perigo por consultas
+O(1) nos estados esparsos existentes. Nenhum `_process`, timer ou mapa de perigo novo.
+O probe ampliado (30 arenas; lote ocioso com 20 rodadas de aquecimento e 200 medidas) passou de
+**8,675/8,951 ms** para **7,683/7,917 ms** de mediana/p95 por lote de seis entidades. Os números são
+CPU headless local, não FPS. Dados, ressalvas e método A/B sem substituir fontes em uso estão na
+seção de tuning de [BOUND_MANIFESTATIONS.md](BOUND_MANIFESTATIONS.md).

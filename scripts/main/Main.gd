@@ -7,6 +7,10 @@ extends Node3D
 @onready var game_setup_screen: Control = $UILayer/GameSetupScreen
 @onready var pause_menu: Control = $UILayer/PauseMenu
 @onready var loading_screen: LoadingScreen = $UILayer/LoadingScreen
+## Ciclo de dia e noite (só visual, tempo real): roda durante a partida, ver DayNightController.
+var day_night: DayNightController
+## Clima cosmético (chuva): roda durante a partida, nubla a luz pelo day_night, ver WeatherController.
+var weather: WeatherController
 
 ## O jogo so comeca (mapa novo ou carregado) depois de uma escolha na tela
 ## de titulo — antes disso a HUD fica escondida e so a tela de titulo
@@ -26,9 +30,23 @@ func _ready() -> void:
 	# antigo continuar valendo).
 	GameManager.stagger_ai_turns = true
 	GameManager.camera_rig = camera_rig # ver GameManager.gd — Minimap (HUD) usa isso pro indicador de viewport
+	day_night = DayNightController.new()
+	day_night.name = "DayNight"
+	add_child(day_night)
+	day_night.setup(get_node_or_null("Sun") as DirectionalLight3D, get_node_or_null("WorldEnvironment") as WorldEnvironment)
+	# O que brilha no mapa (WorldGlow) acende conforme a cena escurece.
+	hex_grid.world_glow.set_darkness(day_night.darkness)
+	day_night.darkness_changed.connect(hex_grid.world_glow.set_darkness)
+	weather = WeatherController.new()
+	weather.name = "Weather"
+	add_child(weather)
+	weather.setup(camera_rig, day_night)
+	GameManager.day_night = day_night
+	GameManager.weather = weather
 	# V3 / Etapa 4: anti-aliasing e sombras reais, aplicados já e a cada mudança nas Configurações (sem reiniciar).
 	_apply_graphics_settings()
 	Settings.graphics_changed.connect(_apply_graphics_settings)
+	camera_rig.zoom_changed.connect(_fit_shadows_to_view)
 	EventBus.restart_requested.connect(_on_restart_requested)
 	title_screen.new_game_setup_requested.connect(_on_new_game_setup_requested)
 	title_screen.load_game_requested.connect(_on_title_load_requested)
@@ -47,7 +65,21 @@ func _ready() -> void:
 
 func _apply_graphics_settings() -> void:
 	GraphicsQuality.apply_anti_aliasing(get_viewport(), Settings.anti_aliasing)
+	GraphicsQuality.apply_render_scale(get_viewport(), Settings.render_scale_percent)
+	var world_environment := get_node_or_null("WorldEnvironment") as WorldEnvironment
+	GraphicsQuality.apply_screen_effects(world_environment.environment if world_environment else null, Settings.screen_effects_enabled)
 	GraphicsQuality.apply_shadows(get_node_or_null("Sun") as DirectionalLight3D, Settings.shadow_quality)
+	_fit_shadows_to_view()
+	if day_night != null:
+		day_night.set_enabled(Settings.day_night_cycle_enabled)
+	if weather != null:
+		weather.set_enabled(Settings.weather_enabled)
+	if hex_grid != null and hex_grid.world_glow != null:
+		hex_grid.world_glow.apply_lighting_settings(Settings.map_lighting_enabled, Settings.creature_lighting_enabled)
+
+## Alcance das sombras = chão visível no zoom atual (mesmas cascatas próximas; ver GraphicsQuality.fit_shadows_to_view).
+func _fit_shadows_to_view() -> void:
+	GraphicsQuality.fit_shadows_to_view(get_node_or_null("Sun") as DirectionalLight3D, Settings.shadow_quality, camera_rig.camera)
 
 func _on_new_game_setup_requested() -> void:
 	title_screen.visible = false
@@ -121,6 +153,8 @@ func _on_restart_requested() -> void:
 ## atras da tela de titulo.
 func _on_pause_main_menu_requested() -> void:
 	GameManager.end_match()
+	day_night.stop()
+	weather.stop()
 	hex_grid.visible = false
 	hud.visible = false
 	title_screen.visible = true
@@ -206,6 +240,9 @@ func _enter_gameplay() -> void:
 	if GameManager.human_player != null:
 		hud.ui_shell.bind_player(GameManager.human_player)
 	hud.visible = true
+	# Partida nova, carregada ou reiniciada: o dia recomeça no meio da manhã (a hora não vai para o save).
+	day_night.start_match()
+	weather.start_match()
 
 func _start_game() -> void:
 	UIEvents.clear_session()

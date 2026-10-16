@@ -43,6 +43,8 @@ var _original_current_save_slot: String
 var _original_kingdom_name: String
 
 func before_each():
+	# Conta unidades/Suprimentos exatos da linha: sem a escolta inicial (fixture, ver GameManager).
+	GameManager.starting_escort_on_new_match = false
 	_original_state = GameManager.state
 	_original_players = GameManager.players
 	_original_human_player = GameManager.human_player
@@ -71,6 +73,7 @@ func before_each():
 	GameManager.debug_mode = true
 
 func after_each():
+	GameManager.starting_escort_on_new_match = true
 	SelectionManager.reset()
 	for player in GameManager.players:
 		player.release_relations()
@@ -181,7 +184,7 @@ func _short_setup(through: int = 4) -> Dictionary:
 	var grid := _new_game()
 	var human := GameManager.human_player
 	var city := _found_human_city(grid)
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	city.buildings[HALL] = true
 	# Aetherlands V2, Fase 15 — Ouro de sobra + uma Fazenda evitam que Déficit/Suprimentos
@@ -222,7 +225,7 @@ func test_guardian_n6_n7_flow_from_brace_spears_to_a_sentinel_across_save_and_lo
 	city.city_level = 3
 	city.buildings["v2_building_farm"] = true
 	city.repeatable_building_counts["v2_building_farm"] = 1
-	for id in ["v2_doctrine_guardian_1", "v2_doctrine_guardian_2"]:
+	for id in ["v2_doctrine_guardian_2"]:
 		_research(state, id)
 	_build_hall(grid, city)
 	for id in ["v2_doctrine_guardian_3", "v2_doctrine_guardian_4", "v2_doctrine_guardian_5"]:
@@ -285,7 +288,7 @@ func test_guardian_n6_n7_flow_from_brace_spears_to_a_sentinel_across_save_and_lo
 	assert_false(V2TechniqueRuntime.is_active(unit, WALL))
 	assert_eq(V2UnitUpgrade.city_of(unit, grid), city, "15. Guardião em cidade própria com Salão")
 	human.gold = 100.0
-	unit.hp = 12.0 # 12/24 = 50%
+	unit.hp = 13.0 # 13/26 = 50%
 	unit.kills = 3
 	unit.veterancy_level = 2
 	var remaining := V2TechniqueRuntime.cooldown_remaining(unit, WALL)
@@ -305,7 +308,7 @@ func test_guardian_n6_n7_flow_from_brace_spears_to_a_sentinel_across_save_and_lo
 	assert_eq(human.units.size(), unit_count)
 	assert_eq(_units_of_kind(human, GUARDIAN).size(), 0, "sem Guardião fantasma")
 	assert_eq(human.gold, 100.0 - cost, "17. custo descontado")
-	assert_almost_eq(unit.hp, 16.0, 0.0001, "12/24 -> 16/32")
+	assert_almost_eq(unit.hp, 34.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 34 pela forma + a cura da evolução")
 	assert_eq(unit.veterancy_level, 2)
 	assert_eq(unit.kills, 3)
 	assert_eq(V2TechniqueRuntime.cooldown_remaining(unit, WALL), remaining, "recarga preservada")
@@ -322,8 +325,8 @@ func test_guardian_n6_n7_flow_from_brace_spears_to_a_sentinel_across_save_and_lo
 	var loaded_grid := _save_and_reload()
 	var loaded_human := GameManager.human_player
 	assert_not_same(loaded_human, human)
-	assert_eq(loaded_human.v2_research.get_completed_ids().size(), 7)
-	for n in range(1, 8):
+	assert_eq(loaded_human.v2_research.get_completed_ids().size(), 6)
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 8):
 		assert_true(loaded_human.v2_research.is_completed("v2_doctrine_guardian_%d" % n), "N%d" % n)
 	var loaded_city: City = loaded_human.cities[0]
 	assert_true(loaded_city.buildings.has(HALL))
@@ -332,7 +335,7 @@ func test_guardian_n6_n7_flow_from_brace_spears_to_a_sentinel_across_save_and_lo
 	assert_eq(sentinels.size(), 1)
 	var loaded_unit: Unit = sentinels[0]
 	assert_eq(loaded_unit.coord, unit_coord)
-	assert_almost_eq(loaded_unit.hp, 16.0, 0.0001)
+	assert_almost_eq(loaded_unit.hp, 34.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 34 pela forma + a cura da evolução")
 	assert_eq(loaded_unit.kills, 3)
 	assert_eq(loaded_unit.veterancy_level, 2)
 	assert_eq(V2TechniqueRuntime.cooldown_remaining(loaded_unit, WALL), remaining, "recarga da Muralha preservada")
@@ -365,7 +368,7 @@ func test_a_sentinel_saved_after_the_second_upgrade_loads_as_a_sentinel():
 	var sentinels := _units_of_kind(loaded_human, SENTINEL)
 	assert_eq(sentinels.size(), 1)
 	assert_eq(sentinels[0].coord, coord)
-	assert_eq(sentinels[0].unit_data.max_hp, 32.0)
+	assert_eq(sentinels[0].unit_data.max_hp, 34.0)
 
 func test_reset_after_loading_removes_the_derived_passive_and_the_production_upgrade():
 	var c := _short_setup(7)
@@ -380,7 +383,7 @@ func test_reset_after_loading_removes_the_derived_passive_and_the_production_upg
 func test_two_civilizations_at_different_levels_keep_their_own_effects():
 	var c := _short_setup(6)
 	var rival: PlayerData = GameManager.rival_players[0]
-	for n in range(1, 6):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 6):
 		rival.v2_research.complete_research("v2_doctrine_guardian_%d" % n) # rival sem N6
 	var mine: Unit = c.unit
 	var rival_unit: Unit = c.grid.spawn_unit(WorldSetup.find_spawn_tile(c.grid, rival.cities[0].coord), UnitDatabase.create_unit(GUARDIAN), rival)

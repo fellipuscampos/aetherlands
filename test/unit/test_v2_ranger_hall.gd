@@ -9,28 +9,32 @@ func _apply_signals(player: PlayerData) -> Array:
 	player.v2_unlocks.unlock_applied.connect(func(node_id, unlock_type, unlock_id): seen.append([node_id, unlock_type, unlock_id]))
 	return seen
 
-# --- N1: a Doutrina ---------------------------------------------------------------------------------------------------
+# --- Início da linha: o prédio de treino ---------------------------------------------------------------------------------------------------
 
-func test_n1_only_establishes_the_line_and_opens_n2_with_no_bonus_of_its_own():
+## O antigo N1 ("Doutrina") era um portão sem efeito e saiu: a linha começa no prédio de treino, que não exige
+## pesquisa anterior, e concluí-lo aplica o desbloqueio do prédio direto — sem bônus global.
+func test_the_line_starts_at_the_training_building_without_a_doctrine_gate():
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
 	var before := [player.gold, player.mana, player.units.size()]
 	var seen := _apply_signals(player)
-	player.v2_research.complete_research("v2_doctrine_ranger_1")
-	assert_eq(seen, [["v2_doctrine_ranger_1", "doctrine", "v2_doctrine_ranger"]])
-	assert_eq(V2UnlockSystem.unlocked_ids(player), ["v2_doctrine_ranger"], "nenhum prédio, unidade ou técnica")
+	assert_null(V2ResearchDatabase.get_node("v2_doctrine_ranger_1"), "o N1 de portão não existe mais")
+	assert_true(player.v2_research.is_available("v2_doctrine_ranger_2"), "o prédio não exige pesquisa anterior")
+	assert_true(player.v2_research.complete_research("v2_doctrine_ranger_2"))
+	assert_eq(seen.size(), 1)
+	assert_eq(seen[0][0], "v2_doctrine_ranger_2")
+	assert_eq(seen[0][1], "building")
+	assert_false(V2UnlockSystem.is_unlocked(player, "v2_doctrine_ranger"), "o id da Doutrina não é mais um unlock")
 	assert_eq([player.gold, player.mana, player.units.size()], before, "sem bônus global")
-	assert_true(player.v2_research.is_available("v2_doctrine_ranger_2"))
-	assert_false(player.v2_research.is_available("v2_doctrine_ranger_3"))
+	assert_true(player.v2_research.is_available("v2_doctrine_ranger_3"))
 
 func test_every_ranger_node_applies_its_unlock_once_with_the_generic_type_table():
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
 	var seen := _apply_signals(player)
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		player.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
 	assert_eq(seen, [
-		["v2_doctrine_ranger_1", "doctrine", "v2_doctrine_ranger"],
 		["v2_doctrine_ranger_2", "building", R_CAMP],
 		["v2_doctrine_ranger_3", "unit", ARCHER],
 		["v2_doctrine_ranger_4", "technique", PRECISE],
@@ -94,7 +98,7 @@ func test_the_camp_belongs_to_the_researching_civilization_only():
 func test_the_archer_has_the_specified_baseline():
 	var data := UnitDatabase.create_unit(ARCHER)
 	assert_eq(data.unit_name, "Arqueiro")
-	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points], [13.0, 4.5, 2.5, 2.0])
+	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points], [13.0, 6.5, 3.5, 2.0])
 	assert_eq(data.vision_range, 3)
 	assert_eq(data.attack_range, 2, "ranged: alcance 2")
 	assert_eq(data.production_cost, 20.0)
@@ -210,7 +214,7 @@ func test_the_ranged_attack_uses_the_normal_defense_chain_terrain_wall_and_aura(
 	var foe := _foe_at(grid, rival, archer, 2)
 	foe.magic_status[WALL] = TurnManager.turn_number + 2
 	var wall: float = 1.0 + _technique(WALL).self_defense_bonus
-	var expected := _formula_damage(grid, 4.5, 1.0, foe, wall)
+	var expected := _formula_damage(grid, 6.5, 1.0, foe, wall)
 	assert_almost_eq(CombatResolver.predict(archer, foe, grid).damage_to_defender, expected, 0.0001)
 
 func test_the_selection_offers_targets_at_range_2_and_not_at_range_3_nor_allies_nor_peaceful():

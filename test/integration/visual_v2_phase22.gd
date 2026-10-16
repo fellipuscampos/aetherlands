@@ -27,7 +27,7 @@ func _free_coord(grid: HexGrid, center: Vector2i, min_distance: int = 0) -> Vect
 	return Vector2i(9999, 9999)
 
 func _learn_branch(player: PlayerData, branch: String) -> void:
-	for tier in range(1, 10):
+	for tier in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		var research_id := "v2_magic_%s_%d" % [branch, tier]
 		if not player.v2_research.is_completed(research_id):
 			_check(player.v2_research.complete_research(research_id), research_id)

@@ -6,8 +6,8 @@ extends RefCounted
 ## folga de covis e tiles do grupo. Não guarda estado, não spawna e não consome RNG próprio — quem
 ## orquestra (e passa o RNG dedicado da ecologia) é o MonsterEcologySystem.
 ##
-## Não é o RegionalThreatPlanner: aquele continua dono da ameaça garantida por capital (7–10). Este só
-## espalha a população WILD/ECOLOGY pelo continente principal.
+## O RegionalThreatPlanner escolhe os encontros da abertura/recursos; ambos entregam origens ao mesmo
+## MonsterEcologySystem. Este arquivo fornece as regras comuns de habitat e reposição.
 
 ## Terra ESTÁTICA elegível (ordenada): continente principal (zona MAIN do mapa padrão; mapas menores são
 ## inteiros MAIN), terreno que não bloqueia unidade terrestre, massa de terra >= MIN_LANDMASS e sem
@@ -30,7 +30,7 @@ static func eligible_tiles(grid: HexGrid) -> Array[Vector2i]:
 	return sorted_coords(result)
 
 ## Tile onde um monstro ecológico pode NASCER agora: elegível estaticamente e livre de unidade, cidade,
-## território de cidade, construção, estrutura de covil, portal e marcador de evento mundial.
+## território de cidade, construção, estrutura de covil e portal.
 static func is_legal_spawn_tile(grid: HexGrid, coord: Vector2i) -> bool:
 	var tile: HexTileData = grid.get_tile(coord)
 	if tile == null or tile.blocks_land_units() or tile.resource != "":
@@ -41,15 +41,7 @@ static func is_legal_spawn_tile(grid: HexGrid, coord: Vector2i) -> bool:
 		return false
 	if grid.buildings_by_coord.has(coord) or grid.lairs_by_coord.has(coord) or coord in grid.lair_coords:
 		return false
-	if grid.v2_portal_endpoint_index.has(coord):
-		return false
-	return not _near_world_event_site(coord)
-
-static func _near_world_event_site(coord: Vector2i) -> bool:
-	for event in WorldEventManager.active_events:
-		if event is ReliquaryEvent and (event as ReliquaryEvent).site_coord != ReliquaryEvent.NO_COORD and HexMetrics.axial_distance((event as ReliquaryEvent).site_coord, coord) <= 2:
-			return true
-	return false
+	return not grid.v2_portal_endpoint_index.has(coord)
 
 ## Zona de segurança: `coord` a >= CAPITAL_MIN_DISTANCE[tier] de toda âncora de capital.
 static func capital_distance_ok(coord: Vector2i, tier: String, anchors: Array[Vector2i]) -> bool:
@@ -103,7 +95,7 @@ static func is_valid_new_anchor(grid: HexGrid, coord: Vector2i, tier: String, gr
 		return false
 	if not spacing_ok(coord, tier, sites) or not lair_clearance_ok(grid, coord):
 		return false
-	return group_tiles(grid, coord, group, tier, anchors).size() >= group
+	return group_tiles(grid, coord, group, tier, anchors, false).size() >= group
 
 # ---------------------------------------------------------------------------
 # V3 / Etapa 4 — habitat (MonsterHabitatProfile)
@@ -204,7 +196,7 @@ static func find_refill_anchor(grid: HexGrid, eligible: Array[Vector2i], tier: S
 			continue
 		if not is_valid_new_anchor(grid, coord, tier, group, anchors, sites):
 			continue
-		var members := group_tiles(grid, coord, group, tier, anchors)
+		var members := group_tiles(grid, coord, group, tier, anchors, false)
 		var clear := true
 		for member in members:
 			if blocked.has(member):
@@ -222,7 +214,7 @@ static func _refill_ok(grid: HexGrid, coord: Vector2i, tier: String, group: int,
 		return false
 	if not is_valid_new_anchor(grid, coord, tier, group, anchors, sites):
 		return false
-	for member in group_tiles(grid, coord, group, tier, anchors):
+	for member in group_tiles(grid, coord, group, tier, anchors, false):
 		if blocked.has(member):
 			return false
 	return true

@@ -50,7 +50,7 @@ func after_each():
 	grid.queue_free()
 
 func _learn(tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		player.v2_research.complete_research("v2_magic_druidism_%d" % i)
 
 func _unit(kind: String, owner: PlayerData, coord: Vector2i) -> Unit:
@@ -77,7 +77,7 @@ func test_druid_panel_lists_the_school_and_the_four_spells():
 		var button: Button = row.get_node("Spell_" + id)
 		texts.append(button.text)
 		assert_false(button.disabled, id)
-	assert_eq(texts, ["Brotar Bosque — 6 Mana", "Restaurar Terreno — 5 Mana", "Erguer Terreno — 9 Mana", "Despertar a Mata — 16 Mana"])
+	assert_eq(texts, ["Brotar Bosque — 5 Mana", "Restaurar Terreno — 4 Mana", "Erguer Terreno — 12 Mana", "Despertar a Mata — 24 Mana"])
 	assert_string_contains(row.get_node("Spell_v2_spell_grow_grove").tooltip_text, "Cria Bosque Denso: +1 custo de movimento e +20% Defesa física.")
 	assert_false(row.get_node("Spell_v2_spell_grow_grove").tooltip_text.contains("Alcance efetivo"), "sem bônus, sem linha extra")
 

@@ -24,8 +24,8 @@ static func _ensure_built() -> void:
 	for zone in [
 		_zone("v2_zone_dense_mist", "Névoa Cerrada", -2, 1.0, 0.0, "mist"),
 		_zone("v2_zone_gale", "Vendaval", 0, 0.70, 0.0, "gale"),
-		_zone("v2_zone_lightning_storm", "Tempestade Elétrica", 0, 1.0, 4.0, "storm"),
-		_zone("v2_zone_elemental_cataclysm", "Cataclismo Elemental", -1, 0.80, 5.0, "cataclysm"),
+		_zone("v2_zone_lightning_storm", "Tempestade Elétrica", 0, 1.0, 6.0, "storm"),
+		_zone("v2_zone_elemental_cataclysm", "Cataclismo Elemental", -1, 0.80, 10.0, "cataclysm"),
 	]:
 		_by_id[zone.id] = zone
 

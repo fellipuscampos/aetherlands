@@ -171,8 +171,8 @@ func test_the_capstone_competes_for_the_same_single_research_slot():
 	var player := _player()
 	_complete_two_branches(player, "guardian", "warrior")
 	assert_true(player.v2_research.select_research(CAPSTONE))
-	assert_true(player.v2_research.select_research("v2_magic_sacred_1"), "troca de projeto -- sem slot especial de capstone")
-	assert_eq(player.v2_research.active_id, "v2_magic_sacred_1")
+	assert_true(player.v2_research.select_research("v2_magic_sacred_2"), "troca de projeto -- sem slot especial de capstone")
+	assert_eq(player.v2_research.active_id, "v2_magic_sacred_2")
 	assert_true(player.v2_research.select_research(CAPSTONE), "volta e continua de onde parou")
 
 # --- Toast / feedback (só o humano, sem cinemática/tela de vitória) ------------------------------
@@ -204,7 +204,7 @@ func test_announcement_text_is_generic_reusable_by_transcendence_later():
 
 func test_tooltip_before_completion_explains_the_requirement_and_cost():
 	var tooltip := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.get_node(CAPSTONE), false)
-	assert_true(tooltip.contains("Requer: 2 Doutrinas completas (N9)"))
+	assert_true(tooltip.contains("Requer: 2 Doutrinas completas (N8)"))
 	assert_true(tooltip.contains("Custo: %d" % int(V2ResearchDatabase.CAPSTONE_COST)))
 	assert_true(tooltip.contains("Desbloqueia o acesso à Supremacia Militar."))
 	assert_false(tooltip.contains(V2ResearchDatabase.GAMEPLAY_NOTICE))
@@ -315,7 +315,7 @@ func test_save_load_round_trip_preserves_partial_progress_and_then_completes():
 func test_an_old_save_without_the_capstone_completed_keeps_access_false():
 	var old_block := {
 		"active_id": "",
-		"completed_ids": ["v2_doctrine_guardian_1"],
+		"completed_ids": ["v2_doctrine_guardian_2"],
 		"progress_by_id": {},
 		"research_overflow": 0.0,
 	}

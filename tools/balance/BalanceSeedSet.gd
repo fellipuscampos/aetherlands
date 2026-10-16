@@ -12,10 +12,12 @@ extends RefCounted
 const BASELINE_ID := "RELEASE_BALANCE_BASELINE_PRE_TUNING"
 const SEED_SET_VERSION := "phase33b-v2"
 
-## Mapa real da partida normal (TitleScreen.MAP_SIZES.large) e 3 rivais — o setup máximo do jogo.
-## V3 / Etapa 3: o padrão 1.0 (WorldProfile.STANDARD_1_0, só o continente principal; antes 320x84).
-const MAP_WIDTH := 144
-const MAP_HEIGHT := 76
+## Mapa real da partida normal (o tamanho padrão, WorldProfile.default_size() = Grande 128×72) e 3 rivais — o setup
+## máximo do jogo. Histórico: 320×84 até a V3/Etapa 3, 144×76 até 2026-10-10. O Grande 128×72 gera o MESMO continente
+## do 144×76 (mesma área reservada 96×60 e mesma escala de ruído; só a faixa de oceano ao redor é menor) — números de
+## laboratório antigos só são comparáveis com essa ressalva (docs/AETHERLANDS_RELEASE_BALANCE_BASELINE.md).
+const MAP_WIDTH := 128
+const MAP_HEIGHT := 72
 const RIVAL_COUNT := 3
 
 const TURN_CAP := 240

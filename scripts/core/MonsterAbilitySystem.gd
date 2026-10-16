@@ -7,8 +7,8 @@ extends RefCounted
 ## telemetria. A MonsterAI DECIDE quando agir (MonsterAI._take_ecology_turn); dano físico continua saindo de
 ## CombatResolver.predict/resolve/apply_direct_unit_damage — nenhuma fórmula de combate nova.
 ##
-## Só monstros de sítio ecológico usam habilidades: ameaça regional, Guardião Troll e guardiões de evento
-## mantêm as regras próprias dos papéis (D2/D3) sem alteração.
+## As 12 espécies de covil usam o registro unificado da ecologia. A política de Guardião continua
+## ancorada no recurso; o Dragão segue seu controlador de evento.
 ##
 ## O Verme Colossal subterrâneo é o único estado estrutural: sai de HexGrid.units_by_coord (não bloqueia o
 ## tile nem pode ser alvo), fica nesta lista com destino gravado (telegraph público) e emerge na fase dos
@@ -110,6 +110,9 @@ static func try_active(unit: Unit, grid: HexGrid, anchor: Vector2i, zone: int) -
 		if MonsterAbilityData.param(id, "passive", true) or not is_ready(unit, id):
 			continue
 		var used := false
+		var feedback: Node = null
+		if id != MonsterAbilityData.BURROW:
+			feedback = preload("res://scripts/vfx/CombatFeedback.gd").begin_clip(unit, grid, unit.attack_animation)
 		match id:
 			MonsterAbilityData.FLAME_BREATH:
 				used = _try_breath(unit, grid, anchor, zone)
@@ -123,6 +126,11 @@ static func try_active(unit: Unit, grid: HexGrid, anchor: Vector2i, zone: int) -
 				used = _try_roots(unit, grid, anchor, zone)
 			MonsterAbilityData.AETHER_RUPTURE:
 				used = _try_rupture(unit, grid, anchor, zone)
+		if used and id != MonsterAbilityData.BURROW:
+			unit.play_attack_visual(null)
+			if feedback != null:
+				feedback.delay = preload("res://scripts/vfx/CombatFeedback.gd").attack_delay(unit)
+		preload("res://scripts/vfx/CombatFeedback.gd").finish(feedback)
 		if used:
 			_start_cooldown(unit, id)
 			unit.movement_left = 0.0
@@ -364,7 +372,10 @@ static func _try_burrow(unit: Unit, grid: HexGrid, anchor: Vector2i, zone: int) 
 		grid.units_by_coord.erase(unit.coord)
 	unit.play_burrow_visual() # só visual: cópia do modelo entrando na terra (a Unit some na hora, como antes)
 	unit.visible = false
+	var was_leader := bool(unit.ability_state.get("lair_leader", false))
 	unit.ability_state = {"burrowed": true, "origin": [origin.x, origin.y], "dest": [dest.x, dest.y], "burrow_turn": TurnManager.turn_number}
+	if was_leader:
+		unit.ability_state.lair_leader = true
 	if not unit in burrowed:
 		burrowed.append(unit)
 	MonsterHazardSystem.set_telegraph(grid, dest, true, origin)
@@ -433,7 +444,10 @@ static func _emerge(worm: Unit, grid: HexGrid, turn: int) -> void:
 	grid.units_by_coord[tile] = worm
 	worm.visible = grid.visibility.is_empty() or grid.visibility.get(tile, HexGrid.Visibility.UNSEEN) == HexGrid.Visibility.VISIBLE
 	worm.play_emerge_visual() # só visual: sai da terra no destino e volta pro Idle
+	var was_leader := bool(worm.ability_state.get("lair_leader", false))
 	worm.ability_state = {"emerged_turn": turn}
+	if was_leader:
+		worm.ability_state.lair_leader = true
 	grid.mark_visual_focus_dirty()
 	worm.movement_left = 0.0
 	_start_cooldown(worm, id)
@@ -466,6 +480,11 @@ static func block_roll(defender: Unit, attacker: Unit) -> float:
 
 ## Depois de um ataque comum do monstro (MonsterAI): Picada Venenosa envenena quem levou dano e sobreviveu.
 static func after_attack(unit: Unit, target: Unit, target_hp_before: float) -> void:
+	var feedback := preload("res://scripts/vfx/CombatFeedback.gd").resume(unit)
+	_after_attack_now(unit, target, target_hp_before)
+	preload("res://scripts/vfx/CombatFeedback.gd").finish(feedback)
+
+static func _after_attack_now(unit: Unit, target: Unit, target_hp_before: float) -> void:
 	if not has(unit, MonsterAbilityData.VENOMOUS_BITE) or target == null or not is_instance_valid(target) or target.hp <= 0.0 or target.hp >= target_hp_before:
 		return
 	var id := MonsterAbilityData.VENOMOUS_BITE
@@ -495,6 +514,8 @@ static func on_civ_unit_killed(killer: Unit, grid: HexGrid) -> void:
 	var turn := TurnManager.turn_number
 	if site.is_empty() or int(site.get("raised_turn", -1)) == turn:
 		return
+	if bool(site.get("destroyed", false)) or (site.lair != HexGrid.NO_LAIR and MonsterEcologySystem.leader_for_lair(site.lair) == null):
+		return # morte do líder/destruição interrompe também o nascimento pela Horda Crescente
 	if MonsterEcologySystem.site_population(grid, int(site.id)) >= int(MonsterAbilityData.param(id, "site_cap", 6)):
 		return
 	for coord in MonsterEcologyPlanner.sorted_coords(grid.get_neighbors(killer.coord)):

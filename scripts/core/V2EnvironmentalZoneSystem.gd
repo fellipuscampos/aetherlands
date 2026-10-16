@@ -147,7 +147,11 @@ static func process_global_round(hex_grid: HexGrid = null, defer_fog_refresh: bo
 			continue
 		var zone := zone_at(unit.coord, grid)
 		if zone != null and zone.round_tick_magic_damage > 0.0:
+			var receipt := SpellVFX.receipt(unit,grid)
+			var hp_before := unit.hp
 			CombatResolver.apply_environmental_unit_damage(unit, zone.round_tick_magic_damage, grid)
+			receipt.damage = maxf(0.0,hp_before-unit.hp)
+			SpellVFX.zone_hit(receipt,zone.visual_kind,grid)
 			summary.damaged_units += 1
 	var expired: Array[Vector2i] = []
 	var vision_changed := false

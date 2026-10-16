@@ -58,7 +58,7 @@ func test_the_multiplier_comes_from_the_data_not_from_the_code():
 	var before: float = d.foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, CHARGE, d.foe, d.grid))
 	technique.strike_multiplier = original
-	assert_almost_eq(before - d.foe.hp, _formula_damage(d.grid, 5.0, 2.5, d.foe), 0.0001)
+	assert_almost_eq(before - d.foe.hp, _formula_damage(d.grid, 7.5, 2.5, d.foe), 0.0001)
 
 func test_the_distance_window_comes_from_the_data_too():
 	var technique := _technique(CHARGE)
@@ -331,8 +331,8 @@ func test_the_charge_hits_with_150_percent_of_the_basic_attack_through_the_norma
 	var d := _charge_duel(3)
 	var before: float = d.foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, CHARGE, d.foe, d.grid))
-	assert_almost_eq(before - d.foe.hp, _formula_damage(d.grid, 5.0, 1.5, d.foe), 0.0001, "5,0 x 1,5 - 3,0 x 0,5")
-	assert_almost_eq(before - d.foe.hp, 6.0, 0.0001)
+	assert_almost_eq(before - d.foe.hp, _formula_damage(d.grid, 7.5, 1.5, d.foe), 0.0001, "7,5 x 1,5 - 3,0 x 0,5")
+	assert_almost_eq(before - d.foe.hp, 9.75, 0.0001)
 
 func test_prediction_from_the_approach_tile_equals_the_real_hp_loss():
 	var d := _charge_duel(3)
@@ -425,12 +425,12 @@ func test_the_highlighted_targets_are_the_valid_targets():
 
 # --- A cadeia normal de combate ---------------------------------------------------------------------------------------------------------
 
-func test_terrain_defense_of_the_target_tile_applies():
+## O terreno-base não protege o alvo (2026-10-09): a Carga causa o mesmo dano em colina e em grama.
+func test_the_base_terrain_of_the_target_tile_gives_no_defense():
 	var d := _charge_duel(3)
 	_set_terrain(d.grid, Vector2i(3, 0), HexTileData.TerrainType.HILLS)
-	assert_gt(d.grid.get_tile(Vector2i(3, 0)).defense_bonus, 0.0, "pré-condição: colina defende")
-	var expected := _formula_damage(d.grid, 5.0, 1.5, d.foe)
-	assert_lt(expected, _formula_damage(_world(), 5.0, 1.5, d.foe), "menos dano que na grama")
+	var expected := _formula_damage(d.grid, 7.5, 1.5, d.foe)
+	assert_almost_eq(expected, _formula_damage(_world(), 7.5, 1.5, d.foe), 0.0001, "o mesmo dano que na grama")
 	var before: float = d.foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, CHARGE, d.foe, d.grid))
 	assert_almost_eq(before - d.foe.hp, expected, 0.0001)
@@ -439,8 +439,8 @@ func test_a_shield_wall_on_the_target_reduces_the_damage():
 	var d := _charge_duel(3)
 	d.foe.magic_status[WALL] = TurnManager.turn_number + 2
 	var wall_bonus: float = 1.0 + _technique(WALL).self_defense_bonus
-	var expected := _formula_damage(d.grid, 5.0, 1.5, d.foe, wall_bonus)
-	assert_lt(expected, _formula_damage(d.grid, 5.0, 1.5, d.foe))
+	var expected := _formula_damage(d.grid, 7.5, 1.5, d.foe, wall_bonus)
+	assert_lt(expected, _formula_damage(d.grid, 7.5, 1.5, d.foe))
 	var before: float = d.foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, CHARGE, d.foe, d.grid))
 	assert_almost_eq(before - d.foe.hp, expected, 0.0001, "mesma cadeia de defesa do ataque normal")
@@ -451,7 +451,7 @@ func test_the_defenders_aura_also_counts():
 	var aura: float = 1.0 + UnitDatabase.create_unit(CHAMPION).aura_defense_bonus
 	var before: float = d.foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, CHARGE, d.foe, d.grid))
-	assert_almost_eq(before - d.foe.hp, _formula_damage(d.grid, 5.0, 1.5, d.foe, aura), 0.0001)
+	assert_almost_eq(before - d.foe.hp, _formula_damage(d.grid, 7.5, 1.5, d.foe, aura), 0.0001)
 
 func test_a_charge_into_a_guardian_uses_only_the_cavaliers_own_attack_times_the_multiplier():
 	# O Preparar Lanças é bônus do ATAQUE do Guardião contra montados — não altera o golpe do Cavaleiro contra ele.
@@ -462,7 +462,7 @@ func test_a_charge_into_a_guardian_uses_only_the_cavaliers_own_attack_times_the_
 	var guardian := _unit(grid, rival, SHIELD, Vector2i(3, 0))
 	var before := guardian.hp
 	assert_true(V2TechniqueRuntime.perform_strike(unit, CHARGE, guardian, grid))
-	assert_almost_eq(before - guardian.hp, _formula_damage(grid, 5.0, 1.5, guardian), 0.0001)
+	assert_almost_eq(before - guardian.hp, _formula_damage(grid, 7.5, 1.5, guardian), 0.0001)
 
 func test_a_kill_counts_once_for_xp_the_unit_still_ends_at_the_approach_tile():
 	var d := _charge_duel(3, 4.0, 3.0)
@@ -476,7 +476,7 @@ func test_a_kill_counts_once_for_xp_the_unit_still_ends_at_the_approach_tile():
 
 func test_a_surviving_target_counterattacks_after_the_unit_arrives_adjacent():
 	var d := _charge_duel(3, 60.0, 14.0) # Defesa alta: o revide sai da Defesa do alvo
-	var atk := 5.0 * 1.5
+	var atk := 7.5 * 1.5
 	var expected := maxf(0.0, 14.0 - atk * CombatResolver.DEFENSE_MITIGATION_FACTOR) * CombatResolver.COUNTER_ATTACK_PENALTY
 	assert_gt(expected, 0.0, "pré-condição: há revide")
 	var my_hp: float = d.unit.hp

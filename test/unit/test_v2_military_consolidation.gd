@@ -43,12 +43,12 @@ const CATALOG := {
 # --- §29: auditoria estrutural das seis Doutrinas (9 nós cada, papéis fixos, linha, técnicas) -----
 
 func test_each_of_the_six_branches_has_exactly_nine_nodes_with_the_fixed_tier_roles():
-	var expected_roles := ["doctrine_unlock", "training_structure", "base_unit", "technique_1", "evolution_1", "technique_2", "elite_form", "mastery_structure", "legendary_candidate"]
+	var expected_roles := ["training_structure", "base_unit", "technique_1", "evolution_1", "technique_2", "elite_form", "mastery_structure", "legendary_candidate"]
 	for branch in BRANCHES:
 		var nodes := V2ResearchDatabase.nodes_for_branch(MILITARY, branch)
-		assert_eq(nodes.size(), 9, branch)
+		assert_eq(nodes.size(), 8, branch)
 		assert_eq(nodes.map(func(n): return n.tier_role), expected_roles, branch)
-		assert_eq(nodes.map(func(n): return n.tier), [1, 2, 3, 4, 5, 6, 7, 8, 9], branch)
+		assert_eq(nodes.map(func(n): return n.tier), [2, 3, 4, 5, 6, 7, 8, 9], branch)
 
 func test_n3_n5_n7_form_a_line_and_n9_belongs_to_the_branch_but_not_to_the_chain():
 	for branch in BRANCHES:
@@ -72,7 +72,7 @@ func test_gameplay_connected_covers_exactly_the_54_normal_nodes_plus_the_capston
 	for node in V2ResearchDatabase.nodes_for_tree(MILITARY):
 		if node.gameplay_connected:
 			connected += 1
-	assert_eq(connected, 55, "54 nós normais (6x9) + o capstone (Fase 12)")
+	assert_eq(connected, 49, "48 nós normais (6x8) + o capstone (Fase 12)")
 
 func test_all_six_magic_schools_and_transcendence_are_connected():
 	# Fase 14: TODA a Infraestrutura está conectada agora (18/18, ver test_v2_economy_data.gd) --
@@ -92,7 +92,7 @@ func test_all_infrastructure_nodes_are_connected_since_phase_14():
 
 func test_final_totals_of_the_military_tree():
 	assert_eq(BRANCHES.size(), 6)
-	assert_eq(V2ResearchDatabase.nodes_for_tree(MILITARY).size(), 55, "54 normais + 1 capstone")
+	assert_eq(V2ResearchDatabase.nodes_for_tree(MILITARY).size(), 49, "48 normais + 1 capstone")
 	var techniques := 0
 	var conventional_units := 0
 	var legendaries := 0
@@ -109,7 +109,7 @@ func test_final_totals_of_the_military_tree():
 	assert_eq(legendaries, 6)
 	assert_eq(conventional_units + legendaries, 24, "unidades V2 militares totais")
 	assert_eq(halls + masteries, 12, "prédios militares V2 totais")
-	assert_eq(V2DoctrineContent.CONNECTED_UNLOCK_IDS.size(), 55, "54 unlocks normais + o do capstone")
+	assert_eq(V2DoctrineContent.CONNECTED_UNLOCK_IDS.size(), 49, "48 unlocks normais + o do capstone")
 
 # --- §44: as seis Lendárias --------------------------------------------------------------------
 
@@ -192,27 +192,32 @@ func test_legend_hunt_ranger_legendary_recognizes_another_branchs_legendary_by_t
 ## A prova exaustiva de INFILTRATOR != FLYING já existe (test_v2_infiltration.gd); aqui só confirmamos
 ## que os dois perfis continuam distintos quando as DUAS Lendárias de Doutrinas diferentes estão vivas
 ## ao mesmo tempo no mesmo grid.
-func test_shadow_master_infiltrator_stays_distinct_from_griffon_rider_flying_when_both_coexist():
+func test_shadow_master_infiltrator_stays_distinct_from_a_flyer_when_both_coexist():
 	var grid := _world(6)
 	var me := _player(9, 9, 9, 9, 9, 9)
 	for r in range(-3, 4):
 		if grid.tiles.has(Vector2i(1, r)):
 			_unit(grid, me, CATALOG.warrior.base, Vector2i(1, r)) # parede de unidades
-	_set_terrain(grid, Vector2i(3, 0), HexTileData.TerrainType.OCEAN) # água mais além
+	_set_terrain(grid, Vector2i(3, 0), HexTileData.TerrainType.MOUNTAINS) # montanha mais além (água, desde o embarque automático, é travessia de barco)
 
 	var shadow_master := _unit(grid, me, CATALOG.rogue.legend, Vector2i(0, 0))
 	assert_eq(shadow_master.unit_data.movement_profile, UnitData.MovementProfile.INFILTRATOR)
 	var shadow_reach: Dictionary = grid.unit_reachable(shadow_master)
 	assert_true(shadow_reach.has(Vector2i(2, 0)), "INFILTRATOR atravessa a parede de unidades")
-	assert_false(shadow_reach.has(Vector2i(3, 0)), "mas não a água")
+	assert_false(shadow_reach.has(Vector2i(3, 0)), "mas não a montanha")
 	grid.remove_unit(shadow_master)
 
-	var griffon := _unit(grid, me, CATALOG.cavalry.legend, Vector2i(0, 0))
+	# Voador de teste (números da Lendária da Cavalaria, perfil FLYING): o Cavaleiro de Grifo anda pelo chão desde 2026-10-10.
+	var griffon := _flyer(grid, me, Vector2i(0, 0))
 	assert_eq(griffon.unit_data.movement_profile, UnitData.MovementProfile.FLYING)
 	var griffon_reach: Dictionary = grid.unit_reachable(griffon)
 	assert_true(griffon_reach.has(Vector2i(2, 0)), "FLYING também atravessa a parede de unidades")
-	assert_false(griffon_reach.has(Vector2i(3, 0)), "nunca POUSA na água (regra de pouso legal), mas...")
-	assert_true(griffon_reach.has(Vector2i(4, 0)), "...voa POR CIMA dela e pousa do outro lado -- diferente do Mestre das Sombras, barrado na água")
+	assert_false(griffon_reach.has(Vector2i(3, 0)), "nunca POUSA na montanha (regra de pouso legal), mas...")
+	assert_true(griffon_reach.has(Vector2i(4, 0)), "...voa POR CIMA dela e pousa do outro lado -- diferente do Mestre das Sombras, barrado na montanha")
+	grid.remove_unit(griffon)
+	var real_griffon := _unit(grid, me, CATALOG.cavalry.legend, Vector2i(0, 0))
+	assert_eq(real_griffon.unit_data.movement_profile, UnitData.MovementProfile.GROUND, "a Lendária da Cavalaria é terrestre")
+	assert_false(grid.unit_reachable(real_griffon).has(Vector2i(2, 0)), "terrestre: a parede de unidades a barra")
 
 ## Cerco: Munição Demolidora é EXCLUSIVA de cidade -- nunca entra no combate unidade-contra-unidade,
 ## mesmo com o atacante do Cerco totalmente pesquisado e o alvo sendo uma unidade real.
@@ -280,10 +285,10 @@ func test_a_mixed_army_of_six_different_roles_coexists_selects_moves_attacks_and
 
 func test_completing_all_54_normal_researches_unlocks_everything_and_leaves_the_capstone_available():
 	var player := _player(9, 9, 9, 9, 9, 9)
-	assert_eq(player.v2_research.completed_ids.size(), 54, "as 54 pesquisas normais, sem o capstone")
+	assert_eq(player.v2_research.completed_ids.size(), 48, "as 48 pesquisas normais, sem o capstone")
 
 	var unlocked := V2UnlockSystem.unlocked_ids(player)
-	assert_eq(unlocked.size(), 54, "todos os 54 unlocks normais consultáveis (o capstone ainda não foi pesquisado)")
+	assert_eq(unlocked.size(), 48, "todos os 48 unlocks normais consultáveis (o capstone ainda não foi pesquisado)")
 
 	var techniques := 0
 	for branch in BRANCHES:

@@ -23,7 +23,7 @@ func _trainable_forms(city: City) -> Array:
 func test_the_warrior_has_the_specified_baseline():
 	var data := UnitDatabase.create_unit(WARRIOR)
 	assert_eq(data.unit_name, "Guerreiro")
-	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points], [16.0, 5.0, 3.5, 2.0])
+	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points], [16.0, 7.5, 4.5, 2.0])
 	assert_eq(data.vision_range, 3)
 	assert_eq(data.attack_range, 1, "corpo a corpo")
 	assert_eq(data.production_cost, 20.0)
@@ -34,10 +34,10 @@ func test_the_warrior_has_the_specified_baseline():
 func test_the_swordsman_and_the_weapon_master_have_the_specified_baselines():
 	var swordsman := UnitDatabase.create_unit(SWORDSMAN)
 	assert_eq(swordsman.unit_name, "Espadachim")
-	assert_eq([swordsman.max_hp, swordsman.attack, swordsman.defense, swordsman.movement_points, swordsman.production_cost], [21.0, 7.0, 4.5, 2.0, 32.0])
+	assert_eq([swordsman.max_hp, swordsman.attack, swordsman.defense, swordsman.movement_points, swordsman.production_cost], [21.0, 10.5, 6.5, 2.0, 32.0])
 	var master := UnitDatabase.create_unit(MASTER)
 	assert_eq(master.unit_name, "Mestre de Armas")
-	assert_eq([master.max_hp, master.attack, master.defense, master.movement_points, master.production_cost], [28.0, 9.5, 5.5, 2.0, 48.0])
+	assert_eq([master.max_hp, master.attack, master.defense, master.movement_points, master.production_cost], [28.0, 14.5, 7.5, 2.0, 48.0])
 	for data in [swordsman, master]:
 		assert_eq(data.attack_range, 1)
 		assert_eq(data.vision_range, 3)
@@ -60,7 +60,7 @@ func test_the_identity_is_damage_the_guardian_wins_resilience_and_the_warrior_wi
 		assert_gt(warrior_form.attack, guardian_form.attack, "%s ataca mais que %s" % [pair[0], pair[1]])
 		assert_lt(warrior_form.defense, guardian_form.defense, "%s defende menos" % pair[0])
 		assert_lt(warrior_form.max_hp, guardian_form.max_hp + 0.001, "%s tem menos ou a mesma vida" % pair[0])
-	assert_eq([UnitDatabase.create_unit(SHIELD).max_hp, UnitDatabase.create_unit(SHIELD).attack, UnitDatabase.create_unit(SHIELD).defense], [18.0, 3.0, 4.5], "o contraste citado no pedido: Escudeiro")
+	assert_eq([UnitDatabase.create_unit(SHIELD).max_hp, UnitDatabase.create_unit(SHIELD).attack, UnitDatabase.create_unit(SHIELD).defense], [20.0, 4.5, 7.0], "o contraste citado no pedido: Escudeiro")
 
 func test_the_weapon_master_is_an_advanced_melee_not_a_glass_cannon():
 	var master := UnitDatabase.create_unit(MASTER)
@@ -143,7 +143,7 @@ func test_debug_reset_keeps_what_exists_and_production_follows_the_research():
 	player.v2_research.reset()
 	assert_true(city.buildings.has(W_HALL))
 	assert_eq(_trainable_forms(city), [])
-	for n in range(1, 6):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 6):
 		player.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 	assert_eq(_trainable_forms(city), [SWORDSMAN])
 
@@ -231,7 +231,7 @@ func test_the_first_upgrade_preserves_everything_that_does_not_depend_on_the_for
 	assert_eq(c.player.units.size(), count, "sem duplicar")
 	assert_eq(c.player.units.filter(func(u): return u.unit_data.visual_kind == WARRIOR).size(), 0, "sem Guerreiro fantasma")
 	assert_same(c.grid.get_unit_at(coord), unit)
-	assert_almost_eq(unit.hp, 10.5, 0.0001, "50% de 21")
+	assert_almost_eq(unit.hp, 21.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 21 pela forma + a cura da evolução")
 	assert_eq(unit.unit_data.max_hp, 21.0)
 	assert_eq(unit.kills, 3, "abates/XP")
 	assert_eq(unit.veterancy_level, 2, "veterania")
@@ -280,7 +280,7 @@ func test_the_full_chain_warrior_swordsman_master_on_the_same_unit_preserves_eve
 
 	assert_true(V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid))
 	assert_eq(unit.unit_data.visual_kind, SWORDSMAN)
-	assert_almost_eq(unit.hp, 10.5, 0.0001)
+	assert_almost_eq(unit.hp, 21.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 21 pela forma + a cura da evolução")
 	assert_eq(c.player.gold, gold - 24.0)
 	assert_false(V2UnitUpgrade.can_upgrade(c.player, unit, c.grid), "sem ação neste turno")
 
@@ -288,7 +288,7 @@ func test_the_full_chain_warrior_swordsman_master_on_the_same_unit_preserves_eve
 	unit.movement_left = 2.0
 	assert_true(V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid))
 	assert_eq(unit.unit_data.visual_kind, MASTER)
-	assert_almost_eq(unit.hp, 14.0, 0.0001, "50% de 28")
+	assert_almost_eq(unit.hp, 28.0, 0.0001, "já estava em 80%: a cura da evolução completa a vida (28), sem passar do teto")
 	assert_eq(c.player.gold, gold - 24.0 - 32.0)
 
 	assert_eq(unit.get_instance_id(), id, "a MESMA unidade nas três formas")

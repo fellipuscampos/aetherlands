@@ -23,10 +23,10 @@ func _trainable_forms(city: City) -> Array:
 func test_the_shock_cavalier_and_the_armored_cavalier_have_the_specified_baselines():
 	var shock := UnitDatabase.create_unit(SHOCK)
 	assert_eq(shock.unit_name, "Cavaleiro de Choque")
-	assert_eq([shock.max_hp, shock.attack, shock.defense, shock.movement_points, shock.production_cost], [22.0, 7.0, 4.0, 4.0, 38.0])
+	assert_eq([shock.max_hp, shock.attack, shock.defense, shock.movement_points, shock.production_cost], [22.0, 10.5, 6.0, 4.0, 42.0])
 	var armored := UnitDatabase.create_unit(ARMORED)
 	assert_eq(armored.unit_name, "Cavaleiro Blindado")
-	assert_eq([armored.max_hp, armored.attack, armored.defense, armored.movement_points, armored.production_cost], [30.0, 8.5, 6.0, 4.0, 56.0])
+	assert_eq([armored.max_hp, armored.attack, armored.defense, armored.movement_points, armored.production_cost], [30.0, 12.5, 9.0, 4.0, 60.0])
 	for data in [shock, armored]:
 		assert_eq(data.attack_range, 1, "corpo a corpo")
 		assert_eq(data.vision_range, 4)
@@ -80,15 +80,20 @@ func test_the_armored_cavalier_is_a_conventional_elite_below_the_griffon_and_the
 		assert_lt(armored.max_hp, data.max_hp + 0.001, legendary)
 		assert_lt(armored.production_cost, data.production_cost, legendary)
 
-func test_the_forms_are_registered_once_and_carry_distinct_provisional_scales():
+func test_the_forms_are_registered_once_and_wear_their_own_models():
 	for kind in [CAVALIER, SHOCK, ARMORED, GRIFFON]:
 		assert_eq(UnitDatabase.PLAYER_TRAINABLE_KINDS.count(kind), 1, kind)
 		var data := UnitDatabase.create_unit(kind)
 		assert_true(ResourceLoader.exists(data.model_scene_path) or data.model_scene_path == "", data.model_scene_path)
 		for race in ["human", "elf", "dwarf", "orc"]:
 			assert_eq(RaceTheme.unit_name(kind, race), data.unit_name, "%s (%s)" % [kind, race])
-	var scales := [CAVALIER, SHOCK, ARMORED, GRIFFON].map(func(k): return UnitDatabase.create_unit(k).model_scale_multiplier)
-	assert_eq(scales, [1.0, 1.15, 1.3, 1.4], "as formas se distinguem no mapa só pela escala (sem arte nova)")
+	# Arte própria (2026-10-09): cada forma tem o próprio GLB em escala real; o template procedural fica só de reserva.
+	var folders := {CAVALIER: "cavalier_v1", SHOCK: "shock_cavalier_v1", ARMORED: "armored_cavalier_v1", GRIFFON: "griffon_rider_v1"}
+	for kind in folders:
+		var data := UnitDatabase.create_unit(kind)
+		assert_eq(data.model_scene_path, "res://assets/generated/humans/%s/%s.glb" % [folders[kind], folders[kind]], kind)
+		assert_eq(data.model_scale_multiplier, 1.0, "%s: altura já está no modelo" % kind)
+		assert_eq(data.technique_animation_overrides.get(V2DoctrineTechniqueDatabase.CHARGE, ""), data.idle_animation_override.replace("_Idle", "_Charge"), kind)
 	assert_eq(UnitDatabase.create_unit(CAVALIER).visual_template, "cavalry")
 	assert_eq(UnitDatabase.create_unit(GRIFFON).visual_template, "griffin")
 
@@ -121,15 +126,15 @@ func test_production_costs_follow_the_form():
 	var player := _cavalry_player(3)
 	var city := _standalone_city(player, [C_STABLE])
 	city.set_production(CAVALIER)
-	assert_eq(city.production_cost(), 24.0, "Cavaleiro — 24 PP")
+	assert_eq(city.production_cost(), 26.0, "Cavaleiro — 26 PP")
 	player.v2_research.complete_research("v2_doctrine_cavalry_4")
 	player.v2_research.complete_research("v2_doctrine_cavalry_5")
 	city.set_production(SHOCK)
-	assert_eq(city.production_cost(), 38.0, "Cavaleiro de Choque — 38 PP")
+	assert_eq(city.production_cost(), 42.0, "Cavaleiro de Choque — 42 PP")
 	player.v2_research.complete_research("v2_doctrine_cavalry_6")
 	player.v2_research.complete_research("v2_doctrine_cavalry_7")
 	city.set_production(ARMORED)
-	assert_eq(city.production_cost(), 56.0, "Cavaleiro Blindado — 56 PP")
+	assert_eq(city.production_cost(), 60.0, "Cavaleiro Blindado — 60 PP")
 
 func test_the_form_still_needs_the_war_stable_never_the_v1_stable_the_barracks_or_the_other_halls():
 	var player := _player(9, 9, 9, 9)
@@ -159,7 +164,7 @@ func test_debug_reset_keeps_what_exists_and_production_follows_the_research():
 	player.v2_research.reset()
 	assert_true(city.buildings.has(C_STABLE))
 	assert_eq(_trainable_forms(city), [])
-	for n in range(1, 6):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 6):
 		player.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
 	assert_eq(_trainable_forms(city), [SHOCK])
 
@@ -180,7 +185,7 @@ func test_the_first_upgrade_target_comes_from_the_metadata_and_the_cost_from_the
 	assert_eq(V2UnitUpgrade.get_upgrade_target(unit), SHOCK)
 	var expected := V2UnitUpgrade.GOLD_PER_PRODUCTION_POINT * (UnitDatabase.create_unit(SHOCK).production_cost - UnitDatabase.create_unit(CAVALIER).production_cost)
 	assert_eq(V2UnitUpgrade.upgrade_cost(unit), expected)
-	assert_eq(V2UnitUpgrade.upgrade_cost(unit), 28.0, "com os números atuais: 2 x (38 - 24)")
+	assert_eq(V2UnitUpgrade.upgrade_cost(unit), 32.0, "com os números atuais: 2 x (42 - 26)")
 
 func test_the_first_upgrade_requirements_each_have_their_own_reason():
 	var c := _case(5, CAVALIER)
@@ -197,7 +202,7 @@ func test_the_first_upgrade_requirements_each_have_their_own_reason():
 	assert_eq(V2UnitUpgrade.unavailable_upgrade_reason(outside.player, outside.unit, outside.grid), "Precisa estar em uma cidade própria.")
 
 	var poor := _case(5, CAVALIER, true, 27.0)
-	assert_eq(V2UnitUpgrade.unavailable_upgrade_reason(poor.player, poor.unit, poor.grid), "Ouro insuficiente (custa 28).")
+	assert_eq(V2UnitUpgrade.unavailable_upgrade_reason(poor.player, poor.unit, poor.grid), "Ouro insuficiente (custa 32).")
 
 	var spent := _case(5, CAVALIER)
 	spent.unit.movement_left = 0.0
@@ -250,13 +255,13 @@ func test_the_first_upgrade_preserves_everything_that_does_not_depend_on_the_for
 	assert_eq(c.player.units.size(), count, "sem duplicar")
 	assert_eq(c.player.units.filter(func(u): return u.unit_data.visual_kind == CAVALIER).size(), 0, "sem Cavaleiro fantasma")
 	assert_same(c.grid.get_unit_at(coord), unit)
-	assert_almost_eq(unit.hp, 11.0, 0.0001, "50% de 22")
+	assert_almost_eq(unit.hp, 22.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 22 pela forma + a cura da evolução")
 	assert_eq(unit.unit_data.max_hp, 22.0)
 	assert_eq(unit.kills, 3, "abates/XP")
 	assert_eq(unit.veterancy_level, 2, "veterania")
 	assert_eq(int(unit.magic_cooldowns[CHARGE]), 8, "recarga preservada")
 	assert_eq(unit.movement_left, 0.0, "consumiu a ação")
-	assert_eq(c.player.gold, gold - 28.0, "Ouro descontado")
+	assert_eq(c.player.gold, gold - 32.0, "Ouro descontado")
 	assert_true(UnitAbilities.is_mounted(unit.unit_data), "o traço acompanha a forma nova")
 
 func test_a_failed_upgrade_changes_nothing():
@@ -302,16 +307,16 @@ func test_the_full_chain_cavalier_shock_armored_on_the_same_unit_preserves_every
 
 	assert_true(V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid))
 	assert_eq(unit.unit_data.visual_kind, SHOCK)
-	assert_almost_eq(unit.hp, 11.0, 0.0001)
-	assert_eq(c.player.gold, gold - 28.0)
+	assert_almost_eq(unit.hp, 22.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 22 pela forma + a cura da evolução")
+	assert_eq(c.player.gold, gold - 32.0)
 	assert_false(V2UnitUpgrade.can_upgrade(c.player, unit, c.grid), "sem ação neste turno")
 
 	TurnManager.turn_number = 6
 	unit.movement_left = 4.0
 	assert_true(V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid))
 	assert_eq(unit.unit_data.visual_kind, ARMORED)
-	assert_almost_eq(unit.hp, 15.0, 0.0001, "50% de 30")
-	assert_eq(c.player.gold, gold - 28.0 - 36.0)
+	assert_almost_eq(unit.hp, 30.0, 0.0001, "já estava em 80%: a cura da evolução completa a vida (30), sem passar do teto")
+	assert_eq(c.player.gold, gold - 32.0 - 36.0)
 
 	assert_eq(unit.get_instance_id(), id, "a MESMA unidade nas três formas")
 	assert_eq(unit.serial_id, serial)

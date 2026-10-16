@@ -58,7 +58,7 @@ static func _builder_action(unit: Unit, player: PlayerData, grid: HexGrid, view:
 	var targets := V2StrategicAI.known_unimproved_resources(player, view)
 	if targets.is_empty():
 		return true
-	var reachable := grid.unit_reachable(unit)
+	var reachable := grid.unit_landing_reachable(unit) # água é travessia: o destino escolhido é terra
 	var best: Variant = null
 	var best_score := -INF
 	for coord in reachable:
@@ -263,7 +263,7 @@ static func _move_special_profile(unit: Unit, player: PlayerData, grid: HexGrid,
 	var objective = V2StrategicAI.strategic_target_coord(player, view)
 	if objective == null:
 		return false
-	var reachable := grid.unit_reachable(unit)
+	var reachable := grid.unit_landing_reachable(unit) # água é travessia: o destino escolhido é terra
 	var best: Variant = null
 	var best_distance := HexMetrics.axial_distance(unit.coord, objective)
 	for coord in reachable:
@@ -289,7 +289,7 @@ static func _move_caster(unit: Unit, player: PlayerData, grid: HexGrid, view: V2
 	for city in player.cities:
 		anchors.append(city.coord)
 	var objective = V2StrategicAI.strategic_target_coord(player, view)
-	var reachable := grid.unit_reachable(unit)
+	var reachable := grid.unit_landing_reachable(unit) # água é travessia: o destino escolhido é terra
 	var best := unit.coord
 	var best_score := _caster_tile_score(unit.coord, unit, anchors, objective, view)
 	for coord in reachable:
@@ -319,7 +319,7 @@ static func _guard_ritual_site(unit: Unit, player: PlayerData, grid: HexGrid, vi
 	var site := V2TranscendenceSystem.ritual_site_coord(player)
 	if site == V2TranscendenceSystem.INVALID_COORD:
 		return true
-	var reachable := grid.unit_reachable(unit)
+	var reachable := grid.unit_landing_reachable(unit) # água é travessia: o destino escolhido é terra
 	var best := unit.coord
 	var best_score := -float(HexMetrics.axial_distance(unit.coord, site)) * 4.0 - _local_risk(unit.coord, unit, view) * 25.0
 	for coord in reachable:

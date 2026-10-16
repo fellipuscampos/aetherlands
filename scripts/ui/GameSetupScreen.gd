@@ -11,21 +11,16 @@ extends Control
 ## assinatura de antes, so mudou QUEM emite — Main.gd nao precisou mudar a
 ## logica de _on_new_game_requested, so a origem da conexao).
 ##
-## Dificuldade REMOVIDA do seletor (pedido do usuario: "tire as
-## dificuldades, agora so tem normal, entao nao precisa nem exibir") —
-## sempre emite "normal". GameManager.DIFFICULTY_MULTIPLIERS continua
-## tendo "easy"/"hard" (com cobertura de teste propria, ver test_game_
-## manager.gd/test_save_manager.gd) — so a ESCOLHA na UI saiu, nao o
-## mecanismo, pra nao quebrar esse suporte existente por baixo.
+## Dificuldade das IAs (2026-10-15, V2AIDifficulty): Fácil/Normal/Difícil voltaram, agora como modificador da
+## ECONOMIA das IAs — a inteligência é uma só. Os nomes descrevem a vida da IA, como o usuário pediu ("fácil deixa
+## tudo mais leve pra ela, difícil deixa tudo mais caro pra ela"); a dica embaixo diz o efeito em você. Botões
+## montados em código (mesmo padrão do tamanho do mapa), logo depois da linha de rivais.
 ##
-## Selecao de raca reestruturada pra ficar "tao elaborada quanto o
-## civilization" (pedido do usuario): lista de racas a esquerda + painel
-## de detalhe a direita (nome, epiteto, lore) —
-## mesmo padrao "lista + detalhe atualiza ao trocar selecao" da tela de
-## civilizacao do Civ, so com portrait nenhum (o jogo inteiro e modelos
-## procedurais, sem arte de personagem) — o "elaborado" aqui vem do TEXTO
-## (lore), nao de uma imagem. Fase 25: a seção "Tropa Exclusiva" saiu. Fase 26: este mesmo painel
-## explica as duas especialidades sistêmicas vindas de V2RaceBonusDatabase, sem conteúdo exclusivo.
+## Lobby pixelado: quatro cartas com retratos dos modelos reais, detalhes
+## do povo e configuração da partida lado a lado. A área central pode
+## rolar; Voltar, resumo das escolhas e Iniciar permanecem visíveis.
+## As duas especialidades vêm de V2RaceBonusDatabase e a história é
+## secundária, expansível, sem mudar regras ou opções da partida.
 
 signal new_game_requested(width: int, height: int, kingdom_name: String, rival_count: int, difficulty: String, race: String)
 signal back_requested
@@ -69,31 +64,46 @@ const RACE_COLORS := {
 	"orc": Color("b86455"),
 }
 
-@onready var kingdom_name_edit: LineEdit = $CenterBox/Box/KingdomNameEdit
+@onready var kingdom_name_edit: LineEdit = $CenterBox/Box/RaceSection/Details/ConfigurationPanel/ConfigurationBox/KingdomNameEdit
 @onready var human_race_button: Button = $CenterBox/Box/RaceSection/RaceListColumn/HumanRaceButton
 @onready var elf_race_button: Button = $CenterBox/Box/RaceSection/RaceListColumn/ElfRaceButton
 @onready var dwarf_race_button: Button = $CenterBox/Box/RaceSection/RaceListColumn/DwarfRaceButton
 @onready var orc_race_button: Button = $CenterBox/Box/RaceSection/RaceListColumn/OrcRaceButton
-@onready var race_name_label: Label = $CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox/RaceNameLabel
-@onready var race_tagline_label: Label = $CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox/RaceTaglineLabel
-@onready var race_lore_label: RichTextLabel = $CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox/RaceLoreLabel
-@onready var race_specialties_label: RichTextLabel = $CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox/RaceSpecialtiesLabel
-@onready var race_accent: ColorRect = $CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox/RaceAccent
-@onready var lore_button: Button = $CenterBox/Box/RaceSection/RaceDetailPanel/RaceDetailBox/LoreButton
-@onready var decrease_rivals_button: Button = $CenterBox/Box/ConfigurationRow/RivalCountRow/DecreaseRivalsButton
-@onready var rival_count_value: Label = $CenterBox/Box/ConfigurationRow/RivalCountRow/RivalCountValue
-@onready var increase_rivals_button: Button = $CenterBox/Box/ConfigurationRow/RivalCountRow/IncreaseRivalsButton
-@onready var back_button: Button = $CenterBox/Box/FooterRow/BackButton
-@onready var start_game_button: Button = $CenterBox/Box/FooterRow/StartGameButton
-@onready var status_label: Label = $CenterBox/Box/StatusLabel
+@onready var race_name_label: Label = $CenterBox/Box/RaceSection/Details/RaceDetailPanel/RaceDetailBox/RaceNameLabel
+@onready var race_tagline_label: Label = $CenterBox/Box/RaceSection/Details/RaceDetailPanel/RaceDetailBox/RaceTaglineLabel
+@onready var race_lore_label: RichTextLabel = $CenterBox/Box/RaceSection/Details/RaceDetailPanel/RaceDetailBox/RaceLoreLabel
+@onready var race_specialties_label: RichTextLabel = $CenterBox/Box/RaceSection/Details/RaceDetailPanel/RaceDetailBox/RaceSpecialtiesLabel
+@onready var race_accent: ColorRect = $CenterBox/Box/RaceSection/Details/RaceDetailPanel/RaceDetailBox/RaceAccent
+@onready var lore_button: Button = $CenterBox/Box/RaceSection/Details/RaceDetailPanel/RaceDetailBox/LoreButton
+@onready var decrease_rivals_button: Button = $CenterBox/Box/RaceSection/Details/ConfigurationPanel/ConfigurationBox/ConfigurationRow/RivalCountRow/DecreaseRivalsButton
+@onready var rival_count_value: Label = $CenterBox/Box/RaceSection/Details/ConfigurationPanel/ConfigurationBox/ConfigurationRow/RivalCountRow/RivalCountValue
+@onready var increase_rivals_button: Button = $CenterBox/Box/RaceSection/Details/ConfigurationPanel/ConfigurationBox/ConfigurationRow/RivalCountRow/IncreaseRivalsButton
+@onready var back_button: Button = $Footer/FooterRow/BackButton
+@onready var start_game_button: Button = $Footer/FooterRow/StartGameButton
+@onready var status_label: Label = $CenterBox/Box/RaceSection/Details/ConfigurationPanel/ConfigurationBox/StatusLabel
+@onready var map_size_buttons: HBoxContainer = $CenterBox/Box/RaceSection/Details/ConfigurationPanel/ConfigurationBox/MapSizeButtons
+@onready var map_size_hint: Label = $CenterBox/Box/RaceSection/Details/ConfigurationPanel/ConfigurationBox/MapSizeHint
+@onready var map_rule_label: Label = $Footer/FooterRow/Summary/MapRuleLabel
+
+const LOBBY_THEME := preload("res://scripts/ui/GameSetupTheme.gd")
+var _race_cards: Dictionary = {}
 
 var _selected_race := "human"
 var _selected_rival_count := 1
+## Tamanho do mapa (2026-10-10): id de WorldProfile.playable_sizes() — Pequeno/Médio/Grande, padrão Grande. Os botões
+## saem dos perfis (nunca uma lista paralela aqui).
+var _selected_map_size: String = String(WorldProfile.default_size().id)
+var _map_size_group := ButtonGroup.new()
+var _selected_difficulty: String = V2AIDifficulty.NORMAL
+var _difficulty_group := ButtonGroup.new()
+var difficulty_buttons: HBoxContainer
+var difficulty_hint: Label
 
 func _ready() -> void:
 	_apply_accessibility_theme()
 	Settings.accessibility_changed.connect(_apply_accessibility_theme)
 	_label_race_buttons()
+	_build_race_portraits()
 	human_race_button.pressed.connect(_on_race_pressed.bind("human"))
 	elf_race_button.pressed.connect(_on_race_pressed.bind("elf"))
 	dwarf_race_button.pressed.connect(_on_race_pressed.bind("dwarf"))
@@ -104,12 +114,155 @@ func _ready() -> void:
 	start_game_button.pressed.connect(_on_start_game_pressed)
 	lore_button.pressed.connect(_on_lore_pressed)
 	kingdom_name_edit.text_changed.connect(_validate_name)
+	_build_map_size_buttons()
+	_build_difficulty_selector()
 	_update_race_detail(_selected_race)
 	_update_rival_stepper()
+	_update_map_size()
+	get_viewport().size_changed.connect(_layout_for_viewport)
+	visibility_changed.connect(_on_visibility_changed)
+	_layout_for_viewport.call_deferred()
 	human_race_button.call_deferred("grab_focus")
 
 func _apply_accessibility_theme() -> void:
-	theme = Settings.build_ui_theme()
+	theme = LOBBY_THEME.build(Settings.ui_scale_factor())
+	_layout_for_viewport.call_deferred()
+
+func _build_race_portraits() -> void:
+	_race_cards = {"human":human_race_button, "elf":elf_race_button, "dwarf":dwarf_race_button, "orc":orc_race_button}
+	for race in _race_cards:
+		var button: Button = _race_cards[race]
+		var emblem := TextureRect.new()
+		emblem.name = "Emblem"
+		emblem.texture = load(LOBBY_THEME.ART + "emblem_" + race + ".svg") as Texture2D
+		emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		emblem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		emblem.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.add_child(emblem)
+		button.tooltip_text = RACE_INFO[race].display_name + "\n" + V2RaceBonusDatabase.summary(race)
+		var portrait := TextureRect.new()
+		portrait.name = "Portrait"
+		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		portrait.texture = load(LOBBY_THEME.ART + "city_" + race + ".png") as Texture2D
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		portrait.anchor_bottom = .75
+		portrait.offset_left = 12
+		portrait.offset_right = -12
+		portrait.offset_top = 10
+		button.add_child(portrait)
+		var selected := Label.new()
+		selected.name = "SelectedMark"
+		selected.text = "✓"
+		selected.add_theme_font_override("font", ThemeDB.fallback_font)
+		selected.add_theme_color_override("font_color", Color("ffe3a3"))
+		selected.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.add_child(selected)
+		selected.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+		selected.offset_left = -36
+		selected.offset_right = -12
+		selected.offset_top = 12
+		selected.offset_bottom = 36
+
+func _on_visibility_changed() -> void:
+	if is_visible_in_tree() and is_node_ready():
+		_layout_for_viewport.call_deferred()
+		_race_cards.get(_selected_race, human_race_button).call_deferred("grab_focus")
+
+func _layout_for_viewport() -> void:
+	if not is_node_ready():
+		return
+	var viewport_size := get_viewport_rect().size
+	var factor := Settings.ui_scale_factor()
+	var compact := viewport_size.y < 800
+	var width := minf(viewport_size.x - 64, 1320 * maxf(1.0, factor))
+	var left := roundf((viewport_size.x - width) / 2)
+	var edge := 24.0 if compact else 36.0
+	var header: HBoxContainer = $Header
+	$Header/Hint.visible = viewport_size.x > 1100 and factor <= 1.1
+	$Header/Crest.custom_minimum_size = Vector2.ONE * (44 if compact else 56)
+	$Header/Titles/TitleLabel.add_theme_font_size_override("font_size", roundi((36 if compact else 44) * factor))
+	header.position = Vector2(left, edge)
+	header.size = Vector2(width, header.get_combined_minimum_size().y)
+	var footer: VBoxContainer = $Footer
+	back_button.custom_minimum_size = Vector2(140 * factor, 52 * factor)
+	start_game_button.custom_minimum_size = Vector2(250 * factor, 52 * factor)
+	footer.size = Vector2(width, footer.get_combined_minimum_size().y)
+	footer.position = Vector2(left, viewport_size.y - edge - footer.size.y)
+	var scroll: ScrollContainer = $CenterBox
+	scroll.position = Vector2(left, header.position.y + header.size.y + 20)
+	scroll.size = Vector2(width, maxf(120, footer.position.y - scroll.position.y - 20))
+	$CenterBox/Box/RaceSection.add_theme_constant_override("separation", 12 if compact else 16)
+	var config: VBoxContainer = kingdom_name_edit.get_parent()
+	config.add_theme_constant_override("separation", roundi((6 if compact else 10) * factor))
+	config.get_node("NameHint").visible = not compact
+	for button in map_size_buttons.get_children():
+		button.custom_minimum_size = Vector2(90 * factor, 44 * factor)
+	if difficulty_buttons != null:
+		for button in difficulty_buttons.get_children():
+			button.custom_minimum_size = Vector2(90 * factor, 44 * factor)
+		difficulty_hint.visible = not compact
+	kingdom_name_edit.custom_minimum_size.y = 44 * factor
+	for button in [decrease_rivals_button, increase_rivals_button]:
+		button.custom_minimum_size = Vector2.ONE * 44 * factor
+	for button: Button in _race_cards.values():
+		button.custom_minimum_size = Vector2(0, roundf((136 if compact else 190) * factor))
+		button.get_node("Emblem").position = Vector2.ONE * roundf(16 * factor)
+		button.get_node("Emblem").size = Vector2.ONE * roundf(24 * factor)
+		button.get_node("SelectedMark").add_theme_font_size_override("font_size", roundi(18 * factor))
+	_update_race_tiles()
+	_configure_focus()
+
+func _configure_focus() -> void:
+	var cards: Array[Button] = [human_race_button, elf_race_button, dwarf_race_button, orc_race_button]
+	var linear: Array[Control] = [human_race_button, elf_race_button, dwarf_race_button, orc_race_button, lore_button, kingdom_name_edit]
+	for button in map_size_buttons.get_children():
+		linear.append(button)
+	for control in [decrease_rivals_button, increase_rivals_button]:
+		if not control.disabled:
+			linear.append(control)
+	if difficulty_buttons != null:
+		for button in difficulty_buttons.get_children():
+			linear.append(button)
+	for control in [back_button, start_game_button]:
+		if not control.disabled:
+			linear.append(control)
+	for i in linear.size():
+		var control := linear[i]
+		control.focus_next = control.get_path_to(linear[(i + 1) % linear.size()])
+		control.focus_previous = control.get_path_to(linear[posmod(i - 1, linear.size())])
+	for i in cards.size():
+		cards[i].focus_neighbor_left = cards[i].get_path_to(cards[maxi(0, i - 1)])
+		cards[i].focus_neighbor_right = cards[i].get_path_to(cards[mini(cards.size() - 1, i + 1)])
+		cards[i].focus_neighbor_bottom = cards[i].get_path_to(lore_button if i < 2 else kingdom_name_edit)
+		cards[i].focus_neighbor_top = cards[i].get_path_to(cards[i])
+	lore_button.focus_neighbor_top = lore_button.get_path_to(_race_cards.get(_selected_race, human_race_button))
+	lore_button.focus_neighbor_bottom = lore_button.get_path_to(back_button)
+	lore_button.focus_neighbor_right = lore_button.get_path_to(kingdom_name_edit)
+	kingdom_name_edit.focus_neighbor_top = kingdom_name_edit.get_path_to(dwarf_race_button)
+	kingdom_name_edit.focus_neighbor_bottom = kingdom_name_edit.get_path_to(map_size_buttons.get_child(0))
+	var maps := map_size_buttons.get_children()
+	for i in maps.size():
+		var button: Button = maps[i]
+		button.focus_neighbor_top = button.get_path_to(kingdom_name_edit)
+		button.focus_neighbor_bottom = button.get_path_to(increase_rivals_button if not increase_rivals_button.disabled else decrease_rivals_button)
+		button.focus_neighbor_left = button.get_path_to(maps[maxi(0, i - 1)])
+		button.focus_neighbor_right = button.get_path_to(maps[mini(maps.size() - 1, i + 1)])
+	var difficulty: Array = difficulty_buttons.get_children() if difficulty_buttons != null else []
+	for button in [decrease_rivals_button, increase_rivals_button]:
+		button.focus_neighbor_bottom = button.get_path_to(difficulty[1] if difficulty.size() > 1 else start_game_button)
+		button.focus_neighbor_top = button.get_path_to(maps[1])
+	for i in difficulty.size():
+		var button: Button = difficulty[i]
+		button.focus_neighbor_top = button.get_path_to(increase_rivals_button if not increase_rivals_button.disabled else decrease_rivals_button)
+		button.focus_neighbor_bottom = button.get_path_to(start_game_button)
+		button.focus_neighbor_left = button.get_path_to(difficulty[maxi(0, i - 1)])
+		button.focus_neighbor_right = button.get_path_to(difficulty[mini(difficulty.size() - 1, i + 1)])
+	back_button.focus_neighbor_right = back_button.get_path_to(start_game_button)
+	back_button.focus_neighbor_top = back_button.get_path_to(lore_button)
+	start_game_button.focus_neighbor_left = start_game_button.get_path_to(back_button)
+	start_game_button.focus_neighbor_top = start_game_button.get_path_to(difficulty[1] if difficulty.size() > 1 else (increase_rivals_button if not increase_rivals_button.disabled else decrease_rivals_button))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("ui_cancel"):
@@ -133,15 +286,23 @@ func _label_race_buttons() -> void:
 func reset_to_defaults() -> void:
 	_selected_race = "human"
 	_selected_rival_count = 1
+	_selected_map_size = String(WorldProfile.default_size().id)
+	_update_map_size()
+	_selected_difficulty = V2AIDifficulty.NORMAL
+	_update_difficulty()
 	human_race_button.button_pressed = true
 	kingdom_name_edit.text = ""
 	status_label.text = ""
 	_update_race_detail(_selected_race)
 	_update_rival_stepper()
+	_validate_name(kingdom_name_edit.text)
+	$CenterBox.scroll_vertical = 0
 
 func _on_race_pressed(race: String) -> void:
 	_selected_race = race
 	_update_race_detail(race)
+	_validate_name(kingdom_name_edit.text)
+	_update_summary()
 
 ## Espelha a raca selecionada no painel de detalhe grande (nome/epiteto/
 ## lore) — mesmo padrao "lista a esquerda, detalhe a
@@ -169,6 +330,96 @@ func _update_race_detail(race: String) -> void:
 	# nome que o jogador ja digitou (kingdom_name_edit.text continua dele).
 	kingdom_name_edit.placeholder_text = info.display_name
 
+func _build_map_size_buttons() -> void:
+	for child in map_size_buttons.get_children():
+		child.queue_free()
+	for profile in WorldProfile.playable_sizes():
+		var button := Button.new()
+		button.name = "MapSize_%s" % profile.id
+		button.text = String(profile.label)
+		button.toggle_mode = true
+		button.button_group = _map_size_group
+		button.custom_minimum_size = Vector2(96, 44)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.theme_type_variation = &"SetupMapButton"
+		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		button.tooltip_text = _map_size_text(profile)
+		button.pressed.connect(_on_map_size_pressed.bind(String(profile.id)))
+		map_size_buttons.add_child(button)
+
+func _build_difficulty_selector() -> void:
+	var config: VBoxContainer = kingdom_name_edit.get_parent()
+	var anchor_index := config.get_node("ConfigurationRow").get_index() + 1
+	var title := Label.new()
+	title.name = "DifficultyLabel"
+	title.text = "Dificuldade das IAs"
+	title.theme_type_variation = &"SetupBody"
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	difficulty_buttons = HBoxContainer.new()
+	difficulty_buttons.name = "DifficultyButtons"
+	difficulty_buttons.add_theme_constant_override("separation", 8)
+	for level in V2AIDifficulty.LEVELS:
+		var button := Button.new()
+		button.name = "Difficulty_%s" % level
+		button.text = V2AIDifficulty.label(level)
+		button.toggle_mode = true
+		button.button_group = _difficulty_group
+		button.custom_minimum_size = Vector2(96, 44)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.theme_type_variation = &"SetupMapButton"
+		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		button.tooltip_text = V2AIDifficulty.description(level)
+		button.pressed.connect(_on_difficulty_pressed.bind(level))
+		difficulty_buttons.add_child(button)
+	difficulty_hint = Label.new()
+	difficulty_hint.name = "DifficultyHint"
+	difficulty_hint.theme_type_variation = &"SetupMuted"
+	difficulty_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	difficulty_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	config.add_child(title)
+	config.move_child(title, anchor_index)
+	config.add_child(difficulty_buttons)
+	config.move_child(difficulty_buttons, anchor_index + 1)
+	config.add_child(difficulty_hint)
+	config.move_child(difficulty_hint, anchor_index + 2)
+	_update_difficulty()
+
+func _on_difficulty_pressed(level: String) -> void:
+	_selected_difficulty = V2AIDifficulty.normalized(level)
+	_update_difficulty()
+
+func _update_difficulty() -> void:
+	if difficulty_buttons == null:
+		return
+	for button in difficulty_buttons.get_children():
+		(button as Button).set_pressed_no_signal(String(button.name) == "Difficulty_%s" % _selected_difficulty)
+	difficulty_hint.text = V2AIDifficulty.description(_selected_difficulty) + " A inteligência das IAs é a mesma em todos os níveis."
+	_update_summary()
+
+func _on_map_size_pressed(size_id: String) -> void:
+	_selected_map_size = size_id
+	_update_map_size()
+
+## Perfil escolhido (cai no padrão se o id não existir).
+func selected_map_profile() -> Dictionary:
+	var profile := WorldProfile.by_id(_selected_map_size)
+	return profile if not profile.is_empty() else WorldProfile.default_size()
+
+func _map_size_text(profile: Dictionary) -> String:
+	return "%d × %d hexágonos · ~%d tiles de terra" % [int(profile.width), int(profile.height), WorldProfile.estimated_land_tiles(profile)]
+
+func _update_map_size() -> void:
+	var profile := selected_map_profile()
+	for button in map_size_buttons.get_children():
+		if button is Button:
+			(button as Button).set_pressed_no_signal(String(button.name) == "MapSize_%s" % profile.id)
+	map_size_hint.text = _map_size_text(profile)
+	_update_summary()
+
+func _update_summary() -> void:
+	map_rule_label.text = "%s  ·  Mapa %s  ·  %d %s  ·  IAs: %s" % [RACE_INFO[_selected_race].race_name, selected_map_profile().label, _selected_rival_count, "rival" if _selected_rival_count == 1 else "rivais", V2AIDifficulty.label(_selected_difficulty)]
+	map_rule_label.tooltip_text = "%s\n%s\n%s" % [RACE_INFO[_selected_race].display_name, selected_map_profile().label, _map_size_text(selected_map_profile())]
+
 func _on_rival_count_pressed(count: int) -> void:
 	_selected_rival_count = clampi(count, 1, 3)
 	_update_rival_stepper()
@@ -180,6 +431,8 @@ func _update_rival_stepper() -> void:
 	rival_count_value.text = str(_selected_rival_count)
 	decrease_rivals_button.disabled = _selected_rival_count <= 1
 	increase_rivals_button.disabled = _selected_rival_count >= 3
+	_update_summary()
+	_configure_focus.call_deferred()
 
 func _update_race_tiles() -> void:
 	var entries := {
@@ -191,19 +444,16 @@ func _update_race_tiles() -> void:
 	for race in entries:
 		var button: Button = entries[race]
 		var selected: bool = str(race) == _selected_race
-		var style := StyleBoxFlat.new()
-		style.bg_color = UIThemeTokens.COLOR_SURFACE_RAISED if selected else UIThemeTokens.COLOR_SURFACE
-		style.border_width_left = 1
-		style.border_width_top = 3 if selected else 1
-		style.border_width_right = 1
-		style.border_width_bottom = 1
-		style.border_color = RACE_COLORS[race] if selected else UIThemeTokens.COLOR_BORDER
-		style.corner_radius_top_left = UIThemeTokens.RADIUS_CONTROL
-		style.corner_radius_top_right = UIThemeTokens.RADIUS_CONTROL
-		style.corner_radius_bottom_left = UIThemeTokens.RADIUS_CONTROL
-		style.corner_radius_bottom_right = UIThemeTokens.RADIUS_CONTROL
-		button.add_theme_stylebox_override("normal", style)
-		button.add_theme_stylebox_override("pressed", style)
+		button.set_pressed_no_signal(selected)
+		for state in ["normal", "pressed", "hover", "hover_pressed"]:
+			var style := LOBBY_THEME.panel(selected or state.begins_with("hover"), Settings.ui_scale_factor())
+			style.set_content_margin(SIDE_TOP, button.custom_minimum_size.y * .75)
+			style.set_content_margin(SIDE_BOTTOM, 12 * Settings.ui_scale_factor())
+			button.add_theme_stylebox_override(state, style)
+		var focus := LOBBY_THEME.TITLE_THEME._frame("button_focus", Settings.ui_scale_factor())
+		button.add_theme_stylebox_override("focus", focus)
+		if button.has_node("SelectedMark"):
+			button.get_node("SelectedMark").visible = selected
 
 func _on_back_pressed() -> void:
 	back_requested.emit()
@@ -215,14 +465,18 @@ func _on_lore_pressed() -> void:
 func _validate_name(value: String) -> bool:
 	var trimmed := value.strip_edges()
 	if trimmed.is_empty():
-		status_label.text = "Sem nome personalizado: será usado %s." % RACE_INFO[_selected_race].display_name
+		status_label.text = ""
+		status_label.visible = false
 		start_game_button.disabled = false
 		return true
 	if trimmed.length() < 2:
 		status_label.text = "O nome precisa ter pelo menos 2 caracteres."
+		status_label.visible = true
+		status_label.modulate = Color("ffb09b")
 		start_game_button.disabled = true
 		return false
 	status_label.text = ""
+	status_label.visible = false
 	start_game_button.disabled = false
 	return true
 
@@ -230,10 +484,10 @@ func _on_start_game_pressed() -> void:
 	if not _validate_name(kingdom_name_edit.text):
 		kingdom_name_edit.grab_focus()
 		return
-	var size: Dictionary = TitleScreen.MAP_SIZES.large
+	var size: Dictionary = selected_map_profile()
 	var kingdom_name := kingdom_name_edit.text.strip_edges()
 	if kingdom_name.is_empty():
 		kingdom_name = RACE_INFO[_selected_race].display_name
 	new_game_requested.emit(
-		size.width, size.height, kingdom_name, _selected_rival_count, "normal", _selected_race
+		size.width, size.height, kingdom_name, _selected_rival_count, _selected_difficulty, _selected_race
 	)

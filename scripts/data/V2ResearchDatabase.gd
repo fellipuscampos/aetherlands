@@ -20,10 +20,10 @@ extends RefCounted
 ## FASE 3: só os nós com `gameplay_connected` (Guardião N1-N3, ver V2DoctrineContent.
 ## CONNECTED_UNLOCK_IDS) liberam algo de verdade, via V2UnlockSystem.
 ##
-## Estrutura (55 + 55 + 18 = 128 nós):
-##  - Doutrinas: 6 linhas x 9 níveis + Exército Supremo.
-##  - Escolas:   6 linhas x 9 níveis + Transcendência.
-##  - Infraestrutura: 6 linhas x 3 níveis (scaffold — uma linha pode ficar com
+## Estrutura (49 + 49 + 21 = 119 nós):
+##  - Doutrinas: 6 linhas x 8 níveis (tiers 2..9) + Exército Supremo.
+##  - Escolas:   6 linhas x 8 níveis (tiers 2..9) + Transcendência.
+##  - Infraestrutura: 7 linhas x 3 níveis (scaffold — uma linha pode ficar com
 ##    2 níveis no futuro se o 3º não gerar decisão; não é obrigação manter 18).
 ##
 ## IDs: v2_doctrine_<linha>_<n>, v2_magic_<linha>_<n>,
@@ -34,18 +34,27 @@ const SUPREME_ARMY_ID := "v2_supreme_army"
 const TRANSCENDENCE_ID := "v2_transcendence"
 
 const BRANCH_TIER_COUNT := 9
+## O antigo N1 das Doutrinas/Escolas ("Doutrina do X"/"Escola X") era um portão puro: não liberava nada
+## além do próprio N2, sem bônus nem mecânica. Saiu (2026-10-09): cada linha começa no tier 2 (o prédio
+## de treino / da Escola), sem pré-requisito. Os ids e tiers dos demais nós NÃO mudam — saves, conteúdo
+## e a semântica N3 = unidade-base / N9 = Lendário continuam válidos. O que o jogador VÊ é a posição na
+## linha (display_tier: "N1".."N8"), nunca o tier cru. Saves com o N1 antigo: ver RETIRED_FIRST_TIER e
+## V2ResearchState._read_progress (o Conhecimento investido num N1 inacabado volta ao saldo guardado).
+const BRANCH_FIRST_TIER := 2
+const RETIRED_FIRST_TIER := 1
 const INFRASTRUCTURE_TIER_COUNT := 3
 const CAPSTONE_TIER := 10
 ## "Duas Doutrinas completas" / "duas Escolas completas" (N9 concluído).
 const CAPSTONE_REQUIRED_BRANCHES := 2
 
 ## Fase 27 — primeira curva balanceada por microcenários e telemetria multi-seed.
-## Mantém crescimento estritamente monotônico sem a parede exponencial da F26.
-const BRANCH_TIER_COSTS := [8.0, 16.0, 24.0, 28.0, 40.0, 80.0, 128.0, 196.0, 268.0]
+## Mantém crescimento estritamente monotônico sem a parede exponencial da F26. Indexado por tier - 1:
+## a primeira posição (o N1 retirado) não é mais usada; os nós existentes mantêm o custo de sempre.
+const BRANCH_TIER_COSTS := [8.0, 16.0, 24.0, 28.0, 36.0, 60.0, 92.0, 132.0, 180.0] # 2026-10-14: N5–N9 eram 40/80/128/196/268 (ritmo de 3–4 h, docs/BALANCE_PASS_2026-10-14.md)
 ## Infraestrutura I / II / III, preservando sua curva curta e monotônica.
-const INFRASTRUCTURE_TIER_COSTS := [16.0, 48.0, 120.0]
+const INFRASTRUCTURE_TIER_COSTS := [16.0, 40.0, 96.0] # 2026-10-14: eram 16/48/120
 ## Projeto separado e materialmente mais caro que o N9, sem bloquear o endgame.
-const CAPSTONE_COST := 400.0
+const CAPSTONE_COST := 280.0 # 2026-10-14: era 400
 
 ## Fase 12: o nome da VIA DE VITÓRIA que cada capstone universal desbloqueia — não é
 ## o nome do nó de pesquisa (Exército Supremo desbloqueia a Supremacia Militar; o nó
@@ -77,7 +86,6 @@ const MAX_ACTIVE_LEGENDARY_UNITS := 1
 ## Rótulo em português de cada `unlock_type` (tooltip/UI). Os tipos das
 ## Doutrinas seguem o vocabulário canônico da Fase 2; os demais são das Fases 0-1.
 const UNLOCK_TYPE_LABELS := {
-	"doctrine": "Doutrina",
 	"building": "Estrutura",
 	"unit": "Unidade",
 	"technique": "Técnica",
@@ -86,7 +94,6 @@ const UNLOCK_TYPE_LABELS := {
 	"legendary_candidate": "Candidato a Unidade Lendária",
 	"victory_capstone": "Capstone de vitória",
 	"city_level": "Nível de cidade",
-	"school": "Escola",
 	"caster": "Conjurador",
 	"spell": "Feitiço",
 	"manifestation": "Grande Manifestação",
@@ -94,6 +101,7 @@ const UNLOCK_TYPE_LABELS := {
 	"ritual_building": "Estrutura Ritual",
 	"grand_manifestation": "Grande Manifestação",
 	"infrastructure_upgrade": "Melhoria de infraestrutura",
+	"settler_limit": "Limite de Colonos",
 }
 
 ## Estado de um nó para uma civilização (ver node_state e V2ResearchState).
@@ -110,13 +118,14 @@ const STATE_LABELS := {
 
 # --- Papéis fixos dos tiers (parte do design oficial da V2, NÃO placeholder) ---
 
+## Um papel por tier a partir de BRANCH_FIRST_TIER (índice 0 = tier 2).
 const DOCTRINE_TIER_ROLES := [
-	"doctrine_unlock", "training_structure", "base_unit", "technique_1",
+	"training_structure", "base_unit", "technique_1",
 	"evolution_1", "technique_2", "elite_form", "mastery_structure",
 	"legendary_candidate",
 ]
 const MAGIC_TIER_ROLES := [
-	"school_unlock", "school_building", "caster", "basic_spell",
+	"school_building", "caster", "basic_spell",
 	"intermediate_spell", "advanced_spell", "greater_spell",
 	"ritual_structure", "grand_manifestation",
 ]
@@ -125,7 +134,6 @@ const MAGIC_TIER_ROLES := [
 const INFRASTRUCTURE_TIER_ROLES := ["infrastructure_level_1", "infrastructure_level_2", "infrastructure_level_3"]
 
 const TIER_ROLE_LABELS := {
-	"doctrine_unlock": "Doutrina",
 	"training_structure": "Estrutura de treinamento",
 	"base_unit": "Unidade-base",
 	"technique_1": "Técnica I",
@@ -134,7 +142,6 @@ const TIER_ROLE_LABELS := {
 	"elite_form": "Forma Elite",
 	"mastery_structure": "Estrutura de Maestria",
 	"legendary_candidate": "Candidato a Unidade Lendária",
-	"school_unlock": "Escola",
 	"school_building": "Prédio da Escola",
 	"caster": "Conjurador",
 	"basic_spell": "Feitiço Básico",
@@ -152,7 +159,6 @@ const TIER_ROLE_LABELS := {
 
 ## O que cada papel desbloqueará no futuro (V2ResearchNode.unlock_type).
 const TIER_ROLE_UNLOCK_TYPES := {
-	"doctrine_unlock": "doctrine",
 	"training_structure": "building",
 	"base_unit": "unit",
 	"technique_1": "technique",
@@ -161,7 +167,6 @@ const TIER_ROLE_UNLOCK_TYPES := {
 	"elite_form": "unit_upgrade",
 	"mastery_structure": "mastery_building",
 	"legendary_candidate": "legendary_candidate",
-	"school_unlock": "school",
 	# Fase 17: tipos PRÓPRIOS da Magia (prédio de Escola, estrutura ritual e Grande Manifestação não são
 	# "building"/Lendária militares — o toast, o tooltip e o slot de Manifestação distinguem por tipo).
 	"school_building": "school_building",
@@ -182,7 +187,6 @@ const TIER_ROLE_UNLOCK_TYPES := {
 ## "Futuramente desbloqueará <isto>." — {title} = nome da linha (nominativo),
 ## {of} = genitivo ("da Doutrina do Guardião").
 const TIER_ROLE_FUTURE_TEXT := {
-	"doctrine_unlock": "a {title}",
 	"training_structure": "a estrutura de treinamento {of}",
 	"base_unit": "a unidade-base {of}",
 	"technique_1": "a Técnica I {of}",
@@ -191,7 +195,6 @@ const TIER_ROLE_FUTURE_TEXT := {
 	"elite_form": "a Forma Elite {of}",
 	"mastery_structure": "a Estrutura de Maestria {of}",
 	"legendary_candidate": "o candidato a Unidade Lendária {of}",
-	"school_unlock": "a {title}",
 	"school_building": "o prédio {of}",
 	"caster": "o conjurador {of}",
 	"basic_spell": "o feitiço básico {of}",
@@ -234,6 +237,8 @@ const INFRASTRUCTURE_BRANCHES := [
 	{"id": "academy", "name": "Academia", "title": "Linha de Academia", "genitive": "da linha de Academia", "role": "knowledge", "summary": "Foco: Conhecimento"},
 	{"id": "arcane", "name": "Arcana", "title": "Linha Arcana", "genitive": "da linha Arcana", "role": "mana", "summary": "Foco: Mana"},
 	{"id": "urbanization", "name": "Urbanização", "title": "Linha de Urbanização/Fortificação", "genitive": "da linha de Urbanização/Fortificação", "role": "city_fortification", "summary": "Foco: nível da cidade e fortificações"},
+	# 2026-10-09: limite de Colonos treinados na partida (V2ColonizationData / V2ColonizationRuntime).
+	{"id": "colonization", "name": "Colonização", "title": "Linha de Colonização", "genitive": "da linha de Colonização", "role": "expansion", "summary": "Foco: Colonos e novas cidades"},
 ]
 
 # --- Cache (montado uma vez por sessão) ----------
@@ -249,14 +254,14 @@ static func _ensure_built() -> void:
 		return
 	for tree_type in tree_types():
 		_by_tree[tree_type] = []
-	_add_branches(V2ResearchNode.TreeType.MILITARY_DOCTRINE, "doctrine", DOCTRINE_BRANCHES, DOCTRINE_TIER_ROLES, BRANCH_TIER_COSTS)
+	_add_branches(V2ResearchNode.TreeType.MILITARY_DOCTRINE, "doctrine", DOCTRINE_BRANCHES, DOCTRINE_TIER_ROLES, BRANCH_TIER_COSTS, BRANCH_FIRST_TIER)
 	_add_capstone(V2ResearchNode.TreeType.MILITARY_DOCTRINE, SUPREME_ARMY_ID, "Exército Supremo", "military_victory_capstone", "")
 	_apply_doctrine_content()
-	_add_branches(V2ResearchNode.TreeType.MAGIC_SCHOOL, "magic", MAGIC_BRANCHES, MAGIC_TIER_ROLES, BRANCH_TIER_COSTS)
+	_add_branches(V2ResearchNode.TreeType.MAGIC_SCHOOL, "magic", MAGIC_BRANCHES, MAGIC_TIER_ROLES, BRANCH_TIER_COSTS, BRANCH_FIRST_TIER)
 	_add_capstone(V2ResearchNode.TreeType.MAGIC_SCHOOL, TRANSCENDENCE_ID, "Transcendência", "magic_victory_capstone",
-		"Nó universal da árvore mágica. Exige duas Escolas completas até o N9 e libera a via de vitória por Transcendência.")
+		"Nó universal da árvore mágica. Exige duas Escolas completas até o último nível e libera a via de vitória por Transcendência.")
 	_apply_magic_content()
-	_add_branches(V2ResearchNode.TreeType.INFRASTRUCTURE, "infrastructure", INFRASTRUCTURE_BRANCHES, INFRASTRUCTURE_TIER_ROLES, INFRASTRUCTURE_TIER_COSTS)
+	_add_branches(V2ResearchNode.TreeType.INFRASTRUCTURE, "infrastructure", INFRASTRUCTURE_BRANCHES, INFRASTRUCTURE_TIER_ROLES, INFRASTRUCTURE_TIER_COSTS, 1)
 	_apply_infrastructure_content()
 
 static func _register(node: V2ResearchNode) -> void:
@@ -268,19 +273,20 @@ static func _register(node: V2ResearchNode) -> void:
 		_by_branch[key] = []
 	_by_branch[key].append(node)
 
-static func _add_branches(tree_type: int, id_kind: String, branches: Array, roles: Array, costs: Array) -> void:
+## `roles[i]` é o papel do tier `first_tier + i`; o custo segue indexado pelo tier (costs[tier - 1]).
+static func _add_branches(tree_type: int, id_kind: String, branches: Array, roles: Array, costs: Array, first_tier: int) -> void:
 	for line in branches:
-		for tier in range(1, roles.size() + 1):
-			var role: String = roles[tier - 1]
+		for tier in range(first_tier, first_tier + roles.size()):
+			var role: String = roles[tier - first_tier]
 			var node := V2ResearchNode.new()
 			node.id = "%s%s_%s_%d" % [ID_PREFIX, id_kind, line.id, tier]
-			node.display_name = "%s %s" % [line.name, ROMAN_NUMERALS[tier - 1]]
+			node.display_name = "%s %s" % [line.name, ROMAN_NUMERALS[tier - first_tier]]
 			node.tree_type = tree_type
 			node.branch = line.id
 			node.tier = tier
 			node.tier_role = role
 			node.cost = costs[tier - 1]
-			if tier > 1:
+			if tier > first_tier:
 				node.prerequisites = [String("%s%s_%s_%d" % [ID_PREFIX, id_kind, line.id, tier - 1])]
 			node.unlock_type = TIER_ROLE_UNLOCK_TYPES[role]
 			node.unlock_id = "placeholder"
@@ -321,6 +327,8 @@ static func _apply_doctrine_content() -> void:
 	for line in DOCTRINE_BRANCHES:
 		var entries := V2DoctrineContent.entries_for(line.id)
 		var nodes: Array = _by_branch.get(_branch_key(V2ResearchNode.TreeType.MILITARY_DOCTRINE, line.id), [])
+		if not _content_matches(nodes, entries, "Doutrina %s" % line.id):
+			continue
 		var unit_line: Array[V2ResearchNode] = []
 		for i in nodes.size():
 			var node: V2ResearchNode = nodes[i]
@@ -374,7 +382,8 @@ static func _apply_infrastructure_content() -> void:
 			var unlock_id: String = entry.get("unlock_id", "")
 			if unlock_id != "":
 				node.unlock_id = unlock_id
-				node.unlock_type = "city_level" if line.id == "urbanization" else ("building" if i == 0 else "infrastructure_upgrade")
+				# 2026-10-09: o conteúdo pode declarar o próprio tipo (Colonização: "settler_limit"); sem ele, a regra estrutural.
+				node.unlock_type = String(entry.get("unlock_type", "city_level" if line.id == "urbanization" else ("building" if i == 0 else "infrastructure_upgrade")))
 				node.gameplay_connected = unlock_id in V2InfrastructureContent.CONNECTED_UNLOCK_IDS
 				_by_unlock_id[unlock_id] = node
 
@@ -388,6 +397,8 @@ static func _apply_magic_content() -> void:
 		if entries.is_empty():
 			continue
 		var nodes: Array = _by_branch.get(_branch_key(V2ResearchNode.TreeType.MAGIC_SCHOOL, line.id), [])
+		if not _content_matches(nodes, entries, "Escola %s" % line.id):
+			continue
 		for i in nodes.size():
 			var node: V2ResearchNode = nodes[i]
 			var entry: Dictionary = entries[i]
@@ -407,6 +418,15 @@ static func _apply_magic_content() -> void:
 	transcendence.is_placeholder = false
 	transcendence.gameplay_connected = transcendence.unlock_id in V2MagicContent.CONNECTED_UNLOCK_IDS
 	_by_unlock_id[transcendence.unlock_id] = transcendence
+
+## O conteúdo é casado com os nós por POSIÇÃO (entrada i -> i-ésimo nó da linha). Um descompasso (ex.: uma
+## entrada a mais/a menos depois de mudar a estrutura da linha) daria nomes/unlocks trocados em silêncio:
+## falha alto e deixa a linha como placeholder estrutural em vez de aplicar conteúdo desalinhado.
+static func _content_matches(nodes: Array, entries: Array, label: String) -> bool:
+	if nodes.size() == entries.size():
+		return true
+	push_error("V2ResearchDatabase: %s tem %d entradas de conteúdo para %d nós." % [label, entries.size(), nodes.size()])
+	return false
 
 static func _describe_future_unlock(role: String, line: Dictionary) -> String:
 	var what: String = TIER_ROLE_FUTURE_TEXT[role].format({"title": line.title, "of": line.genitive})
@@ -489,6 +509,33 @@ static func tree_label(tree_type: int) -> String:
 static func role_label(tier_role: String) -> String:
 	return TIER_ROLE_LABELS.get(tier_role, tier_role)
 
+## Primeiro tier existente das linhas da árvore (Doutrinas/Escolas: BRANCH_FIRST_TIER; Infraestrutura: 1).
+static func first_tier_for_tree(tree_type: int) -> int:
+	return 1 if tree_type == V2ResearchNode.TreeType.INFRASTRUCTURE else BRANCH_FIRST_TIER
+
+## Nível MOSTRADO ao jogador para um tier de linha: a posição dele na linha (1 = primeiro nó existente).
+## `tier` é a chave estrutural estável (ids, saves, regras); a UI nunca mostra o tier cru.
+static func display_tier(tree_type: int, tier: int) -> int:
+	return tier - first_tier_for_tree(tree_type) + 1
+
+## "N1".."N8" (Doutrinas/Escolas) para um nó ou um tier de linha.
+static func tier_label(tree_type: int, tier: int) -> String:
+	return "N%d" % display_tier(tree_type, tier)
+
+## Rótulo do último nível das linhas (o exigido pelos capstones, ex.: "N8").
+static func final_tier_label(tree_type: int) -> String:
+	return tier_label(tree_type, BRANCH_TIER_COUNT)
+
+## Ids do N1 retirado das Doutrinas/Escolas (só existem em saves antigos). V2ResearchState usa isto
+## para devolver ao saldo o Conhecimento investido neles, em vez de perdê-lo em silêncio.
+static func is_retired_node_id(id: String) -> bool:
+	for tree_type in [V2ResearchNode.TreeType.MILITARY_DOCTRINE, V2ResearchNode.TreeType.MAGIC_SCHOOL]:
+		var kind := "doctrine" if tree_type == V2ResearchNode.TreeType.MILITARY_DOCTRINE else "magic"
+		for info in branches_for_tree(tree_type):
+			if id == "%s%s_%s_%d" % [ID_PREFIX, kind, info.id, RETIRED_FIRST_TIER]:
+				return true
+	return false
+
 # --- Regra estrutural dos capstones e estados (sem gameplay) ---------------------
 
 ## Linha completa = o último tier (N9 / III) concluído. `completed` é um
@@ -558,7 +605,7 @@ static func unavailable_reason(node_id: String, completed: Dictionary) -> String
 		return "Requer %s." % ", ".join(missing)
 	if node.is_universal and not capstone_requirement_met(node_id, completed):
 		var progress := capstone_progress(node_id, completed)
-		return "Requer %d %s completas (N%d): %d/%d." % [node.requirement.branch_count, capstone_unit_word(node), node.requirement.at_tier, progress.x, progress.y]
+		return "Requer %d %s completas (%s): %d/%d." % [node.requirement.branch_count, capstone_unit_word(node), tier_label(node.tree_type, node.requirement.at_tier), progress.x, progress.y]
 	return ""
 
 ## "Doutrinas" / "Escolas" — o que o capstone conta.
@@ -630,11 +677,11 @@ static func node_tooltip(node: V2ResearchNode, completed: bool = false) -> Strin
 	if node.is_universal:
 		lines.append("Nó universal · %s" % tree_label(node.tree_type))
 	else:
-		lines.append("%s · Nível %d" % [line_label(node), node.tier])
+		lines.append("%s · Nível %d" % [line_label(node), display_tier(node.tree_type, node.tier)])
 	lines.append(role_label(node.tier_role))
 	lines.append("Custo: %d Conhecimento" % int(node.cost))
 	if node.is_universal:
-		lines.append("Requer: %d %s completas (N%d)" % [node.requirement.branch_count, capstone_unit_word(node), node.requirement.at_tier])
+		lines.append("Requer: %d %s completas (%s)" % [node.requirement.branch_count, capstone_unit_word(node), tier_label(node.tree_type, node.requirement.at_tier)])
 	elif node.prerequisites.is_empty():
 		lines.append("Requer: nenhum (início da linha)")
 	else:
@@ -672,8 +719,6 @@ static func unlock_effect_text(node: V2ResearchNode, completed: bool = false) ->
 	if not node.gameplay_connected:
 		return ""
 	match node.unlock_type:
-		"doctrine":
-			return "Desbloqueia a %s." % node.display_name
 		"building":
 			# Fase 14: as cinco linhas econômicas de Infraestrutura (Economia/Logística/Indústria/
 			# Academia/Arcano) precisam do NOME DO PRÉDIO (ex.: "Mercado"), não do nome da pesquisa
@@ -683,6 +728,9 @@ static func unlock_effect_text(node: V2ResearchNode, completed: bool = false) ->
 			if V2InfrastructureEconomyData.is_economy_building(node.unlock_id):
 				return _infrastructure_economy_effect_text(node.branch, node.unlock_id)
 			return "Desbloqueia %s." % node.display_name
+		"settler_limit":
+			# 2026-10-09: Colonização — o limite vem do dado (V2ColonizationData), nunca do id no código.
+			return "Permite treinar %s. Sem esta linha, nenhuma cidade treina Colonos (o Colono inicial é grátis)." % V2ColonizationData.limit_label(int(V2ColonizationData.SETTLER_LIMIT_BY_UNLOCK.get(node.unlock_id, 0)))
 		"infrastructure_upgrade":
 			# Fase 14: só as cinco linhas econômicas ficam gameplay_connected com este tipo (N2/N3);
 			# Só as linhas econômicas de Infraestrutura usam este tipo; Magia tem seus próprios tipos.
@@ -734,8 +782,6 @@ static func unlock_effect_text(node: V2ResearchNode, completed: bool = false) ->
 			var headline := ("Acesso à %s desbloqueado." % access) if completed else ("Desbloqueia o acesso à %s." % access)
 			var condition := CAPSTONE_TERRITORIAL_NOTE if node.tree_type == V2ResearchNode.TreeType.MILITARY_DOCTRINE else CAPSTONE_TRANSCENDENCE_NOTE
 			return "%s\n\n%s" % [headline, condition]
-		"school":
-			return "Desbloqueia a %s. Marco da Escola: abre a pesquisa do prédio da Escola, sem bônus passivo." % node.display_name
 		"school_building":
 			var caster_name := ""
 			for candidate in nodes_for_branch(node.tree_type, node.branch):

@@ -59,7 +59,7 @@ func test_the_multiplier_comes_from_the_data_not_from_the_code():
 	var original := technique.strike_multiplier
 	technique.strike_multiplier = 2.5
 	var predicted: float = CombatResolver.predict(unit, foe, d.grid, technique.strike_multiplier).damage_to_defender
-	assert_eq(predicted, _formula_damage(d.grid, 5.0, 2.5, foe))
+	assert_eq(predicted, _formula_damage(d.grid, 7.5, 2.5, foe))
 	var hp_before := foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(unit, POWER, foe, d.grid))
 	assert_almost_eq(hp_before - foe.hp, predicted, 0.0001, "o golpe usa o que está no dado")
@@ -168,8 +168,8 @@ func test_the_strike_hits_with_160_percent_of_the_basic_attack():
 	var foe: Unit = d.foe
 	var basic: float = CombatResolver.predict(unit, foe, d.grid).damage_to_defender
 	var strike: float = CombatResolver.predict(unit, foe, d.grid, _technique(POWER).strike_multiplier).damage_to_defender
-	assert_eq(basic, _formula_damage(d.grid, 5.0, 1.0, foe), "ataque comum: 5,0 - 3,0/2")
-	assert_eq(strike, _formula_damage(d.grid, 5.0, 1.6, foe), "golpe: 8,0 - 3,0/2")
+	assert_eq(basic, _formula_damage(d.grid, 7.5, 1.0, foe), "ataque comum: 5,0 - 3,0/2")
+	assert_eq(strike, _formula_damage(d.grid, 7.5, 1.6, foe), "golpe: 8,0 - 3,0/2")
 	assert_gt(strike, basic)
 	assert_eq(CombatResolver.predict(unit, foe, d.grid, 1.0).damage_to_defender, basic, "1.0 é o ataque comum")
 
@@ -181,7 +181,7 @@ func test_prediction_and_real_resolution_agree_hp_loss_equals_the_predicted_dama
 	var before := foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(unit, POWER, foe, d.grid))
 	assert_almost_eq(before - foe.hp, predicted, 0.0001)
-	assert_almost_eq(before - foe.hp, 6.5, 0.0001, "5,0 x 1,6 - 3,0 x 0,5")
+	assert_almost_eq(before - foe.hp, 10.5, 0.0001, "7,5 x 1,6 - 3,0 x 0,5")
 
 func test_it_consumes_the_action_and_zeroes_the_remaining_movement():
 	var d := _duel()
@@ -257,8 +257,8 @@ func test_it_passes_through_the_normal_defense_chain_wall_on_the_target_reduces_
 	var foe: Unit = d.foe
 	foe.magic_status[WALL] = TurnManager.turn_number + 2 # Muralha de Escudos ativa no alvo (+35% Defesa)
 	var wall_bonus: float = 1.0 + _technique(WALL).self_defense_bonus
-	var expected := _formula_damage(d.grid, 5.0, 1.6, foe, wall_bonus)
-	assert_lt(expected, _formula_damage(d.grid, 5.0, 1.6, foe))
+	var expected := _formula_damage(d.grid, 7.5, 1.6, foe, wall_bonus)
+	assert_lt(expected, _formula_damage(d.grid, 7.5, 1.6, foe))
 	var before := foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(unit, POWER, foe, d.grid))
 	assert_almost_eq(before - foe.hp, expected, 0.0001, "mesma cadeia de defesa do ataque normal")
@@ -272,7 +272,7 @@ func test_the_defenders_aura_from_a_command_champion_also_counts():
 	var aura: float = 1.0 + UnitDatabase.create_unit(CHAMPION).aura_defense_bonus
 	var before := foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(unit, POWER, foe, d.grid))
-	assert_almost_eq(before - foe.hp, _formula_damage(d.grid, 5.0, 1.6, foe, aura), 0.0001)
+	assert_almost_eq(before - foe.hp, _formula_damage(d.grid, 7.5, 1.6, foe, aura), 0.0001)
 
 func test_a_kill_counts_once_for_xp_and_removes_the_target():
 	var d := _duel(4.0, 3.0)

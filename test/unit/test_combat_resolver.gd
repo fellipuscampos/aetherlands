@@ -11,7 +11,7 @@ func before_each():
 	_created_units = []
 
 	hex_grid = HexGrid.new()
-	# HexGrid so cria _cities_root/_tints_root (entre outros) em _ready(),
+	# HexGrid so cria _cities_root/_borders_root (entre outros) em _ready(),
 	# que o motor so chama quando o node entra na scene tree — precisa
 	# disso pros testes de resolve_city_attack abaixo, que exercitam
 	# hex_grid.found_city()/capture_city() de verdade (mesmo padrao ja
@@ -270,25 +270,23 @@ func test_resolve_with_splash_skips_area_damage_entirely_if_the_attacker_dies_to
 	assert_true(attacker.hp <= 0.0, "pre-condicao: o atacante precisa ter morrido no contra-ataque")
 	assert_almost_eq(secondary.hp, 1000.0, 0.01, "um atacante ja morto nao deveria continuar aplicando dano em area")
 
-## Mago (unit_data.ignores_terrain_defense) atira magia que ignora o bonus
-## de defesa de terreno do defensor — colina (defense_bonus 0.5) protege
-## contra guerreiro mas nao contra magia.
-func test_mage_ignores_terrain_defense_bonus():
-	var mage = _make_unit("mage", human, Vector2i(0, 0))
-	var warrior = _make_unit("warrior", human, Vector2i(2, 0))
-	var defender_a = _make_unit("warrior", rival, Vector2i(1, 0)) # HILLS
-	var defender_b = _make_unit("warrior", rival, Vector2i(1, 0))
-
-	var mage_result = CombatResolver.predict(mage, defender_a, hex_grid)
-	var warrior_result = CombatResolver.predict(warrior, defender_b, hex_grid)
-
-	assert_gt(mage_result.damage_to_defender, warrior_result.damage_to_defender, "mago deveria ignorar o bonus de defesa de colina, causando mais dano que um guerreiro com o mesmo ataque base")
+## O terreno-base não protege ninguém (2026-10-09): o MESMO duelo dá o MESMO resultado com o defensor em
+## colina, floresta, montanha ou grama — só a Defesa da própria unidade (e os efeitos dela) conta.
+func test_base_terrain_never_changes_the_defense():
+	var attacker = _make_unit("warrior", human, Vector2i(0, 0))
+	var defender = _make_unit("warrior", rival, Vector2i(1, 0)) # HILLS
+	var on_hills = CombatResolver.predict(attacker, defender, hex_grid)
+	for terrain in [HexTileData.TerrainType.FOREST, HexTileData.TerrainType.MOUNTAINS, HexTileData.TerrainType.GRASSLAND]:
+		hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(terrain)
+		var result = CombatResolver.predict(attacker, defender, hex_grid)
+		assert_almost_eq(result.damage_to_defender, on_hills.damage_to_defender, 0.0001, "terreno %d não protege o defensor" % terrain)
+		assert_almost_eq(result.damage_to_attacker, on_hills.damage_to_attacker, 0.0001, "nem o revide muda com o terreno")
+	assert_false("defense_bonus" in TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS), "o tile não tem mais bônus de Defesa")
 
 ## Muralhas (BuildingData.defense_bonus) somam ao multiplicador de defesa
 ## de uma unidade guarnicionada DENTRO da propria cidade — mesmo mecanismo
-## do bonus de terreno, so que vindo de um predio em vez do tile.
-## Fase 16: a comparação é a MESMA cidade sem e com Muralhas I (+10%) — o bônus V1 (+50%) era
-## grande o bastante pra superar até o terreno de colina do caso "sem cidade", o V2 não precisa.
+## que o Fortificar, so que vindo da cidade (fonte explicita; o terreno-base nao da Defesa).
+## Fase 16: a comparação é a MESMA cidade sem e com Muralhas I (+10%).
 func test_walls_building_reduces_damage_to_garrisoned_defender():
 	var city := City.new()
 	city.owner_player = rival
@@ -307,8 +305,8 @@ func test_walls_building_reduces_damage_to_garrisoned_defender():
 	)
 	city.queue_free()
 
-## Muralhas nao protegem contra magia, igual bonus de terreno (mesmo campo
-## unit_data.ignores_terrain_defense gate os dois).
+## Muralhas nao protegem contra magia (unit_data.ignores_terrain_defense gate a Defesa urbana,
+## o Fortificar e o terreno modificado pelos druidas).
 func test_mage_ignores_walls_defense_bonus():
 	var city := City.new()
 	city.owner_player = rival

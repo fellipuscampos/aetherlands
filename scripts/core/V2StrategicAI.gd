@@ -210,6 +210,19 @@ static func research_score(player: PlayerData, node: V2ResearchNode) -> float:
 	score += player.v2_research.get_progress_ratio(node.id) * 10.0
 	return score - node.cost * 0.006
 
+## Meta de expansão da IA: cidades desejadas pelo turno (a MESMA regra que decide produzir Colono). `lookahead`
+## projeta a meta alguns turnos à frente (a pesquisa de Colonização precisa estar pronta QUANDO a meta subir).
+static func desired_city_count(lookahead: int = 0) -> int:
+	return mini(6, 1 + (TurnManager.turn_number + maxi(lookahead, 0)) / 30)
+
+## Colonos vivos + cidades produzindo um (a expansão já em curso).
+static func pending_settlers(player: PlayerData) -> int:
+	return player.units.filter(func(u): return is_instance_valid(u) and u.unit_data.can_found_city).size() + V2ColonizationRuntime.settlers_in_production(player)
+
+## A IA quer mais cidades do que tem + as que já estão a caminho (agora, ou daqui a `lookahead` turnos)?
+static func wants_more_cities(player: PlayerData, lookahead: int = 0) -> bool:
+	return player.cities.size() + pending_settlers(player) < desired_city_count(lookahead)
+
 static func _economic_urgency(player: PlayerData, role: String) -> float:
 	match role:
 		"gold":
@@ -227,6 +240,15 @@ static func _economic_urgency(player: PlayerData, role: String) -> float:
 			return V2AITuning.KNOWLEDGE_RESEARCH_URGENCY if player.v2_research.completed_ids.size() < V2ResearchDatabase.all_nodes().size() else -20.0
 		"mana":
 			return 36.0 if player.v2_ai_strategy.orientation == V2AIStrategyState.Orientation.ARCANE and player.mana < strategic_mana_reserve(player) else 4.0
+		"expansion":
+			# 2026-10-09 — linha de Colonização: sem ela a IA não treina Colonos. Urgente quando a meta de expansão
+			# (projetada EXPANSION_RESEARCH_LEAD_TURNS à frente: pesquisa + produção do Colono levam turnos) vai pedir
+			# uma cidade a mais e o limite atual barra o próximo Colono; antes disso, valor baixo.
+			var limit := V2ColonizationRuntime.settler_limit(player)
+			var blocked := limit != V2ColonizationData.UNLIMITED and V2ColonizationRuntime.settlers_used(player) >= limit
+			if not blocked:
+				return -20.0
+			return V2AITuning.EXPANSION_RESEARCH_URGENCY if wants_more_cities(player, V2AITuning.EXPANSION_RESEARCH_LEAD_TURNS) else 4.0
 		"city_fortification":
 			# Urbanização deixa de ser cosmética quando uma cidade já usa a
 			# maior parte dos slots. O valor precisa superar uma preferência
@@ -287,10 +309,11 @@ static func _plan_production(player: PlayerData, view: V2AIWorldView) -> void:
 		var choice := _best_production(player, city, view, queued_roles)
 		if choice == "":
 			continue
-		city.set_production(choice)
-		player.v2_ai_strategy.last_reasons.append("Produção em %s: %s" % [city.city_name, choice])
 		if BuildingDatabase.get_building(choice) != null:
-			city.pending_building_coord = _building_site(city, view.grid)
+			city.start_building(choice, _building_site(city, view.grid), view.grid) # mesma entrada do jogador: recurso no tile é destruído
+		else:
+			city.set_production(choice)
+		player.v2_ai_strategy.last_reasons.append("Produção em %s: %s" % [city.city_name, choice])
 		var role := V2UnitLine.role_of(choice)
 		if role != "":
 			queued_roles[role] = int(queued_roles.get(role, 0)) + 1
@@ -319,20 +342,55 @@ static func _best_production(player: PlayerData, city: City, view: V2AIWorldView
 			best = id
 	return best
 
+## Pressão de guerra para a PRODUÇÃO (2026-10-15), 0..1: exército inimigo perto de uma cidade própria ou cidade
+## perdida = 1.0; em guerra = 0.6; preparando uma guerra (RivalAI.is_preparing_war) = 0.5; senão 0. Só fatos que a IA
+## conhece (V2AIWorldView). Ver V2AITuning.WAR_* para o efeito.
+static func war_production_pressure(player: PlayerData, view: V2AIWorldView) -> float:
+	if defensive_war_pressure(player, view):
+		return 1.0
+	if not player.enemies.is_empty():
+		return 0.6
+	if RivalAI.is_preparing_war(player):
+		return 0.5
+	return 0.0
+
+## Tropas de civilizações inimigas (em guerra) que a IA está vendo agora.
+static func visible_enemy_army(player: PlayerData, view: V2AIWorldView) -> int:
+	var count := 0
+	for unit in view.visible_enemy_units:
+		if unit.owner_player != null and player.is_at_war_with(unit.owner_player) and unit.unit_data.attack > 0.0:
+			count += 1
+	return count
+
+## Inimigo em guerra visível a até 4 casas DESTA cidade: ela treina defesa antes de qualquer prédio.
+static func city_under_siege(city: City, view: V2AIWorldView) -> bool:
+	for unit in view.visible_enemy_units:
+		if unit.owner_player != null and city.owner_player.is_at_war_with(unit.owner_player) and HexMetrics.axial_distance(unit.coord, city.coord) <= AIWarTactics.INVADER_THREAT_RADIUS + 1:
+			return true
+	return false
+
 static func _production_score(player: PlayerData, city: City, id: String, view: V2AIWorldView, queued_roles: Dictionary) -> float:
 	var building := BuildingDatabase.get_building(id)
+	var pressure := war_production_pressure(player, view)
 	if building != null:
 		if building.gold_upkeep > 0.0 and (V2EconomyRuntime.is_gold_deficit(player) or player.gold < V2AITuning.gold_reserve(player)):
 			return -100.0
+		if city_under_siege(city, view):
+			return -50.0 # cidade sitiada não começa obra: treina defesa
 		var branch := V2InfrastructureEconomyData.branch_for_building(id)
 		if branch != "":
 			var role := String(V2ResearchDatabase.branch_info(V2ResearchNode.TreeType.INFRASTRUCTURE, branch).get("role", ""))
-			return 15.0 + _economic_urgency(player, role) - city.building_count(id) * 7.0
+			return 15.0 + _economic_urgency(player, role) - city.building_count(id) * 7.0 - V2AITuning.WAR_CIVIL_PENALTY * pressure
 		var node := V2ResearchDatabase.node_for_unlock_id(id)
 		if node != null:
 			var preferred := node.branch in player.v2_ai_strategy.preferred_doctrine_branches or node.branch in player.v2_ai_strategy.preferred_magic_branches or node.branch == player.v2_ai_strategy.adaptive_doctrine_branch
 			if node.tier_role in ["training_structure", "school_building"]:
 				return 48.0 if preferred else 14.0
+			# 2026-10-15 — gargalo medido no laboratório (BALANCE_PASS_2026-10-14 §8): com a Transcendência liberada, a
+			# Estrutura Ritual ficava 394 turnos-civ construível sem ninguém escolher. Sem nenhuma no reino (nem na
+			# fila), ela vira a obra mais importante da IA focada em Transcendência.
+			if node.tier_role == "ritual_structure" and _needs_ritual_structure(player):
+				return 95.0
 			if node.tier_role in ["mastery_structure", "ritual_structure"]:
 				return 38.0 if preferred else 8.0
 		return 5.0
@@ -340,24 +398,29 @@ static func _production_score(player: PlayerData, city: City, id: String, view: 
 		var target_level := V2CityLevelData.target_level_for_project(id)
 		if player.gold - V2CityLevelData.upgrade_gold_cost(target_level) < V2AITuning.gold_reserve(player):
 			return -100.0
+		if city_under_siege(city, view):
+			return -50.0
 		var ratio := float(city.used_building_slots()) / maxf(city.max_building_slots(), 1)
 		var core_bonus := 15.0 if city == _core_city(player) else 0.0
-		return 42.0 + core_bonus if ratio >= V2AITuning.CITY_SLOT_PRESSURE else -5.0
+		return (42.0 + core_bonus - V2AITuning.WAR_CIVIL_PENALTY * pressure) if ratio >= V2AITuning.CITY_SLOT_PRESSURE else -5.0
 	if V2FortificationData.is_fortification_project(id):
-		return 25.0 + _city_threat_score(city, view)
+		# Em guerra a muralha é defesa de verdade: a cidade da linha de frente (inimigo visto perto) a quer muito.
+		return 25.0 + _city_threat_score(city, view) + (20.0 if pressure > 0.0 else 0.0)
 	var data := UnitDatabase.create_unit(id)
 	if data.can_found_city:
-		var queued_settlers := player.units.filter(func(u): return u.unit_data.can_found_city).size() + player.cities.filter(func(c): return c.production_item != "" and UnitDatabase.create_unit(c.production_item).can_found_city).size()
-		var desired := mini(6, 1 + TurnManager.turn_number / 30)
-		return 24.0 if player.cities.size() + queued_settlers < desired and CitySite.has_acceptable_site(view.grid, player) else -100.0
+		return 24.0 if wants_more_cities(player) and CitySite.has_acceptable_site(view.grid, player) else -100.0
 	if V2ConstructorRuntime.is_builder_kind(id):
 		return 32.0 if _builder_needed(player, view) else -100.0
 	var tokens := relevant_unit_count(player) + queued_relevant_count(player)
 	if tokens >= V2AITuning.HARD_TOKEN_CAP:
 		return -100.0
 	var manifestation := V2ManifestationSystem.is_manifestation_kind(id)
-	if tokens >= V2AITuning.target_relevant_units(player) and not (manifestation and V2ManifestationSystem.active_manifestation_count(player) < 2):
+	var army_target := V2AITuning.war_target_relevant_units(player, pressure, visible_enemy_army(player, view))
+	if tokens >= army_target and not (manifestation and V2ManifestationSystem.active_manifestation_count(player) < 2):
 		return -60.0
+	# Tropa sob pressão de guerra: a mesma pontuação de sempre + o bônus de guerra (V2AITuning.WAR_UNIT_BONUS);
+	# a cidade sitiada dobra o bônus — ela precisa de defensores agora.
+	var war_bonus := V2AITuning.WAR_UNIT_BONUS * pressure * (2.0 if city_under_siege(city, view) else 1.0)
 	var supply_cap := int(V2EconomyRuntime.player_supply_capacity(player))
 	var projected_free := supply_cap - V2LogisticsRuntime.player_supply_used(player) - data.supply_cost
 	var war := not player.enemies.is_empty()
@@ -368,15 +431,15 @@ static func _production_score(player: PlayerData, city: City, id: String, view: 
 		var need := V2TranscendenceSystem.MANIFESTATIONS_REQUIRED - V2ManifestationSystem.active_manifestation_count(player)
 		return 90.0 if player.v2_ai_strategy.victory_focus == V2AIStrategyState.VictoryFocus.TRANSCENDENCE and need > 0 else 18.0
 	if V2LegendarySystem.is_legendary_kind(id):
-		return 72.0 if player.v2_ai_strategy.orientation == V2AIStrategyState.Orientation.MILITARY else 32.0
+		return (72.0 if player.v2_ai_strategy.orientation == V2AIStrategyState.Orientation.MILITARY else 32.0) + war_bonus
 	if data.is_v2_caster():
 		var count := player.units.filter(func(u): return u.unit_data.v2_magic_school == data.v2_magic_school).size()
 		for queued_city in player.cities:
 			if queued_city.production_item in UnitDatabase.PLAYER_TRAINABLE_KINDS and UnitDatabase.create_unit(queued_city.production_item).v2_magic_school == data.v2_magic_school:
 				count += 1
-		return (55.0 if player.v2_ai_strategy.orientation == V2AIStrategyState.Orientation.ARCANE else 25.0) - count * 12.0
+		return (55.0 if player.v2_ai_strategy.orientation == V2AIStrategyState.Orientation.ARCANE else 25.0) - count * 12.0 + war_bonus * 0.5
 	var role := V2UnitLine.role_of(id)
-	var desired_role := _desired_role_count(player, role)
+	var desired_role := _desired_role_count(player, role, army_target)
 	var current := player.units.filter(func(u): return V2UnitLine.role_of(u.unit_data.visual_kind) == role).size() + int(queued_roles.get(role, 0))
 	if role == "":
 		return -10.0
@@ -384,13 +447,28 @@ static func _production_score(player: PlayerData, city: City, id: String, view: 
 	# (resposta mínima; o planner real continua escolhendo — nada é forçado).
 	var lair_bonus := lair_response_production_bonus(player, view)
 	if current >= desired_role:
+		if war_bonus > 0.0:
+			# Em guerra o papel "cheio" ainda vale (o teto global já limita), só que cada cópia a mais vale menos.
+			return 18.0 + data.attack * 0.15 + war_bonus - float(current - desired_role + 1) * 6.0 + lair_bonus
 		return -10.0 if lair_bonus <= 0.0 else 18.0 + data.attack * 0.15 + lair_bonus
-	return 18.0 + (desired_role - current) * 14.0 + data.attack * 0.15 + lair_bonus
+	return 18.0 + (desired_role - current) * 14.0 + data.attack * 0.15 + lair_bonus + war_bonus
 
-static func _desired_role_count(player: PlayerData, role: String) -> int:
+## IA de Transcendência com acesso ao Ritual e NENHUMA Estrutura Ritual utilizável (construída ou na fila).
+static func _needs_ritual_structure(player: PlayerData) -> bool:
+	if player.v2_ai_strategy.victory_focus != V2AIStrategyState.VictoryFocus.TRANSCENDENCE or not V2TranscendenceSystem.has_access(player):
+		return false
+	for city in player.cities:
+		if V2TranscendenceSystem.city_has_usable_magic_ritual_structure(city, player):
+			return false
+		var queued := V2ResearchDatabase.node_for_unlock_id(city.production_item) if city.production_item != "" else null
+		if queued != null and queued.tier_role == "ritual_structure":
+			return false
+	return true
+
+static func _desired_role_count(player: PlayerData, role: String, army_target: int = -1) -> int:
 	if role == "":
 		return 0
-	var target := V2AITuning.target_relevant_units(player)
+	var target := army_target if army_target > 0 else V2AITuning.target_relevant_units(player)
 	var branches := player.v2_ai_strategy.preferred_doctrine_branches.duplicate()
 	if player.v2_ai_strategy.adaptive_doctrine_branch != "":
 		branches.append(player.v2_ai_strategy.adaptive_doctrine_branch)
@@ -463,6 +541,10 @@ static func _core_city(player: PlayerData) -> City:
 			result = city
 	return result
 
+## Ordem de preferência: (1) tile SEM recurso de mapa — construir em cima destrói o recurso e a melhoria dele
+## (City.start_building), então a IA só sacrifica um quando não sobra outro tile; (2) tile desocupado — unidade em
+## cima não impede a obra (City.is_valid_building_tile), mas é o último recurso, para uma cidade com todos os tiles
+## ocupados (guarnição, monstro ou inimigo parado) não ficar impedida de construir; (3) coordenada, determinístico.
 static func _building_site(city: City, grid: HexGrid) -> Vector2i:
 	var candidates: Array[Vector2i] = []
 	for coord in city.owned_tiles:
@@ -471,7 +553,14 @@ static func _building_site(city: City, grid: HexGrid) -> Vector2i:
 	for coord in grid.get_neighbors(city.coord):
 		if city.is_valid_building_tile(coord, grid) and coord not in candidates:
 			candidates.append(coord)
-	candidates.sort_custom(func(a: Vector2i, b: Vector2i): return a.x < b.x if a.x != b.x else a.y < b.y)
+	candidates.sort_custom(func(a: Vector2i, b: Vector2i):
+		var a_resource := grid.get_tile(a).resource != ""
+		if a_resource != (grid.get_tile(b).resource != ""):
+			return not a_resource
+		var a_occupied := grid.get_unit_at(a) != null
+		if a_occupied != (grid.get_unit_at(b) != null):
+			return not a_occupied
+		return a.x < b.x if a.x != b.x else a.y < b.y)
 	return candidates[0] if not candidates.is_empty() else City.NO_PENDING_COORD
 
 static func _start_ritual_if_ready(player: PlayerData, view: V2AIWorldView) -> void:
@@ -518,11 +607,6 @@ static func strategic_target_coord(player: PlayerData, view: V2AIWorldView) -> V
 			var db := HexMetrics.axial_distance(anchor, b.coord)
 			return da < db if da != db else _coord_less(a.coord, b.coord))
 		return known_war_cities[0].coord
-	# Fase 33D3: Relicário público que o plano julgou viável — voo, Portais e conjuradores usam as capacidades
-	# existentes (V2AITacticalAI) para chegar; nenhum atalho novo.
-	var reliquary := reliquary_plan(player, view)
-	if String(reliquary.mode) == "go":
-		return reliquary.site
 	return null
 
 ## Fase 33D3 — alvo de Supremacia contra o primeiro rival PENDENTE em guerra com alvo conhecido.
@@ -739,60 +823,3 @@ static func defensive_war_pressure(player: PlayerData, view: V2AIWorldView) -> b
 		if unit.owner_player != null and player.is_at_war_with(unit.owner_player) and _nearest_own_city_distance(player, unit.coord) <= V2AITuning.LOCAL_THREAT_RADIUS:
 			return true
 	return false
-
-## Relicário: vale ir? Evento público aberto, sem pressão grave, local a ≤ RELIQUARY_INTEREST_RADIUS de uma
-## cidade própria, ≥ 2 unidades aptas perto e força das RELIQUARY_MAX_RESPONDERS mais próximas ≥ OVERMATCH ×
-## defesa conhecida dos guardiões (visíveis; se o local não está à vista, os guardiões do catálogo).
-## Nunca "Relicário ativo = sempre ir". {mode: none|go, site, units: [Unit]}
-const RELIQUARY_INTEREST_RADIUS := 18
-const RELIQUARY_FORCE_RADIUS := 16
-const RELIQUARY_MAX_RESPONDERS := 3
-
-static func reliquary_plan(player: PlayerData, view: V2AIWorldView) -> Dictionary:
-	var plan := {"mode": "none", "site": ReliquaryEvent.NO_COORD, "units": [], "reason": ""}
-	var record: Dictionary = {}
-	for entry in view.public_world_events:
-		if String(entry.type) == ReliquaryEvent.EVENT_TYPE:
-			record = entry
-	if record.is_empty() or player.cities.is_empty():
-		plan.reason = "no_event"
-		return plan
-	var site: Vector2i = record.coord
-	plan.site = site
-	if under_severe_pressure(player, view):
-		plan.reason = "pressure"
-		return plan
-	if _nearest_own_city_distance(player, site) > RELIQUARY_INTEREST_RADIUS:
-		plan.reason = "too_far"
-		return plan
-	var candidates: Array[Unit] = []
-	for unit in player.units:
-		if is_lair_responder(unit) and HexMetrics.axial_distance(unit.coord, site) <= RELIQUARY_FORCE_RADIUS and not StrategicAI._is_needed_garrison(unit, player):
-			candidates.append(unit)
-	candidates.sort_custom(func(a: Unit, b: Unit) -> bool:
-		var da := HexMetrics.axial_distance(a.coord, site)
-		var db := HexMetrics.axial_distance(b.coord, site)
-		return da < db if da != db else a.serial_id < b.serial_id)
-	var chosen := candidates.slice(0, RELIQUARY_MAX_RESPONDERS)
-	if chosen.size() < 2:
-		plan.reason = "no_mobile_force"
-		return plan
-	var force := 0.0
-	for unit in chosen:
-		force += CityDefense.unit_power(unit)
-	if force < reliquary_known_defense(view, site, String(record.phase)) * CityDefense.OVERMATCH:
-		plan.reason = "insufficient_force"
-		return plan
-	plan.mode = "go"
-	plan.units = chosen
-	return plan
-
-static func reliquary_known_defense(view: V2AIWorldView, site: Vector2i, phase: String) -> float:
-	var observed := 0.0
-	for unit in view.visible_enemy_units:
-		if unit.owner_player == null and HexMetrics.axial_distance(unit.coord, site) <= 1:
-			observed += CityDefense.unit_power(unit)
-	if view.is_visible(site) and phase == WorldEvent.PHASE_ACTIVE:
-		return observed
-	var catalog := CityDefense.unit_data_power(MonsterDatabase.create_monster(ReliquaryEvent.GUARDIAN_KIND)) * float(ReliquaryEvent.GUARDIAN_COUNT)
-	return maxf(observed, catalog)

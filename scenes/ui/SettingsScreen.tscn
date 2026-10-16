@@ -1,241 +1,561 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="Script" path="res://scripts/ui/SettingsScreen.gd" id="1"]
+[gd_scene load_steps=4 format=3]
+[ext_resource type="Script" path="res://scripts/ui/SettingsScreen.gd" id="Script"]
+[ext_resource type="Texture2D" path="res://assets/ui/title_menu/kingdom_landscape_painted.png" id="Landscape"]
+[ext_resource type="Texture2D" path="res://assets/ui/title_menu/crest.svg" id="Crest"]
 
 [node name="SettingsScreen" type="Control"]
 layout_mode = 1
-anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 visible = false
-script = ExtResource("1")
+texture_filter = 1
+script = ExtResource("Script")
+
+[node name="Landscape" type="TextureRect" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("Landscape")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="Backdrop" type="ColorRect" parent="."]
 layout_mode = 1
-anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.043, 0.059, 0.078, 1)
+mouse_filter = 2
+color = Color(0.025, 0.065, 0.08, 0.9)
 
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1
-anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 32
-theme_override_constants/margin_bottom = 24
 
 [node name="Layout" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 20
 
 [node name="Header" type="HBoxContainer" parent="Margin/Layout"]
 layout_mode = 2
-[node name="Title" type="Label" parent="Margin/Layout/Header"]
+theme_override_constants/separation = 20
+
+[node name="Crest" type="TextureRect" parent="Margin/Layout/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(56,56)
+texture = ExtResource("Crest")
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Titles" type="VBoxContainer" parent="Margin/Layout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_type_variation = &"HeadingLabel"
-text = "Configurações"
-[node name="BackButton" type="Button" parent="Margin/Layout/Header"]
-unique_name_in_owner = true
+theme_override_constants/separation = 4
+
+[node name="Kicker" type="Label" parent="Margin/Layout/Header/Titles"]
 layout_mode = 2
-custom_minimum_size = Vector2(100, 44)
-text = "Voltar"
+mouse_filter = 2
+text = "AETHERLANDS  /  SUA EXPERIÊNCIA"
+theme_type_variation = &"SetupKicker"
+
+[node name="Title" type="Label" parent="Margin/Layout/Header/Titles"]
+layout_mode = 2
+mouse_filter = 2
+text = "Configurações"
+theme_type_variation = &"SetupTitle"
 
 [node name="Body" type="HBoxContainer" parent="Margin/Layout"]
 layout_mode = 2
 size_flags_vertical = 3
-alignment = 1
-theme_override_constants/separation = 12
-[node name="LeftGutter" type="Control" parent="Margin/Layout/Body"]
+theme_override_constants/separation = 24
+
+[node name="CategoryScroll" type="ScrollContainer" parent="Margin/Layout/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(220,0)
+horizontal_scroll_mode = 0
+follow_focus = true
+
+[node name="Categories" type="VBoxContainer" parent="Margin/Layout/Body/CategoryScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-[node name="Categories" type="VBoxContainer" parent="Margin/Layout/Body"]
+theme_override_constants/separation = 12
+
+[node name="CategoryLabel" type="Label" parent="Margin/Layout/Body/CategoryScroll/Categories"]
 layout_mode = 2
-custom_minimum_size = Vector2(210, 0)
-size_flags_vertical = 4
-theme_override_constants/separation = 8
-[node name="AudioCategory" type="Button" parent="Margin/Layout/Body/Categories"]
+mouse_filter = 2
+text = "PREFERÊNCIAS"
+theme_type_variation = &"SetupKicker"
+
+[node name="AudioCategory" type="Button" parent="Margin/Layout/Body/CategoryScroll/Categories"]
 unique_name_in_owner = true
 layout_mode = 2
 toggle_mode = true
+custom_minimum_size = Vector2(0,56)
 text = "Áudio"
-[node name="VideoCategory" type="Button" parent="Margin/Layout/Body/Categories"]
+alignment = 0
+theme_type_variation = &"SetupSmallButton"
+mouse_default_cursor_shape = 2
+
+[node name="VideoCategory" type="Button" parent="Margin/Layout/Body/CategoryScroll/Categories"]
 unique_name_in_owner = true
 layout_mode = 2
 toggle_mode = true
+custom_minimum_size = Vector2(0,56)
 text = "Vídeo"
-[node name="AccessibilityCategory" type="Button" parent="Margin/Layout/Body/Categories"]
+alignment = 0
+theme_type_variation = &"SetupSmallButton"
+mouse_default_cursor_shape = 2
+
+[node name="AccessibilityCategory" type="Button" parent="Margin/Layout/Body/CategoryScroll/Categories"]
 unique_name_in_owner = true
 layout_mode = 2
 toggle_mode = true
+custom_minimum_size = Vector2(0,56)
 text = "Interface"
-[node name="ControlsCategory" type="Button" parent="Margin/Layout/Body/Categories"]
+alignment = 0
+theme_type_variation = &"SetupSmallButton"
+mouse_default_cursor_shape = 2
+
+[node name="ControlsCategory" type="Button" parent="Margin/Layout/Body/CategoryScroll/Categories"]
 unique_name_in_owner = true
 layout_mode = 2
 toggle_mode = true
+custom_minimum_size = Vector2(0,56)
 text = "Controles"
-[node name="HelpCategory" type="Button" parent="Margin/Layout/Body/Categories"]
+alignment = 0
+theme_type_variation = &"SetupSmallButton"
+mouse_default_cursor_shape = 2
+
+[node name="HelpCategory" type="Button" parent="Margin/Layout/Body/CategoryScroll/Categories"]
 unique_name_in_owner = true
 layout_mode = 2
 toggle_mode = true
+custom_minimum_size = Vector2(0,56)
 text = "Ajuda"
-[node name="DebugButton" type="Button" parent="Margin/Layout/Body/Categories"]
+alignment = 0
+theme_type_variation = &"SetupSmallButton"
+mouse_default_cursor_shape = 2
+
+[node name="DebugButton" type="Button" parent="Margin/Layout/Body/CategoryScroll/Categories"]
 unique_name_in_owner = true
 layout_mode = 2
 visible = false
 text = "Developer Tools"
 
+[node name="Hint" type="Label" parent="Margin/Layout/Body/CategoryScroll/Categories"]
+layout_mode = 2
+mouse_filter = 2
+text = "Ajustes aplicados na hora e salvos automaticamente."
+theme_type_variation = &"SetupMuted"
+autowrap_mode = 3
+
 [node name="PagePanel" type="PanelContainer" parent="Margin/Layout/Body"]
-custom_minimum_size = Vector2(680, 440)
-layout_mode = 2
-size_flags_vertical = 4
-theme_type_variation = &"SurfacePanel"
-[node name="Pages" type="MarginContainer" parent="Margin/Layout/Body/PagePanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 20
-
-[node name="AudioPage" type="VBoxContainer" parent="Margin/Layout/Body/PagePanel/Pages"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 16
-[node name="Title" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/AudioPage"]
-layout_mode = 2
-theme_type_variation = &"SubheadingLabel"
-text = "Áudio"
-[node name="MusicLabel" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/AudioPage"]
-layout_mode = 2
-text = "Música"
-[node name="MusicSlider" type="HSlider" parent="Margin/Layout/Body/PagePanel/Pages/AudioPage"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(480, 0)
-layout_mode = 2
-size_flags_horizontal = 0
-min_value = 0.0
-max_value = 1.0
-step = 0.05
-[node name="SfxLabel" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/AudioPage"]
-layout_mode = 2
-text = "Efeitos"
-[node name="SfxSlider" type="HSlider" parent="Margin/Layout/Body/PagePanel/Pages/AudioPage"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(480, 0)
-layout_mode = 2
-size_flags_horizontal = 0
-min_value = 0.0
-max_value = 1.0
-step = 0.05
-
-[node name="VideoPage" type="VBoxContainer" parent="Margin/Layout/Body/PagePanel/Pages"]
-unique_name_in_owner = true
-layout_mode = 2
-visible = false
-theme_override_constants/separation = 8
-[node name="Title" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
-layout_mode = 2
-theme_type_variation = &"SubheadingLabel"
-text = "Vídeo"
-[node name="WindowModeLabel" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
-layout_mode = 2
-text = "Modo de janela"
-[node name="WindowModeOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
-unique_name_in_owner = true
-layout_mode = 2
-[node name="ResolutionLabel" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
-layout_mode = 2
-text = "Resolução"
-[node name="ResolutionOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
-unique_name_in_owner = true
-layout_mode = 2
-[node name="VSyncCheckButton" type="CheckButton" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Sincronização vertical (V-Sync)"
-[node name="AntiAliasingLabel" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
-layout_mode = 2
-text = "Anti-aliasing"
-[node name="AntiAliasingOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
-unique_name_in_owner = true
-layout_mode = 2
-[node name="ShadowQualityLabel" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
-layout_mode = 2
-text = "Qualidade das sombras"
-[node name="ShadowQualityOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
-unique_name_in_owner = true
-layout_mode = 2
-[node name="GraphicsHint" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"MutedLabel"
-autowrap_mode = 3
-text = "Aplicado na hora, sem reiniciar. FXAA e MSAA não se combinam: escolher um desliga o outro."
-[node name="ResetGraphicsButton" type="Button" parent="Margin/Layout/Body/PagePanel/Pages/VideoPage"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 0
-text = "Restaurar padrões gráficos"
-
-[node name="AccessibilityPage" type="VBoxContainer" parent="Margin/Layout/Body/PagePanel/Pages"]
-unique_name_in_owner = true
-layout_mode = 2
-visible = false
-theme_override_constants/separation = 16
-[node name="Title" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/AccessibilityPage"]
-layout_mode = 2
-theme_type_variation = &"SubheadingLabel"
-text = "Interface e acessibilidade"
-[node name="ScaleLabel" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/AccessibilityPage"]
-layout_mode = 2
-text = "Escala da interface"
-[node name="UIScaleOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/Pages/AccessibilityPage"]
-unique_name_in_owner = true
-layout_mode = 2
-[node name="ScaleHint" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/AccessibilityPage"]
-layout_mode = 2
-theme_type_variation = &"MutedLabel"
-autowrap_mode = 3
-text = "Dimensiona fontes e controles sem alterar o mapa ou a câmera."
-[node name="ReducedMotionCheck" type="CheckButton" parent="Margin/Layout/Body/PagePanel/Pages/AccessibilityPage"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Movimento reduzido"
-[node name="MotionHint" type="Label" parent="Margin/Layout/Body/PagePanel/Pages/AccessibilityPage"]
-layout_mode = 2
-theme_type_variation = &"MutedLabel"
-autowrap_mode = 3
-text = "Remove transições e pulsos cosméticos; feedback por texto e estado permanece."
-
-[node name="ControlsPage" type="VBoxContainer" parent="Margin/Layout/Body/PagePanel/Pages"]
-unique_name_in_owner = true
-layout_mode = 2
-visible = false
-[node name="ControlsText" type="RichTextLabel" parent="Margin/Layout/Body/PagePanel/Pages/ControlsPage"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-bbcode_enabled = true
-
-[node name="HelpPage" type="VBoxContainer" parent="Margin/Layout/Body/PagePanel/Pages"]
-unique_name_in_owner = true
-layout_mode = 2
-visible = false
-[node name="GlossaryText" type="RichTextLabel" parent="Margin/Layout/Body/PagePanel/Pages/HelpPage"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-bbcode_enabled = true
-
-[node name="RightGutter" type="Control" parent="Margin/Layout/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(680,440)
+theme_type_variation = &"SetupPanel"
+
+[node name="PageScroll" type="ScrollContainer" parent="Margin/Layout/Body/PagePanel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+follow_focus = true
+
+[node name="Pages" type="VBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AudioPage" type="VBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = true
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+
+[node name="VideoPage" type="VBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+
+[node name="AccessibilityPage" type="VBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+
+[node name="ControlsPage" type="VBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+
+[node name="HelpPage" type="VBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AudioPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "Áudio"
+theme_type_variation = &"SetupHeading"
+
+[node name="Introduction" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AudioPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "A trilha do seu reino e os sons da sua jornada."
+theme_type_variation = &"SetupMuted"
+autowrap_mode = 3
+
+[node name="MusicRow" type="HBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AudioPage"]
+layout_mode = 2
+
+[node name="MusicLabel" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AudioPage/MusicRow"]
+layout_mode = 2
+mouse_filter = 2
+text = "Volume da música"
+theme_type_variation = &"SetupBody"
+size_flags_horizontal = 3
+
+[node name="MusicValue" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AudioPage/MusicRow"]
+layout_mode = 2
+mouse_filter = 2
+text = "100%"
+theme_type_variation = &"SetupKicker"
+unique_name_in_owner = true
+
+[node name="MusicSlider" type="HSlider" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AudioPage"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(480,44)
+min_value = 0.0
+max_value = 1.0
+step = 0.05
+
+[node name="SfxRow" type="HBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AudioPage"]
+layout_mode = 2
+
+[node name="SfxLabel" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AudioPage/SfxRow"]
+layout_mode = 2
+mouse_filter = 2
+text = "Volume dos efeitos"
+theme_type_variation = &"SetupBody"
+size_flags_horizontal = 3
+
+[node name="SfxValue" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AudioPage/SfxRow"]
+layout_mode = 2
+mouse_filter = 2
+text = "100%"
+theme_type_variation = &"SetupKicker"
+unique_name_in_owner = true
+
+[node name="SfxSlider" type="HSlider" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AudioPage"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(480,44)
+min_value = 0.0
+max_value = 1.0
+step = 0.05
+
+[node name="Tip" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AudioPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "Use as setas para ajustar os volumes com precisão."
+theme_type_variation = &"SetupMuted"
+autowrap_mode = 3
+
+[node name="Title" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "Vídeo"
+theme_type_variation = &"SetupHeading"
+
+[node name="DisplayHeading" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "TELA"
+theme_type_variation = &"SetupKicker"
+
+[node name="WindowModeRow" type="HBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="WindowModeLabel" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage/WindowModeRow"]
+layout_mode = 2
+mouse_filter = 2
+text = "Modo de janela"
+theme_type_variation = &"SetupBody"
+custom_minimum_size = Vector2(220,0)
+vertical_alignment = 1
+
+[node name="WindowModeOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage/WindowModeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0,44)
+mouse_default_cursor_shape = 2
+
+[node name="ResolutionRow" type="HBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ResolutionLabel" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage/ResolutionRow"]
+layout_mode = 2
+mouse_filter = 2
+text = "Resolução"
+theme_type_variation = &"SetupBody"
+custom_minimum_size = Vector2(220,0)
+vertical_alignment = 1
+
+[node name="ResolutionOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage/ResolutionRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0,44)
+mouse_default_cursor_shape = 2
+
+[node name="VSyncCheckButton" type="CheckButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0,44)
+text = "Sincronização vertical (V-Sync)"
+tooltip_text = "Sincroniza a imagem com a atualização do monitor."
+mouse_default_cursor_shape = 2
+
+[node name="QualityHeading" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "QUALIDADE VISUAL"
+theme_type_variation = &"SetupKicker"
+
+[node name="AntiAliasingRow" type="HBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="AntiAliasingLabel" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage/AntiAliasingRow"]
+layout_mode = 2
+mouse_filter = 2
+text = "Suavização de bordas"
+theme_type_variation = &"SetupBody"
+custom_minimum_size = Vector2(220,0)
+vertical_alignment = 1
+
+[node name="AntiAliasingOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage/AntiAliasingRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0,44)
+mouse_default_cursor_shape = 2
+
+[node name="ShadowQualityRow" type="HBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ShadowQualityLabel" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage/ShadowQualityRow"]
+layout_mode = 2
+mouse_filter = 2
+text = "Qualidade das sombras"
+theme_type_variation = &"SetupBody"
+custom_minimum_size = Vector2(220,0)
+vertical_alignment = 1
+
+[node name="ShadowQualityOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage/ShadowQualityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0,44)
+mouse_default_cursor_shape = 2
+
+[node name="RenderScaleRow" type="HBoxContainer" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="RenderScaleLabel" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage/RenderScaleRow"]
+layout_mode = 2
+mouse_filter = 2
+text = "Resolução 3D"
+theme_type_variation = &"SetupBody"
+custom_minimum_size = Vector2(220,0)
+vertical_alignment = 1
+
+[node name="RenderScaleOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage/RenderScaleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0,44)
+tooltip_text = "Desenha o mundo em menos pixels e amplia com AMD FSR; a interface continua nítida. Para placas de vídeo fracas."
+mouse_default_cursor_shape = 2
+
+[node name="ScreenEffectsCheck" type="CheckButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0,44)
+text = "Oclusão de ambiente e reflexos"
+tooltip_text = "Sombreamento de contato (SSAO) e reflexos na água (SSR). Desligar ajuda placas de vídeo fracas."
+mouse_default_cursor_shape = 2
+
+[node name="EffectsHeading" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "AMBIENTE E ILUMINAÇÃO"
+theme_type_variation = &"SetupKicker"
+
+[node name="DayNightCheck" type="CheckButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0,44)
+text = "Ciclo de dia e noite"
+tooltip_text = "Alterna dia e noite em tempo real. Desligado, permanece meio-dia."
+mouse_default_cursor_shape = 2
+
+[node name="WeatherCheck" type="CheckButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0,44)
+text = "Clima: chuva e neve"
+tooltip_text = "Ativa os efeitos visuais e sonoros de chuva e neve."
+mouse_default_cursor_shape = 2
+
+[node name="MapLightingCheck" type="CheckButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0,44)
+text = "Iluminação dos recursos"
+tooltip_text = "Cristais e nódulos iluminam o terreno ao redor. O brilho dos modelos é preservado."
+mouse_default_cursor_shape = 2
+
+[node name="CreatureLightingCheck" type="CheckButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0,44)
+text = "Iluminação das manifestações"
+tooltip_text = "Os núcleos das Grandes Manifestações iluminam o terreno e as tropas próximas."
+mouse_default_cursor_shape = 2
+
+[node name="GraphicsHint" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "As mudanças são aplicadas imediatamente."
+theme_type_variation = &"SetupMuted"
+unique_name_in_owner = true
+autowrap_mode = 3
+
+[node name="ResetGraphicsButton" type="Button" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/VideoPage"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+custom_minimum_size = Vector2(0,44)
+text = "Restaurar padrões gráficos"
+theme_type_variation = &"SetupSmallButton"
+mouse_default_cursor_shape = 2
+
+[node name="Title" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AccessibilityPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "Interface e acessibilidade"
+theme_type_variation = &"SetupHeading"
+autowrap_mode = 3
+
+[node name="ScaleLabel" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AccessibilityPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "Escala da interface"
+theme_type_variation = &"SetupBody"
+
+[node name="UIScaleOption" type="OptionButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AccessibilityPage"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0,44)
+
+[node name="ScaleHint" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AccessibilityPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "Aumente fontes e controles para uma leitura mais confortável."
+theme_type_variation = &"SetupMuted"
+autowrap_mode = 3
+
+[node name="ReducedMotionCheck" type="CheckButton" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AccessibilityPage"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0,44)
+text = "Movimento reduzido"
+
+[node name="MotionHint" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/AccessibilityPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "Remove transições e pulsos cosméticos, mantendo as indicações de texto e estado."
+theme_type_variation = &"SetupMuted"
+autowrap_mode = 3
+
+[node name="Title" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/ControlsPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "Controles"
+theme_type_variation = &"SetupHeading"
+
+[node name="ControlsText" type="RichTextLabel" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/ControlsPage"]
+unique_name_in_owner = true
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+focus_mode = 2
+
+[node name="Title" type="Label" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/HelpPage"]
+layout_mode = 2
+mouse_filter = 2
+text = "Guia do reino"
+theme_type_variation = &"SetupHeading"
+
+[node name="GlossaryText" type="RichTextLabel" parent="Margin/Layout/Body/PagePanel/PageScroll/Pages/HelpPage"]
+unique_name_in_owner = true
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+focus_mode = 2
+
+[node name="Divider" type="HSeparator" parent="Margin/Layout"]
+layout_mode = 2
+
+[node name="Footer" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="BackButton" type="Button" parent="Margin/Layout/Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(160,52)
+text = "Voltar"
+theme_type_variation = &"SetupSmallButton"
+mouse_default_cursor_shape = 2
+
+[node name="NavigationHint" type="Label" parent="Margin/Layout/Footer"]
+layout_mode = 2
+mouse_filter = 2
+text = "Esc  Voltar  ·  Tab / setas  Navegar"
+theme_type_variation = &"SetupMuted"
+size_flags_horizontal = 3
+vertical_alignment = 1
+
+[node name="Status" type="Label" parent="Margin/Layout/Footer"]
+layout_mode = 2
+mouse_filter = 2
+text = "ALTERAÇÕES SALVAS AUTOMATICAMENTE"
+theme_type_variation = &"SetupKicker"
+vertical_alignment = 1

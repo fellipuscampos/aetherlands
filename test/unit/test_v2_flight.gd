@@ -1,6 +1,7 @@
 extends "res://test/unit/v2_combat_fixture.gd"
 
-## Perfil de movimento FLYING (voo tático) e a vulnerabilidade a ataques à distância — Aetherlands V2 Fase 9. O Cavaleiro de Grifo é a primeira unidade FLYING:
+## Perfil de movimento FLYING (voo tático) e a vulnerabilidade a ataques à distância — Aetherlands V2 Fase 9. (2026-10-10: o Cavaleiro de Grifo
+## não voa mais; os testes do SISTEMA usam a unidade voadora de teste _flyer da fixture, com os números dele.) Uma unidade FLYING:
 ## atravessa qualquer terreno e qualquer unidade no meio do caminho (até o Movimento, em distância geométrica), mas TERMINA só num tile de terra livre (o mesmo
 ## que uma unidade terrestre poderia ocupar). A Carga e a Retirada Tática usam o perfil aéreo sem código específico. A unidade terrestre segue EXATAMENTE como
 ## antes. Números = BALANCE PLACEHOLDER.
@@ -11,12 +12,12 @@ func _rival_with_ranger(me: PlayerData) -> PlayerData:
 	assert_true(me.is_at_war_with(rival), "pré-condição: em guerra")
 	return rival
 
-## Cavaleiro de Grifo (N9) em (0,0) e um rival em guerra.
+## Unidade voadora de teste (números do Grifo, perfil FLYING) em (0,0) e um rival em guerra.
 func _sky() -> Dictionary:
 	var grid := _world()
 	var me := _cavalry_player(9)
 	var rival := _rival_of(me)
-	var griffon := _unit(grid, me, GRIFFON, Vector2i(0, 0))
+	var griffon := _flyer(grid, me, Vector2i(0, 0))
 	return {"grid": grid, "me": me, "rival": rival, "unit": griffon}
 
 func _wall_of(grid: HexGrid, q: int, terrain: HexTileData.TerrainType) -> void:
@@ -26,10 +27,12 @@ func _wall_of(grid: HexGrid, q: int, terrain: HexTileData.TerrainType) -> void:
 
 # --- O perfil é dado da unidade; o terrestre não muda -------------------------------------------------------------------------------------
 
-func test_only_the_griffon_has_the_flying_profile_and_every_other_kind_is_ground_or_infiltrator():
+func test_only_the_manifestations_fly_and_every_other_kind_is_ground_or_infiltrator():
+	assert_eq(UnitDatabase.create_unit(GRIFFON).movement_profile, UnitData.MovementProfile.GROUND, "2026-10-10: o Cavaleiro de Grifo anda pelo chão (4 raças)")
+	assert_false(UnitDatabase.create_unit(GRIFFON).is_flying())
 	for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
 		var data := UnitDatabase.create_unit(kind)
-		if kind in [GRIFFON, "v2_manifestation_seraph", "v2_manifestation_archdemon", "v2_manifestation_veil_archon", "v2_manifestation_elemental_primordial"]:
+		if kind in ["v2_manifestation_seraph", "v2_manifestation_archdemon", "v2_manifestation_veil_archon", "v2_manifestation_elemental_primordial"]:
 			assert_eq(data.movement_profile, UnitData.MovementProfile.FLYING)
 			assert_true(data.has_trait(UnitData.TRAIT_FLYING), "o traço semântico acompanha o perfil")
 		else:
@@ -54,8 +57,10 @@ func test_a_ground_unit_takes_exactly_the_old_reachable_call():
 	_unit(grid, me, WARRIOR, Vector2i(-1, 1))
 	for kind in [CAVALIER, WARRIOR, ARMORED]:
 		var unit := _unit(grid, me, kind, Vector2i(-2 if kind == CAVALIER else (2 if kind == WARRIOR else 3), -2))
-		var old := grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies, unit.embarked)
+		var old := grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies, unit.can_embark())
 		assert_eq(grid.unit_reachable(unit), old, kind)
+		# Técnicas (allow_water = false): o Dijkstra só por terra de antes do embarque automático.
+		assert_eq(grid.unit_reachable(unit, -1.0, false, false), grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies, false), kind)
 	var v1_flat := grid.compute_reachable(Vector2i(0, 0), 3.0, me, false, false, false)
 	var flat_off := grid.compute_reachable(Vector2i(0, 0), 3.0, me)
 	assert_eq(v1_flat, flat_off, "flat_cost desligado é o comportamento de sempre")
@@ -171,10 +176,10 @@ func test_the_flight_path_is_a_straight_line_with_the_right_length_ending_at_the
 func test_the_animation_uses_the_straight_line_for_the_flyer_and_never_crashes_over_water():
 	var s := _sky()
 	_wall_of(s.grid, 2, HexTileData.TerrainType.OCEAN)
-	var waypoints: Array[Vector3] = s.grid._animation_waypoints(Vector2i(0, 0), Vector2i(4, 0), s.unit, false)
+	var waypoints: Array[Vector3] = s.grid._animation_waypoints(Vector2i(0, 0), Vector2i(4, 0), s.unit)
 	assert_eq(waypoints.size(), 4)
 	var ground := _unit(s.grid, s.me, CAVALIER, Vector2i(0, 3))
-	assert_true(s.grid._animation_waypoints(Vector2i(0, 3), Vector2i(1, 3), ground, false).size() <= 1)
+	assert_true(s.grid._animation_waypoints(Vector2i(0, 3), Vector2i(1, 3), ground).size() <= 1)
 
 # --- Carga aérea ---------------------------------------------------------------------------------------------------------------------------
 
@@ -184,7 +189,7 @@ func test_ground_cavalry_is_stopped_by_a_water_barrier_and_the_griffon_charges_a
 	var rival := _rival_of(me)
 	_wall_of(grid, 2, HexTileData.TerrainType.OCEAN)
 	var ground := _unit(grid, me, CAVALIER, Vector2i(0, 0))
-	var griffon := _unit(grid, me, GRIFFON, Vector2i(0, 1))
+	var griffon := _flyer(grid, me, Vector2i(0, 1))
 	var foe := _foe(grid, rival, Vector2i(4, 0))
 	assert_false(V2TechniqueRuntime.can_use(ground, CHARGE, grid), "a cavalaria terrestre não atravessa o mar")
 	assert_eq(V2TechniqueRuntime.unavailable_reason(ground, CHARGE, grid), "Sem rota até um tile adjacente ao alvo.")
@@ -194,7 +199,7 @@ func test_ground_cavalry_is_stopped_by_a_water_barrier_and_the_griffon_charges_a
 	assert_eq(HexMetrics.axial_distance(griffon.coord, foe.coord), 1, "termina adjacente")
 	assert_false(grid.get_tile(griffon.coord).blocks_land_units(), "num tile de terra")
 	assert_eq(griffon.coord, Vector2i(3, 0), "o tile adjacente legal de menor custo")
-	assert_almost_eq(before - foe.hp, _formula_damage(grid, 10.0, 1.5, foe), 0.0001, "10,0 x 1,5 - 3,0 x 0,5")
+	assert_almost_eq(before - foe.hp, _formula_damage(grid, 16.0, 1.5, foe), 0.0001, "10,0 x 1,5 - 3,0 x 0,5")
 
 func test_the_aerial_charge_crosses_units_in_the_middle_of_the_route():
 	var s := _sky()
@@ -257,7 +262,7 @@ func test_a_walled_in_griffon_still_retreats_ground_cavalry_would_have_nowhere_t
 		_set_terrain(grid, coord, HexTileData.TerrainType.MOUNTAINS)
 	assert_eq(V2TechniqueRuntime.unavailable_reason(ground, RETREAT, grid), "Nenhum tile livre ao alcance.")
 	grid.remove_unit(ground)
-	var griffon := _unit(grid, me, GRIFFON, Vector2i(0, 0))
+	var griffon := _flyer(grid, me, Vector2i(0, 0))
 	var tiles := V2TechniqueRuntime.relocation_tiles(griffon, _technique(RETREAT), grid)
 	assert_eq(tiles.size(), 30, "36 do raio 3, menos os 6 da montanha")
 	assert_true(Vector2i(2, 0) in tiles and Vector2i(-3, 0) in tiles)
@@ -312,7 +317,7 @@ func test_a_melee_strike_technique_is_not_ranged_either():
 	var warrior := _unit(s.grid, warrior_owner, WARRIOR, Vector2i(1, 0))
 	var before: float = s.unit.hp
 	var predicted: float = CombatResolver.predict(warrior, s.unit, s.grid, _technique(POWER).strike_multiplier).damage_to_defender
-	assert_almost_eq(predicted, _formula_damage(s.grid, 5.0, 1.6, s.unit), 0.0001, "Golpe Poderoso é corpo a corpo: sem +25%")
+	assert_almost_eq(predicted, _formula_damage(s.grid, 7.5, 1.6, s.unit), 0.0001, "Golpe Poderoso é corpo a corpo: sem +25%")
 	assert_eq(s.unit.hp, before)
 
 func test_precise_shot_gets_the_bonus_only_against_the_griffon_and_predict_equals_resolve():
@@ -378,7 +383,7 @@ func test_the_ranged_bonus_leaves_the_counterattack_and_the_griffons_own_attacks
 	var rival := _rival_with_ranger(s.me)
 	var archer := _unit(s.grid, rival, ARCHER, Vector2i(1, 0))
 	var griffon_hit := CombatResolver.predict(s.unit, archer, s.grid)
-	assert_almost_eq(griffon_hit.damage_to_defender, _formula_damage(s.grid, 10.0, 1.0, archer), 0.0001, "o ataque do Grifo não muda")
+	assert_almost_eq(griffon_hit.damage_to_defender, _formula_damage(s.grid, 16.0, 1.0, archer), 0.0001, "o ataque do Grifo não muda")
 	assert_eq(UnitAbilities.ranged_vulnerability_multiplier(s.unit, archer), 1.0)
 
 func test_the_griffon_is_still_mounted_so_the_brace_spears_counter_stacks_with_the_vulnerability_sources_separately():
@@ -399,8 +404,8 @@ func test_no_griffon_id_and_no_name_appears_in_the_movement_and_combat_foundatio
 		for forbidden in ["griffon_rider", "Cavaleiro de Grifo", "v2_legendary_"]:
 			assert_false(source.contains(forbidden), "%s cita '%s'" % [path, forbidden])
 
-func test_the_flight_text_comes_from_the_profile_and_only_the_griffon_has_it():
-	assert_eq(UnitAbilities.flight_text(UnitDatabase.create_unit(GRIFFON)), "Voo tático: atravessa terreno e unidades; pousa só em terra livre.")
-	for kind in [CAVALIER, SHOCK, ARMORED, WARRIOR, "griffin", "cavalry"]:
+func test_the_flight_text_comes_from_the_profile():
+	assert_eq(UnitAbilities.flight_text(_flyer_data()), "Voo tático: atravessa terreno e unidades; pousa só em terra livre.")
+	for kind in [GRIFFON, CAVALIER, SHOCK, ARMORED, WARRIOR, "griffin", "cavalry"]:
 		assert_eq(UnitAbilities.flight_text(UnitDatabase.create_unit(kind)), "", kind)
 	assert_eq(UnitAbilities.flight_text(null), "")

@@ -368,6 +368,7 @@ func test_regional_systems_cost_nothing_per_frame_and_little_per_turn():
 	for record in WorldEventManager.regional_threats:
 		player.explored_tiles[record.coord] = true
 	# Planner por capital (colocação num mundo já cheio: pior caso de busca).
+	var opening_budget := int(MonsterEcologySystem.deficits_by_tier().get(MonsterEcologyData.TIER_BASIC, 0))
 	var started := Time.get_ticks_usec()
 	var placed := RegionalThreatPlanner.place_regional(target, player, 1, player.cities[0].coord + Vector2i(0, 0), [GameManager.players[0].cities[0].coord], 1)
 	var planner_us := Time.get_ticks_usec() - started
@@ -395,7 +396,10 @@ func test_regional_systems_cost_nothing_per_frame_and_little_per_turn():
 	RegionalThreatSystem.spawn_guardians(target, 45)
 	var guardian_us := Time.get_ticks_usec() - started
 	gut.p("[D2 perf] planner=%d us/capital | worldview capture=%d us | known defense + plan=%d us | directives+wake=%d us/turn | guardians=%d us (once)" % [planner_us, capture_us, plan_us, directive_us, guardian_us])
-	assert_true(bool(placed.ok))
+	if opening_budget <= 0:
+		assert_true(not bool(placed.ok) or String(placed.source) == "reused", "mundo cheio só permite reuso, nunca uma população regional extra")
+	else:
+		assert_true(bool(placed.ok))
 	assert_lt(planner_us, 250000, "colocação rara: poucos ms")
 	assert_lt(plan_us, 5000)
 	assert_lt(directive_us, 5000, "custo por turno pequeno")

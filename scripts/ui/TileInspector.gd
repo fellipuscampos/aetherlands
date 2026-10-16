@@ -38,7 +38,7 @@ const KIND_RESOURCE := "resource"
 const KIND_HAZARD := "hazard" # V3 / Etapa 3: Raízes do Mundo, Contaminação Micótica, Rastro Subterrâneo (temporários)
 const KIND_TERRITORY := "territory" # V3 / Etapa 3: território ecológico SEM estrutura (não é covil) / área limpa
 
-const REPOPULATION_HELP := "Criaturas podem repovoar regiões distantes ao longo da partida. Áreas recentemente limpas permanecem seguras por algum tempo."
+const REPOPULATION_HELP := "Destruir um covil impede novos spawns num raio de 8 hexágonos por 20 rodadas. Depois, áreas selvagens fora de visão podem ser reocupadas."
 
 const STATE_UNSEEN := "unseen"
 const STATE_EXPLORED := "explored"
@@ -129,6 +129,19 @@ static func _unit_is_perceived(unit: Unit, viewer: PlayerData, state: String, he
 		return true
 	return state == STATE_VISIBLE
 
+## Fronteiras fechadas (HexGrid.city_has_closed_borders): o que o território de `city` significa para `viewer`.
+## "" enquanto a cidade ainda não evoluiu (fronteira aberta).
+static func closed_border_line(hex_grid: HexGrid, city: City, viewer: PlayerData) -> String:
+	if hex_grid == null or not hex_grid.city_has_closed_borders(city):
+		return ""
+	if city.owner_player == viewer:
+		return "Fronteiras fechadas: outros reinos só entram em guerra com você."
+	if viewer != null and viewer.is_at_war_with(city.owner_player):
+		return "Fronteiras fechadas — em guerra: suas unidades podem entrar."
+	if viewer != null and viewer.has_open_borders_with(city.owner_player):
+		return "Fronteiras abertas por acordo: suas unidades podem entrar."
+	return "Fronteiras fechadas: suas unidades não entram (só em guerra ou com fronteiras abertas)."
+
 static func _faction_line(owner: PlayerData, viewer: PlayerData) -> String:
 	if owner == null:
 		return "Facção: Monstros (hostis a todos)"
@@ -153,6 +166,9 @@ static func _city_entry(city: City, hex_grid: HexGrid, viewer: PlayerData) -> Di
 	# O City Level é a informação estrutural primária da cidade (Fase 13; Fase 25 — não existe mais população).
 	lines.append("%s (%s)" % [V2CityLevelData.level_name(city.city_level), "sua" if own else "rival"])
 	lines.append(_faction_line(city.owner_player, viewer))
+	# Fronteiras fechadas de uma cidade alheia: fato público (o nível da cidade já está na primeira linha).
+	if not own and hex_grid.city_has_closed_borders(city):
+		lines.append(closed_border_line(hex_grid, city, viewer))
 	# Aetherlands V2, Fase 16 — Fortificação é fato público (qualquer observador vê a muralha); o
 	# escudo só existe com ela e aparece uma vez, no bloco abaixo.
 	lines.append("Vida: %d/%d" % [int(city.hp), int(city.max_hp())])
@@ -177,6 +193,7 @@ static func _city_entry(city: City, hex_grid: HexGrid, viewer: PlayerData) -> Di
 			buildings_line += " (%s)" % ", ".join(built_names)
 		lines.append(buildings_line)
 		lines.append("Território: %d tiles | Anexação: %d ponto(s)" % [city.owned_tiles.size(), city.annexation_points])
+		lines.append(closed_border_line(hex_grid, city, viewer) if hex_grid.city_has_closed_borders(city) else "Fronteiras abertas (fecham quando a cidade evoluir para %s)." % V2CityLevelData.level_name(HexGrid.CLOSED_BORDERS_FROM_LEVEL))
 		if not city.resource_improvements.is_empty():
 			var improvement_names: Array[String] = []
 			for coord in city.resource_improvements:
@@ -241,7 +258,7 @@ static func unit_traits(unit: Unit) -> Array[String]:
 	if data.attack_range > 1:
 		traits.append("Ataque à distância (alcance %d)" % data.attack_range)
 	if data.ignores_terrain_defense:
-		traits.append("Ignora defesa de terreno")
+		traits.append("Ignora fortificações e terreno modificado")
 	if data.regen_fraction > 0.0:
 		traits.append("Regenera %d%% da vida por turno" % int(round(data.regen_fraction * 100.0)))
 	if data.can_found_city:
@@ -331,7 +348,7 @@ static func _unit_entry(unit: Unit, hex_grid: HexGrid, viewer: PlayerData) -> Di
 	lines.append("%s%s" % [unit_class_label(unit), " | %s" % unit.veterancy_title() if unit.veterancy_level > 0 else ""])
 	lines.append(_faction_line(unit.owner_player, viewer))
 	var movement := "Movimento %.1f/%.1f" % [unit.movement_left, data.movement_points] if own else "Movimento %.1f" % data.movement_points
-	lines.append("HP %d/%d | Ataque %.1f | Defesa %.1f | %s" % [int(unit.hp), int(data.max_hp), data.attack, data.defense, movement])
+	lines.append("HP %d/%d | Ataque %.1f | Defesa %.1f | %s" % [int(unit.presentation_hp()), int(data.max_hp), data.attack, data.defense, movement])
 	var traits := unit_traits(unit)
 	if not traits.is_empty():
 		lines.append(" · ".join(traits))
@@ -345,25 +362,28 @@ static func _unit_entry(unit: Unit, hex_grid: HexGrid, viewer: PlayerData) -> Di
 static func _monster_entry(unit: Unit, hex_grid: HexGrid) -> Dictionary:
 	var data := unit.unit_data
 	var lines: Array[String] = []
-	var is_boss := unit.is_camp_boss or unit.world_event_managed
+	var is_leader := MonsterEcologySystem.is_lair_leader(unit)
+	var is_boss := is_leader or unit.world_event_managed
 	var lair_kind: String = _lair_kind_near(unit.coord, hex_grid)
 	if unit.world_event_managed:
 		lines.append("Criatura de evento mundial")
-	elif unit.is_camp_boss:
+	elif is_leader:
 		var home: String = " do covil de %s" % MonsterDatabase.KIND_DATA[lair_kind].unit_name if lair_kind != "" else " do covil"
-		lines.append("Chefe%s — não sai do covil" % home)
+		lines.append("Líder%s — sua derrota permite destruir a estrutura" % home)
 	lines.append(_faction_line(null, null))
 	# V3 / Combat Ecology: tier da ESPÉCIE (Básica/Intermediária/Avançada), independente do papel do covil.
 	var tier := MonsterEcologyData.tier_of(data.visual_kind)
 	if tier != "" and not unit.world_event_managed:
 		lines.append("Criatura %s" % MonsterEcologyData.tier_display(tier))
-	lines.append("HP %d/%d | Ataque %.1f | Defesa %.1f | Movimento %.1f%s" % [int(unit.hp), int(data.max_hp), data.attack, data.defense, data.movement_points, " (voa)" if data.flies else ""])
+	lines.append("HP %d/%d | Ataque %.1f | Defesa %.1f | Movimento %.1f%s" % [int(unit.presentation_hp()), int(data.max_hp), data.attack, data.defense, data.movement_points, " (voa)" if data.flies else ""])
 	var ecology_label := MonsterEcologySystem.behavior_label(unit)
 	if ecology_label != "" and not unit.is_camp_boss:
 		lines.append("Comportamento: %s" % ecology_label)
 	# V3 / Etapa 3: estado de aggro observável (persegue um intruso / desistiu e volta ao território).
 	if MonsterEcologySystem.is_ecology_unit(unit):
-		if bool(unit.ability_state.get("returning", false)):
+		if unit.ability_state.has("retaliation"):
+			lines.append("Estado: voltando ao local do confronto" if bool(unit.ability_state.retaliation.get("returning", false)) else "Estado: reagindo ao agressor (perseguição limitada)")
+		elif bool(unit.ability_state.get("returning", false)):
 			lines.append("Estado: retornando ao território")
 		elif unit.ability_state.has("aggro_target"):
 			lines.append("Estado: perseguindo um intruso (desiste longe do território)")
@@ -383,7 +403,8 @@ static func _monster_entry(unit: Unit, hex_grid: HexGrid) -> Dictionary:
 	if data.gold_reward > 0.0:
 		lines.append("Recompensa por derrotar: %d ouro" % int(data.gold_reward))
 	var kind := KIND_BOSS if is_boss else KIND_MONSTER
-	return {"key": kind, "kind": kind, "tag": data.unit_name, "title": data.unit_name, "lines": lines}
+	var title := "%s — Líder do covil" % data.unit_name if is_leader else data.unit_name
+	return {"key": kind, "kind": kind, "tag": title, "title": title, "lines": lines}
 
 ## V3 / Etapa 3 — perigos e territórios da Combat Ecology no tile. Perigos temporários (raízes, infecção, rastro)
 ## só com o tile VISÍVEL agora (a névoa não revela perigo não observado); território/área limpa com o tile já
@@ -410,7 +431,7 @@ static func _ecology_entries(coord: Vector2i, hex_grid: HexGrid, viewer: PlayerD
 				"Um Verme Colossal ferido fugiu por baixo da terra e emerge aqui no próximo turno.",
 				"Emergir não causa dano — é só fuga."]})
 	for site in MonsterEcologySystem.sites:
-		if site.anchor == coord and site.lair == HexGrid.NO_LAIR:
+		if site.anchor == coord and site.lair == HexGrid.NO_LAIR and not bool(site.get("destroyed", false)):
 			var species := String(site.species)
 			var title := MonsterAbilityFeedback.habitat_name(species)
 			entries.append({"key": "territory", "kind": KIND_TERRITORY, "tag": title, "title": title, "lines": [
@@ -421,7 +442,8 @@ static func _ecology_entries(coord: Vector2i, hex_grid: HexGrid, viewer: PlayerD
 	for entry in MonsterEcologySystem.depleted:
 		if entry.coord == coord and TurnManager.turn_number - int(entry.turn) < MonsterEcologyData.REFILL_DEPLETED_COOLDOWN:
 			entries.append({"key": "territory", "kind": KIND_TERRITORY, "tag": "Área limpa", "title": "Área limpa", "lines": [
-				"As criaturas desta região foram derrotadas.",
+				"Covil destruído: novos spawns bloqueados nesta região por mais %d rodadas." % (MonsterEcologyData.REFILL_DEPLETED_COOLDOWN - (TurnManager.turn_number - int(entry.turn))),
+				"Criaturas sobreviventes ainda podem estar nos arredores.",
 				REPOPULATION_HELP]})
 			break
 	return entries
@@ -442,7 +464,17 @@ static func _lair_entry(lair: LairStructure, coord: Vector2i, hex_grid: HexGrid,
 	var kind_name: String = info.get("unit_name", "Monstros")
 	var lines: Array[String] = [_faction_line(null, null)]
 	if state == STATE_VISIBLE:
-		lines.append("Estrutura: %d/%d HP" % [int(lair.hp), int(lair.max_hp)])
+		lines.append("Estrutura: destruída com um golpe após a derrota do líder")
+		var site := MonsterEcologySystem.site_for_lair(coord)
+		if not site.is_empty():
+			if MonsterEcologySystem.leader_for_lair(coord) != null:
+				lines.append("Estado: protegido pelo líder, mesmo quando ele se afasta")
+				if TurnManager.turn_number < int(site.get("wake_turn", 0)):
+					lines.append("Atividade: preparando-se — defende apenas os arredores")
+			else:
+				lines.append("Estado: vulnerável — ataque a estrutura para interromper os spawns da região")
+		else:
+			lines.append("Derrote os defensores para liberar o ataque à estrutura.")
 		var defenders := 0
 		for area_coord in hex_grid._lair_area(coord):
 			var occupant: Unit = hex_grid.get_unit_at(area_coord)
@@ -450,7 +482,7 @@ static func _lair_entry(lair: LairStructure, coord: Vector2i, hex_grid: HexGrid,
 				defenders += 1
 		if defenders > 0:
 			lines.append("Estado: defendido por %d monstro(s) visível(is)" % defenders)
-		else:
+		elif site.is_empty():
 			lines.append("Estado: sem defensores à vista — pode ser destruído por ataque")
 	else:
 		lines.append("Estado atual desconhecido (fora da sua visão).")
@@ -473,6 +505,7 @@ static func _lair_entry(lair: LairStructure, coord: Vector2i, hex_grid: HexGrid,
 	if float(rewards.mana) > 0.0:
 		reward += " + %d mana" % int(rewards.mana)
 	lines.append(reward)
+	lines.append(REPOPULATION_HELP)
 	return {"key": "lair", "kind": KIND_LAIR, "tag": "Covil", "title": "Covil de %s" % kind_name, "lines": lines}
 
 # ---------------------------------------------------------------------------
@@ -622,10 +655,13 @@ static func _terrain_section(hex_grid: HexGrid, coord: Vector2i, viewer: PlayerD
 	if tile == null or state == STATE_UNSEEN:
 		return {"title": "Terreno", "lines": ["Região inexplorada."]}
 	var lines: Array[String] = []
-	lines.append("Mov. %d | Def. +%d%%" % [tile.movement_cost, int(round(tile.defense_bonus * 100.0))])
+	lines.append("Mov. %d" % tile.movement_cost)
 	var territory_owner: City = hex_grid.city_owning_tile(coord)
 	if territory_owner != null and (territory_owner.owner_player == viewer or state == STATE_VISIBLE):
 		lines.append("Território: %s" % territory_owner.city_name)
+		var borders := closed_border_line(hex_grid, territory_owner, viewer)
+		if borders != "":
+			lines.append(borders)
 	# Fase 20: modificação física de terreno V2 (camada sobre o terreno-base; sem dono) — só com o tile VISÍVEL (a
 	# neblina não revela o estado atual do terreno fora da visão).
 	if state == STATE_VISIBLE:

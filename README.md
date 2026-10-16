@@ -17,30 +17,16 @@ complexidade aumentar:
 
 - Mapa hexagonal 3D real, gerado por codigo (`SurfaceTool`) e desenhado com
   `MultiMeshInstance3D` (milhares de tiles em uma unica draw call).
-- Shader proprio (`shaders/terrain.gdshader`) rodando no pipeline
-  Forward+, com 5 texturas reais CC0 (ambientCG) projetadas em triplanar,
-  uma por FAMILIA de bioma, cada uma escolhida pelo material de verdade
-  que aquele bioma deveria parecer (nao so "textura de chao generica pra
-  tudo"): terreno "comum" (a maioria dos biomas — Planicie, Floresta,
-  Colinas etc.) usa `Ground037`; Neve/Gelo Eterno usa `Snow006`; Deserto
-  usa `Ground033` (areia); Lava usa `Rock035` (pedra vulcanica escura);
-  Campos de Cristal usa `Ice003` (gelo rachado/facetado, tingido na cor
-  arcana do bioma). Cada uma das 4 especiais AINDA ganha um efeito
-  procedural por cima da textura real (reportado pelo usuario: "os
-  biomas nao parecem bem trabalhados... nem pareciam biomas de neve...
-  nao vi o de fogo", depois "baixe as texturas corretas de assets pra
-  isso"): Neve/Gelo Eterno ganham brilho pontual tipo cristal de gelo
-  pegando luz; Deserto ganha ondulacao de duna (faixas); Lava ganha veios
-  brilhando por baixo da pedra, pulsando (com EMISSION de verdade, nao so
-  cor); Campos de Cristal ganham facetas brilhantes com um leve brilho
-  magico (tambem EMISSION). Tiles de oceano ondulam e brilham
-  (deslocamento de vertice + glint animado, sem textura nenhuma). Qual
-  tratamento cada tile usa vem de um canal extra de "custom data" por
-  instancia do MultiMesh (`HexGrid._material_kind_for`, 0-4) que o
-  fragment shader interpreta; se algum arquivo de textura faltar no
-  disco, o uniform cai no branco padrao (`hint_default_white`) em vez de
-  pintar o tile de preto — mesma filosofia de fallback do resto do
-  projeto. Normal corrigida por face (`FRONT_FACING`) pra iluminacao
+- Shader proprio (`shaders/terrain.gdshader`) em Forward+, com 15 materiais
+  em **pixel art** coerentes com as árvores e os personagens blocky.
+  Uma array de 14 superfícies atende os biomas terrestres; uma textura
+  separada detalha a água. Projeção em espaço mundo mantém 64 pixels por
+  unidade no chão e nas paredes, com filtro nearest e mipmaps. Ondas,
+  congelamento, magma líquido, neve nos picos e brilho mágico continuam
+  nos shaders. As fotografias anteriores foram preservadas como fontes,
+  mas não são carregadas pelo material atual. Inventário e revisão:
+  [`pixel_v1/README.md`](assets/textures/terrain/pixel_v1/README.md).
+  Normal corrigida por face (`FRONT_FACING`) pra iluminacao
   ficar certa mesmo com culling desligado.
 - 16 biomas (antes eram 12, e 6 antes disso) gerados por dois eixos
   independentes, tipo diagrama de Whittaker simplificado, nao e mais so
@@ -176,7 +162,9 @@ complexidade aumentar:
   civilizacao de fantasia de VERDADE, nao mais uma copia generica do
   reino do jogador so trocando nome/cor: Reino Elfico de Verdemata,
   Reino Anao de Ferroeste e Horda Orc das Brumas (nome/lider/cor/raca
-  proprios, ver `GameManager.RIVAL_CIVS`), todas com IA propria em 100%
+  proprios, ver `GameManager.AI_CIVS` — desde 2026-10-12 ha tambem o Reino
+  de Valmere, humano, e os rivais sao sempre as racas que o jogador NAO
+  escolheu, sem repetir civilizacao), todas com IA propria em 100%
   GDScript sem depender de nenhum plugin externo (`RivalAI.gd`), capital,
   guarda e colonizadores que agem sozinhos. A IA avalia o resultado
   PROVAVEL de um combate antes de atacar (mesma formula do combate de
@@ -800,7 +788,7 @@ agora e conteudo e profundidade, nao mais fechar o loop basico.
    restaurado via lista de tiles ja explorados.
 8. ~~Multiplos civs rivais + diplomacia~~, feito: 1 a 3 rivais escolhidos
    na tela de titulo (`GameManager.rival_players`, cada um com nome/lider/
-   cor proprios, ver `GameManager.RIVAL_CIVS`), e diplomacia de verdade
+   cor proprios, ver `GameManager.AI_CIVS`), e diplomacia de verdade
    (`Diplomacy.gd`): guerra/paz por par jogador-rival, "Propor Paz" pode
    ser recusado pela IA, unidade/cidade de quem esta em paz nunca fica
    atacavel. **Decisao de escopo**: so o jogador humano negocia
@@ -1022,7 +1010,7 @@ agora e conteudo e profundidade, nao mais fechar o loop basico.
     serem a copia da sua insira outras civilizacoes de fantasia, tipo os
     anoes, os orcs, os elfos coisas assim. ai voce cria tropas especificas
     pra essas civilizacoes". Antes, os 3 rivais so diferiam por nome/
-    lider/cor (`GameManager.RIVAL_CIVS`), copiando a mesma economia e o
+    lider/cor (`GameManager.AI_CIVS`), copiando a mesma economia e o
     mesmo elenco de unidades do reino do jogador. Agora `CivilizationData`
     ganhou um campo `race` (`"dwarf"`/`"orc"`/`"elf"`, vazio = humano
     generico), e cada um dos 3 rivais e uma raca classica de fantasia com
@@ -1712,7 +1700,7 @@ atuais de `Unit.gd`/`City.gd`):
 **Texturas de terreno**:
 - [Poly Haven](https://polyhaven.com/textures/ground-terrain), PBR CC0
   ate 8K, sem precisar de login.
-- [ambientCG](https://ambientcg.com/), 2000+ materiais PBR CC0. **Usado**:
+- [ambientCG](https://ambientcg.com/), 2000+ materiais PBR CC0. **Fontes antigas preservadas**:
   [Ground037](https://ambientcg.com/view?id=Ground037) (terreno comum) e,
   pros biomas especiais (roadmap item 27),
   [Snow006](https://ambientcg.com/view?id=Snow006) (Neve/Gelo Eterno),
@@ -1776,8 +1764,9 @@ atuais de `Unit.gd`/`City.gd`):
   dos predios construidos, `max_building_slots()` bate com a populacao da
   cidade e `can_build()` respeita esse limite mesmo pra um predio novo
   (nao so pro ja construido); `is_valid_building_tile()` aceita um
-  vizinho livre de terra firme e rejeita tile longe demais da cidade,
-  oceano, ocupado por unidade/cidade, ou ja usado por outro predio;
+  vizinho de terra firme — inclusive com unidade em cima (aliada,
+  inimiga ou monstro: tropa nao bloqueia obra) — e rejeita tile longe
+  demais da cidade, oceano, com cidade, ou ja usado por outro predio;
   `process_turn()` grava `building_coords[id]` e devolve `built_coord` SO
   quando o jogador escolheu um tile (`pending_building_coord`), com
   **graceful degrade** pra quando `set_production()` foi chamado direto
@@ -1857,7 +1846,8 @@ atuais de `Unit.gd`/`City.gd`):
   diplomacia com um monstro), `_attack_target_name()` devolve o nome
   certo pro aviso "ATACAR X" do hover, tanto pra unidade quanto pra
   cidade; e posicionamento de predio: `start_building_placement()` lista
-  so vizinhos validos (exclui um ocupado por unidade), clicar um tile
+  so vizinhos validos (exclui um ja com predio; tile ocupado por unidade
+  entra na lista e o clique nele confirma a obra), clicar um tile
   destacado confirma (seta `production_item`/`pending_building_coord` e
   encerra o modo), e clicar um tile invalido cancela sem mudar nada.
 - `test_diplomacy.gd`, jogadores comecam em paz, guerra e sempre
@@ -1873,7 +1863,7 @@ atuais de `Unit.gd`/`City.gd`):
   (`DIFFICULTY_MULTIPLIERS`) so aos rivais, humano sempre fica em 1.0;
   **teste de regressao** garantindo que humano e rivais nunca comecam na
   mesma coordenada num mapa pequeno; e `setup_players()` copia o campo
-  `race` novo de `RIVAL_CIVS` pro `CivilizationData` de cada rival (todo
+  `race` novo de `AI_CIVS` pro `CivilizationData` de cada rival (todo
   rival do pool atual tem uma raca de fantasia), enquanto o jogador
   humano continua sem raca nenhuma; o pipeline inteiro de
   `start_new_game()` (gerar mapa + espalhar civs) continua funcionando de
@@ -2127,7 +2117,7 @@ importados destoavam do resto do visual do jogo (ver roadmap item 19). Os
 arquivos do modelo continuam em `assets/models/castle/` (nao apagados),
 so nao sao mais carregados por `City.gd`.
 
-**Integrado**: o terreno (`shaders/terrain.gdshader`) agora projeta a
+**Histórico, substituído por pixel art v1**: o terreno (`shaders/terrain.gdshader`) projetava a
 textura `Ground037` (ambientCG, CC0) em **triplanar** sobre os tiles que
 nao sao agua, sample da textura nos 3 eixos (XY/XZ/YZ) misturado pelo
 peso da normal em espaco mundo, pra nao esticar/distorcer nas laterais do
@@ -2141,7 +2131,7 @@ mas ainda nao usei no shader, normal map triplanar exige reconstruir o
 espaco tangente por eixo, mais arriscado de acertar sem poder testar no
 editor; fica como proximo passo.
 
-**Integrado**: os 4 biomas especiais (roadmap item 27, resposta direta a
+**Histórico, substituído por pixel art v1**: os 4 biomas especiais (roadmap item 27, resposta direta a
 "todos os biomas tem a textura correta?") ganharam textura real CC0
 propria (mesma tecnica triplanar acima, so um sampler diferente por
 `mat_kind`): `snow_albedo.jpg` ([Snow006](https://ambientcg.com/view?id=Snow006),

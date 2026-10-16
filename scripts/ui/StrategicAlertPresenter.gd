@@ -44,11 +44,8 @@ func refresh() -> void:
 			var rounds := V2TranscendenceSystem.ritual_rounds_remaining(rival)
 			definitions.append({"text": "Ritual %dT" % rounds, "color": UIThemeTokens.COLOR_CRITICAL if rounds <= 1 else UIThemeTokens.COLOR_WARNING, "destination": NavigationManager.VICTORY, "rank": 1 if rounds <= 1 else 5})
 	# Fases 33D2/33D3: chips de OBJETIVO do mundo — no máximo MAX_OBJECTIVE_CHIPS, e um Ritual rival (emergência)
-	# ocupa vaga antes deles. Ordem: Relicário ativo, ameaça regional descoberta, próximo passo (só na Convergência).
+	# ocupa vaga antes deles. Ordem: ameaça regional descoberta, próximo passo (só na Convergência).
 	var objectives: Array[Dictionary] = []
-	var reliquary := WorldEventManager.active_event_of_type(ReliquaryEvent.EVENT_TYPE) as ReliquaryEvent
-	if reliquary != null and reliquary.is_open() and reliquary.phase != WorldEvent.PHASE_DORMANT:
-		objectives.append({"text": "Relicário Desperto", "color": UIThemeTokens.COLOR_WARNING, "destination": &"reliquary", "rank": 6, "coord": reliquary.site_coord})
 	for objective in RegionalThreatSystem.objectives_for(_player):
 		if String(objective.status) == "active":
 			objectives.append({"text": String(objective.title), "color": UIThemeTokens.COLOR_WARNING, "destination": &"world_threat", "rank": 6, "coord": objective.target})

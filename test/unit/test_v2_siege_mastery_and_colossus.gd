@@ -95,7 +95,7 @@ func test_the_colossus_stays_blocked_with_the_grand_arsenal_but_without_n9():
 func test_the_colossus_has_the_specified_baseline():
 	var data := UnitDatabase.create_unit(COLOSSUS)
 	assert_eq(data.unit_name, "Colosso de Cerco")
-	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points, data.attack_range, data.production_cost], [44.0, 9.0, 8.0, 2.0, 3, 110.0])
+	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points, data.attack_range, data.production_cost], [44.0, 12.0, 10.0, 2.0, 3, 110.0])
 	assert_eq(data.vision_range, 4)
 	assert_eq(data.visual_kind, COLOSSUS, "o SaveManager recria a unidade por ele")
 	assert_false(data.can_found_city)

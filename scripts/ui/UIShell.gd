@@ -37,6 +37,10 @@ var turn_controller: TurnController
 var city_summary: CityProductionPresenter
 var event_center: EventCenterPresenter
 var critical_alerts: CriticalAlertPresenter
+var peace_offers: PeaceOfferPresenter
+var open_borders_offers: OpenBordersOfferPresenter
+var building_site_confirm: BuildingSiteConfirmPresenter
+var attack_target_choice: AttackTargetChoicePresenter
 var context_router: ContextRouter
 var targeting_banner: TargetingBanner
 var empire_screen: EmpireScreen
@@ -59,10 +63,14 @@ func _ready() -> void:
 	global_bar.event_center_requested.connect(toggle_event_center)
 	navigation_manager.overlay_visibility_changed.connect(_on_overlay_visibility_changed)
 	resized.connect(_on_resized)
+	global_bar.resized.connect(_on_resized)
 	call_deferred("_on_resized")
 
 func _apply_accessibility_theme() -> void:
-	theme = Settings.build_ui_theme()
+	theme = preload("res://scripts/ui/HUDChromeTheme.gd").build(Settings.ui_scale_percent / 100.0)
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	context_host.add_theme_stylebox_override("panel", preload("res://scripts/ui/HUDChromeTheme.gd").panel(Settings.ui_scale_percent / 100.0, "neutral", 12))
+	if turn_controller != null: _on_resized.call_deferred()
 
 func _exit_tree() -> void:
 	attention_service.dispose()
@@ -82,6 +90,9 @@ func _build_live_hud() -> void:
 	turn_controller.action_requested.connect(_on_attention_action)
 	turn_controller.end_turn_requested.connect(func(): end_turn_requested.emit())
 	turn_controller_host.add_child(turn_controller)
+	turn_controller_host.alignment = BoxContainer.ALIGNMENT_END
+	turn_controller.minimum_size_changed.connect(_queue_bottom_layout)
+	attention_presenter.minimum_size_changed.connect(_queue_bottom_layout)
 	city_summary = CityProductionPresenter.new()
 	city_summary.name = "CityProductionSummary"
 	city_summary.visible = false
@@ -99,15 +110,36 @@ func _build_live_hud() -> void:
 	critical_alerts.custom_minimum_size.x = 620
 	critical_alerts.action_requested.connect(func(event: UIEventData): event_action_requested.emit(event))
 	critical_alert_host.add_child(critical_alerts)
+	toast_presenter.use_critical_banner = true
+	critical_alerts.resized.connect(func(): _place_toasts(navigation_manager.is_overlay_open()))
+	critical_alerts.visibility_changed.connect(func(): _place_toasts(navigation_manager.is_overlay_open()))
+	# Proposta de paz de um rival: modal de Aceitar/Recusar (a resposta é do jogador, nunca automática).
+	peace_offers = PeaceOfferPresenter.new()
+	peace_offers.name = "PeaceOffers"
+	peace_offers.modal_manager = modal_manager
+	add_child(peace_offers)
+	# Pedido de fronteiras abertas de um rival: mesmo modal de Aceitar/Recusar.
+	open_borders_offers = OpenBordersOfferPresenter.new()
+	open_borders_offers.name = "OpenBordersOffers"
+	open_borders_offers.modal_manager = modal_manager
+	add_child(open_borders_offers)
+	# Prédio sobre recurso de mapa: modal de confirmação antes de a obra destruir o recurso.
+	building_site_confirm = BuildingSiteConfirmPresenter.new()
+	building_site_confirm.name = "BuildingSiteConfirm"
+	building_site_confirm.modal_manager = modal_manager
+	add_child(building_site_confirm)
+	# Tropa guarnecendo uma cidade: o jogador escolhe em quem o ataque bate.
+	attack_target_choice = AttackTargetChoicePresenter.new()
+	attack_target_choice.name = "AttackTargetChoice"
+	attack_target_choice.modal_manager = modal_manager
+	add_child(attack_target_choice)
 	_build_context_layer()
 	_build_strategy_screens()
 
 ## Fase 30: o ContextHost passa a hospedar os painéis reais de Tile/Unidade/Cidade
 ## e a faixa inferior ganha o banner fixo de mira.
 func _build_context_layer() -> void:
-	var context_style := UITheme.panel_style(UIThemeTokens.COLOR_SURFACE, UIThemeTokens.COLOR_BORDER, 1, UIThemeTokens.RADIUS_PANEL, true)
-	context_style.shadow_size = UIThemeTokens.ELEVATION_DOCK
-	context_style.set_content_margin_all(UIThemeTokens.SPACE_3)
+	var context_style := preload("res://scripts/ui/HUDChromeTheme.gd").panel(Settings.ui_scale_percent / 100.0, "neutral", 12)
 	context_host.add_theme_stylebox_override("panel", context_style)
 	context_host.anchor_top = 1.0
 	context_router = ContextRouter.new()
@@ -237,24 +269,24 @@ func handle_escape() -> bool:
 func apply_viewport_size(viewport_size: Vector2) -> void:
 	_viewport_size = viewport_size
 	current_breakpoint = UIThemeTokens.breakpoint_name(viewport_size.x)
-	context_width = UIThemeTokens.context_width_for(viewport_size.x)
+	context_width = minf(UIThemeTokens.context_width_for(viewport_size.x) * Settings.ui_scale_percent / 100.0, viewport_size.x * 0.4 - 1)
 	context_host.offset_left = -context_width - UIThemeTokens.HUD_EDGE_MARGIN
 	context_host.offset_right = -UIThemeTokens.HUD_EDGE_MARGIN
 	# 1600 e a baseline intermediaria, nao uma tela larga: a barra completa
 	# ainda estoura quando os quatro estados estrategicos coexistem.
 	global_bar.set_compact(viewport_size.x < UIThemeTokens.BREAKPOINT_LARGE)
-	var toast_width := minf(420.0, viewport_size.x - 2.0 * UIThemeTokens.SPACE_4)
+	var ui_factor := Settings.ui_scale_percent / 100.0
+	var toast_width := minf(420.0 * ui_factor, viewport_size.x - 2.0 * UIThemeTokens.SPACE_4)
 	toast_presenter.offset_left = -toast_width * 0.5
 	toast_presenter.offset_right = toast_width * 0.5
+	critical_alerts.custom_minimum_size.x = minf(620.0 * ui_factor, viewport_size.x - 32.0)
+	critical_alert_host.offset_top = top_reserved()
+	critical_alert_host.offset_bottom = critical_alert_host.offset_top + maxf(106.0 * ui_factor, critical_alerts.get_combined_minimum_size().y)
 	var drawer_width := 420.0 if viewport_size.x >= UIThemeTokens.BREAKPOINT_LARGE else clampf(viewport_size.x * 0.32, 340.0, 400.0)
 	for drawer in [city_summary, event_center]:
 		_layout_drawer(drawer, drawer_width)
 	_layout_minimap(viewport_size)
-	turn_controller_host.offset_right = -UIThemeTokens.HUD_EDGE_MARGIN
-	turn_controller_host.offset_bottom = -UIThemeTokens.HUD_EDGE_MARGIN
-	turn_controller_host.offset_top = -UIThemeTokens.HUD_EDGE_MARGIN - 56.0
-	attention_host.offset_bottom = -UIThemeTokens.HUD_EDGE_MARGIN
-	attention_host.offset_top = -UIThemeTokens.HUD_EDGE_MARGIN - 56.0
+	_layout_bottom_controls()
 	_fit_context_host()
 	_layout_targeting_banner(viewport_size)
 	for screen in [empire_screen, diplomacy_screen, victory_screen]:
@@ -278,6 +310,7 @@ static func minimap_size_for(viewport_size: Vector2, expanded: bool, context_wid
 
 func _layout_minimap(viewport_size: Vector2) -> void:
 	var minimap_size := minimap_size_for(viewport_size, minimap_expanded, context_width)
+	minimap_host.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	minimap_host.offset_left = UIThemeTokens.HUD_EDGE_MARGIN
 	minimap_host.offset_right = UIThemeTokens.HUD_EDGE_MARGIN + minimap_size.x
 	minimap_host.offset_top = -UIThemeTokens.HUD_EDGE_MARGIN - minimap_size.y
@@ -286,6 +319,7 @@ func _layout_minimap(viewport_size: Vector2) -> void:
 func set_minimap_expanded(value: bool) -> void:
 	minimap_expanded = value
 	_layout_minimap(_viewport_size)
+	_layout_bottom_controls()
 
 func toggle_minimap_expanded() -> void:
 	set_minimap_expanded(not minimap_expanded)
@@ -293,7 +327,9 @@ func toggle_minimap_expanded() -> void:
 ## Toast é confirmação curta: com tela estratégica aberta ele desce para a base
 ## da tela, para nunca cobrir abas e títulos da tela.
 func _place_toasts(overlay_open: bool) -> void:
-	var top := 188.0
+	var top := maxf(188.0, top_reserved() + 12.0)
+	if critical_alerts != null and critical_alerts.is_visible_in_tree():
+		top = maxf(top, critical_alerts.get_global_rect().end.y + 12.0)
 	if overlay_open:
 		top = maxf(188.0, _viewport_size.y - 300.0)
 	toast_presenter.offset_top = top
@@ -309,9 +345,10 @@ func top_reserved() -> float:
 func _fit_context_host() -> void:
 	if context_router == null:
 		return
-	var bottom_reserved := float(UIThemeTokens.HUD_EDGE_MARGIN + 56)
+	var bottom_reserved := float(UIThemeTokens.HUD_EDGE_MARGIN) + maxf(56, turn_controller.get_combined_minimum_size().y) + 8
 	var available := _viewport_size.y - top_reserved() - bottom_reserved
-	var wanted := context_router.preferred_height() + float(UIThemeTokens.SPACE_3) * 2.0
+	var wanted := context_router.preferred_height() + 24 * Settings.ui_scale_percent / 100.0
+	wanted = maxf(wanted, context_host.get_combined_minimum_size().y)
 	var height := clampf(wanted, 140.0, available)
 	context_host.anchor_top = 1.0
 	context_host.anchor_bottom = 1.0
@@ -327,7 +364,8 @@ func _layout_targeting_banner(viewport_size: Vector2) -> void:
 	var right := viewport_size.x - context_width - float(UIThemeTokens.SPACE_4)
 	var width := minf(600.0, maxf(320.0, right - left))
 	var x := left + maxf(0.0, (right - left - width) * 0.5)
-	targeting_banner.position = Vector2(x, viewport_size.y - 76.0 - 170.0)
+	var footer_height := maxf(56 * Settings.ui_scale_percent / 100.0, turn_controller.get_combined_minimum_size().y)
+	targeting_banner.position = Vector2(x, viewport_size.y - UIThemeTokens.HUD_EDGE_MARGIN - footer_height - 12 - 170)
 	targeting_banner.size = Vector2(width, 170.0)
 
 func layer_order() -> Dictionary:
@@ -380,10 +418,47 @@ func _on_attention_action(action: String, item: AttentionItem) -> void:
 func _on_attention_expanded(value: bool) -> void:
 	if value:
 		close_auxiliary_drawer()
-		attention_host.offset_top = -440.0
-	else:
-		attention_host.offset_top = -UIThemeTokens.HUD_EDGE_MARGIN - 56.0
+	_layout_bottom_controls()
 	_sync_surface_visibility()
+
+var _bottom_layout_queued := false
+
+func _queue_bottom_layout() -> void:
+	if not _bottom_layout_queued:
+		_bottom_layout_queued = true
+		_update_bottom_layout.call_deferred()
+
+func _update_bottom_layout() -> void:
+	_bottom_layout_queued = false
+	_layout_bottom_controls()
+	_fit_context_host()
+	_layout_targeting_banner(_viewport_size)
+
+func _layout_bottom_controls() -> void:
+	if turn_controller == null or attention_presenter == null: return
+	var edge := float(UIThemeTokens.HUD_EDGE_MARGIN)
+	var scale_factor := Settings.ui_scale_percent / 100.0
+	var turn_width := maxf(248 * scale_factor, turn_controller.get_combined_minimum_size().x)
+	var turn_height := maxf(56 * scale_factor, turn_controller.get_combined_minimum_size().y)
+	turn_controller_host.offset_left = -edge - turn_width
+	turn_controller_host.offset_right = -edge
+	turn_controller_host.offset_top = -edge - turn_height
+	turn_controller_host.offset_bottom = -edge
+	var left := minimap_host.offset_right + 12
+	var right := _viewport_size.x - edge - turn_width - 12
+	# Expanded map may occupy the space above the attention dock, but buttons never overlap.
+	if minimap_expanded: left = 16 + minimap_size_for(_viewport_size, false, context_width).x + 12
+	var available := maxf(180, right - left)
+	var width := minf(336 * scale_factor, available)
+	attention_host.anchor_left = 0
+	attention_host.anchor_right = 0
+	attention_host.offset_left = left + maxf(0, (available - width) * .5)
+	attention_host.offset_right = attention_host.offset_left + width
+	var maximum := _viewport_size.y - top_reserved() - edge - turn_height - 24
+	attention_presenter.set_list_height(minf(248 * scale_factor, maximum))
+	var height := maxf(turn_height, attention_presenter.get_combined_minimum_size().y) if attention_presenter.is_expanded() else turn_height
+	attention_host.offset_top = -edge - height
+	attention_host.offset_bottom = -edge
 
 func _on_overlay_visibility_changed(value: bool) -> void:
 	overlay_dimmer.visible = value

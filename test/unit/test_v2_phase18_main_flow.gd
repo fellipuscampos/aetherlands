@@ -80,7 +80,7 @@ func _end_turn() -> void:
 	assert_false(GameManager.is_turn_processing)
 
 func _learn(branch: String, tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		var id := "v2_magic_%s_%d" % [branch, i]
 		if not GameManager.human_player.v2_research.is_completed(id):
 			assert_true(GameManager.human_player.v2_research.complete_research(id), id)
@@ -138,9 +138,9 @@ func test_136_infernal_end_to_end_through_two_manifestations_save_and_no_final_r
 	assert_not_null(city)
 	city.city_level = 3 # atalho de slot; City Level tem seu próprio fluxo dedicado.
 	var mana_before: float = human.mana
-	assert_true(human.v2_research.select_research("v2_magic_infernal_1"))
+	assert_true(human.v2_research.select_research("v2_magic_infernal_2"))
 	_end_turn()
-	assert_gt(human.v2_research.get_progress("v2_magic_infernal_1"), 0.0, "economia gerou Conhecimento")
+	assert_gt(human.v2_research.get_progress("v2_magic_infernal_2"), 0.0, "economia gerou Conhecimento")
 	assert_gt(human.mana, mana_before, "economia gerou Mana")
 	_learn("infernal", 2)
 	_build(city, SANCTUM)
@@ -170,16 +170,16 @@ func test_136_infernal_end_to_end_through_two_manifestations_save_and_no_final_r
 	var warlock_hp := warlock.hp
 	var target_hp := target.hp
 	_cast(warlock, "v2_spell_infernal_flame", target)
-	assert_eq(target_hp - target.hp, 6.0)
+	assert_eq(target_hp - target.hp, 9.0)
 	assert_eq(warlock.hp, warlock_hp, "sem retaliation")
 
 	# 21–25: Fogo Voraz base 8 e bônus 12 no limiar inclusivo de 50%.
 	_learn("infernal", 5)
 	var full := _spawn("v2_unit_guardian", rival, warlock.coord + Vector2i(2, -1))
 	var devouring := V2SpellDatabase.get_spell("v2_spell_devouring_fire")
-	assert_eq(V2MagicRuntime.predict_damage(warlock, full, devouring), 8.0)
+	assert_eq(V2MagicRuntime.predict_damage(warlock, full, devouring), 13.0)
 	full.hp = full.unit_data.max_hp * 0.5
-	assert_eq(V2MagicRuntime.predict_damage(warlock, full, devouring), 12.0)
+	assert_eq(V2MagicRuntime.predict_damage(warlock, full, devouring), 19.5)
 	_cast(warlock, devouring.id, full)
 
 	# 26–30: Explosão resolve o cluster mesmo matando o primário e registra 3 kills.
@@ -204,7 +204,7 @@ func test_136_infernal_end_to_end_through_two_manifestations_save_and_no_final_r
 	_grid.visibility[far_target.coord] = HexGrid.Visibility.VISIBLE
 	var far_hp := far_target.hp
 	_cast(warlock, "v2_spell_damnation", far_target)
-	assert_eq(far_hp - far_target.hp, 15.0)
+	assert_eq(far_hp - far_target.hp, 32.0)
 
 	# 35–44: Círculo, N9, duas Escolas 2/2, espera de Mana e nascimento do Arquidemônio.
 	_learn("infernal", 8)
@@ -219,8 +219,8 @@ func test_136_infernal_end_to_end_through_two_manifestations_save_and_no_final_r
 	city.stored_production = 105.0
 	_end_turn()
 	assert_eq(city.production_item, ARCHDEMON)
-	assert_eq(city.stored_production, 105.0)
-	human.mana = 80.0
+	assert_eq(city.stored_production, 88.0)
+	human.mana = 160.0
 	_end_turn()
 	var archdemon := _find(ARCHDEMON)
 	assert_not_null(archdemon)
@@ -229,11 +229,11 @@ func test_136_infernal_end_to_end_through_two_manifestations_save_and_no_final_r
 	assert_eq(archdemon.unit_data.movement_profile, UnitData.MovementProfile.FLYING)
 	assert_true(archdemon.unit_data.has_trait(UnitData.TRAIT_GRAND_MANIFESTATION))
 	assert_false(archdemon.unit_data.has_trait(UnitData.TRAIT_LEGENDARY))
-	assert_false(archdemon.unit_data.can_basic_attack)
+	assert_true(archdemon.unit_data.can_basic_attack)
 	var arch_target := _spawn("v2_unit_guardian", rival, archdemon.coord + Vector2i(2, 0))
-	assert_eq(V2MagicRuntime.predict_damage(archdemon, arch_target, V2SpellDatabase.get_spell("v2_spell_infernal_flame")), 7.5)
+	assert_eq(V2MagicRuntime.predict_damage(archdemon, arch_target, V2SpellDatabase.get_spell("v2_spell_infernal_flame")), 11.25)
 	arch_target.hp = arch_target.unit_data.max_hp * 0.5
-	assert_eq(V2MagicRuntime.predict_damage(archdemon, arch_target, devouring), 15.0)
+	assert_eq(V2MagicRuntime.predict_damage(archdemon, arch_target, devouring), 24.375)
 	var seraph_coord := _free_coord(city.coord, 8, 5)
 	var seraph := _spawn(SERAPH, human, seraph_coord)
 	assert_not_null(seraph)
@@ -261,8 +261,8 @@ func test_136_infernal_end_to_end_through_two_manifestations_save_and_no_final_r
 	assert_eq(V2MagicRuntime.cooldown_remaining(loaded_warlock, "v2_spell_damnation"), 4)
 
 	# 61–63: demais árvores intactas; Transcendência conectada, porém pesquisa sozinha não vence.
-	assert_eq(V2DoctrineContent.CONNECTED_UNLOCK_IDS.size(), 55)
-	assert_eq(V2InfrastructureContent.CONNECTED_UNLOCK_IDS.size(), 18)
+	assert_eq(V2DoctrineContent.CONNECTED_UNLOCK_IDS.size(), 49)
+	assert_eq(V2InfrastructureContent.CONNECTED_UNLOCK_IDS.size(), 21)
 	assert_true(human.v2_research.complete_research("v2_transcendence"))
 	assert_true(V2ResearchDatabase.get_node("v2_transcendence").gameplay_connected)
 	GameManager.check_victories()

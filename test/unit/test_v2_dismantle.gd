@@ -172,7 +172,7 @@ func test_the_basic_attack_and_the_real_combat_resolution_agree():
 	var unit := _unit(grid, me, ROGUE, Vector2i(0, 0))
 	var siege := _traited_foe(grid, rival, Vector2i(1, 0), UnitData.TRAIT_SIEGE, 60.0, 3.0)
 	var predicted: float = CombatResolver.predict(unit, siege, grid).damage_to_defender
-	assert_almost_eq(predicted, _formula_damage(grid, 4.5, 1.5, siege), 0.0001)
+	assert_almost_eq(predicted, _formula_damage(grid, 7.0, 1.5, siege), 0.0001)
 	var hp := siege.hp
 	CombatResolver.resolve(unit, siege, grid)
 	assert_almost_eq(hp - siege.hp, predicted, 0.0001, "predict == resolve")
@@ -184,7 +184,7 @@ func test_it_stacks_with_the_sneak_attack_penetration_and_no_counterattack_throu
 	var unit := _unit(grid, me, ROGUE, Vector2i(0, 0))
 	var siege := _traited_foe(grid, rival, Vector2i(1, 0), UnitData.TRAIT_SIEGE, 60.0, 14.0) # Defesa alta: revidaria num ataque comum
 	var predicted: float = CombatResolver.predict(unit, siege, grid, 1.35, 0.4, true).damage_to_defender
-	var manual := _formula_damage(grid, 4.5, 1.5 * 1.35, siege, 1.0, 0.4)
+	var manual := _formula_damage(grid, 7.0, 1.5 * 1.35, siege, 1.0, 0.4)
 	assert_almost_eq(predicted, manual, 0.0001, "Desmantelar (no Ataque) x Ataque Furtivo (multiplicador + penetração), pela mesma pipeline")
 	var my_hp := unit.hp
 	assert_true(V2TechniqueRuntime.perform_strike(unit, SNEAK_ATTACK, siege, grid))

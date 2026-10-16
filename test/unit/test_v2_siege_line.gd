@@ -23,10 +23,10 @@ func _trainable_forms(city: City) -> Array:
 func test_the_trebuchet_and_the_bombard_have_the_specified_baselines():
 	var trebuchet := UnitDatabase.create_unit(TREBUCHET)
 	assert_eq(trebuchet.unit_name, "Trebuchet")
-	assert_eq([trebuchet.max_hp, trebuchet.attack, trebuchet.defense, trebuchet.movement_points, trebuchet.attack_range, trebuchet.production_cost], [20.0, 5.0, 3.0, 2.0, 3, 44.0])
+	assert_eq([trebuchet.max_hp, trebuchet.attack, trebuchet.defense, trebuchet.movement_points, trebuchet.attack_range, trebuchet.production_cost], [20.0, 7.5, 4.5, 2.0, 3, 44.0])
 	var bombard := UnitDatabase.create_unit(BOMBARD)
 	assert_eq(bombard.unit_name, "Bombarda")
-	assert_eq([bombard.max_hp, bombard.attack, bombard.defense, bombard.movement_points, bombard.attack_range, bombard.production_cost], [26.0, 6.5, 4.0, 2.0, 3, 64.0])
+	assert_eq([bombard.max_hp, bombard.attack, bombard.defense, bombard.movement_points, bombard.attack_range, bombard.production_cost], [26.0, 10.0, 6.0, 2.0, 3, 64.0])
 	for data in [trebuchet, bombard]:
 		assert_true(data.has_trait(UnitData.TRAIT_SIEGE))
 		assert_false(data.has_trait(UnitData.TRAIT_LEGENDARY), "convencional, não Lendária")
@@ -132,7 +132,7 @@ func test_debug_reset_keeps_what_exists_and_production_follows_the_research():
 	player.v2_research.reset()
 	assert_true(city.buildings.has(SIEGE_ARSENAL))
 	assert_eq(_trainable_forms(city), [])
-	for n in range(1, 6):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 6):
 		player.v2_research.complete_research("v2_doctrine_siege_%d" % n)
 	assert_eq(_trainable_forms(city), [TREBUCHET])
 
@@ -210,7 +210,7 @@ func test_the_first_upgrade_preserves_everything_that_does_not_depend_on_the_for
 	assert_eq(c.player.units.size(), count, "sem duplicar")
 	assert_eq(c.player.units.filter(func(u): return u.unit_data.visual_kind == CATAPULT).size(), 0, "sem Catapulta fantasma")
 	assert_same(c.grid.get_unit_at(coord), unit)
-	assert_almost_eq(unit.hp, 10.0, 0.0001, "50% de 20")
+	assert_almost_eq(unit.hp, 20.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 20 pela forma + a cura da evolução")
 	assert_eq(unit.unit_data.max_hp, 20.0)
 	assert_eq(unit.kills, 3, "abates/XP")
 	assert_eq(unit.veterancy_level, 2, "veterania")
@@ -261,7 +261,7 @@ func test_the_full_chain_catapult_trebuchet_bombard_on_the_same_unit_preserves_e
 
 	assert_true(V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid))
 	assert_eq(unit.unit_data.visual_kind, TREBUCHET)
-	assert_almost_eq(unit.hp, 10.0, 0.0001)
+	assert_almost_eq(unit.hp, 20.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 20 pela forma + a cura da evolução")
 	assert_eq(c.player.gold, gold - 32.0)
 	assert_false(V2UnitUpgrade.can_upgrade(c.player, unit, c.grid), "sem ação neste turno")
 
@@ -269,7 +269,7 @@ func test_the_full_chain_catapult_trebuchet_bombard_on_the_same_unit_preserves_e
 	unit.movement_left = 2.0
 	assert_true(V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid))
 	assert_eq(unit.unit_data.visual_kind, BOMBARD)
-	assert_almost_eq(unit.hp, 13.0, 0.0001, "50% de 26")
+	assert_almost_eq(unit.hp, 26.0, 0.0001, "já estava em 80%: a cura da evolução completa a vida (26), sem passar do teto")
 	assert_eq(c.player.gold, gold - 32.0 - 40.0)
 
 	assert_eq(unit.get_instance_id(), id, "a MESMA unidade nas três formas")

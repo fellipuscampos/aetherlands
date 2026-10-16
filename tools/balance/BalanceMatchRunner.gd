@@ -103,8 +103,8 @@ static func setup_match(host: Node, config: Dictionary) -> HexGrid:
 	grid.recompute_fog(GameManager.human_player)
 	return grid
 
-## Raça/nome por assento. Também reaplicado depois de um load (o save do jogo normal não guarda a
-## raça dos rivais, que no jogo normal é fixa por índice em GameManager.RIVAL_CIVS).
+## Raça/nome por assento (a matriz de rotação do laboratório, não o elenco do jogo normal —
+## GameManager.rival_races_for). Também reaplicado depois de um load: o nome do assento não é salvo.
 static func apply_seat_identity(config: Dictionary) -> void:
 	var races: Array = config.races
 	for seat in GameManager.players.size():

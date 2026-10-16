@@ -48,6 +48,8 @@ var _original_current_save_slot: String
 var _original_kingdom_name: String
 
 func before_each():
+	# Conta unidades/Suprimentos exatos da linha: sem a escolta inicial (fixture, ver GameManager).
+	GameManager.starting_escort_on_new_match = false
 	_original_state = GameManager.state
 	_original_players = GameManager.players
 	_original_human_player = GameManager.human_player
@@ -76,6 +78,7 @@ func before_each():
 	GameManager.debug_mode = true
 
 func after_each():
+	GameManager.starting_escort_on_new_match = true
 	SelectionManager.reset()
 	for player in GameManager.players:
 		player.release_relations()
@@ -236,7 +239,7 @@ func _short_setup(through: int = 4) -> Dictionary:
 	var rival: PlayerData = GameManager.rival_players[0]
 	Diplomacy.declare_war(human, rival)
 	var city := _found_human_city(grid)
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
 	city.buildings[HALL] = true
 	# Aetherlands V2, Fase 15 — vários testes deste arquivo constroem Campo/Torre (upkeep de Ouro)
@@ -274,8 +277,6 @@ func test_ranger_n1_to_n9_flow_from_the_camp_to_the_legend_hunter_across_save_an
 	assert_false(V2UnlockSystem.is_unlocked(human, "v2_doctrine_ranger"))
 
 	# 2. N1: estabelece a linha, sem bônus; só o N2 fica disponível.
-	_research(state, "v2_doctrine_ranger_1")
-	assert_eq(V2UnlockSystem.unlocked_ids(human), ["v2_doctrine_ranger"], "2. o N1 não libera nada além da Doutrina")
 	assert_false(city.can_build(HALL))
 	assert_true(state.is_available("v2_doctrine_ranger_2"))
 
@@ -462,7 +463,7 @@ func test_ranger_n1_to_n9_flow_from_the_camp_to_the_legend_hunter_across_save_an
 	assert_gt(volley_left, 0, "pré-condição: a Saraivada está em recarga")
 	var loaded_grid := _save_and_reload()
 	var loaded := GameManager.human_player
-	assert_eq(loaded.v2_research.get_completed_ids().size(), 9, "33. as 9 pesquisas do Patrulheiro")
+	assert_eq(loaded.v2_research.get_completed_ids().size(), 8, "33. as 8 pesquisas do Patrulheiro")
 	var loaded_city: City = loaded.cities[0]
 	assert_true(loaded_city.buildings.has(HALL) and loaded_city.buildings.has(TOWER), "34. Campo e Torre restaurados")
 	var loaded_marksmen := _units_of_kind(loaded, MARKSMAN)
@@ -483,7 +484,7 @@ func test_ranger_n1_to_n9_flow_from_the_camp_to_the_legend_hunter_across_save_an
 	_clear_foes(loaded_grid, [loaded_legend, loaded_common])
 	# 38. Slot global: com o Caçador vivo, o Campeão e o Herói estão bloqueados, mesmo com os prédios e as pesquisas das outras Doutrinas.
 	assert_true(V2LegendarySystem.has_active_legendary(loaded), "38. o slot continua ocupado")
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		loaded.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 		loaded.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 	for id in [G_HALL, G_MASTERY, W_HALL, ARENA]:
@@ -594,7 +595,7 @@ func test_the_cooldowns_of_both_ranged_techniques_survive_save_and_load():
 func test_a_legend_hunter_in_production_survives_save_and_load_and_blocks_the_other_two_in_another_city():
 	var c := _short_setup(9)
 	var human: PlayerData = c.human
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 		human.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 	var city: City = c.city
@@ -618,7 +619,7 @@ func test_a_legend_hunter_in_production_survives_save_and_load_and_blocks_the_ot
 func test_a_legend_hunter_and_a_champion_finishing_in_the_same_turn_never_create_two_legendaries():
 	var c := _short_setup(9)
 	var human: PlayerData = c.human
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	var city: City = c.city
 	city.buildings[TOWER] = true
@@ -664,7 +665,7 @@ func test_ai_civilizations_keep_playing_with_the_ranger_content_present():
 func test_an_ai_civilization_given_the_research_by_debug_builds_trains_shoots_and_respects_the_slot():
 	var c := _short_setup(3)
 	var rival: PlayerData = c.rival
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		rival.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
 	var rival_city: City = rival.cities[0]
 	rival_city.city_level = 3

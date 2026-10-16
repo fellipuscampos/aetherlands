@@ -47,7 +47,7 @@ func _player(through: int = 5, gold: float = 100.0) -> PlayerData:
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
 	player.gold = gold
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	return player
 
@@ -185,7 +185,7 @@ func test_the_upgrade_turns_the_same_unit_into_a_guardian_and_charges_gold():
 	assert_true(V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid))
 	assert_eq(unit.unit_data.visual_kind, GUARDIAN)
 	assert_eq(unit.unit_data.unit_name, "Guardião")
-	assert_eq(unit.unit_data.max_hp, 24.0)
+	assert_eq(unit.unit_data.max_hp, 26.0)
 	assert_eq(c.player.gold, gold - 24.0, "Ouro descontado na hora")
 
 func test_it_is_the_same_object_with_no_duplicate_and_no_ghost_shieldbearer():
@@ -205,28 +205,66 @@ func test_it_is_the_same_object_with_no_duplicate_and_no_ghost_shieldbearer():
 	assert_eq(unit.coord, Vector2i(1, 0))
 	assert_eq(unit.owner_player, c.player)
 
-func test_hp_keeps_the_percentage_and_never_heals_for_free():
+## Cura da evolução (2026-10-12, pedido do usuário: "quando evoluo um personagem, ele continua com a mesma vida; seria
+## justo, por gastar ouro nisso, o personagem recuperar um pouco da vida"). A troca de forma preserva o PERCENTUAL de
+## vida e, por cima, evoluir recupera V2UnitUpgrade.UPGRADE_HEAL_FRACTION da Vida máxima NOVA — a mesma quantidade
+## esteja a tropa quase morta ou quase cheia, nunca além do teto.
+func test_upgrading_keeps_the_percentage_and_then_heals_a_fixed_share_of_the_new_max():
 	var c := _case()
 	var unit: Unit = c.unit
-	unit.hp = 9.0 # 9/18 = 50%
+	unit.hp = 10.0 # 10/20 = 50%
+	assert_almost_eq(V2UnitUpgrade.upgrade_heal_amount(unit), 26.0 * V2UnitUpgrade.UPGRADE_HEAL_FRACTION, 0.0001, "a prévia diz o que vai curar")
 	V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid)
-	assert_almost_eq(unit.hp, 12.0, 0.0001, "50% de 24")
+	assert_almost_eq(unit.hp, 13.0 + 26.0 * V2UnitUpgrade.UPGRADE_HEAL_FRACTION, 0.0001, "50% de 26 (forma) + 30% de 26 (cura)")
 	assert_lt(unit.hp, unit.unit_data.max_hp)
+
+func test_the_heal_is_the_same_amount_whether_the_unit_is_low_or_nearly_healthy():
+	var healed: Array[float] = []
+	for start in [2.0, 5.0, 10.0]: # 10%, 25% e 50% de 20
+		var c := _case()
+		var unit: Unit = c.unit
+		unit.hp = start
+		V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid)
+		healed.append(unit.hp - start / 20.0 * 26.0)
+	for amount in healed:
+		assert_almost_eq(amount, healed[0], 0.0001, "não é % da vida que falta: quem está pior não cura mais")
+	assert_almost_eq(healed[0], 7.8, 0.0001, "30% de 26")
 
 func test_full_hp_stays_full_and_never_exceeds_the_new_max():
 	var c := _case()
 	var unit: Unit = c.unit
+	assert_eq(V2UnitUpgrade.upgrade_heal_amount(unit), 0.0, "tropa cheia: nada a curar")
 	V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid)
-	assert_eq(unit.hp, 24.0)
+	assert_eq(unit.hp, 26.0)
 	assert_lte(unit.hp, unit.unit_data.max_hp)
 
-func test_an_odd_hp_fraction_is_preserved_proportionally():
+func test_the_heal_never_goes_past_the_new_maximum():
 	var c := _case()
 	var unit: Unit = c.unit
-	unit.hp = 4.5 # 25%
+	unit.hp = 18.0 # 90%: faltariam só 10% depois da troca de forma
+	assert_almost_eq(V2UnitUpgrade.upgrade_heal_amount(unit), 2.6, 0.0001, "cura só o que falta")
 	V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid)
-	assert_almost_eq(unit.hp / unit.unit_data.max_hp, 0.25, 0.0001)
-	assert_gt(unit.hp, 0.0)
+	assert_almost_eq(unit.hp, 26.0, 0.0001, "sem cura além do teto")
+
+func test_a_blocked_upgrade_heals_nothing():
+	var c := _case()
+	var unit: Unit = c.unit
+	unit.hp = 9.0
+	c.player.gold = 0.0
+	assert_false(V2UnitUpgrade.perform_upgrade(c.player, unit, c.grid))
+	assert_eq(unit.hp, 9.0, "sem evolução, sem cura")
+
+func test_the_upgrade_button_tells_how_much_it_heals():
+	var c := _case()
+	var unit: Unit = c.unit
+	unit.hp = 9.0
+	var upgrade: UnitAbilityViewData = null
+	for view in UnitPresenter.abilities_for(unit, c.grid):
+		if view.id == "upgrade":
+			upgrade = view
+	assert_not_null(upgrade)
+	assert_string_contains(upgrade.description, "30% da Vida máxima")
+	assert_string_contains(upgrade.description, "+8 de Vida agora")
 
 func test_xp_veterancy_and_kills_are_preserved():
 	var c := _case()

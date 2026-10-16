@@ -1,7 +1,7 @@
 class_name RaceTheme
 extends RefCounted
 
-## Camada de APRESENTACAO por raca: nome temático de algumas unidades (o Guarda inicial "warrior" e
+## Camada de APRESENTACAO por raca: nome temático de algumas unidades (o antigo Guarda "warrior" e
 ## as tropas mundanas V1 que ainda podem existir em saves antigos) e o KIT DE ESTILO visual das
 ## unidades, indexados por CivilizationData.race. Os ids MECÂNICOS nunca mudam. "human" não entra nas
 ## tabelas de nome: os getters caem no dado original (UnitDatabase/BuildingDatabase).

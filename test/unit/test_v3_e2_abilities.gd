@@ -190,12 +190,11 @@ func test_rising_horde_raises_one_per_round_up_to_six_and_never_from_event_skele
 	assert_eq(MonsterEcologySystem.site_population(grid, int(site.id)), 6, "teto de 6 vivos por sítio")
 	for unit in grid.neutral_units():
 		assert_null(grid.get_city_at(unit.coord))
-	var event_skeleton := grid.spawn_monster_at(Vector2i(8, 0), "skeleton")
-	event_skeleton.source_event_id = 3
+	var loose_skeleton := grid.spawn_monster_at(Vector2i(8, 0), "skeleton")
 	var before := grid.neutral_units().size()
 	TurnManager.turn_number = 40
-	MonsterAbilitySystem.on_civ_unit_killed(event_skeleton, grid)
-	assert_eq(grid.neutral_units().size(), before, "Esqueleto de evento/regional não multiplica")
+	MonsterAbilitySystem.on_civ_unit_killed(loose_skeleton, grid)
+	assert_eq(grid.neutral_units().size(), before, "Esqueleto fora da ecologia (regional/legado) não multiplica")
 
 func test_rising_horde_triggers_from_a_real_kill():
 	var skeleton := _monster("skeleton", Vector2i(0, 0))
@@ -216,6 +215,9 @@ func test_worg_never_targets_cities_and_prefers_isolated_prey():
 	assert_false(MonsterEcologyData.behavior("worg").city_hunt)
 	assert_false(MonsterEcologyData.behavior("worg").improvement_hunt)
 	# Presa: o isolado vence o escoltado mesmo um pouco mais longe.
+	# Não deixe sobreviventes da ronda anterior disputarem a escolha deste cenário independente.
+	for owner in [human, rival]:
+		for survivor in owner.units.duplicate(): grid.remove_unit(survivor)
 	var escorted := _soldier(Vector2i(8, 2))
 	_soldier(Vector2i(8, 3))
 	var isolated := _soldier(Vector2i(10, -4), rival)

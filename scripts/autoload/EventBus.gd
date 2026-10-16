@@ -23,8 +23,18 @@ signal notify(text: String, sfx_kind: String)
 signal ui_research_completed(player: PlayerData, research_id: String, display_name: String)
 signal ui_production_completed(player: PlayerData, city_name: String, item_id: String, display_name: String, target_coord: Vector2i)
 signal diplomacy_changed(change_type: String, source: PlayerData, target: PlayerData, reason: String)
+## Uma civilização propôs paz a `receiver` e a resposta é dele (Diplomacy.offer_peace). Hoje só o jogador humano
+## recebe ofertas pendentes (a IA responde na hora); a UI abre o modal de Aceitar/Recusar (PeaceOfferPresenter).
+signal peace_offered(proposer: PlayerData, receiver: PlayerData)
+## Uma civilização pediu FRONTEIRAS ABERTAS a `receiver` e a resposta é dele (Diplomacy.request_open_borders). Só o
+## jogador humano recebe pedidos pendentes (a IA responde na hora); a UI abre o modal de Aceitar/Recusar
+## (OpenBordersOfferPresenter).
+signal open_borders_offered(proposer: PlayerData, receiver: PlayerData)
 signal city_founded(player: PlayerData, city_name: String, target_coord: Vector2i)
 signal city_captured(old_owner: PlayerData, new_owner: PlayerData, city_name: String, target_coord: Vector2i)
+## Uma civilização perdeu a ÚLTIMA cidade e saiu da partida (HexGrid.eliminate_civilization): as unidades dela já
+## foram removidas e as relações diplomáticas encerradas quando este sinal sai. `conqueror` = quem tomou a cidade.
+signal civilization_eliminated(player: PlayerData, conqueror: PlayerData)
 signal city_threatened(player: PlayerData, city_name: String, target_coord: Vector2i, threat_description: String)
 ## Apresentacao pode recomputar estado derivado sem observar gameplay por frame.
 signal ui_state_changed(reason: String)
@@ -32,6 +42,14 @@ signal ui_state_changed(reason: String)
 ## posicionamento de prédio, anexação, Ataque da Cidade). O estado continua
 ## sendo lido do próprio SelectionManager; o sinal só evita polling na UI.
 signal targeting_changed
+## O jogador escolheu, no posicionamento de prédio, um tile cujo recurso de mapa a obra destrói
+## (City.building_site_loss). A UI abre o modal de confirmação (BuildingSiteConfirmPresenter) e responde com
+## SelectionManager.confirm_building_placement()/decline_building_placement(); nada foi gasto nem destruído ainda.
+signal building_placement_confirmation_requested(city: City, building_id: String, coord: Vector2i)
+## O jogador atacou um tile que tem uma TROPA e uma CIDADE atacáveis (guarnição). A UI abre o modal de escolha
+## (AttackTargetChoicePresenter) e responde com SelectionManager.choose_attack_target()/decline_attack_target();
+## nada foi atacado nem gasto ainda.
+signal attack_target_choice_requested(attacker: Unit, coord: Vector2i)
 ## Fase 30: clique fora dos alvos destacados durante a mira. Nada foi gasto;
 ## a mensagem é apenas feedback curto para o TargetingBanner.
 signal targeting_rejected(message: String)
@@ -66,6 +84,9 @@ signal world_phase_changed(old_phase: int, new_phase: int, turn: int, cause: Str
 ## - combat_engagement: um ataque comum resolvido (target_kind "unit" ou "city", no tile target_coord).
 signal city_production_processed(player: PlayerData, city: City, item_id: String, result: Dictionary)
 signal unit_removed(former_owner: PlayerData, unit: Unit)
+## A ordem de marcha de `unit` (Unit.move_order_target) mudou: nova ordem, chegada, cancelamento. Só apresentação
+## escuta (MarchRouteOverlay redesenha a rota visível do jogador).
+signal unit_move_order_changed(unit: Unit)
 ## V3 / Etapa 4 — estado temporário/Barreira de `unit` mudou (aplicado, renovado, tick, expirou, carregado): o card da
 ## unidade selecionada atualiza os chips sem polling.
 signal unit_status_changed(unit: Unit)

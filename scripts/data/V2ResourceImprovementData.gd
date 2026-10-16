@@ -17,7 +17,8 @@ const IMPROVEMENTS := {
 	"iron": {
 		"id": "v2_improvement_iron_mine",
 		"display_name": "Mina de Ferro",
-		"model_scene_path": "res://assets/models/kaykit/buildings/building_blacksmith_blue.gltf",
+		"model_scene_path": "res://assets/generated/improvements/iron_mine_v1/iron_mine_v1.glb",
+		"replaces_resource_prop": true,
 		"effects": [
 			{"resource": "production", "branch": "industry", "yields": [2.0, 3.0, 4.0]},
 		],
@@ -25,7 +26,8 @@ const IMPROVEMENTS := {
 	"horses": {
 		"id": "v2_improvement_horse_ranch",
 		"display_name": "Haras",
-		"model_scene_path": "res://assets/models/kaykit/buildings/building_market_blue.gltf",
+		"model_scene_path": "res://assets/generated/improvements/horse_ranch_v1/horse_ranch_v1.glb",
+		"replaces_resource_prop": true,
 		"effects": [
 			{"resource": "supply", "branch": "logistics", "yields": [4.0, 6.0, 8.0]},
 		],
@@ -33,7 +35,9 @@ const IMPROVEMENTS := {
 	"gems": {
 		"id": "v2_improvement_gem_mine",
 		"display_name": "Mina de Gemas",
-		"model_scene_path": "res://assets/models/kaykit/buildings/building_tower_A_blue.gltf",
+		"model_scene_path": "res://assets/generated/improvements/gem_mine_v1/gem_mine_v1.glb",
+		"replaces_resource_prop": true,
+		"glow_profile": GlowProfiles.AMETHYST,
 		"effects": [
 			{"resource": "gold", "branch": "economy", "yields": [4.0, 6.0, 8.0]},
 		],
@@ -41,7 +45,8 @@ const IMPROVEMENTS := {
 	"silk": {
 		"id": "v2_improvement_silk_post",
 		"display_name": "Entreposto de Seda",
-		"model_scene_path": "res://assets/models/kaykit/buildings/building_windmill_blue.gltf",
+		"model_scene_path": "res://assets/generated/improvements/silk_post_v1/silk_post_v1.glb",
+		"replaces_resource_prop": true,
 		"effects": [
 			{"resource": "gold", "branch": "economy", "yields": [2.0, 3.0, 4.0]},
 			{"resource": "knowledge", "branch": "academy", "yields": [1.0, 2.0, 3.0]},
@@ -50,7 +55,9 @@ const IMPROVEMENTS := {
 	"mana_node": {
 		"id": "v2_improvement_arcane_conduit",
 		"display_name": "Conduíte Arcano",
-		"model_scene_path": "res://assets/models/kaykit/buildings/building_tower_B_blue.gltf",
+		"model_scene_path": "res://assets/generated/improvements/arcane_conduit_v2/arcane_conduit_v2.glb",
+		"replaces_resource_prop": true,
+		"glow_profile": GlowProfiles.ARCANE,
 		"effects": [
 			{"resource": "mana", "branch": "arcane", "yields": [2.0, 3.0, 4.0]},
 		],

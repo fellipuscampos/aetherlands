@@ -85,7 +85,7 @@ func _found_city() -> City:
 	return null
 
 func _learn(player: PlayerData, branch: String, tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		var id := "v2_magic_%s_%d" % [branch, i]
 		if not player.v2_research.is_completed(id):
 			assert_true(player.v2_research.complete_research(id), id)
@@ -137,9 +137,9 @@ func test_elementalism_n1_to_n9_environmental_rounds_six_manifestations_and_save
 	assert_not_null(city, "1–2. nova partida e cidade")
 	city.city_level = 4
 	var initial_mana := human.mana
-	assert_true(human.v2_research.select_research("v2_magic_elementalism_1"))
+	assert_true(human.v2_research.select_research("v2_magic_elementalism_2"))
 	_end_turn()
-	assert_gt(human.v2_research.get_progress("v2_magic_elementalism_1"), 0.0, "3–4. Conhecimento real")
+	assert_gt(human.v2_research.get_progress("v2_magic_elementalism_2"), 0.0, "3–4. Conhecimento real")
 	assert_gt(human.mana, initial_mana, "Mana real")
 
 	# 5–10. Escola, estrutura e caster pela fila normal.
@@ -200,10 +200,10 @@ func test_elementalism_n1_to_n9_environmental_rounds_six_manifestations_and_save
 	assert_true(V2MagicRuntime.cast(elementalista, STORM, storm_target.coord, grid), "%s / %s" % [V2MagicRuntime.unavailable_reason(elementalista, STORM, grid), V2MagicRuntime.tile_reason(elementalista, V2SpellDatabase.get_spell(STORM), storm_target.coord, grid)])
 	assert_eq(storm_target.hp, hp)
 	_end_turn()
-	assert_eq(storm_target.hp, hp - 4.0)
+	assert_eq(storm_target.hp, hp - 6.0)
 	assert_eq(int(V2EnvironmentalZoneSystem.zone_entry_at(storm_target.coord, grid).remaining_rounds), 1)
 	_end_turn()
-	assert_eq(storm_target.hp, hp - 8.0)
+	assert_eq(storm_target.hp, hp - 12.0)
 	assert_true(V2EnvironmentalZoneSystem.zone_entry_at(storm_target.coord, grid).is_empty())
 
 	# 35–47. Cataclismo, Grove e Portal coexistem; Dissipar remove as duas camadas mágicas, Restaurar remove a física.
@@ -216,8 +216,11 @@ func test_elementalism_n1_to_n9_environmental_rounds_six_manifestations_and_save
 		if String(grid.v2_environmental_zones[coord].zone_id) == "v2_zone_elemental_cataclysm":
 			cataclysm_cells += 1
 	assert_eq(cataclysm_cells, 19)
+	# O Cataclismo atinge aliados também e, desde 2026-10-14 (10/rodada + 35% de Vida pagos), mataria o próprio
+	# conjurador dentro do raio: ele sai da área antes da primeira rodada (o resto do fluxo continua usando-o).
+	grid.teleport_unit(elementalista, _free_coord(area_center, 6, 3))
 	var zone := V2EnvironmentalZoneSystem.zone_at(area_center, grid)
-	assert_eq([zone.vision_delta, zone.physical_ranged_attack_multiplier, zone.round_tick_magic_damage], [-1, 0.8, 5.0])
+	assert_eq([zone.vision_delta, zone.physical_ranged_attack_multiplier, zone.round_tick_magic_damage], [-1, 0.8, 10.0])
 	assert_true(V2TerrainRuntime.apply(grid, area_center, "v2_terrain_dense_grove"))
 	_learn(human, "arcanism", 7)
 	var arcanist := _spawn("v2_unit_arcanist", human, _free_coord(area_center, 3, 3))
@@ -243,7 +246,7 @@ func test_elementalism_n1_to_n9_environmental_rounds_six_manifestations_and_save
 	city.stored_production = UnitDatabase.create_unit(PRIMORDIAL).production_cost
 	_end_turn()
 	assert_null(_find(PRIMORDIAL), "52. PP completo espera Mana")
-	human.mana = 100.0
+	human.mana = 175.0
 	_end_turn()
 	var primordial := _find(PRIMORDIAL)
 	assert_not_null(primordial)
@@ -286,7 +289,7 @@ func test_elementalism_n1_to_n9_environmental_rounds_six_manifestations_and_save
 	# 69–73. Árvore mágica completa; capstone conectado, mas pesquisa sem Ritual não vence.
 	for branch in V2ResearchDatabase.MAGIC_BRANCHES:
 		_learn(human, String(branch.id), 9)
-	assert_eq(V2MagicContent.CONNECTED_UNLOCK_IDS.size(), 55)
+	assert_eq(V2MagicContent.CONNECTED_UNLOCK_IDS.size(), 49)
 	assert_eq(V2ResearchDatabase.capstone_progress(V2ResearchDatabase.TRANSCENDENCE_ID, human.v2_research.completed_ids), Vector2i(2, 2))
 	assert_true(human.v2_research.complete_research(V2ResearchDatabase.TRANSCENDENCE_ID))
 	assert_true(V2ResearchDatabase.get_node(V2ResearchDatabase.TRANSCENDENCE_ID).gameplay_connected)

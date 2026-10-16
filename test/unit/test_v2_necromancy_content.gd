@@ -4,9 +4,9 @@ extends GutTest
 ## Hostes, o Lich e os quatro registros de feitiço; totais históricos da árvore e a
 ## varredura anti-hardcode das fundações genéricas.
 
-const IDS := ["v2_magic_school_necromancy", "v2_building_necromancy_ossuary", "v2_unit_necromancer", "v2_spell_raise_dead", "v2_spell_mend_undead", "v2_spell_macabre_command", "v2_spell_raise_legion", "v2_building_necromancy_ritual", "v2_manifestation_lich_sovereign"]
-const NAMES := ["Escola da Necromancia", "Ossuário", "Necromante", "Erguer Mortos", "Recompor Ossos", "Comando Macabro", "Erguer Legião", "Mausoléu Negro", "Lich Soberano"]
-const TYPES := ["school", "school_building", "caster", "spell", "spell", "spell", "spell", "ritual_building", "grand_manifestation"]
+const IDS := ["v2_building_necromancy_ossuary", "v2_unit_necromancer", "v2_spell_raise_dead", "v2_spell_mend_undead", "v2_spell_macabre_command", "v2_spell_raise_legion", "v2_building_necromancy_ritual", "v2_manifestation_lich_sovereign"]
+const NAMES := ["Ossuário", "Necromante", "Erguer Mortos", "Recompor Ossos", "Comando Macabro", "Erguer Legião", "Mausoléu Negro", "Lich Soberano"]
+const TYPES := ["school_building", "caster", "spell", "spell", "spell", "spell", "ritual_building", "grand_manifestation"]
 const OSSUARY := "v2_building_necromancy_ossuary"
 const MAUSOLEUM := "v2_building_necromancy_ritual"
 const NECROMANCER := "v2_unit_necromancer"
@@ -36,13 +36,13 @@ func _player() -> PlayerData:
 
 func test_nine_necromancy_nodes_keep_structure_and_get_canonical_content():
 	var nodes := V2ResearchDatabase.nodes_for_branch(MAGIC, "necromancy")
-	assert_eq(nodes.size(), 9)
-	for i in 9:
+	assert_eq(nodes.size(), 8)
+	for i in 8:
 		var node := nodes[i]
-		assert_eq(node.id, "v2_magic_necromancy_%d" % (i + 1))
-		assert_eq(node.tier, i + 1)
-		assert_eq(node.cost, V2ResearchDatabase.BRANCH_TIER_COSTS[i])
-		assert_eq(node.prerequisites, ([] as Array[String]) if i == 0 else (["v2_magic_necromancy_%d" % i] as Array[String]))
+		assert_eq(node.id, "v2_magic_necromancy_%d" % (i + 2))
+		assert_eq(node.tier, i + 2)
+		assert_eq(node.cost, V2ResearchDatabase.BRANCH_TIER_COSTS[i + 1], "o custo do tier não mudou")
+		assert_eq(node.prerequisites, ([] as Array[String]) if i == 0 else (["v2_magic_necromancy_%d" % (i + 1)] as Array[String]))
 		assert_eq(node.display_name, NAMES[i])
 		assert_eq(node.unlock_id, IDS[i])
 		assert_eq(node.unlock_type, TYPES[i], node.id)
@@ -50,14 +50,14 @@ func test_nine_necromancy_nodes_keep_structure_and_get_canonical_content():
 		assert_false(node.is_placeholder)
 		assert_ne(node.intent, "")
 
-func test_totals_are_55_connected_including_transcendence():
+func test_totals_are_49_connected_including_transcendence():
 	var totals := {}
 	for node in V2ResearchDatabase.nodes_for_tree(MAGIC):
 		if node.is_universal:
 			continue
 		var key: String = node.branch if node.gameplay_connected else "inert"
 		totals[key] = totals.get(key, 0) + 1
-	assert_eq(totals, {"sacred": 9, "infernal": 9, "necromancy": 9, "druidism": 9, "arcanism": 9, "elementalism": 9})
+	assert_eq(totals, {"sacred": 8, "infernal": 8, "necromancy": 8, "druidism": 8, "arcanism": 8, "elementalism": 8})
 	var transcendence := V2ResearchDatabase.get_node(V2ResearchDatabase.TRANSCENDENCE_ID)
 	assert_true(transcendence.gameplay_connected)
 	assert_eq(transcendence.requirement.branch_count, 2, "três Escolas completas não mudam o requisito")
@@ -77,27 +77,27 @@ func test_tooltips_toasts_and_n1_milestone():
 	var player := _player()
 	GameManager.human_player = player
 	watch_signals(EventBus)
-	for i in 4:
-		assert_true(player.v2_research.complete_research("v2_magic_necromancy_%d" % (i + 1)))
+	for i in 3:
+		assert_true(player.v2_research.complete_research("v2_magic_necromancy_%d" % (i + 2)))
 	var texts: Array[String] = []
 	for i in get_signal_emit_count(EventBus, "notify"):
 		texts.append(String(get_signal_parameters(EventBus, "notify", i)[0]))
-	for text in ["Escola desbloqueada: Escola da Necromancia.", "Novo prédio mágico disponível: Ossuário.", "Novo conjurador disponível: Necromante.", "Novo feitiço disponível: Erguer Mortos."]:
+	for text in ["Novo prédio mágico disponível: Ossuário.", "Novo conjurador disponível: Necromante.", "Novo feitiço disponível: Erguer Mortos."]:
 		assert_true(text in texts, text)
 	for node in V2ResearchDatabase.nodes_for_branch(MAGIC, "necromancy"):
 		assert_false(V2ResearchDatabase.node_tooltip(node).contains(V2ResearchDatabase.GAMEPLAY_NOTICE), node.id)
 	var tip := func(id: String) -> String: return V2ResearchDatabase.node_tooltip(V2ResearchDatabase.node_for_unlock_id(id)).replace("\n", " ")
 	assert_string_contains(tip.call("v2_spell_raise_dead"), "Invoca uma Hoste Esquelética (Comando 1).")
 	assert_string_contains(tip.call("v2_spell_raise_legion"), "Invoca uma Hoste Macabra (Comando 2).")
-	assert_string_contains(tip.call("v2_spell_mend_undead"), "curar 8 de Vida de uma unidade própria morta-viva")
-	assert_string_contains(tip.call("v2_spell_macabre_command"), "+40% Ataque a uma Hoste própria")
+	assert_string_contains(tip.call("v2_spell_mend_undead"), "curar 12 de Vida de uma unidade própria morta-viva")
+	assert_string_contains(tip.call("v2_spell_macabre_command"), "+50% Ataque a uma Hoste própria")
 	assert_string_contains(tip.call(NECROMANCER), "+2 de capacidade de Comando Necromântico")
-	assert_string_contains(tip.call(LICH), "100 PP + 65 Mana")
+	assert_string_contains(tip.call(LICH), "84 PP + 130 Mana")
 	assert_string_contains(tip.call(LICH), "Soberania dos Mortos")
 	var fresh := _player()
-	fresh.v2_research.complete_research("v2_magic_necromancy_1")
-	assert_true(fresh.has_unlocked("v2_magic_school_necromancy"))
-	assert_false(fresh.has_unlocked(OSSUARY), "N1 sozinho não libera o Ossuário")
+	assert_false(fresh.v2_research.complete_research("v2_magic_necromancy_1"), "o marco de Escola (N1) saiu da árvore")
+	assert_true(fresh.v2_research.complete_research("v2_magic_necromancy_2"), "o Ossuário é o início da linha")
+	assert_true(fresh.has_unlocked(OSSUARY))
 	assert_false("researched_magic" in fresh, "Fase 25: estado V1 removido")
 
 # --- Prédios --------------------------------------------------------------------------------------------------
@@ -107,7 +107,7 @@ func test_ossuary_and_mausoleum_data():
 	assert_eq([ossuary.display_name, ossuary.production_cost, ossuary.gold_upkeep, ossuary.requires_building, ossuary.trains_unit], ["Ossuário", 24.0, 1.0, "", NECROMANCER])
 	assert_eq(ossuary.copy_limit_mode, BuildingData.CopyLimitMode.UNIQUE)
 	var mausoleum: BuildingData = BuildingDatabase.get_building(MAUSOLEUM)
-	assert_eq([mausoleum.display_name, mausoleum.production_cost, mausoleum.gold_upkeep, mausoleum.requires_building, mausoleum.trains_unit], ["Mausoléu Negro", 60.0, 2.0, OSSUARY, LICH])
+	assert_eq([mausoleum.display_name, mausoleum.production_cost, mausoleum.gold_upkeep, mausoleum.requires_building, mausoleum.trains_unit], ["Mausoléu Negro", 48.0, 2.0, OSSUARY, LICH])
 	assert_eq(mausoleum.copy_limit_mode, BuildingData.CopyLimitMode.UNIQUE)
 	assert_eq(BuildingDatabase.building_that_trains(NECROMANCER).id, OSSUARY)
 	assert_eq(BuildingDatabase.building_that_trains(LICH).id, MAUSOLEUM)
@@ -116,7 +116,7 @@ func test_ossuary_and_mausoleum_data():
 
 func test_necromancer_data():
 	var data := UnitDatabase.create_unit(NECROMANCER)
-	assert_eq([data.unit_name, data.max_hp, data.attack, data.defense, data.movement_points, data.vision_range, data.production_cost, data.supply_cost], ["Necromante", 10.0, 0.0, 1.5, 2.0, 3, 24.0, 2])
+	assert_eq([data.unit_name, data.max_hp, data.attack, data.defense, data.movement_points, data.vision_range, data.production_cost, data.supply_cost], ["Necromante", 10.0, 0.0, 2.5, 2.0, 3, 24.0, 2])
 	assert_false(data.can_basic_attack)
 	assert_eq([data.v2_magic_school], ["necromancy"])
 	assert_eq(data.movement_profile, UnitData.MovementProfile.GROUND)
@@ -129,10 +129,10 @@ func test_necromancer_data():
 
 func test_host_data_supply_traits_and_not_trainable():
 	var skeleton := UnitDatabase.create_unit(SKELETON)
-	assert_eq([skeleton.unit_name, skeleton.max_hp, skeleton.attack, skeleton.defense, skeleton.movement_points, skeleton.vision_range, skeleton.attack_range], ["Hoste Esquelética", 18.0, 4.0, 3.0, 2.0, 2, 1])
+	assert_eq([skeleton.unit_name, skeleton.max_hp, skeleton.attack, skeleton.defense, skeleton.movement_points, skeleton.vision_range, skeleton.attack_range], ["Hoste Esquelética", 18.0, 6.0, 4.5, 2.0, 2, 1])
 	assert_eq([skeleton.retinue_school, skeleton.retinue_command_cost], ["necromancy", 1])
 	var macabre := UnitDatabase.create_unit(MACABRE)
-	assert_eq([macabre.unit_name, macabre.max_hp, macabre.attack, macabre.defense, macabre.movement_points, macabre.vision_range, macabre.attack_range], ["Hoste Macabra", 30.0, 7.0, 5.0, 2.0, 3, 1])
+	assert_eq([macabre.unit_name, macabre.max_hp, macabre.attack, macabre.defense, macabre.movement_points, macabre.vision_range, macabre.attack_range], ["Hoste Macabra", 30.0, 10.5, 7.5, 2.0, 3, 1])
 	assert_eq([macabre.retinue_school, macabre.retinue_command_cost], ["necromancy", 2])
 	for data in [skeleton, macabre]:
 		assert_eq(data.supply_cost, 0)
@@ -162,8 +162,8 @@ func test_hosts_can_never_be_trained_even_with_everything_researched():
 
 func test_lich_data():
 	var data := UnitDatabase.create_unit(LICH)
-	assert_eq([data.unit_name, data.max_hp, data.attack, data.defense, data.movement_points, data.vision_range, data.production_cost, data.production_mana_cost, data.supply_cost], ["Lich Soberano", 34.0, 0.0, 6.0, 2.0, 4, 100.0, 65.0, 0])
-	assert_false(data.can_basic_attack)
+	assert_eq([data.unit_name, data.max_hp, data.attack, data.defense, data.movement_points, data.vision_range, data.production_cost, data.production_mana_cost, data.supply_cost], ["Lich Soberano", 46.0, 12.0, 9.0, 2.0, 4, 84.0, 130.0, 0])
+	assert_true(data.can_basic_attack)
 	assert_eq([data.v2_magic_school], ["necromancy"])
 	assert_eq(data.movement_profile, UnitData.MovementProfile.GROUND)
 	assert_eq(data.retinue_command_capacity, 4)
@@ -193,13 +193,13 @@ func test_spell_records_and_order():
 	var ids := V2SpellDatabase.for_school("necromancy").map(func(spell): return spell.id)
 	assert_eq(ids, ["v2_spell_raise_dead", "v2_spell_mend_undead", "v2_spell_macabre_command", "v2_spell_raise_legion"])
 	var raise := V2SpellDatabase.get_spell("v2_spell_raise_dead")
-	assert_eq([raise.target_mode, raise.mana_cost, raise.cast_range, raise.cooldown_turns, raise.summon_unit_id], [V2SpellData.TargetMode.EMPTY_TILE, 7.0, 2, 2, SKELETON])
+	assert_eq([raise.target_mode, raise.mana_cost, raise.cast_range, raise.cooldown_turns, raise.summon_unit_id], [V2SpellData.TargetMode.EMPTY_TILE, 10.0, 2, 2, SKELETON])
 	var mend := V2SpellDatabase.get_spell("v2_spell_mend_undead")
-	assert_eq([mend.target_mode, mend.mana_cost, mend.cast_range, mend.cooldown_turns, mend.heal_amount, mend.required_target_trait], [V2SpellData.TargetMode.OWN_UNIT, 6.0, 3, 1, 8.0, UnitData.TRAIT_UNDEAD])
+	assert_eq([mend.target_mode, mend.mana_cost, mend.cast_range, mend.cooldown_turns, mend.heal_amount, mend.required_target_trait], [V2SpellData.TargetMode.OWN_UNIT, 6.0, 3, 1, 12.0, UnitData.TRAIT_UNDEAD])
 	var macabre := V2SpellDatabase.get_spell("v2_spell_macabre_command")
-	assert_eq([macabre.target_mode, macabre.mana_cost, macabre.cast_range, macabre.cooldown_turns, macabre.attack_bonus, macabre.duration, macabre.required_target_trait], [V2SpellData.TargetMode.OWN_UNIT, 7.0, 3, 2, 0.4, 1, UnitData.TRAIT_RETINUE])
+	assert_eq([macabre.target_mode, macabre.mana_cost, macabre.cast_range, macabre.cooldown_turns, macabre.attack_bonus, macabre.duration, macabre.required_target_trait], [V2SpellData.TargetMode.OWN_UNIT, 9.0, 3, 2, 0.5, 1, UnitData.TRAIT_RETINUE])
 	var legion := V2SpellDatabase.get_spell("v2_spell_raise_legion")
-	assert_eq([legion.target_mode, legion.mana_cost, legion.cast_range, legion.cooldown_turns, legion.summon_unit_id], [V2SpellData.TargetMode.EMPTY_TILE, 15.0, 2, 4, MACABRE])
+	assert_eq([legion.target_mode, legion.mana_cost, legion.cast_range, legion.cooldown_turns, legion.summon_unit_id], [V2SpellData.TargetMode.EMPTY_TILE, 30.0, 2, 5, MACABRE])
 	assert_true(macabre in V2SpellDatabase.offensive_spells())
 	assert_false(macabre in V2SpellDatabase.defensive_spells())
 	assert_true(macabre in V2SpellDatabase.status_spells())

@@ -195,8 +195,8 @@ func test_the_shot_hits_with_140_percent_of_the_basic_attack():
 	var foe: Unit = d.foe
 	var basic: float = CombatResolver.predict(unit, foe, d.grid).damage_to_defender
 	var shot: float = CombatResolver.predict(unit, foe, d.grid, _technique(PRECISE).strike_multiplier).damage_to_defender
-	assert_eq(basic, _formula_damage(d.grid, 4.5, 1.0, foe))
-	assert_eq(shot, _formula_damage(d.grid, 4.5, 1.4, foe), "4,5 x 1,4 - 3,0/2")
+	assert_eq(basic, _formula_damage(d.grid, 6.5, 1.0, foe))
+	assert_eq(shot, _formula_damage(d.grid, 6.5, 1.4, foe), "4,5 x 1,4 - 3,0/2")
 	assert_gt(shot, basic)
 
 func test_prediction_and_real_resolution_agree_and_a_ranged_shot_takes_no_counterattack():
@@ -253,7 +253,7 @@ func test_the_defense_chain_of_the_target_applies_wall_and_command_aura():
 	_unit(d.grid, d.rival, CHAMPION, _coord_at(d.grid, foe.coord, 1)) # aura do Campeão inimigo perto do alvo
 	var wall: float = 1.0 + _technique(WALL).self_defense_bonus
 	var aura: float = 1.0 + UnitDatabase.create_unit(CHAMPION).aura_defense_bonus
-	var expected := _formula_damage(d.grid, 4.5, 1.4, foe, wall * aura)
+	var expected := _formula_damage(d.grid, 6.5, 1.4, foe, wall * aura)
 	var hp := foe.hp
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, PRECISE, foe, d.grid))
 	assert_almost_eq(hp - foe.hp, expected, 0.0001)
@@ -281,7 +281,7 @@ func test_the_multiplier_comes_from_the_data():
 	technique.strike_multiplier = 2.0
 	var hp := (d.foe as Unit).hp
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, PRECISE, d.foe, d.grid))
-	assert_almost_eq(hp - (d.foe as Unit).hp, _formula_damage(d.grid, 4.5, 2.0, d.foe), 0.0001)
+	assert_almost_eq(hp - (d.foe as Unit).hp, _formula_damage(d.grid, 6.5, 2.0, d.foe), 0.0001)
 	technique.strike_multiplier = original
 
 func test_the_cooldown_lives_on_the_unit_and_survives_the_form_change():

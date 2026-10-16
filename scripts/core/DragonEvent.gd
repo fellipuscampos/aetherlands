@@ -563,18 +563,11 @@ func _take_dragon_turn_logic(hex_grid: HexGrid, players: Array[PlayerData]) -> v
 	# Dois modos EXPLICITOS de deslocamento (item 1) -- recalculado todo
 	# tick a partir da distancia ATUAL, nunca guardado alem deste tick.
 	var distance_to_target: float = HexMetrics.axial_distance(dragon_unit.coord, target_city.coord)
-	travel_mode = TRAVEL_MODE_GROUND if distance_to_target <= DRAGON_GROUND_ENGAGE_RANGE else TRAVEL_MODE_FLYING
-	# Roadmap "Dragon Event v1 fechado" -- pedido explicito do usuario:
-	# animacao de Voo (asas batendo) durante Flying, em vez do Walking_A
-	# generico que slide_to() tocaria por padrao. moving_animation/idle_
-	# animation sao campos de INSTANCIA (ver Unit.gd) -- trocar isto aqui
-	# nao exige nenhuma mudanca no restante do arquivo de movimento.
-	if travel_mode == TRAVEL_MODE_FLYING:
-		dragon_unit.moving_animation = "Fly"
-		dragon_unit.idle_animation = "Fly"
-	else:
-		dragon_unit.moving_animation = Unit.WALK_ANIMATION
-		dragon_unit.idle_animation = Unit.DEFAULT_ANIMATION
+	travel_mode = travel_mode_for_distance(distance_to_target)
+	# O modelo tem um conjunto de clipes para cada modo (parado/andar/atacar no ar e em terra,
+	# MonsterDatabase.DRAGON_POSTURES): a postura segue o modo de viagem. Trocar de postura com o Dragão parado ou
+	# andando já leva o clipe atual para o equivalente (pouso/decolagem suaves, Unit.set_posture).
+	dragon_unit.set_posture(travel_mode)
 
 	if _city_in_attack_range(hex_grid, target_city):
 		_play_dragon_attack_effects()
@@ -608,30 +601,25 @@ func _take_dragon_turn_logic(hex_grid: HexGrid, players: Array[PlayerData]) -> v
 	RivalAI.move_unit_toward(dragon_unit, hex_grid, target_city.coord)
 
 ## Toca a animacao de Ataque + o VFX de sopro de fogo (GPUParticles3D +
-## luz, ambos construidos junto do corpo em Unit._build_dragon_body) --
+## luz, ambos presos ao osso da boca em Unit._build_fire_breath) --
 ## chamado ANTES de CombatResolver.resolve_with_splash/resolve_city_attack
 ## de proposito (pedido do usuario: "cabeça abre → inclina → pausa, e um
 ## sistema de partículas produz o jato de fogo" -- o efeito visual precisa
 ## comecar ANTES/JUNTO do dano ser aplicado, nunca depois). Busca os nodes
 ## pelo nome (find_child) em vez de guardar referencia direta -- a Unit e'
 ## reconstruida do zero a cada spawn/relink, nunca vale a pena cachear.
+const DRAGON_DEATH_SECONDS := 1.2
+
 func _play_dragon_attack_effects() -> void:
 	if dragon_unit == null or not is_instance_valid(dragon_unit):
 		return
-	dragon_unit._play_animation("Attack")
-	var emitter := dragon_unit.find_child("FireBreathEmitter", true, false)
-	if emitter is GPUParticles3D:
-		emitter.restart()
-	var light := dragon_unit.find_child("FireBreathLight", true, false)
-	if light is OmniLight3D:
-		light.light_energy = 3.0
-		var tween := dragon_unit.create_tween()
-		tween.tween_property(light, "light_energy", 0.0, 0.5).set_delay(0.3)
+	dragon_unit._play_animation(dragon_unit.attack_animation) # o ataque da postura atual (no ar ou em terra)
+	dragon_unit.play_fire_breath() # a rajada sai na janela em que o clipe abre a boca (UnitData.fire_breath_*)
 
-## Toca "Death" (rotation, ver Unit._build_dragon_death_animation) + um
+## Tombo de morte (Unit.play_death_topple: o corpo gira de lado) + um
 ## Tween a parte pra QUEDA (position:y) relativo ao valor ATUAL da Unit no
-## momento da morte -- nunca um numero fixo dentro do proprio clipe (ver
-## comentario la pro motivo exato). Chamado so' quando o proprio
+## momento da morte -- nunca um numero fixo. O modelo nao tem clipe de
+## morte; o tombo e' da propria Unit. Chamado so' quando o proprio
 ## DragonEvent detecta a morte em tempo real (combate contra `enemy`
 ## acima); se o Dragao morreu no turno de OUTRO jogador (ver dead-check no
 ## topo de _take_dragon_turn_logic), a Unit ja foi removida do mapa antes
@@ -639,9 +627,10 @@ func _play_dragon_attack_effects() -> void:
 func _play_dragon_death_effects() -> void:
 	if dragon_unit == null or not is_instance_valid(dragon_unit):
 		return
-	dragon_unit._play_animation("Death")
-	var tween := dragon_unit.create_tween()
-	tween.tween_property(dragon_unit, "position:y", dragon_unit.position.y - 0.35, 1.2)
+	dragon_unit.play_death_topple(DRAGON_DEATH_SECONDS)
+	if dragon_unit.is_inside_tree():
+		var tween := dragon_unit.create_tween()
+		tween.tween_property(dragon_unit, "position:y", dragon_unit.position.y - 0.35, DRAGON_DEATH_SECONDS)
 
 ## Ponto UNICO que decide um desfecho de verdade pro evento (item 8/9 do
 ## pedido original: "o Dragao nao pode sumir sem resolucao"). 5B.3-G:
@@ -898,7 +887,7 @@ func _notify_preparation_started(players: Array[PlayerData]) -> void:
 	# 5B.3-G: "primeiro" removido de proposito -- a ordem de visita nao e'
 	# mais garantida (Blocker #3 revisado de novo, ver _choose_target_city),
 	# so' a PRIMEIRA a ser avisada continua sendo verdade.
-	EventBus.notify.emit("O Dragão se aproxima. Os relatos foram confirmados: uma criatura de poder incomum deverá surgir na região em breve. %s foi a primeira a ser avisada da ameaça. Faltam %d turnos para sua chegada — deseja participar da expedição para detê-lo?" % [target_name, PREPARATION_DURATION_TURNS], "")
+	EventBus.notify.emit("O Dragão se aproxima. Os relatos foram confirmados: uma criatura de poder incomum deverá surgir na região em breve. %s foi a primeira a ser avisada da ameaça. Faltam %d turnos para a chegada dele. Prepare suas defesas: o Dragão ataca os reinos por onde passa." % [target_name, PREPARATION_DURATION_TURNS], "")
 
 ## Regra MINIMA proposital (docs/DRAGON_EVENT_DESIGN.md, Blocker #1):
 ## considera origin_region primeiro, depois expande em aneis de vizinhos
@@ -999,6 +988,14 @@ func relink_unit(hex_grid: HexGrid) -> void:
 	dragon_unit = hex_grid.get_unit_at(lookup_coord)
 	if dragon_unit != null:
 		_mark_dragon_unit(dragon_unit)
+		# O modo de viagem não vai para o save (é recalculado a cada turno): sem isto o Dragão carregado ao lado da
+		# cidade-alvo apareceria voando até o turno seguinte.
+		if current_target_city_coord != NO_COORD:
+			dragon_unit.set_posture(travel_mode_for_distance(HexMetrics.axial_distance(dragon_unit.coord, current_target_city_coord)))
+
+## O modo de viagem para a distância até a cidade-alvo: em terra perto dela, voando longe.
+static func travel_mode_for_distance(distance: float) -> String:
+	return TRAVEL_MODE_GROUND if distance <= DRAGON_GROUND_ENGAGE_RANGE else TRAVEL_MODE_FLYING
 
 func to_save_dict() -> Dictionary:
 	var data := super.to_save_dict()

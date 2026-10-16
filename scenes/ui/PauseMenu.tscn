@@ -1,8 +1,10 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/PauseMenu.gd" id="PauseMenu_gd"]
 [ext_resource type="PackedScene" path="res://scenes/ui/LoadGameScreen.tscn" id="LoadGameScreen_scn"]
 [ext_resource type="PackedScene" path="res://scenes/ui/SettingsScreen.tscn" id="SettingsScreen_scn"]
+
+[ext_resource type="Texture2D" path="res://assets/ui/title_menu/crest.svg" id="PauseCrest_tex"]
 
 [node name="PauseMenu" type="Control"]
 process_mode = 3
@@ -20,7 +22,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.035, 0.045, 0.058, 0.94)
+color = Color(0.025, 0.045, 0.055, 0.76)
 
 [node name="MainPage" type="Control" parent="."]
 layout_mode = 1
@@ -36,60 +38,162 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Box" type="VBoxContainer" parent="MainPage/CenterBox"]
+[node name="PauseCard" type="PanelContainer" parent="MainPage/CenterBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(600, 480)
+theme_type_variation = &"PausePanel"
+texture_filter = 1
+
+[node name="PauseContent" type="VBoxContainer" parent="MainPage/CenterBox/PauseCard"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 12
-custom_minimum_size = Vector2(320, 0)
 
-[node name="TitleLabel" type="Label" parent="MainPage/CenterBox/Box"]
+[node name="PauseHeader" type="HBoxContainer" parent="MainPage/CenterBox/PauseCard/PauseContent"]
+unique_name_in_owner = true
 layout_mode = 2
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 30
-text = "Pausado"
+theme_override_constants/separation = 16
 
-[node name="SessionLabel" type="Label" parent="MainPage/CenterBox/Box"]
+[node name="PauseCrest" type="TextureRect" parent="MainPage/CenterBox/PauseCard/PauseContent/PauseHeader"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = &"MutedLabel"
-horizontal_alignment = 1
+custom_minimum_size = Vector2(64, 64)
+texture = ExtResource("PauseCrest_tex")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Titles" type="VBoxContainer" parent="MainPage/CenterBox/PauseCard/PauseContent/PauseHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_constants/separation = 4
+
+[node name="Kicker" type="Label" parent="MainPage/CenterBox/PauseCard/PauseContent/PauseHeader/Titles"]
+layout_mode = 2
+theme_type_variation = &"PauseKicker"
+text = "AETHERLANDS"
+
+[node name="TitleLabel" type="Label" parent="MainPage/CenterBox/PauseCard/PauseContent/PauseHeader/Titles"]
+layout_mode = 2
+theme_type_variation = &"PauseTitle"
+text = "Jogo pausado"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="SessionLabel" type="Label" parent="MainPage/CenterBox/PauseCard/PauseContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PauseBody"
+autowrap_mode = 3
 text = "Partida em andamento"
 
-[node name="ResumeButton" type="Button" parent="MainPage/CenterBox/Box"]
+[node name="HeaderSeparator" type="HSeparator" parent="MainPage/CenterBox/PauseCard/PauseContent"]
 layout_mode = 2
-theme_type_variation = &"PrimaryButton"
-text = "Continuar"
 
-[node name="SaveButton" type="Button" parent="MainPage/CenterBox/Box"]
+[node name="ResumeButton" type="Button" parent="MainPage/CenterBox/PauseCard/PauseContent"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "Salvar Jogo"
+custom_minimum_size = Vector2(0, 54)
+theme_type_variation = &"PausePrimaryButton"
+text = "Continuar partida"
+clip_text = true
 
-[node name="LoadButton" type="Button" parent="MainPage/CenterBox/Box"]
+[node name="ActionsScroll" type="ScrollContainer" parent="MainPage/CenterBox/PauseCard/PauseContent"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "Carregar Jogo"
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+follow_focus = true
 
-[node name="SettingsButton" type="Button" parent="MainPage/CenterBox/Box"]
+[node name="PauseActions" type="VBoxContainer" parent="MainPage/CenterBox/PauseCard/PauseContent/ActionsScroll"]
+unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="SaveLoadRow" type="HBoxContainer" parent="MainPage/CenterBox/PauseCard/PauseContent/ActionsScroll/PauseActions"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SaveButton" type="Button" parent="MainPage/CenterBox/PauseCard/PauseContent/ActionsScroll/PauseActions/SaveLoadRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PauseButton"
+text = "Salvar jogo"
+clip_text = true
+
+[node name="LoadButton" type="Button" parent="MainPage/CenterBox/PauseCard/PauseContent/ActionsScroll/PauseActions/SaveLoadRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PauseButton"
+text = "Carregar jogo"
+clip_text = true
+
+[node name="SettingsRow" type="HBoxContainer" parent="MainPage/CenterBox/PauseCard/PauseContent/ActionsScroll/PauseActions"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SettingsButton" type="Button" parent="MainPage/CenterBox/PauseCard/PauseContent/ActionsScroll/PauseActions/SettingsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PauseButton"
 text = "Configurações"
+clip_text = true
 
-[node name="DeveloperToolsButton" type="Button" parent="MainPage/CenterBox/Box"]
+[node name="DeveloperToolsButton" type="Button" parent="MainPage/CenterBox/PauseCard/PauseContent/ActionsScroll/PauseActions/SettingsRow"]
+unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 visible = false
-text = "Developer Tools"
+theme_type_variation = &"PauseUtilityButton"
+text = "Ferramentas de debug"
+clip_text = true
+tooltip_text = "Abrir as ferramentas de debug para invocações, VFX e testes."
 
-[node name="MainMenuButton" type="Button" parent="MainPage/CenterBox/Box"]
+[node name="ExitSeparator" type="HSeparator" parent="MainPage/CenterBox/PauseCard/PauseContent/ActionsScroll/PauseActions"]
 layout_mode = 2
-theme_type_variation = &"GhostButton"
-text = "Voltar ao Menu Principal"
 
-[node name="QuitButton" type="Button" parent="MainPage/CenterBox/Box"]
+[node name="ExitRow" type="HBoxContainer" parent="MainPage/CenterBox/PauseCard/PauseContent/ActionsScroll/PauseActions"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = &"GhostButton"
-text = "Sair do Jogo"
+theme_override_constants/separation = 12
 
-[node name="StatusLabel" type="Label" parent="MainPage/CenterBox/Box"]
+[node name="MainMenuButton" type="Button" parent="MainPage/CenterBox/PauseCard/PauseContent/ActionsScroll/PauseActions/ExitRow"]
+unique_name_in_owner = true
 layout_mode = 2
-horizontal_alignment = 1
+size_flags_horizontal = 3
+theme_type_variation = &"PauseUtilityButton"
+text = "Menu principal"
+clip_text = true
+tooltip_text = "Voltar ao menu principal. O jogo pede confirmação antes de descartar progresso."
+
+[node name="QuitButton" type="Button" parent="MainPage/CenterBox/PauseCard/PauseContent/ActionsScroll/PauseActions/ExitRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PauseExitButton"
+text = "Sair do jogo"
+clip_text = true
+
+[node name="StatusLabel" type="Label" parent="MainPage/CenterBox/PauseCard/PauseContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"PauseBody"
 autowrap_mode = 3
 text = ""
+
+[node name="NavigationHint" type="Label" parent="MainPage/CenterBox/PauseCard/PauseContent"]
+layout_mode = 2
+theme_type_variation = &"PauseMuted"
+horizontal_alignment = 1
+text = "ESC para continuar"
 
 [node name="LoadGameScreen" parent="." instance=ExtResource("LoadGameScreen_scn")]
 layout_mode = 1

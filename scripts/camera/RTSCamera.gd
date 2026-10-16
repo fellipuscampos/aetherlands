@@ -1,9 +1,12 @@
 class_name RTSCamera
 extends Node3D
 
+## Ângulo FIXO (2026-10-09): o rig nunca gira — a câmera fica sempre na orientação inicial da cena (rig sem
+## rotação, Camera3D inclinada em Main.tscn). Só pan (WASD/setas, minimapa) e zoom (roda do mouse, que aproxima
+## ao longo da MESMA direção da câmera e por isso não muda o ângulo). O giro por Q/E foi removido.
+
 @export var pan_speed: float = 20.0
 @export var zoom_speed: float = 2.0
-@export var rotate_speed: float = 90.0
 @export var min_zoom: float = 6.0
 @export var max_zoom: float = 30.0
 ## Mapa agora e retangular (largura != altura em geral), entao o limite de
@@ -17,11 +20,16 @@ extends Node3D
 
 @onready var camera: Camera3D = $Camera3D
 
+## Distância da câmera mudou (roda do mouse ou reset_view). O Main ajusta o alcance das sombras ao chão visível
+## (GraphicsQuality.fit_shadows_to_view) — evento discreto, nada por quadro.
+signal zoom_changed
+
 var _zoom_distance: float = 15.0
 var _default_camera_position: Vector3
 var _default_camera_rotation: Vector3
 
 func _ready() -> void:
+	rotation = Vector3.ZERO # orientação fixa: nada gira o rig
 	_default_camera_position = camera.position
 	_default_camera_rotation = camera.rotation_degrees
 	_zoom_distance = camera.position.length()
@@ -53,10 +61,10 @@ func reset_view(focus_position: Vector3 = Vector3.ZERO) -> void:
 	camera.position = _default_camera_position
 	camera.rotation_degrees = _default_camera_rotation
 	_zoom_distance = _default_camera_position.length()
+	zoom_changed.emit()
 
 func _process(delta: float) -> void:
 	_handle_pan(delta)
-	_handle_rotate(delta)
 
 func _handle_pan(delta: float) -> void:
 	var input_dir := Vector3.ZERO
@@ -72,26 +80,10 @@ func _handle_pan(delta: float) -> void:
 	if input_dir == Vector3.ZERO:
 		return
 
-	input_dir = input_dir.normalized()
-	var forward = -global_transform.basis.z
-	forward.y = 0.0
-	forward = forward.normalized()
-	var right = global_transform.basis.x
-	right.y = 0.0
-	right = right.normalized()
-	var move = (right * input_dir.x + forward * -input_dir.z) * pan_speed * delta
-	position += move
+	# Com o ângulo fixo, "frente" da tela é sempre -Z do mundo e "direita" é +X: pan direto nos eixos do mundo.
+	position += input_dir.normalized() * pan_speed * delta
 	position.x = clamp(position.x, -pan_bounds_x, pan_bounds_x)
 	position.z = clamp(position.z, -pan_bounds_z, pan_bounds_z)
-
-func _handle_rotate(delta: float) -> void:
-	var rotate_dir := 0.0
-	if Input.is_physical_key_pressed(KEY_Q):
-		rotate_dir -= 1.0
-	if Input.is_physical_key_pressed(KEY_E):
-		rotate_dir += 1.0
-	if rotate_dir != 0.0:
-		rotate_y(deg_to_rad(rotate_speed * rotate_dir * delta))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -118,6 +110,7 @@ func _zoom(amount: float) -> void:
 	_zoom_distance = clamp(_zoom_distance + amount, min_zoom, max_zoom)
 	var dir = camera.position.normalized()
 	camera.position = dir * _zoom_distance
+	zoom_changed.emit()
 
 func _raycast_ground(screen_pos: Vector2) -> Dictionary:
 	var space_state = get_world_3d().direct_space_state

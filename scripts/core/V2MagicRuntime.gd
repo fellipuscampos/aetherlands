@@ -275,7 +275,7 @@ static func tile_target_label(spell: V2SpellData, coord: Vector2i, hex_grid: Hex
 # --- Disponibilidade -------------------------------------------------------------------------------
 
 ## O motivo (uma frase) de `unit` não poder conjurar `spell_id` agora, ou "" se pode (há ao menos um alvo).
-static func unavailable_reason(unit: Unit, spell_id: String, hex_grid: HexGrid = null) -> String:
+static func unavailable_reason(unit: Unit, spell_id: String, hex_grid: HexGrid = null, check_targets: bool = true) -> String:
 	var spell := V2SpellDatabase.get_spell(spell_id)
 	if spell == null or unit == null or unit.unit_data == null:
 		return "Feitiço desconhecido."
@@ -299,8 +299,13 @@ static func unavailable_reason(unit: Unit, spell_id: String, hex_grid: HexGrid =
 		var command_reason := V2RetinueSystem.summon_reason(unit.owner_player, summon_data(spell))
 		if command_reason != "":
 			return command_reason
-	if unit.owner_player.mana < spell.mana_cost:
-		return "Mana insuficiente: requer %d." % int(spell.mana_cost)
+	if unit.owner_player.mana < V2ManifestationBalance.mana_cost(unit, spell):
+		return "Mana insuficiente: requer %d." % int(V2ManifestationBalance.mana_cost(unit, spell))
+	if spell.health_cost_fraction > 0.0 and unit.hp <= health_cost(unit, spell):
+		return "Vida insuficiente: o feitiço custa %d de Vida." % ceili(health_cost(unit, spell))
+	# Autonomous planners already validate each candidate below. Avoid scanning the same
+	# range twice; the final cast still performs the full canonical validation.
+	if not check_targets: return ""
 	if spell.targets_tile():
 		if not target_tiles(unit, spell, hex_grid).is_empty():
 			return ""
@@ -326,26 +331,59 @@ static func can_cast(unit: Unit, spell_id: String, hex_grid: HexGrid = null) -> 
 ## só é descontada depois de validar tudo; a recarga só começa num cast bem-sucedido.
 static func cast(unit: Unit, spell_id: String, target_coord: Vector2i, hex_grid: HexGrid = null) -> bool:
 	var grid := _grid(hex_grid)
-	if grid == null or not can_cast(unit, spell_id, grid):
-		return false
+	if grid == null or not can_cast(unit, spell_id, grid): return false
+	var feedback := preload("res://scripts/vfx/CombatFeedback.gd").begin_cast(unit, grid)
+	var success := _cast_now(unit, spell_id, target_coord, grid)
+	preload("res://scripts/vfx/CombatFeedback.gd").finish(feedback)
+	return success
+
+static func _cast_now(unit: Unit, spell_id: String, target_coord: Vector2i, hex_grid: HexGrid) -> bool:
+	var grid := hex_grid # validated by cast; never re-evaluate or change rules after opening presentation
 	var spell := V2SpellDatabase.get_spell(spell_id)
 	if spell.targets_tile():
-		var tile_ok := _cast_on_tile(unit, spell, target_coord, grid)
+		var context := {"origin_coord":unit.coord}
+		var tile_outcomes: Array[Dictionary] = []
+		var tile_ok := _cast_on_tile(unit, spell, target_coord, grid, tile_outcomes)
 		if tile_ok:
+			_play_cast_visual(unit, target_coord, grid, spell, tile_outcomes, context)
 			MonsterAbilitySystem.on_spell_cast(unit, grid) # V3 / Etapa 2: Fome Arcana reage DEPOIS do feitiço resolver
 		return tile_ok
 	var target := grid.get_unit_at(target_coord)
 	if target_reason(unit, spell, target, grid) != "":
 		return false
-	unit.owner_player.mana -= spell.mana_cost
+	unit.owner_player.mana -= V2ManifestationBalance.mana_cost(unit, spell)
+	_pay_health(unit, spell, grid)
 	_start_cooldown(unit, spell)
 	# Reúne tudo ANTES de aplicar: a morte do primário nunca interrompe uma explosão.
 	var affected := affected_units(unit, spell, target, grid)
+	var stage_feedback: bool = grid.is_inside_tree() and SpellVFX.SCHOOLS.has(spell.school_branch)
+	var outcomes: Array[Dictionary] = []
 	for affected_unit in affected:
-		_apply(unit, spell, affected_unit, grid)
+		var before_hp := affected_unit.hp
+		var outcome := SpellVFX.receipt(affected_unit,grid)
+		_apply(unit, spell, affected_unit, grid, not stage_feedback or preload("res://scripts/vfx/CombatFeedback.gd").current() != null)
+		outcome.heal = maxf(0.0,affected_unit.hp-before_hp)
+		outcome.damage = maxf(0.0,before_hp-affected_unit.hp)
+		outcomes.append(outcome)
 	_commit_action(unit, spell)
+	var presented := _play_cast_visual(unit, target_coord, grid, spell, outcomes)
+	if stage_feedback and not presented and preload("res://scripts/vfx/CombatFeedback.gd").current() == null:
+		for outcome in outcomes:
+			var healed: Unit = outcome.unit.get_ref()
+			if is_instance_valid(healed) and float(outcome.heal)>0 and SpellVFX.unit_visible(healed,grid):
+				grid.spawn_heal_popup(healed.coord,outcome.heal)
 	MonsterAbilitySystem.on_spell_cast(unit, grid) # V3 / Etapa 2: Fome Arcana reage DEPOIS do feitiço resolver
 	return true
+
+## Animação de conjuração do mago (só visual, depois de o feitiço resolver): o mesmo ponto serve ao jogador e à IA.
+static func _play_cast_visual(unit: Unit, target_coord: Vector2i, grid: HexGrid, spell: V2SpellData, outcomes: Array[Dictionary] = [], context: Dictionary = {}) -> bool:
+	if unit != null and is_instance_valid(unit):
+		context.synchronized_feedback = preload("res://scripts/vfx/CombatFeedback.gd").current() != null
+		context.release_seconds = preload("res://scripts/vfx/CombatFeedback.gd").cast_release(unit)
+		context.start_delay = unit.visual_walk_remaining()
+		unit.play_cast_visual(grid.world_for_coord(target_coord))
+		return SpellVFX.play(unit,spell,target_coord,grid,outcomes,context) != null
+	return false
 
 ## Custo comum de todo cast bem-sucedido: ação + cancelar fortificar/explorar/marcha.
 static func _commit_action(unit: Unit, spell: V2SpellData) -> void:
@@ -365,7 +403,7 @@ static func _start_cooldown(unit: Unit, spell: V2SpellData) -> void:
 ## Fase 19/20 — cast em tile (invocação, criação ou remoção de modificação de terreno). Revalida tile e comando (can_cast já o fez); nasce pelo pipeline
 ## normal (HexGrid.spawn_unit: grid, serial, save), dono = do conjurador, Vida cheia e movimento 0 (só age a partir
 ## do próximo turno do dono). Só DEPOIS de nascer cobra Mana/recarga/ação: se nada nasce, nada é gasto.
-static func _cast_on_tile(unit: Unit, spell: V2SpellData, coord: Vector2i, grid: HexGrid) -> bool:
+static func _cast_on_tile(unit: Unit, spell: V2SpellData, coord: Vector2i, grid: HexGrid, receipts: Array[Dictionary] = []) -> bool:
 	if tile_reason(unit, spell, coord, grid) != "":
 		return false
 	# Tudo abaixo já foi validado; efeitos destrutivos/substitutivos só começam agora.
@@ -376,6 +414,9 @@ static func _cast_on_tile(unit: Unit, spell: V2SpellData, coord: Vector2i, grid:
 		if summoned == null:
 			return false
 		summoned.movement_left = 0.0
+		preload("res://scripts/vfx/CombatFeedback.gd").stage_spawned(summoned)
+		receipts.append(SpellVFX.receipt(summoned,grid))
+		receipts.append({"tile":coord})
 	if spell.terrain_modification_id != "":
 		# Fase 20: toda a área é decidida ANTES de mudar qualquer tile; zero tiles = nada gasto.
 		var area := terrain_area_tiles(unit, spell, coord, grid)
@@ -383,31 +424,56 @@ static func _cast_on_tile(unit: Unit, spell: V2SpellData, coord: Vector2i, grid:
 			return false
 		for area_coord in area:
 			V2TerrainRuntime.apply(grid, area_coord, spell.terrain_modification_id)
+			receipts.append({"tile":area_coord})
 	if spell.environmental_zone_id != "":
 		# Toda a área é decidida/aplicada em batch: Mana uma vez, marker por tile,
 		# fog no máximo uma vez se uma fonte humana de visão foi afetada.
-		if V2EnvironmentalZoneSystem.apply_area(unit, spell.environmental_zone_id, coord, spell.splash_radius, grid).is_empty():
+		var zone_area := V2EnvironmentalZoneSystem.apply_area(unit, spell.environmental_zone_id, coord, spell.splash_radius, grid)
+		if zone_area.is_empty():
 			return false
+		for area_coord in zone_area: receipts.append({"tile":area_coord})
 	if spell.remove_terrain_modification and not V2TerrainRuntime.remove(grid, coord):
 		return false
+	if spell.remove_terrain_modification: receipts.append({"tile":coord})
 	if spell.teleport_caster:
+		receipts.append({"tile":unit.coord})
 		grid.teleport_unit(unit, coord) # deslocamento direto: nenhum pathfinding/custo/intermediário
+		receipts.append({"tile":coord})
 	if spell.dispel_at_tile:
 		var target := grid.get_unit_at(coord)
 		if target != null:
-			for status_id in dispellable_statuses_for(unit, target, grid):
+			var removable := dispellable_statuses_for(unit, target, grid)
+			for status_id in removable:
 				target.magic_status.erase(status_id)
 			target.refresh_technique_marker()
+			if not removable.is_empty(): receipts.append(SpellVFX.receipt(target,grid))
 		V2PortalSystem.close_pair_at(coord, grid) # no-op se o efeito elegível era só da unidade
 		V2EnvironmentalZoneSystem.remove(grid, coord, true) # Grove/Elevado são físicos e permanecem
 	if spell.creates_portal_pair and not V2PortalSystem.create_or_replace_pair(unit.owner_player, spell.school_branch, unit.coord, coord, grid):
 		return false
-	unit.owner_player.mana -= spell.mana_cost
+	unit.owner_player.mana -= V2ManifestationBalance.mana_cost(unit, spell)
+	_pay_health(unit, spell, grid)
 	_start_cooldown(unit, spell)
 	_commit_action(unit, spell)
 	return true
 
-static func _apply(caster: Unit, spell: V2SpellData, target: Unit, grid: HexGrid) -> void:
+## Vida que `unit` paga para conjurar `spell` (fração da Vida máxima; 0 para feitiços só de Mana).
+static func health_cost(unit: Unit, spell: V2SpellData) -> float:
+	if unit == null or spell == null or spell.health_cost_fraction <= 0.0:
+		return 0.0
+	return unit.unit_data.max_hp * spell.health_cost_fraction
+
+## Cobra o preço em Vida de um cast bem-sucedido. unavailable_reason já garantiu que sobra Vida (nunca mata). Sem
+## reação de dano nem Barreira Arcana: é um preço pago, não um golpe recebido.
+static func _pay_health(unit: Unit, spell: V2SpellData, grid: HexGrid) -> void:
+	var cost := health_cost(unit, spell)
+	if cost <= 0.0:
+		return
+	unit.set_hp_silent(maxf(unit.hp - cost, 1.0))
+	if grid != null and grid.is_inside_tree() and unit.is_visible_in_tree():
+		grid.spawn_damage_popup(unit.coord, cost)
+
+static func _apply(caster: Unit, spell: V2SpellData, target: Unit, grid: HexGrid, show_popup: bool = true) -> void:
 	if spell.is_damage():
 		CombatResolver.apply_direct_unit_damage(caster, target, predict_damage(caster, target, spell), grid)
 	if spell.is_heal() and _is_injured(target):
@@ -416,7 +482,7 @@ static func _apply(caster: Unit, spell: V2SpellData, target: Unit, grid: HexGrid
 		# V3 / Etapa 2: em tile de infecção micótica a cura recebida cai pela metade (MonsterHazardSystem).
 		var heal := (target.unit_data.max_hp if spell.heal_to_full else spell.heal_amount) * MonsterHazardSystem.heal_multiplier(target)
 		target.hp = minf(target.hp + heal, target.unit_data.max_hp)
-		if grid != null and target.hp > before:
+		if show_popup and grid != null and target.hp > before:
 			grid.spawn_heal_popup(target.coord, target.hp - before)
 	if spell.applies_status():
 		# Mesmo feitiço de novo (outro conjurador) SUBSTITUI o registro — nunca 1,35 x 1,35.
@@ -508,6 +574,16 @@ static func defense_multiplier(defender: Unit) -> float:
 			result *= 1.0 + spell.defense_bonus
 	return result
 
+## Nomes dos feitiços de DEFESA ativos em `defender` agora (o aviso de combate diz o que protegeu a unidade).
+static func active_defense_names(defender: Unit) -> Array[String]:
+	var names: Array[String] = []
+	if defender == null or defender.magic_status.is_empty():
+		return names
+	for spell in V2SpellDatabase.defensive_spells():
+		if V2OwnerTurnEffect.is_active(defender.magic_status, spell.id):
+			names.append(spell.display_name)
+	return names
+
 ## Multiplicador de Ataque de `attacker` vindo de feitiços V2 ativos nele (Fase 19, Comando Macabro) — UM fator em
 ## CombatResolver.predict, paralelo a defense_multiplier. Caminho rápido: sem estado mágico, 1.0 sem olhar feitiço.
 ## O mesmo feitiço nunca acumula consigo (um registro por id); feitiços diferentes multiplicariam.
@@ -564,7 +640,9 @@ static func command_tooltip_line(unit: Unit, spell: V2SpellData) -> String:
 	return "Comando disponível: %d." % V2RetinueSystem.command_available(unit.owner_player, data.retinue_school)
 
 static func button_text(unit: Unit, spell: V2SpellData) -> String:
-	var text := "%s — %d Mana" % [spell.display_name, int(spell.mana_cost)]
+	var text := "%s — %d Mana" % [spell.display_name, int(V2ManifestationBalance.mana_cost(unit, spell))]
+	if spell.health_cost_fraction > 0.0:
+		text += " + %d Vida" % ceili(health_cost(unit, spell))
 	var remaining := cooldown_remaining(unit, spell.id)
 	if remaining > 0:
 		text += " (recarga %d)" % remaining
@@ -580,7 +658,7 @@ static func status_lines(unit: Unit) -> Array[String]:
 			if spell.silences_spellcasting:
 				lines.append("%s — não pode conjurar feitiços." % spell.display_name)
 			else:
-				lines.append("%s — Ativa (até o início do próximo turno do dono)" % spell.display_name)
+				lines.append("%s — Ativa (%s)" % [spell.display_name, V2OwnerTurnEffect.DURATION_ON_UNIT])
 	return lines
 
 ## Recargas de feitiço de `unit` (só o dono vê).

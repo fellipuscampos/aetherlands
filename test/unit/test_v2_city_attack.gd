@@ -101,11 +101,11 @@ func test_an_unfortified_city_has_no_city_attack():
 
 func test_power_and_range_by_level():
 	var city := _fortified(human, 1)
-	assert_eq([CityDefense.city_attack_power(city), CityDefense.city_attack_range(city)], [3.0, 2])
+	assert_eq([CityDefense.city_attack_power(city), CityDefense.city_attack_range(city)], [4.5, 2])
 	city.fortification_level = 2
-	assert_eq([CityDefense.city_attack_power(city), CityDefense.city_attack_range(city)], [5.0, 2])
+	assert_eq([CityDefense.city_attack_power(city), CityDefense.city_attack_range(city)], [7.5, 2])
 	city.fortification_level = 3
-	assert_eq([CityDefense.city_attack_power(city), CityDefense.city_attack_range(city)], [7.0, 3])
+	assert_eq([CityDefense.city_attack_power(city), CityDefense.city_attack_range(city)], [10.5, 3])
 
 # --- Alvos -------------------------------------------------------------------------------------------
 
@@ -154,9 +154,9 @@ func test_damage_is_flat_ignores_defense_and_has_no_counter():
 	var tank := _unit("warrior", rival, Vector2i(1, 0), 50.0)
 	var city_hp := city.hp
 	var city_shield := city.shield
-	assert_eq(CityDefense.predict_city_defense_attack(city, tank), 5.0)
+	assert_eq(CityDefense.predict_city_defense_attack(city, tank), 7.5)
 	assert_true(CityDefense.resolve_city_defense_attack(city, tank, grid))
-	assert_eq(tank.hp, 35.0, "5 fixo, Defesa 50 não reduz")
+	assert_eq(tank.hp, 32.5, "7,5 fixo, Defesa 50 não reduz")
 	assert_eq([city.hp, city.shield], [city_hp, city_shield], "sem revide")
 
 func test_attack_power_is_3_5_7_in_practice():
@@ -169,11 +169,14 @@ func test_attack_power_is_3_5_7_in_practice():
 
 func test_flyers_take_the_plain_power_without_the_unit_vulnerability_bonus():
 	var city := _fortified(human, 1)
-	var griffon := grid.spawn_unit(Vector2i(1, 0), UnitDatabase.create_unit(GRIFFON), rival)
+	# Voador de teste (números do Grifo, perfil FLYING): o Cavaleiro de Grifo não voa mais desde 2026-10-10.
+	var flyer_data := UnitDatabase.create_unit(GRIFFON)
+	flyer_data.movement_profile = UnitData.MovementProfile.FLYING
+	var griffon := grid.spawn_unit(Vector2i(1, 0), flyer_data, rival)
 	assert_true(griffon.unit_data.is_flying(), "pré-condição: voador")
 	var hp_before := griffon.hp
 	assert_true(CityDefense.resolve_city_defense_attack(city, griffon, grid))
-	assert_eq(hp_before - griffon.hp, 3.0, "sem os +25% de vulnerabilidade de voador")
+	assert_eq(hp_before - griffon.hp, 4.5, "sem os +25% de vulnerabilidade de voador")
 
 func test_deficit_halves_the_power_only():
 	var city := _fortified(human, 1)
@@ -182,9 +185,9 @@ func test_deficit_halves_the_power_only():
 	human.gold = 0.0
 	assert_true(V2EconomyRuntime.is_gold_deficit(human), "pré-condição: Déficit")
 	var target := _unit("warrior", rival, Vector2i(1, 0))
-	assert_eq(CityDefense.predict_city_defense_attack(city, target), 1.5)
+	assert_eq(CityDefense.predict_city_defense_attack(city, target), 2.25)
 	CityDefense.resolve_city_defense_attack(city, target, grid)
-	assert_eq(target.hp, 38.5)
+	assert_eq(target.hp, 37.75)
 	assert_eq(city.max_shield(), 8.0)
 	assert_almost_eq(city.defense_bonus(), 0.10, 0.0001)
 
@@ -198,7 +201,7 @@ func test_logistic_tension_never_changes_the_city_attack():
 			grid.spawn_unit(coord, UnitDatabase.create_unit("v2_unit_shieldbearer"), human)
 			placed += 1
 	assert_true(V2LogisticsRuntime.is_logistically_strained(human), "pré-condição: Tensão")
-	assert_eq(CityDefense.city_attack_power(city), 3.0)
+	assert_eq(CityDefense.city_attack_power(city), 4.5)
 
 func test_killing_blow_removes_the_target_and_grants_no_reward():
 	var city := _fortified(human, 3)
@@ -262,7 +265,7 @@ func test_clicking_an_invalid_tile_keeps_targeting_and_a_valid_one_fires_once():
 	assert_same(SelectionManager.city_attack_city, city, "clique inválido: continua mirando")
 	assert_eq(city.last_city_attack_turn, -1)
 	SelectionManager._handle_city_attack_click(enemy.coord)
-	assert_eq(enemy.hp, 37.0)
+	assert_eq(enemy.hp, 35.5)
 	assert_null(SelectionManager.city_attack_city, "disparou e saiu da mira")
 	SelectionManager.start_city_attack_targeting(city)
 	assert_null(SelectionManager.city_attack_city, "já usado: não entra de novo")
@@ -282,7 +285,7 @@ func test_ai_fires_once_at_the_lowest_hp_fraction():
 	hurt.hp = 10.0
 	Diplomacy.declare_war(rival, human)
 	assert_same(CityDefense.ai_city_defense_turn(city, grid), hurt)
-	assert_eq(hurt.hp, 7.0)
+	assert_eq(hurt.hp, 5.5)
 	assert_eq(healthy.hp, 40.0)
 	assert_null(CityDefense.ai_city_defense_turn(city, grid), "uma vez por turno")
 

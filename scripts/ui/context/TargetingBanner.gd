@@ -24,6 +24,8 @@ func _ready() -> void:
 	name = "TargetingBanner"
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build()
+	_apply_chrome()
+	Settings.accessibility_changed.connect(_apply_chrome)
 	if not EventBus.targeting_changed.is_connected(refresh):
 		EventBus.targeting_changed.connect(refresh)
 	if not EventBus.targeting_rejected.is_connected(show_feedback):
@@ -31,6 +33,13 @@ func _ready() -> void:
 	if not EventBus.unit_selected.is_connected(_on_selection_changed):
 		EventBus.unit_selected.connect(_on_selection_changed)
 	refresh()
+
+func _apply_chrome() -> void:
+	var chrome := preload("res://scripts/ui/HUDChromeTheme.gd")
+	theme = chrome.build(Settings.ui_scale_percent / 100.0)
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	panel.add_theme_stylebox_override("panel", chrome.panel(Settings.ui_scale_percent / 100.0, "target", 10))
+	feedback_panel.add_theme_stylebox_override("panel", chrome.panel(Settings.ui_scale_percent / 100.0, "warning", 8))
 
 func _build() -> void:
 	if panel != null:

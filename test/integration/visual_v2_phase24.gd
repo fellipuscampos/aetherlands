@@ -75,7 +75,6 @@ func _run() -> void:
 		grid.set_debug_fog_disabled(true)
 		hud._on_tile_selected(city.coord, grid.get_tile(city.coord))
 	# A captura documenta a partida, não o modal transitório de evento mundial.
-	hud.world_event_panel.visible = false
 	hud.dragon_announcement_panel.visible = false
 	hud.dragon_resolution_panel.visible = false
 	await _capture("phase24_v2_ai_real_game.png")

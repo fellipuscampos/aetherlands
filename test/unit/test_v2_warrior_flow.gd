@@ -45,6 +45,8 @@ var _original_current_save_slot: String
 var _original_kingdom_name: String
 
 func before_each():
+	# Conta unidades/Suprimentos exatos da linha: sem a escolta inicial (fixture, ver GameManager).
+	GameManager.starting_escort_on_new_match = false
 	_original_state = GameManager.state
 	_original_players = GameManager.players
 	_original_human_player = GameManager.human_player
@@ -73,6 +75,7 @@ func before_each():
 	GameManager.debug_mode = true
 
 func after_each():
+	GameManager.starting_escort_on_new_match = true
 	SelectionManager.reset()
 	for player in GameManager.players:
 		player.release_relations()
@@ -232,7 +235,7 @@ func _short_setup(through: int = 4) -> Dictionary:
 	var rival: PlayerData = GameManager.rival_players[0]
 	Diplomacy.declare_war(human, rival)
 	var city := _found_human_city(grid)
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 	city.buildings[HALL] = true
 	# Aetherlands V2, Fase 15 — vários testes deste arquivo constroem Salão/Arena (upkeep de Ouro)
@@ -271,9 +274,6 @@ func test_warrior_n1_to_n9_flow_from_the_weapons_hall_to_the_blade_hero_across_s
 	assert_false(V2UnlockSystem.is_unlocked(human, "v2_doctrine_warrior"))
 
 	# 2. N1: estabelece a linha, sem bônus global nem passivo; só o N2 fica disponível.
-	_research(state, "v2_doctrine_warrior_1")
-	assert_true(V2UnlockSystem.is_unlocked(human, "v2_doctrine_warrior"), "2. Doutrina do Guerreiro")
-	assert_eq(V2UnlockSystem.unlocked_ids(human), ["v2_doctrine_warrior"], "o N1 não libera nada além da Doutrina")
 	assert_false(city.can_build(HALL), "o Salão é do N2")
 	assert_true(state.is_available("v2_doctrine_warrior_2"))
 	assert_false(state.is_available("v2_doctrine_warrior_3"))
@@ -418,7 +418,7 @@ func test_warrior_n1_to_n9_flow_from_the_weapons_hall_to_the_blade_hero_across_s
 	assert_gt(hero_cooldown, 0, "pré-condição: o Golpe do Herói está em recarga")
 	var loaded_grid := _save_and_reload()
 	var loaded := GameManager.human_player
-	assert_eq(loaded.v2_research.get_completed_ids().size(), 9, "26. as 9 pesquisas do Guerreiro")
+	assert_eq(loaded.v2_research.get_completed_ids().size(), 8, "26. as 8 pesquisas do Guerreiro")
 	var loaded_city: City = loaded.cities[0]
 	assert_true(loaded_city.buildings.has(HALL) and loaded_city.buildings.has(ARENA), "Salão de Armas e Arena restaurados")
 	var loaded_masters := _units_of_kind(loaded, MASTER)
@@ -443,7 +443,7 @@ func test_warrior_n1_to_n9_flow_from_the_weapons_hall_to_the_blade_hero_across_s
 	var loaded_state := loaded.v2_research
 	assert_eq(V2ResearchDatabase.capstone_progress("v2_supreme_army", loaded_state.completed_ids), Vector2i(1, 2))
 	assert_false(loaded_state.is_available("v2_supreme_army"), "com uma só Doutrina não")
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		loaded_state.complete_research("v2_doctrine_guardian_%d" % n)
 	assert_eq(V2ResearchDatabase.capstone_progress("v2_supreme_army", loaded_state.completed_ids), Vector2i(2, 2), "27. Doutrinas completas: 2 / 2")
 	assert_true(loaded_state.is_available("v2_supreme_army"), "Exército Supremo pesquisável")
@@ -561,7 +561,7 @@ func test_the_cooldowns_of_both_strike_techniques_survive_save_and_load():
 func test_a_hero_in_production_survives_save_and_load_and_blocks_a_champion_in_the_other_city():
 	var c := _short_setup(9)
 	var human: PlayerData = c.human
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	var city: City = c.city
 	city.buildings[ARENA] = true
@@ -582,7 +582,7 @@ func test_a_hero_in_production_survives_save_and_load_and_blocks_a_champion_in_t
 func test_a_hero_and_a_champion_finishing_in_the_same_turn_never_create_two_legendaries():
 	var c := _short_setup(9)
 	var human: PlayerData = c.human
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	var city: City = c.city
 	city.buildings[ARENA] = true
@@ -628,7 +628,7 @@ func test_ai_civilizations_keep_playing_with_the_warrior_content_present():
 func test_an_ai_civilization_given_the_research_by_debug_trains_the_right_form_and_respects_the_slot():
 	var c := _short_setup(3)
 	var rival: PlayerData = c.rival
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		rival.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 	var rival_city: City = rival.cities[0]
 	rival_city.city_level = 3

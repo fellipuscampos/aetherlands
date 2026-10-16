@@ -276,7 +276,7 @@ func test_main_end_to_end_flow_research_upgrade_annex_up_to_level_4():
 	assert_eq(city.city_level, 1)
 	assert_eq(city.max_building_slots(), 4)
 	# 5-10: a árvore de Infraestrutura tem 6 linhas x 3; pesquisa Planejamento Urbano.
-	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.INFRASTRUCTURE).size(), 18)
+	assert_eq(V2ResearchDatabase.nodes_for_tree(V2ResearchNode.TreeType.INFRASTRUCTURE).size(), 21, "7 linhas x 3 (com Colonização)")
 	human.v2_research.complete_research(URBANIZATION_1)
 	human.gold = 200.0
 	# 10-14: upgrade pra Cidade II disponível, inicia e conclui.

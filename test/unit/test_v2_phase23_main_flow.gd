@@ -74,7 +74,7 @@ func _found_city() -> City:
 	return null
 
 func _learn_branch(player: PlayerData, branch: String) -> void:
-	for tier in range(1, 10):
+	for tier in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		var id := "v2_magic_%s_%d" % [branch, tier]
 		if not player.v2_research.is_completed(id):
 			assert_true(player.v2_research.complete_research(id), id)

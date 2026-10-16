@@ -8,28 +8,32 @@ func _apply_signals(player: PlayerData) -> Array:
 	player.v2_unlocks.unlock_applied.connect(func(node_id, unlock_type, unlock_id): seen.append([node_id, unlock_type, unlock_id]))
 	return seen
 
-# --- N1: a Doutrina ---------------------------------------------------------------------------------------------------
+# --- Início da linha: o prédio de treino ---------------------------------------------------------------------------------------------------
 
-func test_n1_only_establishes_the_line_and_opens_n2_with_no_bonus_of_its_own():
+## O antigo N1 ("Doutrina") era um portão sem efeito e saiu: a linha começa no prédio de treino, que não exige
+## pesquisa anterior, e concluí-lo aplica o desbloqueio do prédio direto — sem bônus global.
+func test_the_line_starts_at_the_training_building_without_a_doctrine_gate():
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
 	var before := [player.gold, player.mana, player.units.size()]
 	var seen := _apply_signals(player)
-	player.v2_research.complete_research("v2_doctrine_siege_1")
-	assert_eq(seen, [["v2_doctrine_siege_1", "doctrine", "v2_doctrine_siege"]])
-	assert_eq(V2UnlockSystem.unlocked_ids(player), ["v2_doctrine_siege"], "nenhum prédio, unidade ou técnica")
+	assert_null(V2ResearchDatabase.get_node("v2_doctrine_siege_1"), "o N1 de portão não existe mais")
+	assert_true(player.v2_research.is_available("v2_doctrine_siege_2"), "o prédio não exige pesquisa anterior")
+	assert_true(player.v2_research.complete_research("v2_doctrine_siege_2"))
+	assert_eq(seen.size(), 1)
+	assert_eq(seen[0][0], "v2_doctrine_siege_2")
+	assert_eq(seen[0][1], "building")
+	assert_false(V2UnlockSystem.is_unlocked(player, "v2_doctrine_siege"), "o id da Doutrina não é mais um unlock")
 	assert_eq([player.gold, player.mana, player.units.size()], before, "sem bônus global")
-	assert_true(player.v2_research.is_available("v2_doctrine_siege_2"))
-	assert_false(player.v2_research.is_available("v2_doctrine_siege_3"))
+	assert_true(player.v2_research.is_available("v2_doctrine_siege_3"))
 
 func test_every_siege_node_applies_its_unlock_once_with_the_generic_type_table():
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
 	var seen := _apply_signals(player)
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		player.v2_research.complete_research("v2_doctrine_siege_%d" % n)
 	assert_eq(seen, [
-		["v2_doctrine_siege_1", "doctrine", "v2_doctrine_siege"],
 		["v2_doctrine_siege_2", "building", SIEGE_ARSENAL],
 		["v2_doctrine_siege_3", "unit", CATAPULT],
 		["v2_doctrine_siege_4", "technique", DEMOLITION_AMMO],
@@ -94,7 +98,7 @@ func test_the_arsenal_uses_a_normal_slot_is_built_once_and_belongs_to_the_resear
 func test_the_catapult_has_the_specified_baseline():
 	var data := UnitDatabase.create_unit(CATAPULT)
 	assert_eq(data.unit_name, "Catapulta")
-	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points], [16.0, 3.5, 2.5, 2.0])
+	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points], [16.0, 5.0, 3.5, 2.0])
 	assert_eq(data.vision_range, 3)
 	assert_eq(data.attack_range, 2)
 	assert_eq(data.production_cost, 28.0)
@@ -118,7 +122,7 @@ func test_the_basic_ranged_attack_uses_the_normal_combat_no_special_anti_unit_fo
 	var catapult := _unit(grid, me, CATAPULT, Vector2i(0, 0))
 	var foe := _foe(grid, rival, Vector2i(2, 0))
 	var predicted: float = CombatResolver.predict(catapult, foe, grid).damage_to_defender
-	assert_almost_eq(predicted, _formula_damage(grid, 3.5, 1.0, foe), 0.0001, "fórmula normal do combate ranged, sem multiplicador especial")
+	assert_almost_eq(predicted, _formula_damage(grid, 5.0, 1.0, foe), 0.0001, "fórmula normal do combate ranged, sem multiplicador especial")
 	var before := foe.hp
 	CombatResolver.resolve(catapult, foe, grid)
 	assert_almost_eq(before - foe.hp, predicted, 0.0001, "predict == resolve")

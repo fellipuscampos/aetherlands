@@ -35,9 +35,10 @@ extends Resource
 @export var can_found_city: bool = false
 @export var visual_kind: String = "warrior"
 @export var production_cost: float = 15.0
-## Mago: ataque magico ignora o bonus de defesa de terreno E de predio
-## (colinas/floresta/montanha, Muralhas) do defensor — nao protegem
-## contra magia. Ver CombatResolver.predict().
+## Mago: ataque magico ignora as protecoes de LUGAR do defensor — Defesa
+## urbana (Fortificacao), Fortificar e terreno modificado pelos druidas. (O
+## terreno-base nao da Defesa a ninguem desde 2026-10-09.) Nome do campo
+## mantido por compatibilidade. Ver CombatResolver.predict().
 @export var ignores_terrain_defense: bool = false
 
 ## So > 0 pra monstros neutros (MonsterDatabase) que guardam Covis de
@@ -99,7 +100,12 @@ extends Resource
 ## body().
 @export var idle_animation_override: String = ""
 @export var walk_animation_override: String = ""
+## Trabalho civil, tocado uma vez ao construir uma melhoria.
+@export var work_animation_override: String = ""
 @export var attack_animation_override: String = ""
+## Clipe de CONJURAÇÃO (magos, 2026-10-10): tocado uma vez por feitiço bem-sucedido (V2MagicRuntime.cast ->
+## Unit.play_cast_visual), virado para o alvo; volta ao Idle/Andar com o crossfade normal. "" = sem animação de feitiço.
+@export var cast_animation_override: String = ""
 ## Verme Colossal (Escavar): clipes de entrar/sair da terra. "" (padrao) = a
 ## unidade so some/aparece, como antes. Ver Unit.play_burrow_visual()/
 ## play_emerge_visual(), chamados por MonsterAbilitySystem.
@@ -124,6 +130,44 @@ extends Resource
 ## repouso durante a mistura). 0.0 (padrao) = troca instantanea de sempre.
 ## Ver Unit._build_animation_player().
 @export var animation_blend_time: float = 0.0
+
+## TRANSIÇÃO POR CAPTURA DE POSE (Grandes Manifestações, 2026-10-13 — "tenha certeza de inserir animações suaves entre
+## os estados, tipo de idle pra spell, de idle pra walk"): segundos que a unidade leva para sair da pose em que ESTÁ e
+## chegar ao clipe novo, com curva seno (PoseCaptureTransition). Diferente do crossfade linear de animation_blend_time,
+## parte da pose real do esqueleto — então interromper um gesto ou conjurar duas vezes seguidas nunca dá salto. > 0
+## substitui animation_blend_time (que passa a ser ignorado) e também faz Ataque/Conjuração voltarem sozinhos ao
+## Idle/Andar. Mesma exigência: os clipes animam o MESMO conjunto de ossos. 0.0 (padrão) = não usa.
+@export var pose_transition_time: float = 0.0
+## Tempo das trocas que ENTRAM ou SAEM do Andar (mudança de postura; o Primordial abre o corpo em S). 0.0 = usa
+## pose_transition_time.
+@export var pose_transition_walk_time: float = 0.0
+
+## NÚCLEO QUE ILUMINA (Grandes Manifestações, 2026-10-13): perfil de GlowProfiles da luz presa ao modelo e o osso onde
+## ela fica (o núcleo; no Lich, o foco do cajado). A luz ilumina o mapa em volta e o mapa de emissão do modelo cresce
+## com a escuridão — o mesmo efeito dos cristais (WorldGlow.attach_light / track_emission). &"" = não ilumina.
+@export var glow_profile: StringName = &""
+@export var glow_bone: String = ""
+
+## POSTURAS (Dragão, 2026-10-13 — "ele tem 6 animações, 2 idle, 2 walk e 2 attack, pra quando tá no ar e pra quando tá
+## na terra"): postura -> {"idle", "walk", "attack"} com os clipes dela. Quem controla a unidade troca de postura com
+## Unit.set_posture (o Dragão: DragonEvent, pelo modo de viagem); a unidade nasce em `default_posture`. Vazio = a
+## unidade só tem os clipes de idle/walk/attack_animation_override, como todas as outras.
+@export var posture_animations: Dictionary = {}
+@export var default_posture: String = ""
+## Segundos da troca de POSTURA (pouso/decolagem), mais longa que a troca de estado dentro da mesma postura. 0.0 = usa
+## o tempo normal da transição.
+@export var posture_transition_time: float = 0.0
+
+## SOPRO DE FOGO (Dragão): osso onde nasce a rajada (o eixo +Y local do osso aponta para a frente) e a janela, em
+## segundos a partir do começo do clipe de ataque, em que ela sai. O emissor e a luz são montados pela Unit
+## (_build_fire_breath) e disparados por Unit.play_fire_breath. "" = não cospe fogo.
+@export var fire_breath_bone: String = ""
+@export var fire_breath_start: float = 0.0
+@export var fire_breath_end: float = 0.0
+
+## Altura mínima dos marcadores (barra de vida, selo) acima do chão. A altura normal vem da caixa do modelo em
+## repouso; serve para quem fica MAIS ALTO animado do que em repouso (o Dragão voando). 0.0 = só a caixa.
+@export var marker_min_height: float = 0.0
 
 ## Todo pacote KayKit reaproveitado ate hoje separa Idle (vem do proprio
 ## personagem, model_scene_path) de Andar (sempre este segundo arquivo

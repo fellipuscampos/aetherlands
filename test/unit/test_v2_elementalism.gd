@@ -65,7 +65,7 @@ func _player(name: String) -> PlayerData:
 	return player
 
 func _learn(player: PlayerData, through: int = 9, branch: String = SCHOOL) -> void:
-	for tier in range(1, through + 1):
+	for tier in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		var id := "v2_magic_%s_%d" % [branch, tier]
 		if not player.v2_research.is_completed(id):
 			assert_true(player.v2_research.complete_research(id), id)
@@ -90,27 +90,27 @@ func _code_only(source: String) -> String:
 	return "\n".join(lines)
 
 func test_all_nine_nodes_and_transcendence_are_canonical_connected():
-	var names := ["Escola do Elementalismo", "Observatório Elemental", "Elementalista", "Névoa Cerrada", "Vendaval", "Tempestade Elétrica", "Cataclismo Elemental", "Nexo dos Elementos", "Primordial dos Elementos"]
-	var ids := ["v2_magic_school_elementalism", "v2_building_elemental_observatory", CASTER, MIST, GALE, STORM, CATACLYSM, "v2_building_elemental_ritual", PRIMORDIAL]
+	var names := ["Observatório Elemental", "Elementalista", "Névoa Cerrada", "Vendaval", "Tempestade Elétrica", "Cataclismo Elemental", "Nexo dos Elementos", "Primordial dos Elementos"]
+	var ids := ["v2_building_elemental_observatory", CASTER, MIST, GALE, STORM, CATACLYSM, "v2_building_elemental_ritual", PRIMORDIAL]
 	var nodes := V2ResearchDatabase.nodes_for_branch(V2ResearchNode.TreeType.MAGIC_SCHOOL, SCHOOL)
-	assert_eq(nodes.size(), 9)
-	for i in 9:
+	assert_eq(nodes.size(), 8)
+	for i in 8:
 		assert_eq([nodes[i].display_name, nodes[i].unlock_id], [names[i], ids[i]])
 		assert_true(nodes[i].gameplay_connected)
 		assert_false(nodes[i].is_placeholder)
-	assert_eq(V2MagicContent.CONNECTED_UNLOCK_IDS.size(), 55)
+	assert_eq(V2MagicContent.CONNECTED_UNLOCK_IDS.size(), 49)
 	assert_true(V2ResearchDatabase.get_node(V2ResearchDatabase.TRANSCENDENCE_ID).gameplay_connected)
 
 func test_buildings_units_and_manifestation_have_exact_data():
 	var observatory := BuildingDatabase.get_building("v2_building_elemental_observatory")
 	var nexus := BuildingDatabase.get_building("v2_building_elemental_ritual")
 	assert_eq([observatory.display_name, observatory.production_cost, observatory.gold_upkeep, observatory.trains_unit, observatory.copy_limit_mode], ["Observatório Elemental", 24.0, 1.0, CASTER, BuildingData.CopyLimitMode.UNIQUE])
-	assert_eq([nexus.display_name, nexus.production_cost, nexus.gold_upkeep, nexus.requires_building, nexus.trains_unit], ["Nexo dos Elementos", 60.0, 2.0, "v2_building_elemental_observatory", PRIMORDIAL])
+	assert_eq([nexus.display_name, nexus.production_cost, nexus.gold_upkeep, nexus.requires_building, nexus.trains_unit], ["Nexo dos Elementos", 48.0, 2.0, "v2_building_elemental_observatory", PRIMORDIAL])
 	var caster := UnitDatabase.create_unit(CASTER)
-	assert_eq([caster.max_hp, caster.attack, caster.defense, caster.movement_points, caster.vision_range, caster.production_cost, caster.supply_cost], [11.0, 0.0, 1.5, 2.0, 4, 24.0, 2])
+	assert_eq([caster.max_hp, caster.attack, caster.defense, caster.movement_points, caster.vision_range, caster.production_cost, caster.supply_cost], [11.0, 0.0, 2.5, 2.0, 4, 24.0, 2])
 	assert_eq([caster.can_basic_attack, caster.v2_magic_school, caster.movement_profile], [false, SCHOOL, UnitData.MovementProfile.GROUND])
 	var primordial := UnitDatabase.create_unit(PRIMORDIAL)
-	assert_eq([primordial.max_hp, primordial.attack, primordial.defense, primordial.movement_points, primordial.vision_range, primordial.production_cost, primordial.production_mana_cost, primordial.supply_cost], [40.0, 0.0, 6.5, 4.0, 5, 110.0, 75.0, 0])
+	assert_eq([primordial.max_hp, primordial.attack, primordial.defense, primordial.movement_points, primordial.vision_range, primordial.production_cost, primordial.production_mana_cost, primordial.supply_cost], [54.0, 14.0, 10.0, 4.0, 5, 92.0, 150.0, 0])
 	assert_eq([primordial.movement_profile, primordial.environmental_zone_duration_bonus, primordial.environmental_zone_duration_bonus_name], [UnitData.MovementProfile.FLYING, 1, "Coração Elemental"])
 	for trait_id in [UnitData.TRAIT_CASTER, UnitData.TRAIT_FLYING, UnitData.TRAIT_GRAND_MANIFESTATION]:
 		assert_true(primordial.has_trait(trait_id), trait_id)
@@ -122,11 +122,11 @@ func test_spell_and_zone_records_are_exact_and_data_driven():
 	assert_eq([defaults.duration_rounds, defaults.vision_delta, defaults.physical_ranged_attack_multiplier, defaults.round_tick_magic_damage, defaults.dispellable], [0, 0, 1.0, 0.0, true])
 	var spells := V2SpellDatabase.for_school(SCHOOL)
 	assert_eq(spells.map(func(s): return s.id), [MIST, GALE, STORM, CATACLYSM])
-	var expected := [[6.0, 4, 2, 1, Z_MIST], [8.0, 4, 2, 1, Z_GALE], [12.0, 4, 3, 1, Z_STORM], [20.0, 5, 5, 2, Z_CATACLYSM]]
+	var expected := [[5.0, 4, 2, 1, Z_MIST], [9.0, 4, 2, 1, Z_GALE], [18.0, 4, 3, 1, Z_STORM], [36.0, 5, 5, 2, Z_CATACLYSM]]
 	for i in 4:
 		assert_eq([spells[i].mana_cost, spells[i].cast_range, spells[i].cooldown_turns, spells[i].splash_radius, spells[i].environmental_zone_id], expected[i])
 		assert_eq(spells[i].target_mode, V2SpellData.TargetMode.TILE)
-	var zone_expected := {Z_MIST: [2, -2, 1.0, 0.0], Z_GALE: [2, 0, 0.70, 0.0], Z_STORM: [2, 0, 1.0, 4.0], Z_CATACLYSM: [2, -1, 0.80, 5.0]}
+	var zone_expected := {Z_MIST: [2, -2, 1.0, 0.0], Z_GALE: [2, 0, 0.70, 0.0], Z_STORM: [2, 0, 1.0, 6.0], Z_CATACLYSM: [2, -1, 0.80, 10.0]}
 	for id in zone_expected:
 		var zone := V2EnvironmentalZoneDatabase.get_zone(id)
 		assert_eq([zone.duration_rounds, zone.vision_delta, zone.physical_ranged_attack_multiplier, zone.round_tick_magic_damage], zone_expected[id], id)
@@ -157,7 +157,7 @@ func test_radius_one_is_primary_first_skips_existing_and_hidden_secondary_and_ch
 	grid.visibility[hidden] = HexGrid.Visibility.UNSEEN
 	var before := human.mana
 	assert_true(V2MagicRuntime.cast(caster, MIST, primary, grid))
-	assert_eq(human.mana, before - 6.0)
+	assert_eq(human.mana, before - 5.0)
 	assert_eq(grid.v2_environmental_zones.size(), 6, "1 Gale + primary e quatro secundários")
 	assert_eq(String(grid.v2_environmental_zones[existing].zone_id), Z_GALE)
 	assert_false(grid.v2_environmental_zones.has(hidden))
@@ -168,7 +168,7 @@ func test_cataclysm_fills_nineteen_tiles_and_combines_all_three_effects():
 	assert_true(V2MagicRuntime.cast(caster, CATACLYSM, primary, grid))
 	assert_eq(grid.v2_environmental_zones.size(), 19)
 	var zone := V2EnvironmentalZoneSystem.zone_at(primary, grid)
-	assert_eq([zone.vision_delta, zone.physical_ranged_attack_multiplier, zone.round_tick_magic_damage], [-1, 0.8, 5.0])
+	assert_eq([zone.vision_delta, zone.physical_ranged_attack_multiplier, zone.round_tick_magic_damage], [-1, 0.8, 10.0])
 
 func test_effective_vision_has_fast_path_floor_and_position_semantics():
 	var caster := _unit(CASTER, human, Vector2i.ZERO)
@@ -217,10 +217,10 @@ func test_storm_has_no_immediate_damage_then_ticks_twice_and_expires_impartially
 	assert_true(V2MagicRuntime.cast(caster, STORM, own.coord, grid))
 	assert_eq([own.hp, enemy.hp], [own_hp, enemy_hp], "sem dano imediato")
 	var first := V2EnvironmentalZoneSystem.process_global_round(grid)
-	assert_eq([own.hp, enemy.hp], [own_hp - 4.0, enemy_hp - 4.0])
+	assert_eq([own.hp, enemy.hp], [own_hp - 6.0, enemy_hp - 6.0])
 	assert_eq([first.damaged_units, first.expired_zones], [2, 0])
 	var second := V2EnvironmentalZoneSystem.process_global_round(grid)
-	assert_eq([own.hp, enemy.hp], [own_hp - 8.0, enemy_hp - 8.0])
+	assert_eq([own.hp, enemy.hp], [own_hp - 12.0, enemy_hp - 12.0])
 	assert_gt(second.expired_zones, 0)
 	assert_true(grid.v2_environmental_zones.is_empty())
 
@@ -246,13 +246,13 @@ func test_environmental_damage_is_fixed_through_defense_terrain_aegis_v1_and_fli
 	]
 	fixtures[1].fortified = true
 	fixtures[1].magic_status["v2_spell_sacred_aegis"] = V2OwnerTurnEffect.expiry_for_now()
-	grid.tiles[fixtures[1].coord].defense_bonus = 5.0
+	V2TerrainRuntime.apply(grid, fixtures[1].coord, "v2_terrain_raised_ground") # terreno modificado também não reduz o dano fixo
 	var before := fixtures.map(func(unit: Unit): return unit.hp)
 	for unit in fixtures:
 		assert_true(_apply(unit.coord, Z_STORM))
 	V2EnvironmentalZoneSystem.process_global_round(grid)
 	for i in fixtures.size():
-		assert_eq(fixtures[i].hp, float(before[i]) - 4.0, fixtures[i].unit_data.unit_name)
+		assert_eq(fixtures[i].hp, float(before[i]) - 6.0, fixtures[i].unit_data.unit_name)
 
 func test_gale_does_not_change_spell_damage_or_city_attack_formula():
 	_learn(human, 4, "infernal")

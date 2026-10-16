@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="Script" path="res://scripts/ui/LoadGameScreen.gd" id="LoadGameScreen_gd"]
+[gd_scene load_steps=4 format=3]
+[ext_resource type="Script" path="res://scripts/ui/LoadGameScreen.gd" id="Script"]
+[ext_resource type="Texture2D" path="res://assets/ui/title_menu/kingdom_landscape_painted.png" id="Landscape"]
+[ext_resource type="Texture2D" path="res://assets/ui/title_menu/crest.svg" id="Crest"]
 
 [node name="LoadGameScreen" type="Control"]
 layout_mode = 1
@@ -9,7 +10,28 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 visible = false
-script = ExtResource("LoadGameScreen_gd")
+texture_filter = 1
+script = ExtResource("Script")
+
+[node name="Landscape" type="TextureRect" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("Landscape")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.025, 0.065, 0.08, 0.9)
 
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -17,44 +39,123 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 80
-theme_override_constants/margin_top = 48
-theme_override_constants/margin_right = 80
-theme_override_constants/margin_bottom = 48
 
 [node name="VBox" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 20
 
-[node name="TitleLabel" type="Label" parent="Margin/VBox"]
+[node name="Header" type="HBoxContainer" parent="Margin/VBox"]
 layout_mode = 2
-theme_type_variation = &"PanelTitle"
-horizontal_alignment = 1
-text = "Carregar Jogo"
+theme_override_constants/separation = 20
+
+[node name="Crest" type="TextureRect" parent="Margin/VBox/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(56,56)
+texture = ExtResource("Crest")
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Titles" type="VBoxContainer" parent="Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="Kicker" type="Label" parent="Margin/VBox/Header/Titles"]
+layout_mode = 2
+mouse_filter = 2
+text = "AETHERLANDS  /  CRÔNICAS DO REINO"
+theme_type_variation = &"SetupKicker"
+
+[node name="Title" type="Label" parent="Margin/VBox/Header/Titles"]
+layout_mode = 2
+mouse_filter = 2
+text = "Carregar jogo"
+theme_type_variation = &"SetupTitle"
+
+[node name="ListHeading" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+
+[node name="Description" type="Label" parent="Margin/VBox/ListHeading"]
+layout_mode = 2
+mouse_filter = 2
+text = "Retome a história de um reino salvo."
+theme_type_variation = &"SetupMuted"
+size_flags_horizontal = 3
+
+[node name="CountLabel" type="Label" parent="Margin/VBox/ListHeading"]
+layout_mode = 2
+mouse_filter = 2
+text = ""
+theme_type_variation = &"SetupKicker"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
+follow_focus = true
 
 [node name="SlotList" type="VBoxContainer" parent="Margin/VBox/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 10
+theme_override_constants/separation = 16
 
-[node name="EmptyStateLabel" type="Label" parent="Margin/VBox"]
+[node name="EmptyState" type="CenterContainer" parent="Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_type_variation = &"MutedLabel"
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "Nenhuma partida salva ainda."
+mouse_filter = 2
 
-[node name="BackButton" type="Button" parent="Margin/VBox"]
+[node name="EmptyBox" type="VBoxContainer" parent="Margin/VBox/EmptyState"]
 layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Icon" type="TextureRect" parent="Margin/VBox/EmptyState/EmptyBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(80,80)
+texture = ExtResource("Crest")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="EmptyStateLabel" type="Label" parent="Margin/VBox/EmptyState/EmptyBox"]
+layout_mode = 2
+mouse_filter = 2
+text = "Nenhuma partida salva ainda."
+theme_type_variation = &"SetupHeading"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="Margin/VBox/EmptyState/EmptyBox"]
+layout_mode = 2
+mouse_filter = 2
+text = "Comece um novo reino e salve sua jornada
+para continuar daqui na próxima vez."
+theme_type_variation = &"SetupMuted"
+horizontal_alignment = 1
+
+[node name="Divider" type="HSeparator" parent="Margin/VBox"]
+layout_mode = 2
+
+[node name="Footer" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="BackButton" type="Button" parent="Margin/VBox/Footer"]
+layout_mode = 2
+custom_minimum_size = Vector2(160,52)
 text = "Voltar"
+theme_type_variation = &"SetupSmallButton"
+mouse_default_cursor_shape = 2
+
+[node name="Hint" type="Label" parent="Margin/VBox/Footer"]
+layout_mode = 2
+mouse_filter = 2
+text = "Esc  Voltar  ·  Tab / setas  Navegar"
+theme_type_variation = &"SetupMuted"
+size_flags_horizontal = 3
+vertical_alignment = 1
 
 [node name="ConfirmDeleteDialog" type="ConfirmationDialog" parent="."]
-title = "Confirmar"
+title = "Excluir partida"
 initial_position = 1
-size = Vector2i(420, 140)
+size = Vector2i(480,180)
 dialog_text = "Excluir esta partida salva? Isso não pode ser desfeito."

@@ -19,6 +19,10 @@ enum StatusPolarity { NONE, BENEFICIAL, HARMFUL }
 @export var id: String = ""                 # == unlock_id do nó de pesquisa (v2_spell_*)
 @export var school_branch: String = ""      # Escola dona (== UnitData.v2_magic_school do conjurador)
 @export var mana_cost: float = 0.0
+## Preço em VIDA (2026-10-14): fração da Vida MÁXIMA do conjurador paga a cada conjuração, junto com a Mana — os
+## feitiços de dano mais brutais custam sangue. Nunca mata: com Vida atual igual ou menor que o preço, o feitiço fica
+## indisponível (V2MagicRuntime.unavailable_reason). 0 = só Mana (padrão de todo feitiço).
+@export var health_cost_fraction: float = 0.0
 @export var cooldown_turns: int = 0         # 0 = sem recarga
 @export var target_mode: TargetMode = TargetMode.OWN_UNIT
 @export var cast_range: int = 1             # distância hex máxima do conjurador ao alvo primário

@@ -71,6 +71,7 @@ static func improve_resource(unit: Unit, hex_grid: HexGrid) -> bool:
 	unit.exploring = false
 	unit.move_order_target = Unit.NO_MOVE_ORDER
 	var consumed := unit.work_charges_remaining <= 0
+	unit.play_work_visual(consumed)
 	if consumed:
 		hex_grid.remove_unit(unit)
 	if is_human:

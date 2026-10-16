@@ -23,7 +23,7 @@ const TIER_DISPLAY := {
 
 ## Campos por espécie:
 ## - tier: TIER_* (explícito, obrigatório).
-## - group_size: monstros por sítio ecológico (grupo inicial e de reposição).
+## - group_size: monstros por covil (inclui o líder, designado sem bônus de atributos).
 ## - patrol_radius_cap: teto opcional de TODOS os raios do perfil de atividade (-1 = sem teto) — a forma
 ##   mínima de "quase imóvel com âncora" (era da Colmeia Micótica, que saiu do jogo; nenhuma espécie usa hoje).
 ## - abilities: ids de MonsterAbilityData (Etapa 2).
@@ -92,6 +92,14 @@ const REFILL_DEPLETED_COOLDOWN := 20
 const REFILL_MIN_CIV_DISTANCE := 2
 ## Amostras aleatórias de tiles elegíveis por tentativa (sem varrer o mapa inteiro).
 const REFILL_SAMPLE_ATTEMPTS := 96
+## Covis unificados: população contada pela origem, mesmo durante patrulha ou fuga subterrânea.
+## Uma baixa abre espaço, mas reforços nunca aparecem durante um cerco visível.
+const REINFORCE_INTERVAL := 6
+const MAX_BIRTHS_PER_ROUND := 3
+## Matar o líder abre uma janela longa e garantida para destruir a estrutura. Se abandonada,
+## ela só pode ser reocupada fora de visão/presença das civilizações, com aviso territorial.
+const LEADER_RECOVERY_DELAY := 12
+const NEW_LAIR_WAKE_DELAY := 3
 ## Pesos de ERA para escolher o tier de uma reposição NOVA (entre os tiers abaixo do alvo). Não removem
 ## população existente — só ponderam o que nasce.
 const REFILL_WEIGHTS := {
@@ -101,7 +109,7 @@ const REFILL_WEIGHTS := {
 }
 
 ## Canal de RNG próprio da ecologia (colocação + reposição + ronda). Nunca o RNG global, o
-## monster_turn_rng, o do planner regional, do Dragão ou do Relicário.
+## monster_turn_rng, o do planner regional ou o do Dragão.
 const RNG_SALT := 9300
 
 static func is_ecology_species(kind: String) -> bool:

@@ -53,7 +53,7 @@ func _grid_with_city(guardian_through: int = 9) -> Dictionary:
 			if absi(q + r) <= 3:
 				grid.tiles[Vector2i(q, r)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	var player := PlayerData.new(CivilizationData.new())
-	for n in range(1, guardian_through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, guardian_through + 1):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	_players.append(player)
 	_grids.append(grid)
@@ -261,7 +261,7 @@ func test_124_resources_never_gate_military_training():
 	var s := _grid_with_city(0)
 	var city: City = s.city
 	var player: PlayerData = s.player
-	for n in range(1, 4):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 4):
 		player.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
 		player.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 	city.buildings["v2_building_war_stable"] = true

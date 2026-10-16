@@ -50,7 +50,7 @@ func after_each():
 	grid.queue_free()
 
 func _learn(tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		player.v2_research.complete_research("v2_magic_infernal_%d" % i)
 
 func _unit(kind: String, owner: PlayerData, coord: Vector2i) -> Unit:
@@ -73,12 +73,12 @@ func test_warlock_panel_lists_infernal_spells_in_n4_to_n7_order():
 	for child in row.get_children():
 		if child is Button and String(child.name).begins_with("Spell_"):
 			texts.append(child.text)
-	assert_eq(texts, ["Chama Infernal — 5 Mana", "Fogo Voraz — 8 Mana", "Explosão Infernal — 11 Mana", "Condenação — 18 Mana"])
+	assert_eq(texts, ["Chama Infernal — 6 Mana", "Fogo Voraz — 12 Mana", "Explosão Infernal — 18 Mana", "Condenação — 34 Mana + 4 Vida"])
 	assert_string_contains(hud.unit_info_label.text, "Sem ataque básico.")
 	assert_string_contains(hud.unit_info_label.text, "Classe: Conjurador — Escola Infernal")
 	assert_string_contains(hud.unit_info_label.text, "Suprimentos: 2")
 	var blast: Button = row.get_node("Spell_v2_spell_infernal_blast")
-	assert_string_contains(blast.tooltip_text, "5 de dano mágico")
+	assert_string_contains(blast.tooltip_text, "9 de dano mágico")
 	assert_string_contains(blast.tooltip_text, "até 3 tiles")
 	assert_string_contains(blast.tooltip_text, "Recarga 3")
 
@@ -100,7 +100,7 @@ func test_archdemon_panel_and_production_show_passive_pp_mana_and_slot_reason():
 	city.buildings["v2_building_infernal_ritual"] = true
 	hud._on_tile_selected(city.coord, grid.get_tile(city.coord))
 	var button: Button = hud._production_buttons[ARCHDEMON]
-	assert_eq(button.text, "Arquidemônio  —  105 PP + 70 Mana")
+	assert_eq(button.text, "Arquidemônio  —  88 PP + 140 Mana")
 	assert_true(button.visible and not button.disabled)
 	var archdemon := _unit(ARCHDEMON, player, Vector2i(3, 0))
 	SelectionManager._select_unit(archdemon)

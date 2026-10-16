@@ -44,12 +44,28 @@ var _catalog_by_id: Dictionary = {}
 var action_buttons: Dictionary = {}
 var render_count := 0
 var _last_key := 0
+var production_summary: VBoxContainer
+var _compact_layout := false
+const STYLE := preload("res://scripts/ui/context/ContextPanelStyle.gd")
 
 func _ready() -> void:
 	name = "CityContextPanel"
 	add_theme_constant_override("separation", UIThemeTokens.SPACE_2)
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_build_chrome()
+	STYLE.apply(self)
+	Settings.accessibility_changed.connect(_apply_style)
+	resized.connect(_layout_content)
+
+func _apply_style() -> void:
+	if _compact_layout != STYLE.is_compact(self):
+		refresh()
+	STYLE.apply(self)
+
+func _layout_content() -> void:
+	if _compact_layout != STYLE.is_compact(self):
+		refresh()
+	STYLE.layout(self)
 
 func _build_chrome() -> void:
 	if body != null:
@@ -73,7 +89,7 @@ func _build_chrome() -> void:
 	identity.add_child(subtitle_label)
 	badge_flow = ContextUI.flow()
 	badge_flow.name = "Badges"
-	identity.add_child(badge_flow)
+	add_child(badge_flow)
 	var close := ContextUI.close_button("Fechar cidade")
 	close.pressed.connect(func(): close_requested.emit())
 	header.add_child(close)
@@ -86,6 +102,11 @@ func _build_chrome() -> void:
 	add_child(tabs)
 	tabs.set_tabs(TABS)
 	tabs.tab_selected.connect(_on_tab_selected)
+	production_summary = VBoxContainer.new()
+	production_summary.name = "ProductionSummary"
+	production_summary.add_theme_constant_override("separation", UIThemeTokens.SPACE_2)
+	production_summary.visible = false
+	add_child(production_summary)
 	scroll = ScrollContainer.new()
 	scroll.name = "Scroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -122,7 +143,8 @@ func refresh() -> void:
 		view = {"valid": false}
 		return
 	var built := CityPresenter.build(city, GameManager.human_player, GameManager.hex_grid, current_tab)
-	var key := str([built, current_tab, catalog_category]).hash()
+	_compact_layout = STYLE.is_compact(self)
+	var key := str([built, current_tab, catalog_category, _compact_layout]).hash()
 	view = built
 	if key == _last_key and render_count > 0:
 		return
@@ -137,6 +159,7 @@ func refresh() -> void:
 	if view.own:
 		tabs.select(current_tab)
 	_render_body()
+	STYLE.apply(self)
 	scroll.set_deferred("scroll_vertical", previous_scroll)
 	render_count += 1
 
@@ -151,15 +174,31 @@ func _render_header() -> void:
 	ContextUI.clear(vitals)
 	var hp_meter := ContextUI.meter("Vida", view.hp, view.max_hp, ContextUI.hp_color(view.hp, view.max_hp))
 	hp_meter.name = "HPMeter"
-	vitals.add_child(hp_meter)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	vitals.add_child(row)
+	hp_meter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(hp_meter)
 	if float(view.max_shield) > 0.0:
-		var shield_meter := ContextUI.meter("Escudo · %s" % view.fortification_name, view.shield, view.max_shield, UIThemeTokens.COLOR_INFO)
+		var shield_meter := ContextUI.meter("Escudo", view.shield, view.max_shield, UIThemeTokens.COLOR_INFO)
+		shield_meter.tooltip_text = view.fortification_name
 		shield_meter.name = "ShieldMeter"
-		vitals.add_child(shield_meter)
+		shield_meter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(shield_meter)
 
 func _render_body() -> void:
+	var compact_production: bool = _compact_layout and current_tab == "production" and bool(view.own)
+	var badge_parent: Node = body if compact_production else self
+	if badge_flow.get_parent() != badge_parent:
+		badge_flow.reparent(badge_parent)
+	if not compact_production:
+		move_child(badge_flow, 1)
+	ContextUI.clear(production_summary)
+	production_summary.visible = current_tab == "production" and view.own
 	var keep_catalog := current_tab == "production" and _catalog_reusable()
 	for child in body.get_children():
+		if child == badge_flow:
+			continue
 		if keep_catalog and child == _catalog_list:
 			continue
 		body.remove_child(child)
@@ -183,6 +222,8 @@ func _render_body() -> void:
 			_render_public()
 		_:
 			_render_overview()
+	if compact_production:
+		body.move_child(badge_flow, body.get_child_count() - 1)
 
 # --- Visão geral -------------------------------------------------------------------
 
@@ -195,6 +236,8 @@ func _render_overview() -> void:
 	body.add_child(outputs)
 	var grid := GridContainer.new()
 	grid.columns = 3
+	grid.name = "OutputsGrid"
+	STYLE.grid(grid, 126, 3)
 	grid.add_theme_constant_override("h_separation", UIThemeTokens.SPACE_1)
 	grid.add_theme_constant_override("v_separation", UIThemeTokens.SPACE_1)
 	outputs.add_child(grid)
@@ -369,12 +412,15 @@ func _catalog_reusable() -> bool:
 func _render_production() -> void:
 	var reuse := _catalog_list != null and is_instance_valid(_catalog_list) and _catalog_list.get_parent() == body
 	var card := _current_production_card(false)
-	body.add_child(card)
-	body.move_child(card, 0)
+	if _compact_layout:
+		body.add_child(card)
+		card.tooltip_text = String(view.production.item_name)
+	else:
+		production_summary.add_child(card)
 	var catalog: Dictionary = view.catalog
 	catalog_tabs = AETabStrip.new()
 	catalog_tabs.name = "CatalogTabs"
-	body.add_child(catalog_tabs)
+	production_summary.add_child(catalog_tabs)
 	var entries: Array = []
 	for entry in CATALOG_TABS:
 		var items: Array = catalog.get(entry.key, [])
@@ -384,18 +430,21 @@ func _render_production() -> void:
 		catalog_category = "units"
 	catalog_tabs.select(catalog_category)
 	catalog_tabs.tab_selected.connect(_on_catalog_selected)
-	body.move_child(catalog_tabs, 1)
 	var items: Array = _catalog_items()
 	if reuse:
 		for item in items:
 			var existing: AEProductionItem = _catalog_by_id.get(String(item.id), null)
 			if existing != null:
 				existing.configure(item)
+		if _compact_layout:
+			body.move_child(_catalog_list, 0)
 		return
 	var list := VBoxContainer.new()
 	list.name = "CatalogList"
 	list.add_theme_constant_override("separation", UIThemeTokens.SPACE_1)
 	body.add_child(list)
+	if _compact_layout:
+		body.move_child(list, 0)
 	_catalog_list = list
 	_catalog_signature = _catalog_signature_for(items)
 	_catalog_by_id.clear()
@@ -481,6 +530,7 @@ func _render_territory() -> void:
 	body.add_child(summary)
 	var grid := GridContainer.new()
 	grid.columns = 3
+	STYLE.grid(grid, 108, 3)
 	grid.add_theme_constant_override("h_separation", UIThemeTokens.SPACE_1)
 	summary.add_child(grid)
 	for stat in [["Raio máx.", str(data.radius), "◎"], ["Tiles", str(data.owned_tiles), "■"], ["Anexação", str(data.annex_points), "▲"]]:

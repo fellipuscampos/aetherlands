@@ -306,15 +306,14 @@ func test_147_sacred_school_flow_from_the_temple_to_the_seraph_across_save_and_l
 	var city := _found_human_city(grid)
 	city.city_level = 3 # atalho declarado: slots pros prédios deste fluxo (City Level tem fluxo próprio)
 	var mana_start := human.mana
-	assert_true(state.select_research("v2_magic_sacred_1"), "5-6. pesquisa da Escola Sagrada")
-	for i in 10:
-		if state.is_completed("v2_magic_sacred_1"):
+	assert_true(state.select_research("v2_magic_sacred_2"), "5-6. pesquisa do Templo, o primeiro nó da Escola Sagrada")
+	for i in 20:
+		if state.is_completed("v2_magic_sacred_2"):
 			break
 		_end_turn()
-	assert_true(state.is_completed("v2_magic_sacred_1"), "3. Conhecimento natural completou o N1")
+	assert_true(state.is_completed("v2_magic_sacred_2"), "3. Conhecimento natural completou o primeiro nó")
 	assert_gt(human.mana, mana_start, "4. Mana natural (base por cidade)")
 	# 7-8. Templo.
-	_learn_node(state, "v2_magic_sacred_2")
 	_build(city, "v2_building_sacred_temple")
 	# 9-12. Clérigo: produção normal, 2 Suprimentos, sem ataque básico.
 	_learn_node(state, "v2_magic_sacred_3")
@@ -335,7 +334,7 @@ func test_147_sacred_school_flow_from_the_temple_to_the_seraph_across_save_and_l
 	_learn_node(state, "v2_magic_sacred_4")
 	human.mana = 100.0 # atalho declarado: Mana de sobra pro repertório (a origem econômica é provada em test_v2_sacred_integration)
 	_cast(cleric, "v2_spell_restoring_light", ally)
-	assert_eq([ally.hp, human.mana], [11.0, 96.0], "16. cura 8, custa 4")
+	assert_eq([ally.hp, human.mana], [12.0, 95.0], "16. cura 12, custa 5")
 	# 17-21. Égide em combate real e expiração no turno do dono.
 	_learn_node(state, "v2_magic_sacred_5")
 	_cast(cleric, "v2_spell_sacred_aegis", ally)
@@ -363,7 +362,7 @@ func test_147_sacred_school_flow_from_the_temple_to_the_seraph_across_save_and_l
 		unit.hp = 2.0
 	_cast(cleric, "v2_spell_healing_wave", ally)
 	for unit in group:
-		assert_eq(unit.hp, 8.0, "25. múltiplas curas")
+		assert_eq(unit.hp, 12.0, "25. múltiplas curas")
 	# 26-28. Milagre num aliado quase morto.
 	_learn_node(state, "v2_magic_sacred_7")
 	ally.hp = 0.5
@@ -374,9 +373,9 @@ func test_147_sacred_school_flow_from_the_temple_to_the_seraph_across_save_and_l
 	_build(city, "v2_building_sacred_ritual")
 	_learn_node(state, "v2_magic_sacred_9")
 	# 32-35. Produção reserva o slot; uma segunda Catedral não pode iniciar.
-	assert_eq(UnitDatabase.create_unit("v2_manifestation_seraph").production_cost, 100.0, "32. 100 PP + 60 Mana")
+	assert_eq(UnitDatabase.create_unit("v2_manifestation_seraph").production_cost, 84.0, "32. 84 PP + 120 Mana")
 	GameManager.debug_mode = false # a produção do Serafim precisa de turnos reais pra testar a espera
-	human.mana = 60.0
+	human.mana = 120.0
 	_clear_city_ring(city)
 	assert_true(city.can_train("v2_manifestation_seraph"))
 	city.set_production("v2_manifestation_seraph")
@@ -392,18 +391,18 @@ func test_147_sacred_school_flow_from_the_temple_to_the_seraph_across_save_and_l
 	_end_turn()
 	assert_eq(_units_of_kind(human, "v2_manifestation_seraph").size(), 0, "38. esperando")
 	assert_eq(city.production_item, "v2_manifestation_seraph")
-	assert_eq(city.stored_production, 100.0, "sem perder PP")
+	assert_eq(city.stored_production, 84.0, "sem perder PP")
 	# 39-40. Mana recuperada -> nasce, cobrando uma vez.
-	human.mana = 80.0
+	human.mana = 140.0
 	_end_turn()
 	var seraph := _find(human, "v2_manifestation_seraph")
 	assert_not_null(seraph, "40. Serafim nasce")
-	assert_lt(human.mana, 80.0 - 59.0 + 5.0, "60 cobrados uma vez (mais a renda do turno)")
+	assert_lt(human.mana, 140.0 - 119.0 + 5.0, "120 cobrados uma vez (mais a renda do turno)")
 	# 41-45. Voo, traços, sem ataque, aura, feitiços.
 	assert_eq(seraph.unit_data.movement_profile, UnitData.MovementProfile.FLYING, "41")
 	assert_true(seraph.unit_data.has_trait(UnitData.TRAIT_CASTER) and seraph.unit_data.has_trait(UnitData.TRAIT_GRAND_MANIFESTATION), "42")
 	assert_false(seraph.unit_data.has_trait(UnitData.TRAIT_LEGENDARY))
-	assert_false(seraph.unit_data.can_basic_attack, "43")
+	assert_true(seraph.unit_data.can_basic_attack, "43")
 	var near := grid.get_unit_at(_free_near(grid, seraph.coord, 2))
 	if near == null:
 		near = grid.spawn_unit(_free_near(grid, seraph.coord, 2), UnitDatabase.create_unit("warrior"), human)
@@ -417,7 +416,7 @@ func test_147_sacred_school_flow_from_the_temple_to_the_seraph_across_save_and_l
 	_save_and_load()
 	human = GameManager.human_player
 	state = human.v2_research
-	for i in range(1, 10):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		assert_true(state.is_completed("v2_magic_sacred_%d" % i), "48. pesquisa N%d" % i)
 	assert_eq(human.mana, mana_saved, "49. Mana")
 	var loaded_city := human.cities[0]
@@ -430,8 +429,8 @@ func test_147_sacred_school_flow_from_the_temple_to_the_seraph_across_save_and_l
 	assert_not_null(loaded_seraph, "54. Serafim")
 	assert_false(V2ManifestationSystem.slot_available(human, "sacred"), "55. slot derivado")
 	# 56-57. O resto do V2 intacto e nenhuma Transcendência.
-	assert_eq(V2DoctrineContent.CONNECTED_UNLOCK_IDS.size(), 55, "56. Doutrinas intactas")
-	assert_eq(V2InfrastructureContent.CONNECTED_UNLOCK_IDS.size(), 18, "56. Infraestrutura intacta")
+	assert_eq(V2DoctrineContent.CONNECTED_UNLOCK_IDS.size(), 49, "56. Doutrinas intactas")
+	assert_eq(V2InfrastructureContent.CONNECTED_UNLOCK_IDS.size(), 21, "56. Infraestrutura intacta (com Colonização)")
 	GameManager.check_victories()
 	assert_ne(GameManager.state, GameManager.GameState.GAME_OVER, "57. sem vitória por Transcendência")
 

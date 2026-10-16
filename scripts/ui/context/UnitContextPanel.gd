@@ -29,12 +29,20 @@ var render_count := 0
 ## Assinatura da última visão desenhada: sinais repetidos (névoa, turno, mira de
 ## outra unidade) que não mudam nada visível não remontam o painel.
 var _last_key := 0
+var _vitals_host: VBoxContainer
+const STYLE := preload("res://scripts/ui/context/ContextPanelStyle.gd")
 
 func _ready() -> void:
 	name = "UnitContextPanel"
 	add_theme_constant_override("separation", UIThemeTokens.SPACE_2)
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_build_chrome()
+	STYLE.apply(self)
+	Settings.accessibility_changed.connect(_apply_style)
+	resized.connect(func(): STYLE.layout(self))
+
+func _apply_style() -> void:
+	STYLE.apply(self)
 
 func _build_chrome() -> void:
 	if body != null:
@@ -58,10 +66,13 @@ func _build_chrome() -> void:
 	identity.add_child(subtitle_label)
 	badge_flow = ContextUI.flow()
 	badge_flow.name = "Badges"
-	identity.add_child(badge_flow)
+	add_child(badge_flow)
 	var close := ContextUI.close_button("Fechar seleção")
 	close.pressed.connect(func(): close_requested.emit())
 	header.add_child(close)
+	_vitals_host = VBoxContainer.new()
+	_vitals_host.name = "VitalsHost"
+	add_child(_vitals_host)
 	scroll = ScrollContainer.new()
 	scroll.name = "Scroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -96,6 +107,7 @@ func refresh() -> void:
 	_last_key = key
 	var previous_scroll := scroll.scroll_vertical
 	_render()
+	STYLE.apply(self)
 	scroll.set_deferred("scroll_vertical", previous_scroll)
 	render_count += 1
 
@@ -112,11 +124,13 @@ func _render() -> void:
 	name_label.text = view.name
 	subtitle_label.text = "%s · %s" % [view.subtitle, view.owner_name if view.own else "%s (%s)" % [view.owner_name, view.relation]]
 	portrait.configure(view.portrait_glyph, view.portrait_accent, view.owner_color, view.portrait_caption)
+	portrait.set_icon(view.get("portrait_icon"))
 	ContextUI.clear(badge_flow)
 	for badge in view.badges:
 		badge_flow.add_child(ContextUI.chip(badge.text, badge.tone, -1, badge.get("tooltip", "")))
 	badge_flow.visible = not view.badges.is_empty()
 	ContextUI.clear(body)
+	ContextUI.clear(_vitals_host)
 	stat_items.clear()
 	command_buttons.clear()
 	ability_buttons.clear()
@@ -125,9 +139,11 @@ func _render() -> void:
 	warning_panel = null
 	if not view.warning.is_empty():
 		body.add_child(_warning_block(view.warning))
-	body.add_child(_vitals())
+	_vitals_host.add_child(_vitals())
 	if view.own and not view.commands.is_empty():
 		body.add_child(_commands())
+	if view.own and V2ManifestationOrders.is_bound(unit):
+		body.add_child(_stats_grid())
 	if view.own and (not view.abilities.is_empty() or not String(view.ability_empty_text).is_empty()):
 		body.add_child(_abilities())
 	if not view.passives.is_empty():
@@ -159,12 +175,19 @@ func _vitals() -> Control:
 	hp_meter = ContextUI.meter("Vida", view.hp, view.max_hp, ContextUI.hp_color(view.hp, view.max_hp), "", 12.0)
 	hp_meter.name = "HPMeter"
 	box.add_child(hp_meter)
+	# Four strategic choices must fit above the fold on small screens. Keep HP
+	# fixed; put the entity's secondary attributes below its orders in the scroll.
+	if not view.own or not V2ManifestationOrders.is_bound(unit):
+		box.add_child(_stats_grid())
+	return box
+
+func _stats_grid() -> Control:
 	var grid := GridContainer.new()
 	grid.name = "Stats"
 	grid.columns = mini(4, view.stats.size())
+	STYLE.grid(grid, 98, mini(4, view.stats.size()))
 	grid.add_theme_constant_override("h_separation", UIThemeTokens.SPACE_1)
 	grid.add_theme_constant_override("v_separation", UIThemeTokens.SPACE_1)
-	box.add_child(grid)
 	for stat in view.stats:
 		var item := AEStatItem.new()
 		item.name = "Stat_" + String(stat.key)
@@ -172,14 +195,17 @@ func _vitals() -> Control:
 		grid.add_child(item)
 		item.set_stat(stat.caption, stat.value, stat.get("glyph", ""), stat.get("tooltip", ""), stat.get("color", UIThemeTokens.COLOR_TEXT))
 		stat_items.append(item)
-	return box
+	return grid
 
 func _commands() -> Control:
 	var box := ContextUI.section("Comandos")
 	box.name = "Commands"
+	if V2ManifestationOrders.is_bound(unit):
+		box.add_child(ContextUI.caption(V2ManifestationOrders.describe(unit)))
 	var grid := GridContainer.new()
 	grid.name = "CommandStrip"
-	grid.columns = 3
+	grid.columns = 2 if view.commands.size() == 4 else mini(3, view.commands.size())
+	STYLE.grid(grid, 126 if view.commands.size() == 3 else 150, grid.columns)
 	grid.add_theme_constant_override("h_separation", UIThemeTokens.SPACE_1)
 	grid.add_theme_constant_override("v_separation", UIThemeTokens.SPACE_1)
 	box.add_child(grid)
@@ -200,6 +226,7 @@ func _abilities() -> Control:
 	var grid := GridContainer.new()
 	grid.name = "AbilityGrid"
 	grid.columns = 2
+	STYLE.grid(grid, 168, 2)
 	grid.add_theme_constant_override("h_separation", UIThemeTokens.SPACE_1)
 	grid.add_theme_constant_override("v_separation", UIThemeTokens.SPACE_1)
 	box.add_child(grid)
@@ -232,14 +259,15 @@ func _statuses() -> Control:
 	# lista os ocultos — o card nunca explode em resolução pequena.
 	var shown: Array = view.statuses if view.statuses.size() <= MAX_STATUS_CHIPS else view.statuses.slice(0, MAX_STATUS_CHIPS - 1)
 	for status in shown:
-		var chip := ContextUI.chip(status.title, status.tone, int(status.turns), status.tooltip)
+		var chip := ContextUI.chip(status.title, status.tone, int(status.turns), status.tooltip, String(status.get("duration_text", "")))
 		flow.add_child(chip)
 		status_chips.append(chip)
 	if shown.size() < view.statuses.size():
 		var hidden: Array = view.statuses.slice(shown.size())
 		var names: Array[String] = []
 		for status in hidden:
-			names.append("%s%s" % [status.title, (" · %dt" % int(status.turns)) if int(status.turns) >= 0 else ""])
+			var duration_text := String(status.get("duration_text", ""))
+			names.append("%s%s" % [status.title, " · %s" % duration_text if duration_text != "" else ((" · %dt" % int(status.turns)) if int(status.turns) >= 0 else "")])
 		var more := ContextUI.chip("+%d" % hidden.size(), AEStatusChip.Tone.NEUTRAL, -1, AETooltip.compose("Outros efeitos", "", names))
 		more.name = "MoreStatuses"
 		flow.add_child(more)
@@ -257,10 +285,12 @@ func _footer() -> Control:
 func _execute(action: UnitAbilityViewData) -> void:
 	if action == null or not is_valid_context() or SelectionManager.selected_unit != unit:
 		return
-	if action.state == UnitAbilityViewData.State.TARGETING and action.action_kind in ["technique", "spell"]:
+	if action.state == UnitAbilityViewData.State.TARGETING and action.action_kind in ["technique", "spell", "manifestation_order"]:
 		SelectionManager.cancel_active_targeting()
 		return
 	match action.action_kind:
+		"manifestation_order":
+			SelectionManager.start_manifestation_targeting(action.action_arg)
 		"move":
 			SelectionManager.wake_selected_for_move()
 		"fortify":
@@ -295,4 +325,5 @@ func preferred_height() -> float:
 	if body == null:
 		return 0.0
 	var header := get_node("Header") as Control
-	return header.get_combined_minimum_size().y + body.get_combined_minimum_size().y + UIThemeTokens.SPACE_2 * 2
+	var badge_height := badge_flow.get_combined_minimum_size().y + 10 * STYLE.CHROME.factor() if badge_flow.visible else 0.0
+	return header.get_combined_minimum_size().y + badge_height + _vitals_host.get_combined_minimum_size().y + body.get_combined_minimum_size().y + 30 * STYLE.CHROME.factor()

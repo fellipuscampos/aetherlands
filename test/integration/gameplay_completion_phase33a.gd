@@ -87,7 +87,6 @@ func _continue_research_path(player: PlayerData) -> void:
 		return
 	for id in [
 		"v2_infrastructure_academy_1",
-		"v2_doctrine_guardian_1",
 		"v2_doctrine_guardian_2",
 		"v2_doctrine_guardian_3",
 	]:

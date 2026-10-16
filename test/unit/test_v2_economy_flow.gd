@@ -165,8 +165,8 @@ func test_main_end_to_end_economy_flow():
 	assert_eq(city.city_level, 1)
 	assert_eq(V2EconomyRuntime.city_gold_income(city), 2.0)
 	assert_eq(V2EconomyRuntime.city_supply_capacity(city), 4.0)
-	assert_eq(V2EconomyRuntime.city_production_income(city), 4.0)
-	assert_eq(V2EconomyRuntime.city_knowledge_income(city), 2.0)
+	assert_eq(V2EconomyRuntime.city_production_income(city), 5.0)
+	assert_eq(V2EconomyRuntime.city_knowledge_income(city), 3.0)
 	assert_eq(V2EconomyRuntime.city_mana_income(city), 1.0)
 
 	# 5-7: pesquisa real progredindo SEM debug de Conhecimento -- só a renda de turno (usa
@@ -201,24 +201,24 @@ func test_main_end_to_end_economy_flow():
 	# 20-26: Oficina + Engenharia/Manufatura.
 	_research(human, "v2_building_workshop")
 	_build_copy(city, WORKSHOP)
-	assert_eq(V2EconomyRuntime.city_production_income(city), 4.0 + 2.0)
+	assert_eq(V2EconomyRuntime.city_production_income(city), 5.0 + 2.0)
 	_research(human, "v2_workshop_efficiency_2")
-	assert_eq(V2EconomyRuntime.city_production_income(city), 4.0 + 3.0)
+	assert_eq(V2EconomyRuntime.city_production_income(city), 5.0 + 3.0)
 	_research(human, "v2_workshop_efficiency_3")
-	assert_eq(V2EconomyRuntime.city_production_income(city), 4.0 + 4.0)
+	assert_eq(V2EconomyRuntime.city_production_income(city), 5.0 + 4.0)
 
 	# 27-31: Academia + Métodos de Estudo/Centros de Pesquisa, Conhecimento usado numa pesquisa real.
 	_research(human, "v2_building_academy")
 	_build_copy(city, ACADEMY)
-	assert_eq(V2EconomyRuntime.city_knowledge_income(city), 2.0 + 3.0)
+	assert_eq(V2EconomyRuntime.city_knowledge_income(city), 3.0 + 3.0)
 	human.v2_research.select_research("v2_infrastructure_academy_2")
 	var before_progress := human.v2_research.get_progress("v2_infrastructure_academy_2")
 	V2EconomyRuntime.apply_turn_income(human)
 	assert_gt(human.v2_research.get_progress("v2_infrastructure_academy_2"), before_progress, "Conhecimento real avançou a pesquisa")
 	_research(human, "v2_academy_efficiency_2")
-	assert_eq(V2EconomyRuntime.city_knowledge_income(city), 2.0 + 4.0)
+	assert_eq(V2EconomyRuntime.city_knowledge_income(city), 3.0 + 4.0)
 	_research(human, "v2_academy_efficiency_3")
-	assert_eq(V2EconomyRuntime.city_knowledge_income(city), 2.0 + 5.0)
+	assert_eq(V2EconomyRuntime.city_knowledge_income(city), 3.0 + 5.0)
 
 	# 32-35: Santuário Arcano + Condução/Nexos.
 	_research(human, "v2_building_arcane_shrine")
@@ -255,8 +255,8 @@ func test_main_end_to_end_economy_flow():
 	assert_true(human.v2_research.is_completed("v2_infrastructure_economy_3"), "Rede Mercantil sobreviveu ao save/load")
 
 	# 47: Doutrinas militares continuam funcionando (nenhum sistema isolado quebrou).
-	human.v2_research.complete_research("v2_doctrine_guardian_1")
-	assert_true(human.v2_research.is_completed("v2_doctrine_guardian_1"))
+	human.v2_research.complete_research("v2_doctrine_guardian_2")
+	assert_true(human.v2_research.is_completed("v2_doctrine_guardian_2"))
 	GameManager.check_victories()
 	assert_eq(GameManager.state, GameManager.GameState.PLAYING, "nada disto conecta vitória")
 
@@ -264,7 +264,6 @@ func test_main_end_to_end_economy_flow():
 
 func test_workshop_speeds_up_v2_military_production():
 	var city := _founded_city(human, Vector2i(0, 0))
-	human.v2_research.complete_research("v2_doctrine_guardian_1")
 	human.v2_research.complete_research("v2_doctrine_guardian_2")
 	_build_copy(city, "v2_building_guardian_hall")
 	city.set_production("v2_unit_shieldbearer")
@@ -277,7 +276,6 @@ func test_workshop_speeds_up_v2_military_production():
 
 func test_market_gold_funds_a_unit_upgrade():
 	var city := _founded_city(human, Vector2i(0, 0))
-	human.v2_research.complete_research("v2_doctrine_guardian_1")
 	human.v2_research.complete_research("v2_doctrine_guardian_2")
 	human.v2_research.complete_research("v2_doctrine_guardian_3")
 	human.v2_research.complete_research("v2_doctrine_guardian_4")
@@ -292,9 +290,9 @@ func test_academy_knowledge_completes_a_doctrine_research_and_unlocks_a_unit():
 	var city := _founded_city(human, Vector2i(0, 0))
 	_research(human, "v2_building_academy")
 	_build_copy(city, ACADEMY)
-	human.v2_research.select_research("v2_doctrine_guardian_1")
+	human.v2_research.select_research("v2_doctrine_guardian_2")
 	var turns := 0
-	while not human.v2_research.is_completed("v2_doctrine_guardian_1") and turns < 50:
+	while not human.v2_research.is_completed("v2_doctrine_guardian_2") and turns < 50:
 		V2EconomyRuntime.apply_turn_income(human)
 		turns += 1
-	assert_true(human.v2_research.is_completed("v2_doctrine_guardian_1"), "Conhecimento da Academia concluiu uma pesquisa de Doutrina real")
+	assert_true(human.v2_research.is_completed("v2_doctrine_guardian_2"), "Conhecimento da Academia concluiu uma pesquisa de Doutrina real")

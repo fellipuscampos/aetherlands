@@ -2,7 +2,7 @@ extends GutTest
 
 ## Aetherlands V2, Fase 17 — UI da Magia V2: seção "Magia — Escola Sagrada" no painel do conjurador (botões na ordem
 ## N4..N7, "— N Mana", recarga, desabilitado com motivo), "Sem ataque básico.", dica da mira, e o botão de produção
-## do Serafim ("100 PP + 60 Mana", slot/Mana com motivo, "Aguardando 60 Mana.").
+## do Serafim ("100 PP + 120 Mana", slot/Mana com motivo, "Aguardando 120 Mana.").
 
 const CLERIC := "v2_unit_sacred_cleric"
 const SERAPH := "v2_manifestation_seraph"
@@ -36,7 +36,7 @@ func before_each():
 	GameManager.players = majors
 	GameManager.hex_grid = grid
 	GameManager.human_player = player
-	player.mana = 100.0
+	player.mana = 200.0
 	player.gold = 500.0
 	TurnManager.turn_number = 5
 
@@ -50,7 +50,7 @@ func after_each():
 	grid.queue_free()
 
 func _learn(tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		player.v2_research.complete_research("v2_magic_sacred_%d" % i)
 
 func _unit(kind: String, coord: Vector2i, hp: float = -1.0) -> Unit:
@@ -75,7 +75,7 @@ func test_caster_panel_lists_the_known_spells_in_order_with_mana_costs():
 	for child in row.get_children():
 		if child is Button and String(child.name).begins_with("Spell_"):
 			texts.append(child.text)
-	assert_eq(texts, ["Luz Restauradora — 4 Mana", "Égide Sagrada — 6 Mana", "Onda de Cura — 9 Mana", "Milagre — 16 Mana"])
+	assert_eq(texts, ["Luz Restauradora — 5 Mana", "Égide Sagrada — 8 Mana", "Onda de Cura — 16 Mana", "Milagre — 36 Mana"])
 	assert_string_contains(hud.unit_info_label.text, "Sem ataque básico.")
 
 func test_caster_without_research_shows_no_spell_and_no_free_spell():
@@ -95,7 +95,7 @@ func test_spell_button_disabled_with_reason_and_cooldown_suffix():
 	cleric.magic_cooldowns["v2_spell_sacred_aegis"] = TurnManager.turn_number + 1
 	SelectionManager._select_unit(cleric)
 	var aegis: Button = _actions().get_node("Spell_v2_spell_sacred_aegis")
-	assert_eq(aegis.text, "Égide Sagrada — 6 Mana (recarga 1)")
+	assert_eq(aegis.text, "Égide Sagrada — 8 Mana (recarga 1)")
 
 func test_pressing_a_spell_enters_targeting_and_shows_the_hint():
 	_learn(4)
@@ -114,14 +114,14 @@ func test_seraph_production_button_shows_pp_and_mana_and_reasons():
 	city.buildings["v2_building_sacred_ritual"] = true
 	hud._on_tile_selected(city.coord, grid.get_tile(city.coord))
 	var button: Button = hud._production_buttons[SERAPH]
-	assert_eq(button.text, "Serafim  —  100 PP + 60 Mana")
+	assert_eq(button.text, "Serafim  —  84 PP + 120 Mana")
 	assert_true(button.visible)
 	assert_false(button.disabled)
 	player.mana = 10.0
 	hud._on_tile_selected(city.coord, grid.get_tile(city.coord))
 	assert_true(button.visible and button.disabled)
-	assert_string_contains(button.tooltip_text, "Requer 60 Mana.")
-	player.mana = 100.0
+	assert_string_contains(button.tooltip_text, "Requer 120 Mana.")
+	player.mana = 200.0
 	_unit(SERAPH, Vector2i(3, 0))
 	hud._on_tile_selected(city.coord, grid.get_tile(city.coord))
 	assert_true(button.visible and button.disabled)
@@ -137,4 +137,4 @@ func test_production_progress_says_waiting_for_mana():
 	city.stored_production = 100.0
 	player.mana = 10.0
 	hud._on_tile_selected(city.coord, grid.get_tile(city.coord))
-	assert_string_contains(hud.production_progress_label.text, "Aguardando 60 Mana.")
+	assert_string_contains(hud.production_progress_label.text, "Aguardando 120 Mana.")

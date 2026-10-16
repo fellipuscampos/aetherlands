@@ -53,7 +53,7 @@ func after_each():
 	grid.queue_free()
 
 func _learn(tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		player.v2_research.complete_research("v2_magic_necromancy_%d" % i)
 
 func _unit(kind: String, owner: PlayerData, coord: Vector2i) -> Unit:
@@ -79,7 +79,7 @@ func test_necromancer_panel_shows_school_command_and_spells_in_order():
 	var texts := []
 	for spell_id in ["v2_spell_raise_dead", "v2_spell_mend_undead", "v2_spell_macabre_command", "v2_spell_raise_legion"]:
 		texts.append(row.get_node("Spell_" + spell_id).text)
-	assert_eq(texts, ["Erguer Mortos — 7 Mana", "Recompor Ossos — 6 Mana", "Comando Macabro — 7 Mana", "Erguer Legião — 15 Mana"])
+	assert_eq(texts, ["Erguer Mortos — 10 Mana", "Recompor Ossos — 6 Mana", "Comando Macabro — 9 Mana", "Erguer Legião — 30 Mana"])
 	assert_null(row.get_node_or_null("DissolveRetinueButton"), "Necromante não é retinue")
 
 func test_summon_tooltips_show_available_or_insufficient_command():
@@ -144,5 +144,7 @@ func test_lich_panel_shows_sovereignty_of_the_dead():
 	assert_string_contains(info, "Passiva da Manifestação — Soberania dos Mortos")
 	assert_string_contains(info, "Concede +4 de capacidade de Comando Necromântico.")
 	assert_string_contains(info, "Comando Necromântico: 0 / 4")
-	assert_string_contains(info, "Sem ataque básico.")
+	assert_string_contains(info, "Ataque 12.0")
+	assert_false(hud.move_button.visible)
+	assert_not_null(_actions().get_node_or_null("Order_protect_unit"))
 	assert_eq(_actions().get_node("MagicHeader").text, "Magia — Escola de Necromancia")

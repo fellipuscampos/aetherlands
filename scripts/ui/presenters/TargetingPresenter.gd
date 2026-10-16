@@ -6,6 +6,18 @@ extends RefCounted
 ## helpers que a mira usa.
 
 static func current() -> Dictionary:
+	if SelectionManager.manifestation_targeting_mode != "":
+		var mode := SelectionManager.manifestation_targeting_mode
+		return {
+			"kind": "manifestation_order",
+			"title": V2ManifestationOrders.LABELS.get(mode, "Ordenar entidade"),
+			"target": ("Cidade" if mode.ends_with("city") else "Unidade") + (" própria" if mode.begins_with("protect_") else " hostil"),
+			"range": 0,
+			"cost": "Ordem persistente · sem custo",
+			"instruction": "Escolha um alvo destacado. A entidade age ao encerrar o turno.",
+			"targets": SelectionManager.manifestation_target_coords.size(),
+			"color": UIThemeTokens.COLOR_TARGETING,
+		}
 	if SelectionManager.technique_targeting_id != "":
 		var unit := SelectionManager.technique_targeting_unit
 		var technique := V2DoctrineTechniqueDatabase.get_technique(SelectionManager.technique_targeting_id)

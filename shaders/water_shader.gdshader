@@ -50,28 +50,12 @@ uniform vec2 lava_grid_size = vec2(1.0, 1.0);
 uniform vec2 lava_grid_half = vec2(0.0, 0.0);
 uniform float lava_hex_size : hint_range(0.1, 10.0) = 1.0;
 
-// Nevoa de guerra (pedido do usuario: "a camada de nuvens deve cobrir a
-// agua nao explorada da mesma forma que cobre a terra... transicao
-// terra/mar homogenea") — MESMOS valores padrao de terrain.gdshader
-// fog_cloud_color/fog_explored_* pra a nuvem/sepia lerem como uma unica
-// camada continua atravessando a linha da costa, nao dois tratamentos
-// diferentes se encontrando na praia.
-uniform vec3 fog_cloud_color : source_color = vec3(0.35, 0.38, 0.42);
-uniform float fog_cloud_noise_scale : hint_range(0.05, 5.0) = 0.5;
-uniform float fog_cloud_speed : hint_range(0.0, 0.5) = 0.035;
-uniform float fog_cloud_warp_strength : hint_range(0.0, 2.0) = 0.8;
-uniform vec3 fog_explored_tint : source_color = vec3(0.55, 0.48, 0.36);
-uniform float fog_explored_desaturate : hint_range(0.0, 1.0) = 0.6;
-uniform float fog_explored_darken : hint_range(0.0, 1.0) = 0.4;
-// Luma FIXO do tom sepia de Explorado — pedido do usuario, 4a rodada
-// ("ainda da pra ver onde o terreno termina e comeca a agua, quero que
-// nao tenha essa divisao"): a versao anterior derivava o brilho do sepia
-// do ALBEDO REAL (agua rasa turquesa BRILHANTE vs agua funda escura vs
-// terra vizinha), entao a costa continuava "desenhada" por baixo da
-// nevoa so pela diferenca de brilho entre tiles supostamente escondidos.
-// MESMO valor de terrain.gdshader, pra costa e terra ficarem
-// PIXEL-IGUAIS quando Explorado.
-uniform float fog_sepia_luma : hint_range(0.0, 1.0) = 0.42;
+// NÉVOA DE GUERRA (refeita em 2026-10-12): este shader não pinta mais névoa. A água de um tile NUNCA VISTO fica sob
+// a camada física de névoa (FogLayer), que é opaca e escreve profundidade — os pixels daqui nem passam no teste de
+// profundidade. A água EXPLORADA (memória) aparece como é, com as ondas, sob o mesmo filtro escuro do terreno
+// (terrain.gdshader fog_memory_tint; quem preenche os dois é HexGrid.MEMORY_TINT). O fog_level contínuo continua
+// vindo do canal ALFA de liquid_type_texture (0 nunca visto, 0,5 explorado, 1 visível).
+uniform vec3 fog_memory_tint : source_color = vec3(0.4, 0.44, 0.54);
 
 // ---------------------------------------------------------------------
 // Agua — ondas (2 camadas em direcoes/velocidades opostas)
@@ -115,6 +99,13 @@ uniform float fine_strength : hint_range(0.0, 2.0) = 0.5;
 uniform sampler2D wave_normal_a : repeat_enable;
 uniform sampler2D wave_normal_b : repeat_enable;
 uniform float texture_influence : hint_range(0.0, 1.0) = 0.0;
+
+// Small pixel detail modulates the existing ocean/coast/frozen water,
+// preserving depth, animated foam and the shared liquid geometry.
+uniform sampler2D pixel_water_tex : source_color, filter_nearest_mipmap, repeat_enable;
+uniform bool pixel_water_enabled = false;
+uniform float pixel_water_scale = 0.5;
+uniform float pixel_water_mean_luma = 0.16;
 
 // filter_nearest (nao linear/mipmap) de proposito: um buffer de
 // profundidade tem descontinuidades DURAS nas silhuetas dos objetos —
@@ -280,26 +271,6 @@ float value_noise(vec2 p) {
 	float d = hash(i + vec2(1.0, 1.0));
 	vec2 u = f * f * (3.0 - 2.0 * f);
 	return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-}
-
-// Nuvem volumetrica animada da nevoa de guerra — MESMA tecnica/formula de
-// terrain.gdshader fog_cloud_pattern (2 camadas de value_noise com domain-
-// warp, TIME passado como parametro em vez de lido direto), duplicada aqui
-// porque shaders nao compartilham codigo entre arquivos neste projeto
-// (mesmo padrao de hash()/value_noise() acima, cada shader com sua propria
-// copia). Precisa ser uma copia FIEL (nao so "parecida") pra nuvem de agua
-// e nuvem de terra se moverem em sincronia e a transicao na costa nunca
-// criar uma costura visivel entre os dois shaders.
-float fog_cloud_pattern(vec2 world_xz, float t) {
-	vec2 p = world_xz * fog_cloud_noise_scale;
-	vec2 drift = vec2(t * fog_cloud_speed, t * fog_cloud_speed * 0.6);
-	vec2 warp = vec2(
-		value_noise((p + drift) * 0.5),
-		value_noise((p - drift) * 0.5 + vec2(17.3, 9.1))
-	) * fog_cloud_warp_strength;
-	float n1 = value_noise(p + drift + warp);
-	float n2 = value_noise(p * 1.8 - drift * 1.3 + warp);
-	return clamp(n1 * 0.6 + n2 * 0.4, 0.0, 1.0);
 }
 
 // Normal pseudo-procedural derivado por diferenca central sobre um campo
@@ -536,22 +507,6 @@ void fragment() {
 		vec3 n_axis = vec3(0.0, 1.0, 0.0);
 		vec3 n_tex = normalize(t_axis * (tsn_a.x + tsn_b.x) + b_axis * (tsn_a.y + tsn_b.y) + n_axis * (tsn_a.z + tsn_b.z));
 		vec3 water_world_normal = normalize(mix(n_proc, n_tex, texture_influence));
-		// Nevoa de guerra tambem precisa achatar as ONDAS, nao so a cor —
-		// pedido do usuario ("a nevoa de guerra mostra o relevo do mapa...
-		// ainda ta mostrando o oceano" apos terrain.gdshader ja ter sido
-		// corrigido): sem isso, agua fora de visao continuava com o normal
-		// de onda completo, entao o brilho especular/reflexo animado ainda
-		// "lia" como agua de verdade em movimento, denunciando a costa por
-		// baixo da mesma nuvem uniforme que a terra ja usa. step() DURO
-		// (nao smoothstep), MESMO motivo/limiar de terrain.gdshader (ver
-		// comentario la): liquid_type_texture e baixa resolucao/bilinear,
-		// fog_level vem borrado por varios tiles perto de qualquer
-		// fronteira — uma FRACAO de onda ainda e onda o bastante pra
-		// denunciar "isso e agua", entao precisa ser tudo ou nada, nao um
-		// gradiente. So agua REALMENTE visivel agora mantem onda de
-		// verdade; Unexplored E Explorado caem pro normal plano.
-		float water_shape_mask = step(0.999, fog_level);
-		water_world_normal = normalize(mix(vec3(0.0, 1.0, 0.0), water_world_normal, water_shape_mask));
 		NORMAL = normalize((VIEW_MATRIX * vec4(water_world_normal, 0.0)).xyz);
 
 		// Gradiente de 3 cores (pedido do usuario, estilo Civ VI/VII: raso
@@ -679,6 +634,13 @@ void fragment() {
 		// claro.
 		float coast_foam_crest = pow(coast_foam_wave, 5.0) * coast_foam_falloff * (1.0 - lava_proximity);
 		vec3 water_final_color = mix(water_color, foam_color.rgb, coast_foam_mask) + foam_color.rgb * coast_foam_crest * 0.6;
+		if (pixel_water_enabled) {
+			vec2 drift = vec2(floor(TIME * 4.0) / 128.0, 0.0);
+			vec3 pattern = texture(pixel_water_tex, world_pos.xz * pixel_water_scale + drift).rgb;
+			float luma = dot(pattern, vec3(0.2126, 0.7152, 0.0722));
+			float detail = clamp(luma / max(pixel_water_mean_luma, 0.01), 0.8, 1.2);
+			water_final_color *= mix(1.0, detail, 0.7);
+		}
 		water_final_color = clamp(water_final_color, 0.0, 1.0);
 		float water_alpha = clamp(mix(base_alpha, foam_color.a, coast_foam_mask), 0.0, 1.0);
 
@@ -707,37 +669,9 @@ void fragment() {
 		EMISSION = lava_fissure_color.rgb * lava_proximity * 0.3;
 	}
 
-	// Nevoa de guerra — mesma logica de terrain.gdshader (2 smoothstep
-	// encadeados nos keypoints 0/0.5/1 de fog_level: Unexplored 100% nuvem,
-	// Explored 100% sepia, Visible 100% cor original), por cima de QUALQUER
-	// um dos dois ramos acima (agua OU lava) — pedido do usuario: cobrir a
-	// agua nao explorada "da mesma forma que cobre a terra", nao deixar so
-	// escura, com transicao homogenea entre terra e mar na mesma area de
-	// Terra Incognita.
-	vec3 sepia_albedo = mix(vec3(fog_sepia_luma), fog_explored_tint * (fog_sepia_luma + 0.3), fog_explored_desaturate) * (1.0 - fog_explored_darken);
-
-	float cloud_pattern = fog_cloud_pattern(world_pos.xz, TIME);
-	vec3 cloud_albedo = fog_cloud_color * (0.7 + cloud_pattern * 0.5);
-
-	// Pedido do usuario, 2a/3a rodada ("ainda ta mostrando o oceano" / "so
-	// seja possivel ver nevoa, sem relevos"): ROUGHNESS/SPECULAR/EMISSION
-	// precisam ficar "sob nuvem" durante Unexplored E Explorado (nao so
-	// Unexplored como antes), com step() DURO (nao smoothstep) pelo MESMO
-	// motivo de water_shape_mask/shape_mask acima — fog_level vem borrado
-	// por varios tiles perto de qualquer fronteira (textura baixa
-	// resolucao/bilinear), uma FRACAO de brilho especular ja e brilho
-	// especular o bastante pra denunciar agua.
-	float fog_cloud_weight = 1.0 - step(0.999, fog_level);
-	vec3 stage_unexplored_to_explored = mix(cloud_albedo, sepia_albedo, smoothstep(0.0, 0.5, fog_level));
-	ALBEDO = mix(stage_unexplored_to_explored, ALBEDO, smoothstep(0.5, 1.0, fog_level));
-
-	// Sob nuvem a agua/lava fica opaca (senao daria pra ver o degrade de
-	// profundidade/espuma/brilho por baixo de uma nuvem que deveria
-	// escondê-la por completo) — volta ao ALPHA natural assim que
-	// fog_level passa de Unexplored (Explored e Visible mostram a forma
-	// real do liquido, so Unexplored precisa esconder).
-	ALPHA = mix(1.0, ALPHA, smoothstep(0.0, 0.5, fog_level));
-	ROUGHNESS = mix(ROUGHNESS, 0.95, fog_cloud_weight);
-	SPECULAR = mix(SPECULAR, 0.05, fog_cloud_weight);
-	EMISSION = mix(EMISSION, vec3(0.0), fog_cloud_weight) * mix(1.0 - fog_explored_darken, 1.0, smoothstep(0.5, 1.0, fog_level));
+	// MEMÓRIA: água/lava explorada sob o filtro escuro (mesma regra de terrain.gdshader). 0 em tile visível, 1 de
+	// explorado para baixo — por baixo da camada de névoa este pixel nem é desenhado.
+	float memory = 1.0 - smoothstep(0.5, 1.0, fog_level);
+	ALBEDO *= mix(vec3(1.0), fog_memory_tint, memory);
+	EMISSION *= mix(vec3(1.0), fog_memory_tint, memory);
 }

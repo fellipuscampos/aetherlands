@@ -46,6 +46,8 @@ var _original_current_save_slot: String
 var _original_kingdom_name: String
 
 func before_each():
+	# Conta unidades/Suprimentos exatos da linha: sem a escolta inicial (fixture, ver GameManager).
+	GameManager.starting_escort_on_new_match = false
 	_original_state = GameManager.state
 	_original_players = GameManager.players
 	_original_human_player = GameManager.human_player
@@ -75,6 +77,7 @@ func before_each():
 	_reserved.clear()
 
 func after_each():
+	GameManager.starting_escort_on_new_match = true
 	GameManager.combat_ecology_on_new_match = true
 	SelectionManager.reset()
 	for player in GameManager.players:
@@ -284,7 +287,7 @@ func test_phase15_main_integration_flow_across_save_and_load():
 	assert_almost_eq(V2EconomyRuntime.player_supply_capacity(human), 8.0, 0.0001, "15. capacidade 8")
 
 	# 16-19. Guardião N1-N5, Salão, Guardiões (custo 2) até o limite; o próximo é bloqueado.
-	for n in range(1, 3):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 3):
 		_research_node(state, "v2_doctrine_guardian_%d" % n)
 	_build(city, HALL)
 	for n in range(3, 6):

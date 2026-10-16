@@ -30,6 +30,11 @@ extends Resource
 ## visual procedural. Ver Building._build_visual().
 @export var model_scene_path: String = ""
 
+## Ajuste uniforme da fonte: KayKit parte da calibração de tile Building.KAYKIT_SCALE;
+## assets/generated parte de 1:1 em metros. Não normalizar por altura, pois isso
+## destrói a proporção entre prédios. Ver Building._build_model().
+@export var model_scale_multiplier: float = 1.0
+
 ## Aetherlands V2, Fase 13 — quantas cópias do MESMO id uma cidade pode ter. UNIQUE (padrão) = no
 ## máximo 1 por cidade. CITY_LEVEL = o limite vem de V2CityLevelData.repeatable_building_limit(
 ## city.city_level), ver City.max_copies_for_building()/building_count()/can_build() — os cinco

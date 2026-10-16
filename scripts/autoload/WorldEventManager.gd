@@ -19,23 +19,22 @@ var _next_event_id: int = 0
 ## ONCE_PER_GAME: depois que UM evento do tipo conclui (qualquer desfecho), o tipo nunca mais nasce nesta
 ## partida — corrige o Dragão que voltava a ser sorteado depois de resolvido.
 const REPEAT_ONCE_PER_GAME := "ONCE_PER_GAME"
-const REPEAT_POLICY := {"dragon": REPEAT_ONCE_PER_GAME, "reliquary": REPEAT_ONCE_PER_GAME}
+const REPEAT_POLICY := {"dragon": REPEAT_ONCE_PER_GAME}
 
-## Fase 33D3 — AGENDAMENTO dos grandes eventos da Ascensão (docs/AETHERLANDS_STRATEGIC_PACING_OBJECTIVES_DESIGN.md
+## Fase 33D3 — AGENDAMENTO do grande evento da Ascensão (docs/AETHERLANDS_STRATEGIC_PACING_OBJECTIVES_DESIGN.md
 ## §8). Dragão: só INICIA na Ascensão; elegível DRAGON_ELIGIBLE_AFTER rodadas depois da entrada nela; depois,
 ## o gatilho probabilístico existente (WorldEventTrigger, 2%/rodada); garantido a partir de
 ## DRAGON_GUARANTEE_AFTER; na virada para a Convergência, se nunca ocorreu e a Ascensão já durou o bastante,
-## é anunciado na mesma rodada da transição. Relicário: elegível RELIQUARY_ELIGIBLE_AFTER rodadas depois da
-## Ascensão; o Dragão tem prioridade — com o Dragão ativo o Relicário espera (e depois RELIQUARY_AFTER_DRAGON
-## rodadas da resolução); se o Dragão ainda pode começar, o Relicário só é anunciado quando sua duração máxima
-## (ReliquaryEvent.MAX_DURATION) termina antes da garantia do Dragão; a Convergência o supersede se ele ainda
-## não foi anunciado. No máximo UM grande evento (Dragão/Relicário) ativo; ameaças regionais e
-## Guardiões não contam.
+## é anunciado na mesma rodada da transição. No máximo UM grande evento ativo; ameaças regionais e Guardiões
+## não contam.
 const DRAGON_ELIGIBLE_AFTER := 10
 const DRAGON_GUARANTEE_AFTER := 35
-const RELIQUARY_ELIGIBLE_AFTER := 15
-const RELIQUARY_AFTER_DRAGON := 5
-const MAJOR_EVENT_TYPES := ["dragon", "reliquary"]
+const MAJOR_EVENT_TYPES := ["dragon"]
+## Tipos de evento que já existiram e foram REMOVIDOS do jogo. Um save que ainda traga um deles ativo carrega
+## normalmente: o evento é descartado em silêncio (from_save_dict) e os monstros que ele tinha gerado não voltam
+## (SaveManager._deserialize_neutral_units). "reliquary" = Relicário Desperto, removido em 2026-10-12 a pedido do
+## usuário ("apague o evento relicário do game").
+const RETIRED_EVENT_TYPES := ["reliquary"]
 const SCHEDULE_PENDING := "PENDING"
 const SCHEDULE_ANNOUNCED := "ANNOUNCED"
 const SCHEDULE_RESOLVED := "RESOLVED"
@@ -60,7 +59,6 @@ var guardian_stats: Dictionary = {}
 ## Fase 33D3 — estado dos agendadores (salvo): {state, eligible_turn, announce_turn, forced, resolution_turn,
 ## superseded_reason, target_deferred_rounds, phase_at_start}. Ausente num save antigo = derivado no próximo round.
 var dragon_schedule: Dictionary = {}
-var reliquary_schedule: Dictionary = {}
 ## Fase 33D3 — marcos públicos já anunciados, por índice de civ: {"supreme_army": turno, "second_manifestation":
 ## turno}. Cada marco é anunciado UMA vez por civ por partida (PublicVictoryMilestones).
 var public_milestones: Dictionary = {}
@@ -81,7 +79,6 @@ func reset_for_new_match(turn: int = 1) -> void:
 	RegionalThreatSystem.defer_planning = false
 	MonsterEcologySystem.reset() # V3: registro/alvos/reposição/RNG da ecologia nunca vazam entre partidas
 	dragon_schedule = {}
-	reliquary_schedule = {}
 	public_milestones = {}
 
 func phase_entered_turn() -> int:
@@ -130,7 +127,7 @@ func event_by_id(event_id: int) -> WorldEvent:
 	return null
 
 ## Primeira rodada em que o Dragão ainda pendente é garantido: Ascensão+35 ou a Convergência mais cedo possível
-## (o piso dela) — o que vier antes. Um grande evento ativo nessa rodada tomaria o lugar do Dragão.
+## (o piso dela) — o que vier antes.
 func dragon_guarantee_deadline() -> int:
 	return mini(ascension_turn() + DRAGON_GUARANTEE_AFTER, WorldPhaseRules.CONVERGENCE_FLOOR_TURN)
 
@@ -140,7 +137,7 @@ func dragon_still_pending() -> bool:
 
 ## Virada Ascensão → Convergência (antes da transição): garante o anúncio do Dragão que nunca ocorreu se a
 ## Ascensão já durou DRAGON_ELIGIBLE_AFTER rodadas e não há grande evento ativo; senão (ou sem alvo) o registra
-## como SUPERSEDED. O Relicário ainda não anunciado é SUPERSEDED (nunca nasce na Convergência).
+## como SUPERSEDED.
 func _close_ascension_events(hex_grid: HexGrid, players: Array[PlayerData], turn: int) -> void:
 	if dragon_still_pending():
 		var asc := ascension_turn()
@@ -157,10 +154,6 @@ func _close_ascension_events(hex_grid: HexGrid, players: Array[PlayerData], turn
 				dragon_schedule["convergence_edge"] = true
 		else:
 			_supersede_dragon("CONVERGENCE", turn)
-	if String(reliquary_schedule.get("state", "")) in ["", SCHEDULE_PENDING] and can_start_event_type(ReliquaryEvent.EVENT_TYPE):
-		reliquary_schedule["state"] = SCHEDULE_SUPERSEDED
-		reliquary_schedule["superseded_turn"] = turn
-		reliquary_schedule["superseded_reason"] = "CONVERGENCE"
 
 func _supersede_dragon(reason: String, turn: int) -> void:
 	dragon_schedule["state"] = SCHEDULE_SUPERSEDED
@@ -212,11 +205,10 @@ func advance_turn(hex_grid: HexGrid, players: Array[PlayerData]) -> void:
 			EventBus.world_event_phase_changed.emit(event, phase_before, event.phase)
 		if event.is_completed():
 			completed_event_types[event.event_type] = int(completed_event_types.get(event.event_type, 0)) + 1
-			var schedule := dragon_schedule if event is DragonEvent else (reliquary_schedule if event is ReliquaryEvent else {})
-			if event is DragonEvent or event is ReliquaryEvent:
-				schedule["state"] = SCHEDULE_RESOLVED
-				schedule["resolution_turn"] = TurnManager.turn_number
-				schedule["outcome"] = String(event.result.get("outcome", ""))
+			if event is DragonEvent:
+				dragon_schedule["state"] = SCHEDULE_RESOLVED
+				dragon_schedule["resolution_turn"] = TurnManager.turn_number
+				dragon_schedule["outcome"] = String(event.result.get("outcome", ""))
 			EventBus.world_event_completed.emit(event, event.result)
 			remove_event(event)
 
@@ -261,52 +253,6 @@ func _start_dragon(hex_grid: HexGrid, turn: int, forced: bool) -> DragonEvent:
 	register_event(event)
 	return event
 
-## Fase 33D3 — Relicário Desperto: uma vez por partida, só anunciado na Ascensão (ver o agendamento no topo).
-func maybe_start_reliquary(hex_grid: HexGrid, turn: int) -> void:
-	if hex_grid == null or not can_start_event_type(ReliquaryEvent.EVENT_TYPE):
-		return
-	var state := String(reliquary_schedule.get("state", ""))
-	if state not in ["", SCHEDULE_PENDING]:
-		return
-	var asc := ascension_turn()
-	if world_phase != WorldPhaseRules.Phase.ASCENSION or asc < 0:
-		return
-	reliquary_schedule["eligible_turn"] = asc + RELIQUARY_ELIGIBLE_AFTER
-	if turn < asc + RELIQUARY_ELIGIBLE_AFTER:
-		return
-	reliquary_schedule["state"] = SCHEDULE_PENDING
-	# Prioridade do Dragão: com o Dragão ativo, o Relicário espera. Se o Dragão da partida ainda pode começar, o
-	# Relicário só é anunciado se terminar (duração máxima fixa) ANTES das DUAS garantias do Dragão: Ascensão+35
-	# e a virada para a Convergência (que pode chegar antes, a partir do piso dela) — nunca as atrasa nem as ocupa.
-	if _has_active_dragon() or has_active_major_event():
-		reliquary_schedule["waited_for_dragon"] = true
-		return
-	if dragon_still_pending() and turn + ReliquaryEvent.MAX_DURATION >= dragon_guarantee_deadline():
-		reliquary_schedule["waited_for_dragon"] = true
-		return
-	var dragon_resolved := int(dragon_schedule.get("resolution_turn", -1))
-	if dragon_resolved >= 0 and turn < dragon_resolved + RELIQUARY_AFTER_DRAGON:
-		return
-	var site := ReliquaryEvent.choose_site(hex_grid, GameManager.players)
-	if site == ReliquaryEvent.NO_COORD:
-		reliquary_schedule["state"] = SCHEDULE_SUPERSEDED
-		reliquary_schedule["superseded_reason"] = "NO_SITE"
-		reliquary_schedule["superseded_turn"] = turn
-		return
-	var event := ReliquaryEvent.new()
-	event.site_coord = site
-	reliquary_schedule["state"] = SCHEDULE_ANNOUNCED
-	reliquary_schedule["announce_turn"] = turn
-	reliquary_schedule["site"] = [site.x, site.y]
-	register_event(event)
-
-## Escolha de recompensa do Relicário por quem controla o assento vencedor (painel de evento existente).
-func choose_reliquary_reward(player: PlayerData, choice: String) -> bool:
-	var event := active_event_of_type(ReliquaryEvent.EVENT_TYPE) as ReliquaryEvent
-	if event == null or not event.awaiting_choice_from(GameManager.players.find(player)):
-		return false
-	return event.apply_reward(GameManager.players, choice)
-
 func _has_active_dragon() -> bool:
 	for event in active_events:
 		if event is DragonEvent:
@@ -345,7 +291,6 @@ func to_save_dict() -> Dictionary:
 		"completed_event_types": completed_event_types.duplicate(),
 		"regional": RegionalThreatSystem.to_save_dict(),
 		"dragon_schedule": dragon_schedule.duplicate(true),
-		"reliquary_schedule": reliquary_schedule.duplicate(true),
 		"public_milestones": public_milestones.duplicate(true),
 	}
 
@@ -358,6 +303,8 @@ func from_save_dict(data: Dictionary) -> void:
 	_next_event_id = data.get("next_event_id", 0)
 	for saved in data.get("events", []):
 		var event_type: String = saved.get("event_type", "")
+		if event_type in RETIRED_EVENT_TYPES:
+			continue # evento removido do jogo: some do save sem aviso
 		var event := _construct_event(event_type)
 		if event == null:
 			push_warning("WorldEventManager: tipo de evento desconhecido no save ('%s') -- ignorado" % event_type)
@@ -374,7 +321,6 @@ func _load_world_state(data: Dictionary) -> void:
 	# Fase 33D3: agendadores e marcos. Ausentes (save ≤ v23): agendadores derivam no PRÓXIMO round (nada nasce
 	# no load); marcos já satisfeitos no estado carregado contam como anunciados (sem enxurrada retroativa).
 	dragon_schedule = (data.get("dragon_schedule", {}) as Dictionary).duplicate(true) if typeof(data.get("dragon_schedule", {})) == TYPE_DICTIONARY else {}
-	reliquary_schedule = (data.get("reliquary_schedule", {}) as Dictionary).duplicate(true) if typeof(data.get("reliquary_schedule", {})) == TYPE_DICTIONARY else {}
 	if typeof(data.get("public_milestones")) == TYPE_DICTIONARY:
 		public_milestones = (data.public_milestones as Dictionary).duplicate(true)
 	else:
@@ -405,7 +351,5 @@ func _construct_event(event_type: String) -> WorldEvent:
 	match event_type:
 		DragonEvent.EVENT_TYPE:
 			return DragonEvent.new()
-		ReliquaryEvent.EVENT_TYPE:
-			return ReliquaryEvent.new()
 		_:
 			return null

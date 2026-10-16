@@ -20,8 +20,8 @@ var visible_enemy_city_coords: Dictionary = {}
 var known_lairs: Array[Dictionary] = []
 ## Fase 33D3 — marcos PÚBLICOS de vitória dos rivais ({owner_id: [marcos]}; PublicVictoryMilestones): só o fato.
 var public_milestones: Dictionary = {}
-## Fase 33D3 — grandes eventos PÚBLICOS em andamento (Relicário: o local é público pelo anúncio; Dragão: região
-## de origem anunciada). {event_id, type, phase, coord}.
+## Fase 33D3 — grandes eventos PÚBLICOS em andamento (Dragão: região de origem anunciada).
+## {event_id, type, phase, coord}.
 var public_world_events: Array[Dictionary] = []
 
 static func capture(player: PlayerData, hex_grid: HexGrid) -> V2AIWorldView:
@@ -78,9 +78,7 @@ static func capture(player: PlayerData, hex_grid: HexGrid) -> V2AIWorldView:
 		if int(owner_id) != own_id:
 			view.public_milestones[int(owner_id)] = facts[owner_id]
 	for event in WorldEventManager.active_events:
-		if event is ReliquaryEvent and (event as ReliquaryEvent).is_open() and event.phase != WorldEvent.PHASE_DORMANT:
-			view.public_world_events.append({"event_id": event.event_id, "type": event.event_type, "phase": event.phase, "coord": (event as ReliquaryEvent).site_coord})
-		elif event is DragonEvent:
+		if event is DragonEvent:
 			view.public_world_events.append({"event_id": event.event_id, "type": event.event_type, "phase": event.phase, "coord": (event as DragonEvent).origin_region})
 	return view
 

@@ -7,13 +7,11 @@ func _track_player(civ: CivilizationData) -> PlayerData:
 	_owned_players.append(player)
 	return player
 
-## Roadmap 2.0 Parte 1 — acesso naval: tech "Navegação" (TechDatabase.
-## is_navigation_researched), terrenos elegiveis pra embarque (HexTileData.
-## can_be_embarked_on), pre-condicao espacial (HexGrid.is_coastal_tile),
-## o toggle do jogador (SelectionManager.toggle_embark_selected) e as
-## acoes bloqueadas enquanto embarcado (C2). Pathfinding em si (compute_
-## reachable/compute_path/move_unit com embarked=true) fica em
-## test_hex_grid_movement.gd, junto dos outros testes de movimento.
+## Acesso naval: terrenos elegiveis pra embarque (HexTileData.can_be_embarked_on),
+## tile litoraneo (HexGrid.is_coastal_tile) e as acoes bloqueadas enquanto
+## embarcado (C2). Desde 2026-10-10 o embarque e AUTOMATICO (sem tech nem
+## toggle): o sistema inteiro — rota anfibia, estado derivado do tile, barco
+## por raca — fica em test_embark_boats.gd.
 
 var hex_grid: HexGrid
 var human: PlayerData
@@ -124,15 +122,12 @@ func test_toggle_explore_selected_noop_while_embarked():
 
 ## --- C7: garantia estrutural (nao mecanica nova) ---------------------------
 
-## A IA nunca embarca nesta fase — como `compute_reachable`/`compute_path`
-## pra uma unidade NAO-embarcada continuam bloqueando 100% dos tiles de
-## agua exatamente como antes de C, um assentador de IA fisicamente nao
-## consegue alcancar terra do outro lado de um vao de oceano, mesmo com
-## pontuacao de recursos favoravel do outro lado — nao e uma mecanica nova,
-## e uma garantia estrutural do proprio pathfinding. Este teste e uma
-## regressao: se uma mudanca futura em C acidentalmente desse embarque
-## "de graca" pra unidades sem o campo setado, isto quebraria.
-func test_non_embarked_ai_settler_cannot_reach_land_across_an_ocean_gap():
+## Embarque automatico (2026-10-10, "IA tambem"): a IA usa a MESMA rota
+## anfibia (HexGrid.unit_path), entao um assentador de IA alcanca terra do
+## outro lado de um vao de oceano — e o sitio de cidade (CitySite) passa a
+## considera-la. A rota SO por terra (amphibious = false: monstros, tecnicas)
+## continua sem atravessar: garantia estrutural do pathfinding.
+func test_ai_settler_reaches_land_across_an_ocean_gap_by_boat_but_the_land_only_route_does_not():
 	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
 	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
 	var far_land := Vector2i(3, 0)
@@ -151,6 +146,8 @@ func test_non_embarked_ai_settler_cannot_reach_land_across_an_ocean_gap():
 	var reachable = hex_grid.compute_reachable(settler.coord, settler.movement_left, settler.owner_player, settler.unit_data.flies)
 	var path = hex_grid.compute_path(settler.coord, far_land, settler.owner_player, settler.unit_data.flies)
 
-	assert_false(reachable.has(far_land), "assentador de IA (nao-embarcado) nao deveria conseguir alcancar terra do outro lado do oceano")
-	assert_eq(path.size(), 0, "compute_path tambem nao deveria achar rota nenhuma")
+	assert_false(reachable.has(far_land), "rota so por terra: nao atravessa o oceano")
+	assert_eq(path.size(), 0, "compute_path so por terra tambem nao")
+	assert_eq(hex_grid.unit_path(settler, far_land), [Vector2i(1, 0), Vector2i(2, 0), far_land] as Array[Vector2i], "de barco, atravessa")
+	assert_true(CitySite._reachable(hex_grid, settler, far_land), "o sitio de cidade da IA usa a rota anfibia")
 	assert_gt(CitySite.evaluate(hex_grid, far_land, CitySite.build_context(hex_grid, rival)).total, 0.0, "confirma que o destino SERIA atraente (vizinho de recurso) se fosse alcancavel — a garantia vem do pathfinding, nao da pontuacao")

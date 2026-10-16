@@ -34,7 +34,12 @@ const EDGE_MARKER_SIZE := 6.0
 ## nítidos; o enquadramento continua o mesmo mundo inteiro, só em escala maior.
 signal expand_toggled(expanded: bool)
 
-var _panel_style: StyleBoxFlat
+const CHROME := preload("res://scripts/ui/HUDChromeTheme.gd")
+var _panel_style: StyleBox
+var _heading: Label
+var _compass: TextureRect
+var _ui_factor := 1.0
+var _chrome_applied := false
 var _dragging := false
 var expanded := false
 var expand_button: Button
@@ -65,19 +70,33 @@ var layout_rebuilds := 0
 var terrain_rebuilds := 0
 
 func _ready() -> void:
-	_panel_style = UITheme.panel_style(UIThemeTokens.COLOR_SURFACE, UIThemeTokens.COLOR_BORDER, 1, UIThemeTokens.RADIUS_PANEL, false)
+	_panel_style = CHROME.panel(1, "neutral", 0)
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	EventBus.fog_updated.connect(_on_fog_updated)
 	EventBus.restart_requested.connect(_on_restart)
 	resized.connect(_rebuild_terrain)
 	_build_expand_button()
+	_apply_chrome()
+	Settings.accessibility_changed.connect(_apply_chrome)
 	_rebuild_terrain()
 
 func _build_expand_button() -> void:
+	_compass = TextureRect.new()
+	_compass.texture = CHROME.icon("compass")
+	_compass.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_compass.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_compass.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_compass)
+	_heading = Label.new()
+	_heading.text = "MAPA"
+	_heading.add_theme_font_override("font", CHROME.PIXEL)
+	_heading.add_theme_color_override("font_color", Color("e6bc77"))
+	_heading.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_heading)
 	expand_button = Button.new()
 	expand_button.name = "ExpandButton"
-	expand_button.flat = true
-	expand_button.focus_mode = Control.FOCUS_NONE
-	expand_button.theme_type_variation = &"CaptionLabel"
+	expand_button.flat = false
+	expand_button.focus_mode = Control.FOCUS_ALL
 	expand_button.custom_minimum_size = Vector2(20, 20)
 	expand_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	expand_button.offset_left = -22.0
@@ -88,6 +107,31 @@ func _build_expand_button() -> void:
 	add_child(expand_button)
 	_refresh_expand_button()
 
+func _apply_chrome() -> void:
+	var next_factor := CHROME.factor()
+	if _chrome_applied and is_equal_approx(_ui_factor, next_factor):
+		return
+	_chrome_applied = true
+	_ui_factor = next_factor
+	theme = CHROME.build(_ui_factor)
+	_heading.add_theme_font_size_override("font_size", roundi(14 * _ui_factor))
+	_heading.position = Vector2(28,8) * _ui_factor
+	_compass.position = Vector2(8,9) * _ui_factor
+	_compass.size = Vector2(14,14) * _ui_factor
+	expand_button.custom_minimum_size = Vector2(26,26) * _ui_factor
+	expand_button.add_theme_constant_override("icon_max_width", roundi(14 * _ui_factor))
+	for state in ["normal","hover","pressed","focus"]:
+		var frame := theme.get_stylebox(state,"IconButton").duplicate() as StyleBox
+		frame.set_content_margin_all(4 * _ui_factor)
+		expand_button.add_theme_stylebox_override(state, frame)
+	expand_button.offset_left = -32 * _ui_factor
+	expand_button.offset_right = -6 * _ui_factor
+	expand_button.offset_top = 6 * _ui_factor
+	expand_button.offset_bottom = 32 * _ui_factor
+	_layout_cache.clear()
+	_layout_size = Vector2.ZERO
+	_rebuild_terrain()
+
 func set_expanded(value: bool) -> void:
 	expanded = value
 	_refresh_expand_button()
@@ -96,7 +140,8 @@ func set_expanded(value: bool) -> void:
 func _refresh_expand_button() -> void:
 	if expand_button == null:
 		return
-	expand_button.text = "−" if expanded else "+"
+	expand_button.text = ""
+	expand_button.icon = CHROME.icon("collapse" if expanded else "expand")
 	expand_button.tooltip_text = "Reduzir minimapa" if expanded else "Ampliar minimapa (hexágonos nítidos)"
 
 # ---------------------------------------------------------------------------
@@ -135,7 +180,9 @@ func _map_identity(grid: HexGrid) -> String:
 	return "%d:%d:%d:%d:%d" % [grid.get_instance_id(), grid.map_seed, grid.map_width, grid.map_height, grid.tiles.size()]
 
 func _content_rect() -> Rect2:
-	return Rect2(Vector2.ONE * CONTENT_PADDING, size - Vector2.ONE * CONTENT_PADDING * 2.0)
+	var padding := 8.0
+	var header := 34.0 * _ui_factor
+	return Rect2(Vector2(padding,header), Vector2(maxf(0,size.x-padding*2),maxf(0,size.y-header-padding)))
 
 ## Recalcula o enquadramento SÓ se o mapa (identidade) ou o tamanho do painel mudou. true = refez.
 func _ensure_layout(grid: HexGrid) -> bool:
@@ -383,15 +430,15 @@ func _draw_entities(hex_grid: HexGrid) -> void:
 			continue
 		var px := _project(coord, hex_grid.hex_size)
 		if _map_rect.has_point(px):
-			draw_circle(px, DOT_UNIT, _unit_dot_color(unit))
+			draw_rect(Rect2(px.round() - Vector2.ONE * 2, Vector2.ONE * 4), _unit_dot_color(unit))
 	for coord in hex_grid.cities_by_coord.keys():
 		var city: City = hex_grid.cities_by_coord[coord]
 		if not city.visible:
 			continue
 		var px := _project(coord, hex_grid.hex_size)
 		if _map_rect.has_point(px):
-			draw_circle(px, DOT_CITY, city.owner_player.civ.color)
-			draw_arc(px, DOT_CITY + 1.0, 0.0, TAU, 12, Color.WHITE, 1.0)
+			draw_rect(Rect2(px.round() - Vector2.ONE * 4, Vector2.ONE * 8), Color("f4e9d3"))
+			draw_rect(Rect2(px.round() - Vector2.ONE * 3, Vector2.ONE * 6), city.owner_player.civ.color)
 
 ## Contorno do campo de visão real da câmera (TRAPÉZIO: a câmera é inclinada) — só o contorno, nunca preenchido, para
 ## não esconder o minimapa. Fora do mundo: marcador de borda.

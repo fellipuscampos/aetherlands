@@ -126,7 +126,10 @@ static func activate(unit: Unit, technique_id: String) -> bool:
 	var technique := V2DoctrineTechniqueDatabase.get_technique(technique_id)
 	if technique.is_strike() or technique.is_relocation():
 		return false # ataque e reposicionamento precisam de alvo (perform_strike / relocate): não há "ativar" sem escolher
+	var clip := String(unit.unit_data.shield_wall_animation_override)
+	var feedback := preload("res://scripts/vfx/CombatFeedback.gd").begin_clip(unit, GameManager.hex_grid, clip)
 	_commit_activation(unit, technique)
+	preload("res://scripts/vfx/CombatFeedback.gd").finish(feedback)
 	return true
 
 ## Grava o efeito e a recarga, gasta a ação (zera o movimento restante) e cancela ordens automáticas. Comum à postura (activate) e ao
@@ -200,7 +203,7 @@ static func strike_targets(unit: Unit, technique: V2DoctrineTechniqueData, hex_g
 			if technique.repositions():
 				# Mover-e-atacar: o alvo só vale se existe um tile adjacente alcançável (o alcance de movimento da unidade é calculado UMA vez por consulta).
 				if not movable_ready:
-					movable = grid.unit_reachable(unit)
+					movable = grid.unit_reachable(unit, -1.0, false, false) # Técnica: só por terra (embarcado não golpeia)
 					movable_ready = true
 				if _approach_tile(unit, target, movable, grid) == NO_TILE:
 					continue
@@ -262,7 +265,7 @@ static func perform_strike(unit: Unit, technique_id: String, target: Unit = null
 	var approach := NO_TILE
 	var approach_cost := 0.0
 	if technique.repositions():
-		var movable := grid.unit_reachable(unit)
+		var movable := grid.unit_reachable(unit, -1.0, false, false) # Técnica: só por terra (embarcado não golpeia)
 		approach = _approach_tile(unit, victims[0], movable, grid)
 		if approach == NO_TILE:
 			return false
@@ -272,8 +275,10 @@ static func perform_strike(unit: Unit, technique_id: String, target: Unit = null
 	unit.exploring = false
 	unit.move_order_target = Unit.NO_MOVE_ORDER
 	if approach != NO_TILE:
-		grid.move_unit(unit, approach, approach_cost) # a unidade REALMENTE percorre a rota e termina adjacente ao alvo
+		grid.move_unit(unit, approach, approach_cost, "", grid.unit_route(unit, approach, false, false)) # a unidade REALMENTE percorre a rota (só por terra, como o alcance acima) e termina adjacente ao alvo
 	unit.begin_technique_animation(technique.id) # clipe próprio da técnica (se houver), uma vez por uso
+	unit.play_attack_visual(victims[0])
+	var feedback := preload("res://scripts/vfx/CombatFeedback.gd").begin_attack(unit, grid)
 	for victim in victims:
 		if unit.hp <= 0.0:
 			break # caiu no contra-ataque de um alvo anterior
@@ -283,6 +288,7 @@ static func perform_strike(unit: Unit, technique_id: String, target: Unit = null
 	if is_instance_valid(unit):
 		unit.end_technique_animation()
 	unit.movement_left = 0.0
+	preload("res://scripts/vfx/CombatFeedback.gd").finish(feedback)
 	return true
 
 ## Tile "sem coordenada" (nenhum tile escolhido / nenhuma aproximação possível).
@@ -310,7 +316,7 @@ static func _approach_tile(unit: Unit, target: Unit, movable: Dictionary, grid: 
 	if tied.size() > 1 and unit.unit_data.movement_profile != UnitData.MovementProfile.FLYING:
 		var steps: Dictionary = {}
 		for coord in tied:
-			steps[coord] = grid.compute_path(unit.coord, coord, unit.owner_player, unit.unit_data.flies, unit.embarked).size()
+			steps[coord] = grid.compute_path(unit.coord, coord, unit.owner_player, unit.unit_data.flies, false).size()
 		tied.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 			if steps[a] != steps[b]:
 				return steps[a] < steps[b]
@@ -375,7 +381,9 @@ static func perform_city_strike(unit: Unit, technique_id: String, target_city: C
 	unit.fortified = false
 	unit.exploring = false
 	unit.move_order_target = Unit.NO_MOVE_ORDER
+	unit.begin_technique_animation(technique.id)
 	CombatResolver.resolve_city_attack(unit, target_city, grid, 1.0, technique.strike_multiplier)
+	if is_instance_valid(unit): unit.end_technique_animation()
 	unit.movement_left = 0.0
 	return true
 
@@ -408,7 +416,7 @@ static func relocation_tiles(unit: Unit, technique: V2DoctrineTechniqueData, hex
 	var grid: HexGrid = hex_grid if hex_grid != null else GameManager.hex_grid
 	if unit == null or grid == null or technique == null or not technique.is_relocation():
 		return result
-	var reach := grid.unit_reachable(unit, float(technique.relocate_range), technique.relocate_flat_cost)
+	var reach := grid.unit_reachable(unit, float(technique.relocate_range), technique.relocate_flat_cost, false) # Retirada: só por terra
 	for coord in reach.keys():
 		result.append(coord)
 	result.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
@@ -426,7 +434,8 @@ static func relocate(unit: Unit, technique_id: String, dest: Vector2i, hex_grid:
 	var grid: HexGrid = hex_grid if hex_grid != null else GameManager.hex_grid
 	if not (dest in relocation_tiles(unit, technique, grid)):
 		return false
-	grid.move_unit(unit, dest, 0.0) # deslocamento real (o custo é a ação da técnica, gasta em _commit_activation)
+	var clip := String(unit.unit_data.technique_animation_overrides.get(technique.id, ""))
+	grid.move_unit(unit, dest, 0.0, clip, grid.unit_route(unit, dest, technique.relocate_flat_cost, false)) # deslocamento real com a postura própria, pela rota das mesmas regras de relocation_tiles; custo permanece em _commit_activation
 	_commit_activation(unit, technique)
 	return true
 
@@ -485,6 +494,19 @@ static func defense_multiplier(defender: Unit, hex_grid: HexGrid) -> float:
 		result *= 1.0 + best
 	return result
 
+## Nomes das Técnicas de DEFESA que protegem `defender` agora — a dele mesmo ou a que um aliado adjacente projeta
+## (a mesma leitura de defense_multiplier). O aviso de combate diz o que protegeu a unidade.
+static func active_defense_names(defender: Unit, hex_grid: HexGrid) -> Array[String]:
+	var names: Array[String] = []
+	if defender == null or defender.owner_player == null:
+		return names
+	for technique in V2DoctrineTechniqueDatabase.defensive_techniques():
+		if is_active(defender, technique.id):
+			names.append(technique.display_name)
+		elif technique.adjacent_ally_defense_bonus > 0.0 and hex_grid != null and V2UnlockSystem.is_unlocked(defender.owner_player, technique.id) and _ally_projects(defender, technique, hex_grid):
+			names.append("%s (aliado ao lado)" % technique.display_name)
+	return names
+
 ## Algum ALIADO (mesmo dono, outra unidade viva) num tile a até `adjacent_radius` de
 ## `defender` está com `technique` ativa?
 static func _ally_projects(defender: Unit, technique: V2DoctrineTechniqueData, hex_grid: HexGrid) -> bool:
@@ -535,7 +557,7 @@ static func status_lines(unit: Unit) -> Array[String]:
 		return lines
 	for technique in V2DoctrineTechniqueDatabase.all_techniques():
 		if is_active(unit, technique.id):
-			lines.append("%s — Ativa (até o início do próximo turno)" % technique.display_name)
+			lines.append("%s — Ativa (%s)" % [technique.display_name, V2OwnerTurnEffect.DURATION_ON_UNIT])
 	return lines
 
 ## Linhas das técnicas PASSIVAS de `unit` (só o dono vê: revelar a pesquisa de um rival não faz

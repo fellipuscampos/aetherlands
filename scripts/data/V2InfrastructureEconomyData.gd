@@ -16,8 +16,8 @@ extends RefCounted
 ## City Level/território/recursos do mapa (§3). (Fase 25: população/tiles trabalhados não existem mais.)
 const BASE_GOLD_PER_CITY := 2.0
 const BASE_SUPPLY_PER_CITY := 4.0
-const BASE_PRODUCTION_PER_CITY := 4.0
-const BASE_KNOWLEDGE_PER_CITY := 2.0
+const BASE_PRODUCTION_PER_CITY := 5.0 # 2026-10-14: era 4 (ritmo de 3–4 h, docs/BALANCE_PASS_2026-10-14.md)
+const BASE_KNOWLEDGE_PER_CITY := 3.0 # 2026-10-14: era 2
 const BASE_MANA_PER_CITY := 1.0
 
 const RESOURCE_LABELS := {

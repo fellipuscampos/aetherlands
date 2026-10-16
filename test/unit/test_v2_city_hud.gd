@@ -67,7 +67,7 @@ func test_upgrade_button_shows_the_pp_and_gold_cost_when_available():
 	var row := _v2_city_actions_row()
 	assert_not_null(row, "painel de cidade deveria ter o container V2CityActions")
 	var button: Button = row.get_node("CityUpgradeButton")
-	assert_eq(button.text, "Evoluir para Cidade II — 60 PP + 30 Ouro")
+	assert_eq(button.text, "Evoluir para Cidade II — 45 PP + 25 Ouro")
 	assert_false(button.disabled)
 
 func test_upgrade_button_is_disabled_with_the_reason_in_the_tooltip_without_research():
@@ -152,7 +152,7 @@ func test_upgrade_button_shows_waiting_for_gold_once_production_points_are_full(
 	player.gold = 5.0
 	hud._on_tile_selected(city.coord, grid.get_tile(city.coord))
 	var button: Button = _v2_city_actions_row().get_node("CityUpgradeButton")
-	assert_eq(button.text, "Aguardando 30 Ouro.")
+	assert_eq(button.text, "Aguardando 25 Ouro.")
 
 func test_other_v2_doctrine_buildings_remain_unaffected_by_the_new_city_actions_row():
 	# Regressão: a linha V2CityActions não deveria interferir com os botões de prédio/unidade
@@ -229,7 +229,7 @@ func test_city_attack_button_states():
 	hud._on_tile_selected(s.city.coord, s.grid.get_tile(s.city.coord))
 	button = _v2_city_actions_row().get_node("CityAttackButton")
 	assert_false(button.disabled)
-	assert_eq(button.tooltip_text, "Poder 3 | Alcance 2. Sem revide.")
+	assert_eq(button.tooltip_text, "Poder 4.5 | Alcance 2. Sem revide.")
 	button.pressed.emit()
 	assert_same(SelectionManager.city_attack_city, s.city, "entrou na mira")
 	SelectionManager._handle_city_attack_click(monster.coord)

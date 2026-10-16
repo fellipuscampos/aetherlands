@@ -55,19 +55,17 @@ func test_spawn_monster_at_clears_tree_prop_on_its_tile():
 	var coord := Vector2i(0, 0)
 	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.FOREST)
 
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.instance_count = 1
-	mm.set_instance_transform(0, Transform3D(Basis(), Vector3.ONE))
-	var mm_instance := MultiMeshInstance3D.new()
-	mm_instance.multimesh = mm
-	hex_grid.add_child(mm_instance)
-	hex_grid._props_tree_instance = mm_instance
-	hex_grid._tree_coord_to_index[coord] = [0]
+	# Vegetação real do kit composta no tile (a primeira seed em que a floresta não sorteou "vazio").
+	for map_seed in 32:
+		hex_grid.map_seed = map_seed
+		hex_grid.nature_decor.refresh_tile(coord)
+		if hex_grid.nature_decor.has_decor(coord):
+			break
+	assert_true(hex_grid.nature_decor.has_decor(coord), "pré-condição: o tile de floresta tem vegetação")
 
 	hex_grid.spawn_monster_at(coord, "goblin")
 
-	assert_false(hex_grid._tree_coord_to_index.has(coord), "arvore nao deveria continuar registrada no tile do monstro novo")
+	assert_false(hex_grid.nature_decor.has_decor(coord), "arvore nao deveria continuar registrada no tile do monstro novo")
 
 	hex_grid.queue_free()
 

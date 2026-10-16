@@ -107,7 +107,7 @@ func _accepts(event: UIEventData) -> bool:
 
 func _make_event_row(event: UIEventData) -> Control:
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UITheme.panel_style(UIThemeTokens.COLOR_SURFACE, _severity_color(event.severity), 1, UIThemeTokens.RADIUS_CONTROL, false))
+	panel.add_theme_stylebox_override("panel", preload("res://scripts/ui/HUDChromeTheme.gd").panel(Settings.ui_scale_percent / 100.0, preload("res://scripts/ui/HUDChromeTheme.gd").tone(event.severity), 8))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", UIThemeTokens.SPACE_2)
 	panel.add_child(row)

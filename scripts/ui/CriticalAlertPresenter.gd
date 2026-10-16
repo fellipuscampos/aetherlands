@@ -13,11 +13,19 @@ var _queue: Array[UIEventData] = []
 var _current: UIEventData
 var _timer: Timer
 var _known_keys: Dictionary = {}
+const CHROME := preload("res://scripts/ui/HUDChromeTheme.gd")
 
 func _ready() -> void:
 	visible = false
 	theme_type_variation = &"ElevatedPanel"
 	_build()
+	_apply_theme()
+	Settings.accessibility_changed.connect(_apply_theme)
+
+func _apply_theme() -> void:
+	theme = CHROME.build(CHROME.factor())
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	add_theme_stylebox_override("panel", CHROME.panel(CHROME.factor(), "critical", 12))
 	if UIEvents != null and not UIEvents.event_published.is_connected(_on_event):
 		UIEvents.event_published.connect(_on_event)
 
@@ -61,6 +69,7 @@ func _build() -> void:
 	row.add_child(texts)
 	title_label = Label.new()
 	title_label.theme_type_variation = &"HeadingLabel"
+	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	texts.add_child(title_label)
 	message_label = Label.new()
 	message_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -97,8 +106,6 @@ func _show_next() -> void:
 	action_button.visible = _current.has_target_coord or not _current.focus_action.is_empty()
 	visible = true
 	modulate.a = 0.0
-	position.y = -10.0
-	var tween := create_tween().set_parallel(true)
+	var tween := create_tween()
 	tween.tween_property(self, "modulate:a", 1.0, Settings.motion_duration(UIThemeTokens.MOTION_PANEL))
-	tween.tween_property(self, "position:y", 0.0, Settings.motion_duration(UIThemeTokens.MOTION_PANEL))
 	_timer.start()

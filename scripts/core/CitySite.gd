@@ -76,9 +76,8 @@ const ARCANE_NODE_EXTRA_POINTS := 5.0
 const DIVERSITY_POINTS_PER_TERRAIN := 0.3
 const DIVERSITY_MAX_EXTRA_TERRAINS := 3
 const COAST_POINTS := 0.5
-## Defensibilidade: bonus de defesa do terreno do CENTRO (colina 0.5 -> 1.0
-## ponto) + vizinhos que barram acesso (agua/montanha: gargalo natural).
-const DEFENSE_POINTS_PER_BONUS := 2.0
+## Defensibilidade: vizinhos que barram acesso (agua/montanha: gargalo natural). O terreno do
+## centro nao conta mais: desde 2026-10-09 o terreno-base nao da Defesa a ninguem (ver HexTileData).
 const BARRIER_POINTS_PER_NEIGHBOR := 0.25
 const BARRIER_MAX_NEIGHBORS := 3
 ## Espaco pra expansao: fracao do anel 3 ainda livre (trabalhavel, sem dono,
@@ -363,7 +362,6 @@ static func evaluate(hex_grid: HexGrid, coord: Vector2i, context: Dictionary) ->
 	if center == null:
 		return {"total": -INF, "parts": parts}
 	parts.terrain += tile_points(center)
-	parts.defense += center.defense_bonus * DEFENSE_POINTS_PER_BONUS
 	if hex_grid.is_coastal_tile(coord):
 		parts.terrain += COAST_POINTS
 
@@ -524,7 +522,7 @@ static func choose_site(hex_grid: HexGrid, player: PlayerData, unit: Unit, accep
 static func _reachable(hex_grid: HexGrid, unit: Unit, coord: Vector2i) -> bool:
 	if coord == unit.coord:
 		return true
-	return not hex_grid.compute_path(unit.coord, coord, unit.owner_player, unit.unit_data.flies, unit.embarked).is_empty()
+	return not hex_grid.unit_path(unit, coord).is_empty()
 
 ## Existe ALGUM local aceitavel pra uma cidade nova de `player`? (usado antes
 ## de a IA gastar producao num colonizador). "Conhecido" = explorado + o que

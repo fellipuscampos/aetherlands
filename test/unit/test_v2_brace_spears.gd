@@ -54,7 +54,7 @@ func _world() -> HexGrid:
 func _player(through: int) -> PlayerData:
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	return player
 
@@ -94,8 +94,7 @@ func _damage(grid: HexGrid, attacker: Unit, defender: Unit) -> float:
 	return CombatResolver.predict(attacker, defender, grid).damage_to_defender
 
 func _expected(grid: HexGrid, attacker: Unit, defender: Unit, attack_mult: float) -> float:
-	var terrain := 1.0 + grid.get_tile(defender.coord).defense_bonus
-	return maxf(1.0, attacker.unit_data.attack * attack_mult - defender.unit_data.defense * terrain * CombatResolver.DEFENSE_MITIGATION_FACTOR)
+	return maxf(1.0, attacker.unit_data.attack * attack_mult - defender.unit_data.defense * CombatResolver.DEFENSE_MITIGATION_FACTOR)
 
 func _bonus() -> float:
 	return V2DoctrineTechniqueDatabase.get_technique(BRACE).basic_attack_bonus

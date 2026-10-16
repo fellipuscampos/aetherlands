@@ -106,7 +106,7 @@ func test_the_hero_stays_blocked_with_the_arena_but_without_n9():
 func test_the_hero_has_the_specified_baseline():
 	var data := UnitDatabase.create_unit(HERO)
 	assert_eq(data.unit_name, "Herói da Lâmina")
-	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points], [38.0, 12.0, 7.0, 2.0])
+	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points], [38.0, 18.0, 10.0, 2.0])
 	assert_eq(data.vision_range, 3)
 	assert_eq(data.attack_range, 1, "corpo a corpo")
 	assert_eq(data.production_cost, 90.0)
@@ -278,7 +278,7 @@ func test_the_slot_is_one_per_civilization_across_both_doctrines_and_a_rival_her
 	var grid := _world()
 	var me := _player(9, 9)
 	var rival := _rival_of(me)
-	rival.v2_research.complete_research("v2_doctrine_warrior_1") # só pra existir
+	rival.v2_research.complete_research("v2_doctrine_warrior_2") # só pra existir
 	_unit(grid, rival, HERO, Vector2i(3, 0)) # Herói INIMIGO ativo
 	var city := _city_with_everything(me)
 	assert_true(city.can_train(CHAMPION), "a Lendária rival não ocupa o MEU slot")

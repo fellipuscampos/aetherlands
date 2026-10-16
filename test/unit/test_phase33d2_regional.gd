@@ -481,8 +481,8 @@ func test_ai_attacks_the_structure_through_the_same_rule_as_the_human_without_te
 	assert_true(CombatResolver.can_attack_lair(ai_unit, ai_lair, grid), "regra canônica (IA)")
 	CombatResolver.resolve_lair_attack(human_unit, human_lair, grid)
 	assert_true(StrategicAI.respond_to_lair(ai_unit, rival, grid))
-	assert_lt(grid.lairs_by_coord[ai_lair].hp, 10.0, "a IA atacou a estrutura")
-	assert_almost_eq(grid.lairs_by_coord[ai_lair].hp, grid.lairs_by_coord[human_lair].hp, 0.001, "mesmo dano")
+	assert_false(grid.lairs_by_coord.has(ai_lair), "a IA destruiu a estrutura vulnerável com um golpe")
+	assert_false(grid.lairs_by_coord.has(human_lair), "mesma regra para o humano")
 	assert_eq(ai_unit.movement_left, 0.0, "consome a ação")
 	var human_gold := human.gold
 	var rival_gold := rival.gold

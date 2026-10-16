@@ -4,7 +4,7 @@ extends Node3D
 ## Representacao 3D de um predio de cidade (ver BuildingDatabase) POSICIONADO
 ## no mapa — o jogador escolhe o tile ao encomendar o predio
 ## (SelectionManager.start_building_placement), do mesmo jeito que escolhe
-## onde fundar uma cidade. Todo prédio do jogo usa um modelo KayKit
+## onde fundar uma cidade. Os prédios usam cenas KayKit ou arte própria
 ## (BuildingData.model_scene_path); os corpos procedurais dos prédios V1 e das
 ## estruturas das Escolas V1 saíram na Fase 25.
 
@@ -21,9 +21,13 @@ func setup(id: String, start_coord: Vector2i, player: PlayerData) -> void:
 func _build_visual() -> void:
 	var accent_color = owner_player.civ.color if owner_player else Color(0.6, 0.6, 0.6)
 	var data: BuildingData = BuildingDatabase.get_building(building_id)
-	if data and data.model_scene_path != "":
-		_build_model(data.model_scene_path, accent_color)
-		return
+	# A arte segue a raça do dono ATUAL (BuildingArtCatalog); captura/load recriam o prédio.
+	var model_path := BuildingDatabase.model_path_for(building_id, BuildingArtCatalog.race_of(owner_player))
+	if data and model_path != "":
+		var packed_scene := load(model_path) as PackedScene
+		if packed_scene != null:
+			_build_model(packed_scene, model_path, data.model_scale_multiplier, accent_color)
+			return
 	_build_fallback(accent_color)
 
 ## Fator de escala UNICO pra todo modelo do KayKit Medieval Hexagon Pack —
@@ -52,23 +56,26 @@ func _build_visual() -> void:
 ## tudo pro mesmo tamanho.
 const KAYKIT_SCALE := 1.0 / 1.1547 # = sqrt(3)/2, ver derivacao acima
 
-## Carrega uma cena externa (KayKit) como corpo do predio em vez de montar
+## Carrega uma cena externa como corpo do predio em vez de montar
 ## geometria procedural — ver BuildingData.model_scene_path. `accent_color`
-## (cor da civilizacao do dono) NAO tinge o modelo aqui de proposito —
-## primeira versao multiplicava albedo_color por cima da textura pintada
-## (tecnica de "atlas gradiente" da KayKit) e lavava tudo pra uma cor lisa,
-## reportado pelo usuario ("ta todos sem texturas"). Os arquivos ja
-## baixados sao todos a variante "blue" do pack (que tem 4 cores prontas
-## por predio); diferenciar por civilizacao de verdade fica pra um passe
-## futuro que troque de ARQUIVO por civ em vez de tingir em runtime.
-func _build_model(scene_path: String, _accent_color: Color) -> void:
-	var scene: PackedScene = load(scene_path)
+## (cor da civilizacao do dono) NUNCA tinge o modelo inteiro — primeira versao
+## multiplicava albedo_color por cima da textura pintada (tecnica de "atlas
+## gradiente" da KayKit) e lavava tudo pra uma cor lisa, reportado pelo
+## usuario ("ta todos sem texturas"). A diferenciação por civilização é por
+## ARQUIVO (arte da raça, BuildingArtCatalog); a cor do dono entra só nas
+## malhas `*_Faction` (bandeira/placa) da arte própria, igual ao centro da cidade.
+func _build_model(scene: PackedScene, model_path: String, scale_multiplier: float, accent_color: Color) -> void:
 	var model: Node3D = scene.instantiate()
 	add_child(model)
-	model.scale = Vector3.ONE * KAYKIT_SCALE
+	# Arte própria em metros não usa a unidade de tile nativa do pacote KayKit.
+	var generated := BuildingArtCatalog.is_generated(model_path)
+	var source_scale := 1.0 if generated else KAYKIT_SCALE
+	model.scale = Vector3.ONE * source_scale * scale_multiplier
+	if generated:
+		BuildingArtCatalog.apply_owner_color(model, accent_color.lightened(0.1))
 
 ## Fallback procedural (galpão baixo + chaminé) para um prédio sem model_scene_path — hoje todo
-## prédio do BuildingDatabase tem modelo KayKit; isto só evita um tile vazio se um faltar.
+## prédio do BuildingDatabase tem modelo externo; isto só evita um tile vazio se um faltar.
 func _build_fallback(accent_color: Color) -> void:
 	var shed := MeshInstance3D.new()
 	var shed_mesh := BoxMesh.new()

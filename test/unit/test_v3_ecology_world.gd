@@ -78,6 +78,7 @@ func test_ecology_survives_save_and_load_without_duplication():
 	for unit in target.neutral_units():
 		if unit.ecology_site_id == int(victim.id):
 			target.remove_unit(unit)
+	target.destroy_lair(victim.lair)
 	var some := target.neutral_units().filter(func(u): return u.ecology_site_id >= 0)
 	some[0].ecology_rest_until = 17
 	MonsterEcologySystem.next_refill_turn = 9
@@ -93,14 +94,15 @@ func test_ecology_survives_save_and_load_without_duplication():
 	MonsterEcologySystem.rng.state = int(before.rng_state)
 	assert_eq(MonsterEcologySystem.rng.randf(), probe)
 
-func test_saved_version_is_26_and_carries_the_ecology_block():
+func test_saved_version_is_27_and_carries_the_unified_lair_block():
 	var target := _small_match(2)
-	assert_eq(SaveManager.SAVE_VERSION, 26)
+	assert_eq(SaveManager.SAVE_VERSION, 27)
+	assert_true(26 in SaveManager.MIGRATABLE_SAVE_VERSIONS)
 	assert_true(24 in SaveManager.MIGRATABLE_SAVE_VERSIONS)
 	assert_true(25 in SaveManager.MIGRATABLE_SAVE_VERSIONS)
 	assert_true(SaveManager.save_game(target, SAVE_PATH))
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
-	assert_eq(int(data.version), 26)
+	assert_eq(int(data.version), 27)
 	assert_true(data.has("combat_ecology"))
 	assert_true(data.combat_ecology.has("hazards") and data.combat_ecology.has("burrowed"), "v26: perigos e Vermes subterrâneos")
 	assert_eq((data.combat_ecology.sites as Array).size(), MonsterEcologySystem.sites.size())
@@ -125,6 +127,7 @@ func test_v24_save_loads_without_mass_spawn_and_refills_only_after_the_round_bou
 	file.store_string(JSON.stringify(data))
 	file.close()
 	var neutral_in_file: int = (data.neutral_units as Array).size()
+	var lairs_in_file := target.lair_coords.size()
 	WorldEventManager.reset_for_new_match()
 	assert_true(SaveManager.load_game(target, SAVE_PATH), "save v24 carrega")
 	assert_eq(target.neutral_units().size(), neutral_in_file, "nenhum spawn dentro do load")
@@ -142,7 +145,8 @@ func test_v24_save_loads_without_mass_spawn_and_refills_only_after_the_round_bou
 		MonsterEcologySystem.process_round(target, next)
 		grown = grown or MonsterEcologySystem.sites.size() > 0
 	assert_true(grown, "a reposição normal começa depois da fronteira")
-	assert_lte(MonsterEcologySystem.sites.size(), 4, "gradual: no máximo um sítio por intervalo")
+	assert_lte(MonsterEcologySystem.sites.size(), lairs_in_file + 4, "adoção não cria monstros; novas origens continuam graduais")
+	assert_lte(target.neutral_units().size(), neutral_in_file + 12, "no máximo quatro grupos de até três criaturas")
 
 # --- Mundo real: gates e determinismo -------------------------------------------------------------------
 

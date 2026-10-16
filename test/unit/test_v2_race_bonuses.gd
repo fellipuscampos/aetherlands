@@ -274,7 +274,7 @@ func test_race_does_not_change_shared_research_unit_building_or_spell_catalogs()
 	var unit_ids := UnitDatabase.PLAYER_TRAINABLE_KINDS.duplicate()
 	var building_ids := BuildingDatabase.all_buildings().map(func(building): return building.id)
 	var spell_ids := V2SpellDatabase.all_spells().map(func(spell): return spell.id)
-	assert_eq(research_ids.size(), 128)
+	assert_eq(research_ids.size(), 119)
 	for race_id in RACES:
 		assert_eq(V2ResearchDatabase.all_nodes().map(func(node): return node.id), research_ids, race_id)
 		assert_eq(UnitDatabase.PLAYER_TRAINABLE_KINDS, unit_ids, race_id)
@@ -323,7 +323,7 @@ func test_save_source_has_no_derived_racial_state_and_version_is_unchanged():
 	var source := FileAccess.get_file_as_string("res://scripts/autoload/SaveManager.gd")
 	for forbidden in ["gold_bonus", "production_bonus", "race_modifiers", "racial_effects"]:
 		assert_false(source.contains(forbidden), forbidden)
-	assert_eq(SaveManager.SAVE_VERSION, 26) # F33D1: 22 (era/eventos); F33D2: 23 (ameaças regionais/Guardiões); F33D3: 24 (grandes eventos/marcos); V3 Etapa 1: 25 (Combat Ecology); V3 Etapa 2: 26 (habilidades); settings e raça nunca mexem no schema
+	assert_eq(SaveManager.SAVE_VERSION, 27) # v27: covis unificados; settings e raça continuam fora do schema de partida
 
 
 func test_consumers_have_no_concrete_race_branches():

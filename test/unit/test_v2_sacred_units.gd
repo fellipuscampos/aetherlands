@@ -64,7 +64,7 @@ func _player(civ_name: String) -> PlayerData:
 	return player
 
 func _learn(player: PlayerData, tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		if not player.v2_research.is_completed("v2_magic_sacred_%d" % i):
 			assert_true(player.v2_research.complete_research("v2_magic_sacred_%d" % i))
 
@@ -114,7 +114,7 @@ func test_temple_research_is_per_civilization():
 
 func test_cleric_data():
 	var data := UnitDatabase.create_unit(CLERIC)
-	assert_eq([data.unit_name, data.max_hp, data.attack, data.defense, data.movement_points, data.vision_range], ["Clérigo", 12.0, 0.0, 2.0, 2.0, 3])
+	assert_eq([data.unit_name, data.max_hp, data.attack, data.defense, data.movement_points, data.vision_range], ["Clérigo", 12.0, 0.0, 3.0, 2.0, 3])
 	assert_eq([data.production_cost, data.supply_cost, data.attack_range], [24.0, 2, 0])
 	assert_false(data.can_basic_attack)
 	assert_eq(data.v2_magic_school, "sacred")
@@ -208,7 +208,7 @@ func test_default_can_basic_attack_keeps_every_existing_unit_unchanged():
 		assert_true(UnitDatabase.create_unit(kind).can_basic_attack, kind)
 
 func test_desmantelar_hits_the_cleric_automatically():
-	for i in range(1, 7):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 7):
 		human.v2_research.complete_research("v2_doctrine_rogue_%d" % i)
 	var rogue := _unit("v2_unit_assassin", human, Vector2i(0, 0))
 	var cleric := _unit(CLERIC, rival, Vector2i(1, 0))
@@ -219,7 +219,7 @@ func test_desmantelar_hits_the_cleric_automatically():
 func test_cathedral_data():
 	var ritual := BuildingDatabase.get_building(RITUAL)
 	assert_eq(ritual.display_name, "Catedral Sagrada")
-	assert_eq([ritual.production_cost, ritual.gold_upkeep], [60.0, 2.0])
+	assert_eq([ritual.production_cost, ritual.gold_upkeep], [48.0, 2.0])
 	assert_eq(ritual.copy_limit_mode, BuildingData.CopyLimitMode.UNIQUE)
 	assert_eq(ritual.requires_building, TEMPLE)
 	assert_eq(ritual.trains_unit, SERAPH, "só habilita a Manifestação; nunca treina o Clérigo")

@@ -56,6 +56,17 @@ func test_opening_pause_shows_only_main_page():
 	assert_false(pause_menu.load_game_screen.visible)
 	assert_false(pause_menu.settings_screen.visible)
 
+func test_escape_cancels_manifestation_targeting_before_opening_pause():
+	# No entity is needed to cancel an aim; cancellation must also work if its caster died.
+	SelectionManager.manifestation_targeting_mode = V2ManifestationOrders.ATTACK_CITY
+	var event := InputEventAction.new()
+	event.action = "ui_cancel"
+	event.pressed = true
+	pause_menu._unhandled_input(event)
+	assert_eq(SelectionManager.manifestation_targeting_mode, "")
+	assert_false(pause_menu.visible)
+	assert_false(get_tree().paused)
+
 func test_settings_button_navigates_to_settings_screen_without_closing_pause():
 	pause_menu.open()
 

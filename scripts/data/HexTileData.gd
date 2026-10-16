@@ -30,7 +30,7 @@ enum TerrainType {
 	## pra como cada um se encaixa na decisao em camadas (elevacao ->
 	## litoral -> ruido) dentro da zona Vulcanica/de Cristal.
 	VOLCANIC_ROCK, # "Terra Vulcanica" — base caminhavel dominante do Vulcanico, substitui o antigo "100% Lava"
-	VOLCANIC_HILLS, # "Colinas Vulcanicas" — elevacao MEDIA (elevation_tier HILLS na zona Vulcanica), relevo 3D real (cupula, ver elevation_kind) entre a base e os Picos
+	VOLCANIC_HILLS, # "Colinas Vulcanicas" — elevacao MEDIA (elevation_tier HILLS na zona Vulcanica), topo plano num degrau de base_height entre a base e os Picos (so Montanhas tem relevo, ver HexGrid.elevation_kind_for)
 	VOLCANIC_PEAKS, # "Montanhas Vulcanicas" — cordilheira central (elevation_tier MOUNTAINS na zona Vulcanica)
 	VOLCANIC_ASH, # "Solo de Cinzas" — faixa costeira/periferica do Vulcanico
 	CRYSTAL_PEAKS, # "Picos de Cristal" — cordilheira central (elevation_tier HILLS/MOUNTAINS na zona de Cristal)
@@ -50,7 +50,9 @@ enum TerrainType {
 @export var terrain_type: TerrainType = TerrainType.GRASSLAND
 @export var display_name: String = "Planicie"
 @export var movement_cost: int = 1
-@export var defense_bonus: float = 0.0
+## Sem bônus de Defesa por terreno-base (2026-10-09): floresta/colina/montanha não protegem quem está
+## nelas — o combate usa só a Defesa da própria unidade e os efeitos DELA (técnicas, auras, feitiços,
+## Fortificar) mais a Defesa urbana e as modificações druídicas, que são fontes explícitas. Ver CombatResolver.predict.
 ## Metadado bruto do terreno (Fase 25): NÃO gera recurso nenhum — a economia é inteira de
 ## V2EconomyRuntime. Continua só como sinal de "terra boa" da heurística de local de cidade (CitySite).
 @export var food_yield: int = 0

@@ -86,8 +86,8 @@ func test_it_works_with_one_two_and_three_targets_each_at_075_of_the_attack():
 		var d := _arc(count)
 		var unit: Unit = d.unit
 		var foes: Array = d.foes
-		var expected := _formula_damage(d.grid, 5.0, 0.75, foes[0])
-		assert_almost_eq(expected, 3.75 - 1.5, 0.0001, "0,75 x 5,0 - 3,0/2")
+		var expected := _formula_damage(d.grid, 7.5, 0.75, foes[0])
+		assert_almost_eq(expected, 5.625 - 1.5, 0.0001, "0,75 x 7,5 - 3,0/2")
 		assert_true(V2TechniqueRuntime.perform_strike(unit, CLEAVE, null, d.grid), "%d alvo(s)" % count)
 		for foe in foes:
 			assert_almost_eq(40.0 - foe.hp, expected, 0.0001, "cada alvo perde o dano de 0,75x (%d alvos)" % count)
@@ -226,9 +226,9 @@ func test_each_target_uses_its_own_defense_terrain_and_effects():
 	var walled := _foe(grid, rival, RING[2], 40.0, 4.0)
 	walled.magic_status[WALL] = TurnManager.turn_number + 2
 	var wall_bonus: float = 1.0 + _technique(WALL).self_defense_bonus
-	var expected_soft := _formula_damage(grid, 5.0, 0.75, soft)
-	var expected_hard := _formula_damage(grid, 5.0, 0.75, hard)
-	var expected_walled := _formula_damage(grid, 5.0, 0.75, walled, wall_bonus)
+	var expected_soft := _formula_damage(grid, 7.5, 0.75, soft)
+	var expected_hard := _formula_damage(grid, 7.5, 0.75, hard)
+	var expected_walled := _formula_damage(grid, 7.5, 0.75, walled, wall_bonus)
 	assert_true(V2TechniqueRuntime.perform_strike(unit, CLEAVE, null, grid))
 	assert_almost_eq(40.0 - soft.hp, expected_soft, 0.0001)
 	assert_almost_eq(40.0 - hard.hp, expected_hard, 0.0001)
@@ -243,8 +243,8 @@ func test_the_command_aura_of_the_enemy_reaches_only_the_units_inside_it():
 	var protected := _foe(d.grid, d.rival, RING[0])
 	var exposed := _foe(d.grid, d.rival, RING[3])
 	var aura: float = 1.0 + UnitDatabase.create_unit(CHAMPION).aura_defense_bonus
-	var expected_protected := _formula_damage(d.grid, 5.0, 0.75, protected, aura)
-	var expected_exposed := _formula_damage(d.grid, 5.0, 0.75, exposed)
+	var expected_protected := _formula_damage(d.grid, 7.5, 0.75, protected, aura)
+	var expected_exposed := _formula_damage(d.grid, 7.5, 0.75, exposed)
 	assert_true(V2TechniqueRuntime.perform_strike(d.unit, CLEAVE, null, d.grid))
 	assert_almost_eq(40.0 - protected.hp, expected_protected, 0.0001)
 	assert_almost_eq(40.0 - exposed.hp, expected_exposed, 0.0001)

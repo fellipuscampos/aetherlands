@@ -94,7 +94,7 @@ const KIND_DATA := {
 		# ociosos, o bando inteiro ainda e promovido a Invasor de verdade
 		# (invader_promotable, inalterado), virando uma invasao real.
 		"behavior": BEHAVIOR_RAIDER, "invader_promotable": true,
-		"unit_name": "Goblin", "attack": 3.0, "defense": 2.0, "max_hp": 8.0,
+		"unit_name": "Goblin", "attack": 4.5, "defense": 3.0, "max_hp": 8.0,
 		"movement_points": 1.0, "vision_range": 1, "gold_reward": 15.0, "clear_reward": 75.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "goblin",
 	},
@@ -110,7 +110,7 @@ const KIND_DATA := {
 		# e' lido por MonsterAI._guard_radius_for, ausente pra qualquer
 		# outro kind cai no padrao.
 		"behavior": BEHAVIOR_GUARDIAN, "guard_radius": 5, "invader_promotable": false,
-		"unit_name": "Troll", "attack": 6.0, "defense": 4.0, "max_hp": 20.0,
+		"unit_name": "Troll", "attack": 9.0, "defense": 6.0, "max_hp": 20.0,
 		"movement_points": 1.0, "vision_range": 1, "gold_reward": 35.0, "clear_reward": 100.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "troll",
 	},
@@ -131,7 +131,7 @@ const KIND_DATA := {
 		],
 		"weight": 10, "min_threat": 0.65, "lair_cap": 2, "global_cap": 2, "batch_spawn": 1,
 		"behavior": BEHAVIOR_HUNTER, "invader_promotable": false,
-		"unit_name": "Vivern", "attack": 8.0, "defense": 3.0, "max_hp": 16.0,
+		"unit_name": "Vivern", "attack": 12.0, "defense": 4.5, "max_hp": 16.0,
 		"movement_points": 3.0, "vision_range": 1, "gold_reward": 70.0, "clear_reward": 130.0, "clear_reward_mana": 20.0,
 		"flies": true, "visual_kind": "wyvern",
 	},
@@ -139,7 +139,7 @@ const KIND_DATA := {
 		"biomes": [HexTileData.TerrainType.DESERT, HexTileData.TerrainType.TUNDRA],
 		"weight": 25, "min_threat": 0.15, "lair_cap": 4, "global_cap": 5, "batch_spawn": 3,
 		"behavior": BEHAVIOR_INVADER, "invader_promotable": false,
-		"unit_name": "Esqueleto", "attack": 4.0, "defense": 1.0, "max_hp": 6.0,
+		"unit_name": "Esqueleto", "attack": 6.0, "defense": 1.5, "max_hp": 6.0,
 		"movement_points": 2.0, "vision_range": 1, "gold_reward": 10.0, "clear_reward": 85.0, "clear_reward_mana": 10.0,
 		"flies": false, "visual_kind": "skeleton",
 	},
@@ -147,7 +147,7 @@ const KIND_DATA := {
 		"biomes": [HexTileData.TerrainType.LAVA],
 		"weight": 5, "min_threat": 0.85, "lair_cap": 1, "global_cap": 1, "batch_spawn": 1,
 		"behavior": BEHAVIOR_HUNTER, "invader_promotable": false,
-		"unit_name": "Dragao", "attack": 16.0, "defense": 8.0, "max_hp": 50.0,
+		"unit_name": "Dragao", "attack": 24.0, "defense": 12.0, "max_hp": 50.0,
 		"movement_points": 2.0, "vision_range": 2, "gold_reward": 200.0, "clear_reward": 150.0, "clear_reward_mana": 35.0,
 		"flies": true, "visual_kind": "dragon",
 	},
@@ -161,49 +161,49 @@ const KIND_DATA := {
 	"worg": {
 		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 2, "global_cap": 5, "batch_spawn": 1,
 		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
-		"unit_name": "Worg", "attack": 4.0, "defense": 1.5, "max_hp": 8.0,
+		"unit_name": "Worg", "attack": 6.0, "defense": 2.5, "max_hp": 8.0,
 		"movement_points": 3.0, "vision_range": 1, "gold_reward": 15.0, "clear_reward": 75.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "worg",
 	},
 	"giant_spider": {
 		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 2, "global_cap": 5, "batch_spawn": 1,
 		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
-		"unit_name": "Aranha Gigante", "attack": 3.5, "defense": 2.0, "max_hp": 9.0,
+		"unit_name": "Aranha Gigante", "attack": 5.5, "defense": 3.0, "max_hp": 9.0,
 		"movement_points": 2.0, "vision_range": 1, "gold_reward": 15.0, "clear_reward": 75.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "giant_spider",
 	},
 	"minotaur": {
 		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
 		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
-		"unit_name": "Minotauro", "attack": 7.0, "defense": 3.5, "max_hp": 20.0,
+		"unit_name": "Minotauro", "attack": 10.5, "defense": 5.5, "max_hp": 20.0,
 		"movement_points": 2.0, "vision_range": 1, "gold_reward": 40.0, "clear_reward": 100.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "minotaur",
 	},
 	"basilisk": {
 		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
 		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
-		"unit_name": "Basilisco", "attack": 6.0, "defense": 5.0, "max_hp": 18.0,
+		"unit_name": "Basilisco", "attack": 9.0, "defense": 7.5, "max_hp": 18.0,
 		"movement_points": 1.0, "vision_range": 1, "gold_reward": 40.0, "clear_reward": 100.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "basilisk",
 	},
 	"colossal_worm": {
 		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
 		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
-		"unit_name": "Verme Colossal", "attack": 11.0, "defense": 5.0, "max_hp": 32.0,
+		"unit_name": "Verme Colossal", "attack": 16.5, "defense": 7.5, "max_hp": 32.0,
 		"movement_points": 2.0, "vision_range": 1, "gold_reward": 90.0, "clear_reward": 150.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "colossal_worm",
 	},
 	"arboreal_ancient": {
 		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
 		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
-		"unit_name": "Ancião Arbóreo", "attack": 9.0, "defense": 7.0, "max_hp": 36.0,
+		"unit_name": "Ancião Arbóreo", "attack": 13.5, "defense": 10.5, "max_hp": 36.0,
 		"movement_points": 1.0, "vision_range": 1, "gold_reward": 90.0, "clear_reward": 150.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "arboreal_ancient",
 	},
 	"mana_devourer": {
 		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
 		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
-		"unit_name": "Devorador de Mana", "attack": 12.0, "defense": 4.0, "max_hp": 28.0,
+		"unit_name": "Devorador de Mana", "attack": 18.0, "defense": 6.0, "max_hp": 28.0,
 		"movement_points": 2.0, "vision_range": 1, "gold_reward": 90.0, "clear_reward": 150.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "mana_devourer",
 	},
@@ -213,7 +213,7 @@ const KIND_DATA := {
 	"corrupted_hero": {
 		"biomes": [], "weight": 0, "min_threat": 1.0, "lair_cap": 1, "global_cap": 5, "batch_spawn": 1,
 		"behavior": BEHAVIOR_GUARDIAN, "invader_promotable": false,
-		"unit_name": "Herói Corrompido", "attack": 8.0, "defense": 6.0, "max_hp": 34.0,
+		"unit_name": "Herói Corrompido", "attack": 12.0, "defense": 9.0, "max_hp": 34.0,
 		"movement_points": 2.0, "vision_range": 1, "gold_reward": 80.0, "clear_reward": 150.0, "clear_reward_mana": 0.0,
 		"flies": false, "visual_kind": "corrupted_hero",
 	},
@@ -250,6 +250,47 @@ const CAMP_BOSS_ATTACK_MULTIPLIER := 1.3
 ## do fim do primeiro trecho.
 const V3_ANIMATION_BLEND_TIME := 0.2
 
+## DRAGÃO (2026-10-13): o dragão vermelho escuro modelado no Blender (README em assets/generated/dragons/
+## dark_red_dragon_v5_animated) no lugar do corpo procedural de caixas montado em código. 3 m na escala nativa (1:1),
+## frente em +Z, 53 ossos e seis clipes sobre os mesmos 159 canais: um Idle, um Walk e um Attack para cada POSTURA —
+## no ar e em terra (UnitData.posture_animations). Nasce voando (é como o evento o traz ao mapa, e o Dragão voa sobre
+## qualquer terreno); o DragonEvent o pousa perto do alvo. As trocas usam a transição por captura de pose (sem salto
+## mesmo interrompendo um gesto); pouso e decolagem levam mais tempo, porque não há clipe próprio para eles.
+## O sopro sai do osso `mouth_fire` na janela 0,75–2,0 s dos dois ataques (marcadores FIRE_START/FIRE_END do modelo).
+const DRAGON_MODEL := "res://assets/generated/dragons/dark_red_dragon_v5_animated/dark_red_dragon_v5_animated.glb"
+const DRAGON_POSTURE_FLYING := "flying"
+const DRAGON_POSTURE_GROUND := "ground"
+const DRAGON_POSTURES := {
+	DRAGON_POSTURE_FLYING: {"idle": "Dragon_Idle_Flying", "walk": "Dragon_Walk_Flying", "attack": "Dragon_Attack_Flying"},
+	DRAGON_POSTURE_GROUND: {"idle": "Dragon_Idle_Ground", "walk": "Dragon_Walk_Ground", "attack": "Dragon_Attack_Ground"},
+}
+const DRAGON_TRANSITION_TIME := 0.5
+const DRAGON_POSTURE_TRANSITION_TIME := 1.1
+const DRAGON_FIRE_BONE := "mouth_fire"
+const DRAGON_FIRE_START := 0.75
+const DRAGON_FIRE_END := 2.0
+## Voando, as pontas das asas passam de 3,8 m: a barra de vida e o selo ficam acima disso.
+const DRAGON_MARKER_HEIGHT := 4.05
+
+static func _apply_dragon_model(data: UnitData) -> void:
+	var flying: Dictionary = DRAGON_POSTURES[DRAGON_POSTURE_FLYING]
+	data.model_scene_path = DRAGON_MODEL
+	data.animation_scene_path = DRAGON_MODEL
+	data.merge_shared_walk_animation = false
+	data.idle_animation_override = flying.idle
+	data.walk_animation_override = flying.walk
+	data.attack_animation_override = flying.attack
+	data.posture_animations = DRAGON_POSTURES.duplicate(true)
+	data.default_posture = DRAGON_POSTURE_FLYING
+	data.pose_transition_time = DRAGON_TRANSITION_TIME
+	data.posture_transition_time = DRAGON_POSTURE_TRANSITION_TIME
+	data.fire_breath_bone = DRAGON_FIRE_BONE
+	data.fire_breath_start = DRAGON_FIRE_START
+	data.fire_breath_end = DRAGON_FIRE_END
+	data.marker_min_height = DRAGON_MARKER_HEIGHT
+	data.model_scale_multiplier = 1.0
+	data.model_yaw_offset_degrees = 0.0
+
 const SKELETON_V1_MODEL := "res://assets/generated/skeletons/skeleton_warrior_v1/skeleton_warrior_v1.glb"
 
 ## Especies do bestiario ecologico com modelo final: kind -> GLB + prefixo
@@ -264,7 +305,7 @@ const HANDMADE_MODELS := {
 	# Aranha: GLB re-exportado do .blend animado por tools/art_pipeline/spider_export.py.
 	"giant_spider": {"path": "res://assets/generated/spiders/giant_spider_v1/giant_spider_v1.glb", "prefix": "Spider"},
 	# Devorador: flutua -- a altura de flutuacao ja esta na geometria (origem no chao).
-	"mana_devourer": {"path": "res://assets/generated/mana_devourers/mana_devourer_v1/mana_devourer_v1.glb", "prefix": "ManaDevourer"},
+	"mana_devourer": {"path": "res://assets/generated/mana_devourers/mana_devourer_blocky_v3/mana_devourer_blocky_v3.glb", "prefix": "ManaDevourer"},
 	# Verme Colossal: verme-lacraia de areia, em pe (J) perto de 1 tile. Sem Walk (anda no Idle); Escavar toca
 	# Worm_Burrow/Worm_Emerge ("burrow": true, ver Unit.play_burrow_visual/play_emerge_visual).
 	"colossal_worm": {"path": "res://assets/generated/sand_worms/sand_worm_v1/sand_worm_v1.glb", "prefix": "Worm", "burrow": true},
@@ -414,6 +455,8 @@ static func create_monster(kind: String, is_camp_boss: bool = false) -> UnitData
 		# (troll_blocky.json "height" + resalvar/reexportar), nao aqui.
 		data.model_scale_multiplier = 1.0
 		data.model_yaw_offset_degrees = 0.0 # V3: ver nota no goblin acima
+	elif kind == "dragon":
+		_apply_dragon_model(data)
 	elif HANDMADE_MODELS.has(kind):
 		# V1 feitos a mao no Blender (2026-10) -- substituem as silhuetas
 		# provisorias de MonsterPlaceholderVisuals (que segue valendo pras

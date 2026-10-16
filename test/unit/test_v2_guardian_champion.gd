@@ -54,7 +54,7 @@ func _world() -> HexGrid:
 func _player(through: int = 9) -> PlayerData:
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	return player
 
@@ -90,8 +90,7 @@ func _damage(grid: HexGrid, attacker: Unit, defender: Unit) -> float:
 
 ## Dano esperado de STRIKE contra `defender` com um multiplicador de defesa extra `extra`.
 func _expected(grid: HexGrid, defender: Unit, extra: float) -> float:
-	var terrain := 1.0 + grid.get_tile(defender.coord).defense_bonus
-	return maxf(1.0, STRIKE - defender.unit_data.defense * terrain * extra * CombatResolver.DEFENSE_MITIGATION_FACTOR)
+	return maxf(1.0, STRIKE - defender.unit_data.defense * extra * CombatResolver.DEFENSE_MITIGATION_FACTOR)
 
 func _standalone_city(player: PlayerData, with_mastery: bool = true) -> City:
 	var city := City.new()
@@ -125,9 +124,9 @@ func _aura_bonus() -> float:
 func test_the_champion_has_the_specified_baseline():
 	var data := UnitDatabase.create_unit(CHAMPION)
 	assert_eq(data.unit_name, "Campeão Guardião")
-	assert_eq(data.max_hp, 44.0)
-	assert_eq(data.attack, 6.5)
-	assert_eq(data.defense, 10.0)
+	assert_eq(data.max_hp, 46.0)
+	assert_eq(data.attack, 11.0)
+	assert_eq(data.defense, 15.5)
 	assert_eq(data.movement_points, 2.0)
 	assert_eq(data.vision_range, 3)
 	assert_eq(data.attack_range, 1, "corpo a corpo")
@@ -143,7 +142,7 @@ func test_relations_the_champion_is_clearly_superior_but_still_a_guardian():
 	assert_gt(champion.defense, sentinel.defense)
 	assert_gt(champion.attack, sentinel.attack, "ataque melhor...")
 	assert_lt(champion.attack, champion.defense, "...mas continua secundário à Defesa")
-	assert_lt(champion.attack, UnitDatabase.create_unit("men_at_arms").attack + 1.5, "não vira DPS")
+	assert_lt(champion.attack, UnitDatabase.create_unit("v2_legendary_blade_hero").attack, "não vira DPS: bate menos que a Lendária de dano (o Homem de Armas V1 saiu do jogo)")
 	assert_eq(champion.movement_points, sentinel.movement_points, "mesma mobilidade")
 	assert_eq(champion.vision_range, sentinel.vision_range)
 	assert_gt(champion.production_cost, sentinel.production_cost * 1.5, "custo excepcional")
@@ -166,7 +165,7 @@ func test_it_is_registered_as_a_trainable_kind_and_named_for_every_race():
 func test_the_champion_can_be_created_and_shown_as_a_unit():
 	var grid := _world()
 	var unit := _unit(grid, _player(), CHAMPION, Vector2i(0, 0))
-	assert_eq(unit.hp, 44.0)
+	assert_eq(unit.hp, 46.0)
 	assert_true(unit.get_child_count() > 0)
 	assert_true(V2LegendarySystem.is_legendary_unit(unit))
 

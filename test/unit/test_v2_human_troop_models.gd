@@ -89,7 +89,10 @@ func test_a_plain_attack_plays_the_attack_clip_facing_the_defender():
 	target.position = swordsman.position + Vector3(2.0, 0.0, 0.0)
 	swordsman.play_attack_visual(target)
 	assert_eq(swordsman._anim_player.current_animation, "Swordsman_Attack")
-	assert_almost_eq(swordsman.rotation.y, atan2(2.0, 0.0), 0.001, "virou para o defensor")
+	assert_almost_eq(swordsman.facing_target_yaw, atan2(2.0, 0.0), 0.001, "mira o defensor")
+	if swordsman._face_tween != null and swordsman._face_tween.is_valid():
+		await swordsman._face_tween.finished
+	assert_almost_eq(swordsman.rotation.y, atan2(2.0, 0.0), 0.001, "virou para o defensor (giro suave, sem estalo)")
 
 func test_a_technique_plays_its_own_clip_once_for_all_its_targets():
 	var hunter := _unit("v2_unit_hunter", Vector2i(0, 0))
@@ -100,10 +103,10 @@ func test_a_technique_plays_its_own_clip_once_for_all_its_targets():
 	hunter.begin_technique_animation(VO)
 	hunter.play_attack_visual(first)
 	assert_eq(hunter._anim_player.current_animation, "Hunter_Volley", "Saraivada toca o clipe próprio")
-	var facing := hunter.rotation.y
+	var facing := hunter.facing_target_yaw
 	hunter.play_attack_visual(second)
 	assert_eq(hunter._anim_player.current_animation, "Hunter_Volley", "o segundo alvo não troca o clipe")
-	assert_almost_eq(hunter.rotation.y, facing, 0.001, "segue virado para o primeiro alvo")
+	assert_almost_eq(hunter.facing_target_yaw, facing, 0.001, "segue virado para o primeiro alvo")
 	hunter.end_technique_animation()
 	hunter.play_attack_visual(second)
 	assert_eq(hunter._anim_player.current_animation, "Hunter_Attack", "fora da técnica volta ao Attack comum")
@@ -125,3 +128,26 @@ func test_the_technique_clip_returns_to_rest_when_it_ends():
 	master._on_blended_animation_finished(&"WeaponMaster_PowerStrike", master._anim_player)
 	assert_eq(master._anim_player.current_animation, "WeaponMaster_Idle", "a técnica é one-shot: volta ao Idle")
 	master.end_technique_animation()
+
+## Transições suaves (2026-10-09): o giro para o alvo é animado e sempre pelo caminho curto — de +170° para -170° gira
+## 20° passando por 180°, nunca 340° pelo lado errado.
+func test_turning_to_a_target_is_animated_along_the_short_way():
+	var warrior := _unit("v2_unit_warrior", Vector2i(0, 0))
+	warrior.rotation.y = deg_to_rad(170.0)
+	warrior.face_toward(warrior.position + Vector3(sin(deg_to_rad(-170.0)), 0.0, cos(deg_to_rad(-170.0))))
+	assert_almost_eq(warrior.rotation.y, deg_to_rad(170.0), 0.02, "não estala no mesmo quadro")
+	if warrior._face_tween != null and warrior._face_tween.is_valid():
+		await warrior._face_tween.finished
+	# O tween interpola de 170° até o alvo: terminar em 190° (e não em -170°) é passar por 180°, o lado curto.
+	assert_almost_eq(rad_to_deg(warrior.rotation.y), 190.0, 0.5, "chega no mesmo ângulo que -170° pelo lado curto")
+	assert_almost_eq(warrior.shortest_yaw_to(deg_to_rad(-170.0)), warrior.rotation.y, 0.001)
+
+## Golpe que começa no meio da aproximação (Carga): o passo é dono do giro; ao chegar a unidade vira para o alvo.
+func test_a_turn_requested_while_walking_happens_when_the_step_ends():
+	var cavalier := _unit("v2_unit_cavalier", Vector2i(0, 0))
+	var waypoint := cavalier.position + Vector3(0.0, 0.0, 1.5)
+	cavalier.walk_path([waypoint] as Array[Vector3])
+	cavalier.face_toward(waypoint + Vector3(2.0, 0.0, 0.0))
+	await get_tree().create_timer(Unit.MOVE_DURATION + Unit.FACE_TURN_DURATION + 0.2).timeout
+	assert_false(cavalier._walking)
+	assert_almost_eq(cavalier.rotation.y, atan2(2.0, 0.0), 0.01, "terminou virada para o alvo")

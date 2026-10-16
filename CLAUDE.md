@@ -29,7 +29,9 @@ o número do outro), o roteiro de benchmark headless usado pra medir de
 verdade em vez de adivinhar, e a lista do que já foi otimizado (A* em
 `compute_path`, overlays de neblina guiados por coordenada em vez de por
 pixel, cache de território habitável) com custo antes/depois — não
-redescubra os mesmos gargalos.
+redescubra os mesmos gargalos. Benchmark permanente: `tools/perf/PerfBench.tscn`
+(§6 do guia). Arte nova: texturas de modelo em BC7 via
+`tools/perf/texture_import_audit.gd -- --fix` + `--import`.
 
 ## Executáveis
 
@@ -53,6 +55,11 @@ redescubra os mesmos gargalos.
   `docs/# Aetherlands V3 — Visão e Direção.md`, implementação em
   `docs/AETHERLANDS_V3_IMPLEMENTATION.md` (monstros neutros: leia antes de
   mexer em MonsterAI/covis/spawn).
+- Antes de mexer na IA (guerra/paz, memória diplomática, produção de guerra,
+  tática, dificuldade): leia `docs/AI_ROUND_2026-10-15.md` (causas, regras e
+  constantes de `RivalAI`, `DiplomaticMemory`, `AIWarTactics`, `V2AIDifficulty`).
 - Antes de qualquer tuning/balanceamento: leia
+  `docs/BALANCE_PASS_2026-10-14.md` (valores atuais e por quê, modelo de
+  duelo `tools/balance/unit_duel_model.py`, custo em Vida dos feitiços) e
   `docs/AETHERLANDS_RELEASE_BALANCE_BASELINE.md` (baseline F33B, laboratório
   4-IA em `tools/balance/`, comandos e gargalos medidos).

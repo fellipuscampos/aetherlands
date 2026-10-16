@@ -1,8 +1,8 @@
 extends GutTest
 
-## Fase 33D3 — grandes eventos da Ascensão: agendamento/garantia/alvo/participação/recompensa/UI do Dragão,
-## Relicário Desperto (agendamento, supersessão, local justo, guardiões, disputa, recompensa, save), exclusividade
-## e migração v23.
+## Fase 33D3 — grande evento da Ascensão: agendamento/garantia/alvo/participação/recompensa/UI do Dragão, save e
+## migração v23. O Relicário Desperto, que também era testado aqui, foi removido do jogo em 2026-10-12; sobrou só a
+## garantia de que um save que ainda o traga carrega sem ele.
 
 const SAVE_PATH := "user://test_phase33d3_events.json"
 const SMALL_MAP := 61
@@ -28,9 +28,6 @@ func before_each():
 func after_each():
 	if UIEvents.event_published.is_connected(_capture_callable):
 		UIEvents.event_published.disconnect(_capture_callable)
-	for event in WorldEventManager.active_events:
-		if event is ReliquaryEvent:
-			(event as ReliquaryEvent)._remove_marker()
 	if _real_grid != null and is_instance_valid(_real_grid):
 		await BalanceMatchRunner.teardown_match(self, _real_grid)
 	_real_grid = null
@@ -88,13 +85,9 @@ func _seed_where(predicate: Callable) -> int:
 func _dragon() -> DragonEvent:
 	return WorldEventManager.active_event_of_type(DragonEvent.EVENT_TYPE) as DragonEvent
 
-func _reliquary() -> ReliquaryEvent:
-	return WorldEventManager.active_event_of_type(ReliquaryEvent.EVENT_TYPE) as ReliquaryEvent
-
 func _round(turn: int) -> void:
 	TurnManager.turn_number = turn
 	WorldEventManager.maybe_spawn_dragon(grid, turn)
-	WorldEventManager.maybe_start_reliquary(grid, turn)
 	WorldEventManager.advance_turn(grid, players)
 
 # --- Dragão: agendamento ---------------------------------------------------------------------------
@@ -279,221 +272,10 @@ func test_dragon_resolution_goes_to_the_event_center_without_a_modal():
 	for event in _published:
 		assert_false(String(event.title + event.message).contains("DragonEvent"), "sem nome de classe")
 
-func test_optional_participation_is_not_required_attention():
+func test_the_dragon_never_creates_an_attention_item():
 	var source := FileAccess.get_file_as_string("res://scripts/ui/AttentionService.gd")
-	assert_false(source.contains("\"world_event_decision:%s\" % stable_id, AttentionItem.Priority.REQUIRED"), "participação opcional nunca bloqueia o fim de turno")
+	assert_false(source.contains("world_event_decision") or source.contains("\"world_event\""), "o jogador não é perguntado sobre o Dragão: nenhum item de decisão")
 	assert_false(source.contains("StrategicImperatives") or source.contains("PublicVictoryMilestones"), "imperativos e marcos nunca viram Attention")
-
-# --- Relicário: agendamento -------------------------------------------------------------------------
-
-func test_reliquary_scheduler_respects_era_eligibility_and_dragon_priority():
-	_world()
-	WorldEventManager.world_phase = WorldPhaseRules.Phase.FOUNDATION
-	WorldEventManager.maybe_start_reliquary(grid, ASC + 20)
-	assert_null(_reliquary(), "Despertar: não")
-	WorldEventManager.world_phase = WorldPhaseRules.Phase.ASCENSION
-	WorldEventManager.maybe_start_reliquary(grid, ASC + 14)
-	assert_null(_reliquary(), "antes de +15: não")
-	# Dragão ativo: pendente.
-	WorldEventManager.maybe_spawn_dragon(grid, ASC + DRAGON_GUARANTEE())
-	var dragon := _dragon()
-	WorldEventManager.maybe_start_reliquary(grid, ASC + 36)
-	assert_null(_reliquary(), "Dragão ativo: PENDING")
-	assert_eq(String(WorldEventManager.reliquary_schedule.state), WorldEventManager.SCHEDULE_PENDING)
-	dragon._resolve_with_outcome("defeated")
-	TurnManager.turn_number = ASC + 40
-	WorldEventManager.advance_turn(grid, players)
-	assert_null(_dragon())
-	for turn in range(ASC + 40, ASC + 45):
-		WorldEventManager.maybe_start_reliquary(grid, turn)
-		assert_null(_reliquary(), "espera %d rodadas depois do Dragão" % WorldEventManager.RELIQUARY_AFTER_DRAGON)
-	WorldEventManager.maybe_start_reliquary(grid, ASC + 45)
-	assert_not_null(_reliquary(), "anunciado depois da espera")
-	WorldEventManager.maybe_spawn_dragon(grid, ASC + 90)
-	assert_null(_dragon(), "nunca Dragão + Relicário ativos juntos")
-
-func test_early_reliquary_only_when_it_ends_before_the_dragon_guarantee():
-	var no_hit := func(s: int) -> bool:
-		for turn in range(ASC + 10, ASC + 17):
-			if WorldEventTrigger.should_spawn_dragon(s, turn):
-				return false
-		return true
-	_world([2, 2, 2, 2], _seed_where(no_hit))
-	for turn in range(ASC + 10, ASC + 15):
-		WorldEventManager.maybe_spawn_dragon(grid, turn)
-	WorldEventManager.maybe_start_reliquary(grid, ASC + 15)
-	var reliquary := _reliquary()
-	assert_not_null(reliquary, "+15 com o Dragão ainda por vir: cabe antes da garantia")
-	assert_lt(ASC + 15 + ReliquaryEvent.MAX_DURATION, ASC + DRAGON_GUARANTEE(), "duração máxima termina antes da garantia")
-	# Simula a partida: o Relicário expira sem vencedor; a garantia do Dragão nunca é adiada.
-	for turn in range(ASC + 15, ASC + DRAGON_GUARANTEE() + 1):
-		_round(turn)
-	assert_null(_reliquary(), "expirou dentro da janela")
-	assert_not_null(_dragon(), "Dragão garantido no prazo")
-	assert_true(WorldEventManager.can_start_event_type(ReliquaryEvent.EVENT_TYPE) == false, "Relicário uma vez por partida")
-
-func test_reliquary_is_superseded_by_convergence_before_announcement():
-	_world()
-	WorldEventManager.maybe_spawn_dragon(grid, ASC + DRAGON_GUARANTEE())
-	WorldEventManager.maybe_start_reliquary(grid, ASC + 36)
-	assert_eq(String(WorldEventManager.reliquary_schedule.state), WorldEventManager.SCHEDULE_PENDING)
-	TurnManager.turn_number = WorldPhaseRules.CONVERGENCE_FALLBACK_TURN
-	WorldEventManager.advance_world_phase(players, WorldPhaseRules.CONVERGENCE_FALLBACK_TURN)
-	assert_eq(String(WorldEventManager.reliquary_schedule.state), WorldEventManager.SCHEDULE_SUPERSEDED)
-	_dragon()._resolve_with_outcome("defeated")
-	WorldEventManager.advance_turn(grid, players)
-	for turn in range(WorldPhaseRules.CONVERGENCE_FALLBACK_TURN, WorldPhaseRules.CONVERGENCE_FALLBACK_TURN + 20):
-		WorldEventManager.maybe_start_reliquary(grid, turn)
-	assert_null(_reliquary(), "nunca nasce na Convergência; sem local nem recompensa")
-
-# --- Relicário: local -------------------------------------------------------------------------------
-
-func test_reliquary_site_is_valid_fair_and_deterministic():
-	_world()
-	var site := ReliquaryEvent.choose_site(grid, players)
-	assert_ne(site, ReliquaryEvent.NO_COORD)
-	assert_true(ReliquaryEvent.is_valid_site(grid, site))
-	assert_null(grid.city_owning_tile(site))
-	var nearest: Array = []
-	for player in players:
-		var best := 999999
-		for city in player.cities:
-			best = mini(best, HexMetrics.axial_distance(city.coord, site))
-		nearest.append(best)
-	nearest.sort()
-	assert_gte(int(nearest[0]), ReliquaryEvent.SITE_MIN_CITY_DISTANCE, "fora do interior imediato de um reino")
-	assert_lte(absi(int(nearest[1]) - int(nearest[0])), 1, "distância competitiva para as duas civs mais próximas")
-	assert_eq(ReliquaryEvent.choose_site(grid, players), site, "determinístico")
-	# Terreno de melhoria/território/covil nunca é local.
-	grid.create_lair(site, "goblin", HexGrid.LAIR_ROLE_WILD)
-	assert_ne(ReliquaryEvent.choose_site(grid, players), site)
-
-# --- Relicário: guardiões e disputa -----------------------------------------------------------------
-
-func _active_reliquary() -> ReliquaryEvent:
-	var reliquary := ReliquaryEvent.new()
-	reliquary.site_coord = Vector2i(0, 0)
-	WorldEventManager.register_event(reliquary)
-	TurnManager.turn_number = ASC + 20
-	reliquary.advance_turn(grid, players) # anunciado
-	TurnManager.turn_number = reliquary.turn_deadline
-	reliquary.advance_turn(grid, players) # ativo
-	return reliquary
-
-func _clear_guardians(reliquary: ReliquaryEvent) -> void:
-	for unit in grid.units_by_coord.values().duplicate():
-		if unit.source_event_id == reliquary.event_id:
-			grid.remove_unit(unit)
-
-func test_guardians_are_real_and_must_die_before_progress():
-	_world()
-	var reliquary := _active_reliquary()
-	assert_eq(reliquary.phase, WorldEvent.PHASE_ACTIVE)
-	assert_eq(reliquary.live_guardian_count(grid), ReliquaryEvent.GUARDIAN_COUNT)
-	for unit in grid.units_by_coord.values():
-		if unit.source_event_id == reliquary.event_id:
-			assert_eq(unit.unit_data.visual_kind, "skeleton", "monstro existente, stats intactos")
-			assert_false(grid.lair_roles.has(unit.source_lair_coord), "fora do sistema de covil")
-	var claimant := grid.spawn_unit(Vector2i(2, 2), UnitDatabase.create_unit("warrior"), players[0])
-	reliquary.evaluate_control(grid, players, 70)
-	assert_eq(reliquary.control_rounds, 0, "guardião vivo: sem progresso")
-	_clear_guardians(reliquary)
-	grid.move_unit(claimant, Vector2i(0, 0), 0.0)
-	reliquary.evaluate_control(grid, players, 71)
-	assert_eq(reliquary.control_rounds, 1)
-	assert_eq(reliquary.guardians_cleared_turn, 71)
-
-func test_two_consecutive_rounds_resolve_and_the_reward_is_applied_once():
-	_world()
-	players[0].v2_ai_strategy.orientation = V2AIStrategyState.Orientation.MILITARY
-	players[0].mana = 500.0
-	var reliquary := _active_reliquary()
-	_clear_guardians(reliquary)
-	grid.spawn_unit(Vector2i(0, 0), UnitDatabase.create_unit("warrior"), players[0])
-	grid.spawn_unit(Vector2i(1, 0), UnitDatabase.create_unit("warrior"), players[0])
-	var gold := players[0].gold
-	reliquary.evaluate_control(grid, players, 70)
-	assert_eq(reliquary.control_rounds, 1, "rodada 1 → 1/2 (mais unidades não aceleram)")
-	reliquary.evaluate_control(grid, players, 71)
-	assert_eq(reliquary.phase, WorldEvent.PHASE_RESOLUTION, "rodada 2 → resolvido")
-	assert_eq(reliquary.winner_index, 0)
-	assert_eq(reliquary.reward_choice, ReliquaryEvent.CHOICE_GOLD, "IA com Mana de sobra e não Arcana escolhe Ouro")
-	assert_almost_eq(players[0].gold - gold, ReliquaryEvent.REWARD_GOLD, 0.001)
-	assert_false(reliquary.apply_reward(players, ReliquaryEvent.CHOICE_MANA), "exatamente uma vez")
-	assert_eq(ReliquaryEvent.ai_reward_choice(_arcane()), ReliquaryEvent.CHOICE_MANA, "Arcana prefere Mana")
-
-func _arcane() -> PlayerData:
-	var arcane := _player("Arcana")
-	arcane.v2_ai_strategy.orientation = V2AIStrategyState.Orientation.ARCANE
-	arcane.mana = 500.0
-	return arcane
-
-func test_hostile_adjacent_contests_and_switching_restarts_the_count():
-	_world()
-	var reliquary := _active_reliquary()
-	_clear_guardians(reliquary)
-	var a := grid.spawn_unit(Vector2i(0, 0), UnitDatabase.create_unit("warrior"), players[0])
-	reliquary.evaluate_control(grid, players, 70)
-	assert_eq([reliquary.control_owner, reliquary.control_rounds], [0, 1])
-	Diplomacy.declare_war(players[0], players[1], "Teste", true)
-	var b := grid.spawn_unit(Vector2i(1, 0), UnitDatabase.create_unit("warrior"), players[1])
-	reliquary.evaluate_control(grid, players, 71)
-	assert_eq(reliquary.control_rounds, 0, "hostil adjacente: zera")
-	assert_eq(reliquary.contested_rounds, 1)
-	grid.remove_unit(a)
-	grid.move_unit(b, Vector2i(0, 0), 0.0)
-	reliquary.evaluate_control(grid, players, 72)
-	assert_eq([reliquary.control_owner, reliquary.control_rounds], [1, 1], "B começa em 1/2")
-	grid.remove_unit(b)
-	reliquary.evaluate_control(grid, players, 73)
-	assert_eq(reliquary.control_rounds, 0, "ninguém no local: sem progresso")
-
-func test_human_reward_choice_uses_the_existing_decision_path():
-	_world()
-	GameManager.ai_controls_human_seat = false
-	var reliquary := _active_reliquary()
-	_clear_guardians(reliquary)
-	grid.spawn_unit(Vector2i(0, 0), UnitDatabase.create_unit("warrior"), players[0])
-	reliquary.evaluate_control(grid, players, 70)
-	reliquary.evaluate_control(grid, players, 71)
-	assert_true(reliquary.awaiting_choice_from(0), "pessoa escolhe")
-	var mana := players[0].mana
-	assert_true(WorldEventManager.choose_reliquary_reward(players[0], ReliquaryEvent.CHOICE_MANA))
-	assert_almost_eq(players[0].mana - mana, ReliquaryEvent.REWARD_MANA, 0.001)
-	assert_false(WorldEventManager.choose_reliquary_reward(players[0], ReliquaryEvent.CHOICE_GOLD), "uma vez")
-	assert_false(FileAccess.get_file_as_string("res://scripts/ui/AttentionService.gd").contains("\"world_event_reward:%d\" % event.event_id, AttentionItem.Priority.REQUIRED"), "escolha não bloqueia o fim de turno")
-
-func test_unchosen_human_reward_defaults_to_gold_after_the_window():
-	_world()
-	GameManager.ai_controls_human_seat = false
-	var reliquary := _active_reliquary()
-	_clear_guardians(reliquary)
-	grid.spawn_unit(Vector2i(0, 0), UnitDatabase.create_unit("warrior"), players[0])
-	reliquary.evaluate_control(grid, players, 70)
-	reliquary.evaluate_control(grid, players, 71)
-	var gold := players[0].gold
-	TurnManager.turn_number = reliquary.choice_deadline
-	reliquary.advance_turn(grid, players)
-	assert_eq(reliquary.phase, WorldEvent.PHASE_COMPLETED)
-	assert_almost_eq(players[0].gold - gold, ReliquaryEvent.REWARD_GOLD, 0.001)
-
-func test_ai_decides_whether_to_answer_the_reliquary():
-	_world()
-	var reliquary := _active_reliquary()
-	var view := V2AIWorldView.capture(players[1], grid)
-	var plan := V2StrategicAI.reliquary_plan(players[1], view)
-	assert_eq(String(plan.mode), "none", "sem força móvel: não vai")
-	for offset in [Vector2i(3, 0), Vector2i(3, 1), Vector2i(4, 0), Vector2i(4, 1)]:
-		grid.spawn_unit(offset, UnitDatabase.create_unit("warrior"), players[1])
-	V2AITacticalAI.clear_views()
-	view = V2AIWorldView.capture(players[1], grid)
-	plan = V2StrategicAI.reliquary_plan(players[1], view)
-	assert_eq(String(plan.mode), "go", "força livre perto: vai")
-	assert_eq((plan.units as Array).size(), V2StrategicAI.RELIQUARY_MAX_RESPONDERS, "manda só uma força pequena")
-	var mover: Unit = plan.units[0]
-	var start := mover.coord
-	assert_true(StrategicAI.respond_to_reliquary(mover, players[1], grid))
-	assert_true(mover.coord != start or HexMetrics.axial_distance(mover.coord, reliquary.site_coord) <= 1, "anda ou luta, sem teleporte")
 
 # --- Persistência -----------------------------------------------------------------------------------
 
@@ -524,12 +306,7 @@ func _event_snapshot() -> Dictionary:
 	var events: Array = []
 	for event in WorldEventManager.active_events:
 		events.append(event.to_save_dict())
-	var guardians: Array = []
-	for unit in _real_grid.neutral_units():
-		if unit.source_event_id >= 0:
-			guardians.append([unit.coord, unit.source_event_id])
-	guardians.sort()
-	return {"events": _norm(events), "dragon": _norm(WorldEventManager.dragon_schedule), "reliquary": _norm(WorldEventManager.reliquary_schedule), "milestones": _norm(WorldEventManager.public_milestones), "guardians": guardians}
+	return {"events": _norm(events), "dragon": _norm(WorldEventManager.dragon_schedule), "milestones": _norm(WorldEventManager.public_milestones)}
 
 func _reload() -> Dictionary:
 	var before := _event_snapshot()
@@ -539,7 +316,7 @@ func _reload() -> Dictionary:
 	players = GameManager.players
 	return before
 
-func test_dragon_and_reliquary_state_survive_save_and_load_in_every_phase():
+func test_dragon_state_survives_save_and_load_in_every_phase():
 	_small_match()
 	WorldEventManager.world_phase = WorldPhaseRules.Phase.ASCENSION
 	WorldEventManager.phase_history.append({"phase": WorldPhaseRules.Phase.ASCENSION, "turn": ASC, "cause": "PROGRESS"})
@@ -564,40 +341,48 @@ func test_dragon_and_reliquary_state_survive_save_and_load_in_every_phase():
 	before = _reload()
 	assert_null(_dragon(), "resolvido não volta")
 	assert_eq(String(WorldEventManager.dragon_schedule.state), WorldEventManager.SCHEDULE_RESOLVED)
-	# Relicário: preparação, ativo com guardiões, 1/2, resolvido.
-	var site := ReliquaryEvent.choose_site(_real_grid, players)
-	assert_ne(site, ReliquaryEvent.NO_COORD)
-	var reliquary := ReliquaryEvent.new()
-	reliquary.site_coord = site
-	WorldEventManager.register_event(reliquary)
-	WorldEventManager.advance_turn(_real_grid, players)
-	before = _reload()
-	assert_eq(_event_snapshot(), before, "Relicário em preparação")
-	TurnManager.turn_number = _reliquary().turn_deadline
-	WorldEventManager.advance_turn(_real_grid, players)
-	assert_eq(_reliquary().live_guardian_count(_real_grid), ReliquaryEvent.GUARDIAN_COUNT)
-	before = _reload()
-	assert_eq(_event_snapshot(), before, "guardiões ligados ao evento após o load")
-	assert_eq(_reliquary().live_guardian_count(_real_grid), ReliquaryEvent.GUARDIAN_COUNT)
-	for unit in _real_grid.neutral_units():
-		if unit.source_event_id == _reliquary().event_id:
-			_real_grid.remove_unit(unit)
-	_real_grid.spawn_unit(site, UnitDatabase.create_unit("warrior"), players[2])
-	TurnManager.turn_number += 1
-	WorldEventManager.advance_turn(_real_grid, players)
-	assert_eq(_reliquary().control_rounds, 1)
-	before = _reload()
-	assert_eq(_reliquary().control_rounds, 1, "1/2 preservado")
-	TurnManager.turn_number += 1
-	WorldEventManager.advance_turn(_real_grid, players)
-	assert_true(_reliquary() == null or _reliquary().phase in [WorldEvent.PHASE_RESOLUTION, WorldEvent.PHASE_COMPLETED])
-	var gold := players[2].gold
-	_reload()
-	for turn in range(TurnManager.turn_number, TurnManager.turn_number + 6):
-		TurnManager.turn_number = turn
-		WorldEventManager.advance_turn(_real_grid, players)
-	assert_almost_eq(players[2].gold, gold, 0.001, "recompensa não reaplicada depois do load")
-	assert_false(WorldEventManager.can_start_event_type(ReliquaryEvent.EVENT_TYPE), "uma vez por partida")
+	assert_false(WorldEventManager.can_start_event_type(DragonEvent.EVENT_TYPE), "uma vez por partida")
+
+## O Relicário Desperto foi removido do jogo (WorldEventManager.RETIRED_EVENT_TYPES). Um save que ainda o traga —
+## evento ativo, agendador e guardiões no mapa — carrega normalmente, sem o evento e sem os guardiões dele; o resto
+## do save (os outros monstros, o Dragão) não muda.
+func test_a_save_with_the_retired_reliquary_loads_without_the_event_and_its_guardians():
+	_small_match()
+	WorldEventManager.world_phase = WorldPhaseRules.Phase.ASCENSION
+	WorldEventManager.phase_history.append({"phase": WorldPhaseRules.Phase.ASCENSION, "turn": ASC, "cause": "PROGRESS"})
+	TurnManager.turn_number = ASC + 20
+	var neutral_before := _real_grid.neutral_units().size()
+	assert_gt(neutral_before, 1, "pré-condição: há monstros no mapa")
+	assert_true(SaveManager.save_game(_real_grid, SAVE_PATH))
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
+	# Como o save ficava com o Relicário ATIVO: o evento, o agendador dele e um guardião ligado ao evento.
+	data.world_events.events.append({"event_type": "reliquary", "event_id": 7, "phase": "active", "turn_started": ASC + 15, "turn_deadline": ASC + 30,
+		"participants": {}, "result": {}, "site_coord": [0, 0], "control_owner": -1, "control_rounds": 0, "winner_index": -1, "reward_choice": ""})
+	data.world_events["reliquary_schedule"] = {"state": "ANNOUNCED", "announce_turn": ASC + 15, "site": [0, 0]}
+	data.world_events["next_event_id"] = 8
+	var guardian: Dictionary = data.neutral_units[0]
+	guardian["source_event"] = 7
+	var guardian_coord := Vector2i(int(guardian.coord[0]), int(guardian.coord[1]))
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify(data))
+	file.close()
+	WorldEventManager.reset_for_new_match()
+
+	assert_true(SaveManager.load_game(_real_grid, SAVE_PATH), "o save com o evento removido continua carregando")
+
+	assert_true(WorldEventManager.active_events.is_empty(), "o Relicário não volta")
+	assert_null(_real_grid.get_unit_at(guardian_coord), "o guardião do evento some com ele")
+	assert_eq(_real_grid.neutral_units().size(), neutral_before - 1, "os outros monstros do save continuam")
+	assert_eq(WorldEventManager._next_event_id, 8, "o contador de eventos do save é respeitado")
+	assert_false(WorldEventManager.has_active_major_event())
+	# A partida segue: o Dragão continua agendável e o save seguinte não traz mais nada do Relicário.
+	players = GameManager.players
+	_ensure_two_cities()
+	WorldEventManager.maybe_spawn_dragon(_real_grid, ASC + DRAGON_GUARANTEE())
+	assert_not_null(_dragon(), "o Dragão não é barrado por um evento que não existe mais")
+	assert_true(SaveManager.save_game(_real_grid, SAVE_PATH))
+	var resaved := FileAccess.get_file_as_string(SAVE_PATH)
+	assert_false(resaved.contains("reliquary") or resaved.contains("source_event"), "nada do Relicário é regravado")
 
 func test_v23_save_loads_and_schedulers_start_only_on_the_next_round():
 	_small_match(2)
@@ -608,10 +393,8 @@ func test_v23_save_loads_and_schedulers_start_only_on_the_next_round():
 	assert_true(SaveManager.save_game(_real_grid, SAVE_PATH))
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
 	data.version = 23
-	for key in ["dragon_schedule", "reliquary_schedule", "public_milestones"]:
+	for key in ["dragon_schedule", "public_milestones"]:
 		data.world_events.erase(key)
-	for unit in data.neutral_units:
-		unit.erase("source_event")
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	file.store_string(JSON.stringify(data))
 	file.close()
@@ -620,7 +403,7 @@ func test_v23_save_loads_and_schedulers_start_only_on_the_next_round():
 	assert_true(WorldEventManager.active_events.is_empty(), "nada nasce dentro do load")
 	assert_eq(WorldEventManager.world_phase, WorldPhaseRules.Phase.ASCENSION, "era preservada")
 	assert_false(WorldEventManager.regional_threats.is_empty(), "ameaças regionais preservadas")
-	assert_true(WorldEventManager.dragon_schedule.is_empty() and WorldEventManager.reliquary_schedule.is_empty())
+	assert_true(WorldEventManager.dragon_schedule.is_empty())
 	WorldEventManager.maybe_spawn_dragon(_real_grid, 80)
 	assert_not_null(_dragon(), "agendador age no próximo round, pela idade real da Ascensão (garantia já vencida)")
 
@@ -631,20 +414,13 @@ func test_d3_systems_cost_nothing_per_frame_and_little_per_round():
 	players = GameManager.players
 	WorldEventManager.world_phase = WorldPhaseRules.Phase.ASCENSION
 	WorldEventManager.phase_history.append({"phase": WorldPhaseRules.Phase.ASCENSION, "turn": 1, "cause": "PROGRESS"})
-	var started := Time.get_ticks_usec()
-	var site := ReliquaryEvent.choose_site(_real_grid, players)
-	var site_us := Time.get_ticks_usec() - started
-	var reliquary := ReliquaryEvent.new()
-	reliquary.site_coord = site
-	WorldEventManager.register_event(reliquary)
 	for player in players:
 		for other in players:
 			if other != player:
 				player.remember_enemy_city(other.cities[0])
 	var view := V2AIWorldView.capture(players[1], _real_grid)
-	started = Time.get_ticks_usec()
+	var started := Time.get_ticks_usec()
 	for i in 200:
-		V2StrategicAI.reliquary_plan(players[1], view)
 		V2StrategicAI.strategic_target_coord(players[1], view)
 	var ai_us := (Time.get_ticks_usec() - started) / 200
 	started = Time.get_ticks_usec()
@@ -656,13 +432,10 @@ func test_d3_systems_cost_nothing_per_frame_and_little_per_round():
 	for turn in range(2, 102):
 		WorldEventManager.maybe_spawn_dragon(_real_grid, turn)
 		PublicVictoryMilestones.evaluate_round(players, turn)
-		WorldEventManager.maybe_start_reliquary(_real_grid, turn)
 	var round_us := (Time.get_ticks_usec() - started) / 100
-	gut.p("[D3 perf] reliquary site=%d us (once) | AI reliquary plan + strategic target=%d us/call | imperatives (4 civs)=%d us | milestones+scheduler=%d us/round" % [site_us, ai_us, imperative_us, round_us])
-	assert_ne(site, ReliquaryEvent.NO_COORD)
-	assert_lt(site_us, 1000000, "escolha rara do local")
+	gut.p("[D3 perf] AI strategic target=%d us/call | imperatives (4 civs)=%d us | milestones+scheduler=%d us/round" % [ai_us, imperative_us, round_us])
 	assert_lt(ai_us, 5000)
 	assert_lt(imperative_us, 5000)
 	assert_lt(round_us, 2000)
-	for path in ["res://scripts/core/ReliquaryEvent.gd", "res://scripts/core/StrategicImperatives.gd", "res://scripts/core/PublicVictoryMilestones.gd"]:
+	for path in ["res://scripts/core/StrategicImperatives.gd", "res://scripts/core/PublicVictoryMilestones.gd"]:
 		assert_false(FileAccess.get_file_as_string(path).contains("func _process"), "zero custo por frame: %s" % path)

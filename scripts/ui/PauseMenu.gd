@@ -36,15 +36,19 @@ signal main_menu_requested
 
 @onready var hud: Control = $"../HUD"
 @onready var main_page: Control = $MainPage
-@onready var resume_button: Button = $MainPage/CenterBox/Box/ResumeButton
-@onready var save_button: Button = $MainPage/CenterBox/Box/SaveButton
-@onready var load_button: Button = $MainPage/CenterBox/Box/LoadButton
-@onready var settings_button: Button = $MainPage/CenterBox/Box/SettingsButton
-@onready var developer_tools_button: Button = $MainPage/CenterBox/Box/DeveloperToolsButton
-@onready var main_menu_button: Button = $MainPage/CenterBox/Box/MainMenuButton
-@onready var quit_button: Button = $MainPage/CenterBox/Box/QuitButton
-@onready var status_label: Label = $MainPage/CenterBox/Box/StatusLabel
-@onready var session_label: Label = $MainPage/CenterBox/Box/SessionLabel
+@onready var resume_button: Button = %ResumeButton
+@onready var save_button: Button = %SaveButton
+@onready var load_button: Button = %LoadButton
+@onready var settings_button: Button = %SettingsButton
+@onready var developer_tools_button: Button = %DeveloperToolsButton
+@onready var main_menu_button: Button = %MainMenuButton
+@onready var quit_button: Button = %QuitButton
+@onready var status_label: Label = %StatusLabel
+@onready var session_label: Label = %SessionLabel
+@onready var pause_card: PanelContainer = %PauseCard
+@onready var pause_content: VBoxContainer = %PauseContent
+@onready var actions_scroll: ScrollContainer = %ActionsScroll
+@onready var pause_crest: TextureRect = %PauseCrest
 @onready var load_game_screen: Control = $LoadGameScreen
 @onready var settings_screen: Control = $SettingsScreen
 @onready var confirm_load_dialog: ConfirmationDialog = $ConfirmLoadDialog
@@ -54,11 +58,15 @@ signal main_menu_requested
 
 var _pager: MenuPager
 var _pending_load_slot_id: String = ""
+const PAUSE_THEME := preload("res://scripts/ui/PauseMenuTheme.gd")
+var _layout_queued := false
 
 func _ready() -> void:
 	_apply_accessibility_theme()
 	Settings.accessibility_changed.connect(_apply_accessibility_theme)
+	get_viewport().size_changed.connect(_queue_layout)
 	visible = false
+	status_label.visible = false
 	_pager = MenuPager.new([main_page, load_game_screen, settings_screen])
 	resume_button.pressed.connect(close)
 	save_button.pressed.connect(_on_save_pressed)
@@ -78,6 +86,8 @@ func _ready() -> void:
 	confirm_save_dialog.confirmed.connect(_perform_save)
 	confirm_main_menu_dialog.confirmed.connect(_confirm_main_menu)
 	confirm_quit_dialog.confirmed.connect(AudioManager.request_quit)
+	for dialog in [confirm_save_dialog,confirm_main_menu_dialog,confirm_quit_dialog]:
+		dialog.get_cancel_button().text = "Cancelar"
 	if hud.ui_shell != null:
 		hud.ui_shell.register_pause_action(open)
 
@@ -106,6 +116,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if SelectionManager.cancel_city_attack_targeting(): # Fase 16: ESC cancela a mira do Ataque da Cidade, sem gastar o disparo
 			get_viewport().set_input_as_handled()
 			return
+		if SelectionManager.cancel_manifestation_targeting():
+			get_viewport().set_input_as_handled()
+			return
 		if SelectionManager.cancel_v2_spell_targeting(): # Fase 17: ESC cancela a mira do feitiço V2, sem gastar Mana/recarga/ação
 			get_viewport().set_input_as_handled()
 			return
@@ -128,16 +141,46 @@ func toggle() -> void:
 
 func open() -> void:
 	status_label.text = ""
+	status_label.visible = false
 	_refresh_session_summary()
 	_pager.reset_to(main_page)
 	if hud.ui_shell != null:
 		hud.ui_shell.set_system_surface_active(true)
 	visible = true
+	_queue_layout()
 	get_tree().paused = true
 	resume_button.call_deferred("grab_focus")
 
 func _apply_accessibility_theme() -> void:
-	theme = Settings.build_ui_theme()
+	theme = PAUSE_THEME.build(Settings.ui_scale_factor())
+	_queue_layout()
+
+## Reflow only on open, resize or accessibility changes. No per-frame menu work.
+func _queue_layout() -> void:
+	if _layout_queued or not is_inside_tree(): return
+	_layout_queued = true
+	_layout_for_viewport.call_deferred()
+
+func _layout_for_viewport() -> void:
+	_layout_queued = false
+	if not is_node_ready(): return
+	var factor := Settings.ui_scale_factor()
+	var screen := get_viewport_rect().size
+	pause_card.custom_minimum_size = Vector2(minf(600*factor,maxf(1,screen.x-48)),minf(480*factor,maxf(1,screen.y-48)))
+	pause_content.add_theme_constant_override("separation",roundi(12*factor))
+	pause_crest.custom_minimum_size = Vector2(64,64)*factor
+	%PauseHeader.add_theme_constant_override("separation",roundi(16*factor))
+	%PauseActions.add_theme_constant_override("separation",roundi(10*factor))
+	for row in [%SaveLoadRow,%SettingsRow,%ExitRow]: row.add_theme_constant_override("separation",roundi(12*factor))
+	resume_button.custom_minimum_size.y = 54*factor
+	for button in [save_button,load_button,settings_button,developer_tools_button,main_menu_button,quit_button]:
+		button.custom_minimum_size.y = 44*factor
+	var focusable: Array[Button] = [resume_button,save_button,load_button,settings_button]
+	if developer_tools_button.visible: focusable.append(developer_tools_button)
+	focusable.append_array([main_menu_button,quit_button])
+	for i in focusable.size():
+		focusable[i].focus_next = focusable[i].get_path_to(focusable[(i+1)%focusable.size()])
+		focusable[i].focus_previous = focusable[i].get_path_to(focusable[posmod(i-1,focusable.size())])
 
 func close() -> void:
 	visible = false
@@ -162,6 +205,7 @@ func _perform_save() -> void:
 		_refresh_session_summary()
 	else:
 		status_label.text = "Falha ao salvar."
+	status_label.visible = true
 
 func _on_load_button_pressed() -> void:
 	load_game_screen.refresh()

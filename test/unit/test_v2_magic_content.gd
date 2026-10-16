@@ -4,10 +4,11 @@ extends GutTest
 ## As seis Escolas e a Transcendência estão conectadas (Fase 23). Mesmo espírito de
 ## test_v2_doctrine_content.gd.
 
-const SACRED_IDS := ["v2_magic_school_sacred", "v2_building_sacred_temple", "v2_unit_sacred_cleric", "v2_spell_restoring_light", "v2_spell_sacred_aegis", "v2_spell_healing_wave", "v2_spell_miracle", "v2_building_sacred_ritual", "v2_manifestation_seraph"]
-const INFERNAL_IDS := ["v2_magic_school_infernal", "v2_building_infernal_sanctum", "v2_unit_infernal_warlock", "v2_spell_infernal_flame", "v2_spell_devouring_fire", "v2_spell_infernal_blast", "v2_spell_damnation", "v2_building_infernal_ritual", "v2_manifestation_archdemon"]
-const SACRED_NAMES := ["Escola Sagrada", "Templo Sagrado", "Clérigo", "Luz Restauradora", "Égide Sagrada", "Onda de Cura", "Milagre", "Catedral Sagrada", "Serafim"]
-const SACRED_TYPES := ["school", "school_building", "caster", "spell", "spell", "spell", "spell", "ritual_building", "grand_manifestation"]
+## Ordem dos tiers 2..9 (o N1 de portão "Escola X" saiu: não liberava nada além do próprio N2).
+const SACRED_IDS := ["v2_building_sacred_temple", "v2_unit_sacred_cleric", "v2_spell_restoring_light", "v2_spell_sacred_aegis", "v2_spell_healing_wave", "v2_spell_miracle", "v2_building_sacred_ritual", "v2_manifestation_seraph"]
+const INFERNAL_IDS := ["v2_building_infernal_sanctum", "v2_unit_infernal_warlock", "v2_spell_infernal_flame", "v2_spell_devouring_fire", "v2_spell_infernal_blast", "v2_spell_damnation", "v2_building_infernal_ritual", "v2_manifestation_archdemon"]
+const SACRED_NAMES := ["Templo Sagrado", "Clérigo", "Luz Restauradora", "Égide Sagrada", "Onda de Cura", "Milagre", "Catedral Sagrada", "Serafim"]
+const SACRED_TYPES := ["school_building", "caster", "spell", "spell", "spell", "spell", "ritual_building", "grand_manifestation"]
 const MAGIC := V2ResearchNode.TreeType.MAGIC_SCHOOL
 
 var _players: Array[PlayerData] = []
@@ -30,22 +31,22 @@ func _player() -> PlayerData:
 func _sacred_nodes() -> Array[V2ResearchNode]:
 	return V2ResearchDatabase.nodes_for_branch(MAGIC, "sacred")
 
-func test_the_nine_sacred_nodes_keep_their_structural_ids_costs_and_prerequisites():
+func test_the_eight_sacred_nodes_keep_their_structural_ids_costs_and_prerequisites():
 	var nodes := _sacred_nodes()
-	assert_eq(nodes.size(), 9)
-	for i in 9:
+	assert_eq(nodes.size(), 8)
+	for i in 8:
 		var node := nodes[i]
-		assert_eq(node.id, "v2_magic_sacred_%d" % (i + 1))
-		assert_eq(node.tier, i + 1)
-		assert_eq(node.cost, V2ResearchDatabase.BRANCH_TIER_COSTS[i], "custo placeholder inalterado")
+		assert_eq(node.id, "v2_magic_sacred_%d" % (i + 2))
+		assert_eq(node.tier, i + 2)
+		assert_eq(node.cost, V2ResearchDatabase.BRANCH_TIER_COSTS[i + 1], "o custo do tier não mudou")
 		if i == 0:
-			assert_eq(node.prerequisites, [] as Array[String])
+			assert_eq(node.prerequisites, [] as Array[String], "o Templo é o início da linha")
 		else:
-			assert_eq(node.prerequisites, ["v2_magic_sacred_%d" % i] as Array[String])
+			assert_eq(node.prerequisites, ["v2_magic_sacred_%d" % (i + 1)] as Array[String])
 
 func test_canonical_names_unlock_ids_and_types():
 	var nodes := _sacred_nodes()
-	for i in 9:
+	for i in 8:
 		assert_eq(nodes[i].display_name, SACRED_NAMES[i])
 		assert_eq(nodes[i].unlock_id, SACRED_IDS[i])
 		assert_eq(nodes[i].unlock_type, SACRED_TYPES[i], nodes[i].id)
@@ -63,12 +64,10 @@ func test_six_schools_and_transcendence_are_connected():
 		else:
 			assert_false(node.gameplay_connected, node.id)
 			assert_true(node.is_placeholder, node.id)
-	assert_eq(connected, 54)
-	assert_eq(V2MagicContent.entries_for("infernal").size(), 9)
-	assert_eq(V2MagicContent.entries_for("necromancy").size(), 9)
-	assert_eq(V2MagicContent.entries_for("druidism").size(), 9)
-	assert_eq(V2MagicContent.entries_for("arcanism").size(), 9)
-	assert_eq(V2MagicContent.entries_for("elementalism").size(), 9)
+	assert_eq(connected, 48)
+	for school in ["sacred", "infernal", "necromancy", "druidism", "arcanism", "elementalism"]:
+		assert_eq(V2MagicContent.entries_for(school).size(), V2ResearchDatabase.nodes_for_branch(MAGIC, school).size(), "uma entrada por nó: %s" % school)
+		assert_eq(V2MagicContent.entries_for(school).size(), 8, school)
 
 func test_transcendence_is_the_connected_victory_capstone():
 	var node := V2ResearchDatabase.get_node(V2ResearchDatabase.TRANSCENDENCE_ID)
@@ -76,8 +75,10 @@ func test_transcendence_is_the_connected_victory_capstone():
 	assert_eq(node.unlock_id, V2MagicContent.TRANSCENDENCE_UNLOCK_ID)
 	assert_eq(node.requirement.branch_count, 2, "estrutura inalterada: duas Escolas")
 
-func test_connected_ids_are_exactly_the_fifty_five_and_unique_and_never_collide_with_v1():
-	assert_eq(V2MagicContent.CONNECTED_UNLOCK_IDS.size(), 55)
+func test_connected_ids_are_exactly_the_forty_nine_and_unique_and_never_collide_with_v1():
+	assert_eq(V2MagicContent.CONNECTED_UNLOCK_IDS.size(), 49)
+	for id in V2MagicContent.CONNECTED_UNLOCK_IDS:
+		assert_false(id.begins_with("v2_magic_school_"), "o marco de Escola (N1 retirado) não é mais um unlock: %s" % id)
 	var seen := {}
 	for id in V2MagicContent.CONNECTED_UNLOCK_IDS:
 		assert_false(seen.has(id), "único: %s" % id)
@@ -107,31 +108,30 @@ func test_tooltips_explain_real_effects_never_the_not_connected_notice():
 		var tooltip := V2ResearchDatabase.node_tooltip(node).replace("\n", " ")
 		assert_false(tooltip.contains(V2ResearchDatabase.GAMEPLAY_NOTICE), node.id)
 	var light := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.node_for_unlock_id("v2_spell_restoring_light")).replace("\n", " ")
-	assert_string_contains(light, "Gasta 4 Mana para curar 8 de Vida de uma unidade própria a até 2 tiles.")
+	assert_string_contains(light, "Gasta 5 Mana para curar 12 de Vida de uma unidade própria a até 2 tiles.")
 	var aegis := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.node_for_unlock_id("v2_spell_sacred_aegis")).replace("\n", " ")
-	assert_string_contains(aegis, "Gasta 6 Mana para conceder +35% Defesa")
-	assert_string_contains(aegis, "até o início do próximo turno do dono")
+	assert_string_contains(aegis, "Gasta 8 Mana para conceder +40% Defesa")
+	assert_string_contains(aegis, V2OwnerTurnEffect.DURATION_FOR_CASTER)
 	var wave := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.node_for_unlock_id("v2_spell_healing_wave")).replace("\n", " ")
-	assert_string_contains(wave, "Gasta 9 Mana para curar 6 de Vida do alvo")
+	assert_string_contains(wave, "Gasta 16 Mana para curar 12 de Vida do alvo")
 	assert_string_contains(wave, "unidades próprias adjacentes")
 	var miracle := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.node_for_unlock_id("v2_spell_miracle")).replace("\n", " ")
-	assert_string_contains(miracle, "Gasta 16 Mana para restaurar uma unidade própria")
+	assert_string_contains(miracle, "Gasta 36 Mana para restaurar ao máximo de Vida uma unidade própria")
 	assert_string_contains(miracle, "Recarga 5.")
 	var seraph := V2ResearchDatabase.node_tooltip(V2ResearchDatabase.node_for_unlock_id("v2_manifestation_seraph")).replace("\n", " ")
-	assert_string_contains(seraph, "100 PP + 60 Mana")
+	assert_string_contains(seraph, "84 PP + 120 Mana")
 
 func test_toasts_are_generic_by_type():
 	var player := _player()
 	GameManager.human_player = player
 	var expected := [
-		"Escola desbloqueada: Escola Sagrada.",
 		"Novo prédio mágico disponível: Templo Sagrado.",
 		"Novo conjurador disponível: Clérigo.",
 		"Novo feitiço disponível: Luz Restauradora.",
 	]
 	watch_signals(EventBus)
-	for i in 4:
-		assert_true(player.v2_research.complete_research("v2_magic_sacred_%d" % (i + 1)))
+	for i in 3:
+		assert_true(player.v2_research.complete_research("v2_magic_sacred_%d" % (i + 2)))
 	var texts: Array[String] = []
 	for i in get_signal_emit_count(EventBus, "notify"):
 		texts.append(String(get_signal_parameters(EventBus, "notify", i)[0]))
@@ -140,23 +140,25 @@ func test_toasts_are_generic_by_type():
 	assert_eq(V2UnlockSystem.announcement_text("ritual_building", "Catedral Sagrada"), "Nova estrutura ritual disponível: Catedral Sagrada.")
 	assert_eq(V2UnlockSystem.announcement_text("grand_manifestation", "Serafim"), "Grande Manifestação disponível: Serafim.")
 
-func test_n1_is_a_milestone_without_passive_bonus():
+## O antigo N1 ("Escola Sagrada") era só um marco sem bônus que travava o Templo: saiu. O Templo é o início da linha.
+func test_the_school_building_starts_the_line_without_a_milestone_gate():
 	var player := _player()
 	var mana_before := V2EconomyRuntime.player_mana_income(player)
-	player.v2_research.complete_research("v2_magic_sacred_1")
-	assert_eq(V2EconomyRuntime.player_mana_income(player), mana_before)
-	assert_true(player.has_unlocked("v2_magic_school_sacred"))
-	assert_false(player.has_unlocked("v2_building_sacred_temple"), "N1 sozinho não libera o Templo")
+	assert_null(V2ResearchDatabase.get_node("v2_magic_sacred_1"))
+	assert_true(player.v2_research.is_available("v2_magic_sacred_2"), "o Templo não exige pesquisa anterior")
+	assert_true(player.v2_research.complete_research("v2_magic_sacred_2"))
+	assert_true(player.has_unlocked("v2_building_sacred_temple"))
+	assert_eq(V2EconomyRuntime.player_mana_income(player), mana_before, "o Templo não produz Mana")
 
 func test_research_never_writes_v1_magic_state():
 	var player := _player()
-	for i in 9:
-		player.v2_research.complete_research("v2_magic_sacred_%d" % (i + 1))
+	for i in 8:
+		player.v2_research.complete_research("v2_magic_sacred_%d" % (i + 2))
 	assert_false("researched_magic" in player, "Fase 25: estado V1 removido")
 	assert_false("current_research" in player, "Fase 25: estado V1 removido")
 
 func test_unlock_types_have_labels():
-	for type in ["school", "school_building", "caster", "spell", "ritual_building", "grand_manifestation"]:
+	for type in ["school_building", "caster", "spell", "ritual_building", "grand_manifestation"]:
 		assert_true(type in V2UnlockSystem.CONNECTED_TYPES, type)
 		assert_ne(V2ResearchDatabase.unlock_type_label(type), type, "rótulo em português: %s" % type)
 

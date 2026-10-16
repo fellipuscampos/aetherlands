@@ -53,6 +53,19 @@ func test_noncritical_event_never_enters_banner_queue():
 	assert_null(presenter.current_event())
 	assert_false(presenter.visible)
 
+func test_shell_critical_event_has_one_alert_and_remains_in_history():
+	var shell := (load("res://scenes/ui/UIShell.tscn") as PackedScene).instantiate() as UIShell
+	add_child_autofree(shell)
+	var event := UIEventData.create("city_threatened", UIEventData.Category.CITY, UIEventData.Severity.CRITICAL, "City threatened")
+	event.with_target(Vector2i(2, 3), "city")
+	UIEvents.publish(event)
+	assert_eq(shell.critical_alerts.current_event(), event)
+	assert_eq(shell.toast_presenter.visible_toast_count(), 0)
+	assert_eq(UIEvents.get_history().size(), 1)
+	assert_eq(UIEvents.get_history()[0].target_coord, Vector2i(2, 3))
+	UIEvents.publish(UIEventData.create("production_completed", UIEventData.Category.PRODUCTION, UIEventData.Severity.INFO, "Production completed"))
+	assert_eq(shell.toast_presenter.visible_toast_count(), 1)
+
 func test_shell_drawers_are_mutually_exclusive_and_responsive():
 	var shell := (load("res://scenes/ui/UIShell.tscn") as PackedScene).instantiate() as UIShell
 	add_child_autofree(shell)
@@ -96,7 +109,7 @@ func test_war_has_event_banner_and_persistent_state_not_only_toast():
 	assert_eq(UIEvents.get_history().filter(func(event): return event.event_type == "war_declared").size(), 1)
 	assert_not_null(banner.current_event())
 	assert_eq(alerts.get_child_count(), 1)
-	Diplomacy.propose_peace(human, rival)
+	Diplomacy.make_peace(human, rival) # a regra de aceitar paz é testada em test_diplomacy.gd
 	alerts.refresh()
 	assert_eq(alerts.get_child_count(), 0)
 	GameManager.human_player = old_human

@@ -73,7 +73,7 @@ func _player(civ_name: String) -> PlayerData:
 	return player
 
 func _learn(player: PlayerData, branch: String = "necromancy", tier: int = 9) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		if not player.v2_research.is_completed("v2_magic_%s_%d" % [branch, i]):
 			assert_true(player.v2_research.complete_research("v2_magic_%s_%d" % [branch, i]))
 
@@ -171,10 +171,11 @@ func test_lich_adds_four_command_and_uses_the_shared_repertoire():
 	assert_eq(V2MagicRuntime.spells_for_unit(lich).map(func(spell): return spell.id), ["v2_spell_raise_dead", "v2_spell_mend_undead", "v2_spell_macabre_command", "v2_spell_raise_legion"])
 	assert_true(V2MagicRuntime.cast(lich, "v2_spell_raise_dead", Vector2i(1, 0)), "o Lich invoca")
 	assert_eq(V2RetinueSystem.command_used(human, SCHOOL), 1, "o Lich não ocupa o próprio comando")
-	assert_false(lich.unit_data.can_basic_attack)
+	assert_true(lich.unit_data.can_basic_attack)
 	var enemy := _unit("warrior", rival, Vector2i(-1, 0))
-	assert_false(CombatResolver.can_attack_unit(lich, enemy, grid), "sem ataque básico")
-	assert_eq(CombatResolver.predict(enemy, lich, grid).damage_to_attacker, 0.0, "sem revide")
+	lich.movement_left = lich.unit_data.movement_points
+	assert_true(CombatResolver.can_attack_unit(lich, enemy, grid), "ataque autônomo")
+	assert_gt(CombatResolver.predict(enemy, lich, grid).damage_to_attacker, 0.0, "a entidade agora revida")
 
 func test_lich_death_drops_capacity_without_killing_hosts():
 	_learn(human)
@@ -197,12 +198,12 @@ func test_mend_heals_the_lich_and_sacred_light_too():
 	var lich := _unit(LICH, human, Vector2i(1, 0))
 	lich.hp = 10.0
 	assert_true(V2MagicRuntime.cast(necromancer, "v2_spell_mend_undead", lich.coord))
-	assert_eq(lich.hp, 18.0)
+	assert_eq(lich.hp, 22.0)
 	assert_true(V2MagicRuntime.cast(cleric, "v2_spell_restoring_light", lich.coord))
-	assert_eq(lich.hp, 26.0, "a Sagrada cura qualquer unidade própria, inclusive undead")
+	assert_eq(lich.hp, 34.0, "a Sagrada cura qualquer unidade própria, inclusive undead")
 
 func test_lich_counters_dismantle_yes_legend_hunt_no():
-	for i in range(1, 7):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 7):
 		assert_true(rival.v2_research.complete_research("v2_doctrine_rogue_%d" % i))
 	var lich := _unit(LICH, human, Vector2i.ZERO)
 	var saboteur := _unit("v2_unit_saboteur", rival, Vector2i(1, 0))
@@ -241,30 +242,31 @@ func test_fail_closed_second_lich_never_spawns():
 	_learn(human)
 	a.production_item = LICH
 	b.production_item = LICH # estado inconsistente: as duas concluem no mesmo ciclo
+	human.mana = 400.0
 	_complete(a)
 	_complete(b)
 	assert_push_error("V2ManifestationSystem")
 	assert_eq(V2ManifestationSystem.active_units(human, SCHOOL).size(), 1)
-	assert_eq(human.mana, 200.0 - 65.0, "uma cobrança só")
+	assert_eq(human.mana, 400.0 - 130.0, "uma cobrança só")
 
 # --- Mana de produção (65) ------------------------------------------------------------------------------------------------
 
 func test_production_mana_battery():
 	var city := _ritual_city(human, Vector2i.ZERO)
 	_learn(human)
-	human.mana = 64.0
+	human.mana = 129.0
 	assert_false(city.can_train(LICH))
-	assert_eq(V2ManifestationSystem.training_soft_reason(human, city, LICH), "Requer 65 Mana.")
-	human.mana = 65.0
-	assert_true(city.can_train(LICH), "exatamente 65 inicia")
+	assert_eq(V2ManifestationSystem.training_soft_reason(human, city, LICH), "Requer 130 Mana.")
+	human.mana = 130.0
+	assert_true(city.can_train(LICH), "exatamente 130 inicia")
 	city.set_production(LICH)
-	assert_eq(human.mana, 65.0, "nada reservado")
+	assert_eq(human.mana, 130.0, "nada reservado")
 	human.mana = 10.0
 	_complete(city)
 	assert_eq(V2ManifestationSystem.active_units(human, SCHOOL).size(), 0, "espera a Mana")
 	assert_eq(city.production_item, LICH)
-	assert_eq(city.stored_production, 100.0, "PP travados no custo, sem perda")
-	assert_eq(city.production_waiting_for_mana(), 65)
+	assert_eq(city.stored_production, 84.0, "PP travados no custo, sem perda")
+	assert_eq(city.production_waiting_for_mana(), 130)
 	assert_false(V2ManifestationSystem.slot_available(human, SCHOOL, null), "slot reservado")
 	assert_true(SaveManager.save_game(grid, SAVE_PATH))
 	var loaded := HexGrid.new()
@@ -276,11 +278,11 @@ func test_production_mana_battery():
 	human = GameManager.human_player
 	var loaded_city: City = human.cities[0]
 	assert_eq(loaded_city.production_item, LICH, "a espera sobrevive ao load")
-	assert_eq(loaded_city.production_waiting_for_mana(), 65)
-	human.mana = 70.0
+	assert_eq(loaded_city.production_waiting_for_mana(), 130)
+	human.mana = 135.0
 	_complete(loaded_city)
 	assert_eq(V2ManifestationSystem.active_units(human, SCHOOL).size(), 1, "nasce")
-	assert_eq(human.mana, 5.0, "65 cobrados uma vez")
+	assert_eq(human.mana, 5.0, "130 cobrados uma vez")
 	_complete(loaded_city)
 	assert_eq(V2ManifestationSystem.active_units(human, SCHOOL).size(), 1, "sem conclusão dupla")
 

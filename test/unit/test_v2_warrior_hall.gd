@@ -9,31 +9,32 @@ func _apply_signals(player: PlayerData) -> Array:
 	player.v2_unlocks.unlock_applied.connect(func(node_id, unlock_type, unlock_id): seen.append([node_id, unlock_type, unlock_id]))
 	return seen
 
-# --- N1: a Doutrina -------------------------------------------------------------------------------------------------
+# --- Início da linha: o prédio de treino -------------------------------------------------------------------------------------------------
 
-func test_n1_only_establishes_the_line_and_opens_n2_with_no_bonus_of_its_own():
+## O antigo N1 ("Doutrina") era um portão sem efeito e saiu: a linha começa no prédio de treino, que não exige
+## pesquisa anterior, e concluí-lo aplica o desbloqueio do prédio direto — sem bônus global.
+func test_the_line_starts_at_the_training_building_without_a_doctrine_gate():
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
-	var gold := player.gold
-	var mana := player.mana
-	var units_before := player.units.size()
+	var before := [player.gold, player.mana, player.units.size()]
 	var seen := _apply_signals(player)
-	player.v2_research.complete_research("v2_doctrine_warrior_1")
-	assert_eq(seen, [["v2_doctrine_warrior_1", "doctrine", "v2_doctrine_warrior"]])
-	assert_eq(V2UnlockSystem.unlocked_ids(player), ["v2_doctrine_warrior"], "nenhum prédio, unidade ou técnica")
-	assert_eq([player.gold, player.mana, player.units.size()], [gold, mana, units_before], "sem bônus global")
-	assert_true(player.v2_research.is_available("v2_doctrine_warrior_2"))
-	assert_false(player.v2_research.is_available("v2_doctrine_warrior_3"))
-	assert_eq(V2UnlockSystem.announcement_text("doctrine", "Doutrina do Guerreiro"), "Doutrina desbloqueada: Doutrina do Guerreiro")
+	assert_null(V2ResearchDatabase.get_node("v2_doctrine_warrior_1"), "o N1 de portão não existe mais")
+	assert_true(player.v2_research.is_available("v2_doctrine_warrior_2"), "o prédio não exige pesquisa anterior")
+	assert_true(player.v2_research.complete_research("v2_doctrine_warrior_2"))
+	assert_eq(seen.size(), 1)
+	assert_eq(seen[0][0], "v2_doctrine_warrior_2")
+	assert_eq(seen[0][1], "building")
+	assert_false(V2UnlockSystem.is_unlocked(player, "v2_doctrine_warrior"), "o id da Doutrina não é mais um unlock")
+	assert_eq([player.gold, player.mana, player.units.size()], before, "sem bônus global")
+	assert_true(player.v2_research.is_available("v2_doctrine_warrior_3"))
 
 func test_every_warrior_node_applies_its_unlock_once_with_the_generic_type_table():
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
 	var seen := _apply_signals(player)
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		player.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 	assert_eq(seen, [
-		["v2_doctrine_warrior_1", "doctrine", "v2_doctrine_warrior"],
 		["v2_doctrine_warrior_2", "building", W_HALL],
 		["v2_doctrine_warrior_3", "unit", WARRIOR],
 		["v2_doctrine_warrior_4", "technique", POWER],

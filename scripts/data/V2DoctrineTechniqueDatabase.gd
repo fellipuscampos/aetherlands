@@ -302,7 +302,7 @@ static func _describe_relocation(technique: V2DoctrineTechniqueData) -> String:
 	var text := "Reposiciona a unidade em um tile livre à sua escolha, a até %d tiles" % technique.relocate_range
 	text += " (o custo do terreno não conta; terreno impassável e tiles ocupados continuam bloqueando)" if technique.relocate_flat_cost else ""
 	if technique.self_defense_bonus > 0.0:
-		text += "; ao chegar, +%d%% de Defesa até o início do seu próximo turno" % int(round(technique.self_defense_bonus * 100.0))
+		text += "; ao chegar, +%d%% de Defesa %s" % [int(round(technique.self_defense_bonus * 100.0)), V2OwnerTurnEffect.DURATION_FOR_CASTER]
 	return text + ". Consome a ação e o movimento da unidade; recarga de %d turnos." % technique.cooldown_turns
 
 static func _describe_strike(technique: V2DoctrineTechniqueData) -> String:
@@ -347,6 +347,6 @@ static func _describe(technique: V2DoctrineTechniqueData) -> String:
 		parts.append("+%d%% de Defesa na própria unidade" % int(round(technique.self_defense_bonus * 100.0)))
 	if technique.adjacent_ally_defense_bonus > 0.0:
 		parts.append("+%d%% nos aliados adjacentes" % int(round(technique.adjacent_ally_defense_bonus * 100.0)))
-	var text := "Postura defensiva: %s, até o início do seu próximo turno." % ", ".join(parts)
+	var text := "Postura defensiva: %s, %s." % [", ".join(parts), V2OwnerTurnEffect.DURATION_FOR_CASTER]
 	text += " Consome a ação e o movimento da unidade; recarga de %d turnos." % technique.cooldown_turns
 	return text

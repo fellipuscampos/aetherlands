@@ -55,6 +55,7 @@ var _original_current_save_slot: String
 
 func before_each():
 	_original_state = GameManager.state
+	GameManager.state = GameManager.GameState.PLAYING
 	_original_players = GameManager.players
 	_original_human_player = GameManager.human_player
 	_original_rival_players = GameManager.rival_players
@@ -121,7 +122,7 @@ func test_setup_players_clamps_rival_count_to_available_civs():
 
 	GameManager.setup_players(hex_grid)
 
-	assert_eq(GameManager.rival_players.size(), GameManager.RIVAL_CIVS.size())
+	assert_eq(GameManager.rival_players.size(), GameManager.MAX_RIVALS)
 
 	hex_grid.queue_free()
 
@@ -156,22 +157,102 @@ func test_setup_players_gives_each_rival_a_distinct_civ_name():
 
 	hex_grid.queue_free()
 
-## Cada rival e uma civilizacao de fantasia de verdade (anao/orc/elfo, ver
-## GameManager.RIVAL_CIVS), nao mais uma copia generica do reino do
-## jogador — setup_players() precisa copiar o campo `race` novo pro
-## CivilizationData de cada rival, senao RivalAI nunca desbloquearia a
-## tropa exclusiva de ninguem.
-func test_setup_players_gives_each_rival_the_race_from_rival_civs():
+## Cada rival e uma civilizacao de fantasia de verdade (ver GameManager.AI_CIVS), nao mais uma copia generica do
+## reino do jogador — setup_players() precisa copiar a raca pro CivilizationData de cada rival. Jogador humano (o
+## padrao): elfo, anao e orc, nesta ordem, como sempre foi.
+func test_setup_players_gives_each_rival_the_race_from_ai_civs():
 	var hex_grid := HexGrid.new()
 	hex_grid._ready()
 	GameManager.rival_count = 3
 
 	GameManager.setup_players(hex_grid)
 
-	for i in range(GameManager.rival_players.size()):
-		assert_eq(GameManager.rival_players[i].civ.race, GameManager.RIVAL_CIVS[i].race)
-		assert_ne(GameManager.rival_players[i].civ.race, "", "todo rival do pool atual deveria ter uma raca de fantasia")
+	assert_eq(GameManager.rival_players.map(func(rival): return rival.civ.race), ["elf", "dwarf", "orc"])
+	for rival in GameManager.rival_players:
+		assert_eq(rival.civ.civ_name, GameManager.AI_CIVS[rival.civ.race].name)
 
+	hex_grid.queue_free()
+
+## Relato do usuario 2026-10-12: "os jogadores inimigos nunca sao humanos, tipo se eu escolho elfos, o jogo tem eu como
+## elfo, uma ia elfo, orcs e anoes, se escolho orc tem 2 orcs, 1 elfo e 1 anao, nunca tem humanos, eles devem ser a ia
+## tambem, pra nunca repetir uma civ".
+func test_rivals_are_always_the_races_the_player_did_not_pick():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var original_race: String = GameManager.human_race
+	GameManager.rival_count = 3
+	for player_race in GameManager.RACES:
+		GameManager.human_race = player_race
+
+		GameManager.setup_players(hex_grid)
+
+		var races: Array = GameManager.players.map(func(player): return player.civ.race)
+		assert_eq(races.size(), 4)
+		for race in GameManager.RACES:
+			assert_eq(races.count(race), 1, "jogador %s: exatamente uma civilizacao %s na partida" % [player_race, race])
+		assert_eq(races[0], player_race)
+		if player_race != "human":
+			assert_eq(GameManager.rival_players[0].civ.race, "human", "o reino humano e a IA quando o jogador nao e humano")
+	GameManager.human_race = original_race
+	hex_grid.queue_free()
+
+func test_fewer_rivals_still_never_repeat_the_player_race():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var original_race: String = GameManager.human_race
+	for player_race in GameManager.RACES:
+		for count in [1, 2]:
+			GameManager.human_race = player_race
+			GameManager.rival_count = count
+
+			GameManager.setup_players(hex_grid)
+
+			var rival_races: Array = GameManager.rival_players.map(func(rival): return rival.civ.race)
+			assert_eq(rival_races.size(), count)
+			assert_false(player_race in rival_races, "jogador %s com %d rival(is)" % [player_race, count])
+			assert_eq(rival_races, Array(GameManager.rival_races_for(player_race).slice(0, count)))
+	GameManager.human_race = original_race
+	hex_grid.queue_free()
+
+## Toda civilizacao da partida se distingue no mapa (borda de territorio, base da unidade, minimapa): nomes e cores
+## diferentes entre si, do azul do jogador e do vermelho-escuro dos monstros.
+func test_every_civilization_in_a_match_has_its_own_name_and_colour():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var original_race: String = GameManager.human_race
+	GameManager.rival_count = 3
+	for player_race in GameManager.RACES:
+		GameManager.human_race = player_race
+		GameManager.human_kingdom_name = ""
+
+		GameManager.setup_players(hex_grid)
+
+		var names := {}
+		for player in GameManager.players:
+			names[player.civ.civ_name] = true
+		assert_eq(names.size(), 4, "jogador %s: quatro nomes de reino diferentes" % player_race)
+		var colours: Array = GameManager.players.map(func(player): return player.civ.color)
+		colours.append(Unit.MONSTER_COLOR)
+		for a in colours.size():
+			for b in range(a + 1, colours.size()):
+				var distance := Vector3(colours[a].r - colours[b].r, colours[a].g - colours[b].g, colours[a].b - colours[b].b).length()
+				# 0.15: o par mais próximo hoje é anão × orc (0.18) — cores anteriores a este teste, mantidas.
+				assert_gt(distance, 0.15, "jogador %s: cores %d e %d se confundem" % [player_race, a, b])
+	GameManager.human_race = original_race
+	hex_grid.queue_free()
+
+## O load recria o elenco que estava no save (SaveManager passa as racas salvas), sem rederivar da raca do jogador.
+func test_setup_players_recreates_an_explicit_rival_roster():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	var original_race: String = GameManager.human_race
+	GameManager.human_race = "elf"
+	GameManager.rival_count = 3
+
+	GameManager.setup_players(hex_grid, GameManager.LEGACY_RIVAL_RACES)
+
+	assert_eq(GameManager.rival_players.map(func(rival): return rival.civ.race), ["elf", "dwarf", "orc"], "o elenco pedido, mesmo repetindo a raca do jogador")
+	GameManager.human_race = original_race
 	hex_grid.queue_free()
 
 ## GameManager.human_race defaults pra "human" (ex: um teste que chama
@@ -315,9 +396,9 @@ func test_set_debug_mode_only_toggles_the_flag_and_never_touches_research():
 
 func test_debug_complete_current_research_finishes_the_active_research():
 	GameManager.human_player = _track_player(CivilizationData.new())
-	assert_true(GameManager.human_player.v2_research.select_research("v2_doctrine_guardian_1"))
+	assert_true(GameManager.human_player.v2_research.select_research("v2_doctrine_guardian_2"))
 	GameManager.debug_complete_current_research()
-	assert_true(GameManager.human_player.v2_research.is_completed("v2_doctrine_guardian_1"))
+	assert_true(GameManager.human_player.v2_research.is_completed("v2_doctrine_guardian_2"))
 	assert_eq(GameManager.human_player.v2_research.active_id, "")
 
 func test_debug_complete_current_research_does_nothing_without_an_active_research():
@@ -352,6 +433,7 @@ func test_debug_mode_completes_city_production_in_one_turn():
 	GameManager.players = [GameManager.human_player, rival]
 	hex_grid.found_city(rival_coord, rival, "Capital Rival")
 	var city = hex_grid.found_city(coord, GameManager.human_player, "Capital")
+	GameManager.human_player.v2_research.complete_research("v2_infrastructure_colonization_1") # o Colono exige a linha de Colonização
 	city.set_production("settler") # Colonizador nao depende de predio nenhum
 	GameManager.set_debug_mode(true)
 
@@ -548,6 +630,39 @@ func test_spawn_starting_forces_never_places_two_civs_on_the_same_tile():
 
 	hex_grid.queue_free()
 
+## Toda civilização começa com Colonizador (o rival já o gasta fundando a capital) + Escudeiro + Guerreiro
+## básicos, cada um com o modelo da própria raça — o antigo Guarda ("warrior") não nasce mais.
+func test_every_civilization_starts_with_a_race_shieldbearer_and_warrior():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	hex_grid.generate_map(13, 13, 555)
+	GameManager.map_width = 13
+	GameManager.map_height = 13
+	GameManager.rival_count = 3
+	GameManager.human_race = "dwarf"
+
+	GameManager.start_new_game(hex_grid)
+
+	var players: Array = [GameManager.human_player]
+	players.append_array(GameManager.rival_players)
+	for player: PlayerData in players:
+		var kinds := []
+		for unit in player.units:
+			kinds.append(unit.unit_data.visual_kind)
+			var model_path := UnitArtCatalog.model_path(unit.unit_data.visual_kind, player.civ.race)
+			if model_path != "":
+				assert_eq(unit.unit_data.model_scene_path, model_path, "%s veste a arte %s" % [unit.unit_data.visual_kind, player.civ.race])
+		kinds.sort()
+		var expected := ["settler", "v2_unit_shieldbearer", "v2_unit_warrior"] if player == GameManager.human_player else ["v2_unit_shieldbearer", "v2_unit_warrior"]
+		assert_eq(kinds, expected, player.civ.civ_name)
+		var coords := {}
+		for unit in player.units:
+			coords[unit.coord] = true
+		assert_eq(coords.size(), player.units.size(), "cada unidade inicial em um tile próprio")
+	assert_eq(GameManager.human_player.civ.race, "dwarf")
+
+	hex_grid.queue_free()
+
 ## O pipeline inteiro de comecar um jogo novo (gerar mapa + espalhar
 ## civs) precisa continuar funcionando no tamanho Grande (96x60, 5760
 ## tiles — pedido do usuario com as dimensoes exatas do Civilization, e
@@ -579,7 +694,7 @@ func test_start_new_game_works_at_the_large_map_size():
 ## Principal, num canvas total bem maior — civs (humano + rivais) sempre
 ## precisam nascer dentro da zona Principal mesmo assim, nunca no gap de
 ## oceano nem dentro de um continente especial. GameManager._rival_origin
-## trava na pegada FIXA (TitleScreen.MAIN_ZONE_SIZE), nao no canvas total.
+## trava na AREA RESERVADA do tamanho (WorldProfile.main_frame), nao no canvas total.
 func test_start_new_game_at_large_size_keeps_civs_inside_the_main_zone():
 	var hex_grid := HexGrid.new()
 	hex_grid._ready()
@@ -703,37 +818,8 @@ func test_event_rng_stays_reproducible_regardless_of_ai_rng_activity_in_real_tur
 
 	setup.hex_grid.queue_free()
 
-## --- Roadmap "Fase Macro" 5B.2: participacao (humano + IA) ---------------
-
-func test_respond_to_world_event_records_the_humans_decision():
-	var setup = _setup_minimal_hex_grid_with_one_rival()
-	var event := DragonEvent.new()
-	event.phase = WorldEvent.PHASE_PREPARATION
-	WorldEventManager.register_event(event)
-
-	var recorded := GameManager.respond_to_world_event(true)
-
-	assert_true(recorded)
-	var human_index: int = GameManager.players.find(GameManager.human_player)
-	assert_eq(event.participants.get(human_index), {"decision": true})
-	setup.hex_grid.queue_free()
-
-func test_respond_to_world_event_returns_false_without_an_eligible_event():
-	var setup := _setup_minimal_hex_grid_with_one_rival()
-	assert_false(GameManager.respond_to_world_event(true), "sem evento nenhum em Preparation, nao deveria haver nada pra responder")
-	setup.hex_grid.queue_free()
-
-func test_respond_to_world_event_does_not_overwrite_an_existing_decision():
-	var setup = _setup_minimal_hex_grid_with_one_rival()
-	var event := DragonEvent.new()
-	event.phase = WorldEvent.PHASE_PREPARATION
-	WorldEventManager.register_event(event)
-	var human_index: int = GameManager.players.find(GameManager.human_player)
-	event.participants[human_index] = {"decision": false}
-
-	assert_false(GameManager.respond_to_world_event(true), "ja havia uma decisao registrada -- nao deveria haver nada NOVO pra responder")
-	assert_eq(event.participants[human_index], {"decision": false})
-	setup.hex_grid.queue_free()
+## --- Roadmap "Fase Macro" 5B.2: a IA decide se manda uma força à caçada ---------------
+## (2026-10-13: o jogador não é mais perguntado — o Dragão ataca os reinos por onde passa; ver test_hud.gd.)
 
 ## Integracao: _finish_turn() precisa consultar RivalAI.decide_world_event_
 ## participation pra cada rival, nao so o humano via UI futura.
@@ -862,3 +948,73 @@ func test_end_match_calls_hex_grid_reset_to_empty():
 	hex_grid.queue_free()
 	if is_instance_valid(unit):
 		unit.queue_free()
+
+## ORDENS PERMANENTES NA TROCA DE TURNO (2026-10-10, relato do usuario: "ele fica preso nessa rota sem eu poder
+## atacar... o proximo turno ja ta marcando pra andar"). A marcha/Explorar gastam o movimento que SOBROU do turno
+## que esta acabando (HexGrid.run_standing_orders ANTES de reset_movement) — antes gastavam o movimento do turno
+## NOVO antes de o jogador ter controle, e a unidade chegava em todo turno dele com 0 de movimento.
+func _grass_strip(hex_grid: HexGrid, r: int, length: int) -> void:
+	for q in range(0, length):
+		hex_grid.tiles[Vector2i(q, r)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+
+func test_a_pending_march_leaves_the_unit_fresh_on_the_players_turn_and_walks_when_the_turn_ends():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	var hex_grid: HexGrid = setup.hex_grid
+	GameManager.stagger_ai_turns = false
+	_grass_strip(hex_grid, 4, 9)
+	var warrior := hex_grid.spawn_unit(Vector2i(0, 4), UnitDatabase.create_unit("warrior"), GameManager.human_player) # 2 de movimento
+	warrior.move_order_target = Vector2i(8, 4)
+	hex_grid.continue_move_order(warrior) # o clique: anda o que da ja neste turno
+	assert_eq(warrior.coord, Vector2i(2, 4))
+	assert_eq(warrior.movement_left, 0.0)
+
+	GameManager._on_turn_changed(0, 0) # encerra o turno do clique: nao sobrou movimento, ninguem anda
+
+	assert_eq(warrior.coord, Vector2i(2, 4), "o movimento do turno NOVO nao e gasto antes de o jogador jogar")
+	assert_eq(warrior.movement_left, 2.0, "no turno do jogador a unidade esta inteira: pode atacar ou ser redirecionada")
+	assert_eq(warrior.move_order_target, Vector2i(8, 4), "e a ordem continua pendente")
+
+	GameManager._on_turn_changed(0, 0) # o jogador nao mexeu nela: a marcha anda ao encerrar o turno
+
+	assert_eq(warrior.coord, Vector2i(4, 4), "mesmo ritmo de sempre: o movimento de um turno por turno")
+	assert_eq(warrior.movement_left, 2.0, "e ela comeca o turno seguinte inteira de novo")
+
+	hex_grid.queue_free()
+
+func test_a_unit_that_acted_this_turn_keeps_its_order_but_does_not_march_on_top_of_the_action():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	var hex_grid: HexGrid = setup.hex_grid
+	GameManager.stagger_ai_turns = false
+	_grass_strip(hex_grid, 4, 9)
+	var warrior := hex_grid.spawn_unit(Vector2i(0, 4), UnitDatabase.create_unit("warrior"), GameManager.human_player)
+	warrior.move_order_target = Vector2i(8, 4)
+	warrior.movement_left = 1.0 # gastou parte do turno (ex.: a marcha foi interrompida por um inimigo)
+
+	GameManager._on_turn_changed(0, 0)
+
+	assert_eq(warrior.coord, Vector2i(1, 4), "anda so o que sobrou do turno que acabou")
+	assert_eq(warrior.movement_left, 2.0)
+
+	hex_grid.queue_free()
+
+func test_exploring_also_waits_for_the_end_of_the_players_turn():
+	var setup = _setup_minimal_hex_grid_with_one_rival()
+	var hex_grid: HexGrid = setup.hex_grid
+	GameManager.stagger_ai_turns = false
+	_grass_strip(hex_grid, 4, 9)
+	var scout := hex_grid.spawn_unit(Vector2i(0, 4), UnitDatabase.create_unit("warrior"), GameManager.human_player)
+	scout.exploring = true
+	scout.movement_left = 0.0 # ja explorou neste turno
+
+	GameManager._on_turn_changed(0, 0)
+
+	assert_eq(scout.coord, Vector2i(0, 4), "nao gasta o movimento do turno novo antes do jogador")
+	assert_eq(scout.movement_left, 2.0)
+	assert_true(scout.exploring)
+
+	GameManager._on_turn_changed(0, 0)
+
+	assert_ne(scout.coord, Vector2i(0, 4), "sem ordem nova, explora ao encerrar o turno")
+	assert_eq(scout.movement_left, 2.0)
+
+	hex_grid.queue_free()

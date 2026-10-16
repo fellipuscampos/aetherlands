@@ -1,5 +1,10 @@
 extends GutTest
 
+## Explicit fixture for unavailable wall art after all four races have models.
+class ProceduralWallCity extends City:
+	func _add_fortification_model() -> bool:
+		return false
+
 var _owned_players: Array[PlayerData] = []
 
 func _track_player(civ: CivilizationData) -> PlayerData:
@@ -167,8 +172,10 @@ func test_can_build_requires_the_owner_research():
 ## Fase 25: fora da progressão V2 só o Colonizador é treinável (UnitDatabase.CORE_TRAINABLE_KINDS),
 ## sem prédio; nenhuma tropa V1 abre fila, nem com o prédio V1 vestigial presente.
 func test_can_train_settler_never_requires_a_building():
-	var city := City.new()
-	assert_true(city.can_train("settler"))
+	var city := _owned_city()
+	assert_false(city.can_train("settler"), "sem a linha de Colonização, nenhum Colono (2026-10-09)")
+	city.owner_player.v2_research.complete_research("v2_infrastructure_colonization_1")
+	assert_true(city.can_train("settler"), "com a pesquisa, nenhum prédio é exigido")
 	city.queue_free()
 
 func test_v1_troops_are_never_trainable():
@@ -205,7 +212,7 @@ func test_max_hp_follows_city_level_not_population():
 	var hp_at_pop_1 = city.max_hp()
 	assert_eq(city.max_hp(), hp_at_pop_1, "população não muda a vida da cidade")
 	city.city_level = 3
-	assert_eq(city.max_hp(), 36.0, "cidade mais desenvolvida é mais difícil de arrasar")
+	assert_eq(city.max_hp(), 46.0, "cidade mais desenvolvida é mais difícil de arrasar")
 	city.queue_free()
 
 func test_max_shield_is_zero_without_walls_built():
@@ -526,17 +533,63 @@ func test_is_valid_building_tile_rejects_ocean():
 	hex_grid.queue_free()
 	city.queue_free()
 
-func test_is_valid_building_tile_rejects_tile_occupied_by_unit():
+## Pedido do usuario: "nao da pra construir em um tile se tiver uma tropa em
+## cima, seja monstro, inimigo ou aliado... quero que a construcao
+## funcione". Unidade nunca ocupou o tile pra efeito de predio (ja podia
+## andar pra cima de uma obra em andamento) — a trava so existia no clique.
+func test_is_valid_building_tile_accepts_tile_occupied_by_any_unit():
 	var hex_grid := _make_ring_hex_grid(Vector2i(0, 0))
-	var target = HexGrid.NEIGHBOR_DIRS[0]
 	var human := _track_player(CivilizationData.new())
+	var rival := _track_player(CivilizationData.new())
+	var city := City.new()
+	city.coord = Vector2i(0, 0)
+	city.owner_player = human
+	var units: Array[Unit] = []
+	var owners := {"aliada": human, "inimiga": rival, "monstro neutro": null}
+	var index := 0
+	for label in owners:
+		var target: Vector2i = HexGrid.NEIGHBOR_DIRS[index]
+		index += 1
+		var unit := Unit.new()
+		unit.setup(UnitDatabase.create_unit("warrior"), owners[label], target)
+		hex_grid.units_by_coord[target] = unit
+		units.append(unit)
+
+		assert_true(city.is_valid_building_tile(target, hex_grid), "unidade %s em cima nao deveria impedir a construcao" % label)
+
+	hex_grid.queue_free()
+	city.queue_free()
+	for unit in units:
+		unit.queue_free()
+
+## A obra concluir com uma tropa parada em cima e' o caso normal agora: o
+## predio nasce no tile escolhido e a tropa continua la, intacta.
+func test_building_completes_under_a_unit_standing_on_the_site():
+	var hex_grid := _make_ring_hex_grid(Vector2i(0, 0))
+	var target: Vector2i = HexGrid.NEIGHBOR_DIRS[0]
+	var human := _track_player(CivilizationData.new())
+	var city := City.new()
+	city.coord = Vector2i(0, 0)
+	city.owner_player = human
 	var unit := Unit.new()
 	unit.setup(UnitDatabase.create_unit("warrior"), human, target)
 	hex_grid.units_by_coord[target] = unit
-	var city := City.new()
-	city.coord = Vector2i(0, 0)
+	var hp_before := unit.hp
+	city.set_production("v2_building_guardian_hall")
+	city.pending_building_coord = target
 
-	assert_false(city.is_valid_building_tile(target, hex_grid))
+	var result := {}
+	for i in range(20):
+		result = city.process_turn(hex_grid)
+		if result.built_kind != "":
+			break
+	assert_eq(result.built_coord, target, "a obra conclui mesmo com a tropa em cima")
+	var building := hex_grid.place_building(result.built_coord, result.built_kind, human)
+
+	assert_eq(hex_grid.get_building_at(target), building)
+	assert_eq(hex_grid.get_unit_at(target), unit, "a tropa continua no tile")
+	assert_eq(unit.hp, hp_before)
+	assert_false(city.is_valid_building_tile(target, hex_grid), "tile com predio pronto continua barrado, com ou sem tropa")
 
 	hex_grid.queue_free()
 	city.queue_free()
@@ -657,8 +710,10 @@ func test_process_turn_completes_the_fortification_project_and_refreshes_the_wal
 ## centralizados no APOTEMA (meio de cada aresta) + 6 pilares de canto
 ## EXATAMENTE nos vertices (HexMetrics.corner), fechando as juntas.
 func test_walls_visual_forms_a_closed_hexagon_of_segments_and_corner_pillars():
-	var human := _track_player(CivilizationData.new())
-	var city := City.new()
+	var fallback_civ := CivilizationData.new()
+	fallback_civ.race = "dwarf"
+	var human := _track_player(fallback_civ)
+	var city := ProceduralWallCity.new()
 	city.setup(human, Vector2i(0, 0), "Capital") # tile_radius default 1.0
 	city.fortification_level = 1
 	city._build_visual_procedural()
@@ -737,7 +792,9 @@ func test_walls_visual_scales_with_the_real_tile_hex_size():
 	hex_grid.hex_size = 2.0 # tile bem maior que o default (1.0)
 	var coord := Vector2i(0, 0)
 	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
-	var human := _track_player(CivilizationData.new())
+	var fallback_civ := CivilizationData.new()
+	fallback_civ.race = "dwarf"
+	var human := _track_player(fallback_civ)
 
 	var city = hex_grid.found_city(coord, human, "Capital")
 	city.fortification_level = 1
@@ -745,15 +802,10 @@ func test_walls_visual_scales_with_the_real_tile_hex_size():
 
 	assert_almost_eq(city.tile_radius, 2.0, 0.01, "tile_radius deveria vir do hex_size real do HexGrid, nao ficar preso no default 1.0")
 
-	var expected_apothem = (2.0 * City.WALL_RADIUS_FACTOR) * 0.8660254
-	var found_segment_at_expected_radius = false
-	for child in city._buildings_root.get_children():
-		if child is MeshInstance3D and child.mesh is BoxMesh:
-			var dist_from_center = Vector2(child.position.x, child.position.z).length()
-			if is_equal_approx(dist_from_center, expected_apothem):
-				found_segment_at_expected_radius = true
-				break
-	assert_true(found_segment_at_expected_radius, "muralha deveria acompanhar o hex_size 2.0, nao ficar presa numa escala fixa pequena")
+	var walls := city._buildings_root.get_node_or_null("FortificationModel") as Node3D
+	assert_not_null(walls)
+	assert_eq(walls.scale,Vector3(2,2,2),"Wall art follows the real grid tile size")
+	assert_eq(walls.scene_file_path,BuildingArtCatalog.fortification_model_path(1,"dwarf"))
 
 	hex_grid.queue_free()
 
@@ -768,20 +820,18 @@ func test_found_city_clears_tree_prop_planted_on_its_own_tile():
 	var coord := Vector2i(0, 0)
 	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.FOREST)
 
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.instance_count = 1
-	mm.set_instance_transform(0, Transform3D(Basis(), Vector3.ONE))
-	var mm_instance := MultiMeshInstance3D.new()
-	mm_instance.multimesh = mm
-	hex_grid.add_child(mm_instance)
-	hex_grid._props_tree_instance = mm_instance
-	hex_grid._tree_coord_to_index[coord] = [0]
+	# Vegetação real do kit composta no tile (a primeira seed em que a floresta não sorteou "vazio").
+	for map_seed in 32:
+		hex_grid.map_seed = map_seed
+		hex_grid.nature_decor.refresh_tile(coord)
+		if hex_grid.nature_decor.has_decor(coord):
+			break
+	assert_true(hex_grid.nature_decor.has_decor(coord), "pré-condição: o tile de floresta tem vegetação")
 
 	var human := _track_player(CivilizationData.new())
 	hex_grid.found_city(coord, human, "Capital")
 
-	assert_false(hex_grid._tree_coord_to_index.has(coord), "arvore nao deveria continuar registrada no tile da cidade nova")
+	assert_false(hex_grid.nature_decor.has_decor(coord), "arvore nao deveria continuar registrada no tile da cidade nova")
 
 	hex_grid.queue_free()
 

@@ -60,7 +60,7 @@ func test_role_and_traits_are_orthogonal_griffon_rider_example():
 	var griffon := UnitDatabase.create_unit("v2_legendary_griffon_rider")
 	assert_eq(V2UnitLine.role_of("v2_legendary_griffon_rider"), "mobility_shock")
 	assert_true(griffon.has_trait(UnitData.TRAIT_MOUNTED))
-	assert_true(griffon.is_flying())
+	assert_false(griffon.is_flying(), "sem voo desde 2026-10-10")
 	assert_true(griffon.has_trait(UnitData.TRAIT_LEGENDARY))
 
 func test_role_and_traits_are_orthogonal_colossus_example():

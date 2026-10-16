@@ -189,7 +189,7 @@ func test_plan_uses_single_research_slot_and_real_runtime_progress():
 func test_active_research_with_high_progress_survives_moderate_emergency():
 	var rival := _install_world(1)[0]
 	grid.found_city(Vector2i.ZERO, rival, "AI", true)
-	var active := "v2_doctrine_guardian_1"
+	var active := "v2_doctrine_guardian_2"
 	var preserved_progress := V2ResearchDatabase.get_node(active).cost * 0.75
 	assert_true(rival.v2_research.select_research(active))
 	rival.v2_research.add_knowledge(preserved_progress)

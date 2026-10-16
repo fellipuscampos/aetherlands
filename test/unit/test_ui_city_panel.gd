@@ -133,7 +133,7 @@ func test_city_panel_is_tabbed_not_a_monolithic_list():
 	assert_eq(panel.tabs.keys(), ["overview", "production", "structures", "territory", "defense"])
 	panel.tabs.button_for("production").pressed.emit()
 	assert_eq(panel.current_tab, "production")
-	assert_not_null(panel.body.get_node_or_null("CatalogTabs"))
+	assert_not_null(panel.production_summary.get_node_or_null("CatalogTabs"), "Production category tabs stay above the scrolling catalog")
 
 # --- Produção ----------------------------------------------------------------------------
 

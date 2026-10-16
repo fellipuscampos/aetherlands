@@ -12,54 +12,75 @@ extends RefCounted
 ## referencia pro HexGrid dono (nao extends Node — nao precisa de posicao
 ## propria na arvore de cena, so usa hex_grid pra ler tiles/world_for_coord
 ## e pra `add_child()` os MultiMeshInstance3D, e pra reusar
-## HexGrid._sepia_prop_color no fog, evitando duplicar aquela formula).
+## HexGrid._memory_prop_color no fog, evitando duplicar aquela formula).
 var _hex_grid: HexGrid
 
-## 1 malha composta por recurso (SurfaceTool, varias formas simples numa
-## unica superficie com cor por vertice — mesma tecnica de HexGrid.
-## _build_tree_mesh), construida so UMA VEZ (geometria e sempre a mesma,
-## independente de quantos tiles tem aquele recurso).
+## Uma malha por recurso, preparada uma vez a partir dos GLBs do Blender,
+## conservando os atlas pixelados dos modelos.
 var _meshes: Dictionary = {} # resource_kind (String) -> ArrayMesh
 
 var _instances: Dictionary = {} # resource_kind -> MultiMeshInstance3D
 var _coord_to_index: Dictionary = {} # resource_kind -> Dictionary[Vector2i, Array[int]]
 
-## "Cavalos": pedido do usuario ("faça um modelo de cavalo pra usar nos
-## tiles com o recurso cavalo", explicitamente pela pipeline de verdade
-## em vez do box cru direto em GDScript que os outros recursos usam) —
-## unico recurso cujo modelo vem de um .glb exportado pela Asset Factory
-## (tools/asset_factory/generate_horse.py), nao de SurfaceTool aqui. Nao
-## da pra reusar o MultiMeshInstance3D dos outros recursos (_instances
-## acima): aquele caminho troca o material do mesh INTEIRO por um so
-## flat (`vertex_color_use_as_albedo`), que apagaria as cores/materiais
-## de verdade exportados no .glb. Uma instancia de cena de verdade por
-## tile (mesmo padrao de Unit/City/Building) preserva os materiais
-## originais -- ver _spawn_horse_instance/apply_fog abaixo pro
-## equivalente de fog-of-war feito na mao (sepia via material override
-## por superficie, ja que um Node3D comum nao tem "modulate" como um
-## MultiMesh tem cor por instancia).
-const HORSE_SCENE_PATH := "res://assets/generated/resources/horses/horses.glb"
-## Modelo exportado em escala REAL de cavalo (~1.7m) pra ficar facil de
-## modelar certo no Blender -- decoracao de tile precisa ser bem menor
-## que isso (do tamanho das outras, gemas/minerio/seda ocupam so uma
-## fracao pequena do tile), daí o downscale aqui em vez de remodelar
-## tudo em escala de brinquedo desde o inicio.
-const HORSE_SCALE := 0.35
+## Cavalos conservam uma instância de cena por tile e seus materiais
+## originais. Sua névoa usa overrides por superfície; os demais recursos
+## usam uma malha texturizada em MultiMesh, com cor por instância.
+const HORSE_SCENE_PATH := "res://assets/generated/resources/horses/horse_resource_v1/horse_resource_v1.glb"
+const CRYSTAL_SCENE_PATH := "res://assets/generated/resources/crystals/crystal_cluster_v1/crystal_cluster_v1.glb"
+const MANA_NODE_SCENE_PATH := "res://assets/generated/resources/arcane_node/arcane_node_v1/arcane_node_v1.glb"
+const IRON_SCENE_PATH := "res://assets/generated/resources/iron/iron_outcrop_v1/iron_outcrop_v1.glb"
+const SILK_SCENE_PATH := "res://assets/generated/resources/silk/silk_mulberry_v1/silk_mulberry_v1.glb"
+## Recursos que BRILHAM (pedido do usuário 2026-10-12: "ponha o cristal e o nódulo arcano para terem um certo brilho,
+## que ilumine inclusive o mapa"): recurso -> perfil de GlowProfiles. Todo o efeito vem de HexGrid.world_glow
+## (WorldGlow) — a luz de cada tile (grupo GLOW_GROUP, chave = coord) e o material com emissão; aqui só se decide QUEM
+## brilha e quando aparece (névoa de guerra, apply_fog). Para outro recurso brilhar, basta uma linha nesta tabela.
+const GLOW_PROFILE_BY_KIND := {
+	"gems": GlowProfiles.AMETHYST,
+	"mana_node": GlowProfiles.ARCANE,
+}
+const GLOW_GROUP := &"resources"
+## Cavalo do Cavaleiro humano, já reduzido a 35% no asset de recurso.
+const HORSE_SCALE := 1.0
 var _horse_scene: PackedScene
 var _horse_instances: Dictionary = {} # Vector2i -> Node3D
-## Vector2i -> Array[{mesh: MeshInstance3D, surface: int, sepia: Material}]
+## Vector2i -> Array[{mesh: MeshInstance3D, surface: int, memory: Material}]
 ## -- precomputado UMA vez no spawn (nao a cada apply_fog) pra so trocar
 ## o material override na hora de tingir, nunca duplicar material em
 ## tempo real durante o jogo.
-var _horse_sepia_overrides: Dictionary = {}
+var _horse_memory_overrides: Dictionary = {}
 
 func _init(hex_grid: HexGrid) -> void:
 	_hex_grid = hex_grid
-	_meshes["iron"] = _build_iron_mesh()
-	_meshes["gems"] = _build_gems_mesh()
-	_meshes["silk"] = _build_silk_mesh()
-	_meshes["mana_node"] = _build_mana_node_mesh()
+	_meshes["iron"] = _load_resource_mesh(IRON_SCENE_PATH)
+	_meshes["gems"] = _load_resource_mesh(CRYSTAL_SCENE_PATH)
+	_meshes["silk"] = _load_resource_mesh(SILK_SCENE_PATH)
+	_meshes["mana_node"] = _load_resource_mesh(MANA_NODE_SCENE_PATH)
 	_horse_scene = load(HORSE_SCENE_PATH)
+
+## Bake the GLB node transforms once, keeping its painted atlas and one
+## surface. Painted resources reuse the existing batching, fog and focus.
+func _load_resource_mesh(scene_path: String) -> ArrayMesh:
+	var packed := load(scene_path) as PackedScene
+	if packed == null:
+		return null
+	var source := packed.instantiate() as Node3D
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	_append_resource_mesh(source, Transform3D.IDENTITY, st)
+	var mesh := st.commit()
+	source.free()
+	return mesh
+
+func _append_resource_mesh(node: Node3D, parent_transform: Transform3D, st: SurfaceTool) -> void:
+	var transform := parent_transform * node.transform
+	if node is MeshInstance3D:
+		var source := node as MeshInstance3D
+		for surface in range(source.mesh.get_surface_count()):
+			st.append_from(source.mesh, surface, transform)
+			st.set_material(source.get_active_material(surface))
+	for child in node.get_children():
+		if child is Node3D:
+			_append_resource_mesh(child, transform, st)
 
 ## Reconstroi todos os MultiMeshInstance3D de recurso do zero a partir do
 ## mapa atual — chamado de HexGrid._rebuild_props(), mesma cadencia de
@@ -73,20 +94,28 @@ func rebuild(tiles: Dictionary) -> void:
 			instance.queue_free()
 	_instances.clear()
 	_coord_to_index.clear()
+	_glow_shown.clear()
+	if _glow() != null:
+		_glow().clear_group(GLOW_GROUP)
 
 	for node in _horse_instances.values():
 		if node:
 			node.queue_free()
 	_horse_instances.clear()
-	_horse_sepia_overrides.clear()
+	_horse_memory_overrides.clear()
 
 	var coords_by_kind: Dictionary = {}
 	for coord in tiles.keys():
+		if _hex_grid.lairs_by_coord.has(coord):
+			continue
 		var data: HexTileData = tiles[coord]
+		var improvement: Node3D = _hex_grid.improvement_markers_by_coord.get(coord)
+		if is_instance_valid(improvement) and bool(improvement.get_meta("replaces_resource_prop", false)):
+			continue # native installation already includes this resource; do not duplicate it on rebuild
 		if data.resource == "horses":
 			_spawn_horse_instance(coord)
 			continue
-		if data.resource == "" or not _meshes.has(data.resource):
+		if data.resource == "" or not _meshes.has(data.resource) or _meshes[data.resource] == null:
 			continue
 		if not coords_by_kind.has(data.resource):
 			coords_by_kind[data.resource] = []
@@ -96,7 +125,7 @@ func rebuild(tiles: Dictionary) -> void:
 		_build_instance_for_kind(kind, coords_by_kind[kind])
 
 ## Instancia de verdade (nao MultiMesh, ver comentario de _horse_scene
-## acima) do cavalo exportado em horses.glb, uma por tile com o
+## acima) do cavalo adaptado em horse_resource_v1.glb, uma por tile com o
 ## recurso "horses". Mesmo tratamento de altura/jitter que
 ## _build_instance_for_kind da aos MultiMesh (_tile_surface_height pra
 ## nao afundar em Colina/Montanha, pequeno jitter de posicao/rotacao pra
@@ -114,13 +143,13 @@ func _spawn_horse_instance(coord: Vector2i) -> void:
 	instance.scale = Vector3.ONE * HORSE_SCALE
 	_hex_grid.add_child(instance)
 	_horse_instances[coord] = instance
-	_horse_sepia_overrides[coord] = _precompute_horse_sepia_overrides(instance)
+	_horse_memory_overrides[coord] = _precompute_horse_memory_overrides(instance)
 
 ## Duplica CADA material de superficie encontrado em `instance` uma vez
-## (sepia via HexGrid._sepia_prop_color, mesma formula/aparencia dos
+## (com o filtro de memoria de HexGrid._memory_prop_color, igual aos
 ## outros props) e guarda a lista pra apply_fog so trocar o override na
 ## hora, sem duplicar material nenhum durante o jogo de verdade.
-func _precompute_horse_sepia_overrides(instance: Node3D) -> Array:
+func _precompute_horse_memory_overrides(instance: Node3D) -> Array:
 	var overrides: Array = []
 	var mesh_instances: Array[MeshInstance3D] = []
 	_collect_mesh_instances(instance, mesh_instances)
@@ -131,9 +160,9 @@ func _precompute_horse_sepia_overrides(instance: Node3D) -> Array:
 			var original: Material = mesh_instance.get_active_material(surface)
 			if original == null or not (original is StandardMaterial3D):
 				continue
-			var sepia: StandardMaterial3D = original.duplicate()
-			sepia.albedo_color = _hex_grid._sepia_prop_color(original.albedo_color)
-			overrides.append({"mesh": mesh_instance, "surface": surface, "sepia": sepia})
+			var memory: StandardMaterial3D = original.duplicate()
+			memory.albedo_color = _hex_grid._memory_prop_color(original.albedo_color)
+			overrides.append({"mesh": mesh_instance, "surface": surface, "memory": memory})
 	return overrides
 
 func _collect_mesh_instances(node: Node, out: Array[MeshInstance3D]) -> void:
@@ -142,10 +171,22 @@ func _collect_mesh_instances(node: Node, out: Array[MeshInstance3D]) -> void:
 	for child in node.get_children():
 		_collect_mesh_instances(child, out)
 
+func _glow() -> WorldGlow:
+	return _hex_grid.world_glow if _hex_grid != null else null
+
+## coord -> true: tiles cujo brilho (luz + emissão da instância) está aceso agora. Só para apply_fog reenviar o que
+## MUDOU, não todo recurso do mapa a cada recálculo de névoa.
+var _glow_shown: Dictionary = {}
+
 func _build_instance_for_kind(kind: String, coords: Array) -> void:
+	var glow_profile: StringName = GLOW_PROFILE_BY_KIND.get(kind, &"")
+	var glows := glow_profile != &"" and _glow() != null
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_colors = true
+	# Dado por instância (r = brilho ligado) para a névoa apagar o brilho de um tile só; precisa vir ANTES de
+	# instance_count. Nasce 0 (apagado), como a luz: apply_fog acende o que está visível.
+	mm.use_custom_data = glows
 	mm.mesh = _meshes[kind]
 	mm.instance_count = coords.size()
 
@@ -156,7 +197,7 @@ func _build_instance_for_kind(kind: String, coords: Array) -> void:
 		# BUG real (reportado pelo usuario com screenshot: minerio de ferro e
 		# Nodulo Arcano "nao tem nada na celula") — world_for_coord() so da
 		# base_height, MAS terrain.gdshader eleva o CENTRO visual de Colina/
-		# Montanha num domo/pico (ate +HILL_HEIGHT/+MOUNTAIN_PEAK_HEIGHT, ver
+		# Montanha num pico (ate +MOUNTAIN_PEAK_HEIGHT; Colina tinha domo ate 2026-10-09, ver
 		# elevation_height() no shader) que o GDScript nunca via. Ferro e
 		# Nodulo Arcano sao os UNICOS recursos elegiveis em Colina/Montanha
 		# (ver ResourceDatabase.ELIGIBILITY) — o prop inteiro nascia enterrado
@@ -176,16 +217,27 @@ func _build_instance_for_kind(kind: String, coords: Array) -> void:
 		pos.z += randf_range(-0.12, 0.12)
 		var basis = Basis(Vector3.UP, randf() * TAU)
 		mm.set_instance_transform(i, Transform3D(basis, pos))
-		mm.set_instance_color(i, Color.WHITE) # cor ja vem embutida por vertice na malha, ver _build_*_mesh
+		mm.set_instance_color(i, Color.WHITE) # cor vem do atlas ou dos vertices
 		coord_to_index[coord] = [i]
+		if glows:
+			mm.set_instance_custom_data(i, Color(0, 0, 0, 0))
+			_glow().add_light(GLOW_GROUP, coord, pos, glow_profile)
 
 	_coord_to_index[kind] = coord_to_index
 
 	var instance := MultiMeshInstance3D.new()
 	instance.multimesh = mm
-	var mat := StandardMaterial3D.new()
+	if glows:
+		# Mesma aparência do material do GLB (o shader de brilho a reproduz, inclusive o recorte de alfa da névoa),
+		# mais a emissão do perfil.
+		instance.material_override = WorldGlow.prop_material(mm.mesh.surface_get_material(0) as BaseMaterial3D, glow_profile, true)
+		_hex_grid.add_child(instance)
+		_instances[kind] = instance
+		return
+	var mat := mm.mesh.surface_get_material(0).duplicate() as StandardMaterial3D
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	mat.vertex_color_use_as_albedo = true
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.cull_mode = BaseMaterial3D.CULL_BACK
 	# Nevoa de guerra (pedido do usuario, requisito 2: "respeitar o sistema
 	# de Nevoa de Guerra... visibilidade zerada se UNEXPLORED") — mesmo
 	# SCISSOR binario 0/1 usado pros outros props (ver HexGrid._rebuild_props
@@ -197,7 +249,7 @@ func _build_instance_for_kind(kind: String, coords: Array) -> void:
 	_instances[kind] = instance
 
 ## Chamado de HexGrid._apply_prop_fog(), mesma cadencia de _tint_props pras
-## arvores/pedras/picos — reusa HexGrid._sepia_prop_color (nao duplica a
+## arvores/pedras/picos — reusa HexGrid._memory_prop_color (nao duplica a
 ## formula) porque, ao contrario dos shaders (arquivos isolados sem
 ## compartilhamento de codigo entre si), aqui e so uma chamada de metodo
 ## normal do GDScript pela referencia _hex_grid ja guardada.
@@ -216,10 +268,14 @@ func clear_prop_at(coord: Vector2i) -> void:
 			for index in coord_to_index[coord]:
 				instance.multimesh.set_instance_transform(index, Transform3D(Basis().scaled(Vector3.ZERO), Vector3.ZERO))
 			coord_to_index.erase(coord)
+	# O prop saiu do tile: a luz dele sai junto (senão ficaria um clarão sem nada no lugar).
+	_glow_shown.erase(coord)
+	if _glow() != null:
+		_glow().remove_light(GLOW_GROUP, coord)
 	if _horse_instances.has(coord):
 		_horse_instances[coord].queue_free()
 		_horse_instances.erase(coord)
-		_horse_sepia_overrides.erase(coord)
+		_horse_memory_overrides.erase(coord)
 
 func refresh_height(coord: Vector2i) -> void:
 	for kind in _coord_to_index:
@@ -228,6 +284,8 @@ func refresh_height(coord: Vector2i) -> void:
 			var transform := mm.get_instance_transform(index)
 			transform.origin.y = _hex_grid._tile_surface_height(coord)
 			mm.set_instance_transform(index, transform)
+			if _glow() != null:
+				_glow().move_light(GLOW_GROUP, coord, transform.origin)
 	if _horse_instances.has(coord):
 		_horse_instances[coord].position.y = _hex_grid._tile_surface_height(coord)
 
@@ -235,6 +293,7 @@ func apply_fog(visibility: Dictionary) -> void:
 	for kind in _instances.keys():
 		var instance: MultiMeshInstance3D = _instances[kind]
 		var coord_to_index: Dictionary = _coord_to_index[kind]
+		var glows: bool = instance.multimesh.use_custom_data
 		for coord in coord_to_index.keys():
 			var indices: Array = coord_to_index[coord]
 			var vis = visibility.get(coord, HexGrid.Visibility.UNSEEN)
@@ -245,118 +304,37 @@ func apply_fog(visibility: Dictionary) -> void:
 				HexGrid.Visibility.UNSEEN:
 					color = Color(1.0, 1.0, 1.0, 0.0)
 				HexGrid.Visibility.EXPLORED:
-					color = _hex_grid._sepia_prop_color(Color.WHITE)
+					color = _hex_grid._memory_prop_color(Color.WHITE)
 				HexGrid.Visibility.VISIBLE:
 					pass
 			for idx in indices:
 				instance.multimesh.set_instance_color(idx, color)
+			# Brilho só em tile VISÍVEL agora: em tile explorado o prop é uma lembrança em sépia (sem emissão), e uma
+			# luz acesa na névoa entregaria o que há ali. Só reenvia o que mudou.
+			if glows:
+				var lit: bool = vis == HexGrid.Visibility.VISIBLE
+				if lit != _glow_shown.has(coord):
+					if lit:
+						_glow_shown[coord] = true
+					else:
+						_glow_shown.erase(coord)
+					for idx in indices:
+						instance.multimesh.set_instance_custom_data(idx, Color(1.0 if lit else 0.0, 0, 0, 0))
+					_glow().set_light_shown(GLOW_GROUP, coord, lit)
 
 	# "Cavalos": instancia de cena de verdade, nao MultiMesh (ver
 	# _horse_scene acima) -- sem cor por instancia disponivel, entao
 	# UNSEEN esconde o node inteiro (mesma convencao de Unit/City/
 	# Building, ver HexGrid._apply_fog_to_entities) e EXPLORED troca pra
-	# um material override sepia pre-computado no spawn (ver
-	# _precompute_horse_sepia_overrides) em vez de tingir por vertice.
+	# um material override com o filtro de memoria, pre-computado no spawn (ver
+	# _precompute_horse_memory_overrides) em vez de tingir por vertice.
 	for coord in _horse_instances.keys():
 		var instance: Node3D = _horse_instances[coord]
 		var vis = visibility.get(coord, HexGrid.Visibility.UNSEEN)
 		if _hex_grid.get_tile(coord).resource != "horses":
 			vis = HexGrid.Visibility.UNSEEN
 		instance.visible = vis != HexGrid.Visibility.UNSEEN
-		var use_sepia = vis == HexGrid.Visibility.EXPLORED
-		for entry in _horse_sepia_overrides.get(coord, []):
+		var use_memory = vis == HexGrid.Visibility.EXPLORED
+		for entry in _horse_memory_overrides.get(coord, []):
 			var mesh_instance: MeshInstance3D = entry["mesh"]
-			mesh_instance.set_surface_override_material(entry["surface"], entry["sepia"] if use_sepia else null)
-
-## Cone simples (base circular jitterizada por `sides`, apice no eixo Y) —
-## mesma tecnica generica de HexGrid._add_cone, duplicada aqui de proposito
-## (cada malha de recurso e uma composicao de 2-3 destes, e essa classe e
-## propositalmente autocontida, sem depender de metodos privados de
-## HexGrid alem do _sepia_prop_color acima). cull_disabled no material
-## (ver _build_instance_for_kind) cobre qualquer duvida de ordem de
-## vertice, entao a winding aqui nao precisa ser perfeita.
-func _add_cone(st: SurfaceTool, base_center: Vector3, radius: float, height: float, color: Color, sides: int = 6) -> void:
-	var apex = base_center + Vector3(0, height, 0)
-	for i in range(sides):
-		var a0 = (TAU / sides) * i
-		var a1 = (TAU / sides) * (i + 1)
-		var p0 = base_center + Vector3(cos(a0) * radius, 0.0, sin(a0) * radius)
-		var p1 = base_center + Vector3(cos(a1) * radius, 0.0, sin(a1) * radius)
-		var normal = (p1 - apex).cross(p0 - apex).normalized()
-		st.set_normal(normal)
-		st.set_color(color)
-		st.add_vertex(apex)
-		st.set_color(color)
-		st.add_vertex(p0)
-		st.set_color(color)
-		st.add_vertex(p1)
-
-## Minerio de Ferro: reportado pelo usuario como "nao tem nada na celula" —
-## causa raiz de verdade era outra (ver _tile_surface_height acima, o prop
-## nascia enterrado), mas a cor tambem nao ajudava: o marrom-acinzentado
-## anterior era proximo DEMAIS do proprio tom de terra/Savana por baixo,
-## somando contraste ruim em cima de invisibilidade total. Boulders agora
-## cinza-carvao BEM mais escuro (contraste forte contra qualquer bioma —
-## Savana clara, Floresta verde, neve branca) com veios de minerio expostos
-## em laranja-ferrugem MUITO mais vivo/saturado por cima — sao os veios,
-## nao os boulders, que fazem o olho reconhecer "ferro" a distancia.
-func _build_iron_mesh() -> ArrayMesh:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_add_cone(st, Vector3(-0.12, 0.0, 0.06), 0.26, 0.3, Color(0.22, 0.2, 0.19), 6)
-	_add_cone(st, Vector3(0.14, 0.0, -0.08), 0.2, 0.24, Color(0.17, 0.155, 0.145), 6)
-	_add_cone(st, Vector3(0.0, 0.0, 0.16), 0.15, 0.18, Color(0.19, 0.17, 0.16), 5)
-	_add_cone(st, Vector3(-0.1, 0.16, 0.05), 0.065, 0.11, Color(0.82, 0.4, 0.14), 5)
-	_add_cone(st, Vector3(0.12, 0.15, -0.06), 0.05, 0.1, Color(0.9, 0.55, 0.2), 5)
-	_add_cone(st, Vector3(0.02, 0.11, 0.14), 0.045, 0.08, Color(0.78, 0.36, 0.12), 4)
-	return st.commit()
-
-## Gemas: pedido do usuario ("cristais pode por grandes veias de cristal")
-## — cada cristal agora e 2 cones empilhados (base grossa/escura + ponta
-## fina/clara, nao mais 1 cone de cor unica), simulando faceta pegando luz
-## na ponta. 4 cristais (era 3) e bem mais altos (ate 0.46 de altura total,
-## era 0.28) pra ler como uma veia bem maior irrompendo do chao.
-func _build_gems_mesh() -> ArrayMesh:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_add_cone(st, Vector3(0.0, 0.0, 0.0), 0.09, 0.24, Color(0.42, 0.16, 0.55), 5)
-	_add_cone(st, Vector3(0.0, 0.22, 0.0), 0.045, 0.22, Color(0.82, 0.5, 0.95), 5)
-	_add_cone(st, Vector3(-0.11, 0.0, 0.05), 0.065, 0.16, Color(0.38, 0.14, 0.5), 5)
-	_add_cone(st, Vector3(-0.11, 0.15, 0.05), 0.03, 0.14, Color(0.78, 0.46, 0.92), 5)
-	_add_cone(st, Vector3(0.1, 0.0, -0.06), 0.055, 0.13, Color(0.35, 0.13, 0.46), 5)
-	_add_cone(st, Vector3(0.1, 0.12, -0.06), 0.028, 0.11, Color(0.75, 0.42, 0.9), 5)
-	_add_cone(st, Vector3(0.03, 0.0, -0.13), 0.04, 0.09, Color(0.32, 0.12, 0.42), 4)
-	return st.commit()
-
-## Seda: moita/amoreira bem maior que antes (raio 0.3, era 0.22) MAIS
-## flores/frutos claros no topo (pedido do usuario: props "muito simples"
-## em geral) — sem os pontinhos claros a moita lia como um arbusto
-## generico qualquer, nao especificamente ligado a seda/amoreira.
-func _build_silk_mesh() -> ArrayMesh:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_add_cone(st, Vector3(0.0, 0.0, 0.0), 0.3, 0.2, Color(0.36, 0.52, 0.32), 8)
-	_add_cone(st, Vector3(0.1, 0.12, 0.08), 0.18, 0.16, Color(0.42, 0.58, 0.36), 8)
-	_add_cone(st, Vector3(-0.12, 0.1, -0.06), 0.16, 0.15, Color(0.4, 0.56, 0.35), 8)
-	_add_cone(st, Vector3(0.14, 0.24, 0.1), 0.025, 0.05, Color(0.92, 0.85, 0.6), 4)
-	_add_cone(st, Vector3(-0.08, 0.22, -0.1), 0.02, 0.04, Color(0.88, 0.8, 0.55), 4)
-	_add_cone(st, Vector3(0.0, 0.18, 0.15), 0.02, 0.04, Color(0.9, 0.82, 0.58), 4)
-	return st.commit()
-
-## Nodulo Arcano: reportado pelo usuario como "nao tem nada na celula" — a
-## versao anterior existia mas era pequena DEMAIS (cristal principal so
-## 0.22 de altura) pra notar no jogo de verdade. Disco baixo assentado no
-## chao como ancora visual, cristal principal bem mais alto (0.34, quase o
-## dobro) partindo de uma base JA ELEVADA (_add_cone so cresce pra cima a
-## partir do base_center, entao elevar o base_center separa a forma do
-## disco embaixo, dando leitura de "levitando"), mais 2 fragmentos
-## menores orbitando em alturas diferentes pra silhueta assimetrica.
-func _build_mana_node_mesh() -> ArrayMesh:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_add_cone(st, Vector3(0.0, 0.0, 0.0), 0.24, 0.045, Color(0.14, 0.2, 0.28), 8)
-	_add_cone(st, Vector3(0.0, 0.22, 0.0), 0.08, 0.34, Color(0.38, 0.82, 0.9), 6)
-	_add_cone(st, Vector3(0.13, 0.16, 0.08), 0.05, 0.2, Color(0.5, 0.9, 0.95), 5)
-	_add_cone(st, Vector3(-0.12, 0.28, -0.09), 0.04, 0.16, Color(0.32, 0.75, 0.86), 5)
-	_add_cone(st, Vector3(0.05, 0.4, -0.03), 0.03, 0.12, Color(0.6, 0.95, 0.98), 5)
-	return st.commit()
+			mesh_instance.set_surface_override_material(entry["surface"], entry["memory"] if use_memory else null)

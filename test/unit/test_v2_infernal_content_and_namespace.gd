@@ -9,9 +9,9 @@ const RITUAL := "v2_building_infernal_ritual"
 const WARLOCK := "v2_unit_infernal_warlock"
 const ARCHDEMON := "v2_manifestation_archdemon"
 const SERAPH := "v2_manifestation_seraph"
-const IDS := ["v2_magic_school_infernal", SANCTUM, WARLOCK, "v2_spell_infernal_flame", "v2_spell_devouring_fire", "v2_spell_infernal_blast", "v2_spell_damnation", RITUAL, ARCHDEMON]
-const NAMES := ["Escola Infernal", "Santuário Infernal", "Bruxo Infernal", "Chama Infernal", "Fogo Voraz", "Explosão Infernal", "Condenação", "Círculo Profano", "Arquidemônio"]
-const TYPES := ["school", "school_building", "caster", "spell", "spell", "spell", "spell", "ritual_building", "grand_manifestation"]
+const IDS := [SANCTUM, WARLOCK, "v2_spell_infernal_flame", "v2_spell_devouring_fire", "v2_spell_infernal_blast", "v2_spell_damnation", RITUAL, ARCHDEMON]
+const NAMES := ["Santuário Infernal", "Bruxo Infernal", "Chama Infernal", "Fogo Voraz", "Explosão Infernal", "Condenação", "Círculo Profano", "Arquidemônio"]
+const TYPES := ["school_building", "caster", "spell", "spell", "spell", "spell", "ritual_building", "grand_manifestation"]
 
 var grid: HexGrid
 var human: PlayerData
@@ -61,7 +61,7 @@ func _player(civ_name: String) -> PlayerData:
 	return player
 
 func _learn(branch: String, tier: int = 9) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		var id := "v2_magic_%s_%d" % [branch, i]
 		if not human.v2_research.is_completed(id):
 			assert_true(human.v2_research.complete_research(id))
@@ -79,10 +79,10 @@ func _unit(kind: String, owner: PlayerData, coord: Vector2i) -> Unit:
 
 func test_infernal_n1_to_n9_have_canonical_ids_names_types_and_connection():
 	var nodes := V2ResearchDatabase.nodes_for_branch(MAGIC, "infernal")
-	assert_eq(nodes.size(), 9)
-	for i in 9:
-		assert_eq(nodes[i].id, "v2_magic_infernal_%d" % (i + 1))
-		assert_eq(nodes[i].tier, i + 1)
+	assert_eq(nodes.size(), 8)
+	for i in 8:
+		assert_eq(nodes[i].id, "v2_magic_infernal_%d" % (i + 2))
+		assert_eq(nodes[i].tier, i + 2)
 		assert_eq(nodes[i].display_name, NAMES[i])
 		assert_eq(nodes[i].unlock_id, IDS[i])
 		assert_eq(nodes[i].unlock_type, TYPES[i])
@@ -98,7 +98,7 @@ func test_magic_connection_totals_are_six_schools_and_no_normal_node_inert():
 			totals[node.branch] += 1
 		else:
 			totals.inert += 1
-	assert_eq(totals, {"sacred": 9, "infernal": 9, "necromancy": 9, "druidism": 9, "arcanism": 9, "elementalism": 9, "inert": 0})
+	assert_eq(totals, {"sacred": 8, "infernal": 8, "necromancy": 8, "druidism": 8, "arcanism": 8, "elementalism": 8, "inert": 0})
 	assert_true(V2ResearchDatabase.get_node("v2_transcendence").gameplay_connected)
 
 func test_infernal_building_records_are_normal_unique_buildings_without_mana_income():
@@ -106,7 +106,7 @@ func test_infernal_building_records_are_normal_unique_buildings_without_mana_inc
 	var ritual := BuildingDatabase.get_building(RITUAL)
 	assert_eq([sanctum.display_name, sanctum.production_cost, sanctum.gold_upkeep, sanctum.copy_limit_mode], ["Santuário Infernal", 24.0, 1.0, BuildingData.CopyLimitMode.UNIQUE])
 	assert_eq([sanctum.requires_building, sanctum.trains_unit], ["", WARLOCK])
-	assert_eq([ritual.display_name, ritual.production_cost, ritual.gold_upkeep, ritual.copy_limit_mode], ["Círculo Profano", 60.0, 2.0, BuildingData.CopyLimitMode.UNIQUE])
+	assert_eq([ritual.display_name, ritual.production_cost, ritual.gold_upkeep, ritual.copy_limit_mode], ["Círculo Profano", 48.0, 2.0, BuildingData.CopyLimitMode.UNIQUE])
 	assert_eq([ritual.requires_building, ritual.trains_unit], [SANCTUM, ARCHDEMON])
 
 func test_sanctum_and_warlock_use_normal_research_building_supply_and_deficit_gates():
@@ -127,7 +127,7 @@ func test_sanctum_and_warlock_use_normal_research_building_supply_and_deficit_ga
 
 func test_warlock_data_traits_and_movement():
 	var data := UnitDatabase.create_unit(WARLOCK)
-	assert_eq([data.unit_name, data.max_hp, data.attack, data.defense, data.movement_points, data.vision_range], ["Bruxo Infernal", 10.0, 0.0, 1.5, 2.0, 3])
+	assert_eq([data.unit_name, data.max_hp, data.attack, data.defense, data.movement_points, data.vision_range], ["Bruxo Infernal", 10.0, 0.0, 2.5, 2.0, 3])
 	assert_eq([data.production_cost, data.supply_cost, data.attack_range], [24.0, 2, 0])
 	assert_eq([data.v2_magic_school, data.spell_damage_multiplier], ["infernal", 1.0])
 	assert_false(data.can_basic_attack)
@@ -147,10 +147,10 @@ func test_ritual_building_needs_n8_and_the_sanctum_in_the_same_city():
 
 func test_archdemon_data_passive_and_traits():
 	var data := UnitDatabase.create_unit(ARCHDEMON)
-	assert_eq([data.unit_name, data.max_hp, data.attack, data.defense, data.movement_points, data.vision_range], ["Arquidemônio", 36.0, 0.0, 6.0, 3.0, 4])
-	assert_eq([data.production_cost, data.production_mana_cost, data.supply_cost], [105.0, 70.0, 0])
+	assert_eq([data.unit_name, data.max_hp, data.attack, data.defense, data.movement_points, data.vision_range], ["Arquidemônio", 50.0, 15.0, 9.0, 3.0, 4])
+	assert_eq([data.production_cost, data.production_mana_cost, data.supply_cost], [88.0, 140.0, 0])
 	assert_eq([data.v2_magic_school, data.spell_damage_multiplier, data.spell_damage_multiplier_name], ["infernal", 1.25, "Chama Primordial"])
-	assert_false(data.can_basic_attack)
+	assert_true(data.can_basic_attack)
 	assert_eq(data.movement_profile, UnitData.MovementProfile.FLYING)
 	for trait_id in [UnitData.TRAIT_CASTER, UnitData.TRAIT_FLYING, UnitData.TRAIT_GRAND_MANIFESTATION]:
 		assert_true(data.has_trait(trait_id), trait_id)
@@ -173,18 +173,18 @@ func test_real_seraph_and_archdemon_use_independent_school_slots_but_two_archdem
 	grid.remove_unit(archdemon)
 	assert_true(infernal_city.can_train(ARCHDEMON), "morte libera slot derivado")
 
-func test_archdemon_production_requires_seventy_mana_without_charging_at_start():
+func test_archdemon_production_requires_upfront_mana_without_charging_at_start():
 	_learn("infernal", 9)
 	var city := _city()
 	city.buildings[SANCTUM] = true
 	city.buildings[RITUAL] = true
-	human.mana = 69.0
+	human.mana = 139.0
 	assert_false(city.can_train(ARCHDEMON))
-	assert_eq(V2ManifestationSystem.training_soft_reason(human, city, ARCHDEMON), "Requer 70 Mana.")
-	human.mana = 70.0
+	assert_eq(V2ManifestationSystem.training_soft_reason(human, city, ARCHDEMON), "Requer 140 Mana.")
+	human.mana = 140.0
 	assert_true(city.can_train(ARCHDEMON))
 	city.set_production(ARCHDEMON)
-	assert_eq(human.mana, 70.0)
+	assert_eq(human.mana, 140.0)
 	assert_false(V2ManifestationSystem.slot_available(human, "infernal", null), "produção reserva o slot")
 
 func test_archdemon_completion_waits_without_losing_pp_then_finishes_once_mana_returns():
@@ -192,20 +192,20 @@ func test_archdemon_completion_waits_without_losing_pp_then_finishes_once_mana_r
 	var city := _city()
 	city.buildings[SANCTUM] = true
 	city.buildings[RITUAL] = true
-	human.mana = 70.0
+	human.mana = 140.0
 	city.set_production(ARCHDEMON)
 	human.mana = 10.0
 	city.stored_production = 105.0
 	var waiting := city.process_turn(grid)
 	assert_eq(waiting.spawn_unit_kind, "")
 	assert_eq(city.production_item, ARCHDEMON)
-	assert_eq(city.stored_production, 105.0)
-	assert_eq(city.production_waiting_for_mana(), 70)
-	human.mana = 80.0
+	assert_eq(city.stored_production, 88.0)
+	assert_eq(city.production_waiting_for_mana(), 140)
+	human.mana = 150.0
 	var ready := city.process_turn(grid)
 	assert_eq(ready.spawn_unit_kind, ARCHDEMON)
 	assert_eq(city.production_item, "")
-	assert_eq(human.mana, 80.0, "City devolve o kind; a cobranção única pertence ao GameManager")
+	assert_eq(human.mana, 150.0, "City devolve o kind; a cobranção única pertence ao GameManager")
 
 func test_sacred_n9_plus_infernal_n9_unlocks_connected_transcendence_without_instant_victory():
 	_learn("sacred", 9)

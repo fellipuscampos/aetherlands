@@ -40,6 +40,8 @@ var _original_current_save_slot: String
 var _original_kingdom_name: String
 
 func before_each():
+	# Conta unidades/Suprimentos exatos da linha: sem a escolta inicial (fixture, ver GameManager).
+	GameManager.starting_escort_on_new_match = false
 	_original_state = GameManager.state
 	_original_players = GameManager.players
 	_original_human_player = GameManager.human_player
@@ -68,6 +70,7 @@ func before_each():
 	GameManager.debug_mode = true
 
 func after_each():
+	GameManager.starting_escort_on_new_match = true
 	SelectionManager.reset()
 	for player in GameManager.players:
 		player.release_relations()
@@ -178,7 +181,7 @@ func _short_setup(through: int = 4) -> Dictionary:
 	var grid := _new_game()
 	var human := GameManager.human_player
 	var city := _found_human_city(grid)
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	city.buildings[HALL] = true
 	# Aetherlands V2, Fase 15 — Ouro de sobra + uma Fazenda evitam que Déficit/Suprimentos
@@ -206,7 +209,7 @@ func test_guardian_n4_n5_flow_from_the_wall_to_an_upgraded_guardian_across_save_
 	city.city_level = 3
 	city.buildings["v2_building_farm"] = true
 	city.repeatable_building_counts["v2_building_farm"] = 1
-	for id in ["v2_doctrine_guardian_1", "v2_doctrine_guardian_2"]:
+	for id in ["v2_doctrine_guardian_2"]:
 		_research(state, id)
 	_build_hall(grid, city)
 	_research(state, "v2_doctrine_guardian_3")
@@ -267,7 +270,7 @@ func test_guardian_n4_n5_flow_from_the_wall_to_an_upgraded_guardian_across_save_
 	# 13-15. Escudeiro dentro do território da cidade, Ouro garantido, HP/veterania preparados.
 	assert_eq(V2UnitUpgrade.city_of(unit, grid), city, "13. Escudeiro em cidade própria com Salão")
 	human.gold = 100.0
-	unit.hp = 9.0 # 9/18 = 50%
+	unit.hp = 10.0 # 10/20 = 50%
 	unit.kills = 3
 	unit.veterancy_level = 2
 	var remaining := V2TechniqueRuntime.cooldown_remaining(unit, WALL)
@@ -287,7 +290,7 @@ func test_guardian_n4_n5_flow_from_the_wall_to_an_upgraded_guardian_across_save_
 	assert_eq(human.units.size(), unit_count, "nada duplicado")
 	assert_eq(_units_of_kind(human, SHIELD).size(), 0, "sem Escudeiro fantasma")
 	assert_eq(human.gold, 100.0 - upgrade_cost, "Ouro descontado")
-	assert_almost_eq(unit.hp, 12.0, 0.0001, "17. 50% de 24")
+	assert_almost_eq(unit.hp, 26.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 26 pela forma + a cura da evolução")
 	assert_eq(unit.kills, 3)
 	assert_eq(unit.veterancy_level, 2, "veterania preservada")
 	assert_eq(unit.movement_left, 0.0, "consumiu a ação")
@@ -298,7 +301,7 @@ func test_guardian_n4_n5_flow_from_the_wall_to_an_upgraded_guardian_across_save_
 	var loaded_grid := _save_and_reload()
 	var loaded_human := GameManager.human_player
 	assert_not_same(loaded_human, human)
-	assert_eq(loaded_human.v2_research.get_completed_ids(), ["v2_doctrine_guardian_1", "v2_doctrine_guardian_2", "v2_doctrine_guardian_3", "v2_doctrine_guardian_4", "v2_doctrine_guardian_5"])
+	assert_eq(loaded_human.v2_research.get_completed_ids(), ["v2_doctrine_guardian_2", "v2_doctrine_guardian_3", "v2_doctrine_guardian_4", "v2_doctrine_guardian_5"])
 	var loaded_city: City = loaded_human.cities[0]
 	assert_true(loaded_city.buildings.has(HALL), "Salão restaurado")
 	assert_eq(_units_of_kind(loaded_human, SHIELD).size(), 0)
@@ -309,7 +312,7 @@ func test_guardian_n4_n5_flow_from_the_wall_to_an_upgraded_guardian_across_save_
 		if g.coord == unit_coord:
 			evolved = g
 	assert_not_null(evolved, "o Guardião evoluído voltou no mesmo tile")
-	assert_almost_eq(evolved.hp, 12.0, 0.0001, "HP proporcional restaurado")
+	assert_almost_eq(evolved.hp, 26.0 * (0.5 + V2UnitUpgrade.UPGRADE_HEAL_FRACTION), 0.0001, "50% de 26 pela forma + a cura da evolução")
 	assert_eq(evolved.kills, 3)
 	assert_eq(evolved.veterancy_level, 2)
 	assert_eq(V2TechniqueRuntime.cooldown_remaining(evolved, WALL), remaining, "recarga preservada no save")
@@ -376,7 +379,7 @@ func test_a_guardian_saved_after_the_upgrade_loads_as_a_guardian_not_as_a_shield
 	var guardians := _units_of_kind(loaded_human, GUARDIAN)
 	assert_eq(guardians.size(), 1)
 	assert_eq(guardians[0].coord, coord)
-	assert_eq(guardians[0].unit_data.max_hp, 24.0)
+	assert_eq(guardians[0].unit_data.max_hp, 26.0)
 
 # --- Real game turn hook ----------------------------------------------------------------------------------------
 

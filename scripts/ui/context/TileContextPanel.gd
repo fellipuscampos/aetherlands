@@ -16,12 +16,19 @@ var portrait: AEPortrait
 var body: VBoxContainer
 var render_count := 0
 var _last_key := 0
+const STYLE := preload("res://scripts/ui/context/ContextPanelStyle.gd")
 
 func _ready() -> void:
 	name = "TileContextPanel"
 	add_theme_constant_override("separation", UIThemeTokens.SPACE_2)
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_build_chrome()
+	STYLE.apply(self)
+	Settings.accessibility_changed.connect(_apply_style)
+	resized.connect(func(): STYLE.layout(self))
+
+func _apply_style() -> void:
+	STYLE.apply(self)
 
 func _build_chrome() -> void:
 	if body != null:
@@ -81,8 +88,16 @@ func refresh() -> void:
 		state_text = "Inexplorado"
 	subtitle_label.text = "%s · %s" % [view.subtitle, state_text]
 	portrait.configure("◇" if view.state != TileInspector.STATE_UNSEEN else "?", UIThemeTokens.COLOR_INFO if view.state == TileInspector.STATE_VISIBLE else UIThemeTokens.COLOR_TEXT_MUTED, UIThemeTokens.COLOR_BORDER, "Tile")
+	portrait.set_icon(null)
+	var highlight: Dictionary = view.get("highlight", {})
+	if not highlight.is_empty():
+		title_label.text = String(highlight.title)
+		subtitle_label.text = "%s · %s" % [view.title, subtitle_label.text]
+		portrait.configure("◇", highlight.accent, highlight.accent, highlight.caption)
+		portrait.set_icon(highlight.icon)
 	if view.state == TileInspector.STATE_UNSEEN:
 		body.add_child(ContextUI.empty_state("Região inexplorada: envie uma unidade para revelar."))
+		STYLE.apply(self)
 		render_count += 1
 		return
 	body.add_child(_terrain_section())
@@ -94,6 +109,7 @@ func refresh() -> void:
 		body.add_child(_features_section())
 	if view.remembered:
 		body.add_child(ContextUI.caption("Informação lembrada: o estado atual pode ter mudado."))
+	STYLE.apply(self)
 	render_count += 1
 
 func _terrain_section() -> Control:
@@ -101,20 +117,12 @@ func _terrain_section() -> Control:
 	var section := ContextUI.section("Terreno-base")
 	section.name = "Terrain"
 	section.tooltip_text = String(terrain.tooltip)
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", UIThemeTokens.SPACE_1)
-	section.add_child(grid)
+	# Só custo de movimento: o terreno-base não dá Defesa (2026-10-09, ver HexTileData).
 	var movement := AEStatItem.new()
 	movement.name = "MovementCost"
 	movement.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.add_child(movement)
+	section.add_child(movement)
 	movement.set_stat("Custo de movimento", str(terrain.movement_cost), "➤", AETooltip.compose("Custo de movimento", "Pontos gastos para entrar neste terreno-base."))
-	var defense := AEStatItem.new()
-	defense.name = "DefenseModifier"
-	defense.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.add_child(defense)
-	defense.set_stat("Defesa física", "+%d%%" % int(terrain.defense_pct), "■", AETooltip.compose("Defesa física", "Bônus do terreno-base para quem defende aqui."))
 	if String(terrain.territory) != "":
 		section.add_child(ContextUI.key_value("Território", String(terrain.territory)))
 	return section
@@ -129,7 +137,7 @@ func _modification_section() -> Control:
 	var content := VBoxContainer.new()
 	card.add_child(content)
 	content.add_child(ContextUI.label(String(modification.name), UIThemeTokens.FONT_BODY_SMALL, UIThemeTokens.COLOR_TEXT, false))
-	content.add_child(ContextUI.caption("Movimento +%d · Defesa física +%d%% (sobre o terreno-base)" % [int(modification.movement_delta), int(modification.defense_pct)]))
+	content.add_child(ContextUI.caption("Movimento +%d · Defesa física +%d%%" % [int(modification.movement_delta), int(modification.defense_pct)]))
 	return section
 
 func _environment_section() -> Control:
@@ -147,7 +155,7 @@ func _environment_section() -> Control:
 	return section
 
 func _features_section() -> Control:
-	var section := ContextUI.section("Neste tile")
+	var section := ContextUI.section("Neste território")
 	section.name = "Features"
 	for feature in view.features:
 		var accent := UIThemeTokens.COLOR_BORDER

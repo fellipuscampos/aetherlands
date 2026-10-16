@@ -122,7 +122,8 @@ static func _building_output_is_deficit_discounted(building_id: String, player: 
 ## cidade na UI).
 static func city_gold_income(city: City) -> float:
 	var base := _single_city_branch_income(city, "economy", V2InfrastructureEconomyData.BASE_GOLD_PER_CITY)
-	return base * V2RaceBonusRuntime.gold_income_multiplier(city.owner_player if city != null else null)
+	var owner: PlayerData = city.owner_player if city != null else null
+	return base * V2RaceBonusRuntime.gold_income_multiplier(owner) * V2AIDifficulty.economy_multiplier(owner)
 
 ## Capacidade de Suprimentos que ESTA cidade contribui (base + Fazendas) — CAPACIDADE, nunca
 ## estoque (§19 do pedido): não existe "gasto" desta função, só leitura pura, recalculada a cada
@@ -135,17 +136,20 @@ static func city_supply_capacity(city: City) -> float:
 ## pedido: Produção é local, não existe production_pool_global). Consumida por City.process_turn().
 static func city_production_income(city: City) -> float:
 	var base := _single_city_branch_income(city, "industry", V2InfrastructureEconomyData.BASE_PRODUCTION_PER_CITY)
-	return base * V2RaceBonusRuntime.city_production_multiplier(city.owner_player if city != null else null)
+	var owner: PlayerData = city.owner_player if city != null else null
+	return base * V2RaceBonusRuntime.city_production_multiplier(owner) * V2AIDifficulty.economy_multiplier(owner)
 
 ## Conhecimento/turno que ESTA cidade contribui (base + Academias) — GLOBAL na agregação.
 static func city_knowledge_income(city: City) -> float:
 	var base := _single_city_branch_income(city, "academy", V2InfrastructureEconomyData.BASE_KNOWLEDGE_PER_CITY)
-	return base * V2RaceBonusRuntime.knowledge_income_multiplier(city.owner_player if city != null else null)
+	var owner: PlayerData = city.owner_player if city != null else null
+	return base * V2RaceBonusRuntime.knowledge_income_multiplier(owner) * V2AIDifficulty.economy_multiplier(owner)
 
 ## Mana/turno que ESTA cidade contribui (base + Santuários Arcanos) — GLOBAL na agregação.
 static func city_mana_income(city: City) -> float:
 	var base := _single_city_branch_income(city, "arcane", V2InfrastructureEconomyData.BASE_MANA_PER_CITY)
-	return base * V2RaceBonusRuntime.mana_income_multiplier(city.owner_player if city != null else null)
+	var owner: PlayerData = city.owner_player if city != null else null
+	return base * V2RaceBonusRuntime.mana_income_multiplier(owner) * V2AIDifficulty.economy_multiplier(owner)
 
 ## Versão SEM desconto de Déficit da renda de Ouro de uma cidade — usada SÓ por `is_gold_deficit`
 ## abaixo, pra decidir se o Déficit está ativo sem reler o próprio resultado que ele mesmo afeta
@@ -163,7 +167,7 @@ static func _nominal_city_gold_income(city: City) -> float:
 	return total
 
 static func _nominal_player_gold_income(player: PlayerData) -> float:
-	return _sum_cities(player, _nominal_city_gold_income) * V2RaceBonusRuntime.gold_income_multiplier(player)
+	return _sum_cities(player, _nominal_city_gold_income) * V2RaceBonusRuntime.gold_income_multiplier(player) * V2AIDifficulty.economy_multiplier(player)
 
 ## Ouro/turno que UM prédio custa de manutenção nesta cidade — soma `gold_upkeep × cópias` de cada
 ## prédio construído (qualquer um, V1 ou V2 — o campo é genérico em BuildingData; hoje só os cinco
@@ -210,16 +214,16 @@ static func is_gold_deficit(player: PlayerData) -> bool:
 ## Agregação por civilização (§118 do pedido: itera só as cidades do player + os building_count
 ## necessários — nunca todas as unidades/o mapa/os 128 nós de pesquisa).
 static func player_gold_income(player: PlayerData) -> float:
-	return _player_branch_income(player, "economy", V2InfrastructureEconomyData.BASE_GOLD_PER_CITY) * V2RaceBonusRuntime.gold_income_multiplier(player)
+	return _player_branch_income(player, "economy", V2InfrastructureEconomyData.BASE_GOLD_PER_CITY) * V2RaceBonusRuntime.gold_income_multiplier(player) * V2AIDifficulty.economy_multiplier(player)
 
 static func player_supply_capacity(player: PlayerData) -> float:
 	return _player_branch_income(player, "logistics", V2InfrastructureEconomyData.BASE_SUPPLY_PER_CITY) * V2RaceBonusRuntime.supply_capacity_multiplier(player)
 
 static func player_knowledge_income(player: PlayerData) -> float:
-	return _player_branch_income(player, "academy", V2InfrastructureEconomyData.BASE_KNOWLEDGE_PER_CITY) * V2RaceBonusRuntime.knowledge_income_multiplier(player)
+	return _player_branch_income(player, "academy", V2InfrastructureEconomyData.BASE_KNOWLEDGE_PER_CITY) * V2RaceBonusRuntime.knowledge_income_multiplier(player) * V2AIDifficulty.economy_multiplier(player)
 
 static func player_mana_income(player: PlayerData) -> float:
-	return _player_branch_income(player, "arcane", V2InfrastructureEconomyData.BASE_MANA_PER_CITY) * V2RaceBonusRuntime.mana_income_multiplier(player)
+	return _player_branch_income(player, "arcane", V2InfrastructureEconomyData.BASE_MANA_PER_CITY) * V2RaceBonusRuntime.mana_income_multiplier(player) * V2AIDifficulty.economy_multiplier(player)
 
 static func _sum_cities(player: PlayerData, city_income: Callable) -> float:
 	if player == null:
@@ -291,7 +295,9 @@ static func city_income_breakdown(city: City, resource: String) -> Dictionary:
 	result.pre_racial_total = base_value + building_total + result.improvement_total
 	result.racial_multiplier = _race_multiplier_for_resource(city.owner_player, resource)
 	result.racial_bonus = result.pre_racial_total * (result.racial_multiplier - 1.0)
-	result.total = result.pre_racial_total * result.racial_multiplier
+	# Dificuldade das IAs (V2AIDifficulty): só rivais, só renda — Suprimentos é capacidade e fica fora.
+	result["difficulty_multiplier"] = 1.0 if resource == "supply" else V2AIDifficulty.economy_multiplier(city.owner_player)
+	result.total = result.pre_racial_total * result.racial_multiplier * float(result.difficulty_multiplier)
 	return result
 
 

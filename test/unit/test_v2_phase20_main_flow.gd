@@ -87,7 +87,7 @@ func _end_turn() -> void:
 	assert_false(GameManager.is_turn_processing)
 
 func _learn(branch: String, tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		var id := "v2_magic_%s_%d" % [branch, i]
 		if not GameManager.human_player.v2_research.is_completed(id):
 			assert_true(GameManager.human_player.v2_research.complete_research(id), id)
@@ -144,6 +144,11 @@ func _find(kind: String) -> Unit:
 	return null
 
 func _aim_and_click(caster: Unit, spell_id: String, coord: Vector2i) -> void:
+	# Repertoire regression through the executor; bound entities no longer expose manual spell targeting.
+	if V2ManifestationOrders.is_bound(caster):
+		caster.movement_left = caster.unit_data.movement_points
+		assert_true(V2MagicRuntime.cast(caster, spell_id, coord, _grid))
+		return
 	caster.movement_left = caster.unit_data.movement_points
 	caster.magic_cooldowns.erase(spell_id)
 	SelectionManager._select_unit(caster)
@@ -167,9 +172,9 @@ func test_156_druidism_end_to_end_with_terrain_layer_four_manifestations_and_sav
 	assert_not_null(city)
 	city.city_level = 3
 	var mana_before: float = human.mana
-	assert_true(human.v2_research.select_research("v2_magic_druidism_1"))
+	assert_true(human.v2_research.select_research("v2_magic_druidism_2"))
 	_end_turn()
-	assert_gt(human.v2_research.get_progress("v2_magic_druidism_1"), 0.0, "Conhecimento real")
+	assert_gt(human.v2_research.get_progress("v2_magic_druidism_2"), 0.0, "Conhecimento real")
 	assert_gt(human.mana, mana_before, "Mana real")
 
 	# 4–10: Escola, Círculo pela fila, Druida pela fila (Supply 2, sem ataque básico).
@@ -198,7 +203,7 @@ func test_156_druidism_end_to_end_with_terrain_layer_four_manifestations_and_sav
 	_aim_and_click(druid, GROW, grove_tile)
 	assert_eq(V2TerrainRuntime.modification_id_at(_grid, grove_tile), GROVE)
 	assert_true(_grid._terrain_modification_markers.has(grove_tile), "marcador no mapa")
-	assert_eq(human.mana, 194.0)
+	assert_eq(human.mana, 195.0)
 
 	# 17–18: uma unidade entra no Bosque pagando +1.
 	var walker := _spawn("warrior", human, _free_neighbor(grove_tile))
@@ -306,7 +311,7 @@ func test_156_druidism_end_to_end_with_terrain_layer_four_manifestations_and_sav
 	_build(city, RITUAL)
 	_learn(SCHOOL, 9)
 	GameManager.debug_mode = false
-	human.mana = 65.0
+	human.mana = 130.0
 	_clear_city_ring(city)
 	assert_true(city.can_train(AVATAR), V2ManifestationSystem.training_soft_reason(human, city, AVATAR))
 	city.set_production(AVATAR)
@@ -314,7 +319,7 @@ func test_156_druidism_end_to_end_with_terrain_layer_four_manifestations_and_sav
 	city.stored_production = 105.0
 	_end_turn()
 	assert_null(_find(AVATAR), "espera a Mana")
-	human.mana = 80.0
+	human.mana = 150.0
 	_end_turn()
 	var avatar := _find(AVATAR)
 	assert_not_null(avatar)
@@ -356,8 +361,8 @@ func test_156_druidism_end_to_end_with_terrain_layer_four_manifestations_and_sav
 		assert_eq(V2ManifestationSystem.active_units(human, school).size(), 1, school)
 
 	# 53–55: Doutrinas/Infraestrutura/Escolas anteriores intactas; Transcendência sem gameplay.
-	assert_eq(V2DoctrineContent.CONNECTED_UNLOCK_IDS.size(), 55)
-	assert_eq(V2InfrastructureContent.CONNECTED_UNLOCK_IDS.size(), 18)
+	assert_eq(V2DoctrineContent.CONNECTED_UNLOCK_IDS.size(), 49)
+	assert_eq(V2InfrastructureContent.CONNECTED_UNLOCK_IDS.size(), 21)
 	for school in ["sacred", "infernal", "necromancy"]:
 		assert_eq(V2SpellDatabase.for_school(school).size(), 4, school)
 	assert_true(V2ResearchDatabase.get_node("v2_transcendence").gameplay_connected)

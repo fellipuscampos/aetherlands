@@ -35,7 +35,8 @@ signal unlock_applied(node_id: String, unlock_type: String, unlock_id: String)
 ## linhas econômicas de Infraestrutura, melhora prédios EXISTENTES, nunca cria um novo).
 ## Fase 17: os seis tipos da Magia (school/school_building/caster/spell/ritual_building/grand_manifestation) entram
 ## pelo MESMO pipeline — nenhum "MagicUnlockSystem".
-const CONNECTED_TYPES: Array[String] = ["doctrine", "building", "unit", "technique", "unit_upgrade", "mastery_building", "legendary_candidate", "victory_capstone", "city_level", "infrastructure_upgrade", "school", "school_building", "caster", "spell", "ritual_building", "grand_manifestation"]
+## (2026-10-09: "doctrine"/"school" saíram junto com o N1 de portão das Doutrinas/Escolas.)
+const CONNECTED_TYPES: Array[String] = ["building", "unit", "technique", "unit_upgrade", "mastery_building", "legendary_candidate", "victory_capstone", "city_level", "infrastructure_upgrade", "settler_limit", "school_building", "caster", "spell", "ritual_building", "grand_manifestation"]
 
 ## node_id -> true: só pra `unlock_applied` sair uma vez por nó (não é estado de
 ## jogo, não é salvo).
@@ -115,8 +116,6 @@ static func unlocked_ids(player) -> Array[String]:
 ## "Supremacia Militar". Todo chamador antigo continua válido (parâmetro tem default).
 static func announcement_text(unlock_type: String, display_name: String, unlock_id: String = "") -> String:
 	match unlock_type:
-		"doctrine":
-			return "Doutrina desbloqueada: %s" % display_name
 		"building":
 			# Fase 14: as cinco linhas econômicas de Infraestrutura têm um nome de PESQUISA
 			# diferente do nome do PRÉDIO (ex.: nó "Mercados Locais" desbloqueia o prédio
@@ -145,9 +144,10 @@ static func announcement_text(unlock_type: String, display_name: String, unlock_
 			return "Via de vitória desbloqueada: %s" % display_name
 		"city_level":
 			return "Desenvolvimento urbano disponível: %s." % V2ResearchDatabase.urbanization_unlock_label(unlock_id)
+		"settler_limit":
+			# 2026-10-09: Colonização — o toast nomeia o limite novo, não o nó de pesquisa.
+			return "Colonização ampliada: %s." % V2ColonizationData.limit_label(int(V2ColonizationData.SETTLER_LIMIT_BY_UNLOCK.get(unlock_id, 0)))
 		# Fase 17 — Magia, frases genéricas por TIPO (nenhuma Escola citada aqui).
-		"school":
-			return "Escola desbloqueada: %s." % display_name
 		"school_building":
 			return "Novo prédio mágico disponível: %s." % display_name
 		"caster":

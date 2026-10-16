@@ -264,7 +264,7 @@ func test_127_defensive_infrastructure_flow_from_city_i_to_the_fortress():
 	Diplomacy.declare_war(human, rival)
 	var state := human.v2_research
 	var city := _found_human_city(grid)
-	assert_eq([city.city_level, city.max_hp(), city.fortification_level, city.max_shield()], [1, 24.0, 0, 0.0], "1-2. Cidade I sem muralha")
+	assert_eq([city.city_level, city.max_hp(), city.fortification_level, city.max_shield()], [1, 30.0, 0, 0.0], "1-2. Cidade I sem muralha")
 	assert_eq(CityDefense.city_attack_unavailable_reason(city), "Requer fortificação (Muralhas I ou superior).")
 	# 3. Sem Urbanização N1, Muralhas I é bloqueada pela pesquisa.
 	assert_eq(city.fortification_unavailable_reason(), "Requer Planejamento Urbano.", "3")
@@ -276,7 +276,7 @@ func test_127_defensive_infrastructure_flow_from_city_i_to_the_fortress():
 	assert_eq(city.fortification_unavailable_reason(), "Requer Cidade II.", "5")
 	# 6. Projeto de Cidade II pela fila: vida máxima 30, fração preservada (cheia).
 	_upgrade_city(city, 2)
-	assert_eq([city.max_hp(), city.hp], [30.0, 30.0], "6")
+	assert_eq([city.max_hp(), city.hp], [38.0, 38.0], "6")
 	# 7. Muralhas I pela MESMA fila, sem ocupar slot.
 	var slots_before := city.used_building_slots()
 	var upkeep_before := V2EconomyRuntime.city_gold_upkeep(city)
@@ -286,12 +286,12 @@ func test_127_defensive_infrastructure_flow_from_city_i_to_the_fortress():
 	# 8. Escudo cheio, defesa +10%, disparo 3 | 2.
 	assert_eq([city.shield, city.max_shield()], [8.0, 8.0], "8. escudo")
 	assert_almost_eq(city.defense_bonus(), 0.10, 0.0001)
-	assert_eq([CityDefense.city_attack_power(city), CityDefense.city_attack_range(city)], [3.0, 2])
+	assert_eq([CityDefense.city_attack_power(city), CityDefense.city_attack_range(city)], [4.5, 2])
 	# 9. Upkeep de 1 Ouro/turno entra na manutenção da cidade.
 	assert_almost_eq(V2EconomyRuntime.city_gold_upkeep(city) - upkeep_before, 1.0, 0.0001, "9")
 	# 10. Painel: bloco de fortificação.
 	var panel := "\n".join(TileInspector._city_entry(city, grid, human).lines)
-	for line in ["Muralhas I", "Escudo: 8 / 8", "Defesa urbana: +10%", "Ataque da Cidade: 3 | Alcance 2"]:
+	for line in ["Muralhas I", "Escudo: 8 / 8", "Defesa urbana: +10%", "Ataque da Cidade: 4.5 | Alcance 2"]:
 		assert_string_contains(panel, line)
 	# 11. Um inimigo visível a 2: a mira destaca, ESC cancela sem gastar.
 	var arena_coord := Vector2i(999, 999)
@@ -311,7 +311,7 @@ func test_127_defensive_infrastructure_flow_from_city_i_to_the_fortress():
 	var city_hp := city.hp
 	SelectionManager.start_city_attack_targeting(city)
 	SelectionManager._handle_city_attack_click(raider.coord)
-	assert_eq(raider.hp, raider_hp - 3.0, "12. dano fixo")
+	assert_eq(raider.hp, raider_hp - 4.5, "12. dano fixo")
 	assert_eq(city.hp, city_hp, "12. sem revide")
 	assert_eq(CityDefense.city_attack_unavailable_reason(city), "Ataque da Cidade já usado neste turno.")
 	# 13. Save/load no MESMO turno: continua usado; fortificação e escudo sobrevivem.
@@ -346,7 +346,7 @@ func test_127_defensive_infrastructure_flow_from_city_i_to_the_fortress():
 	human.gold = 0.0
 	assert_true(V2EconomyRuntime.is_gold_deficit(human), "17. pré-condição")
 	assert_eq(city.fortification_unavailable_reason(), "Déficit de Ouro: estabilize a economia antes de ampliar a fortificação.", "17")
-	assert_eq(CityDefense.city_attack_power(city), 1.5, "17. Déficit reduz só o disparo")
+	assert_eq(CityDefense.city_attack_power(city), 2.25, "17. Déficit reduz só o disparo")
 	city.buildings.erase(G_HALL)
 	city.buildings.erase(G_MASTERY)
 	human.gold = saved_gold
@@ -355,13 +355,13 @@ func test_127_defensive_infrastructure_flow_from_city_i_to_the_fortress():
 	_fortify(city, 2)
 	assert_gt(city.shield, 10.99, "18. 14 - 3 (+ regeneração normal do turno)")
 	assert_lt(city.shield, 14.0, "18. nunca cura cheio no upgrade")
-	assert_eq([CityDefense.city_attack_power(city), CityDefense.city_attack_range(city)], [5.0, 2])
+	assert_eq([CityDefense.city_attack_power(city), CityDefense.city_attack_range(city)], [7.5, 2])
 	# 19-20. N3 -> Cidade IV (44) -> Fortaleza (22 | +30% | 7 | 3).
 	_research_unlock(state, "v2_city_level_4")
 	_upgrade_city(city, 4)
-	assert_eq(city.max_hp(), 44.0, "19")
+	assert_eq(city.max_hp(), 56.0, "19")
 	_fortify(city, 3)
-	assert_eq([city.max_shield(), CityDefense.city_attack_power(city), CityDefense.city_attack_range(city)], [22.0, 7.0, 3], "20")
+	assert_eq([city.max_shield(), CityDefense.city_attack_power(city), CityDefense.city_attack_range(city)], [22.0, 10.5, 3], "20")
 	assert_almost_eq(city.defense_bonus(), 0.30, 0.0001)
 	# 21. Topo: nenhum nível adiante; upkeep total da Fortaleza é 3 (não 6).
 	assert_eq(city.fortification_unavailable_reason(), "Fortificação já está no nível máximo.", "21")
@@ -467,7 +467,7 @@ func test_129_siege_breaks_a_fortress_and_the_capture_closes_the_victory():
 	human.v2_research.debug_complete_branch(MILITARY, "guardian")
 	human.v2_research.debug_complete_branch(MILITARY, "warrior")
 	assert_true(human.v2_research.complete_research(CAPSTONE))
-	for n in range(1, 7):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 7):
 		human.v2_research.complete_research("v2_doctrine_siege_%d" % n)
 	# B já está satisfeito por uma Cidade III conquistada antes.
 	var center_b := _rival_city(grid, rival_b, 3)
@@ -485,8 +485,9 @@ func test_129_siege_breaks_a_fortress_and_the_capture_closes_the_victory():
 	# Bombardeio Preparado (N6, x1,5, parado): atravessa a Fortaleza — escudo primeiro, vida intacta.
 	var hp_before := fortress.hp
 	assert_true(V2TechniqueRuntime.perform_city_strike(bombard, BOMBARDMENT, fortress, grid), V2TechniqueRuntime.unavailable_reason(bombard, BOMBARDMENT, grid))
-	assert_almost_eq(fortress.shield, 22.0 - expected * 1.5, 0.0001, "Bombardeio x1,5 com Munição, dividido por 1,3")
-	assert_eq(fortress.hp, hp_before, "a vida só depois do escudo")
+	# Desde 2026-10-14 (ATQ ×1,5) o Bombardeio quebra o escudo inteiro e o excedente já chega à vida.
+	assert_almost_eq(fortress.shield, maxf(0.0, 22.0 - expected * 1.5), 0.0001, "Bombardeio x1,5 com Munição, dividido por 1,3")
+	assert_almost_eq(fortress.hp, hp_before - maxf(0.0, expected * 1.5 - 22.0), 0.0001, "a vida só depois do escudo")
 	# Munição Demolidora (N4) no ataque básico: o que sobra do escudo cai, o excedente vai pra vida.
 	_end_turn()
 	bombard.movement_left = bombard.unit_data.movement_points

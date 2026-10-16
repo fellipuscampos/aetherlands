@@ -11,7 +11,7 @@ const SAVE_PATH := "user://savegame.json"
 ## Versoes anteriores aceitas por load_game ALEM de SAVE_VERSION (pedido do usuario: "NAO simplesmente
 ## invalide saves antigos"). As migrações específicas delas (pesquisa Tecnologia/Magia V1) perderam o
 ## objeto na Fase 25: o conteúdo V1 é ignorado/sanitizado, o resto do save carrega normalmente.
-const MIGRATABLE_SAVE_VERSIONS: Array[int] = [17, 18, 19, 20, 21, 22, 23, 24, 25]
+const MIGRATABLE_SAVE_VERSIONS: Array[int] = [17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
 ## Fase 25: continua 21 de propósito — o loader é tolerante (campos antigos são ignorados, campos
 ## novos têm default, conteúdo removido passa por _sanitize_legacy_city/_deserialize_player). As
 ## versões 17-20 ainda carregam: tudo o que as migrações antigas convertiam (pesquisa Tecnologia/
@@ -35,7 +35,9 @@ const MIGRATABLE_SAVE_VERSIONS: Array[int] = [17, 18, 19, 20, 21, 22, 23, 24, 25
 ## ("hazards": raízes, infecção, dano de infecção por unidade) e os Vermes subterrâneos ("burrowed"). Estados de
 ## criatura nas unidades de civilização (eco_*) e recargas de habilidade viajam nos dicionários magic_status/
 ## magic_cooldowns que já existiam. Um save 25 carrega: nenhum perigo, nenhum Verme subterrâneo, nada retroativo.
-const SAVE_VERSION := 26
+## 27 — covis unificados: líder, despertar, reforço, trégua e idempotência de rodada.
+## v26 mantém criaturas/atributos e ganha estruturas locais somente na primeira rodada após carregar.
+const SAVE_VERSION := 27
 
 ## path e parametrizavel so pros testes GUT usarem um arquivo isolado, sem
 ## tocar no save de verdade do jogador — o jogo em si sempre usa SAVE_PATH.
@@ -172,6 +174,9 @@ func save_game(hex_grid: HexGrid, path: String = SAVE_PATH, extra_fields: Dictio
 		"current_player_index": TurnManager.current_player_index,
 		"human_kingdom_name": GameManager.human_player.civ.civ_name,
 		"human_race": GameManager.human_player.civ.race,
+		# A raça de cada rival, na ordem de `rivals` (chave opcional, 2026-10-12): o elenco passou a depender da raça
+		# do jogador, e o load precisa recriar exatamente as civilizações que estavam na partida.
+		"rival_races": GameManager.rival_players.map(func(rival: PlayerData) -> String: return rival.civ.race),
 		"difficulty": GameManager.difficulty,
 		"explored_coords": _serialize_explored(hex_grid),
 		"neutral_units": _serialize_neutral_units(hex_grid),
@@ -194,6 +199,9 @@ func save_game(hex_grid: HexGrid, path: String = SAVE_PATH, extra_fields: Dictio
 		"terrain_changes": _serialize_coord_values(hex_grid.terrain_changes),
 		"terrain_resources": _serialize_terrain_resources(hex_grid),
 		"pillaged_tiles": _serialize_coord_values(hex_grid._pillaged_tiles),
+		# Recursos de mapa destruídos por construção (HexGrid.destroy_resource_at): lista esparsa [x, y, id]. Campo
+		# opcional (sem bump de versão); o id é só informativo — o load destrói o que o seed recriar naquele tile.
+		"destroyed_resources": _serialize_coord_values(hex_grid.destroyed_resources),
 		# Fase 20: modificações físicas de terreno V2 — estado GLOBAL do mapa (fora de cidades), lista esparsa
 		# [x, y, id]. Campo opcional (sem bump de versão); custo/Defesa nunca são salvos (derivados do id).
 		"v2_terrain_modifications": _serialize_terrain_modifications(hex_grid),
@@ -267,6 +275,13 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 		var tile := hex_grid.get_tile(Vector2i(int(entry[0]), int(entry[1])))
 		if tile:
 			tile.resource = str(entry[2])
+	# Depois do terreno/recursos acima: o seed recriou o recurso, a destruição salva o apaga de novo (dado, prop e
+	# ícone). Entrada malformada é ignorada; save antigo sem o campo não destrói nada aqui.
+	var destroyed_in = data.get("destroyed_resources", [])
+	if typeof(destroyed_in) == TYPE_ARRAY:
+		for entry in destroyed_in:
+			if _valid_coord(entry):
+				hex_grid.destroy_resource_at(Vector2i(int(entry[0]), int(entry[1])))
 	for entry in data.get("pillaged_tiles", []):
 		hex_grid._pillaged_tiles[Vector2i(int(entry[0]), int(entry[1]))] = int(entry[2])
 	_deserialize_terrain_modifications(hex_grid, data.get("v2_terrain_modifications", []))
@@ -308,7 +323,7 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 	# de eventos futuros dos covis.
 	if data.has("monster_rng_state"):
 		hex_grid.monster_turn_rng.state = int(data.monster_rng_state)
-	GameManager.setup_players(hex_grid) # cria human_player + rival_players do tamanho certo, todos em guerra por padrao
+	GameManager.setup_players(hex_grid, _saved_rival_races(data)) # cria human_player + rival_players do tamanho certo, todos em guerra por padrao
 
 	TurnManager.turn_number = int(data.turn_number)
 	TurnManager.current_player_index = int(data.current_player_index)
@@ -332,6 +347,11 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 	# Só agora todas as pesquisas, cidades, prédios e unidades existem. Load
 	# inválido é descartado silenciosamente e markers são reconstruídos.
 	V2TranscendenceSystem.load_save_array(data.get("v2_transcendence_rituals", []), hex_grid)
+	# Save de antes da regra de eliminação (perder a última cidade): a civilização conquistada vem com tropas no mapa,
+	# em guerra e com proposta de paz pendente. Acerta agora, antes da névoa e da checagem de vitória abaixo.
+	hex_grid.reconcile_eliminations()
+	# Save de antes das fronteiras fechadas (ou salvo com gente dentro): quem está onde não pode estar é retirado.
+	hex_grid.enforce_closed_borders()
 
 	for c in data.get("explored_coords", []):
 		var coord = Vector2i(int(c[0]), int(c[1]))
@@ -363,10 +383,23 @@ func load_game(hex_grid: HexGrid, path: String = SAVE_PATH) -> bool:
 	for event in WorldEventManager.active_events:
 		if event is DragonEvent:
 			(event as DragonEvent).relink_unit(hex_grid)
-		elif event is ReliquaryEvent:
-			(event as ReliquaryEvent).relink(hex_grid) # Fase 33D3: só o marcador visual; nenhum avanço no load
 	GameManager.check_victories()
 	return true
+
+## As raças dos rivais como estavam na partida salva. Save sem a chave (anterior a 2026-10-12), ou com ela inválida:
+## o elenco fixo daquela época (GameManager.LEGACY_RIVAL_RACES) — a partida volta com as mesmas civilizações com que
+## foi jogada, mesmo que hoje esse elenco repetisse a raça do jogador.
+func _saved_rival_races(data: Dictionary) -> Array[String]:
+	var count: int = data.rivals.size()
+	var saved = data.get("rival_races")
+	if typeof(saved) == TYPE_ARRAY and saved.size() == count:
+		var races: Array[String] = []
+		for entry in saved:
+			if typeof(entry) == TYPE_STRING and entry in GameManager.RACES:
+				races.append(entry)
+		if races.size() == count:
+			return races
+	return GameManager.LEGACY_RIVAL_RACES.slice(0, count)
 
 func _match_players() -> Array[PlayerData]:
 	return ([GameManager.human_player] as Array[PlayerData]) + GameManager.rival_players
@@ -401,7 +434,30 @@ func _serialize_relations() -> Array:
 			var c: Dictionary = player.war_campaigns[enemy]
 			campaigns.append({"opponent": index, "objective": c.objective,
 				"status": c.status, "target_coord": [c.target_coord.x, c.target_coord.y]})
-		out.append({"wars": wars, "campaigns": campaigns, "truces": truces, "reasons": reasons})
+		# Propostas de paz sem resposta e a espera depois de uma recusa (Diplomacy.offer_peace/answer_peace_offer):
+		# chaves opcionais, no mesmo formato [indice, turno] das tréguas — save antigo simplesmente não tem.
+		# Fronteiras abertas (2026-10-13): acordos, pedidos pendentes e esperas — chaves opcionais, como as da paz.
+		var open_with: Array = []
+		for other in player.open_borders:
+			var index := players.find(other)
+			if index >= 0:
+				open_with.append(index)
+		out.append({"wars": wars, "campaigns": campaigns, "truces": truces, "reasons": reasons,
+			"peace_offers": _serialize_player_turns(player.peace_offers, players),
+			"peace_refusals": _serialize_player_turns(player.peace_refusals, players),
+			"open_borders": open_with,
+			"open_border_offers": _serialize_player_turns(player.open_border_offers, players),
+			"open_border_refusals": _serialize_player_turns(player.open_border_refusals, players),
+			# Memória diplomática (DiplomaticMemory, 2026-10-15): chave opcional — save antigo carrega memória vazia.
+			"memory": DiplomaticMemory.serialize(player, players)})
+	return out
+
+func _serialize_player_turns(values: Dictionary, players: Array) -> Array:
+	var out: Array = []
+	for other in values:
+		var index := players.find(other)
+		if index >= 0:
+			out.append([index, int(values[other])])
 	return out
 
 ## Guerras, tréguas, motivos e campanhas. Fase 25: o bloco antigo "trade_routes" (comércio V1,
@@ -422,10 +478,37 @@ func _restore_relations(data: Dictionary) -> void:
 				players[i].war_campaigns[players[index]] = {"objective": c.objective,
 					"status": c.status, "target_coord": Vector2i(int(c.target_coord[0]), int(c.target_coord[1]))}
 	for i in range(mini(relations.size(), players.size())):
+		var memory = relations[i].get("memory", [])
+		DiplomaticMemory.restore(players[i], memory if typeof(memory) == TYPE_ARRAY else [], players)
 		for truce in relations[i].get("truces", []):
 			var index := int(truce[0])
 			if index >= 0 and index < players.size() and index != i:
 				players[i].truces[players[index]] = int(truce[1])
+		for refusal in relations[i].get("peace_refusals", []):
+			var index := int(refusal[0])
+			if index >= 0 and index < players.size() and index != i:
+				players[i].peace_refusals[players[index]] = int(refusal[1])
+		for offer in relations[i].get("peace_offers", []):
+			var index := int(offer[0])
+			if index >= 0 and index < players.size() and index != i:
+				players[i].peace_offers[players[index]] = int(offer[1])
+				EventBus.peace_offered.emit(players[index], players[i]) # a UI reabre o modal da proposta que estava sem resposta
+		# Fronteiras abertas: o acordo é simétrico — restaurado dos dois lados mesmo que o arquivo só o traga em um; nunca
+		# entre civilizações em guerra (a guerra o encerra).
+		for open_index in relations[i].get("open_borders", []):
+			var index := int(open_index)
+			if index >= 0 and index < players.size() and index != i and not players[i].is_at_war_with(players[index]):
+				players[i].open_borders[players[index]] = true
+				players[index].open_borders[players[i]] = true
+		for refusal in relations[i].get("open_border_refusals", []):
+			var index := int(refusal[0])
+			if index >= 0 and index < players.size() and index != i:
+				players[i].open_border_refusals[players[index]] = int(refusal[1])
+		for offer in relations[i].get("open_border_offers", []):
+			var index := int(offer[0])
+			if index >= 0 and index < players.size() and index != i:
+				players[i].open_border_offers[players[index]] = int(offer[1])
+				EventBus.open_borders_offered.emit(players[index], players[i])
 
 func _valid_save_header(data: Dictionary) -> bool:
 	for key in ["map_width", "map_height", "map_seed", "turn_number", "current_player_index", "human", "rivals"]:
@@ -438,7 +521,7 @@ func _valid_save_header(data: Dictionary) -> bool:
 			return false
 	if int(data.map_width) <= 0 or int(data.map_height) <= 0 or int(data.map_width) > 512 or int(data.map_height) > 512:
 		return false
-	if data.rivals.size() < 1 or data.rivals.size() > GameManager.RIVAL_CIVS.size():
+	if data.rivals.size() < 1 or data.rivals.size() > GameManager.MAX_RIVALS:
 		return false
 	for key in ["human_kingdom_name", "human_race", "difficulty", "monster_rng_state"]:
 		if data.has(key) and typeof(data[key]) != TYPE_STRING:
@@ -599,6 +682,10 @@ func _valid_world_state(data: Dictionary) -> bool:
 			return false
 		if not _valid_coord_list(relation.get("truces", [])) or typeof(relation.get("reasons", {})) != TYPE_DICTIONARY:
 			return false
+		if not _valid_coord_list(relation.get("peace_offers", [])) or not _valid_coord_list(relation.get("peace_refusals", [])):
+			return false
+		if not _number_list(relation.get("open_borders", [])) or not _valid_coord_list(relation.get("open_border_offers", [])) or not _valid_coord_list(relation.get("open_border_refusals", [])):
+			return false
 		for reason in relation.get("reasons", {}).values():
 			if typeof(reason) != TYPE_STRING:
 				return false
@@ -639,7 +726,7 @@ func _valid_world_events(value: Variant) -> bool:
 	if typeof(value.get("phase_history", [])) != TYPE_ARRAY or not _numeric_dict(value.get("completed_event_types", {})):
 		return false
 	# Fase 33D3 (v24): blocos opcionais de agendamento/marcos.
-	for key in ["dragon_schedule", "reliquary_schedule", "public_milestones"]:
+	for key in ["dragon_schedule", "public_milestones"]:
 		if value.has(key) and typeof(value[key]) != TYPE_DICTIONARY:
 			return false
 	# Fase 33D2 (v23): ameaças regionais/Guardiões opcionais — ausentes = desligado, nada retroativo.
@@ -730,7 +817,6 @@ func _serialize_neutral_units(hex_grid: HexGrid) -> Array:
 			"behavior_state": unit.monster_behavior_state,
 			"movement_left": unit.movement_left,
 			"source_lair": [unit.source_lair_coord.x, unit.source_lair_coord.y],
-			"source_event": unit.source_event_id,
 			"ecology_site": unit.ecology_site_id, # V3 (v25)
 			"ecology_rest": unit.ecology_rest_until,
 			# V3 / Etapa 2 (v26): estado de habilidade da própria criatura.
@@ -813,6 +899,10 @@ func _serialize_lair_alerts(hex_grid: HexGrid) -> Array:
 ## movement_points), o resto so sobrescreve depois igual sempre.
 func _deserialize_neutral_units(saved: Array, hex_grid: HexGrid) -> void:
 	for u in saved:
+		# Guardião de um evento mundial REMOVIDO do jogo (o Relicário Desperto era o único que gerava monstros com
+		# "source_event"; WorldEventManager.RETIRED_EVENT_TYPES): some junto com o evento, como sumia quando ele expirava.
+		if _is_number(u.get("source_event")) and int(u.source_event) >= 0:
+			continue
 		var coord = Vector2i(int(u.coord[0]), int(u.coord[1]))
 		var unit = hex_grid.spawn_monster_at(coord, u.kind, u.get("is_camp_boss", false))
 		unit.set_hp_silent(float(u.hp)) # restauracao, nao um golpe -- nao deveria piscar/pular (ver Unit.hp)
@@ -822,8 +912,6 @@ func _deserialize_neutral_units(saved: Array, hex_grid: HexGrid) -> void:
 		unit.movement_left = float(u.get("movement_left", unit.unit_data.movement_points))
 		if _valid_coord(u.get("source_lair")):
 			unit.source_lair_coord = Vector2i(int(u.source_lair[0]), int(u.source_lair[1]))
-		if _is_number(u.get("source_event")):
-			unit.source_event_id = int(u.source_event)
 		if _is_number(u.get("ecology_site")):
 			unit.ecology_site_id = int(u.ecology_site)
 		if _is_number(u.get("ecology_rest")):
@@ -852,6 +940,10 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 			# unidade, nunca lido fora de V2ConstructorRuntime). Campo opcional, mesmo padrão dos
 			# outros blocos V2 (sem bump de SAVE_VERSION).
 			"work_charges_remaining": unit.work_charges_remaining,
+			"manifestation_order": unit.manifestation_order,
+			"manifestation_ready_turn": unit.manifestation_ready_turn,
+			"manifestation_acted_turn": unit.manifestation_acted_turn,
+			"manifestation_profile_version": 1,
 			# Roadmap 2.0 Parte 1 (C6) — EXCECAO deliberada: diferente de
 			# fortified/exploring/move_order_target (conveniencia de sessao,
 			# de proposito descartados ao salvar), perder isto deixaria uma
@@ -931,6 +1023,8 @@ func _serialize_player(player: PlayerData, is_rival: bool) -> Dictionary:
 		"mana_income_per_turn": player.mana_income_per_turn,
 		"war_weariness": player.war_weariness,
 		"explored_tiles": _serialize_coord_values(player.explored_tiles),
+		# 2026-10-09: Colonos treinados na partida (limite da linha de Colonização, V2ColonizationRuntime).
+		"settlers_trained": player.settlers_trained,
 	}
 	if is_rival:
 		# Fase 24: estado estratégico mínimo e opcional. Scores, views e alvos
@@ -965,20 +1059,28 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 		var unit = hex_grid.spawn_unit(coord, UnitDatabase.create_unit(u.kind), player)
 		unit.serial_id = int(u.get("serial_id", unit.serial_id))
 		hex_grid.next_unit_id = maxi(hex_grid.next_unit_id, unit.serial_id + 1)
+		V2ManifestationOrders.restore(unit, u.get("manifestation_order", {}))
+		unit.manifestation_ready_turn = int(u.get("manifestation_ready_turn", TurnManager.turn_number))
+		unit.manifestation_acted_turn = int(u.get("manifestation_acted_turn", -1))
 		unit.magic_cooldowns = _sanitize_magic_dict(u.get("magic_cooldowns", {}))
 		unit.magic_status = _sanitize_magic_dict(u.get("magic_status", {}))
 		unit.refresh_technique_marker(false) # V2 (Fase 4): o anel de uma Técnica ativa volta junto com o estado (Muralha: direto na postura)
 		unit.refresh_status_overlay() # V3 / Etapa 3: indicador de estado/Barreira Arcana volta junto
-		unit.set_hp_silent(float(u.hp)) # restauracao, nao um golpe -- nao deveria piscar/pular (ver Unit.hp)
+		unit.set_hp_silent(V2ManifestationBalance.restored_hp(unit, float(u.hp), int(u.get("manifestation_profile_version",0)))) # restauracao, nao um golpe -- nao deveria piscar/pular (ver Unit.hp)
 		unit.movement_left = float(u.movement_left)
 		unit.kills = int(u.get("kills", 0))
 		unit.veterancy_level = int(u.get("veterancy_level", 0))
 		unit.work_charges_remaining = int(u.get("work_charges_remaining", 0))
-		unit.embarked = u.get("embarked", false) # Roadmap 2.0 Parte 1 (C6)
 		unit.fortified = u.get("fortified", false)
 		unit.exploring = u.get("exploring", false)
+		# Embarque automático (2026-10-10): `embarked` continua no save, mas o estado é derivado do tile — o load re-deriva
+		# (e já monta o barco, sem animação). Um save antigo nunca deixa uma tropa "a pé" no oceano nem de barco em terra.
+		hex_grid.sync_embarked(unit)
 		var order = u.get("move_order_target", [Unit.NO_MOVE_ORDER.x, Unit.NO_MOVE_ORDER.y])
 		unit.move_order_target = Vector2i(int(order[0]), int(order[1]))
+		if V2ManifestationOrders.is_bound(unit):
+			unit.exploring = false
+			unit.move_order_target = Unit.NO_MOVE_ORDER
 	# Fase 19: o comando de retinues é DERIVADO (nada salvo); os serial_id acima acabaram de ser restaurados,
 	# então o anel "sem comando" é re-derivado agora, pela mesma ordem determinística de antes do save.
 	V2RetinueSystem.refresh_all_markers(player)
@@ -1050,6 +1152,10 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 			if parts.size() != 2:
 				continue
 			var rc := Vector2i(int(parts[0]), int(parts[1]))
+			# Save antigo com prédio em cima de recurso melhorado: o prédio (place_building acima) destruiu o
+			# recurso, e a melhoria não existe sem ele.
+			if hex_grid.destroyed_resources.has(rc):
+				continue
 			city.resource_improvements[rc] = resource_improvements_in[key]
 			hex_grid.refresh_resource_improvement_marker(rc)
 		if c.has("pending_building_coord"):
@@ -1078,6 +1184,9 @@ func _deserialize_player(saved: Dictionary, player: PlayerData, hex_grid: HexGri
 	player.mana = float(saved.get("mana", 0.0))
 	player.mana_income_per_turn = float(saved.get("mana_income_per_turn", 0.0))
 	player.war_weariness = float(saved.get("war_weariness", 0.0))
+	# Save anterior à linha de Colonização: sem o campo -> 0 (o limite ainda exige a pesquisa da linha).
+	var settlers_value = saved.get("settlers_trained", 0)
+	player.settlers_trained = maxi(int(settlers_value), 0) if _is_number(settlers_value) else 0
 	for entry in saved.get("explored_tiles", []):
 		player.explored_tiles[Vector2i(int(entry[0]), int(entry[1]))] = true
 	# Roadmap "Parte C" C3 — cabe na funcao UNICA compartilhada (chamada pra

@@ -67,7 +67,7 @@ func _player(civ_name: String) -> PlayerData:
 	return player
 
 func _learn(player: PlayerData, branch: String, tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		var id := "v2_magic_%s_%d" % [branch, i]
 		if not player.v2_research.is_completed(id):
 			assert_true(player.v2_research.complete_research(id), id)
@@ -83,15 +83,15 @@ func _arcanist(owner: PlayerData = human, coord: Vector2i = Vector2i.ZERO, tier:
 	return _unit(ARCANIST, owner, coord)
 
 func test_nine_nodes_are_canonical_and_the_full_magic_tree_is_connected():
-	var names := ["Escola do Arcanismo", "Conclave Arcano", "Arcanista", "Passo Arcano", "Silêncio", "Dissipar", "Portal do Véu", "Torre do Véu", "Arconte do Véu"]
-	var ids := ["v2_magic_school_arcanism", "v2_building_arcane_conclave", ARCANIST, STEP, SILENCE, DISPEL, PORTAL, "v2_building_arcane_ritual", ARCHON]
+	var names := ["Conclave Arcano", "Arcanista", "Passo Arcano", "Silêncio", "Dissipar", "Portal do Véu", "Torre do Véu", "Arconte do Véu"]
+	var ids := ["v2_building_arcane_conclave", ARCANIST, STEP, SILENCE, DISPEL, PORTAL, "v2_building_arcane_ritual", ARCHON]
 	var nodes := V2ResearchDatabase.nodes_for_branch(MAGIC, SCHOOL)
-	assert_eq(nodes.size(), 9)
-	for i in 9:
+	assert_eq(nodes.size(), 8)
+	for i in 8:
 		assert_eq([nodes[i].display_name, nodes[i].unlock_id], [names[i], ids[i]])
 		assert_true(nodes[i].gameplay_connected)
 		assert_false(nodes[i].is_placeholder)
-	assert_eq(V2MagicContent.CONNECTED_UNLOCK_IDS.size(), 55)
+	assert_eq(V2MagicContent.CONNECTED_UNLOCK_IDS.size(), 49)
 	for node in V2ResearchDatabase.nodes_for_branch(MAGIC, "elementalism"):
 		assert_true(node.gameplay_connected)
 	assert_true(V2ResearchDatabase.get_node(V2ResearchDatabase.TRANSCENDENCE_ID).gameplay_connected)
@@ -101,15 +101,15 @@ func test_buildings_and_units_have_the_exact_phase_21_data():
 	var tower := BuildingDatabase.get_building("v2_building_arcane_ritual")
 	assert_eq([conclave.display_name, conclave.production_cost, conclave.gold_upkeep, conclave.trains_unit], ["Conclave Arcano", 24.0, 1.0, ARCANIST])
 	assert_eq(conclave.copy_limit_mode, BuildingData.CopyLimitMode.UNIQUE)
-	assert_eq([tower.display_name, tower.production_cost, tower.gold_upkeep, tower.requires_building, tower.trains_unit], ["Torre do Véu", 60.0, 2.0, "v2_building_arcane_conclave", ARCHON])
+	assert_eq([tower.display_name, tower.production_cost, tower.gold_upkeep, tower.requires_building, tower.trains_unit], ["Torre do Véu", 48.0, 2.0, "v2_building_arcane_conclave", ARCHON])
 	assert_eq(tower.copy_limit_mode, BuildingData.CopyLimitMode.UNIQUE)
 	var caster := UnitDatabase.create_unit(ARCANIST)
-	assert_eq([caster.unit_name, caster.max_hp, caster.attack, caster.defense, caster.movement_points, caster.vision_range, caster.production_cost, caster.supply_cost], ["Arcanista", 10.0, 0.0, 1.5, 2.0, 4, 24.0, 2])
+	assert_eq([caster.unit_name, caster.max_hp, caster.attack, caster.defense, caster.movement_points, caster.vision_range, caster.production_cost, caster.supply_cost], ["Arcanista", 10.0, 0.0, 2.5, 2.0, 4, 24.0, 2])
 	assert_false(caster.can_basic_attack)
 	assert_eq([caster.v2_magic_school, caster.movement_profile], [SCHOOL, UnitData.MovementProfile.GROUND])
 	var archon := UnitDatabase.create_unit(ARCHON)
-	assert_eq([archon.unit_name, archon.max_hp, archon.attack, archon.defense, archon.movement_points, archon.vision_range, archon.production_cost, archon.production_mana_cost, archon.supply_cost], ["Arconte do Véu", 34.0, 0.0, 5.5, 4.0, 5, 105.0, 70.0, 0])
-	assert_false(archon.can_basic_attack)
+	assert_eq([archon.unit_name, archon.max_hp, archon.attack, archon.defense, archon.movement_points, archon.vision_range, archon.production_cost, archon.production_mana_cost, archon.supply_cost], ["Arconte do Véu", 46.0, 13.0, 8.5, 4.0, 5, 88.0, 140.0, 0])
+	assert_true(archon.can_basic_attack)
 	assert_eq([archon.movement_profile, archon.spell_cooldown_reduction, archon.spell_cooldown_reduction_name], [UnitData.MovementProfile.FLYING, 1, "Fluxo do Véu"])
 	for trait_id in [UnitData.TRAIT_CASTER, UnitData.TRAIT_FLYING, UnitData.TRAIT_GRAND_MANIFESTATION]:
 		assert_true(archon.has_trait(trait_id), trait_id)
@@ -120,9 +120,9 @@ func test_spell_records_and_status_metadata_are_data_driven():
 	var spells := V2SpellDatabase.for_school(SCHOOL)
 	assert_eq(spells.map(func(s): return s.id), [STEP, SILENCE, DISPEL, PORTAL])
 	assert_eq([spells[0].target_mode, spells[0].mana_cost, spells[0].cast_range, spells[0].cooldown_turns, spells[0].teleport_caster], [V2SpellData.TargetMode.EMPTY_TILE, 6.0, 4, 2, true])
-	assert_eq([spells[1].target_mode, spells[1].mana_cost, spells[1].cast_range, spells[1].cooldown_turns, spells[1].requires_v2_caster_target, spells[1].status_polarity, spells[1].status_dispellable], [V2SpellData.TargetMode.HOSTILE_UNIT, 8.0, 3, 3, true, V2SpellData.StatusPolarity.HARMFUL, true])
-	assert_eq([spells[2].target_mode, spells[2].mana_cost, spells[2].cast_range, spells[2].cooldown_turns, spells[2].dispel_at_tile], [V2SpellData.TargetMode.TILE, 7.0, 3, 2, true])
-	assert_eq([spells[3].target_mode, spells[3].mana_cost, spells[3].cast_range, spells[3].cooldown_turns, spells[3].creates_portal_pair], [V2SpellData.TargetMode.EMPTY_TILE, 18.0, 6, 5, true])
+	assert_eq([spells[1].target_mode, spells[1].mana_cost, spells[1].cast_range, spells[1].cooldown_turns, spells[1].requires_v2_caster_target, spells[1].status_polarity, spells[1].status_dispellable], [V2SpellData.TargetMode.HOSTILE_UNIT, 10.0, 3, 3, true, V2SpellData.StatusPolarity.HARMFUL, true])
+	assert_eq([spells[2].target_mode, spells[2].mana_cost, spells[2].cast_range, spells[2].cooldown_turns, spells[2].dispel_at_tile], [V2SpellData.TargetMode.TILE, 9.0, 3, 2, true])
+	assert_eq([spells[3].target_mode, spells[3].mana_cost, spells[3].cast_range, spells[3].cooldown_turns, spells[3].creates_portal_pair], [V2SpellData.TargetMode.EMPTY_TILE, 26.0, 6, 5, true])
 	for id in [AEGIS, COMMAND]:
 		var status := V2SpellDatabase.get_spell(id)
 		assert_eq([status.status_polarity, status.status_dispellable], [V2SpellData.StatusPolarity.BENEFICIAL, true])
@@ -239,7 +239,7 @@ func test_dispel_polarity_matrix_and_multiple_statuses_are_resolved_in_one_cast(
 	var mana_before := human.mana
 	assert_eq(V2MagicRuntime.dispellable_statuses_for(caster, enemy, grid), [COMMAND, AEGIS])
 	assert_true(V2MagicRuntime.cast(caster, DISPEL, enemy.coord, grid))
-	assert_eq(human.mana, mana_before - 7.0, "um único custo")
+	assert_eq(human.mana, mana_before - 9.0, "um único custo")
 	assert_false(enemy.magic_status.has(AEGIS))
 	assert_false(enemy.magic_status.has(COMMAND))
 	assert_true(enemy.magic_status.has(SILENCE), "harmful hostil permanece")

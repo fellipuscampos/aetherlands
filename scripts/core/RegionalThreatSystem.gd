@@ -77,6 +77,9 @@ static func _plan_for(grid: HexGrid, player: PlayerData, index: int, capital: Ve
 	}
 	WorldEventManager.regional_threats.append(record)
 	if placed.ok:
+		var site := MonsterEcologySystem.register_lair(grid, record.coord, turn)
+		if not site.is_empty():
+			site.wake_turn = int(record.wake_turn)
 		EventBus.regional_threat_created.emit(player, record.coord, record.kind)
 		note_observation(grid, player)
 
@@ -181,6 +184,7 @@ static func spawn_guardians(grid: HexGrid, turn: int) -> void:
 			"state": GUARDIAN_ACTIVE, "resolved_turn": -1, "resolved_by": -1, "discovered_by": [],
 		}
 		WorldEventManager.guardian_sites.append(entry)
+		MonsterEcologySystem.register_lair(grid, entry.coord, turn)
 		EventBus.guardian_site_spawned.emit(entry.coord, entry.resource_coord, entry.resource)
 	for player in GameManager.players:
 		note_observation(grid, player)

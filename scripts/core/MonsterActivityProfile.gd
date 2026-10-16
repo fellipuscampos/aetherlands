@@ -13,6 +13,8 @@ extends RefCounted
 ## - patrol_radius: território do monstro ocioso (ronda); fora dele volta para casa.
 ## - chase_radius: o LEASH — o monstro nunca vai além desta distância da âncora; se o alvo foge para fora dele,
 ##   desiste e entra em RETORNO (volta para casa sem readquirir alvo distante; só se defende de quem encostar).
+##   Exceção explícita: se provocado por dano, defende-se num raio fixo do local do confronto e depois retorna
+##   (MonsterAI.RETALIATION_*). Isso não amplia a patrulha nem a agressividade espontânea desta tabela.
 ## - city_radius: 0 = nunca procura cidade; >0 = pode escolher a cidade ativa mais próxima dentro deste
 ##   raio como objetivo (aproximar → atacar; nunca captura).
 ## - improvement_radius: 0 = ignora melhorias; >0 = procura melhoria de recurso não saqueada neste raio.

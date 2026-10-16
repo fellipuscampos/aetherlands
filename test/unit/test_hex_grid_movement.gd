@@ -48,20 +48,20 @@ func _color_close(a: Color, b: Color, tolerance: float = 0.01) -> bool:
 
 ## ALTURA DOS TILES E POSICAO DAS UNIDADES (pedido do usuario: "alguns
 ## personagens... acabam com os pes dentro do terreno... crie uma solucao
-## robusta"). Colina/Montanha ganham um domo/pico VISUAL no shader por cima
-## do base_height cru (ver HexGrid._tile_surface_height/HILL_HEIGHT/
-## MOUNTAIN_PEAK_HEIGHT) -- spawn_unit precisa posicionar a unidade nessa
-## altura de SUPERFICIE, nao na base plana, senao ela nasce com os pes
-## afundados no domo/pico.
-func test_spawn_unit_on_hills_uses_surface_height():
+## robusta"). Montanha ganha um pico VISUAL no shader por cima do base_height
+## cru (ver HexGrid._tile_surface_height/MOUNTAIN_PEAK_HEIGHT) -- spawn_unit
+## precisa posicionar a unidade nessa altura de SUPERFICIE, nao na base plana,
+## senao ela nasce com os pes afundados no pico. Colina e plana desde
+## 2026-10-09 (HexGrid.elevation_kind_for): a unidade fica no topo plano.
+func test_spawn_unit_on_hills_stands_on_the_flat_top():
 	var coord := Vector2i(2, 0)
 	hex_grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.HILLS)
 
 	var unit := hex_grid.spawn_unit(coord, UnitDatabase.create_unit("warrior"), human)
 	_created_units.append(unit)
 
-	var expected_y: float = hex_grid.tiles[coord].base_height + HexGrid.HILL_HEIGHT
-	assert_almost_eq(unit.position.y, expected_y, 0.001, "unidade deveria ficar na altura do DOMO da Colina, nao na base crua")
+	var expected_y: float = hex_grid.tiles[coord].base_height
+	assert_almost_eq(unit.position.y, expected_y, 0.001, "Colina tem topo plano: unidade na base_height, sem cupula")
 
 func test_spawn_unit_on_mountains_uses_surface_height():
 	var coord := Vector2i(2, 0)
@@ -81,6 +81,28 @@ func test_spawn_unit_on_flat_terrain_keeps_plain_base_height():
 	_created_units.append(unit)
 
 	assert_almost_eq(unit.position.y, hex_grid.tiles[coord].base_height, 0.001, "terreno plano nao deveria ganhar bonus de altura nenhum")
+
+## Topo plano (pedido do usuario 2026-10-09): so Montanhas (normal/Vulcanica/Cristal) tem relevo no topo; todo outro
+## terreno — Colinas inclusive — e plano do centro a borda, e o shader segue a MESMA regra (sem cupula de Colina,
+## micro-relevo so dentro do pico).
+func test_only_mountains_have_relief_every_other_tile_top_is_flat():
+	var coord := Vector2i(2, 0)
+	for terrain_type in HexTileData.TerrainType.values():
+		hex_grid.tiles[coord] = TerrainDatabase.create_tile(terrain_type)
+		var base: float = hex_grid.tiles[coord].base_height
+		var name: String = HexTileData.TerrainType.keys()[terrain_type]
+		if terrain_type in HexGrid.PEAK_TERRAINS:
+			assert_eq(HexGrid.elevation_kind_for(terrain_type), HexGrid.ELEVATION_PEAK, "%s tem pico" % name)
+			assert_gt(hex_grid.surface_height_at(coord, Vector2.ZERO), base + 0.5, "%s: pico no centro" % name)
+			assert_almost_eq(hex_grid.surface_height_at(coord, Vector2(1.0, 0.0)), base, 0.0001, "%s: pico some na borda" % name)
+			continue
+		assert_eq(HexGrid.elevation_kind_for(terrain_type), HexGrid.ELEVATION_FLAT, "%s é plano" % name)
+		for local in [Vector2.ZERO, Vector2(0.3, 0.2), Vector2(-0.6, 0.4), Vector2(0.0, -0.86)]:
+			assert_almost_eq(hex_grid.surface_height_at(coord, local), base, 0.0001, "%s: topo plano em %s" % [name, local])
+		assert_almost_eq(hex_grid._tile_surface_height(coord), base, 0.0001, "%s: centro na base_height" % name)
+	var shader := FileAccess.get_file_as_string("res://shaders/terrain.gdshader")
+	assert_false(shader.contains("hill_height"), "shader sem cupula de Colina")
+	assert_true(shader.contains("if (elevation_kind < 1.5) {\n\t\treturn 0.0;"), "shader: elevation_height devolve 0 para tile plano")
 
 ## "Mudancas temporarias de terreno" (pedido explicito do usuario) -- uma
 ## unidade PARADA num tile cujo terreno e transformado depois (ex: magia)
@@ -230,48 +252,43 @@ func test_city_owning_tile_detects_conflict_with_other_city():
 	assert_eq(hex_grid.city_owning_tile(Vector2i(0, 0)), city_a)
 	assert_null(hex_grid.city_owning_tile(Vector2i(0, 0), city_a), "excluindo a propria cidade, ninguem mais possui esse tile")
 
-## Tingimento de territorio (pedido do usuario, requisito 3: "camada
-## transparente com a cor da civilizacao no chao de cada hexagono do
-## territorio"). Cada tile vira um leque de 6 triangulos (centro + par de
-## cantos consecutivos) = 18 vertices; o territorio padrao de found_city
-## (celula + 6 vizinhos) tem 7 tiles = 126 vertices, contando que todos
-## estejam VISIBLE.
-func test_build_city_tint_mesh_covers_all_owned_tiles():
+## Contorno de território (2026-10-10, substitui o tingimento do hexágono inteiro): só as arestas do LIMITE ganham
+## faixa. Território padrão de found_city = célula + 6 vizinhos: o centro não tem borda (todos os vizinhos são da
+## cidade) e o anel externo tem 18 arestas de limite -> 18 trapézios x 6 vértices, contando que todos estejam VISIBLE.
+func test_city_border_mesh_outlines_only_the_territory_limit():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
 	for coord in city.owned_tiles:
 		hex_grid.visibility[coord] = HexGrid.Visibility.VISIBLE
 
-	var mesh = hex_grid._build_city_tint_mesh(city)
+	var mesh = hex_grid._build_city_border_mesh(city)
 
 	assert_eq(mesh.get_surface_count(), 1)
 	var vertex_count = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()
-	assert_eq(vertex_count, 7 * 18, "7 tiles (celula + 6 vizinhos) x 18 vertices (leque de 6 triangulos) cada")
+	assert_eq(vertex_count, 18 * 6, "18 arestas de limite x 6 vértices (2 triângulos) — nada pintado no miolo")
 
-## Nevoa no tingimento — mesma filosofia do contorno: UNSEEN nao gera
-## geometria nenhuma, EXPLORED fica com uma FRACAO da opacidade normal.
-func test_build_city_tint_mesh_skips_unseen_and_dims_explored_tiles():
+## Névoa no contorno: UNSEEN não gera geometria, EXPLORED fica mais fraco.
+func test_city_border_mesh_skips_unseen_and_dims_explored_tiles():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
 	# visibility nunca foi populado neste fixture — tudo comeca UNSEEN.
-	var empty_mesh = hex_grid._build_city_tint_mesh(city)
-	assert_eq(empty_mesh.get_surface_count(), 0, "territorio inteiro UNSEEN nao deveria gerar tingimento nenhum")
+	var empty_mesh = hex_grid._build_city_border_mesh(city)
+	assert_eq(empty_mesh.get_surface_count(), 0, "territorio inteiro UNSEEN nao deveria gerar contorno nenhum")
 
-	hex_grid.visibility[Vector2i(0, 0)] = HexGrid.Visibility.VISIBLE
-	var explored_coord: Vector2i = HexGrid.NEIGHBOR_DIRS[0]
-	hex_grid.visibility[explored_coord] = HexGrid.Visibility.EXPLORED
+	hex_grid.visibility[HexGrid.NEIGHBOR_DIRS[0]] = HexGrid.Visibility.VISIBLE
+	hex_grid.visibility[HexGrid.NEIGHBOR_DIRS[3]] = HexGrid.Visibility.EXPLORED
 
-	var mesh = hex_grid._build_city_tint_mesh(city)
+	var mesh = hex_grid._build_city_border_mesh(city)
 	var colors: PackedColorArray = mesh.surface_get_arrays(0)[Mesh.ARRAY_COLOR]
 
 	var saw_full_alpha := false
 	var saw_dimmed_alpha := false
-	var expected_dimmed = HexGrid.TERRITORY_TINT_ALPHA * HexGrid.TERRITORY_TINT_EXPLORED_ALPHA_MULT
 	for c in colors:
-		if abs(c.a - HexGrid.TERRITORY_TINT_ALPHA) < 0.005:
+		if abs(c.a - 1.0) < 0.005:
 			saw_full_alpha = true
-		elif abs(c.a - expected_dimmed) < 0.005:
+		elif abs(c.a - HexGrid.TERRITORY_BORDER_EXPLORED_ALPHA) < 0.005:
 			saw_dimmed_alpha = true
-	assert_true(saw_full_alpha, "tile VISIBLE deveria tingir com TERRITORY_TINT_ALPHA cheio")
-	assert_true(saw_dimmed_alpha, "tile EXPLORED deveria tingir com uma fracao da opacidade normal")
+	assert_true(saw_full_alpha, "tile VISIBLE: contorno cheio")
+	assert_true(saw_dimmed_alpha, "tile EXPLORED: contorno mais fraco")
+	assert_eq(colors.size(), 2 * 3 * 6, "só os 2 tiles conhecidos, 3 arestas de limite cada")
 
 ## Marcador animado de "em construcao" (pedido do usuario: mostrar que ali
 ## tem uma obra rolando) — refresh_construction_markers() reconcilia com
@@ -354,42 +371,30 @@ func test_refresh_construction_markers_updates_progress_on_an_already_existing_m
 	var mid_row := HexGrid.CONSTRUCTION_PROGRESS_BAR_TEX_HEIGHT / 2
 	assert_true(_color_close(image.get_pixel(roundi(w * 0.6), mid_row), HexGrid.CONSTRUCTION_PROGRESS_BAR_FILL_COLOR), "75% de progresso deveria preencher bem alem da metade da barra")
 
-## Pedido do usuario: "melhorou mas ainda parece que quando a barra chega
-## em 90% a construção acaba" — o predio concluido limpa pending_building_
-## coord no MESMO turno em que a producao cruza o custo (ver City.
-## process_turn), entao sem tratamento especial o marcador some no mesmo
-## refresh, e o jogador nunca chega a VER a barra cheia (so o ultimo valor
-## do turno anterior, podendo ser bem menos que 100%). Agora refresh_
-## construction_markers(just_completed) mantem o marcador por UM refresh
-## extra com a barra travada em 100% antes de sumir de vez.
-func test_refresh_construction_markers_holds_completed_marker_at_full_for_one_extra_refresh():
+## Conclusao: o predio nasce (place_building) e o canteiro sai do tile NO MESMO INSTANTE. Relato do usuario
+## (2026-10-12): "a construcao supostamente termina, aparece o predio, mas a barra de progresso esta tipo em 80%, ai
+## uns 2 turnos depois a barra some... ficam 2 construcoes ocupando o mesmo espaco". Antes o marcador so era avisado da
+## conclusao num refresh posterior e ainda ficava mais um turno inteiro com a barra em 100% sobre o predio pronto;
+## agora quem cria o predio retira o canteiro, e nenhum refresh volta a criar um onde ha predio.
+func test_a_finished_building_replaces_its_construction_marker_at_once():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
-	city.pending_building_coord = Vector2i(1, 0)
 	city.set_production("v2_building_guardian_hall")
+	city.pending_building_coord = Vector2i(1, 0)
 	city.stored_production = city.production_cost() * 0.9
 	hex_grid.refresh_construction_markers()
 	var marker: Node3D = hex_grid._construction_markers[Vector2i(1, 0)]
-	var bar := marker.get_node("ProgressBar") as Sprite3D
 
-	# predio concluido: City ja limpou pending_building_coord (nao esta mais
-	# em "wanted"), mas o coord chega em just_completed neste refresh.
-	city.pending_building_coord = City.NO_PENDING_COORD
-	hex_grid.refresh_construction_markers([Vector2i(1, 0)])
+	hex_grid.place_building(Vector2i(1, 0), "v2_building_guardian_hall", human)
 
-	assert_true(hex_grid._construction_markers.has(Vector2i(1, 0)), "marcador deveria continuar visivel por mais um refresh apos concluir")
-	var image := bar.texture.get_image()
-	var w := HexGrid.CONSTRUCTION_PROGRESS_BAR_TEX_WIDTH
-	var mid_row := HexGrid.CONSTRUCTION_PROGRESS_BAR_TEX_HEIGHT / 2
-	assert_true(_color_close(image.get_pixel(w - 2, mid_row), HexGrid.CONSTRUCTION_PROGRESS_BAR_FILL_COLOR), "barra deveria mostrar 100% preenchido na volta de graca")
-
-	# proximo refresh (sem esse coord em just_completed de novo): remove de vez.
+	assert_false(hex_grid._construction_markers.has(Vector2i(1, 0)), "o canteiro deixa de existir no instante em que o predio nasce")
+	assert_true(marker.is_queued_for_deletion(), "fora da arvore (sem animacao possivel): some na hora")
+	# Estado inconsistente de proposito (a cidade ainda aponta a obra pro tile do predio): nem assim volta a existir
+	# um canteiro em cima de um predio pronto.
 	hex_grid.refresh_construction_markers()
+	assert_false(hex_grid._construction_markers.has(Vector2i(1, 0)), "tile com predio nunca ganha canteiro")
 
-	assert_false(hex_grid._construction_markers.has(Vector2i(1, 0)), "marcador deveria sumir de vez no refresh seguinte a volta de graca")
-
-## Cancelamento (jogador trocou a producao antes de completar) NAO deveria
-## ganhar a "volta de graca" acima — sem isso no just_completed, o marcador
-## deveria continuar sumindo na hora, como sempre funcionou.
+## Cancelamento (jogador trocou a producao antes de completar): o marcador
+## some na hora, sem predio e sem aceno de conclusao.
 func test_refresh_construction_markers_removes_cancelled_marker_immediately():
 	var city = hex_grid.found_city(Vector2i(0, 0), human, "Capital")
 	city.pending_building_coord = Vector2i(1, 0)
@@ -397,13 +402,13 @@ func test_refresh_construction_markers_removes_cancelled_marker_immediately():
 	assert_true(hex_grid._construction_markers.has(Vector2i(1, 0)))
 
 	city.pending_building_coord = City.NO_PENDING_COORD
-	hex_grid.refresh_construction_markers() # just_completed vazio (cancelamento, nao conclusao)
+	hex_grid.refresh_construction_markers()
 
-	assert_false(hex_grid._construction_markers.has(Vector2i(1, 0)), "cancelamento nao deveria ganhar a volta de graca em 100%")
+	assert_false(hex_grid._construction_markers.has(Vector2i(1, 0)), "obra cancelada some na hora")
 
 ## Base da previa de trajeto (estilo Civilization) mostrada ao passar o
 ## mouse sobre um tile alcancavel — ver SelectionManager.handle_world_hover().
-func test_reconstruct_path_returns_correct_step_sequence():
+func test_unit_route_returns_the_step_sequence_to_a_reachable_tile():
 	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
 	warrior.movement_left = 2.0 # grama custa 1 por tile, guerreiro alcanca 2 tiles
@@ -411,14 +416,13 @@ func test_reconstruct_path_returns_correct_step_sequence():
 	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player)
 	assert_true(reachable.has(Vector2i(2, 0)), "com 2 pontos de movimento devia alcancar 2 tiles de grama a frente")
 
-	var path = hex_grid.reconstruct_path(warrior.coord, Vector2i(2, 0))
+	var path = hex_grid.unit_route(warrior, Vector2i(2, 0))
 	assert_eq(path, [Vector2i(1, 0), Vector2i(2, 0)], "caminho deveria passar pelo tile intermediario")
 
-func test_reconstruct_path_to_unreachable_tile_is_empty():
+func test_unit_route_to_an_unreachable_tile_is_empty():
 	var warrior = _make_unit("warrior", human, Vector2i(0, 0))
-	hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player)
 
-	var path = hex_grid.reconstruct_path(warrior.coord, Vector2i(50, 50))
+	var path = hex_grid.unit_route(warrior, Vector2i(50, 50))
 
 	assert_eq(path.size(), 0)
 
@@ -634,12 +638,12 @@ func test_compute_path_embarked_crosses_ocean_gap():
 
 	assert_eq(path, [Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)], "embarcada deveria conseguir tracar o caminho completo atravessando o vao de oceano")
 
-## Regra critica de C4 (achada na revisao do plano): terra so e permitida
-## como DESTINO FINAL enquanto embarcado — uma unidade nao deveria
-## conseguir atravessar terra->agua de novo no MESMO comando (evita
-## "pular de ilha em ilha" isolado e evita continue_move_order executar um
-## trajeto multi-trecho sem revalidar terreno a cada passo).
-func test_embarked_unit_cannot_path_through_land_to_reach_water_beyond_it():
+## Embarque AUTOMATICO (2026-10-10): a antiga regra de C4 ("terra so como
+## destino final enquanto embarcado") existia porque embarcar era um MODO
+## ligado a mao. Agora o estado vem do tile a cada passo (HexGrid.move_unit/
+## sync_embarked), entao um mesmo trajeto atravessa agua -> ilha -> agua,
+## pagando o custo normal de cada tile.
+func test_amphibious_route_crosses_an_island_and_keeps_sailing():
 	hex_grid.tiles[Vector2i(1, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN)
 	hex_grid.tiles[Vector2i(2, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND) # "ilha" no meio do caminho
 	hex_grid.tiles[Vector2i(3, 0)] = TerrainDatabase.create_tile(HexTileData.TerrainType.OCEAN) # agua do OUTRO lado da ilha
@@ -649,9 +653,12 @@ func test_embarked_unit_cannot_path_through_land_to_reach_water_beyond_it():
 	var reachable = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, false, true)
 	var path = hex_grid.compute_path(warrior.coord, Vector2i(3, 0), warrior.owner_player, false, true)
 
-	assert_true(reachable.has(Vector2i(2, 0)), "a ilha em si (destino final em terra) deveria ser alcancavel")
-	assert_false(reachable.has(Vector2i(3, 0)), "agua do OUTRO lado da ilha nao deveria ser alcancavel no mesmo comando — terra so e destino final, nao passagem")
-	assert_eq(path.size(), 0, "compute_path tambem nao deveria achar rota nenhuma atravessando a ilha")
+	assert_true(reachable.has(Vector2i(2, 0)), "a ilha e alcancavel")
+	assert_true(reachable.has(Vector2i(3, 0)), "a agua do outro lado da ilha tambem, no mesmo comando")
+	assert_almost_eq(float(reachable[Vector2i(3, 0)]), 3.0, 0.001, "agua e ilha custam o movimento normal (1 por tile)")
+	assert_eq(path, [Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)], "compute_path atravessa a ilha")
+	var land_only = hex_grid.compute_reachable(warrior.coord, warrior.movement_left, warrior.owner_player, false, false)
+	assert_false(land_only.has(Vector2i(1, 0)), "sem a capacidade anfibia (monstro, tecnica), agua continua bloqueando")
 
 ## "Mover ate" tipo Civilization (pedido do usuario: "no civilization eu
 ## posso colocar pra ela se mover pra um lugar longe... o movimento fica

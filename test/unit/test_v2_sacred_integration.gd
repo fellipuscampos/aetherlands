@@ -72,7 +72,7 @@ func _player(civ_name: String) -> PlayerData:
 	return player
 
 func _learn(player: PlayerData, tier: int = 9) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		if not player.v2_research.is_completed("v2_magic_sacred_%d" % i):
 			assert_true(player.v2_research.complete_research("v2_magic_sacred_%d" % i))
 
@@ -101,14 +101,14 @@ func test_arcane_shrine_mana_feeds_the_spells_and_turns_refill_it():
 	var ally := _unit("warrior", human, Vector2i(1, 0), 2.0)
 	human.mana = 10.0
 	assert_true(V2MagicRuntime.cast(cleric, LIGHT, ally.coord, grid))
-	assert_eq(human.mana, 6.0, "Mana cai")
+	assert_eq(human.mana, 5.0, "Mana cai")
 	V2EconomyRuntime.apply_turn_income(human)
-	assert_eq(human.mana, 6.0 + income, "e a economia repõe")
+	assert_eq(human.mana, 5.0 + income, "e a economia repõe")
 
 # --- §145 Militar -> Magia ----------------------------------------------------------------------------------
 
 func test_magic_sustains_the_doctrine_army_in_real_combat():
-	for i in range(1, 7):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 7):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % i)
 	_learn(human, 5)
 	var guardian := _unit("v2_unit_guardian", human, Vector2i.ZERO, 6.0)
@@ -117,11 +117,11 @@ func test_magic_sustains_the_doctrine_army_in_real_combat():
 	var enemy := _unit("warrior", rival, Vector2i(1, 0))
 	human.mana = 50.0
 	assert_true(V2MagicRuntime.cast(cleric, LIGHT, guardian.coord, grid))
-	assert_eq(guardian.hp, 14.0, "Luz Restauradora: +8")
+	assert_eq(guardian.hp, 18.0, "Luz Restauradora: +12")
 	var second_cleric := _unit(CLERIC, human, Vector2i(0, -1))
 	assert_true(V2MagicRuntime.cast(second_cleric, AEGIS, guardian.coord, grid))
 	assert_true(V2TechniqueRuntime.activate(guardian, "v2_technique_shield_wall"))
-	var expected_factor: float = 1.35 * 1.35 * 1.20
+	var expected_factor: float = 1.35 * (1.0 + V2SpellDatabase.get_spell(AEGIS).defense_bonus) * 1.20
 	var got_factor: float = V2TechniqueRuntime.defense_multiplier(guardian, grid) * V2MagicRuntime.defense_multiplier(guardian) * V2UnitAuras.defense_multiplier(guardian)
 	assert_almost_eq(got_factor, expected_factor, 0.0001, "Muralha x Égide x Comando: origens diferentes multiplicam")
 	var predicted: Dictionary = CombatResolver.predict(enemy, guardian, grid)
@@ -133,7 +133,7 @@ func test_magic_sustains_the_doctrine_army_in_real_combat():
 # --- §146 Counter do Ladino ---------------------------------------------------------------------------------
 
 func test_rogue_counter_works_through_aegis_by_the_existing_formula():
-	for i in range(1, 7):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 7):
 		rival.v2_research.complete_research("v2_doctrine_rogue_%d" % i)
 	_learn(human, 5)
 	var cleric := _unit(CLERIC, human, Vector2i.ZERO)
@@ -151,7 +151,8 @@ func test_rogue_counter_works_through_aegis_by_the_existing_formula():
 	cleric.magic_status.erase(AEGIS)
 	var pen_no_aegis: float = CombatResolver.predict(assassin, cleric, grid, technique.strike_multiplier, pen, true).damage_to_defender
 	var ratio := (with_both - aegis_no_pen) / (pen_no_aegis - with_both)
-	assert_almost_eq(ratio, (1.35 * pen) / (0.35 * (1.0 - pen)), 0.0001, "a penetração age sobre a Defesa JÁ multiplicada pela Égide, na fórmula existente")
+	var aegis_bonus := V2SpellDatabase.get_spell(AEGIS).defense_bonus
+	assert_almost_eq(ratio, ((1.0 + aegis_bonus) * pen) / (aegis_bonus * (1.0 - pen)), 0.0001, "a penetração age sobre a Defesa JÁ multiplicada pela Égide, na fórmula existente")
 
 # --- Tensão Logística ------------------------------------------------------------------------------------------
 
@@ -165,7 +166,7 @@ func test_tension_hits_the_cleric_defense_but_never_the_healing_output():
 	var ally := _unit("warrior", human, Vector2i(1, 0), 2.0)
 	human.mana = 10.0
 	V2MagicRuntime.cast(cleric, LIGHT, ally.coord, grid)
-	assert_eq(ally.hp, 10.0, "cura cheia")
+	assert_eq(ally.hp, 12.0, "cura cheia")
 
 # --- §117 Fortificação -------------------------------------------------------------------------------------
 

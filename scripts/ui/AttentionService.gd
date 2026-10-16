@@ -5,7 +5,6 @@ extends RefCounted
 ## de turno; nao possui polling, flags resolvidas nem representacao no save.
 signal items_changed(items: Array[AttentionItem])
 
-const SORT_WORLD_EVENT := 100
 const SORT_RESEARCH := 200
 const SORT_CITY_IDLE := 300
 const SORT_RITUAL_CRITICAL := 400
@@ -59,7 +58,6 @@ func next_required() -> AttentionItem:
 func refresh() -> void:
 	var rebuilt: Array[AttentionItem] = []
 	if _player != null and _player == GameManager.human_player:
-		_append_world_event(rebuilt)
 		_append_research(rebuilt)
 		_append_cities(rebuilt)
 		_append_rituals(rebuilt)
@@ -75,34 +73,6 @@ func refresh() -> void:
 	_last_signature = signature
 	items_changed.emit(items())
 
-func _append_world_event(result: Array[AttentionItem]) -> void:
-	var human_index := GameManager.players.find(_player)
-	if human_index < 0:
-		return
-	for event in WorldEventManager.active_events:
-		if event == null or event.phase != WorldEvent.PHASE_PREPARATION or event.participants.has(human_index):
-			continue
-		var stable_id := str(event.event_id) if "event_id" in event else str(WorldEventManager.active_events.find(event))
-		# Fase 33D3: participação no Dragão é OPCIONAL — aviso, nunca bloqueio do fim de turno.
-		var item := AttentionItem.create("world_event_decision:%s" % stable_id, AttentionItem.Priority.WARNING, "Decidir participação no evento", "Existe uma decisão de evento mundial pendente.")
-		item.category = "world_event"
-		item.severity = UIEventData.Severity.IMPORTANT
-		item.primary_action = "world_event"
-		item.primary_action_label = "Decidir"
-		item.sort_key = SORT_WORLD_EVENT
-		result.append(item)
-	# Fase 33D3: recompensa do Relicário a escolher (mesmo caminho de decisão do painel de evento). Não bloqueia:
-	# sem escolha em ReliquaryEvent.REWARD_CHOICE_ROUNDS rodadas, vale o Ouro.
-	for event in WorldEventManager.active_events:
-		if event is ReliquaryEvent and (event as ReliquaryEvent).awaiting_choice_from(human_index):
-			var choice := AttentionItem.create("world_event_reward:%d" % event.event_id, AttentionItem.Priority.WARNING, "Escolher recompensa do Relicário", "Ouro ou Mana.")
-			choice.category = "world_event"
-			choice.severity = UIEventData.Severity.IMPORTANT
-			choice.primary_action = "world_event"
-			choice.primary_action_label = "Escolher"
-			choice.sort_key = SORT_WORLD_EVENT
-			result.append(choice)
-
 func _append_research(result: Array[AttentionItem]) -> void:
 	if _player.v2_research == null or _player.v2_research.active_id != "":
 		return
@@ -114,7 +84,7 @@ func _append_research(result: Array[AttentionItem]) -> void:
 	var overflow := _player.v2_research.research_overflow
 	var description := "Selecione o próximo projeto de Conhecimento."
 	if overflow > 0.0:
-		description = "Conhecimento acumulado: %s." % _number(overflow)
+		description = "Conhecimento guardado: %s — entra inteiro, na hora, na pesquisa que você escolher." % _number(overflow)
 	var item := AttentionItem.create("research_idle", AttentionItem.Priority.REQUIRED, "Escolher Pesquisa", description)
 	item.category = "research"
 	item.severity = UIEventData.Severity.IMPORTANT

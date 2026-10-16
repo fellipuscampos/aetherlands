@@ -96,19 +96,27 @@ func test_the_griffon_stays_blocked_with_the_order_but_without_n9():
 func test_the_griffon_has_the_specified_baseline():
 	var data := UnitDatabase.create_unit(GRIFFON)
 	assert_eq(data.unit_name, "Cavaleiro de Grifo")
-	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points, data.production_cost], [36.0, 10.0, 6.5, 5.0, 100.0])
+	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points, data.production_cost], [40.0, 16.0, 10.0, 5.0, 95.0])
 	assert_eq(data.vision_range, 5)
 	assert_eq(data.attack_range, 1, "corpo a corpo")
 	assert_eq(data.visual_kind, GRIFFON, "o SaveManager recria a unidade por ele")
 	assert_false(data.can_found_city)
 
-func test_it_carries_the_three_traits_and_the_flying_profile_and_the_ranged_vulnerability_by_data():
+## 2026-10-10 (pedido do usuário): o Cavaleiro de Grifo não voa mais, nas 4 raças — cavalaria lendária terrestre.
+func test_it_is_mounted_and_legendary_walks_on_the_ground_and_keeps_the_ranged_vulnerability():
 	var data := UnitDatabase.create_unit(GRIFFON)
 	assert_true(data.has_trait(UnitData.TRAIT_MOUNTED))
-	assert_true(data.has_trait(UnitData.TRAIT_FLYING))
+	assert_false(data.has_trait(UnitData.TRAIT_FLYING), "sem o traço de voo")
 	assert_true(data.has_trait(UnitData.TRAIT_LEGENDARY))
-	assert_eq(data.movement_profile, UnitData.MovementProfile.FLYING)
-	assert_true(data.is_flying())
+	assert_eq(data.movement_profile, UnitData.MovementProfile.GROUND)
+	assert_false(data.is_flying())
+	for race in ["human", "dwarf", "elf", "orc"]:
+		var civ := CivilizationData.new()
+		civ.race = race
+		var player := PlayerData.new(civ)
+		var themed := UnitArtCatalog.for_owner(UnitDatabase.create_unit(GRIFFON), player)
+		assert_eq(themed.movement_profile, UnitData.MovementProfile.GROUND, "%s: a arte da raça não muda o movimento" % race)
+		player.release_relations()
 	assert_eq(data.ranged_damage_taken_bonus, 0.25)
 	assert_true(UnitAbilities.is_mounted(data), "ainda montado: o Preparar Lanças o reconhece")
 
@@ -163,7 +171,7 @@ func test_producing_it_needs_n9_the_order_and_a_free_slot_and_costs_100():
 	assert_false(_standalone_city(player, [C_STABLE]).can_train(GRIFFON), "sem a Ordem")
 	assert_false(_standalone_city(player, [G_HALL, G_MASTERY, W_HALL, ARENA, R_CAMP, R_TOWER]).can_train(GRIFFON), "nenhum outro prédio de maestria o treina")
 	city.set_production(GRIFFON)
-	assert_eq(city.production_cost(), 100.0)
+	assert_eq(city.production_cost(), 95.0)
 
 func test_the_other_masteries_do_not_train_it_and_the_order_does_not_train_the_others():
 	var player := _player(9, 9, 9, 9)

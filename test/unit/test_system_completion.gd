@@ -66,6 +66,21 @@ func test_ai_assigns_a_real_building_site():
 	assert_ne(site, City.NO_PENDING_COORD)
 	assert_true(city.is_valid_building_tile(site, grid))
 
+## Tile com unidade em cima vale como obra, mas a IA só o usa quando não sobra tile desocupado — com tile livre a
+## escolha é a mesma de antes desta regra (o baseline de balanceamento depende disso).
+func test_ai_building_site_prefers_free_tiles_and_falls_back_to_occupied_ones():
+	var city := grid.found_city(Vector2i.ZERO, player, "Capital")
+	var free_choice := V2StrategicAI._building_site(city, grid)
+	grid.spawn_unit(free_choice, UnitDatabase.create_unit("warrior"), enemy)
+	var second_choice := V2StrategicAI._building_site(city, grid)
+	assert_ne(second_choice, free_choice, "com outro tile livre, a IA não constrói embaixo da unidade")
+	assert_null(grid.get_unit_at(second_choice))
+
+	for coord in city.owned_tiles:
+		if coord != city.coord and grid.get_unit_at(coord) == null:
+			grid.spawn_unit(coord, UnitDatabase.create_unit("warrior"), player)
+	assert_eq(V2StrategicAI._building_site(city, grid), free_choice, "todo tile ocupado: a IA ainda consegue construir, no mesmo tile que escolheria vazio")
+
 func test_dragon_rewards_are_proportional_and_not_repeated_after_loading():
 	var event := DragonEvent.new()
 	event.result = {"outcome": "defeated"}

@@ -55,3 +55,16 @@ func test_reset_view_resets_zoom_and_rotation_regardless_of_focus():
 
 	assert_eq(rig.rotation, Vector3.ZERO)
 	assert_eq(rig.camera.position, rig._default_camera_position)
+
+## Ângulo fixo (2026-10-09): não existe mais giro da câmera; o rig fica na orientação inicial e o zoom só
+## aproxima ao longo da mesma direção (o ângulo de visão nunca muda).
+func test_the_camera_angle_is_fixed():
+	assert_false("rotate_speed" in rig, "sem parâmetro de giro")
+	assert_false(rig.has_method("_handle_rotate"), "sem controle de giro (Q/E)")
+	assert_eq(rig.rotation, Vector3.ZERO, "o rig nasce na orientação inicial")
+	var direction_before := rig.camera.position.normalized()
+	rig._zoom(rig.zoom_speed * 3.0)
+	assert_true(rig.camera.position.normalized().is_equal_approx(direction_before), "o zoom não muda o ângulo")
+	rig.rotation = Vector3(0.0, 1.0, 0.0) # qualquer resíduo (ex.: estado anterior) é desfeito ao reiniciar
+	rig.reset_view()
+	assert_eq(rig.rotation, Vector3.ZERO)

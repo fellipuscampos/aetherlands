@@ -116,8 +116,8 @@ func test_modal_blocks_click_space_and_hotkeys_and_honors_cancelability():
 func test_responsive_context_bounds_at_required_resolutions():
 	for viewport_size in [Vector2(1280, 720), Vector2(1600, 900), Vector2(1920, 1080), Vector2(2560, 1080)]:
 		shell.apply_viewport_size(viewport_size)
-		assert_lte(shell.context_width, 460.0)
-		assert_gte(shell.context_width, 360.0)
+		assert_lte(shell.context_width, 460.0 * Settings.ui_scale_percent / 100.0)
+		assert_gte(shell.context_width, 360.0 * minf(1.0, Settings.ui_scale_percent / 100.0))
 		assert_lt(shell.context_width, viewport_size.x * 0.4)
 	assert_eq(UIThemeTokens.breakpoint_name(1280), "medium")
 	assert_eq(UIThemeTokens.breakpoint_name(1600), "large")
@@ -132,10 +132,48 @@ func test_global_bar_snapshot_uses_real_runtime_values():
 	assert_eq(snapshot.gold, 73)
 	assert_eq(snapshot.supply_used, 0)
 	assert_eq(snapshot.mana, 19)
+	assert_eq(snapshot.knowledge_banked, 0)
 	assert_eq(snapshot.knowledge_income, 0)
 	assert_eq(snapshot.cities, 0)
 	assert_eq(snapshot.units, 0)
 	assert_true(shell.global_bar._icons.has("gold"), "cada recurso reserva um slot de ícone futuro")
+
+## Pedido do usuário 2026-10-13: "mostre logo na barra superior onde fica a ciência o acúmulo e a ciência por turno".
+## O chip de Conhecimento segue o formato do Ouro e da Mana (acumulado + por turno) e acompanha o guardado na hora —
+## escolher uma pesquisa gasta tudo fora da virada de turno.
+func test_global_bar_shows_banked_knowledge_and_income_and_follows_it_live():
+	var original_human := GameManager.human_player
+	var player := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = player
+	var bar: GlobalBarPresenter = shell.global_bar
+	bar.refresh(player)
+	var label: Label = bar._labels.knowledge
+	assert_eq(label.text, "0  0", "nada guardado, nenhuma renda (sem cidade)")
+
+	player.v2_research.add_knowledge(8.5) # sem pesquisa ativa: fica guardado
+
+	assert_eq(bar.build_snapshot(player).knowledge_banked, 8)
+	assert_eq(label.text, "8  0", "o chip acompanha o guardado sem esperar o próximo turno")
+	var tooltip: String = (bar._items.knowledge as Control).tooltip_text
+	assert_true(tooltip.contains("Conhecimento guardado: 8.5"), tooltip)
+	assert_true(tooltip.contains("entra inteiro, na hora, na próxima pesquisa"), tooltip)
+
+	player.v2_research.select_research("v2_doctrine_guardian_2") # custo 16: recebe os 8.5 na hora
+
+	assert_eq(label.text, "0  0", "gasto ao iniciar a pesquisa")
+	assert_true(bar.research_status.detail_label.text.begins_with("8.5 / 16"), "o widget ao lado já mostra o guardado aplicado: %s" % bar.research_status.detail_label.text)
+	assert_true(((bar._items.knowledge as Control).tooltip_text as String).contains("indo direto para a pesquisa ativa"))
+	# Outra partida: a barra larga o estado antigo e segue o do novo jogador.
+	var other := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = other
+	bar.refresh(other)
+	player.v2_research.cancel_active_research()
+	player.v2_research.add_knowledge(50.0)
+	assert_eq(label.text, "0  0", "o guardado de outro jogador não aparece")
+	other.v2_research.add_knowledge(3.0)
+	assert_eq(label.text, "3  0")
+	GameManager.human_player = original_human
+	bar.refresh(original_human)
 
 func test_hud_hides_legacy_bar_duplicate_research_and_release_fps():
 	var hud := (load("res://scenes/ui/HUD.tscn") as PackedScene).instantiate()

@@ -14,9 +14,10 @@ extends RefCounted
 ## custo de produção, upkeep) é definido aqui de propósito — eles virão quando o
 ## gameplay existir e puder ser comparado com combate, duração e economia reais.
 ##
-## Cada linha tem 9 entradas, uma por tier, na ordem N1..N9 dos papéis fixos:
-## doutrina, estrutura de treinamento, unidade-base, técnica I, primeira evolução,
-## técnica II, forma Elite, estrutura de Maestria, candidato a Unidade Lendária.
+## Cada linha tem 8 entradas, uma por tier, na ordem dos tiers 2..9 (o N1 de portão
+## "Doutrina do X" saiu, ver V2ResearchDatabase.BRANCH_FIRST_TIER): estrutura de
+## treinamento, unidade-base, técnica I, primeira evolução, técnica II, forma Elite,
+## estrutura de Maestria, candidato a Unidade Lendária.
 ## O `unlock_type` sai do papel (V2ResearchDatabase.TIER_ROLE_UNLOCK_TYPES).
 ## As relações de evolução (unidade-base -> evolução -> elite) são derivadas dos
 ## tiers 3-5-7 pelo banco, sem repetição aqui.
@@ -24,12 +25,11 @@ extends RefCounted
 ## Regra do slot global de Unidade Lendária (Fase 6, V2LegendarySystem): anexada à descrição de cada N9.
 const LEGENDARY_RULE := "Cada civilização só pode ter UMA Unidade Lendária ativa ou em treinamento por vez."
 
-## FASE 3-9: os únicos unlock_ids com gameplay REAL (Doutrinas do Guardião, do Guerreiro, do Patrulheiro e da Cavalaria, N1-N9 completas).
+## FASE 3-11: os unlock_ids com gameplay REAL (as seis Doutrinas completas).
 ## O banco marca `gameplay_connected = true` nos nós que os carregam; todo o resto
 ## continua só metadata. Um unlock novo passa a existir no jogo acrescentando o id
 ## aqui E criando o objeto em BuildingDatabase/UnitDatabase (ver V2UnlockSystem).
 const CONNECTED_UNLOCK_IDS: Array[String] = [
-	"v2_doctrine_guardian",
 	"v2_building_guardian_hall",
 	"v2_unit_shieldbearer",
 	"v2_technique_shield_wall",
@@ -38,7 +38,6 @@ const CONNECTED_UNLOCK_IDS: Array[String] = [
 	"v2_unit_sentinel",
 	"v2_building_guardian_mastery",
 	"v2_legendary_guardian_champion",
-	"v2_doctrine_warrior",
 	"v2_building_warrior_hall",
 	"v2_unit_warrior",
 	"v2_technique_power_strike",
@@ -47,7 +46,6 @@ const CONNECTED_UNLOCK_IDS: Array[String] = [
 	"v2_unit_weapon_master",
 	"v2_building_warrior_mastery",
 	"v2_legendary_blade_hero",
-	"v2_doctrine_ranger",
 	"v2_building_ranger_camp",
 	"v2_unit_archer",
 	"v2_technique_precise_shot",
@@ -56,7 +54,6 @@ const CONNECTED_UNLOCK_IDS: Array[String] = [
 	"v2_unit_elite_marksman",
 	"v2_building_ranger_mastery",
 	"v2_legendary_legend_hunter",
-	"v2_doctrine_cavalry",
 	"v2_building_war_stable",
 	"v2_unit_cavalier",
 	"v2_technique_charge",
@@ -65,7 +62,6 @@ const CONNECTED_UNLOCK_IDS: Array[String] = [
 	"v2_unit_armored_cavalier",
 	"v2_building_cavalry_mastery",
 	"v2_legendary_griffon_rider",
-	"v2_doctrine_rogue",
 	"v2_building_rogue_guild",
 	"v2_unit_rogue",
 	"v2_technique_sneak_attack",
@@ -74,7 +70,6 @@ const CONNECTED_UNLOCK_IDS: Array[String] = [
 	"v2_unit_assassin",
 	"v2_building_rogue_mastery",
 	"v2_legendary_shadow_master",
-	"v2_doctrine_siege",
 	"v2_building_siege_arsenal",
 	"v2_unit_catapult",
 	"v2_technique_demolition_ammo",
@@ -91,13 +86,10 @@ const CONNECTED_UNLOCK_IDS: Array[String] = [
 
 const SUPREME_ARMY_UNLOCK_ID := "v2_military_supremacy_access"
 const SUPREME_ARMY_INTENT := "Capstone estratégico da árvore militar (não é uma unidade): exigido pela futura Vitória por Supremacia Militar."
-const SUPREME_ARMY_DESCRIPTION := "O domínio completo de duas tradições militares permite à civilização reivindicar o ápice de sua doutrina de guerra. Exército Supremo é requisito da futura Vitória por Supremacia Militar. Não é uma unidade: é o capstone estratégico da árvore; as Unidades Lendárias vêm dos N9 de cada Doutrina."
+const SUPREME_ARMY_DESCRIPTION := "O domínio completo de duas tradições militares permite à civilização reivindicar o ápice de sua doutrina de guerra. Exército Supremo é requisito da futura Vitória por Supremacia Militar. Não é uma unidade: é o capstone estratégico da árvore; as Unidades Lendárias vêm do último nível de cada Doutrina."
 
 const BRANCHES := {
 	"guardian": [
-		{"name": "Doutrina do Guardião", "unlock_id": "v2_doctrine_guardian",
-			"intent": "Abrir a tradição de tank / frontline / proteção.",
-			"description": "Doutrina de linha de frente e proteção. Abre a tradição militar que forma tropas defensivas, capazes de segurar posição e proteger o restante do exército."},
 		{"name": "Salão dos Guardiões", "unlock_id": "v2_building_guardian_hall",
 			"intent": "Treinar as tropas da Doutrina do Guardião.",
 			"description": "Estrutura de treinamento da linha do Guardião. Permite treinar o Escudeiro; as demais tropas defensivas da Doutrina virão com os próximos níveis."},
@@ -124,9 +116,6 @@ const BRANCHES := {
 			"description": "Candidato a Unidade Lendária da linha do Guardião. Fantasia: o centro defensivo de uma formação. Unidade separada da cadeia convencional, com uma aura própria de comando defensivo."},
 	],
 	"warrior": [
-		{"name": "Doutrina do Guerreiro", "unlock_id": "v2_doctrine_warrior",
-			"intent": "Abrir a tradição de dano físico corpo a corpo.",
-			"description": "Doutrina de dano físico corpo a corpo. Forma o combatente ofensivo padrão do exército: troca resistência por capacidade de causar dano."},
 		{"name": "Salão de Armas", "unlock_id": "v2_building_warrior_hall",
 			"intent": "Treinar as tropas da Doutrina do Guerreiro.",
 			"description": "Estrutura de treinamento da linha do Guerreiro. Permite treinar o Guerreiro; as demais tropas corpo a corpo da Doutrina virão com os próximos níveis."},
@@ -153,9 +142,6 @@ const BRANCHES := {
 			"description": "Candidato a Unidade Lendária da linha do Guerreiro. Fantasia: combatente extraordinário de linha de frente e duelos. Unidade separada da cadeia convencional, com a passiva própria Execução: mais Ataque contra alvos já enfraquecidos."},
 	],
 	"ranger": [
-		{"name": "Doutrina do Patrulheiro", "unlock_id": "v2_doctrine_ranger",
-			"intent": "Abrir a tradição de dano ranged constante.",
-			"description": "Doutrina de combate à distância. Forma o dano ranged constante do exército: ataque contínuo a distância, sem depender de mana."},
 		{"name": "Campo dos Patrulheiros", "unlock_id": "v2_building_ranger_camp",
 			"intent": "Treinar as tropas da Doutrina do Patrulheiro.",
 			"description": "Estrutura de treinamento da linha do Patrulheiro. Permite treinar o Arqueiro; as demais tropas à distância da Doutrina virão com os próximos níveis."},
@@ -182,9 +168,6 @@ const BRANCHES := {
 			"description": "Candidato a Unidade Lendária da linha do Patrulheiro. Fantasia: caçador excepcional de alvos perigosos. Unidade separada da cadeia convencional, com a passiva própria Caçada Lendária: mais Ataque contra outras Unidades Lendárias."},
 	],
 	"cavalry": [
-		{"name": "Doutrina da Cavalaria", "unlock_id": "v2_doctrine_cavalry",
-			"intent": "Abrir a tradição de mobilidade, flanco e choque.",
-			"description": "Doutrina de mobilidade, flanco e choque. Forma tropas capazes de contornar linhas, perseguir e alcançar a retaguarda inimiga."},
 		{"name": "Estábulo de Guerra", "unlock_id": "v2_building_war_stable",
 			"intent": "Treinar as tropas da Doutrina da Cavalaria.",
 			"description": "Estrutura de treinamento da linha da Cavalaria. Permite treinar o Cavaleiro; as demais tropas montadas da Doutrina virão com os próximos níveis."},
@@ -207,13 +190,10 @@ const BRANCHES := {
 			"intent": "Consolidar a tradição montada e dar acesso ao Lendário da linha.",
 			"description": "Estrutura de Maestria da linha da Cavalaria: consolida a tradição montada e dá acesso ao seu candidato a Unidade Lendária. Não concede bônus próprios."},
 		{"name": "Cavaleiro de Grifo", "unlock_id": "v2_legendary_griffon_rider",
-			"intent": "Conceito fantástico: voo, atravessar obstáculos, acesso excepcional à backline; com counters.",
-			"description": "Candidato a Unidade Lendária da linha da Cavalaria. Conceito deliberadamente fantástico: voa, atravessa obstáculos e terrenos e tem acesso excepcional à backline — com counters reais, como ataques à distância. Unidade separada da cadeia convencional; a singularidade é a regra de movimento, não os números."},
+			"intent": "O ápice da tradição montada: mobilidade, choque e presença lendária.",
+			"description": "Candidato a Unidade Lendária da linha da Cavalaria: o cavaleiro supremo, mais rápido e mais forte que o Cavaleiro Blindado, com Carga e Retirada Tática da linha. Unidade separada da cadeia convencional; vulnerável a ataques à distância."},
 	],
 	"rogue": [
-		{"name": "Doutrina do Ladino", "unlock_id": "v2_doctrine_rogue",
-			"intent": "Abrir a tradição de sabotagem e eliminação de alvos prioritários.",
-			"description": "Doutrina de sabotagem e eliminação de alvos prioritários. Forma especialistas que respondem a composições específicas — não combatentes de linha de frente."},
 		{"name": "Guilda dos Ladinos", "unlock_id": "v2_building_rogue_guild",
 			"intent": "Treinar as tropas da Doutrina do Ladino.",
 			"description": "Estrutura de treinamento da linha do Ladino, irmã dos demais Salões. Treina o Ladino; as demais tropas da Doutrina vêm com os próximos níveis."},
@@ -240,9 +220,6 @@ const BRANCHES := {
 			"description": "Candidato a Unidade Lendária da linha do Ladino: infiltra formações inteiras atravessando unidades (Passo Sombrio), sem voar nem cruzar terreno impassável. Unidade separada da cadeia convencional; a singularidade é a regra de movimento, não os números."},
 	],
 	"siege": [
-		{"name": "Doutrina de Cerco", "unlock_id": "v2_doctrine_siege",
-			"intent": "Abrir a tradição de destruição de cidades e fortificações.",
-			"description": "Doutrina de conquista e destruição de cidades. Abre a tradição militar que forma as máquinas de guerra capazes de derrubar fortificações — nunca a melhor opção contra outra unidade."},
 		{"name": "Arsenal de Cerco", "unlock_id": "v2_building_siege_arsenal",
 			"intent": "Treinar as máquinas da Doutrina de Cerco.",
 			"description": "Estrutura de treinamento da linha de Cerco. Permite treinar a Catapulta; as demais máquinas de guerra da Doutrina virão com os próximos níveis."},

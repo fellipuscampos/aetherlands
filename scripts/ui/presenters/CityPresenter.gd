@@ -270,6 +270,8 @@ static func unit_item(city: City, kind: String) -> Dictionary:
 		if reason == "":
 			reason = V2ManifestationSystem.training_soft_reason(player, city, kind)
 		if reason == "":
+			reason = V2ColonizationRuntime.training_soft_reason(player, city, kind) # 2026-10-09: limite de Colonos
+		if reason == "":
 			var trainer := BuildingDatabase.building_that_trains(kind)
 			if trainer != null and not city.buildings.has(trainer.id):
 				reason = "Requer construir: %s" % RaceTheme.building_name(trainer.id)
@@ -389,7 +391,7 @@ static func _project_items(city: City) -> Array:
 		var reason := city.city_upgrade_unavailable_reason()
 		var name := "Evoluir para %s" % V2CityLevelData.level_name(next_level)
 		var eta := _eta_text(city, pp)
-		var details: Array = ["Vida máxima: %s → %s" % [_number(city.max_hp()), _number(V2CityLevelData.max_hp(next_level))], "Slots de prédio: %d → %d" % [city.max_building_slots(), V2CityLevelData.max_building_slots(next_level)], "Cópias por prédio repetível: %d → %d" % [V2CityLevelData.repeatable_building_limit(city.city_level), V2CityLevelData.repeatable_building_limit(next_level)], "Pontos de Anexação: +%d" % V2CityLevelData.annexation_grant(next_level), "Ouro cobrado na conclusão."]
+		var details: Array = ["Vida máxima: %s → %s" % [_number(city.max_hp()), _number(V2CityLevelData.max_hp(next_level))], "Slots de prédio: %d → %d" % [city.max_building_slots(), V2CityLevelData.max_building_slots(next_level)], "Visão: %d → %d tiles" % [city.vision_range(), V2CityLevelData.vision_range(next_level)], "Cópias por prédio repetível: %d → %d" % [V2CityLevelData.repeatable_building_limit(city.city_level), V2CityLevelData.repeatable_building_limit(next_level)], "Pontos de Anexação: +%d" % V2CityLevelData.annexation_grant(next_level), "Ouro cobrado na conclusão."]
 		var state := "current" if city.production_item == project_id else ("available" if reason == "" else "blocked")
 		result.append({
 			"id": project_id, "name": name, "category": "development", "subgroup": "Desenvolvimento",

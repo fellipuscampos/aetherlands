@@ -8,13 +8,15 @@ extends Button
 signal command_pressed(view: UnitAbilityViewData)
 
 var view: UnitAbilityViewData
+const CHROME := preload("res://scripts/ui/HUDChromeTheme.gd")
 
 func _init() -> void:
 	theme_type_variation = &"GhostButton"
 	custom_minimum_size = Vector2(0, UIThemeTokens.TARGET_MIN)
 	focus_mode = Control.FOCUS_ALL
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_theme_font_size_override("font_size", UIThemeTokens.FONT_BODY_SMALL)
+	clip_text = true
+	text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	pressed.connect(_on_pressed)
 
 func configure_view(value: UnitAbilityViewData) -> void:
@@ -25,20 +27,11 @@ func configure_view(value: UnitAbilityViewData) -> void:
 	set_pressed_no_signal(value.toggled or value.state == UnitAbilityViewData.State.TARGETING)
 	disabled = value.state == UnitAbilityViewData.State.BLOCKED
 	tooltip_text = value.tooltip()
-	var accent := UIThemeTokens.COLOR_INFO
-	if value.state == UnitAbilityViewData.State.TARGETING:
-		accent = UIThemeTokens.COLOR_TARGETING
-	elif value.toggled:
-		accent = UIThemeTokens.COLOR_SUCCESS
-	var normal := UITheme.panel_style(UIThemeTokens.COLOR_SURFACE_RAISED, UIThemeTokens.COLOR_BORDER, 1, UIThemeTokens.RADIUS_CONTROL, false)
-	var lit := UITheme.panel_style(accent.darkened(0.7), accent, 1, UIThemeTokens.RADIUS_CONTROL, false)
-	add_theme_stylebox_override("normal", lit if button_pressed else normal)
-	add_theme_stylebox_override("pressed", lit)
-	add_theme_stylebox_override("hover_pressed", lit)
+	for style in ["normal", "pressed", "hover_pressed"]:
+		remove_theme_stylebox_override(style)
 	add_theme_color_override("font_color", UIThemeTokens.COLOR_TEXT)
 	add_theme_color_override("font_pressed_color", UIThemeTokens.COLOR_TEXT)
-	# V3 / Etapa 2: ação primária semântica (Fundar Cidade válida) usa a variação PrimaryButton do tema — sem
-	# os overrides de superfície, para o acento do design system aparecer.
+	# Founding keeps its primary emphasis within the same pixel button family.
 	if value.is_primary and not disabled:
 		theme_type_variation = &"PrimaryButton"
 		for style in ["normal", "pressed", "hover_pressed"]:
@@ -49,6 +42,28 @@ func configure_view(value: UnitAbilityViewData) -> void:
 		theme_type_variation = &"GhostButton"
 	if value.hotkey != "":
 		text = "%s  %s  [%s]" % [value.glyph, value.display_name, value.hotkey]
+	set_context_style(CHROME.factor())
+
+func set_context_style(factor: float) -> void:
+	custom_minimum_size.y = 44 * factor
+	if view == null:
+		return
+	var lit := view.toggled or view.state == UnitAbilityViewData.State.TARGETING
+	var stem := "button_bronze" if view.is_primary and not disabled else "button_stone"
+	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
+		var texture_name := stem
+		if state == "disabled": texture_name = "button_disabled"
+		elif state == "focus": texture_name = "button_focus"
+		elif state in ["hover", "hover_pressed"]: texture_name += "_hover"
+		elif state == "pressed" or lit: texture_name += "_pressed"
+		var frame := CHROME.MENU.BASE._button(texture_name, factor)
+		frame.content_margin_left = 8 * factor
+		frame.content_margin_right = 8 * factor
+		frame.content_margin_top = 8 * factor
+		frame.content_margin_bottom = 8 * factor
+		add_theme_stylebox_override(state, frame)
+	add_theme_color_override("font_color", Color("c4e6a3") if lit else Color("f4e9d3"))
+	add_theme_color_override("font_pressed_color", Color("c4e6a3") if lit else Color("fff2cd"))
 
 func _make_custom_tooltip(for_text: String) -> Object:
 	return AETooltip.make_card(for_text)

@@ -1039,7 +1039,7 @@ func test_standard_1_0_world_has_only_the_main_continent():
 	var grid := HexGrid.new()
 	grid._ready()
 	grid.generate_map(TitleScreen.MAP_SIZES.large.width, TitleScreen.MAP_SIZES.large.height, 2024)
-	assert_eq(String(grid.world_profile.id), "standard_1_0")
+	assert_eq(String(grid.world_profile.id), String(WorldProfile.default_size().id), "partida nova: tamanho padrão (Grande)")
 	assert_false(bool(grid.world_profile.volcanic_continent))
 	assert_false(bool(grid.world_profile.crystal_continent))
 	var special_zone := 0

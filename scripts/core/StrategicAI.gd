@@ -46,7 +46,7 @@ static func explore(unit: Unit, player: PlayerData, grid: HexGrid) -> void:
 		return
 	var best = null
 	var score := -INF
-	for coord in grid.compute_reachable(unit.coord, unit.movement_left, player, unit.unit_data.flies):
+	for coord in grid.unit_landing_reachable(unit):
 		var gain := 0.0
 		for near in grid.tiles_in_range(coord, unit.unit_data.vision_range):
 			if not player.explored_tiles.has(near):
@@ -71,7 +71,7 @@ static func explore(unit: Unit, player: PlayerData, grid: HexGrid) -> void:
 				break
 	frontier.sort_custom(func(a, b): return HexMetrics.axial_distance(unit.coord, a) < HexMetrics.axial_distance(unit.coord, b))
 	for coord in frontier.slice(0, 6):
-		if not grid.compute_path(unit.coord, coord, player, unit.unit_data.flies).is_empty():
+		if not grid.unit_path(unit, coord).is_empty():
 			RivalAI.move_unit_toward(unit, grid, coord)
 			return
 
@@ -105,11 +105,18 @@ static func respond_to_lair(unit: Unit, player: PlayerData, grid: HexGrid) -> bo
 	var lair: Vector2i = plan.target
 	if HexMetrics.axial_distance(unit.coord, lair) > V2StrategicAI.LAIR_FORCE_RADIUS or _is_needed_garrison(unit, player):
 		return false
+	if CombatResolver.can_attack_lair(unit, lair, grid):
+		CombatResolver.resolve_lair_attack(unit, lair, grid)
+		return true
 	var defender: Unit = null
 	for enemy in view.visible_enemy_units:
-		if not is_instance_valid(enemy) or enemy.owner_player != null or HexMetrics.axial_distance(enemy.coord, lair) > 1:
+		if not is_instance_valid(enemy) or enemy.owner_player != null:
 			continue
-		if defender == null or HexMetrics.axial_distance(unit.coord, enemy.coord) < HexMetrics.axial_distance(unit.coord, defender.coord):
+		var own_leader := enemy.source_lair_coord == lair and MonsterEcologySystem.is_lair_leader(enemy)
+		if not own_leader and HexMetrics.axial_distance(enemy.coord, lair) > 1:
+			continue
+		if defender == null or (own_leader and not MonsterEcologySystem.is_lair_leader(defender)) \
+			or (own_leader == MonsterEcologySystem.is_lair_leader(defender) and HexMetrics.axial_distance(unit.coord, enemy.coord) < HexMetrics.axial_distance(unit.coord, defender.coord)):
 			defender = enemy
 	if defender == null:
 		if CombatResolver.can_attack_lair(unit, lair, grid):
@@ -124,35 +131,6 @@ static func respond_to_lair(unit: Unit, player: PlayerData, grid: HexGrid) -> bo
 		return true # em posição; o covil ainda não pode ser atacado (defensor fora da vista) — segura
 	var approach := _approach_tile(unit, goal, grid)
 	RivalAI.move_unit_toward(unit, grid, approach if approach != HexGrid.NO_LAIR else goal)
-	return true
-
-## Fase 33D3 — execução do plano do Relicário (V2StrategicAI.reliquary_plan): só as unidades escolhidas; durante
-## a preparação, aproximam-se do local; ativo, enfrentam guardião visível que não as mata e ocupam o tile do
-## Relicário (movimento normal, sem teleporte); em cima dele, seguram a posição. true = consumiu o turno.
-static func respond_to_reliquary(unit: Unit, player: PlayerData, grid: HexGrid) -> bool:
-	if not V2StrategicAI.is_lair_responder(unit) or unit.movement_left <= 0.0:
-		return false
-	var view := V2AITacticalAI.view_for(player, grid)
-	var plan := V2StrategicAI.reliquary_plan(player, view)
-	if String(plan.mode) != "go" or not unit in plan.units:
-		return false
-	var site: Vector2i = plan.site
-	if unit.coord == site:
-		return true
-	var guardian: Unit = null
-	for enemy in view.visible_enemy_units:
-		if is_instance_valid(enemy) and enemy.owner_player == null and HexMetrics.axial_distance(enemy.coord, site) <= 1:
-			if guardian == null or HexMetrics.axial_distance(unit.coord, enemy.coord) < HexMetrics.axial_distance(unit.coord, guardian.coord):
-				guardian = enemy
-	if guardian != null and HexMetrics.axial_distance(unit.coord, guardian.coord) <= unit.unit_data.attack_range:
-		if CombatResolver.can_attack_unit(unit, guardian, grid) and not bool(CombatResolver.predict(unit, guardian, grid).attacker_dies):
-			CombatResolver.resolve(unit, guardian, grid)
-		return true
-	if grid.get_unit_at(site) == null:
-		RivalAI.move_unit_toward(unit, grid, site)
-	else:
-		var approach := _approach_tile(unit, site, grid)
-		RivalAI.move_unit_toward(unit, grid, approach if approach != HexGrid.NO_LAIR else site)
 	return true
 
 ## Em guerra, a última unidade de combate a até CityDefense.GARRISON_RADIUS de uma cidade própria fica.

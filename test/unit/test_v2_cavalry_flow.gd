@@ -52,6 +52,8 @@ var _original_current_save_slot: String
 var _original_kingdom_name: String
 
 func before_each():
+	# Conta unidades/Suprimentos exatos da linha: sem a escolta inicial (fixture, ver GameManager).
+	GameManager.starting_escort_on_new_match = false
 	_original_state = GameManager.state
 	_original_players = GameManager.players
 	_original_human_player = GameManager.human_player
@@ -80,6 +82,7 @@ func before_each():
 	GameManager.debug_mode = true
 
 func after_each():
+	GameManager.starting_escort_on_new_match = true
 	GameManager.regional_threats_on_new_match = true
 	SelectionManager.reset()
 	for player in GameManager.players:
@@ -291,7 +294,7 @@ func _short_setup(through: int = 4, kind: String = CAVALIER) -> Dictionary:
 	var rival: PlayerData = GameManager.rival_players[0]
 	Diplomacy.declare_war(human, rival)
 	var city := _found_human_city(grid)
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
 	city.buildings[STABLE] = true
 	# Aetherlands V2, Fase 15 — vários testes deste arquivo constroem Estábulo/Ordem/outros Salões
@@ -331,8 +334,6 @@ func test_cavalry_n1_to_n9_flow_from_the_stable_to_the_griffon_across_save_and_l
 	assert_false(V2UnlockSystem.is_unlocked(human, "v2_doctrine_cavalry"))
 
 	# 2. N1: estabelece a linha, sem bônus; só o N2 fica disponível.
-	_research(state, "v2_doctrine_cavalry_1")
-	assert_eq(V2UnlockSystem.unlocked_ids(human), ["v2_doctrine_cavalry"], "2. o N1 não libera nada além da Doutrina")
 	assert_false(city.can_build(STABLE))
 	assert_true(state.is_available("v2_doctrine_cavalry_2"))
 
@@ -348,14 +349,14 @@ func test_cavalry_n1_to_n9_flow_from_the_stable_to_the_griffon_across_save_and_l
 	var cavaliers := _units_of_kind(human, CAVALIER)
 	assert_eq(cavaliers.size(), 1)
 	var unit: Unit = cavaliers[0]
-	assert_eq([unit.unit_data.max_hp, unit.unit_data.attack, unit.unit_data.defense, unit.unit_data.movement_points], [17.0, 5.0, 3.0, 4.0])
+	assert_eq([unit.unit_data.max_hp, unit.unit_data.attack, unit.unit_data.defense, unit.unit_data.movement_points], [17.0, 7.5, 4.0, 4.0])
 	assert_true(UnitAbilities.is_mounted(unit.unit_data), "montado")
 
 	# 7. Movimento 4 pelo pathfinding terrestre de sempre (nenhuma regra nova pra unidade convencional).
 	unit.movement_left = unit.unit_data.movement_points
 	grid.recompute_fog(human)
 	SelectionManager._select_unit(unit)
-	assert_eq(SelectionManager.reachable, grid.compute_reachable(unit.coord, unit.movement_left, human, false, false), "7. o alcance é o Dijkstra terrestre normal")
+	assert_eq(SelectionManager.reachable, grid.compute_reachable(unit.coord, unit.movement_left, human, false, true), "7. o alcance é o Dijkstra terrestre normal (água de barco, embarque automático)")
 	for coord in SelectionManager.reachable:
 		assert_lte(HexMetrics.axial_distance(unit.coord, coord), 4, "nada além do movimento 4")
 
@@ -413,9 +414,9 @@ func test_cavalry_n1_to_n9_flow_from_the_stable_to_the_griffon_across_save_and_l
 	assert_eq(V2UnitUpgrade.unavailable_upgrade_reason(human, unit, grid), "")
 	SelectionManager.upgrade_selected()
 	assert_eq(unit.unit_data.visual_kind, SHOCK, "14. evoluiu para Cavaleiro de Choque")
-	assert_eq(human.gold, 100.0 - 28.0, "2 x (38 - 24) = 28 Ouro")
+	assert_eq(human.gold, 100.0 - 32.0, "2 x (42 - 26) = 32 Ouro")
 	assert_eq(V2TechniqueRuntime.cooldown_remaining(unit, CHARGE), 2, "15. a recarga da Carga foi preservada pela evolução")
-	assert_eq([unit.unit_data.max_hp, unit.unit_data.attack, unit.unit_data.movement_points], [22.0, 7.0, 4.0], "16. mesmo movimento, mais Ataque e vida")
+	assert_eq([unit.unit_data.max_hp, unit.unit_data.attack, unit.unit_data.movement_points], [22.0, 10.5, 4.0], "16. mesmo movimento, mais Ataque e vida")
 
 	# 17-22. N6 e a Retirada Tática: mira de TILE, ESC, clique; +20% de Defesa até o próximo turno do dono.
 	_research(state, "v2_doctrine_cavalry_6")
@@ -483,7 +484,7 @@ func test_cavalry_n1_to_n9_flow_from_the_stable_to_the_griffon_across_save_and_l
 	SelectionManager.upgrade_selected()
 	assert_eq(unit.unit_data.visual_kind, ARMORED, "24. evoluiu para Cavaleiro Blindado")
 	assert_eq(human.gold, 100.0 - 36.0, "2 x (56 - 38) = 36 Ouro")
-	assert_eq([unit.unit_data.max_hp, unit.unit_data.defense, unit.unit_data.movement_points], [30.0, 6.0, 4.0], "25. mais resistente, mobilidade preservada")
+	assert_eq([unit.unit_data.max_hp, unit.unit_data.defense, unit.unit_data.movement_points], [30.0, 9.0, 4.0], "25. mais resistente, mobilidade preservada")
 	assert_lt(unit.unit_data.defense, UnitDatabase.create_unit("v2_unit_sentinel").defense, "26. nunca supera a Sentinela")
 	assert_eq(V2TechniqueRuntime.techniques_for_unit(unit).map(func(t): return t.id), [CHARGE, RETREAT], "herda as duas técnicas")
 
@@ -516,22 +517,24 @@ func test_cavalry_n1_to_n9_flow_from_the_stable_to_the_griffon_across_save_and_l
 	var griffon: Unit = griffons[0]
 	assert_true(V2LegendarySystem.is_legendary_unit(griffon))
 	assert_same(V2LegendarySystem.active_legendary(human), griffon)
-	assert_eq(griffon.unit_data.movement_profile, UnitData.MovementProfile.FLYING)
-	assert_true(griffon.unit_data.has_trait(UnitData.TRAIT_FLYING) and griffon.unit_data.has_trait(UnitData.TRAIT_MOUNTED))
+	# 2026-10-10: o Cavaleiro de Grifo não voa mais (pedido do usuário, 4 raças) — cavalaria terrestre lendária.
+	assert_eq(griffon.unit_data.movement_profile, UnitData.MovementProfile.GROUND)
+	assert_false(griffon.unit_data.has_trait(UnitData.TRAIT_FLYING))
+	assert_true(griffon.unit_data.has_trait(UnitData.TRAIT_MOUNTED))
 	assert_eq(_trainable_forms(city), [ARMORED], "31. o Cavaleiro Blindado continua disponível no Estábulo")
 	assert_eq(V2TechniqueRuntime.techniques_for_unit(griffon).map(func(t): return t.id), [CHARGE, RETREAT], "32. herda Carga e Retirada")
 
-	# 33. O voo no mapa gerado: alcance geométrico, sobre qualquer terreno, só pousos legais.
+	# 33. Movimento no mapa gerado: o alcance terrestre comum (mesmo cálculo da cavalaria), nunca o voo tático.
 	griffon.movement_left = griffon.unit_data.movement_points
 	grid.recompute_fog(human)
 	SelectionManager._select_unit(griffon)
-	assert_eq(SelectionManager.reachable, grid.flight_reachable(griffon, griffon.movement_left), "33. o alcance é o do voo tático")
+	assert_eq(SelectionManager.reachable, grid.compute_reachable(griffon.coord, griffon.movement_left, human, false, true), "33. alcance terrestre, sem voo")
 	for coord in SelectionManager.reachable:
-		assert_false(grid.get_tile(coord).blocks_land_units(), "só pousa em tile de terra")
-	for coord in grid.compute_reachable(griffon.coord, griffon.movement_left, human):
-		assert_true(SelectionManager.reachable.has(coord), "tudo que o chão alcança, o voo alcança")
+		var tile := grid.get_tile(coord)
+		assert_true(not tile.blocks_land_units() or tile.can_be_embarked_on(), "só por terra (ou água, de barco) — nunca montanha/lava")
 
-	# 34-36. A ARENA com um anel de oceano: a cavalaria terrestre não atravessa; o Grifo faz a Carga por cima e termina em terra.
+	# 34-36. A ARENA com um anel de oceano: nenhuma cavalaria atravessa (o Grifo também não, desde 2026-10-10); com o anel
+	# virando terra, o Grifo faz a Carga por terra e termina adjacente ao alvo.
 	var center := _arena(grid, 2)
 	_place(grid, griffon, center)
 	_place(grid, unit, center + Vector2i(1, 0)) # o Blindado, dentro do anel
@@ -539,7 +542,12 @@ func test_cavalry_n1_to_n9_flow_from_the_stable_to_the_griffon_across_save_and_l
 	grid.recompute_fog(human)
 	assert_true(grid.get_tile(center + Vector2i(2, 0)).blocks_land_units(), "pré-condição: o anel é oceano")
 	assert_eq(V2TechniqueRuntime.unavailable_reason(unit, CHARGE, grid), "Sem rota até um tile adjacente ao alvo.", "34. o Blindado terrestre não atravessa o mar")
-	assert_true(V2TechniqueRuntime.can_use(griffon, CHARGE, grid), "35. o Grifo voa por cima")
+	assert_eq(V2TechniqueRuntime.unavailable_reason(griffon, CHARGE, grid), "Sem rota até um tile adjacente ao alvo.", "35. o Grifo também não atravessa o mar")
+	for coord in HexMetrics.coords_within(center, 2):
+		if HexMetrics.axial_distance(center, coord) == 2 and grid.get_unit_at(coord) == null:
+			grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	grid.recompute_fog(human)
+	assert_true(V2TechniqueRuntime.can_use(griffon, CHARGE, grid), "por terra, a Carga passa")
 	SelectionManager._select_unit(griffon)
 	var air_predicted: float = CombatResolver.predict(griffon, barrier_foe, grid, 1.5).damage_to_defender
 	SelectionManager.use_technique_selected(CHARGE)
@@ -552,7 +560,7 @@ func test_cavalry_n1_to_n9_flow_from_the_stable_to_the_griffon_across_save_and_l
 	assert_eq(V2TechniqueRuntime.cooldown_remaining(griffon, CHARGE), 3)
 	_clear_foes(grid, [barrier_foe])
 
-	# 37. Retirada aérea: cercado de montanhas, o Grifo ainda tem por onde sair (a cavalaria terrestre não teria).
+	# 37. Retirada: cercado de montanhas, o Grifo NÃO tem por onde sair (sem voo, como toda cavalaria); aberto o cerco, recua.
 	_end_turn()
 	griffon.movement_left = griffon.unit_data.movement_points
 	for coord in grid.get_neighbors(griffon.coord):
@@ -560,9 +568,16 @@ func test_cavalry_n1_to_n9_flow_from_the_stable_to_the_griffon_across_save_and_l
 			grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.MOUNTAINS)
 	grid.recompute_fog(human)
 	var walled_tiles := V2TechniqueRuntime.relocation_tiles(griffon, V2DoctrineTechniqueDatabase.get_technique(RETREAT), grid)
-	assert_false(walled_tiles.is_empty(), "37. o Grifo sai por cima das montanhas")
+	assert_true(walled_tiles.is_empty(), "37. cercado de montanhas, sem saída (não voa)")
+	assert_eq(V2TechniqueRuntime.unavailable_reason(griffon, RETREAT, grid), "Nenhum tile livre ao alcance.")
+	for coord in grid.get_neighbors(griffon.coord):
+		if grid.get_tile(coord).terrain_type == HexTileData.TerrainType.MOUNTAINS:
+			grid.tiles[coord] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
+	grid.recompute_fog(human)
+	walled_tiles = V2TechniqueRuntime.relocation_tiles(griffon, V2DoctrineTechniqueDatabase.get_technique(RETREAT), grid)
+	assert_false(walled_tiles.is_empty(), "aberto o cerco, há para onde recuar")
 	for coord in walled_tiles:
-		assert_false(grid.get_tile(coord).blocks_land_units(), "sem pouso em montanha")
+		assert_false(grid.get_tile(coord).blocks_land_units(), "só terra")
 	SelectionManager._select_unit(griffon)
 	SelectionManager.use_technique_selected(RETREAT)
 	assert_eq(SelectionManager.technique_targeting_id, RETREAT)
@@ -600,7 +615,7 @@ func test_cavalry_n1_to_n9_flow_from_the_stable_to_the_griffon_across_save_and_l
 	assert_true(V2TechniqueRuntime.is_active(griffon, RETREAT), "pré-condição: a Retirada do Grifo está ativa")
 	var loaded_grid := _save_and_reload()
 	var loaded := GameManager.human_player
-	assert_eq(loaded.v2_research.get_completed_ids().size(), 9, "40. as 9 pesquisas da Cavalaria")
+	assert_eq(loaded.v2_research.get_completed_ids().size(), 8, "40. as 8 pesquisas da Cavalaria")
 	var loaded_city: City = loaded.cities[0]
 	assert_true(loaded_city.buildings.has(STABLE) and loaded_city.buildings.has(ORDER), "41. Estábulo e Ordem restaurados")
 	var loaded_armored := _units_of_kind(loaded, ARMORED)
@@ -610,20 +625,21 @@ func test_cavalry_n1_to_n9_flow_from_the_stable_to_the_griffon_across_save_and_l
 	assert_eq(loaded_griffons.size(), 1, "43. o Cavaleiro de Grifo voltou")
 	var loaded_griffon: Unit = loaded_griffons[0]
 	assert_eq(loaded_griffon.coord, griffon_coord)
-	assert_eq([loaded_griffon.unit_data.max_hp, loaded_griffon.unit_data.movement_points], [36.0, 5.0])
-	assert_eq(loaded_griffon.unit_data.movement_profile, UnitData.MovementProfile.FLYING, "44. o perfil de voo vem do dado")
+	assert_eq([loaded_griffon.unit_data.max_hp, loaded_griffon.unit_data.movement_points], [40.0, 5.0])
+	assert_eq(loaded_griffon.unit_data.movement_profile, UnitData.MovementProfile.GROUND, "44. o perfil (terrestre) vem do dado")
 	assert_eq(loaded_griffon.unit_data.ranged_damage_taken_bonus, 0.25)
-	assert_true(loaded_griffon.unit_data.has_trait(UnitData.TRAIT_LEGENDARY) and loaded_griffon.unit_data.has_trait(UnitData.TRAIT_FLYING) and loaded_griffon.unit_data.has_trait(UnitData.TRAIT_MOUNTED))
+	assert_true(loaded_griffon.unit_data.has_trait(UnitData.TRAIT_LEGENDARY) and loaded_griffon.unit_data.has_trait(UnitData.TRAIT_MOUNTED))
+	assert_false(loaded_griffon.unit_data.has_trait(UnitData.TRAIT_FLYING), "não volta voando do save")
 	assert_eq(V2TechniqueRuntime.cooldown_remaining(loaded_griffon, CHARGE), griffon_charge_left, "45. recarga da Carga")
 	assert_true(V2TechniqueRuntime.is_active(loaded_griffon, RETREAT), "46. a Retirada ativa continua ativa")
 	loaded_griffon.movement_left = loaded_griffon.unit_data.movement_points
-	assert_eq(loaded_grid.unit_reachable(loaded_griffon), loaded_grid.flight_reachable(loaded_griffon, loaded_griffon.movement_left), "o voo continua voo depois do load")
+	assert_eq(loaded_grid.unit_reachable(loaded_griffon), loaded_grid.compute_reachable(loaded_griffon.coord, loaded_griffon.movement_left, loaded, false, true), "o Grifo continua terrestre depois do load")
 	loaded_armored[0].movement_left = loaded_armored[0].unit_data.movement_points
-	assert_eq(loaded_grid.unit_reachable(loaded_armored[0]), loaded_grid.compute_reachable(armored_coord, 4.0, loaded, false, false), "e o chão continua chão")
+	assert_eq(loaded_grid.unit_reachable(loaded_armored[0]), loaded_grid.compute_reachable(armored_coord, 4.0, loaded, false, true), "e o chão continua chão")
 	assert_eq(V2TechniqueRuntime.techniques_for_unit(loaded_griffon).map(func(t): return t.id), [CHARGE, RETREAT])
 	# Slot global: com o Grifo vivo, o Campeão, o Herói e o Caçador de Lendas estão bloqueados, mesmo com os prédios e as pesquisas das outras Doutrinas.
 	assert_true(V2LegendarySystem.has_active_legendary(loaded), "o slot continua ocupado")
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		loaded.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 		loaded.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 		loaded.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
@@ -727,7 +743,7 @@ func test_the_charge_cooldown_and_the_retreat_status_survive_save_and_load():
 func test_a_griffon_in_production_survives_save_and_load_and_blocks_the_others_in_another_city():
 	var c := _short_setup(9)
 	var human: PlayerData = c.human
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 		human.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 		human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
@@ -752,7 +768,7 @@ func test_a_griffon_in_production_survives_save_and_load_and_blocks_the_others_i
 func test_a_griffon_and_a_champion_finishing_in_the_same_turn_never_create_two_legendaries():
 	var c := _short_setup(9)
 	var human: PlayerData = c.human
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	var city: City = c.city
 	city.buildings[ORDER] = true
@@ -786,7 +802,10 @@ func test_a_flying_unit_takes_no_multi_turn_move_orders_and_a_ground_cavalier_ke
 	var grid: HexGrid = c.grid
 	var human: PlayerData = c.human
 	var cavalier: Unit = c.unit
-	var griffon := grid.spawn_unit(WorldSetup.find_spawn_tile(grid, cavalier.coord), UnitDatabase.create_unit(GRIFFON), human)
+	# Voador de teste (números do Grifo, perfil FLYING): o Cavaleiro de Grifo anda pelo chão desde 2026-10-10.
+	var flyer_data := UnitDatabase.create_unit(GRIFFON)
+	flyer_data.movement_profile = UnitData.MovementProfile.FLYING
+	var griffon := grid.spawn_unit(WorldSetup.find_spawn_tile(grid, cavalier.coord), flyer_data, human)
 	assert_not_null(griffon)
 	var far := Vector2i(999, 999)
 	for coord in grid.tiles.keys():
@@ -798,6 +817,9 @@ func test_a_flying_unit_takes_no_multi_turn_move_orders_and_a_ground_cavalier_ke
 	assert_eq(griffon.move_order_target, Unit.NO_MOVE_ORDER)
 	assert_true(SelectionManager._try_queue_move_order(cavalier, far), "a cavalaria terrestre segue com a ordem de sempre")
 	assert_ne(cavalier.move_order_target, Unit.NO_MOVE_ORDER)
+	grid.remove_unit(griffon)
+	var real_griffon := grid.spawn_unit(WorldSetup.find_spawn_tile(grid, cavalier.coord), UnitDatabase.create_unit(GRIFFON), human)
+	assert_true(SelectionManager._try_queue_move_order(real_griffon, far), "o Cavaleiro de Grifo (terrestre) aceita a ordem de vários turnos")
 
 func test_ai_civilizations_keep_playing_with_the_cavalry_content_present():
 	var c := _short_setup(9)
@@ -816,7 +838,7 @@ func test_ai_civilizations_keep_playing_with_the_cavalry_content_present():
 func test_an_ai_civilization_given_the_research_by_debug_builds_trains_charges_flies_and_respects_the_slot():
 	var c := _short_setup(3)
 	var rival: PlayerData = c.rival
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		rival.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
 	var rival_city: City = rival.cities[0]
 	rival_city.city_level = 3

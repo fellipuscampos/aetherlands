@@ -35,10 +35,11 @@ static func build(unit: Unit, viewer: PlayerData, hex_grid: HexGrid = null) -> D
 		"relation": _relation(unit.owner_player, viewer),
 		"owner_color": unit.owner_player.civ.color if unit.owner_player != null and unit.owner_player.civ != null else UIThemeTokens.COLOR_CRITICAL,
 		"portrait_glyph": _portrait_glyph(unit),
+		"portrait_icon": IconCatalog.unit_badge(unit), # o mesmo selo do mapa: classe/espécie na cor do dono
 		"portrait_accent": _identity_color(unit),
 		"portrait_caption": _role_short(unit),
 		"badges": _badges(unit),
-		"hp": unit.hp,
+		"hp": unit.presentation_hp(),
 		"max_hp": data.max_hp,
 		"stats": _stats(unit, own),
 		"warning": _warning(unit, own),
@@ -54,7 +55,7 @@ static func build(unit: Unit, viewer: PlayerData, hex_grid: HexGrid = null) -> D
 		view.commands = commands_for(unit, grid)
 		view.abilities = abilities_for(unit, grid)
 		if V2MagicRuntime.is_v2_caster(unit):
-			view.ability_title = "Magia · %s" % V2MagicContent.school_title(data.v2_magic_school)
+			view.ability_title = "Habilidades automáticas" if V2ManifestationOrders.is_bound(unit) else "Magia · %s" % V2MagicContent.school_title(data.v2_magic_school)
 			if V2MagicRuntime.spells_for_unit(unit).is_empty():
 				view.ability_empty_text = "Nenhum feitiço pesquisado nesta Escola."
 	return view
@@ -79,7 +80,7 @@ static func _subtitle(unit: Unit) -> String:
 	if unit.owner_player == null:
 		if unit.world_event_managed:
 			return "Criatura de evento mundial"
-		return "Chefe de covil" if unit.is_camp_boss else "Monstro"
+		return "Líder do covil" if MonsterEcologySystem.is_lair_leader(unit) else "Monstro"
 	var parts: Array[String] = [TileInspector.unit_class_label(unit)]
 	var form := form_label(unit.unit_data.visual_kind)
 	if not form.is_empty():
@@ -91,14 +92,15 @@ static func form_label(kind: String) -> String:
 	var node := V2UnitLine.node_for(kind)
 	if node == null:
 		return ""
+	var level := V2ResearchDatabase.tier_label(node.tree_type, node.tier)
 	match node.tier_role:
 		"base_unit":
-			return "Forma-base · N%d" % node.tier
+			return "Forma-base · %s" % level
 		"evolution_1":
-			return "Evolução · N%d" % node.tier
+			return "Evolução · %s" % level
 		"elite_form":
-			return "Elite · N%d" % node.tier
-	return "N%d" % node.tier
+			return "Elite · %s" % level
+	return level
 
 static func _role_short(unit: Unit) -> String:
 	var data := unit.unit_data
@@ -164,8 +166,8 @@ static func _badges(unit: Unit) -> Array:
 	var data := unit.unit_data
 	var badges: Array = []
 	if unit.owner_player == null:
-		if unit.is_camp_boss:
-			badges.append({"text": "Chefe", "tone": AEStatusChip.Tone.NEGATIVE, "tooltip": "Guarda o covil e não o abandona."})
+		if MonsterEcologySystem.is_lair_leader(unit):
+			badges.append({"text": "Líder do covil", "tone": AEStatusChip.Tone.NEGATIVE, "tooltip": "Sua derrota libera a destruição do covil com um golpe. Destruir o covil interrompe novos spawns na região por 20 rodadas."})
 		if unit.world_event_managed:
 			badges.append({"text": "Evento Mundial", "tone": AEStatusChip.Tone.NEGATIVE, "tooltip": "Criatura controlada por um evento mundial."})
 		return badges
@@ -230,6 +232,7 @@ static func _warning(unit: Unit, own: bool) -> Dictionary:
 # --- Comandos básicos -----------------------------------------------------------
 
 static func commands_for(unit: Unit, grid: HexGrid) -> Array[UnitAbilityViewData]:
+	if V2ManifestationOrders.is_bound(unit): return _manifestation_commands(unit)
 	var result: Array[UnitAbilityViewData] = []
 	var data := unit.unit_data
 	var processing := GameManager.is_turn_processing
@@ -275,8 +278,11 @@ static func commands_for(unit: Unit, grid: HexGrid) -> Array[UnitAbilityViewData
 	explore.action_kind = "explore"
 	explore.is_toggle = true
 	explore.toggled = unit.exploring
-	explore.description = "Anda sozinha por territórios inexplorados a cada turno."
-	if unit.embarked:
+	explore.description = "Anda sozinha por territórios inexplorados com o movimento restante, ao encerrar seu turno."
+	if unit.movement_left <= 0.0:
+		explore.cost_text = "Ordem futura"
+		explore.details.append("Sem movimento neste turno: a exploração continua ao encerrar um turno com movimento disponível.")
+	if unit.embarked and not unit.exploring:
 		explore.state = UnitAbilityViewData.State.BLOCKED
 		explore.blocked_reason = "Unidade embarcada não explora."
 	elif not locked_reason.is_empty():
@@ -354,7 +360,7 @@ static func abilities_for(unit: Unit, grid: HexGrid) -> Array[UnitAbilityViewDat
 		var upgrade := UnitAbilityViewData.create("upgrade", "Evoluir para %s" % (line_node.display_name if line_node != null else target), UnitAbilityViewData.Category.UPGRADE)
 		upgrade.action_kind = "upgrade"
 		upgrade.cost_text = "%d Ouro" % int(ceil(V2UnitUpgrade.upgrade_cost(unit)))
-		upgrade.description = "Moderniza esta unidade na cidade (instantâneo; mantém veterania, HP proporcional e recargas)."
+		upgrade.description = "Moderniza esta unidade na cidade (instantâneo; mantém veterania, HP proporcional e recargas) e recupera %d%% da Vida máxima da nova forma%s." % [roundi(V2UnitUpgrade.UPGRADE_HEAL_FRACTION * 100.0), _upgrade_heal_note(unit)]
 		var reason := V2UnitUpgrade.unavailable_upgrade_reason(unit.owner_player, unit, grid)
 		if processing:
 			reason = "Aguarde o fim do processamento do turno."
@@ -372,21 +378,30 @@ static func abilities_for(unit: Unit, grid: HexGrid) -> Array[UnitAbilityViewDat
 		result.append(dissolve)
 	return result
 
+## " (+N de Vida agora)" para o botão de Evoluir; "" com a tropa cheia (não há o que curar).
+static func _upgrade_heal_note(unit: Unit) -> String:
+	var healed := V2UnitUpgrade.upgrade_heal_amount(unit)
+	return " (+%d de Vida agora)" % roundi(healed) if healed >= 0.5 else ""
+
 static func spell_view(unit: Unit, spell: V2SpellData, grid: HexGrid) -> UnitAbilityViewData:
 	var view := UnitAbilityViewData.create(spell.id, spell.display_name, UnitAbilityViewData.Category.SPELL)
 	view.action_kind = "spell"
 	view.action_arg = spell.id
 	view.accent_color = V2MagicContent.school_color(spell.school_branch)
-	view.cost_text = "%d Mana" % int(spell.mana_cost)
+	view.cost_text = "%d Mana" % int(V2ManifestationBalance.mana_cost(unit,spell))
+	if V2ManifestationOrders.is_bound(unit) and spell.health_cost_fraction > 0.0:
+		view.cost_text += " · %d Vida" % ceili(V2MagicRuntime.health_cost(unit,spell))
 	view.target_type = String(SPELL_TARGET_LABELS.get(spell.target_mode, ""))
 	view.range_value = V2MagicRuntime.effective_range(unit, spell)
 	view.cooldown_max = V2MagicRuntime.effective_cooldown(unit, spell)
 	view.description = V2SpellDatabase.effect_text(spell)
+	if V2ManifestationOrders.is_bound(unit):
+		view.description = view.description.replace("%d Mana" % int(spell.mana_cost), "%d Mana" % int(V2ManifestationBalance.mana_cost(unit,spell)))
 	var command_line := V2MagicRuntime.command_tooltip_line(unit, spell)
 	if command_line != "":
 		view.details.append(command_line.trim_suffix("."))
 	var remaining := V2MagicRuntime.cooldown_remaining(unit, spell.id)
-	var reason := V2MagicRuntime.unavailable_reason(unit, spell.id, grid)
+	var reason := V2MagicRuntime.unavailable_reason(unit, spell.id, grid, not V2ManifestationOrders.is_bound(unit))
 	if GameManager.is_turn_processing:
 		reason = "Aguarde o fim do processamento do turno."
 	view.blocked_reason = reason
@@ -397,6 +412,11 @@ static func spell_view(unit: Unit, spell: V2SpellData, grid: HexGrid) -> UnitAbi
 		view.cooldown_current = remaining
 	elif reason != "":
 		view.state = UnitAbilityViewData.State.BLOCKED
+	if V2ManifestationOrders.is_bound(unit):
+		view.state = UnitAbilityViewData.State.BLOCKED
+		view.blocked_reason = "Automática · " + view.cost_text
+		view.details.append("A entidade escolhe suas habilidades ao cumprir a ordem de atacar ou proteger.")
+		if reason != "": view.details.append(reason)
 	return view
 
 static func technique_view(unit: Unit, technique: V2DoctrineTechniqueData, grid: HexGrid) -> UnitAbilityViewData:
@@ -512,14 +532,14 @@ static func _statuses(unit: Unit, own: bool, grid: HexGrid) -> Array:
 		var turns := maxi(1, int(unit.magic_status[id]) - TurnManager.turn_number - (V2OwnerTurnEffect.SPAN_TURNS - 1))
 		var technique := V2DoctrineTechniqueDatabase.get_technique(id)
 		if technique != null:
-			result.append({"title": technique.display_name, "tone": AEStatusChip.Tone.POSITIVE, "turns": turns, "tooltip": AETooltip.compose(technique.display_name, technique.description, ["Origem: Técnica Militar", "Até o início do próximo turno do dono."])})
+			result.append({"title": technique.display_name, "tone": AEStatusChip.Tone.POSITIVE, "turns": turns, "duration_text": V2OwnerTurnEffect.CHIP_DURATION, "tooltip": AETooltip.compose(technique.display_name, technique.description, ["Origem: Técnica Militar", "Dura o turno dos adversários: termina quando o próximo turno do dono começa."])})
 			continue
 		var spell := V2SpellDatabase.get_spell(id)
 		if spell == null:
 			continue
 		var harmful := spell.silences_spellcasting or spell.status_polarity == V2SpellData.StatusPolarity.HARMFUL
 		var effect := "Não pode conjurar feitiços." if spell.silences_spellcasting else _spell_status_effect(spell)
-		result.append({"title": spell.display_name, "tone": AEStatusChip.Tone.NEGATIVE if harmful else AEStatusChip.Tone.POSITIVE, "turns": turns, "tooltip": AETooltip.compose(spell.display_name, effect, ["Origem: %s" % V2MagicContent.school_title(spell.school_branch), "Até o início do próximo turno do dono."])})
+		result.append({"title": spell.display_name, "tone": AEStatusChip.Tone.NEGATIVE if harmful else AEStatusChip.Tone.POSITIVE, "turns": turns, "duration_text": V2OwnerTurnEffect.CHIP_DURATION, "tooltip": AETooltip.compose(spell.display_name, effect, ["Origem: %s" % V2MagicContent.school_title(spell.school_branch), "Dura o turno dos adversários: termina quando o próximo turno do dono começa."])})
 	if unit.fortified:
 		result.append({"title": "Fortificada", "tone": AEStatusChip.Tone.POSITIVE, "turns": -1, "tooltip": AETooltip.compose("Fortificada", "+%d%% defesa e cura passiva." % int(CombatResolver.FORTIFY_DEFENSE_BONUS * 100), ["Dura até a unidade receber outra ordem."])})
 	var environment: Array = V2EnvironmentalZoneSystem.unit_lines(unit, grid) if grid != null and _coord_visible(unit, grid, own) else [] # Etapa 4: tipado como Array (o ramo vazio quebrava Array[String])
@@ -580,7 +600,11 @@ static func _footer(unit: Unit, own: bool, viewer: PlayerData, grid: HexGrid) ->
 			var site := MonsterEcologySystem.site_by_id(unit.ecology_site_id)
 			if not site.is_empty():
 				result.append({"caption": "Território", "text": MonsterAbilityFeedback.habitat_name(kind) if site.lair == HexGrid.NO_LAIR else "Covil (estrutura)"})
-			if bool(unit.ability_state.get("returning", false)):
+				if bool(site.get("destroyed", false)):
+					result.append({"caption": "Origem", "text": "Covil destruído — sem novos reforços"})
+			if unit.ability_state.has("retaliation"):
+				result.append({"caption": "Estado", "text": "Voltando ao local do confronto" if bool(unit.ability_state.retaliation.get("returning", false)) else "Reagindo ao agressor (perseguição limitada)"})
+			elif bool(unit.ability_state.get("returning", false)):
 				result.append({"caption": "Estado", "text": "Retornando ao território"})
 			elif unit.ability_state.has("aggro_target"):
 				result.append({"caption": "Estado", "text": "Perseguindo um intruso"})
@@ -621,13 +645,34 @@ static func _footer(unit: Unit, own: bool, viewer: PlayerData, grid: HexGrid) ->
 	return result
 
 static func _order_text(unit: Unit) -> String:
+	if V2ManifestationOrders.is_bound(unit): return V2ManifestationOrders.describe(unit)
 	if unit.embarked:
 		return "Embarcada — em trânsito pelo mar"
 	if unit.exploring:
-		return "Explorando automaticamente"
+		return "Explorando automaticamente — anda ao encerrar o turno"
 	if unit.move_order_target != Unit.NO_MOVE_ORDER:
-		return "Em marcha até (%d, %d)" % [unit.move_order_target.x, unit.move_order_target.y]
+		return "Em marcha até (%d, %d) — anda ao encerrar o turno; qualquer ordem sua cancela" % [unit.move_order_target.x, unit.move_order_target.y]
 	return ""
 
 static func _number(value: float) -> String:
 	return str(int(value)) if is_equal_approx(value, roundf(value)) else "%.1f" % value
+
+static func _manifestation_commands(unit: Unit) -> Array[UnitAbilityViewData]:
+	var result: Array[UnitAbilityViewData] = []
+	for mode in V2ManifestationOrders.MODES:
+		var command := UnitAbilityViewData.create(mode,V2ManifestationOrders.LABELS[mode],UnitAbilityViewData.Category.COMMAND)
+		command.glyph = "✦" if String(mode).begins_with("attack_") else "▣"
+		command.action_kind = "manifestation_order"
+		command.action_arg = mode
+		command.is_toggle = true
+		command.toggled = unit.manifestation_order.get("mode", "") == mode
+		command.cost_text = "Ordem persistente"
+		command.description = "Escolha o alvo no mapa. A entidade marchará e decidirá suas ações ao encerrar o turno, até receber outra ordem."
+		command.target_type = "Cidade" if String(mode).ends_with("city") else "Unidade"
+		if GameManager.is_turn_processing:
+			command.state = UnitAbilityViewData.State.BLOCKED
+			command.blocked_reason = "Aguarde o fim do processamento do turno."
+		elif SelectionManager.selected_unit == unit and SelectionManager.manifestation_targeting_mode == mode:
+			command.state = UnitAbilityViewData.State.TARGETING
+		result.append(command)
+	return result

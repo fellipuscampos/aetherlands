@@ -24,7 +24,7 @@ func after_each():
 func _player(through: int) -> PlayerData:
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	return player
 
@@ -44,9 +44,9 @@ func _city(player: PlayerData, with_hall: bool = true) -> City:
 func test_the_guardian_has_the_specified_baseline():
 	var data := UnitDatabase.create_unit(GUARDIAN)
 	assert_eq(data.unit_name, "Guardião")
-	assert_eq(data.max_hp, 24.0)
-	assert_eq(data.attack, 4.0)
-	assert_eq(data.defense, 6.0)
+	assert_eq(data.max_hp, 26.0)
+	assert_eq(data.attack, 6.0)
+	assert_eq(data.defense, 10.0)
 	assert_eq(data.movement_points, 2.0)
 	assert_eq(data.vision_range, 3)
 	assert_eq(data.attack_range, 1, "corpo a corpo")
@@ -61,7 +61,7 @@ func test_the_guardian_is_clearly_tankier_than_the_shieldbearer_but_not_a_dps_un
 	assert_gt(guardian.defense, shield.defense * 1.25)
 	assert_gt(guardian.attack, shield.attack, "ataque ligeiramente maior")
 	assert_lt(guardian.attack, guardian.defense, "continua tank: defende mais do que ataca")
-	assert_lt(guardian.attack, UnitDatabase.create_unit("men_at_arms").attack, "não vira DPS")
+	assert_lt(guardian.attack, UnitDatabase.create_unit("v2_unit_swordsman").attack, "não vira DPS: bate menos que o N5 de dano (o Homem de Armas V1 saiu do jogo)")
 	assert_eq(guardian.movement_points, shield.movement_points, "não ganha mobilidade")
 	assert_eq(guardian.vision_range, shield.vision_range)
 	assert_gt(guardian.production_cost, shield.production_cost)
@@ -97,7 +97,7 @@ func test_it_belongs_to_the_guardian_line_and_has_its_own_model():
 func test_race_theme_and_the_v1_units_are_untouched():
 	for race in ["human", "elf", "dwarf", "orc"]:
 		assert_eq(RaceTheme.unit_name(GUARDIAN, race), "Guardião", race)
-	assert_eq(UnitDatabase.create_unit(SHIELD).max_hp, 18.0, "o Escudeiro continua igual")
+	assert_eq(UnitDatabase.create_unit(SHIELD).max_hp, 20.0, "o Escudeiro continua igual")
 	assert_eq(UnitDatabase.create_unit("warrior").unit_name, "Guarda")
 	assert_eq(UnitDatabase.create_unit("homem_de_escudo").unit_name, "Homem de Escudo")
 
@@ -194,7 +194,7 @@ func test_debug_reset_keeps_existing_content_but_production_follows_the_research
 	assert_true(city.buildings.has(HALL), "o prédio existente não é destruído")
 	assert_false(city.can_train(GUARDIAN), "sem N5 não treina Guardião")
 	assert_false(city.can_train(SHIELD), "sem N3 nem Escudeiro")
-	for n in range(1, 4):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 4):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	assert_true(city.can_train(SHIELD), "a produção volta a respeitar a pesquisa atual")
 

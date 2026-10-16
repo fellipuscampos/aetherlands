@@ -125,8 +125,9 @@ func test_roster_is_4_4_4_with_explicit_tiers_and_no_dragon():
 
 func test_existing_monster_stats_are_preserved():
 	var legacy := {
-		"goblin": [3.0, 2.0, 8.0, 1.0, 15.0], "skeleton": [4.0, 1.0, 6.0, 2.0, 10.0],
-		"troll": [6.0, 4.0, 20.0, 1.0, 35.0], "wyvern": [8.0, 3.0, 16.0, 3.0, 70.0],
+		# Baseline da rodada de balanceamento 14/10: ATQ/DEF ×1,5, HP/movimento/recompensa mantidos.
+		"goblin": [4.5, 3.0, 8.0, 1.0, 15.0], "skeleton": [6.0, 1.5, 6.0, 2.0, 10.0],
+		"troll": [9.0, 6.0, 20.0, 1.0, 35.0], "wyvern": [12.0, 4.5, 16.0, 3.0, 70.0],
 	}
 	for kind in legacy:
 		var data := MonsterDatabase.create_monster(kind)
@@ -476,7 +477,7 @@ func test_corrupted_hero_replaces_the_hive_with_the_standard_advanced_profile():
 		assert_eq(MonsterActivityProfile.for_species("corrupted_hero", phase), MonsterActivityProfile.for_tier(MonsterEcologyData.TIER_ADVANCED, phase), "perfil ADVANCED padrão")
 	var data := MonsterDatabase.create_monster("corrupted_hero")
 	assert_eq(data.unit_name, "Herói Corrompido")
-	assert_eq(data.attack, 8.0, "mesmo ataque da Colmeia")
+	assert_eq(data.attack, 12.0, "ataque preservado da rodada de balanceamento 14/10")
 	assert_eq(data.idle_animation_override, "Hero_Idle")
 	assert_eq(data.walk_animation_override, "Hero_Walk")
 	assert_eq(data.attack_animation_override, "Hero_Attack")
@@ -535,10 +536,13 @@ func test_ai_sees_ecology_monsters_as_hostile_blocking_and_only_when_visible():
 # --- Reposição -----------------------------------------------------------------------------------
 
 func _kill_site(site: Dictionary) -> void:
+	var lair: Vector2i = site.lair
 	for unit in grid.neutral_units():
 		if unit.ecology_site_id == int(site.id):
 			unit.hp = 0.0
 			grid.remove_unit(unit)
+	if lair != HexGrid.NO_LAIR:
+		grid.destroy_lair(lair) # a conquista regional requer destruir a estrutura, não só matar moradores
 
 func test_refill_restores_population_out_of_vision_and_never_on_top_of_players():
 	_populated_world()
@@ -547,6 +551,7 @@ func test_refill_restores_population_out_of_vision_and_never_on_top_of_players()
 		if grid.get_unit_at(coord) == null:
 			grid.spawn_unit(coord, UnitDatabase.create_unit("warrior"), human if coord.x <= 0 else rival)
 	var killed: Array = MonsterEcologySystem.sites.slice(0, 6)
+	var cleared_turn := TurnManager.turn_number
 	var killed_anchors: Array = []
 	for site in killed:
 		killed_anchors.append(site.anchor)
@@ -569,7 +574,7 @@ func test_refill_restores_population_out_of_vision_and_never_on_top_of_players()
 						assert_gt(HexMetrics.axial_distance(city.coord, site.anchor), 1, "nunca adjacente a cidade")
 				assert_true(MonsterEcologyPlanner.capital_distance_ok(site.anchor, MonsterEcologyData.tier_of(String(site.species)), MonsterEcologySystem.capital_anchors()))
 				for old in killed_anchors:
-					if turn - 2 < MonsterEcologyData.REFILL_DEPLETED_COOLDOWN:
+					if turn - cleared_turn < MonsterEcologyData.REFILL_DEPLETED_COOLDOWN:
 						assert_gt(HexMetrics.axial_distance(old, site.anchor), MonsterEcologyData.REFILL_DEPLETED_RADIUS, "não repovoa o lugar recém-limpo")
 	assert_eq(MonsterEcologySystem.sites.size(), before, "população volta ao alvo")
 	assert_eq(refills.size(), 6)

@@ -46,6 +46,21 @@ enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 
 import/blender/enabled=false
 
+[shader_globals]
+
+weather_wetness={
+"type": "float",
+"value": 0.0
+}
+weather_snow_cover={
+"type": "float",
+"value": 0.0
+}
+world_darkness={
+"type": "float",
+"value": 0.0
+}
+
 [rendering]
 
 lights_and_shadows/directional_shadow/soft_shadow_filter_quality=1

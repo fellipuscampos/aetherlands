@@ -70,7 +70,7 @@ func _player(civ_name: String) -> PlayerData:
 	return player
 
 func _learn(player: PlayerData, branch: String = "druidism", tier: int = 9) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		if not player.v2_research.is_completed("v2_magic_%s_%d" % [branch, i]):
 			assert_true(player.v2_research.complete_research("v2_magic_%s_%d" % [branch, i]))
 
@@ -185,7 +185,7 @@ func test_avatar_needs_n9_and_the_ritual_and_never_attacks():
 	assert_false(V2LegendarySystem.is_legendary_unit(avatar))
 
 func test_avatar_counters_dismantle_yes_legend_hunt_no():
-	for i in range(1, 7):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 7):
 		assert_true(rival.v2_research.complete_research("v2_doctrine_rogue_%d" % i))
 	var avatar := _unit(AVATAR, human, Vector2i.ZERO)
 	var plain := _unit("warrior", human, Vector2i(0, 2))
@@ -237,7 +237,7 @@ func test_production_mana_battery_with_save_and_cancel():
 	human.mana = 10.0
 	_complete(city)
 	assert_eq(V2ManifestationSystem.active_units(human, SCHOOL).size(), 0, "espera")
-	assert_eq(city.stored_production, 105.0, "PP travados no custo")
+	assert_eq(city.stored_production, 88.0, "PP travados no custo")
 	assert_eq(city.production_waiting_for_mana(), 65)
 	assert_true(SaveManager.save_game(grid, SAVE_PATH))
 	var loaded := HexGrid.new()

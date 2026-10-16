@@ -41,7 +41,8 @@ func test_global_bar_is_one_continuous_surface_and_compacts_navigation() -> void
 		assert_true(item is HBoxContainer)
 		assert_false(item is PanelContainer)
 	shell.global_bar.set_compact(true)
-	assert_eq((shell.global_bar.navigation_row.get_node("EmpireButton") as Button).text, "I")
+	assert_eq((shell.global_bar.navigation_row.get_node("EmpireButton") as Button).text, "")
+	assert_not_null((shell.global_bar.navigation_row.get_node("EmpireButton") as Button).icon, "ícone identifica o atalho compacto")
 	assert_eq((shell.global_bar.navigation_row.get_node("VictoryButton") as Button).tooltip_text, "Vitória")
 
 func test_strategy_frame_obeys_safe_margins_and_content_height() -> void:

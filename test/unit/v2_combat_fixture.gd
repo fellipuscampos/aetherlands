@@ -98,17 +98,17 @@ func _world(radius: int = 6) -> HexGrid:
 func _player(warrior_through: int = 9, guardian_through: int = 0, ranger_through: int = 0, cavalry_through: int = 0, rogue_through: int = 0, siege_through: int = 0) -> PlayerData:
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
-	for n in range(1, warrior_through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, warrior_through + 1):
 		player.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
-	for n in range(1, guardian_through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, guardian_through + 1):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
-	for n in range(1, ranger_through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, ranger_through + 1):
 		player.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
-	for n in range(1, cavalry_through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, cavalry_through + 1):
 		player.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
-	for n in range(1, rogue_through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, rogue_through + 1):
 		player.v2_research.complete_research("v2_doctrine_rogue_%d" % n)
-	for n in range(1, siege_through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, siege_through + 1):
 		player.v2_research.complete_research("v2_doctrine_siege_%d" % n)
 	return player
 
@@ -145,6 +145,23 @@ func _rival_of(me: PlayerData) -> PlayerData:
 	Diplomacy.declare_war(me, rival)
 	assert_true(me.is_at_war_with(rival), "pré-condição: em guerra")
 	return rival
+
+## Unidade VOADORA de teste (mecânica de voo tático, perfil FLYING): o Cavaleiro de Grifo deixou de voar em 2026-10-10
+## (pedido do usuário, nas 4 raças); hoje só as Manifestações voam, e elas têm regras próprias (Mana, Ritual). Os testes do
+## SISTEMA de voo usam os números do Grifo com o perfil FLYING — o voo continua coberto sem depender do elenco.
+func _flyer_data() -> UnitData:
+	var data := UnitDatabase.create_unit(GRIFFON)
+	data.movement_profile = UnitData.MovementProfile.FLYING
+	if not data.has_trait(UnitData.TRAIT_FLYING):
+		data.traits.append(UnitData.TRAIT_FLYING)
+	return data
+
+func _flyer(grid: HexGrid, player: PlayerData, coord: Vector2i) -> Unit:
+	var unit := grid.spawn_unit(coord, _flyer_data(), player)
+	assert_not_null(unit, "spawn voador em %s" % str(coord))
+	if unit != null and unit.unit_data.supply_cost > 0:
+		_ensure_ample_supply_capacity(player)
+	return unit
 
 func _unit(grid: HexGrid, player: PlayerData, kind: String, coord: Vector2i) -> Unit:
 	var unit := grid.spawn_unit(coord, UnitDatabase.create_unit(kind), player)
@@ -202,8 +219,7 @@ func _traited_foe(grid: HexGrid, owner: PlayerData, coord: Vector2i, trait_id: S
 ## multiplicador de defesa de efeitos (Muralha etc.); o terreno vem do tile do defensor. `defense_penetration` (Fase 10,
 ## Ataque Furtivo) reduz a CONTRIBUIÇÃO da Defesa antes da mitigação, do mesmo jeito que CombatResolver.predict faz.
 func _formula_damage(grid: HexGrid, attack: float, multiplier: float, defender: Unit, extra_defense: float = 1.0, defense_penetration: float = 0.0) -> float:
-	var terrain := 1.0 + grid.get_tile(defender.coord).defense_bonus
-	var effective_defense := defender.unit_data.defense * terrain * extra_defense * (1.0 - defense_penetration)
+	var effective_defense := defender.unit_data.defense * extra_defense * (1.0 - defense_penetration)
 	return maxf(1.0, attack * multiplier - effective_defense * CombatResolver.DEFENSE_MITIGATION_FACTOR)
 
 ## Dano esperado pela FÓRMULA de CombatResolver.resolve_city_attack (multiplicação/divisão — a fórmula urbana já era assim ANTES da Fase 11,

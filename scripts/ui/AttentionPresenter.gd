@@ -8,10 +8,24 @@ var service: AttentionService
 var summary_button: AEButton
 var content: VBoxContainer
 var _expanded := false
+var _scroll: ScrollContainer
+const CHROME := preload("res://scripts/ui/HUDChromeTheme.gd")
 
 func _ready() -> void:
 	theme_type_variation = &"ElevatedPanel"
 	_build()
+	_apply_theme()
+	Settings.accessibility_changed.connect(_apply_theme)
+
+func _apply_theme() -> void:
+	theme = CHROME.build(CHROME.factor())
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	summary_button.custom_minimum_size = Vector2(248,40) * CHROME.factor()
+	_scroll.custom_minimum_size.y = 248 * CHROME.factor()
+
+func set_list_height(height: float) -> void:
+	if _scroll != null:
+		_scroll.custom_minimum_size.y = clampf(height, 96, 248 * CHROME.factor())
 
 func bind_service(value: AttentionService) -> void:
 	if service != null and service.items_changed.is_connected(_on_items_changed):
@@ -29,6 +43,7 @@ func collapse() -> void:
 		return
 	_expanded = false
 	content.visible = false
+	_scroll.visible = false
 	expanded_changed.emit(false)
 
 func refresh() -> void:
@@ -55,19 +70,30 @@ func _build() -> void:
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", UIThemeTokens.SPACE_2)
 	add_child(root)
+	_scroll = ScrollContainer.new()
+	_scroll.name = "PendingScroll"
+	_scroll.visible = false
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.follow_focus = true
+	root.add_child(_scroll)
 	summary_button = AEButton.new()
-	summary_button.kind = AEButton.Kind.PRIMARY
-	summary_button.custom_minimum_size.x = 360
+	summary_button.kind = AEButton.Kind.SECONDARY
+	summary_button.icon = CHROME.icon("pending")
+	summary_button.custom_minimum_size.x = 248
+	summary_button.clip_text = true
+	summary_button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	summary_button.pressed.connect(_toggle)
 	root.add_child(summary_button)
 	content = VBoxContainer.new()
 	content.visible = false
 	content.add_theme_constant_override("separation", UIThemeTokens.SPACE_2)
-	root.add_child(content)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.add_child(content)
 
 func _toggle() -> void:
 	_expanded = not _expanded
 	content.visible = _expanded
+	_scroll.visible = _expanded
 	expanded_changed.emit(_expanded)
 
 func _on_items_changed(_items: Array[AttentionItem]) -> void:
@@ -104,6 +130,7 @@ func _make_item_row(item: AttentionItem) -> Control:
 	var title := Label.new()
 	title.text = item.title
 	title.theme_type_variation = &"CaptionLabel"
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	text_box.add_child(title)
 	if not item.description.is_empty():
 		var description := Label.new()
@@ -115,6 +142,8 @@ func _make_item_row(item: AttentionItem) -> Control:
 	var action := AEButton.new()
 	action.kind = AEButton.Kind.GHOST
 	action.text = item.primary_action_label
+	action.custom_minimum_size.x = 88 * CHROME.factor()
+	action.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	action.pressed.connect(func(): action_requested.emit(item.primary_action, item))
 	row.add_child(action)
 	return row

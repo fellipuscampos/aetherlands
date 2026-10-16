@@ -308,7 +308,7 @@ func test_the_ai_fortified_city_shoots_an_adjacent_monster_once_per_turn():
 	var skeleton := _make_monster("skeleton", Vector2i(1, 0))
 	TurnManager.turn_number = 40
 	assert_eq(CityDefense.ai_city_defense_turn(city, hex_grid), skeleton)
-	assert_almost_eq(skeleton.unit_data.max_hp - skeleton.hp, 3.0, 0.001, "poder 3, dano fixo como a milícia antiga")
+	assert_almost_eq(skeleton.unit_data.max_hp - skeleton.hp, 4.5, 0.001, "poder 4,5 (Muralhas I desde 2026-10-14), dano fixo como a milícia antiga")
 	assert_null(CityDefense.ai_city_defense_turn(city, hex_grid), "uma vez por turno")
 
 func test_the_city_attack_never_touches_event_managed_monsters():
@@ -395,8 +395,8 @@ func _scenario_report(label: String, turns: int) -> void:
 
 func test_scenario_skeleton_pack_against_a_defended_ai_city_is_repelled():
 	var city := hex_grid.found_city(Vector2i.ZERO, rival, "Cidade")
-	_make_unit("warrior", rival, Vector2i(1, 0))
-	_make_unit("warrior", rival, Vector2i(0, 1))
+	_make_unit("v2_unit_warrior", rival, Vector2i(1, 0))
+	_make_unit("v2_unit_warrior", rival, Vector2i(0, 1))
 	for coord in [Vector2i(6, 0), Vector2i(6, -1), Vector2i(5, 1)]:
 		_make_monster("skeleton", coord)
 	var turns := 0
@@ -421,8 +421,8 @@ func test_scenario_skeleton_pack_against_an_ai_city_without_troops_is_worn_down_
 
 func test_scenario_goblin_raiders_are_engaged_by_the_garrison():
 	hex_grid.found_city(Vector2i.ZERO, rival, "Cidade")
-	_make_unit("warrior", rival, Vector2i(1, 0))
-	_make_unit("warrior", rival, Vector2i(0, 1))
+	_make_unit("v2_unit_warrior", rival, Vector2i(1, 0))
+	_make_unit("v2_unit_warrior", rival, Vector2i(0, 1))
 	_make_monster("goblin", Vector2i(4, 0), MonsterDatabase.BEHAVIOR_INVADER)
 	_make_monster("goblin", Vector2i(4, -1), MonsterDatabase.BEHAVIOR_INVADER)
 	var turns := 0
@@ -435,7 +435,7 @@ func test_scenario_goblin_raiders_are_engaged_by_the_garrison():
 func test_scenario_troll_marching_on_a_garrisoned_city_is_fought():
 	hex_grid.found_city(Vector2i.ZERO, rival, "Cidade")
 	for coord in [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 1)]:
-		_make_unit("warrior", rival, coord)
+		_make_unit("v2_unit_warrior", rival, coord)
 	var troll := _make_monster("troll", Vector2i(5, 0), MonsterDatabase.BEHAVIOR_INVADER)
 	var turns := 0
 	while turns < 15 and _live_monsters() > 0:
@@ -447,7 +447,7 @@ func test_scenario_troll_marching_on_a_garrisoned_city_is_fought():
 func test_scenario_wyvern_hunter_near_a_garrisoned_city_is_fought():
 	hex_grid.found_city(Vector2i.ZERO, rival, "Cidade")
 	for coord in [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 1)]:
-		_make_unit("warrior", rival, coord)
+		_make_unit("v2_unit_warrior", rival, coord)
 	var wyvern := _make_monster("wyvern", Vector2i(4, 0))
 	var turns := 0
 	while turns < 15 and _live_monsters() > 0:
@@ -459,8 +459,8 @@ func test_scenario_wyvern_hunter_near_a_garrisoned_city_is_fought():
 func test_scenario_two_ai_cities_each_defend_against_their_own_threat():
 	var city_a := hex_grid.found_city(Vector2i(-8, 0), rival, "Cidade A")
 	var city_b := hex_grid.found_city(Vector2i(8, 0), rival, "Cidade B")
-	_make_unit("warrior", rival, Vector2i(-7, 0))
-	_make_unit("warrior", rival, Vector2i(9, 0))
+	_make_unit("v2_unit_warrior", rival, Vector2i(-7, 0))
+	_make_unit("v2_unit_warrior", rival, Vector2i(9, 0))
 	_make_monster("skeleton", Vector2i(-5, 0))
 	_make_monster("skeleton", Vector2i(5, 0))
 	var turns := 0

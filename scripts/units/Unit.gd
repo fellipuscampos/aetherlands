@@ -6,19 +6,15 @@ const HP_BAR_HEIGHT := 0.07
 const HP_BAR_Y := 0.95
 const MOVE_DURATION := 0.35
 
-## Badge "isto e uma tropa" acima de toda unidade — pedido do usuario:
-## "coloque icones em cima das tropas tipo os dos recursos pra identificar
-## que e uma tropa" (ver ResourceIconManager pro mesmo principio visual
-## sobre tile de recurso). TROOP_ICON_Y fica acima da propria barra de vida
-## (HP_BAR_Y) pra nunca sobrepor ela.
-const TROOP_ICON_SIZE := 32
-const TROOP_ICON_BADGE_RADIUS := 13.0
-const TROOP_ICON_BADGE_COLOR := Color(0.05, 0.05, 0.08, 0.6)
-const TROOP_ICON_COLOR := Color(0.88, 0.88, 0.92)
+## Selo acima de toda unidade — pedido do usuario: "coloque icones em cima das tropas tipo os dos recursos pra
+## identificar que e uma tropa". Desde 2026-10-13 o selo diz O QUE a unidade é e DE QUEM: o pictograma da classe/
+## espécie na cor da civilização dona (IconCatalog.unit_badge). Fica acima da barra de vida (HP_BAR_Y).
+## Tamanho no mundo = BADGE_SIZE * TROOP_ICON_PIXEL_SIZE (o quadro de 128 px inclui a margem da sombra; a placa em
+## si fica com ~0.5, proporcional ao hex).
+const TROOP_ICON_PIXEL_SIZE := 0.0044
 const TROOP_ICON_Y := 1.08
-static var _troop_icon_texture: ImageTexture
 
-## Cor FALLBACK pro corpo/base de monstro neutro (owner_player == null, ver
+## Cor FALLBACK pro corpo procedural de monstro neutro (owner_player == null, ver
 ## MonsterDatabase) sem entrada em MONSTER_KIND_COLORS — nao tem civ.color
 ## pra puxar, entao um vermelho sangue fixo serve tambem pra diferenciar
 ## visualmente "isso e hostil a todo mundo" de qualquer unidade de jogador.
@@ -27,8 +23,8 @@ const MONSTER_COLOR := Color(0.45, 0.08, 0.08)
 ## Cada tipo de monstro (MonsterDatabase.KIND_DATA) tem sua PROPRIA cor fixa
 ## de silhueta — pedido: "Goblins verde viva, Trolls cinza/rocha, Vivern/
 ## Dragao vermelho-laranja/roxo, Esqueleto branco/creme" — em vez de todos
-## caindo no mesmo MONSTER_COLOR vermelho-sangue generico. Usado tanto no
-## corpo (_build_procedural_body) quanto na base (_build_base_disc).
+## caindo no mesmo MONSTER_COLOR vermelho-sangue generico. Usado no corpo
+## procedural (_build_procedural_body).
 const MONSTER_KIND_COLORS := {
 	"goblin": Color(0.25, 0.75, 0.2),
 	"troll": Color(0.5, 0.5, 0.52),
@@ -62,6 +58,12 @@ const NO_MOVE_ORDER := Vector2i(-999999, -999999)
 
 var unit_data: UnitData
 var serial_id: int = 0
+var manifestation_order: Dictionary = {}
+var manifestation_ready_turn: int = 0
+var manifestation_acted_turn: int = -1
+## Transient detour cache; loading replans from the saved strategic target.
+var manifestation_route: Array[Vector2i] = []
+var manifestation_route_goal: Vector2i = NO_MOVE_ORDER
 var magic_cooldowns: Dictionary = {}
 var magic_status: Dictionary = {} # efeito -> turno de expiração exclusivo
 var owner_player: PlayerData
@@ -92,7 +94,12 @@ var work_charges_remaining: int = 0
 ## pendente e uma conveniencia de sessao, nao um estado de jogo que
 ## precise persistir; carregar um save so limpa silenciosamente qualquer
 ## ordem em andamento).
-var move_order_target: Vector2i = NO_MOVE_ORDER
+var move_order_target: Vector2i = NO_MOVE_ORDER:
+	set(value):
+		if value == move_order_target:
+			return
+		move_order_target = value
+		EventBus.unit_move_order_changed.emit(self) # a rota visível do jogador acompanha (MarchRouteOverlay)
 
 ## Colonizador da IA (ver CitySite.choose_site/RivalAI._handle_settler): local
 ## de fundacao ja escolhido (histerese -- sem isso o colonizador trocaria de
@@ -128,25 +135,21 @@ var fortified: bool = false
 ## nenhum tile UNSEEN alcancavel (mapa todo explorado).
 var exploring: bool = false
 
-## Modo "Embarcar" (Roadmap 2.0 Parte 1, acesso naval — pedido do usuario)
-## — unidade TERRESTRE que atravessa agua de verdade (Oceano/Mar Gelado/
-## Costa, ver HexTileData.can_be_embarked_on()) enquanto isto for true. So
-## liga via SelectionManager.toggle_embark_selected(), o UNICO lugar que
-## checa as 3 condicoes (tech "Navegação" pesquisada, unidade nao voa, tile
-## atual adjacente a agua — ver HexGrid.is_coastal_tile). Unidade em
-## transito, nao um segundo modo de combate: NAO pode atacar, fortificar,
-## explorar, fundar/capturar cidade nem conjurar feitico enquanto embarcada
-## (cada acao guarda isso no proprio ponto de decisao). NAO ignora custo de
-## terreno nem cruza Lava (diferente de UnitData.flies) — so a restricao de
-## AGUA. Desliga sozinho ao pisar em terra firme de novo (ver HexGrid.
-## move_unit) — nao precisa de um botao "Desembarcar" separado. Assim como
-## fortified/exploring/move_order_target acima, NAO sobrevive a save/load
-## por padrao seria a convencao — mas este campo e a EXCECAO deliberada
-## (ver SaveManager._serialize_player/_deserialize_player): perder isto
-## silenciosamente deixaria uma unidade presa em pleno oceano tratada como
-## terrestre apos carregar, um estado invalido, nao so uma conveniencia
-## perdida.
+## EMBARQUE AUTOMÁTICO (2026-10-10, pedido do usuário: "quando uma tropa entra na água, ele vire o barquinho e quando
+## sai da água ele vire a tropa de novo"). ESTADO DERIVADO do tile, não um modo: true enquanto a unidade (que embarca,
+## can_embark) está num tile de água embarcável (Oceano/Mar Gelado/Costa, HexTileData.can_be_embarked_on()). Quem liga e
+## desliga é SÓ HexGrid (move_unit/sync_embarked: andar, teleporte, spawn, load, terreno transformado embaixo dela).
+## Unidade em trânsito, não um segundo modo de combate: NÃO ataca, não fortifica, não funda cidade, não conjura nem usa
+## técnica que consome ação, não constrói, não evolui (cada ação guarda isso no próprio ponto de decisão). Água custa o
+## movimento normal do tile. Salvo no save (SaveManager) por compatibilidade, mas o load re-deriva do tile.
 var embarked: bool = false
+
+## Quem embarca: toda unidade de civilização que anda pelo chão (tropas, colonos, construtores, magos, retinue,
+## invocações, o infiltrador). Monstros neutros (sem dono) não; quem voa (perfil FLYING ou voo legado) já sobrevoa.
+func can_embark() -> bool:
+	if owner_player == null or unit_data == null:
+		return false
+	return not unit_data.flies and unit_data.movement_profile != UnitData.MovementProfile.FLYING
 
 ## true so pro ocupante ORIGINAL de um Covil de Monstro (ver HexGrid.
 ## spawn_monster_at/_spawn_monster_lairs) — do lado de MonsterDatabase.
@@ -168,9 +171,6 @@ var monster_behavior_state: String = ""
 ## POR COVIL das ameaças regionais/guardiões (HexGrid.lair_population) e do teatro regional da
 ## MonsterAI. Salvo com o monstro (SaveManager, campo opcional); Vector2i(-999999, -999999) = sem covil.
 var source_lair_coord: Vector2i = Vector2i(-999999, -999999)
-## Fase 33D3 — evento mundial que gerou este monstro (guardião do Relicário); -1 = nenhum. Salvo com o
-## monstro; o evento conta os PRÓPRIOS guardiões por isto (nunca entra no sistema de covil).
-var source_event_id: int = -1
 ## V3 / Combat Ecology — sítio ecológico dono deste monstro (MonsterEcologySystem); -1 = fora da ecologia.
 ## Salvo com o monstro ("ecology_site"); a população POR SÍTIO e a diretiva de atividade por Era saem daqui.
 var ecology_site_id: int = -1
@@ -190,7 +190,11 @@ var ecology_rest_until: int = 0
 ## (a Boss Bar ja anuncia HP/alvo independente de nevoa; esconder o modelo
 ## fisico contradiz isso), nao exclusivo do Dragao especificamente. Unidade
 ## comum de jogador/rival/monstro de covil NUNCA liga isto (default false).
-var always_visible: bool = false
+var always_visible: bool = false:
+	set(value):
+		always_visible = value
+		if value:
+			visible = true # a névoa esconde quem nasce fora da visão (HexGrid.shown_through_fog); isto desfaz na hora
 
 ## Roadmap "Fase Macro" 5B.3-D -- BUG real encontrado apos o usuario
 ## reportar "o Dragao desaparece sem mensagem": esta Unit e' neutra
@@ -265,7 +269,8 @@ var _hp_bar_fg: MeshInstance3D
 var _hp_bar_bg: MeshInstance3D
 
 func setup(data: UnitData, player: PlayerData, start_coord: Vector2i, camp_boss: bool = false) -> void:
-	unit_data = data
+	# Arte da raça do dono (UnitArtCatalog) — único ponto, junto com apply_form; só apresentação.
+	unit_data = UnitArtCatalog.for_owner(data, player)
 	owner_player = player
 	coord = start_coord
 	is_camp_boss = camp_boss
@@ -282,7 +287,8 @@ func reset_movement() -> void:
 ## kills/veterania, recargas/estados (magic_cooldowns/magic_status), ordens e o resto
 ## do estado persistente seguem intactos. Só o que DEPENDE do tipo é refeito: o
 ## visual (corpo, base, barra de vida, ícone) e o HP, que preserva o PERCENTUAL
-## (9/18 vira 12/24), nunca cura de graça nem passa do máximo novo.
+## (9/18 vira 12/24) e nunca passa do máximo novo. A troca de forma em si não cura: a cura da evolução é do
+## V2UnitUpgrade.perform_upgrade (UPGRADE_HEAL_FRACTION), por cima disto.
 func apply_form(new_data: UnitData) -> void:
 	var old_max := unit_data.max_hp
 	var hp_fraction := clampf(hp / old_max, 0.0, 1.0) if old_max > 0.0 else 1.0
@@ -298,13 +304,15 @@ func apply_form(new_data: UnitData) -> void:
 	_hp_bar_bg = null
 	_anim_player = null
 	_formation_players.clear()
+	_clear_boat_state()
 	_braced = false # novo modelo: a postura da Muralha recomeça (refresh_technique_marker abaixo reaplica se ativa)
 	idle_animation = DEFAULT_ANIMATION
 	moving_animation = WALK_ANIMATION
 	attack_animation = ""
 	_marker_height = HP_BAR_Y
-	unit_data = new_data
+	unit_data = UnitArtCatalog.for_owner(new_data, owner_player)
 	_build_visual()
+	set_boat_visual(embarked, false) # evoluiu/trocou de forma na água (ex.: load): continua de barco
 	set_hp_silent(minf(new_data.max_hp, hp_fraction * new_data.max_hp))
 	refresh_technique_marker()
 
@@ -316,9 +324,23 @@ const TECHNIQUE_MARKER_COLOR := Color(0.55, 0.95, 1.0, 0.95)
 ## depois de ativar/expirar, de restaurar um save e de trocar de forma.
 func refresh_technique_marker(animate_brace: bool = true) -> void:
 	_refresh_brace_visual(animate_brace)
+	if preload("res://scripts/vfx/CombatFeedback.gd").defer_call(self, &"refresh_technique_marker", [false], true): return
+	preload("res://scripts/vfx/SpellStatusFX.gd").sync(self)
+	var aegis_active := V2OwnerTurnEffect.is_active(magic_status, "v2_spell_sacred_aegis")
+	var aegis := get_node_or_null("SacredAegis")
+	if aegis_active and aegis == null:
+		aegis = preload("res://scripts/vfx/SacredAegisFX.gd").new()
+		add_child(aegis)
+		aegis.setup(self)
+	elif not aegis_active and aegis != null:
+		remove_child(aegis)
+		aegis.queue_free()
 	var existing := get_node_or_null(TECHNIQUE_MARKER_NAME)
-	# Fase 17: o MESMO anel marca um estado de feitiço V2 ativo (Égide Sagrada) — sem asset novo.
-	var active := V2TechniqueRuntime.active_technique_name(self) != "" or V2MagicRuntime.active_status_name(self) != ""
+	# School-specific status markers replace the generic ring; techniques still use it.
+	var active := V2TechniqueRuntime.active_technique_name(self) != ""
+	for status_id in magic_status:
+		if status_id != "v2_spell_sacred_aegis" and status_id not in preload("res://scripts/vfx/SpellStatusFX.gd").MANAGED and V2MagicRuntime.is_status_active(self,status_id) and V2SpellDatabase.get_spell(status_id)!=null:
+			active = true
 	if active and existing == null:
 		var ring := MeshInstance3D.new()
 		ring.name = TECHNIQUE_MARKER_NAME
@@ -378,6 +400,7 @@ const STATUS_MARKER_ORDER := [
 ## material_overlay, que o flash de dano limpa). Chamado ao aplicar/expirar estado, ao ganhar barreira e no load —
 ## e avisa EventBus.unit_status_changed (Etapa 4) para o card atualizar os chips.
 func refresh_status_overlay() -> void:
+	if preload("res://scripts/vfx/CombatFeedback.gd").defer_call(self, &"refresh_status_overlay", [], true): return
 	var chosen: Array = []
 	for entry in STATUS_MARKER_ORDER:
 		if magic_status.has(entry[0]):
@@ -464,6 +487,7 @@ func refresh_command_marker(uncommanded: bool) -> void:
 ## estado de retinue (V2RetinueSystem.is_commanded, caminho rápido true para quem não é retinue); futuros bloqueios
 ## entram aqui, não em HUD/SelectionManager/CombatResolver separadamente. Defender/retaliar NÃO passa por aqui.
 func can_receive_orders() -> bool:
+	if get_meta("feedback_retired", false): return false
 	return V2RetinueSystem.is_commanded(self)
 
 ## O motivo (uma frase) de can_receive_orders() ser false, ou "".
@@ -527,7 +551,14 @@ func veterancy_multiplier() -> float:
 ## N tiles agora sempre demora N * MOVE_DURATION de verdade, nao importa se
 ## vieram de uma chamada so (com N pontos) ou de N chamadas separadas.
 var _walk_queue: Array[Vector3] = []
+## Embarque automático: para cada trecho de _walk_queue, se o tile de chegada é água (barco) ou terra (tropa).
+var _walk_water: Array[bool] = []
 var _walking: bool = false
+var _walk_tween: Tween = null
+## Rumo do ULTIMO passo dado (um HexGrid.NEIGHBOR_DIRS; ZERO = sem rumo: recem-criada, teleportada, carregada do
+## save). HexGrid.move_unit grava; o roteador (HexGrid.unit_path/unit_route) parte dele para a proxima rota continuar
+## reto em vez de trocar de perna a cada replanejamento. So preferencia entre rotas de mesmo custo — nao vai pro save.
+var travel_dir: Vector2i = Vector2i.ZERO
 
 ## Anima a posicao por UM UNICO trecho ate `target_pos` — atalho pra
 ## walk_path() com uma lista de um elemento so, pra quem so precisa mover
@@ -541,9 +572,19 @@ func slide_to(target_pos: Vector3) -> void:
 ## atualizou coord/ocupacao na hora. Chamadas repetidas (mesmo na mesma
 ## frame, ver _walk_queue acima) se acumulam na fila em vez de brigar por
 ## um Tween so.
-func walk_path(waypoints: Array[Vector3]) -> void:
+var _movement_skill_clip := ""
+
+##
+## `water_steps` (embarque automático, HexGrid.move_unit): um bool por waypoint — chegar nele é estar na água. Vazio =
+## nenhum passo troca de visual (quem não embarca, ou chamadas que só deslizam a unidade).
+func walk_path(waypoints: Array[Vector3], animation_override: String = "", water_steps: Array[bool] = []) -> void:
 	if waypoints.is_empty():
 		return
+	var feedback := preload("res://scripts/vfx/CombatFeedback.gd").current()
+	if feedback != null and feedback.source_ref.get_ref() != self:
+		if preload("res://scripts/vfx/CombatFeedback.gd").defer_call(self, &"walk_path", [waypoints, animation_override, water_steps], true): return
+	if has_meta("feedback_revision_place_at"):
+		set_meta("feedback_revision_place_at", int(get_meta("feedback_revision_place_at")) + 1)
 	# create_tween() exige a unidade estar dentro da SceneTree (ex: testes
 	# GUT que criam Unit/HexGrid isolados, sem add_child). Sem isso o jogo
 	# de verdade nunca chama walk_path fora da arvore, mas nao custa nada
@@ -556,13 +597,21 @@ func walk_path(waypoints: Array[Vector3]) -> void:
 		position = final_pos
 		if direction.length() > 0.05:
 			rotation.y = atan2(direction.x, direction.z)
+		if water_steps.size() == waypoints.size():
+			set_boat_visual(water_steps[-1], false)
 		return
 
 	_walk_queue.append_array(waypoints)
+	for i in waypoints.size():
+		# Sem flag: o passo mantém o visual de quem chega nele (o último enfileirado, ou o atual).
+		_walk_water.append(water_steps[i] if i < water_steps.size() else (_walk_water[-1] if not _walk_water.is_empty() else _boat_shown))
+	if animation_override != "" and _anim_player != null and _anim_player.has_animation(animation_override):
+		_movement_skill_clip = animation_override
 	if _walking:
+		if _movement_skill_clip != "": _play_animation(_movement_skill_clip)
 		return # ja tem um _advance_walk_queue rodando, ele vai pegar isso sozinho
 	_walking = true
-	_play_animation(moving_animation) # pedido do usuario: "os mobs nao tem animacao de andando?"
+	_play_animation(_movement_skill_clip if _movement_skill_clip != "" else moving_animation)
 	_advance_walk_queue()
 
 ## "Motor" que consome _walk_queue um trecho de cada vez -- so este metodo
@@ -571,18 +620,232 @@ func walk_path(waypoints: Array[Vector3]) -> void:
 func _advance_walk_queue() -> void:
 	if _walk_queue.is_empty():
 		_walking = false
+		_update_boat_animation()
+		if _facing_pending:
+			_turn_to_facing_target()
+		var movement_clip := _movement_skill_clip
+		_movement_skill_clip = ""
+		# Carga/ataque podem começar enquanto a aproximação ainda desliza.
+		# Ao chegar, deixe o golpe terminar; o callback já volta ao repouso.
+		if _anim_player != null and _anim_player.is_playing():
+			var current_clip := String(_anim_player.current_animation)
+			if current_clip != movement_clip and (_is_attack_clip(current_clip) or current_clip == cast_animation or unit_data.technique_animation_overrides.values().has(current_clip)):
+				return
 		_play_animation(_rest_animation())
 		return
 	var target_pos: Vector3 = _walk_queue.pop_front()
+	var to_water: bool = _walk_water.pop_front() if not _walk_water.is_empty() else _boat_shown
 	var direction = target_pos - position
 	direction.y = 0.0
+	_stop_facing_turn() # o passo assume o giro; um giro de ataque pendente brigaria pela mesma propriedade
 	var tween = create_tween()
+	_walk_tween = tween
 	tween.set_parallel(true)
 	tween.tween_property(self, "position", target_pos, MOVE_DURATION).set_trans(Tween.TRANS_SINE)
 	if direction.length() > 0.05:
-		var target_angle = atan2(direction.x, direction.z)
-		tween.tween_property(self, "rotation:y", target_angle, MOVE_DURATION * 0.6)
+		tween.tween_property(self, "rotation:y", shortest_yaw_to(atan2(direction.x, direction.z)), MOVE_DURATION * 0.6)
+	# Embarque automático: o passo que cruza a margem troca tropa <-> barco no MEIO do trecho (quando a unidade passa
+	# pela borda entre os dois hexes), não antes de sair nem depois de chegar.
+	if to_water != _boat_shown:
+		tween.tween_callback(set_boat_visual.bind(to_water, true)).set_delay(MOVE_DURATION * 0.5)
 	tween.finished.connect(_advance_walk_queue)
+
+## Coloca a unidade em `target_pos` NA HORA — o unico jeito de reposiciona-la sem animar (movimento fora da tela,
+## teleporte, terreno que muda de altura embaixo dela, patrulha de covil fora da neblina). Cancela a caminhada em
+## andamento: escrever `position` direto com um passo ainda rodando deixava o Tween sobrescrever a posicao nos quadros
+## seguintes e a fila continuar — a unidade terminava parada no tile ERRADO (o estado logico em um, o corpo em outro) e
+## o proximo movimento saia de la, atravessando o mapa na diagonal.
+func place_at(target_pos: Vector3) -> void:
+	if preload("res://scripts/vfx/CombatFeedback.gd").defer_call(self, &"place_at", [target_pos], true): return
+	if _walk_tween != null and _walk_tween.is_valid():
+		_walk_tween.kill()
+	_walk_tween = null
+	_walk_queue.clear()
+	_walk_water.clear()
+	position = target_pos
+	if _walking:
+		_advance_walk_queue() # fila vazia: encerra a caminhada pelo caminho de sempre (repouso, giro pendente, barco)
+
+## --- EMBARQUE AUTOMÁTICO: o barquinho ------------------------------------------------------------------------------
+## O barco da raça do dono (UnitArtCatalog.boat_scene_path_for) é montado SOB DEMANDA, na primeira vez que a unidade
+## entra na água, dentro de _visual_root (recebe a reação de dano como o corpo). Trocar de visual é ESCALA cruzada:
+## o corpo da tropa (modelo, cópias da formação, emblema) encolhe enquanto o barco cresce, BOAT_SWAP_DURATION, curva
+## TRANS_BACK — sem transparência (não briga com o foco visual/neblina, que mexem em material). No fim, o lado encolhido
+## fica invisível e o AnimationPlayer dele para (custo zero). Idle <-> walk do barco com crossfade de BOAT_BLEND_TIME.
+const BOAT_NODE_NAME := "EmbarkBoat"
+const BOAT_SWAP_DURATION := 0.25
+const BOAT_HIDDEN_SCALE := 0.001 # nunca 0: base singular gera aviso de transform
+
+var _boat_root: Node3D = null
+var _boat_player: AnimationPlayer = null
+var _boat_shown := false
+var _troop_part_scales: Dictionary = {} # Node3D -> escala original (capturada antes de encolher)
+var _boat_swap_tween: Tween = null
+
+func is_boat_visual() -> bool:
+	return _boat_shown
+
+## Mostra o barco (`on`) ou a tropa. `animate` = troca cruzada suave; false = imediata (spawn, load, fora da tela).
+func set_boat_visual(on: bool, animate: bool = true) -> void:
+	if on == _boat_shown or _visual_root == null:
+		return
+	if on and not _ensure_boat():
+		return # sem modelo de barco: segue com a tropa (nunca some)
+	_boat_shown = on
+	if _boat_swap_tween != null and _boat_swap_tween.is_valid():
+		_boat_swap_tween.kill()
+	_boat_swap_tween = null
+	var parts := _troop_parts()
+	for part in parts:
+		if not _troop_part_scales.has(part):
+			_troop_part_scales[part] = part.scale
+	var boat_full := _boat_full_scale()
+	if not animate or not is_inside_tree():
+		for part in parts:
+			part.visible = not on
+			part.scale = _troop_part_scales[part] if not on else _troop_part_scales[part] * BOAT_HIDDEN_SCALE
+		_boat_root.visible = on
+		_boat_root.scale = boat_full if on else boat_full * BOAT_HIDDEN_SCALE
+		_apply_marker_height(on)
+		_finish_boat_swap()
+		return
+	var tween := create_tween().set_parallel(true)
+	for part in parts:
+		var full: Vector3 = _troop_part_scales[part]
+		if on:
+			tween.tween_property(part, "scale", full * BOAT_HIDDEN_SCALE, BOAT_SWAP_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+		else:
+			part.visible = true
+			if part.scale.length() > full.length():
+				part.scale = full * BOAT_HIDDEN_SCALE
+			tween.tween_property(part, "scale", full, BOAT_SWAP_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if on:
+		_boat_root.visible = true
+		_boat_root.scale = boat_full * BOAT_HIDDEN_SCALE
+		tween.tween_property(_boat_root, "scale", boat_full, BOAT_SWAP_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	else:
+		tween.tween_property(_boat_root, "scale", boat_full * BOAT_HIDDEN_SCALE, BOAT_SWAP_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.chain().tween_callback(_finish_boat_swap)
+	_boat_swap_tween = tween
+	# O lado que APARECE já anima no estado certo (o barco rema se está andando; a tropa volta a andar/descansar).
+	_set_troop_animation_active(true)
+	if _boat_player != null:
+		_boat_player.active = true
+	_apply_marker_height(on)
+	_update_boat_animation()
+	if not on:
+		_play_animation(moving_animation if _walking else _rest_animation())
+
+## Fim da troca: o lado escondido sai da renderização e o AnimationPlayer dele para.
+func _finish_boat_swap() -> void:
+	_boat_swap_tween = null
+	for part in _troop_parts():
+		part.visible = not _boat_shown
+	if _boat_root != null:
+		_boat_root.visible = _boat_shown
+	_set_troop_animation_active(not _boat_shown)
+	if _boat_player != null:
+		_boat_player.active = _boat_shown
+	_update_boat_animation()
+	if not _boat_shown:
+		_play_animation(moving_animation if _walking else _rest_animation())
+	_refresh_animation_culling() # o barco nasce depois da caixa de visão: entra na regra aqui
+
+## O corpo da tropa: tudo dentro de _visual_root menos o próprio barco.
+func _troop_parts() -> Array[Node3D]:
+	var parts: Array[Node3D] = []
+	if _visual_root == null:
+		return parts
+	for child in _visual_root.get_children():
+		if child is Node3D and child != _boat_root:
+			parts.append(child)
+	return parts
+
+func _set_troop_animation_active(active: bool) -> void:
+	if _anim_player != null:
+		_anim_player.active = active
+	for player in _formation_players:
+		if is_instance_valid(player):
+			player.active = active
+
+## Escala do barco DENTRO de _visual_root: compensa o multiplicador do corpo procedural (visual_template), para o barco
+## ter sempre o tamanho do pacote (a escala de mapa já vem na cena).
+func _boat_full_scale() -> Vector3:
+	var root_scale := _visual_root.scale if _visual_root != null else Vector3.ONE
+	return Vector3(1.0 / maxf(root_scale.x, 0.001), 1.0 / maxf(root_scale.y, 0.001), 1.0 / maxf(root_scale.z, 0.001))
+
+func _ensure_boat() -> bool:
+	if _boat_root != null and is_instance_valid(_boat_root):
+		return true
+	var path := UnitArtCatalog.boat_scene_path_for(owner_player)
+	var scene := load(path) as PackedScene if ResourceLoader.exists(path) else null
+	if scene == null:
+		push_warning("Unit: barco ausente '%s' — a tropa segue visível na água." % path)
+		return false
+	_boat_root = Node3D.new()
+	_boat_root.name = BOAT_NODE_NAME
+	var model: Node3D = scene.instantiate()
+	model.rotation.y = deg_to_rad(UnitArtCatalog.BOAT_YAW_DEGREES)
+	_boat_root.add_child(model)
+	# Antes de entrar na árvore: o post-import (tools/art_pipeline/embark_boat_import.gd) liga autoplay de `idle`; quem
+	# decide o clipe aqui é o estado de andar da unidade (_update_boat_animation).
+	_boat_player = _find_animation_player(model)
+	if _boat_player != null:
+		_boat_player.autoplay = ""
+		for clip in [UnitArtCatalog.BOAT_IDLE_CLIP, UnitArtCatalog.BOAT_WALK_CLIP]:
+			if _boat_player.has_animation(clip):
+				_boat_player.get_animation(clip).loop_mode = Animation.LOOP_LINEAR
+		_boat_player.playback_default_blend_time = UnitArtCatalog.BOAT_BLEND_TIME
+	_visual_root.add_child(_boat_root)
+	_boat_root.visible = false
+	_boat_root.scale = _boat_full_scale() * BOAT_HIDDEN_SCALE
+	if _boat_player != null:
+		_boat_player.play(UnitArtCatalog.BOAT_IDLE_CLIP)
+	# Barra de vida/ícone acima do mastro enquanto embarcado, se o barco for mais alto que a tropa.
+	_troop_marker_height = _marker_height
+	var bounds = _model_aabb(_boat_root)
+	_boat_marker_height = maxf(_troop_marker_height, (bounds.end.y + 0.12) if bounds != null else 0.0)
+	return true
+
+## Altura dos marcadores (barra de vida, ícone de tropa, emblema): a do barco enquanto ele aparece, a da tropa em terra.
+var _troop_marker_height := HP_BAR_Y
+var _boat_marker_height := HP_BAR_Y
+
+## Altura LOCAL do topo do que flutua acima da unidade — o selo (_build_troop_icon). Para quem precisa pôr algo
+## ACIMA da unidade sem sobrepor nada dela (a barra de progresso de uma obra no mesmo tile, ver VisualFocusSystem).
+func markers_top_height() -> float:
+	return _marker_height + 0.2 + IconCatalog.BADGE_SIZE * 0.5 * TROOP_ICON_PIXEL_SIZE
+
+func _apply_marker_height(boat: bool) -> void:
+	var target := _boat_marker_height if boat else _troop_marker_height
+	var delta := target - _marker_height
+	if is_zero_approx(delta):
+		return
+	_marker_height = target
+	for node in [_hp_bar_bg, _hp_bar_fg, get_node_or_null(TROOP_ICON_NAME)]:
+		if node != null and is_instance_valid(node):
+			(node as Node3D).position.y += delta
+
+## Barco andando (rema/balança mais) enquanto há trecho na fila; parado, o balanço calmo. Crossfade no próprio player.
+func _update_boat_animation() -> void:
+	if _boat_player == null or not _boat_shown:
+		return
+	var clip := UnitArtCatalog.BOAT_WALK_CLIP if _walking else UnitArtCatalog.BOAT_IDLE_CLIP
+	if _boat_player.has_animation(clip) and _boat_player.current_animation != clip:
+		_boat_player.play(clip)
+
+const TROOP_ICON_NAME := "TroopIcon"
+
+func _clear_boat_state() -> void:
+	if _boat_swap_tween != null and _boat_swap_tween.is_valid():
+		_boat_swap_tween.kill()
+	_boat_swap_tween = null
+	_boat_root = null
+	_boat_player = null
+	_boat_shown = false
+	_troop_part_scales.clear()
+	_troop_marker_height = HP_BAR_Y
+	_boat_marker_height = HP_BAR_Y
 
 ## Envolve SO o corpo (modelo externo OU geometria procedural, o que quer
 ## que _build_procedural_body tenha acabado de montar) numa Node3D
@@ -608,8 +871,7 @@ func _build_visual() -> void:
 	var bounds = _model_aabb(self)
 	if bounds != null:
 		_marker_height = maxf(HP_BAR_Y, bounds.end.y + 0.12)
-	if unit_data.is_caster():
-		_build_school_emblem()
+	_marker_height = maxf(_marker_height, unit_data.marker_min_height)
 	_visual_root = Node3D.new()
 	add_child(_visual_root)
 	move_child(_visual_root, 0)
@@ -618,9 +880,86 @@ func _build_visual() -> void:
 			child.reparent(_visual_root, false)
 	if unit_data.visual_template != "":
 		_visual_root.scale = Vector3.ONE * unit_data.model_scale_multiplier # distingue as formas que compartilham o mesmo corpo procedural
-	_build_base_disc()
+	# Nada no chao embaixo da unidade (pedido do usuario 2026-10-10: o disco colorido sob os pes saiu de TODAS —
+	# tropas, monstros, barcos). Fora do corpo, a unidade so tem o que flutua acima dela (barra de vida, icone) e os
+	# aros de ESTADO, que so existem enquanto o estado dura (Tecnica, status, sem comando).
 	_build_hp_bar()
 	_build_troop_icon()
+	_build_animation_culling(bounds)
+
+## --- ANIMAÇÃO SÓ ONDE ALGUÉM VÊ (otimização, 2026-10-14; docs/PERFORMANCE_GUIDE.md §6) -------------------------------
+## Uma unidade fora da câmera ou escondida pela névoa não precisa avançar o esqueleto: o AnimationPlayer dela fica com
+## process_mode DISABLED (nenhum quadro processado, nenhum cache limpo — ao contrário de `active`, que o barco usa) e
+## volta a INHERIT quando a unidade entra na tela, continuando do ponto em que parou. Nada visível muda: a caixa do
+## VisibleOnScreenNotifier3D é a do modelo com folga de ANIM_CULL_MARGIN (a sombra de uma unidade logo fora da borda
+## continua animando). Clipe de UMA vez (golpe, feitiço, trabalho, pouso) nunca é pausado no meio: termina e só então
+## a unidade, já no ciclo de repouso, para. Headless (testes GUT, laboratório de balanceamento) não tem câmera: nada
+## é pausado e o comportamento é o de sempre.
+const ANIM_CULL_NODE := "AnimCull"
+const ANIM_CULL_MARGIN := 4.0
+var _anim_cull_notifier: VisibleOnScreenNotifier3D = null
+
+func _build_animation_culling(bounds) -> void:
+	_anim_cull_notifier = null
+	if DisplayServer.get_name() == "headless" or _anim_player == null:
+		return
+	var notifier := VisibleOnScreenNotifier3D.new()
+	notifier.name = ANIM_CULL_NODE
+	var box: AABB = bounds if bounds != null else AABB(Vector3(-0.5, 0.0, -0.5), Vector3(1.0, 1.0, 1.0))
+	notifier.aabb = box.grow(ANIM_CULL_MARGIN)
+	add_child(notifier)
+	_anim_cull_notifier = notifier
+	notifier.screen_entered.connect(_refresh_animation_culling)
+	notifier.screen_exited.connect(_refresh_animation_culling)
+	if not visibility_changed.is_connected(_refresh_animation_culling):
+		visibility_changed.connect(_refresh_animation_culling)
+	_refresh_animation_culling.call_deferred()
+
+func _animation_players() -> Array[AnimationPlayer]:
+	var players: Array[AnimationPlayer] = []
+	if _anim_player != null and is_instance_valid(_anim_player):
+		players.append(_anim_player)
+	for player in _formation_players:
+		if is_instance_valid(player):
+			players.append(player)
+	if _boat_player != null and is_instance_valid(_boat_player):
+		players.append(_boat_player)
+	return players
+
+## Alguém pode estar vendo esta unidade agora?
+func animation_on_screen() -> bool:
+	if _anim_cull_notifier == null or not is_instance_valid(_anim_cull_notifier):
+		return true
+	return is_visible_in_tree() and _anim_cull_notifier.is_on_screen()
+
+func _refresh_animation_culling() -> void:
+	if _anim_cull_notifier == null or not is_inside_tree():
+		return
+	var seen := animation_on_screen()
+	for player in _animation_players():
+		# Um clipe pedido com o player já pausado (golpe da IA fora da tela) também reavalia: sinal emitido no play().
+		if not player.current_animation_changed.is_connected(_on_culled_animation_changed):
+			player.current_animation_changed.connect(_on_culled_animation_changed)
+		if seen:
+			player.process_mode = Node.PROCESS_MODE_INHERIT
+		elif _playing_one_shot(player):
+			player.process_mode = Node.PROCESS_MODE_INHERIT
+			if not player.animation_finished.is_connected(_on_culled_one_shot_finished):
+				player.animation_finished.connect(_on_culled_one_shot_finished, CONNECT_ONE_SHOT | CONNECT_DEFERRED)
+		else:
+			player.process_mode = Node.PROCESS_MODE_DISABLED
+
+func _on_culled_one_shot_finished(_clip: StringName) -> void:
+	_refresh_animation_culling()
+
+func _on_culled_animation_changed(_clip: String) -> void:
+	if not animation_on_screen():
+		_refresh_animation_culling()
+
+func _playing_one_shot(player: AnimationPlayer) -> bool:
+	if not player.is_playing() or not player.has_animation(player.current_animation):
+		return false
+	return player.get_animation(player.current_animation).loop_mode == Animation.LOOP_NONE
 
 ## Material overlay compartilhado (uma unica instancia pra TODA unidade do
 ## jogo, criado uma vez so) -- GeometryInstance3D.material_overlay desenha
@@ -660,6 +999,7 @@ var _hit_reaction_tweens: Array[Tween] = []
 ## posicao local do wrapper, nunca o material/geometria de base de
 ## ninguem.
 func _play_hit_reaction() -> void:
+	if preload("res://scripts/vfx/CombatFeedback.gd").defer_call(self, &"_play_hit_reaction"): return
 	if not is_inside_tree() or _visual_root == null:
 		return
 	for t in _hit_reaction_tweens:
@@ -781,19 +1121,18 @@ const WALK_ANIMATION := "Walking_A"
 ## (nao as constantes direto) pra uma unidade poder trocar seu proprio
 ## "andar"/"parado" sem precisar mexer em slide_to(). Default = as MESMAS
 ## constantes de sempre, ZERO mudanca de comportamento pra qualquer
-## unidade existente. Roadmap "Dragon Event v1 fechado" -- unico uso ate
-## agora: DragonEvent troca pra "Fly" enquanto travel_mode == FLYING
-## (pedido explicito do usuario, animacao de bater asas durante o voo),
-## sem duplicar/reescrever a logica de troca de animacao em si.
+## unidade existente. Quem tem mais de um conjunto de clipes (o Dragao: no ar e em
+## terra) troca os tres de uma vez com set_posture(), sem duplicar/reescrever a
+## logica de troca de animacao em si.
 var moving_animation: String = WALK_ANIMATION
 var idle_animation: String = DEFAULT_ANIMATION
 
-## "" ate hoje pra toda unidade (combate normal, CombatResolver.gd, nao
-## toca nenhuma animacao ainda) -- so o Dragao usa "Attack" hoje, tocado
-## manualmente por DragonEvent.gd. Unidades com UnitData.
-## attack_animation_override ganham esse nome aqui em _build_model_body(),
-## prontas pro dia que o combate normal tambem chamar _play_animation().
+## "" para unidade sem clipe de ataque. Unidades com UnitData.
+## attack_animation_override ganham esse nome aqui em _build_model_body();
+## o combate toca por play_attack_visual / play_city_attack_visual.
 var attack_animation: String = ""
+## Clipe de conjuração resolvido do UnitData (magos); "" = feitiços sem animação na unidade.
+var cast_animation: String = ""
 
 ## Segunda cena de animacao, sempre reaproveitada JUNTO da de UnitData.
 ## animation_scene_path (General) pra fechar Idle+Andar — mesmo rig
@@ -862,8 +1201,13 @@ const MODEL_TARGET_HEIGHT := 0.7
 ## 1.0 -- ver UnitData.gd).
 const ASSET_FACTORY_PATH_PREFIX := "res://assets/generated/"
 
-func _build_model_body() -> void:
-	var scene: PackedScene = load(unit_data.model_scene_path)
+## false = a cena não carregou (arquivo ausente/não importado): o chamador cai no corpo procedural em
+## vez de quebrar o turno com `instantiate` em null.
+func _build_model_body() -> bool:
+	var scene := load(unit_data.model_scene_path) as PackedScene if ResourceLoader.exists(unit_data.model_scene_path) else null
+	if scene == null:
+		push_warning("Unit: modelo ausente '%s' (%s) — usando corpo procedural." % [unit_data.model_scene_path, unit_data.visual_kind])
+		return false
 	var model: Node3D = scene.instantiate()
 	add_child(model)
 	if unit_data.model_scene_path.begins_with(ASSET_FACTORY_PATH_PREFIX):
@@ -881,10 +1225,221 @@ func _build_model_body() -> void:
 			moving_animation = unit_data.walk_animation_override
 		if unit_data.attack_animation_override != "":
 			attack_animation = unit_data.attack_animation_override
+		cast_animation = unit_data.cast_animation_override
 		_anim_player = _build_animation_player(model)
 		if _anim_player:
 			_anim_player.play(idle_animation)
 	_build_formation_copies(model)
+	_build_core_glow(model)
+	_build_fire_breath(model)
+	posture = unit_data.default_posture if unit_data.posture_animations.has(unit_data.default_posture) else ""
+	return true
+
+## POSTURAS (UnitData.posture_animations — o Dragão: "flying" e "ground"). Uma postura é um conjunto de clipes
+## (parado, andar, atacar); trocar de postura troca os três de uma vez e leva o clipe que está tocando para o
+## equivalente da postura nova, com a transição de postura (pouso/decolagem). "" = unidade sem posturas.
+var posture: String = ""
+
+## Troca para a postura `posture_name`. true se a unidade tem essa postura (mesmo que já estivesse nela).
+func set_posture(posture_name: String) -> bool:
+	var clips: Dictionary = unit_data.posture_animations.get(posture_name, {}) if unit_data != null else {}
+	if clips.is_empty():
+		return false
+	if posture_name == posture:
+		return true
+	var previous := {idle_animation: "idle", moving_animation: "walk", attack_animation: "attack"}
+	posture = posture_name
+	idle_animation = String(clips.get("idle", idle_animation))
+	moving_animation = String(clips.get("walk", moving_animation))
+	attack_animation = String(clips.get("attack", attack_animation))
+	if _anim_player == null:
+		return true
+	# Parado ou andando: segue no mesmo estado, agora na postura nova. Um ataque em curso termina como começou; o
+	# retorno dele (_on_blended_animation_finished) já cai no parado/andar da postura nova.
+	var role := String(previous.get(String(_anim_player.current_animation), ""))
+	var target := moving_animation if role == "walk" else (idle_animation if role == "idle" else "")
+	if target != "" and _anim_player.has_animation(target) and String(_anim_player.current_animation) != target:
+		_play_model_animation(_anim_player, target, false, unit_data.posture_transition_time)
+	return true
+
+## `clip` é um golpe desta unidade: o ataque da postura atual ou o de qualquer outra (um golpe começado numa postura
+## pode terminar depois de a unidade trocar para outra — ainda é um clipe de uma vez só, que volta ao parado).
+func _is_attack_clip(clip: String) -> bool:
+	if clip == "":
+		return false
+	if clip == attack_animation:
+		return true
+	for clips in unit_data.posture_animations.values():
+		if String((clips as Dictionary).get("attack", "")) == clip:
+			return true
+	return false
+
+## SOPRO DE FOGO (UnitData.fire_breath_bone — o Dragão). Emissor de partículas e luz presos ao osso da boca por um
+## BoneAttachment3D (seguem a cabeça em qualquer clipe), DESLIGADOS até play_fire_breath. O eixo +Y do osso aponta
+## para a frente; as partículas ficam no mundo (não giram com a cabeça depois de soltas).
+const FIRE_BREATH_ANCHOR := "FireBreathAnchor"
+const FIRE_BREATH_EMITTER := "FireBreathEmitter"
+const FIRE_BREATH_LIGHT := "FireBreathLight"
+const FIRE_BREATH_LIGHT_ENERGY := 4.0
+const FIRE_BREATH_LIGHT_FADE_IN := 0.15
+const FIRE_BREATH_LIGHT_FADE_OUT := 0.45
+var _fire_breath_emitter: GPUParticles3D
+var _fire_breath_light: OmniLight3D
+var _fire_breath_tween: Tween
+
+func _build_fire_breath(model: Node3D) -> void:
+	_fire_breath_emitter = null
+	_fire_breath_light = null
+	if unit_data.fire_breath_bone == "":
+		return
+	var skeletons := model.find_children("*", "Skeleton3D", true, false)
+	if skeletons.is_empty() or (skeletons[0] as Skeleton3D).find_bone(unit_data.fire_breath_bone) < 0:
+		return
+	var anchor := BoneAttachment3D.new()
+	anchor.name = FIRE_BREATH_ANCHOR
+	skeletons[0].add_child(anchor)
+	anchor.bone_name = unit_data.fire_breath_bone
+
+	var emitter := GPUParticles3D.new()
+	emitter.name = FIRE_BREATH_EMITTER
+	emitter.emitting = false
+	emitter.one_shot = false
+	emitter.local_coords = false
+	emitter.amount = 110
+	emitter.lifetime = 0.55
+	emitter.randomness = 0.35
+	emitter.visibility_aabb = AABB(Vector3(-4, -4, -4), Vector3(8, 8, 8))
+	var particle_mesh := BoxMesh.new() # blocos, como o resto da arte
+	particle_mesh.size = Vector3(0.22, 0.22, 0.22)
+	var particle_material := StandardMaterial3D.new()
+	particle_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	particle_material.vertex_color_use_as_albedo = true
+	particle_material.emission_enabled = true
+	particle_material.emission = Color(1.0, 0.45, 0.05)
+	particle_material.emission_energy_multiplier = 2.5
+	particle_mesh.material = particle_material
+	emitter.draw_pass_1 = particle_mesh
+	var process := ParticleProcessMaterial.new()
+	process.direction = Vector3(0, 1, 0) # +Y do osso = para a frente
+	process.spread = 13.0
+	process.initial_velocity_min = 5.0
+	process.initial_velocity_max = 8.0
+	process.gravity = Vector3(0, 0.8, 0)
+	process.scale_min = 0.45
+	process.scale_max = 1.3
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(1.0, 0.92, 0.45))
+	ramp.set_color(1, Color(0.85, 0.12, 0.02, 0.0))
+	ramp.add_point(0.45, Color(1.0, 0.5, 0.06))
+	var ramp_texture := GradientTexture1D.new()
+	ramp_texture.gradient = ramp
+	process.color_ramp = ramp_texture
+	emitter.process_material = process
+	anchor.add_child(emitter)
+
+	var light := OmniLight3D.new()
+	light.name = FIRE_BREATH_LIGHT
+	light.light_color = Color(1.0, 0.6, 0.15)
+	light.light_energy = 0.0 # só acende durante a rajada
+	light.omni_range = 5.0
+	light.shadow_enabled = false
+	light.visible = false
+	light.position = Vector3(0, 1.2, 0) # um pouco à frente da boca, onde o fogo está
+	anchor.add_child(light)
+	_fire_breath_emitter = emitter
+	_fire_breath_light = light
+
+## Dispara a rajada: começa `fire_breath_start` segundos depois (quando o clipe de ataque abre a boca) e para em
+## `fire_breath_end`. Chamar junto com o clipe de ataque. Uma rajada nova cancela a anterior. Só visual.
+func play_fire_breath() -> void:
+	if _fire_breath_emitter == null or not is_instance_valid(_fire_breath_emitter):
+		return
+	stop_fire_breath()
+	if not is_inside_tree():
+		return
+	var duration := maxf(unit_data.fire_breath_end - unit_data.fire_breath_start, 0.1)
+	_fire_breath_tween = create_tween()
+	_fire_breath_tween.tween_interval(maxf(unit_data.fire_breath_start, 0.0))
+	_fire_breath_tween.tween_callback(_set_fire_breath.bind(true))
+	_fire_breath_tween.tween_property(_fire_breath_light, "light_energy", FIRE_BREATH_LIGHT_ENERGY, FIRE_BREATH_LIGHT_FADE_IN)
+	_fire_breath_tween.tween_interval(maxf(duration - FIRE_BREATH_LIGHT_FADE_IN, 0.0))
+	_fire_breath_tween.tween_callback(_set_fire_breath.bind(false))
+	_fire_breath_tween.tween_property(_fire_breath_light, "light_energy", 0.0, FIRE_BREATH_LIGHT_FADE_OUT)
+	_fire_breath_tween.tween_callback(func() -> void: _fire_breath_light.visible = false)
+
+func stop_fire_breath() -> void:
+	if _fire_breath_tween != null and _fire_breath_tween.is_valid():
+		_fire_breath_tween.kill()
+	_fire_breath_tween = null
+	if _fire_breath_emitter != null and is_instance_valid(_fire_breath_emitter):
+		_fire_breath_emitter.emitting = false
+	if _fire_breath_light != null and is_instance_valid(_fire_breath_light):
+		_fire_breath_light.light_energy = 0.0
+		_fire_breath_light.visible = false
+
+func _set_fire_breath(on: bool) -> void:
+	if _fire_breath_emitter != null and is_instance_valid(_fire_breath_emitter):
+		_fire_breath_emitter.emitting = on
+	if on and _fire_breath_light != null and is_instance_valid(_fire_breath_light):
+		_fire_breath_light.visible = true
+
+func has_fire_breath() -> bool:
+	return _fire_breath_emitter != null and is_instance_valid(_fire_breath_emitter)
+
+func is_breathing_fire() -> bool:
+	return has_fire_breath() and _fire_breath_emitter.emitting
+
+## TOMBO DE MORTE (Dragão abatido): o corpo perde a sustentação e tomba de lado em `duration` segundos. Gira a própria
+## Unit — é terminal, ela é removida do mapa logo depois, então não briga com o movimento. Fora da árvore, tomba na hora.
+const DEATH_TOPPLE_DEGREES := 85.0
+
+func play_death_topple(duration: float = 1.2) -> void:
+	stop_fire_breath()
+	_stop_facing_turn()
+	if not is_inside_tree() or duration <= 0.0:
+		rotation.z = deg_to_rad(DEATH_TOPPLE_DEGREES)
+		return
+	create_tween().tween_property(self, "rotation:z", deg_to_rad(DEATH_TOPPLE_DEGREES), duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+
+## NÚCLEO QUE ILUMINA (UnitData.glow_profile — Grandes Manifestações): o mesmo efeito dos cristais do mapa, pelo mesmo
+## sistema (HexGrid.world_glow). Uma luz sem sombra presa ao osso do núcleo (acompanha a flutuação e os gestos; some
+## com o modelo na névoa, no embarque e na morte) e o mapa de emissão do modelo crescendo com a escuridão. Unidade
+## fora de um HexGrid (cena de revisão, teste isolado) fica só com a emissão que o modelo já tem.
+const CORE_GLOW_ANCHOR := "CoreGlowAnchor"
+
+func _build_core_glow(model: Node3D) -> void:
+	if unit_data.glow_profile == &"" or not GlowProfiles.has_profile(unit_data.glow_profile):
+		return
+	var glow := _world_glow()
+	if glow == null:
+		return
+	var anchor: Node3D = model
+	var skeletons := model.find_children("*", "Skeleton3D", true, false)
+	if not skeletons.is_empty() and (skeletons[0] as Skeleton3D).find_bone(unit_data.glow_bone) >= 0:
+		var attachment := BoneAttachment3D.new()
+		attachment.name = CORE_GLOW_ANCHOR
+		skeletons[0].add_child(attachment)
+		attachment.bone_name = unit_data.glow_bone
+		anchor = attachment
+	glow.attach_light(WorldGlow.GROUP_UNITS, get_instance_id(), anchor, unit_data.glow_profile)
+	for mesh in model.find_children("*", "MeshInstance3D", true, false):
+		var instance := mesh as MeshInstance3D
+		if instance.mesh != null and instance.mesh.get_surface_count() > 0:
+			glow.track_emission(instance.get_active_material(0) as BaseMaterial3D, unit_data.glow_profile)
+
+## O WorldGlow do mapa em que a unidade está (null fora de um HexGrid).
+func _world_glow() -> WorldGlow:
+	var node := get_parent()
+	while node != null:
+		if node is HexGrid:
+			return (node as HexGrid).world_glow
+		node = node.get_parent()
+	return null
+
+## A luz do núcleo desta unidade (null se ela não ilumina ou está fora de um mapa).
+func core_glow_light() -> OmniLight3D:
+	var glow := _world_glow()
+	return glow.get_light(WorldGlow.GROUP_UNITS, get_instance_id()) if glow != null else null
 
 ## Fase 19 — Hostes: `model_formation_count` > 1 repete o corpo em volta do centro do tile, como MALHA filha
 ## desta mesma Unit (nenhuma lógica/HP/seleção individual). O corpo principal vai para o primeiro posto.
@@ -953,8 +1508,13 @@ func _build_animation_player(model: Node) -> AnimationPlayer:
 	# ultimo frame apos um unico ciclo sem isso. So idle_animation/
 	# moving_animation (ja resolvidos pros nomes certos em _build_model_
 	# body(), antes desta chamada) -- Ataque/Morte ficam LOOP_NONE de
-	# proposito, tocam uma vez so.
-	for loop_anim_name in [idle_animation, moving_animation]:
+	# proposito, tocam uma vez so. A postura da Muralha de Escudos (hold) tambem e um ciclo: o import de elfos/orcs
+	# vem sem a flag de loop e a postura congelava no ultimo quadro enquanto o efeito durava.
+	var looping: Array = [idle_animation, moving_animation, unit_data.shield_wall_hold_animation_override]
+	for clips in unit_data.posture_animations.values(): # o Parado e o Andar de TODAS as posturas, não só da inicial
+		looping.append(String((clips as Dictionary).get("idle", "")))
+		looping.append(String((clips as Dictionary).get("walk", "")))
+	for loop_anim_name in looping:
 		if library.has_animation(loop_anim_name):
 			library.get_animation(loop_anim_name).loop_mode = Animation.LOOP_LINEAR
 	var player := AnimationPlayer.new()
@@ -962,43 +1522,68 @@ func _build_animation_player(model: Node) -> AnimationPlayer:
 	player.add_animation_library("", library)
 	if unit_data.animation_blend_time > 0.0:
 		player.playback_default_blend_time = unit_data.animation_blend_time
+	if unit_data.animation_blend_time > 0.0 or _uses_pose_transitions():
 		player.animation_finished.connect(_on_blended_animation_finished.bind(player))
+	if _uses_pose_transitions():
+		# Grandes Manifestações: a troca de clipe parte da pose atual do esqueleto (PoseCaptureTransition). Modelo sem
+		# esqueleto não tem o que capturar: segue no crossfade comum.
+		var skeletons := model.find_children("*", "Skeleton3D", true, false)
+		if not skeletons.is_empty():
+			var transition := PoseCaptureTransition.new()
+			transition.setup(player, skeletons[0] as Skeleton3D)
+			player.set_meta(POSE_TRANSITION_META, transition)
 	return player
 
-## So pra unidades com UnitData.animation_blend_time > 0: o Ataque (LOOP_
+## So pra unidades com UnitData.animation_blend_time > 0 (ou pose_transition_time > 0): o Ataque (LOOP_
 ## NONE) termina e volta, com crossfade, pro ciclo que faz sentido agora --
 ## Andar se ainda houver trecho na fila de walk_path(), senao Idle.
 func _on_blended_animation_finished(anim_name: StringName, player: AnimationPlayer) -> void:
 	if not is_instance_valid(player):
+		return
+	if _walking and _movement_skill_clip != "" and anim_name == StringName(_movement_skill_clip):
+		player.play(_movement_skill_clip)
 		return
 	# Muralha de Escudos: o clipe de erguer emenda no loop da postura (sem crossfade de volta ao Idle).
 	if unit_data.shield_wall_animation_override != "" and anim_name == StringName(unit_data.shield_wall_animation_override):
 		if _braced and player.has_animation(unit_data.shield_wall_hold_animation_override):
 			player.play(unit_data.shield_wall_hold_animation_override)
 		return
-	var one_shot := anim_name == StringName(attack_animation) \
+	var one_shot := _is_attack_clip(String(anim_name)) \
+		or (cast_animation != "" and anim_name == StringName(cast_animation)) \
 		or unit_data.technique_animation_overrides.values().has(String(anim_name)) \
 		or (unit_data.emerge_animation_override != "" and anim_name == StringName(unit_data.emerge_animation_override)) \
 		or (unit_data.block_animation_override != "" and anim_name == StringName(unit_data.block_animation_override))
+	one_shot = one_shot or (unit_data.work_animation_override != "" and anim_name == StringName(unit_data.work_animation_override))
 	if not one_shot:
 		return
-	var next_anim := moving_animation if _walking else _rest_animation()
+	var next_anim := (_movement_skill_clip if _movement_skill_clip != "" else moving_animation) if _walking else _rest_animation()
 	if not player.has_animation(next_anim):
 		next_anim = idle_animation # sem Walk (Verme): anda no Idle em vez de congelar no fim do Ataque
 	if player.has_animation(next_anim):
-		player.play(next_anim)
+		_play_model_animation(player,next_anim)
+
+## Clipes de cada cena de animação, na ordem em que eram copiados: [[nome, Animation], ...]. Antes, TODA unidade que
+## nascia instanciava a cena inteira (modelo + esqueleto) só para ler as bibliotecas e a descartava — o dobro do custo
+## de spawn. As Animation são as mesmas instâncias compartilhadas da PackedScene (mesmo resultado de antes); otimização
+## de 2026-10-14, docs/PERFORMANCE_GUIDE.md §6.
+static var _animation_clips_cache: Dictionary = {}
 
 func _copy_animations_into(library: AnimationLibrary, scene_path: String) -> void:
-	var anim_scene: PackedScene = load(scene_path)
-	var anim_source := anim_scene.instantiate()
-	var source_player := _find_animation_player(anim_source)
-	if source_player:
-		for lib_name in source_player.get_animation_library_list():
-			var source_lib := source_player.get_animation_library(lib_name)
-			for anim_name in source_lib.get_animation_list():
-				if not library.has_animation(anim_name):
-					library.add_animation(anim_name, source_lib.get_animation(anim_name))
-	anim_source.free()
+	if not _animation_clips_cache.has(scene_path):
+		var clips: Array = []
+		var anim_scene: PackedScene = load(scene_path)
+		var anim_source := anim_scene.instantiate()
+		var source_player := _find_animation_player(anim_source)
+		if source_player:
+			for lib_name in source_player.get_animation_library_list():
+				var source_lib := source_player.get_animation_library(lib_name)
+				for anim_name in source_lib.get_animation_list():
+					clips.append([anim_name, source_lib.get_animation(anim_name)])
+		anim_source.free()
+		_animation_clips_cache[scene_path] = clips
+	for clip in _animation_clips_cache[scene_path]:
+		if not library.has_animation(clip[0]):
+			library.add_animation(clip[0], clip[1])
 
 ## Verme Colossal (Escavar) -- so visual, nunca muda regra. A logica esconde a
 ## Unit NA HORA do mergulho (sai de units_by_coord, visible = false); isto deixa
@@ -1046,6 +1631,88 @@ func end_technique_animation() -> void:
 	_technique_clip = ""
 	_technique_clip_started = false
 
+var _combat_visual_generation := 0
+var _combat_visual_wait := 0.0
+
+func visual_walk_remaining() -> float:
+	if not _walking: return 0.0
+	var elapsed := _walk_tween.get_total_elapsed_time() if _walk_tween != null and _walk_tween.is_valid() else 0.0
+	return maxf(0.0, MOVE_DURATION - elapsed) + _walk_queue.size() * MOVE_DURATION
+
+func _queue_combat_animation(clip: String, casting: bool = false) -> void:
+	_combat_visual_generation += 1
+	_combat_visual_wait = visual_walk_remaining()
+	if _combat_visual_wait > 0.0 and is_inside_tree():
+		get_tree().create_timer(_combat_visual_wait, false).timeout.connect(_start_combat_animation.bind(clip, casting, _combat_visual_generation), CONNECT_ONE_SHOT)
+	else:
+		_start_combat_animation(clip, casting, _combat_visual_generation)
+
+func _start_combat_animation(clip: String, casting: bool, generation: int) -> void:
+	if generation != _combat_visual_generation or _anim_player == null: return
+	if casting and _anim_player.current_animation == clip:
+		if _uses_pose_transitions():
+			_play_model_animation(_anim_player, clip, true)
+		else:
+			_anim_player.seek(0.0, true)
+	elif casting:
+		_play_model_animation(_anim_player, clip)
+	elif _anim_player.current_animation == clip:
+		if _uses_pose_transitions():
+			_play_model_animation(_anim_player, clip, true)
+		else:
+			_anim_player.seek(0.0, true)
+	else:
+		_play_animation(clip)
+
+## GIRO SUAVE (pedido do usuario 2026-10-09: transicoes suaves entre parado/andando/atacando). O clipe ja fazia
+## crossfade, mas o CORPO estalava: o ataque setava rotation.y direto, e o passo interpolava o angulo cru (de +170°
+## a -170° dava quase uma volta pelo lado errado). Agora todo giro vai pelo caminho curto (shortest_yaw_to) e o
+## ataque/bloqueio vira em FACE_TURN_DURATION. Andando, o passo ja aponta para o destino e e dono do giro (o giro de
+## ataque espera, nunca briga com o Tween do passo); fora da arvore/da neblina o giro e imediato (nada a animar).
+const FACE_TURN_DURATION := 0.15
+var _face_tween: Tween
+## Para onde a unidade terminou (ou vai terminar) virada — o giro animado chega nele em FACE_TURN_DURATION.
+var facing_target_yaw: float = 0.0
+## Pedido de giro feito andando (golpe que começa no meio da aproximação): aplicado quando o último passo termina, a
+## partir da posição de CHEGADA (o ponto-alvo fica guardado, não o ângulo de quando o pedido foi feito).
+var _facing_pending := false
+var _facing_point := Vector3.ZERO
+
+## Ângulo equivalente a `target_yaw` mais próximo da rotação atual (diferença em [-PI, PI]).
+func shortest_yaw_to(target_yaw: float) -> float:
+	return rotation.y + wrapf(target_yaw - rotation.y, -PI, PI)
+
+func face_toward(world_point: Vector3) -> void:
+	_facing_point = world_point
+	var direction := world_point - position
+	direction.y = 0.0
+	if direction.length() > 0.05:
+		facing_target_yaw = atan2(direction.x, direction.z)
+	if _walking:
+		_facing_pending = true
+		return
+	_turn_to_facing_target()
+
+func _turn_to_facing_target() -> void:
+	_facing_pending = false
+	var direction := _facing_point - position
+	direction.y = 0.0
+	if direction.length() <= 0.05:
+		return
+	facing_target_yaw = atan2(direction.x, direction.z)
+	_stop_facing_turn()
+	var target := shortest_yaw_to(facing_target_yaw)
+	if not is_inside_tree() or not visible or is_equal_approx(target, rotation.y):
+		rotation.y = target
+		return
+	_face_tween = create_tween()
+	_face_tween.tween_property(self, "rotation:y", target, FACE_TURN_DURATION).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+func _stop_facing_turn() -> void:
+	if _face_tween != null and _face_tween.is_valid():
+		_face_tween.kill()
+	_face_tween = null
+
 ## Visual do ataque (CombatResolver): vira para o defensor e toca o Attack — ou, durante uma técnica com clipe próprio,
 ## o clipe dela (uma vez por uso). Unidade sem attack_animation segue sem animação de combate (no-op, como sempre foi).
 func play_attack_visual(defender: Unit) -> void:
@@ -1057,35 +1724,158 @@ func play_attack_visual(defender: Unit) -> void:
 			return
 		clip = _technique_clip
 		_technique_clip_started = true
+	elif defender != null and defender.unit_data != null and (defender.unit_data.traits.has(UnitData.TRAIT_CASTER) or defender.unit_data.traits.has(UnitData.TRAIT_SIEGE)):
+		var dismantle := String(unit_data.technique_animation_overrides.get(V2DoctrineTechniqueDatabase.DISMANTLE, ""))
+		if dismantle != "" and _anim_player != null and _anim_player.has_animation(dismantle) and V2UnlockSystem.is_unlocked(owner_player, V2DoctrineTechniqueDatabase.DISMANTLE):
+			clip = dismantle
 	if defender != null and is_instance_valid(defender):
-		var direction: Vector3 = defender.position - position
-		direction.y = 0.0
-		if direction.length() > 0.05:
-			rotation.y = atan2(direction.x, direction.z)
-	_play_animation(clip)
+		face_toward(defender.position)
+	set_meta("feedback_attack_clip", clip)
+	_queue_combat_animation(clip)
+
+## Feitiço bem-sucedido (V2MagicRuntime.cast — jogador e IA): vira para o alvo (giro suave, face_toward) e toca o clipe
+## de conjuração UMA vez; ao terminar, _on_blended_animation_finished volta ao Idle/Andar com o crossfade normal. O MESMO
+## clipe serve para todos os feitiços (pedido do usuário). Só visual: o feitiço já foi resolvido. Sem clipe = no-op.
+func play_cast_visual(target_world: Vector3) -> void:
+	if cast_animation == "" or _anim_player == null or not _anim_player.has_animation(cast_animation):
+		return
+	face_toward(target_world)
+	_queue_combat_animation(cast_animation, true)
+
+## Trabalho do construtor. Na última carga, uma cópia visual termina o
+## gesto enquanto a unidade é consumida imediatamente pelas regras.
+func play_work_visual(consumed: bool = false) -> void:
+	var clip := unit_data.work_animation_override
+	if clip == "" or _anim_player == null or not _anim_player.has_animation(clip) or not is_inside_tree():
+		return
+	if not consumed:
+		_anim_player.stop()
+		_anim_player.play(clip)
+		return
+	var model := _anim_player.get_parent() as Node3D
+	var ghost := (load(unit_data.model_scene_path) as PackedScene).instantiate() as Node3D
+	get_parent().add_child(ghost)
+	ghost.global_transform = model.global_transform
+	ghost.visible = is_visible_in_tree()
+	var players := ghost.find_children("*", "AnimationPlayer", true, false)
+	if players.is_empty():
+		ghost.queue_free()
+		return
+	var player := players[0] as AnimationPlayer
+	player.get_animation(clip).loop_mode = Animation.LOOP_NONE
+	player.animation_finished.connect(func(_name: StringName) -> void: ghost.queue_free(), CONNECT_ONE_SHOT)
+	player.play(clip)
+
+## Cerco contra cidade usa o mecanismo e a técnica próprios, sem alterar dano ou resolução.
+func play_city_attack_visual(city: City) -> void:
+	if attack_animation == "": return
+	var clip := attack_animation
+	if _technique_clip != "" and _anim_player != null and _anim_player.has_animation(_technique_clip):
+		if _technique_clip_started: return
+		clip = _technique_clip
+		_technique_clip_started = true
+	else:
+		var demolition := String(unit_data.technique_animation_overrides.get(V2DoctrineTechniqueDatabase.DEMOLITION_AMMO, ""))
+		if demolition != "" and _anim_player != null and _anim_player.has_animation(demolition) and V2UnlockSystem.is_unlocked(owner_player, V2DoctrineTechniqueDatabase.DEMOLITION_AMMO):
+			clip = demolition
+	if city != null and is_instance_valid(city):
+		face_toward(city.position)
+	set_meta("feedback_attack_clip", clip)
+	_queue_combat_animation(clip)
 
 ## Herói Corrompido (Bloqueio com Escudo): vira para quem atacou e toca o clipe do escudo (com o crossfade normal);
 ## no fim volta pro Idle (_on_blended_animation_finished). Só visual: o dano já foi negado pelo CombatResolver.
 func play_block_visual(attacker: Unit) -> void:
+	if preload("res://scripts/vfx/CombatFeedback.gd").defer_call(self, &"play_block_visual", [attacker]): return
 	var clip := unit_data.block_animation_override
 	if clip == "" or _anim_player == null or not _anim_player.has_animation(clip):
 		return
 	if attacker != null and is_instance_valid(attacker):
-		var direction: Vector3 = attacker.position - position
-		direction.y = 0.0
-		if direction.length() > 0.05:
-			rotation.y = atan2(direction.x, direction.z)
+		face_toward(attacker.position)
 	_anim_player.play(clip)
 
 ## Troca pro clipe `anim_name` so se a unidade tiver AnimationPlayer, o
 ## clipe existir, e nao for o que ja esta tocando (evita reiniciar o ciclo
 ## de Idle toda vez que um slide_to() termina enquanto ja estava parada).
 func _play_animation(anim_name: String) -> void:
+	if _boat_shown:
+		_update_boat_animation() # na água quem anima é o barco (idle/walk pelo estado de andar); a tropa está escondida
+		return
 	if _anim_player and _anim_player.has_animation(anim_name) and _anim_player.current_animation != anim_name:
-		_anim_player.play(anim_name)
+		_play_model_animation(_anim_player,anim_name)
 	for player in _formation_players: # Fase 19: a formação da Hoste anda/ataca junto (só visual)
 		if is_instance_valid(player) and player.has_animation(anim_name) and player.current_animation != anim_name:
 			player.play(anim_name)
+
+## Meta do AnimationPlayer que guarda o PoseCaptureTransition da unidade.
+const POSE_TRANSITION_META := "pose_transition"
+
+## Grandes Manifestações (UnitData.pose_transition_time > 0): as trocas de estado partem da pose atual do esqueleto.
+func _uses_pose_transitions() -> bool:
+	return unit_data != null and unit_data.pose_transition_time > 0.0
+
+## Segundos da transição para `clip` a partir do que `player` toca agora: entrar ou sair do Andar tem tempo próprio.
+func pose_transition_seconds(player: AnimationPlayer, clip: String) -> float:
+	var changing_posture := clip == moving_animation or player.current_animation == moving_animation
+	if changing_posture and unit_data.pose_transition_walk_time > 0.0:
+		return unit_data.pose_transition_walk_time
+	return unit_data.pose_transition_time
+
+## `seconds` > 0 impõe o tempo desta troca (pouso/decolagem); senão vale o tempo normal da unidade.
+func _play_model_animation(player: AnimationPlayer,clip: String,restart: bool=false,seconds: float=0.0) -> void:
+	if _uses_pose_transitions():
+		var transition: Variant=player.get_meta(POSE_TRANSITION_META,null)
+		if transition!=null:
+			transition.play(clip, seconds if seconds > 0.0 else pose_transition_seconds(player, clip), restart)
+		else:
+			player.play(clip)
+	elif _uses_elemental_path_motion(): _play_elemental_path_animation(player,clip)
+	else: player.play(clip)
+
+func _uses_elemental_path_motion() -> bool:
+	return unit_data != null and unit_data.model_scene_path.contains("/elemental_dragon_v9_animated/")
+
+## Mantém a mesma posição no percurso ao mudar velocidade ou começar um gesto.
+## As trilhas da mandíbula e do núcleo continuam com o tempo próprio do gesto.
+func _play_elemental_path_animation(player: AnimationPlayer, clip: String) -> void:
+	var phase := float(player.get_meta("elemental_path_phase",0.0))
+	if player.current_animation in [idle_animation,moving_animation]:
+		phase = fposmod(player.current_animation_position / player.current_animation_length,1.0)
+	if clip in [idle_animation,moving_animation]:
+		player.play(clip,0.0)
+		player.seek(phase*player.get_animation(clip).length,true)
+		return
+	player.set_meta("elemental_path_phase",phase)
+	var template_key := "elemental_template_" + clip
+	if not player.has_meta(template_key):
+		player.set_meta(template_key,player.get_animation(clip).duplicate(true))
+	var animation := (player.get_meta(template_key) as Animation).duplicate(true) as Animation
+	var route := player.get_animation(moving_animation)
+	for track in animation.get_track_count():
+		var path := animation.track_get_path(track)
+		if path.get_subname_count()==0: continue
+		var bone := String(path.get_subname(0))
+		if not (bone=="root" or bone=="head" or bone.begins_with("spine_") or bone.begins_with("ring_")): continue
+		var type := animation.track_get_type(track)
+		if type not in [Animation.TYPE_POSITION_3D,Animation.TYPE_ROTATION_3D,Animation.TYPE_SCALE_3D]: continue
+		var source_track := route.find_track(path,type)
+		if source_track<0: continue
+		while animation.track_get_key_count(track)>0: animation.track_remove_key(track,0)
+		var count := roundi(animation.length*30)
+		for sample in range(count+1):
+			var progress := float(sample)/count
+			var advance := progress*progress*progress*(progress*(progress*6.0-15.0)+10.0)
+			var time := fposmod(phase+advance,1.0)*route.length
+			var value: Variant
+			match type:
+				Animation.TYPE_POSITION_3D: value=route.position_track_interpolate(source_track,time)
+				Animation.TYPE_ROTATION_3D: value=route.rotation_track_interpolate(source_track,time)
+				Animation.TYPE_SCALE_3D: value=route.scale_track_interpolate(source_track,time)
+			animation.track_insert_key(track,progress*animation.length,value)
+	var library := player.get_animation_library("")
+	library.remove_animation(clip)
+	library.add_animation(clip,animation)
+	player.play(clip,0.0)
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
@@ -1103,8 +1893,7 @@ func _build_procedural_body() -> void:
 	# path) — se a tropa tiver um modelo externo definido, usa ele em vez
 	# do resto desta funcao. "" (a maioria ainda hoje) continua no corpo
 	# procedural de sempre.
-	if unit_data.model_scene_path != "":
-		_build_model_body()
+	if unit_data.model_scene_path != "" and _build_model_body():
 		return
 
 	var mat := StandardMaterial3D.new()
@@ -1430,16 +2219,6 @@ func _build_procedural_body() -> void:
 				wing.position = Vector3(side * 0.32, 0.68, 0.0)
 				wing.rotation_degrees = Vector3(0, 0, side * 35)
 				add_child(wing)
-		"dragon":
-			# Roadmap "Dragon Event v1 fechado" -- pedido explicito do
-			# usuario: "o sistema do Dragao ja esta bom o suficiente pra
-			# merecer um Dragao de verdade... Aetherlands Low Poly Modular
-			# -- primeiro prototipo do futuro sistema visual proprio do
-			# jogo". Substitui a capsula+asas+cauda placeholder por um
-			# corpo modular de verdade (ver _build_dragon_body abaixo) --
-			# geometria cubica/prismatica simples de proposito (silhueta
-			# forte, poucos materiais, nada de textura/realismo).
-			_build_dragon_body(mat)
 		"griffin":
 			var body := MeshInstance3D.new()
 			var body_mesh := CapsuleMesh.new()
@@ -1696,683 +2475,6 @@ func _build_procedural_body() -> void:
 			body.position.y = 0.4
 			add_child(body)
 
-## ===========================================================================
-## "Aetherlands Low Poly Modular" -- primeiro prototipo do dragao (roadmap
-## "Dragon Event v1 fechado"). Toda a geometria fica sob um unico
-## DragonVisualRoot (nunca direto sob `self`) de proposito: `self.position`/
-## `self.rotation` continuam pertencendo EXCLUSIVAMENTE a slide_to() (o
-## tween de movimento pelo grid) -- se as animacoes abaixo tambem
-## escrevessem nessas propriedades, as duas ficariam brigando pelo mesmo
-## valor todo frame. Pivots nomeados (NeckPivot/HeadPivot/JawPivot/*Hip/
-## TailPivot/*WingPivot) sao o "esqueleto" barato desta unidade -- cada
-## um e' so' um Node3D vazio que os MeshInstance3D reais penduram embaixo,
-## e as animacoes (ver _build_dragon_animation_player) so' giram/deslocam
-## ESSES pivots, nunca a malha em si.
-## ===========================================================================
-func _build_dragon_body(mat: StandardMaterial3D) -> void:
-	var visual_root := Node3D.new()
-	visual_root.name = "DragonVisualRoot"
-	add_child(visual_root)
-
-	var horn_mat := StandardMaterial3D.new()
-	horn_mat.albedo_color = Color(0.88, 0.85, 0.78)
-	var eye_mat := StandardMaterial3D.new()
-	eye_mat.albedo_color = Color(1.0, 0.85, 0.1)
-	eye_mat.emission_enabled = true
-	eye_mat.emission = Color(1.0, 0.6, 0.0)
-	eye_mat.emission_energy_multiplier = 2.5
-	# Roadmap "Dragon Event v1 fechado" v2 -- pedido explicito do usuario:
-	# "se baseie um pouco nessa imagem" (referencia de um Dragao Ancestral
-	# roxo+laranja com espinhos na espinha/cauda e asas grandes e
-	# contrastantes). Segunda cor (accent) e' NOVA aqui -- silhueta v1 era
-	# monocromatica demais pra ler bem a distancia.
-	var accent_mat := StandardMaterial3D.new()
-	accent_mat.albedo_color = Color(0.95, 0.55, 0.08)
-
-	# --- Torso: v7 -- correcao explicita do usuario depois do v6 (malha
-	# lofted lisa): "eu quero ele composto de quadrados mesmo... ou faz
-	# igual uma geladeira usando 3 quadrados, ou faz o bagulho todo
-	# redondo, o estilo e' justamente low poly voxel fantasy" -- ou seja,
-	# NEM 2-3 blocos grandes (geladeira) NEM um tubo liso (v6 errou pro
-	# lado oposto): o estilo certo e' VARIOS blocos pequenos, cada um
-	# rotacionado pra seguir a curva (uma "escada" de cubos, nao uma
-	# superficie continua) -- ver `_add_segmented_boxes`, que reaproveita
-	# a mesma coluna/raios do v6 mas desenha um BoxMesh de verdade em cada
-	# ponto em vez de um anel de malha lisa.
-	var torso_spine: Array = [
-		Vector3(0, 0.66, -0.55),
-		Vector3(0, 0.67, -0.35),
-		Vector3(0, 0.70, -0.10),
-		Vector3(0, 0.76, 0.15),
-		Vector3(0, 0.81, 0.40),
-		Vector3(0, 0.85, 0.60),
-	]
-	var torso_radii: Array = [
-		Vector2(0.20, 0.18),
-		Vector2(0.27, 0.25),
-		Vector2(0.29, 0.27),
-		Vector2(0.27, 0.25),
-		Vector2(0.24, 0.22),
-		Vector2(0.18, 0.16),
-	]
-	_add_segmented_boxes(visual_root, torso_spine, torso_radii, mat)
-
-	# Barriga em PLACAS separadas (nao uma faixa unica) -- mais geometria
-	# de verdade, nao so' cor: cada placa e' um pouco menor que a anterior,
-	# com um pequeno vao entre elas (ritmo visual "couraça segmentada",
-	# pedido do usuario: "aplicasse modificações no modelo pra ficar mais
-	# desenvolvido... ta simples demais").
-	var belly_z := 0.62
-	for i in range(4):
-		var plate := MeshInstance3D.new()
-		var plate_mesh := BoxMesh.new()
-		var plate_width: float = 0.4 - i * 0.03
-		plate_mesh.size = Vector3(plate_width, 0.09, 0.22)
-		plate.mesh = plate_mesh
-		plate.material_override = accent_mat
-		plate.position = Vector3(0, 0.44, belly_z)
-		visual_root.add_child(plate)
-		belly_z -= 0.27
-
-	_add_spine_spikes(visual_root, accent_mat, [Vector3(0, 0.98, -0.4), Vector3(0, 1.0, -0.1), Vector3(0, 1.06, 0.2)])
-
-	# --- Placas de ombro (uma de cada lado, na base do peito) -- quebra a
-	# silhueta lisa do torso, mesmo espirito de "couraça" da barriga acima.
-	for side in [-1.0, 1.0]:
-		var shoulder_plate := MeshInstance3D.new()
-		var shoulder_plate_mesh := BoxMesh.new()
-		shoulder_plate_mesh.size = Vector3(0.1, 0.16, 0.16)
-		shoulder_plate.mesh = shoulder_plate_mesh
-		shoulder_plate.material_override = accent_mat
-		shoulder_plate.position = Vector3(side * 0.27, 0.95, 0.15)
-		shoulder_plate.rotation_degrees = Vector3(0, 0, side * 15)
-		visual_root.add_child(shoulder_plate)
-
-	# --- Pescoco: pivot na base (anima em Idle/Attack) + segmentos CUBICOS
-	# afunilando ate a cabeca -- cada segmento sobe um pouco de Y alem de
-	# avancar em Z, arqueando o pescoco pra CIMA e pra FRENTE (silhueta da
-	# referencia: pescoco curva antes da cabeca apontar forward), tudo via
-	# POSICIONAMENTO fixo das malhas -- o pivot em si continua girando a
-	# partir de 0 nas animacoes (Idle/Attack), sem precisar mudar nenhuma
-	# key existente.
-	# v4: arco bem mais dramatico (pedido do usuario: modelo "nao ta nada
-	# parecido" com a referencia, que tem a cabeca erguida BEM acima do
-	# corpo) -- cada segmento agora sobe quase o dobro em Y do que avanca
-	# em Z, entao o pescoco lê como um "S" subindo pra cima antes da
-	# cabeca, nao uma linha quase reta pra frente.
-	# v7: correcao explicita do usuario depois do v6 (malha lofted lisa) --
-	# "o pescoço tambem varios quadrados... o estilo e' justamente low
-	# poly voxel fantasy" -- volta a ser uma corrente de BoxMesh (agora 6,
-	# nao 3, pra "dar a sensação de ter curvas" com mais degraus), cada um
-	# rotacionado pra seguir a coluna via `_add_segmented_boxes`. O arco
-	# pra cima (S dramatico, pedido de v4) continua na propria curva da
-	# coluna (`neck_spine`), nao em rotacao do pivot -- o pivot continua
-	# girando a partir de 0 nas animacoes (Idle/Attack) sem precisar mudar
-	# nenhuma key existente.
-	var neck_pivot := Node3D.new()
-	neck_pivot.name = "NeckPivot"
-	neck_pivot.position = Vector3(0, 0.98, 0.6)
-	visual_root.add_child(neck_pivot)
-	var neck_spine: Array = [
-		Vector3(0, 0.0, 0.0),
-		Vector3(0, 0.10, 0.14),
-		Vector3(0, 0.24, 0.26),
-		Vector3(0, 0.40, 0.36),
-		Vector3(0, 0.54, 0.44),
-		Vector3(0, 0.64, 0.50),
-	]
-	var neck_radii: Array = [
-		Vector2(0.19, 0.19),
-		Vector2(0.17, 0.17),
-		Vector2(0.155, 0.155),
-		Vector2(0.135, 0.135),
-		Vector2(0.115, 0.115),
-		Vector2(0.10, 0.10),
-	]
-	_add_segmented_boxes(neck_pivot, neck_spine, neck_radii, mat)
-	for spine_pt in neck_spine.slice(1, neck_spine.size() - 1):
-		_add_spine_spikes(neck_pivot, accent_mat, [spine_pt + Vector3(0, 0.14, 0)], 0.8)
-	var neck_y: float = neck_spine[neck_spine.size() - 1].y
-	var neck_z: float = neck_spine[neck_spine.size() - 1].z
-
-	# --- Cabeca: cubo + focinho + mandibula articulada + chifres + olhos
-	# emissivos -- pendurada na PONTA do pescoco (anima JUNTO com ele).
-	var head_pivot := Node3D.new()
-	head_pivot.name = "HeadPivot"
-	head_pivot.position = Vector3(0, neck_y + 0.12, neck_z + 0.05)
-	neck_pivot.add_child(head_pivot)
-
-	var head_box := MeshInstance3D.new()
-	var head_mesh := BoxMesh.new()
-	head_mesh.size = Vector3(0.26, 0.24, 0.28)
-	head_box.mesh = head_mesh
-	head_box.material_override = mat
-	head_box.position = Vector3(0, 0, 0.1)
-	head_pivot.add_child(head_box)
-
-	var snout := MeshInstance3D.new()
-	var snout_mesh := BoxMesh.new()
-	snout_mesh.size = Vector3(0.16, 0.14, 0.22)
-	snout.mesh = snout_mesh
-	snout.material_override = mat
-	snout.position = Vector3(0, -0.02, 0.34)
-	head_pivot.add_child(snout)
-
-	var jaw_pivot := Node3D.new()
-	jaw_pivot.name = "JawPivot"
-	jaw_pivot.position = Vector3(0, -0.09, 0.28)
-	head_pivot.add_child(jaw_pivot)
-	var jaw := MeshInstance3D.new()
-	var jaw_mesh := BoxMesh.new()
-	jaw_mesh.size = Vector3(0.14, 0.06, 0.2)
-	jaw.mesh = jaw_mesh
-	jaw.material_override = mat
-	jaw.position = Vector3(0, -0.03, 0.1)
-	jaw_pivot.add_child(jaw)
-
-	# Presa inferior -- um unico detalhe pequeno, mas ajuda a cabeca ler
-	# "predador" em vez de "cubo com boca" (pedido do usuario: modelo mais
-	# desenvolvido).
-	var fang := MeshInstance3D.new()
-	var fang_mesh := PrismMesh.new()
-	fang_mesh.size = Vector3(0.025, 0.07, 0.025)
-	fang.mesh = fang_mesh
-	fang.material_override = horn_mat
-	fang.position = Vector3(0, 0.02, 0.19)
-	fang.rotation_degrees = Vector3(180, 0, 0)
-	jaw_pivot.add_child(fang)
-
-	for side in [-1.0, 1.0]:
-		var horn := MeshInstance3D.new()
-		var horn_mesh := PrismMesh.new()
-		horn_mesh.size = Vector3(0.05, 0.24, 0.05)
-		horn.mesh = horn_mesh
-		horn.material_override = horn_mat
-		horn.position = Vector3(side * 0.09, 0.16, -0.02)
-		horn.rotation_degrees = Vector3(-20, 0, side * -10)
-		head_pivot.add_child(horn)
-
-		# Sobrancelha/crista -- pequeno espinho de destaque acima do olho,
-		# entre o chifre e o focinho (referencia: "crista" ao longo da
-		# cabeca, nao so' chifres isolados).
-		var brow := MeshInstance3D.new()
-		var brow_mesh := PrismMesh.new()
-		brow_mesh.size = Vector3(0.04, 0.06, 0.09)
-		brow.mesh = brow_mesh
-		brow.material_override = accent_mat
-		brow.position = Vector3(side * 0.1, 0.09, 0.18)
-		brow.rotation_degrees = Vector3(15, 0, 0)
-		head_pivot.add_child(brow)
-
-		var eye := MeshInstance3D.new()
-		var eye_mesh := BoxMesh.new()
-		eye_mesh.size = Vector3(0.05, 0.05, 0.04)
-		eye.mesh = eye_mesh
-		eye.material_override = eye_mat
-		eye.position = Vector3(side * 0.12, 0.02, 0.2)
-		head_pivot.add_child(eye)
-
-	# --- Sopro de fogo: GPUParticles3D + luz, ambos DESLIGADOS por padrao
-	# (ver DragonEvent._play_fire_breath_vfx) -- pendurados na cabeca pra
-	# se mover/virar junto dela automaticamente, nunca reposicionados a
-	# mao por quem dispara o ataque.
-	var fire_emitter := GPUParticles3D.new()
-	fire_emitter.name = "FireBreathEmitter"
-	fire_emitter.position = Vector3(0, -0.02, 0.46)
-	fire_emitter.emitting = false
-	fire_emitter.one_shot = true
-	fire_emitter.amount = 40
-	fire_emitter.lifetime = 0.45
-	fire_emitter.explosiveness = 0.5
-	var fire_particle_mesh := SphereMesh.new()
-	fire_particle_mesh.radius = 0.05
-	fire_particle_mesh.height = 0.1
-	fire_emitter.draw_pass_1 = fire_particle_mesh
-	var fire_particle_mat := ParticleProcessMaterial.new()
-	fire_particle_mat.direction = Vector3(0, 0, 1)
-	fire_particle_mat.spread = 14.0
-	fire_particle_mat.initial_velocity_min = 2.5
-	fire_particle_mat.initial_velocity_max = 4.5
-	fire_particle_mat.gravity = Vector3(0, 0.6, 0)
-	fire_particle_mat.scale_min = 0.08
-	fire_particle_mat.scale_max = 0.24
-	fire_particle_mat.color = Color(1.0, 0.55, 0.05)
-	fire_emitter.process_material = fire_particle_mat
-	head_pivot.add_child(fire_emitter)
-
-	var fire_light := OmniLight3D.new()
-	fire_light.name = "FireBreathLight"
-	fire_light.light_color = Color(1.0, 0.6, 0.1)
-	fire_light.light_energy = 0.0 # 0 por padrao -- so' acende durante o ataque
-	fire_light.omni_range = 2.0
-	fire_light.position = Vector3(0, -0.02, 0.4)
-	head_pivot.add_child(fire_light)
-
-	# --- Pernas: 4, cada uma com pivot de quadril (anima em Walk) + coxa
-	# + canela, ambas caixas simples.
-	# v4: pernas mais longas erguendo o corpo bem acima do chao (pedido do
-	# usuario: modelo "nao ta nada parecido" com a referencia, que fica em
-	# pe de forma ereta, nao esparramada perto do chao); dianteiras presas
-	# mais alto que traseiras porque o peito agora fica acima do quadril.
-	var leg_hip_positions := {
-		"FrontLeftHipPivot": Vector3(-0.28, 0.42, 0.2),
-		"FrontRightHipPivot": Vector3(0.28, 0.42, 0.2),
-		"BackLeftHipPivot": Vector3(-0.28, 0.34, -0.35),
-		"BackRightHipPivot": Vector3(0.28, 0.34, -0.35),
-	}
-	# v7: pedido explicito do usuario -- "um quadrado pra pata, um acima
-	# pra ser a canela, outro pra ser a coxa, um pra ser o ombro" -- 4
-	# blocos distintos por perna (nao so' coxa+canela+garras soltas).
-	for leg_name in leg_hip_positions:
-		var hip_pivot := Node3D.new()
-		hip_pivot.name = leg_name
-		hip_pivot.position = leg_hip_positions[leg_name]
-		visual_root.add_child(hip_pivot)
-
-		var shoulder := MeshInstance3D.new()
-		var shoulder_mesh := BoxMesh.new()
-		shoulder_mesh.size = Vector3(0.17, 0.13, 0.17)
-		shoulder.mesh = shoulder_mesh
-		shoulder.material_override = mat
-		shoulder.position = Vector3(0, -0.01, 0)
-		hip_pivot.add_child(shoulder)
-
-		var thigh := MeshInstance3D.new()
-		var thigh_mesh := BoxMesh.new()
-		thigh_mesh.size = Vector3(0.14, 0.22, 0.14)
-		thigh.mesh = thigh_mesh
-		thigh.material_override = mat
-		thigh.position = Vector3(0, -0.18, 0)
-		hip_pivot.add_child(thigh)
-
-		var shin := MeshInstance3D.new()
-		var shin_mesh := BoxMesh.new()
-		shin_mesh.size = Vector3(0.11, 0.2, 0.11)
-		shin.mesh = shin_mesh
-		shin.material_override = mat
-		shin.position = Vector3(0, -0.39, 0.02)
-		hip_pivot.add_child(shin)
-
-		var paw := MeshInstance3D.new()
-		var paw_mesh := BoxMesh.new()
-		paw_mesh.size = Vector3(0.13, 0.09, 0.17)
-		paw.mesh = paw_mesh
-		paw.material_override = mat
-		paw.position = Vector3(0, -0.53, 0.06)
-		hip_pivot.add_child(paw)
-
-		# Garras -- 3 por pata, levemente espalhadas, apontando pra frente/
-		# baixo.
-		for claw_x in [-0.035, 0.0, 0.035]:
-			var claw := MeshInstance3D.new()
-			var claw_mesh := PrismMesh.new()
-			claw_mesh.size = Vector3(0.035, 0.08, 0.035)
-			claw.mesh = claw_mesh
-			claw.material_override = horn_mat
-			claw.position = Vector3(claw_x, -0.58, 0.12)
-			claw.rotation_degrees = Vector3(-75, 0, 0)
-			hip_pivot.add_child(claw)
-
-	# --- Cauda: pivot na base (anima em Idle/Walk) + segmentos CUBICOS
-	# progressivamente menores ate a ponta -- mais longa que a v1 (5
-	# segmentos, nao 4) com espinhos no topo de cada um, seguindo a
-	# referencia ("cauda longa, afunilando, com espinhos na espinha").
-	# v4: cauda agora sobe um pouco em Y conforme afunila (mesma tecnica do
-	# pescoco acima) -- pedido do usuario: modelo "nao ta nada parecido"
-	# com a referencia, que tem a cauda varrendo pra CIMA no ar, nao
-	# arrastando reta e murcha atras do corpo.
-	# v7: correcao explicita do usuario depois do v6 (malha lofted lisa) --
-	# "a cauda 6 quadrados, mas eles vao ficando menor pra deixar a
-	# sensação de ter curvas... o estilo e' justamente low poly voxel
-	# fantasy" -- exatamente os 6 pontos ja definidos abaixo, so' que cada
-	# um agora e' um BoxMesh de verdade (`_add_segmented_boxes`) em vez de
-	# um anel de malha lisa. A varredura pra cima (pedido de v4) continua
-	# na propria curva da coluna, nao em rotacao do pivot.
-	var tail_pivot := Node3D.new()
-	tail_pivot.name = "TailPivot"
-	tail_pivot.position = Vector3(0, 0.62, -0.6)
-	visual_root.add_child(tail_pivot)
-	var tail_spine: Array = [
-		Vector3(0, 0.0, 0.0),
-		Vector3(0, 0.05, -0.22),
-		Vector3(0, 0.11, -0.45),
-		Vector3(0, 0.17, -0.68),
-		Vector3(0, 0.23, -0.92),
-		Vector3(0, 0.30, -1.15),
-	]
-	var tail_radii: Array = [
-		Vector2(0.19, 0.19),
-		Vector2(0.16, 0.16),
-		Vector2(0.13, 0.13),
-		Vector2(0.10, 0.10),
-		Vector2(0.07, 0.07),
-		Vector2(0.04, 0.04),
-	]
-	_add_segmented_boxes(tail_pivot, tail_spine, tail_radii, mat)
-	for spine_pt in tail_spine.slice(1, tail_spine.size() - 1):
-		_add_spine_spikes(tail_pivot, accent_mat, [spine_pt + Vector3(0, 0.11, 0)], 0.7)
-	var tail_y: float = tail_spine[tail_spine.size() - 1].y
-	var tail_z: float = tail_spine[tail_spine.size() - 1].z
-
-	# Aba/leque na PONTA da cauda -- referencia tem um "spade" la, nao so'
-	# um cubo minusculo desaparecendo no nada.
-	var tail_fin := MeshInstance3D.new()
-	var tail_fin_mesh := PrismMesh.new()
-	tail_fin_mesh.size = Vector3(0.22, 0.18, 0.12)
-	tail_fin.mesh = tail_fin_mesh
-	tail_fin.material_override = accent_mat
-	tail_fin.position = Vector3(0, tail_y, tail_z - 0.03)
-	tail_fin.rotation_degrees = Vector3(0, 0, 90)
-	tail_pivot.add_child(tail_fin)
-
-	# --- Asas: v5 -- reconstruidas do zero (pedido explicito do usuario
-	# depois de ver o v4 em jogo: "as asas parecem dois papeis... faça um
-	# modelo atraves de uma solução robusta", nao mais um remendo em cima
-	# do anterior). Empilhar varios prismas finos em angulos escolhidos a
-	# mao (v1-v4) sempre ia continuar lendo como sticks soltos, porque
-	# cada peca e' plana e sem gradiente. A solução robusta: a membrana
-	# agora e' UMA malha poligonal real (SurfaceTool, formato de leque com
-	# a borda de tras recortada entre os "dedos") com cor por vertice
-	# (mais escura perto do corpo, mais clara na ponta) simulando volume
-	# sem depender de textura -- ver `_build_wing_membrane_mesh`. Um unico
-	# osso de borda de ataque vai do ombro direto ate a ponta (a linha reta
-	# que mais define a silhueta na referencia), orientado via
-	# `_basis_pointing` (matematica de direcao real, nao Euler angles
-	# escolhidos no olho) -- o mesmo helper orienta as nervuras (uma por
-	# "dedo", encaixada por baixo da malha, nao um graveto solto pra fora
-	# dela) e as garras na ponta.
-	for side in [-1.0, 1.0]:
-		var wing_pivot := Node3D.new()
-		wing_pivot.name = "LeftWingPivot" if side < 0 else "RightWingPivot"
-		wing_pivot.position = Vector3(side * 0.24, 0.85, -0.05)
-		wing_pivot.rotation_degrees = Vector3(-6, side * -10, 0)
-		visual_root.add_child(wing_pivot)
-
-		var root_pt := Vector3(0, 0, 0.08)
-		var lead_mid := Vector3(side * 0.5, 0.06, 0.22)
-		var tip_pt := Vector3(side * 1.05, 0.12, 0.08)
-		var fin1 := Vector3(side * 0.92, -0.05, -0.22)
-		var val1 := Vector3(side * 0.7, -0.15, -0.05)
-		var fin2 := Vector3(side * 0.55, -0.08, -0.32)
-		var val2 := Vector3(side * 0.35, -0.18, -0.1)
-		var fin3 := Vector3(side * 0.22, -0.1, -0.35)
-		var trailing_root := Vector3(0, -0.05, -0.15)
-
-		var membrane := MeshInstance3D.new()
-		var boundary: Array = [lead_mid, tip_pt, fin1, val1, fin2, val2, fin3, trailing_root]
-		membrane.mesh = _build_wing_membrane_mesh(root_pt, boundary, accent_mat.albedo_color, side < 0.0)
-		# Sem sombreamento (pedido do usuario: comparou com uma captura REAL
-		# em jogo e a asa apareceu quase preta) -- a cena real
-		# (scenes/main/Main.tscn) usa ambient_light_energy=0.22 (bem mais
-		# escuro que o meu rig de teste isolado, que usava 0.9), entao
-		# qualquer face virada pro lado errado do sol ficava quase sem luz
-		# nenhuma e o gradiente pintado por vertice desaparecia. Sem
-		# sombreamento, o gradiente sempre aparece exatamente como
-		# desenhado, independente da luz da cena.
-		var membrane_mat := StandardMaterial3D.new()
-		membrane_mat.vertex_color_use_as_albedo = true
-		membrane_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		membrane_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		membrane.material_override = membrane_mat
-		wing_pivot.add_child(membrane)
-
-		var leading_edge := MeshInstance3D.new()
-		var leading_edge_mesh := BoxMesh.new()
-		leading_edge_mesh.size = Vector3((tip_pt - root_pt).length(), 0.055, 0.08)
-		leading_edge.mesh = leading_edge_mesh
-		leading_edge.material_override = mat
-		leading_edge.position = (root_pt + tip_pt) * 0.5
-		leading_edge.transform.basis = _basis_pointing(tip_pt - root_pt, false)
-		wing_pivot.add_child(leading_edge)
-
-		# Nervuras -- uma por "dedo", encaixada por baixo da malha
-		# (encolhida a 85% do comprimento real pra nao furar a silhueta) +
-		# uma garra pequena na ponta de cada uma.
-		for finger_tip in [fin1, fin2, fin3]:
-			var rib := MeshInstance3D.new()
-			var rib_mesh := BoxMesh.new()
-			rib_mesh.size = Vector3((finger_tip - root_pt).length() * 0.85, 0.03, 0.035)
-			rib.mesh = rib_mesh
-			rib.material_override = mat
-			rib.position = root_pt.lerp(finger_tip, 0.42)
-			rib.transform.basis = _basis_pointing(finger_tip - root_pt, false)
-			wing_pivot.add_child(rib)
-
-			var claw_tip := MeshInstance3D.new()
-			var claw_tip_mesh := PrismMesh.new()
-			claw_tip_mesh.size = Vector3(0.03, 0.09, 0.03)
-			claw_tip.mesh = claw_tip_mesh
-			claw_tip.material_override = horn_mat
-			claw_tip.position = finger_tip
-			claw_tip.transform.basis = _basis_pointing(finger_tip - root_pt, true)
-			wing_pivot.add_child(claw_tip)
-
-	_anim_player = _build_dragon_animation_player()
-
-## Fileira de espinhos pequenos (PrismMesh) no topo de um segmento de
-## corpo -- pedido explicito do usuario: "se baseie um pouco nessa
-## imagem" (referencia tem espinhos ao longo de toda a espinha/cauda).
-## `local_positions` sao pontos NO ESPACO LOCAL de `parent` (o proprio
-## segmento) -- cada chamador decide quantos/onde, esta funcao so'
-## constroi a malha em si.
-func _add_spine_spikes(parent: Node3D, spike_mat: StandardMaterial3D, local_positions: Array, scale: float = 1.0) -> void:
-	for local_pos in local_positions:
-		var spike := MeshInstance3D.new()
-		var spike_mesh := PrismMesh.new()
-		spike_mesh.size = Vector3(0.06, 0.14, 0.06) * scale
-		spike.mesh = spike_mesh
-		spike.material_override = spike_mat
-		spike.position = local_pos
-		parent.add_child(spike)
-
-## Monta uma Basis que aponta o eixo LOCAL X (`along_y=false`, pra ossos
-## tipo BoxMesh cujo comprimento e' X) ou Y (`along_y=true`, pra garras
-## tipo PrismMesh cuja ponta e' Y) na direcao `direction` -- pedido
-## explicito do usuario ("solução robusta") em vez de orientar cada osso/
-## garra com Euler angles escolhidos no olho por peça, o que e' fragil e
-## dificil de acertar em pares simetricos left/right. `up_hint` evita uma
-## base degenerada quando `direction` fica quase paralelo a ele.
-static func _basis_pointing(direction: Vector3, along_y: bool, up_hint: Vector3 = Vector3.UP) -> Basis:
-	var axis := direction.normalized()
-	var hint := up_hint
-	if absf(axis.dot(hint)) > 0.98:
-		hint = Vector3.FORWARD
-	if along_y:
-		var x_axis := hint.cross(axis).normalized()
-		var z_axis := x_axis.cross(axis).normalized()
-		return Basis(x_axis, axis, z_axis)
-	var y_axis := axis.cross(hint).normalized()
-	var z_axis := axis.cross(y_axis).normalized()
-	return Basis(axis, y_axis, z_axis)
-
-## Constroi a membrana da asa como UMA malha poligonal real (leque de
-## triangulos a partir de `root`, formato recortado com "dedos" entre as
-## reentrancias), com cor por vertice indo de mais escura (perto do corpo,
-## `root`) a mais clara (ponta da asa) -- pedido do usuario depois de
-## "as asas parecem dois papeis": uma malha so' com gradiente le como
-## superficie tensionada com volume implicito, nao como pedacos de prisma
-## fino colados um do lado do outro. `flip_normals` inverte a normal
-## gerada -- necessario pro lado esquerdo, cujo espelhamento em X inverte
-## a lateralidade (winding) dos triangulos comparado ao lado direito.
-func _build_wing_membrane_mesh(root: Vector3, boundary: Array, base_color: Color, flip_normals: bool) -> ArrayMesh:
-	var root_color := base_color.darkened(0.35)
-	var tip_color := base_color.lightened(0.3)
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for i in range(boundary.size() - 1):
-		var a: Vector3 = boundary[i]
-		var b: Vector3 = boundary[i + 1]
-		var a_t: float = float(i) / float(boundary.size() - 1)
-		var b_t: float = float(i + 1) / float(boundary.size() - 1)
-		st.set_color(root_color)
-		st.add_vertex(root)
-		st.set_color(root_color.lerp(tip_color, a_t))
-		st.add_vertex(a)
-		st.set_color(root_color.lerp(tip_color, b_t))
-		st.add_vertex(b)
-	st.generate_normals(flip_normals)
-	return st.commit()
-
-## Cria uma corrente de BoxMesh de verdade ao longo de `spine` (uma lista
-## de pontos formando a coluna central), um bloco por ponto, do tamanho
-## de `radii[i]` (largura/altura, Vector2) -- pedido explicito do usuario
-## depois de ver a v6 (uma malha lofted lisa): "eu quero ele composto de
-## quadrados mesmo... ou faz igual uma geladeira usando 3 quadrados, ou
-## faz o bagulho todo redondo, o estilo e' justamente low poly voxel
-## fantasy". Ou seja nem poucos blocos grandes (geladeira) nem uma
-## superficie continua (v6 errou pro lado oposto) -- o estilo certo e'
-## VARIOS blocos pequenos formando uma "escada" que sobe/afunila, cada um
-## ORIENTADO (via `_basis_pointing`) pra seguir a direcao local da coluna,
-## entao a propria rotacao de cada bloco acompanha a curva, nao so' a
-## posicao.
-func _add_segmented_boxes(parent: Node3D, spine: Array, radii: Array, seg_mat: StandardMaterial3D) -> void:
-	for i in range(spine.size()):
-		var center: Vector3 = spine[i]
-		var radius: Vector2 = radii[i]
-		var forward: Vector3
-		if i == 0:
-			forward = (spine[1] - spine[0])
-		elif i == spine.size() - 1:
-			forward = (spine[i] - spine[i - 1])
-		else:
-			forward = (spine[i + 1] - spine[i - 1])
-		var length := 0.0
-		if i > 0:
-			length = (spine[i] - spine[i - 1]).length()
-		if i < spine.size() - 1:
-			length = max(length, (spine[i + 1] - spine[i]).length())
-		if length <= 0.0:
-			length = radius.x
-		var box := MeshInstance3D.new()
-		var box_mesh := BoxMesh.new()
-		box_mesh.size = Vector3(length, radius.y * 2.0, radius.x * 2.0)
-		box.mesh = box_mesh
-		box.material_override = seg_mat
-		box.position = center
-		box.transform.basis = _basis_pointing(forward, false)
-		parent.add_child(box)
-
-## Uma track de VALUE por chamada -- `keys` e' um Array de [tempo, valor].
-## Extraido pra nao repetir add_track/track_set_path/track_insert_key em
-## cada uma das 5 animacoes abaixo (~20 tracks no total).
-static func _add_animation_track(animation: Animation, node_path: String, keys: Array) -> void:
-	var track := animation.add_track(Animation.TYPE_VALUE)
-	animation.track_set_path(track, NodePath(node_path))
-	for key in keys:
-		animation.track_insert_key(track, key[0], key[1])
-
-## 5 clipes -- pedido explicito do usuario: "para o primeiro Dragao
-## proprio, 5 animações são suficientes". Idle_A/Walking_A usam os MESMOS
-## nomes das constantes DEFAULT_ANIMATION/WALK_ANIMATION -- slide_to() ja
-## troca entre elas sozinho, sem NENHUMA mudanca no restante do arquivo
-## (mesmo mecanismo generico ja usado pelos modelos KayKit). Fly/Attack/
-## Death sao tocadas explicitamente por quem controla o Dragao (ver
-## DragonEvent) via _play_animation(), que ja no-opa com seguranca se
-## chamada em qualquer OUTRA unidade sem esses clipes.
-func _build_dragon_animation_player() -> AnimationPlayer:
-	var player := AnimationPlayer.new()
-	var library := AnimationLibrary.new()
-	library.add_animation("Idle_A", _build_dragon_idle_animation())
-	library.add_animation("Walking_A", _build_dragon_walk_animation())
-	library.add_animation("Fly", _build_dragon_fly_animation())
-	library.add_animation("Attack", _build_dragon_attack_animation())
-	library.add_animation("Death", _build_dragon_death_animation())
-	player.add_animation_library("", library)
-	add_child(player)
-	player.play("Idle_A")
-	return player
-
-## Respiracao leve: o corpo inteiro sobe/desce um pouco, pescoco balanca
-## suavemente -- looping, ~2s (bem mais lento que Walk/Fly, "parado mas
-## vivo").
-func _build_dragon_idle_animation() -> Animation:
-	var animation := Animation.new()
-	animation.length = 2.0
-	animation.loop_mode = Animation.LOOP_LINEAR
-	_add_animation_track(animation, "DragonVisualRoot:position:y", [[0.0, 0.0], [1.0, 0.03], [2.0, 0.0]])
-	_add_animation_track(animation, "DragonVisualRoot/NeckPivot:rotation:x", [[0.0, 0.0], [1.0, deg_to_rad(-4.0)], [2.0, 0.0]])
-	return animation
-
-## Trote de quadrupede simples: as 4 pernas alternam em 2 pares diagonais
-## (dianteira-esquerda+traseira-direita vs dianteira-direita+traseira-
-## esquerda) -- looping, ~0.6s (bem mais rapido que Idle, "andando de
-## verdade").
-func _build_dragon_walk_animation() -> Animation:
-	var animation := Animation.new()
-	animation.length = 0.6
-	animation.loop_mode = Animation.LOOP_LINEAR
-	var swing := deg_to_rad(22.0)
-	_add_animation_track(animation, "DragonVisualRoot/FrontLeftHipPivot:rotation:x", [[0.0, swing], [0.3, -swing], [0.6, swing]])
-	_add_animation_track(animation, "DragonVisualRoot/BackRightHipPivot:rotation:x", [[0.0, swing], [0.3, -swing], [0.6, swing]])
-	_add_animation_track(animation, "DragonVisualRoot/FrontRightHipPivot:rotation:x", [[0.0, -swing], [0.3, swing], [0.6, -swing]])
-	_add_animation_track(animation, "DragonVisualRoot/BackLeftHipPivot:rotation:x", [[0.0, -swing], [0.3, swing], [0.6, -swing]])
-	_add_animation_track(animation, "DragonVisualRoot:position:y", [[0.0, 0.0], [0.15, 0.02], [0.3, 0.0], [0.45, 0.02], [0.6, 0.0]])
-	return animation
-
-## Bater de asas -- looping, ~0.5s (rapido, "sustentando o proprio peso no
-## ar"). Cauda balanca suave em contraponto pra dar sensacao de peso;
-## pescoco fica mais esticado (postura de voo) que em Idle/Walk.
-func _build_dragon_fly_animation() -> Animation:
-	var animation := Animation.new()
-	animation.length = 0.5
-	animation.loop_mode = Animation.LOOP_LINEAR
-	var flap_up := deg_to_rad(-55.0)
-	var flap_down := deg_to_rad(15.0)
-	_add_animation_track(animation, "DragonVisualRoot/LeftWingPivot:rotation:z", [[0.0, flap_down], [0.25, flap_up], [0.5, flap_down]])
-	_add_animation_track(animation, "DragonVisualRoot/RightWingPivot:rotation:z", [[0.0, -flap_down], [0.25, -flap_up], [0.5, -flap_down]])
-	_add_animation_track(animation, "DragonVisualRoot/TailPivot:rotation:x", [[0.0, deg_to_rad(4.0)], [0.25, deg_to_rad(-4.0)], [0.5, deg_to_rad(4.0)]])
-	_add_animation_track(animation, "DragonVisualRoot/NeckPivot:rotation:x", [[0.0, deg_to_rad(8.0)]])
-	return animation
-
-## Cabeca/pescoco avancam + mandibula abre e fecha -- UMA VEZ (nao
-## looping), ~0.6s. Pedido do usuario: "a animação: cabeça abre → inclina
-## → pausa, e um sistema de partículas produz o jato de fogo" -- o VFX em
-## si (GPUParticles3D/luz) e' disparado separadamente por quem chama esta
-## animacao (ver DragonEvent._play_fire_breath_vfx), nunca por uma key de
-## animacao — mantém o disparo do efeito de fora do proprio clipe.
-func _build_dragon_attack_animation() -> Animation:
-	var animation := Animation.new()
-	animation.length = 0.6
-	animation.loop_mode = Animation.LOOP_NONE
-	_add_animation_track(animation, "DragonVisualRoot/NeckPivot:rotation:x", [[0.0, 0.0], [0.2, deg_to_rad(18.0)], [0.45, deg_to_rad(18.0)], [0.6, 0.0]])
-	_add_animation_track(animation, "DragonVisualRoot/NeckPivot:position:z", [[0.0, 0.0], [0.2, 0.12], [0.45, 0.12], [0.6, 0.0]])
-	_add_animation_track(animation, "DragonVisualRoot/NeckPivot/HeadPivot/JawPivot:rotation:x", [[0.0, 0.0], [0.25, deg_to_rad(35.0)], [0.5, deg_to_rad(35.0)], [0.6, 0.0]])
-	return animation
-
-## Corpo perde sustentacao e tomba -- UMA VEZ, ~1.2s. Anima `self`
-## diretamente (nao DragonVisualRoot) de proposito: e' a UNICA animacao
-## terminal (a Unit e' removida do mapa logo depois, DragonEvent.
-## _remove_dragon_unit), entao nao ha risco de brigar com slide_to() de
-## novo -- nao vai haver mais nenhum movimento depois desta. So' rotation
-## (sempre relativa a 0, seguro independente de pra onde o Dragao estava
-## virado) -- a QUEDA de verdade (position:y) fica de fora do clipe de
-## proposito e usa um Tween a parte com o valor ATUAL no momento da morte
-## (ver DragonEvent._play_dragon_death_effects) -- um valor de posicao
-## fixo AQUI ficaria congelado no Y de onde o corpo estava quando esta
-## Animation foi CONSTRUIDA (spawn), nao de onde ele morreu de verdade.
-func _build_dragon_death_animation() -> Animation:
-	var animation := Animation.new()
-	animation.length = 1.2
-	animation.loop_mode = Animation.LOOP_NONE
-	_add_animation_track(animation, ".:rotation:z", [[0.0, 0.0], [1.2, deg_to_rad(85.0)]])
-	return animation
-
-## Disco colorido embaixo dos pes — indica de quem e a unidade sem precisar
-## tingir o modelo real inteiro (o que destruiria a textura pintada dele,
-## mesma logica usada na bandeira das cidades vs a pedra da torre).
-func _build_base_disc() -> void:
-	var base := MeshInstance3D.new()
-	var base_mesh := CylinderMesh.new()
-	base_mesh.top_radius = 0.35
-	base_mesh.bottom_radius = 0.35
-	base_mesh.height = 0.06
-	base.mesh = base_mesh
-	var base_mat := StandardMaterial3D.new()
-	base_mat.albedo_color = _body_color().darkened(0.3)
-	base.material_override = base_mat
-	base.position.y = 0.03
-	add_child(base)
-
 ## Barra de vida sempre visivel (nao so quando selecionada) — pra dar pra
 ## ver a vida das suas unidades E das inimigas so olhando o mapa, sem
 ## precisar clicar em cada uma. Fundo escuro fixo + barra colorida que
@@ -2409,13 +2511,23 @@ func _build_hp_bar() -> void:
 
 	_update_hp_bar()
 
+var _presented_hp := 10.0
+
+func presentation_hp() -> float:
+	return _presented_hp
+
 func _update_hp_bar() -> void:
+	if preload("res://scripts/vfx/CombatFeedback.gd").defer_call(self, &"_present_hp_bar", [hp], true): return
+	_present_hp_bar(hp)
+
+func _present_hp_bar(value: float) -> void:
+	_presented_hp = value
 	# Chamado pelo setter de hp mesmo antes de _build_visual() rodar
 	# (setup() seta hp = data.max_hp antes de construir a barra) — nesse
 	# momento a barra ainda nao existe, entao so ignora.
 	if _hp_bar_fg == null or unit_data == null:
 		return
-	var frac = clamp(hp / unit_data.max_hp, 0.0, 1.0)
+	var frac = clamp(value / unit_data.max_hp, 0.0, 1.0)
 	var mesh := _hp_bar_fg.mesh as QuadMesh
 	mesh.size = Vector2(HP_BAR_WIDTH * frac, HP_BAR_HEIGHT)
 	_hp_bar_fg.position.x = -(HP_BAR_WIDTH - HP_BAR_WIDTH * frac) * 0.5
@@ -2431,72 +2543,37 @@ func _update_hp_bar() -> void:
 	_hp_bar_bg.visible = frac < 1.0
 	_hp_bar_fg.visible = frac < 1.0
 
-## Sprite3D com textura desenhada em pixels (mesma tecnica de
-## ResourceIconManager._build_icon_texture, nao Label3D/glifo Unicode — a
-## fonte padrao do projeto nao garante cobertura de simbolo de espada) —
-## placa circular semi-transparente com um par de espadas cruzadas por
-## cima. Cor FIXA (nao tingida pela civ) de proposito: o corpo/escudo/
-## bandeira da propria unidade ja carrega a cor da civilizacao, o badge so
-## precisa dizer "isto e uma unidade militar", igual pra qualquer dono —
-## inclusive monstro neutro. Textura construida uma unica vez (static,
-## cache compartilhado entre TODAS as unidades) ja que o desenho e sempre
-## identico.
+## O selo da unidade: Sprite3D billboard com a textura composta por IconCatalog (pictograma da classe/espécie na cor
+## do dono, pontos de nível, aro dourado para Lendárias e Grandes Manifestações). A textura é compartilhada por todas
+## as unidades iguais do mesmo dono (cache do catálogo). Arte vetorial suavizada: filtro linear com mipmaps (o selo
+## é reduzido de 128 px para o tamanho na tela) e transparência por mistura, que preserva a borda suave e a sombra.
 func _build_troop_icon() -> void:
-	if _troop_icon_texture == null:
-		_troop_icon_texture = _build_troop_icon_texture()
 	var sprite := Sprite3D.new()
-	sprite.texture = _troop_icon_texture
+	sprite.texture = IconCatalog.unit_badge(self)
+	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	sprite.no_depth_test = true
 	sprite.shaded = false
 	sprite.double_sided = true
-	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-	sprite.pixel_size = 0.01 # menor que o badge de recurso (0.016) — flutua sobre uma unidade, nao um tile inteiro
-	# TROOP_ICON_Y is calibrated for MODEL_TARGET_HEIGHT (0.7) -- scale it
-	# by the same per-unit multiplier the model itself got, or it stays
-	# floating at head/face height on any unit scaled bigger than that
-	# (model_scale_multiplier defaults to 1.0, so this is a no-op for
-	# every unit that doesn't set one).
+	sprite.pixel_size = TROOP_ICON_PIXEL_SIZE
 	sprite.position = Vector3(0, _marker_height + 0.2, 0)
+	sprite.name = TROOP_ICON_NAME
 	add_child(sprite)
 
-static func _build_troop_icon_texture() -> ImageTexture:
-	var img := Image.create(TROOP_ICON_SIZE, TROOP_ICON_SIZE, false, Image.FORMAT_RGBA8)
-	var center := Vector2(TROOP_ICON_SIZE / 2.0, TROOP_ICON_SIZE / 2.0)
-	for y in range(TROOP_ICON_SIZE):
-		for x in range(TROOP_ICON_SIZE):
-			var d := Vector2(x + 0.5, y + 0.5) - center
-			var pixel := Color(0, 0, 0, 0)
-			if d.length() <= TROOP_ICON_BADGE_RADIUS:
-				pixel = TROOP_ICON_BADGE_COLOR
-				if _hit_crossed_swords(d):
-					pixel = TROOP_ICON_COLOR
-			img.set_pixel(x, y, pixel)
-	return ImageTexture.create_from_image(img)
+## Recompõe o selo depois que a cor do reino mudou (mecânica de escolher a cor base). Só troca a textura, que vem do
+## cache do catálogo: chamar para todas as unidades de um reino é barato.
+func refresh_troop_icon() -> void:
+	var sprite := get_node_or_null(TROOP_ICON_NAME) as Sprite3D
+	if sprite != null:
+		sprite.texture = IconCatalog.unit_badge(self)
 
-## `d` = offset em pixels a partir do centro do badge — nucleo redondo
-## (cruzamento/guarda) + duas laminas finas nas diagonais, capadas ao raio
-## do badge — silhueta simples de "espadas cruzadas", mesmo espirito
-## geometrico dos outros icones (triangulo/losango/ferradura) do selo de
-## recurso.
-static func _hit_crossed_swords(d: Vector2) -> bool:
-	if d.length() <= 2.0:
-		return true
-	if d.length() > 11.0:
+## DEBUG (painel de Debug): toca o clipe de um estado — "idle", "walk", "attack" ou "cast" — com a MESMA transição que o
+## jogo usaria, sem tocar em regra nenhuma (não move, não ataca, não gasta nada). Um clipe de uma vez só (Ataque,
+## Conjuração) recomeça se já estiver tocando e volta sozinho ao Parado quando a unidade tem transição/crossfade.
+## false se a unidade não tem clipe para o estado.
+func debug_play_state(state: String) -> bool:
+	var clip := String({"idle": idle_animation, "walk": moving_animation, "attack": attack_animation, "cast": cast_animation}.get(state, ""))
+	if clip == "" or _anim_player == null or not _anim_player.has_animation(clip):
 		return false
-	var diag1: float = abs(d.x - d.y)
-	var diag2: float = abs(d.x + d.y)
-	return diag1 <= 1.6 or diag2 <= 1.6
-
-func _build_school_emblem() -> void:
-	var emblem := Label3D.new()
-	emblem.name = "SchoolEmblem"
-	var school := unit_data.v2_magic_school
-	emblem.text = V2MagicContent.school_emblem(school)
-	emblem.font_size = 28
-	emblem.outline_size = 5
-	emblem.pixel_size = 0.009
-	emblem.modulate = V2MagicContent.school_color(school)
-	emblem.position.y = _marker_height + 0.55
-	emblem.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	add_child(emblem)
+	_play_model_animation(_anim_player, clip, _anim_player.current_animation == clip and clip != idle_animation and clip != moving_animation)
+	return true

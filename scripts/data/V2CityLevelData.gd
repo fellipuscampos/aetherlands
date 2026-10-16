@@ -27,9 +27,9 @@ const LEVELS := {
 
 ## Custo do PROJETO local (produção da própria cidade) pra alcançar `target_level` (2, 3 ou 4).
 const UPGRADE_COSTS := {
-	2: {"production": 60.0, "gold": 30.0},
-	3: {"production": 120.0, "gold": 70.0},
-	4: {"production": 220.0, "gold": 140.0},
+	2: {"production": 45.0, "gold": 25.0}, # 2026-10-14: eram 60/30, 120/70, 220/140 (docs/BALANCE_PASS_2026-10-14.md)
+	3: {"production": 90.0, "gold": 55.0},
+	4: {"production": 165.0, "gold": 110.0},
 }
 
 ## unlock_id (o que a PESQUISA desbloqueia) — nunca confundir com o id do PROJETO abaixo (§15).
@@ -55,7 +55,7 @@ static func roman(level: int) -> String:
 
 ## Aetherlands V2, Fase 16 — HP máximo da cidade por City Level (BALANCE PLACEHOLDER): resistência
 ## urbana vem do nível de desenvolvimento.
-const MAX_HP_BY_LEVEL := {1: 24.0, 2: 30.0, 3: 36.0, 4: 44.0}
+const MAX_HP_BY_LEVEL := {1: 30.0, 2: 38.0, 3: 46.0, 4: 56.0} # 2026-10-14: ×1,25 (era 24/30/36/44), acompanha o dano ×1,5 do balanceamento
 
 static func max_hp(level: int) -> float:
 	return float(MAX_HP_BY_LEVEL[clamp_level(level)])
@@ -68,6 +68,15 @@ static func repeatable_building_limit(level: int) -> int:
 
 static func max_territory_radius(level: int) -> int:
 	return int(_entry(level).territory_radius)
+
+## Visão da cidade (raio em tiles, HexGrid.compute_visible_tiles — a mesma visão usada pela névoa do humano, pela
+## IA, pela defesa da cidade e pela ecologia de monstros). Pedido do usuario 2026-10-09: cada evolução de nível
+## soma +1 tile de visão ao redor da cidade — I = 4 (o raio de sempre), II = 5, III = 6, IV = 7.
+const BASE_VISION_RANGE := 4
+const VISION_BONUS_PER_LEVEL := 1
+
+static func vision_range(level: int) -> int:
+	return BASE_VISION_RANGE + (clamp_level(level) - MIN_LEVEL) * VISION_BONUS_PER_LEVEL
 
 ## Pontos de Anexação recebidos AO CHEGAR em `level` (0 pro nível I, que nenhuma cidade "chega
 ## a", ela já nasce nele).

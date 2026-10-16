@@ -652,100 +652,74 @@ func test_selecting_an_exploring_unit_shows_the_explore_button_pressed():
 	assert_false(hud.fortify_button.button_pressed)
 	unit.queue_free()
 
-## --- Roadmap "Fase Macro" 5B.2: prompt minimo de Preparation --------------
-## (docs/DRAGON_EVENT_DESIGN.md: "Não precisa ser bonita. Precisa funcionar.")
+## --- Dragão: aviso, sem pergunta (2026-10-13) ------------------------------
+## Pedido do usuário: "durante o evento do dragão é perguntado se as pessoas querem participar mas o dragão ataca a
+## todos, então não faz sentido querer ou não participar; tire a parte que questiona se você quer participar, avise só
+## que um dragão está atacando".
 
-func test_format_world_event_prompt_for_dragon_names_target_and_turns_left():
+func test_the_hud_has_no_participation_prompt_for_the_dragon():
+	assert_null(hud.get_node_or_null("WorldEventPanel"), "o painel Participar / Não participar saiu da cena")
+	for member in ["world_event_panel", "world_event_participate_button", "world_event_decline_button"]:
+		assert_false(member in hud, "%s não existe mais" % member)
+	assert_false(GameManager.has_method("respond_to_world_event"), "não há resposta do jogador a registrar")
+
+func test_a_dragon_in_preparation_asks_nothing_and_blocks_nothing():
+	var human := PlayerData.new(CivilizationData.new())
+	GameManager.human_player = human
+	GameManager.players = [human]
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_PREPARATION
+	event.turn_deadline = TurnManager.turn_number + 2
+	WorldEventManager.register_event(event)
+
+	hud._on_world_event_changed(event)
+	var attention := AttentionService.new()
+	attention.bind_player(human)
+	attention.refresh()
+
+	assert_true(event.participants.is_empty(), "nenhuma decisão do jogador é registrada")
+	for item in attention.items():
+		assert_ne(item.category, "world_event", "nenhum aviso de decisão pendente")
+	assert_true(hud.world_event_tracker.visible, "o acompanhamento do evento continua")
+
+func test_the_tracker_in_preparation_counts_down_to_the_arrival_instead_of_asking():
+	var target := PlayerData.new(CivilizationData.new())
+	target.civ.civ_name = "Reino dos Anões"
+	var players: Array[PlayerData] = [target]
+	var event := DragonEvent.new()
+	event.phase = WorldEvent.PHASE_PREPARATION
+	event.target_civ_index = 0
+	event.turn_deadline = TurnManager.turn_number + 2
+
+	var info: Dictionary = hud.format_world_event_tracker(event, players)
+
+	assert_eq(info.objective, "Prepare suas defesas: o Dragão chega em 3 turnos.")
+	assert_false(String(info.objective).to_lower().contains("particip"))
+	event.turn_deadline = TurnManager.turn_number
+	assert_eq(hud.preparation_objective(event), "Prepare suas defesas: o Dragão chega em 1 turno.", "nasce no turno seguinte ao prazo")
+	event.turn_deadline = TurnManager.turn_number - 4
+	assert_eq(hud.preparation_objective(event), "Prepare suas defesas: o Dragão chega em 1 turno.", "nunca uma contagem zero ou negativa")
+
+func test_the_preparation_warning_tells_the_dragon_is_coming_without_a_question():
 	var target := PlayerData.new(CivilizationData.new())
 	target.civ.civ_name = "Reino dos Anões"
 	var players: Array[PlayerData] = [target]
 	var event := DragonEvent.new()
 	event.target_civ_index = 0
-	event.turn_deadline = 13
+	var notices: Array = []
+	var capture := func(text: String, _kind: String): notices.append(text)
+	EventBus.notify.connect(capture)
 
-	var text: String = hud.format_world_event_prompt(event, players, 10)
+	event._notify_preparation_started(players)
 
-	assert_true("Reino dos Anões" in text)
-	assert_true("3 turno" in text, "faltam 13-10=3 turnos")
-
-func test_format_world_event_prompt_handles_no_target_locked_yet():
-	var event := DragonEvent.new() # target_civ_index continua -1
-	var no_players: Array[PlayerData] = []
-	var text: String = hud.format_world_event_prompt(event, no_players, 10)
-	assert_true("uma civilização desconhecida" in text)
-
-func test_format_world_event_prompt_never_shows_a_negative_turn_count():
-	var event := DragonEvent.new()
-	event.turn_deadline = 5
-	var no_players: Array[PlayerData] = []
-	var text: String = hud.format_world_event_prompt(event, no_players, 10) # turno atual JA passou do prazo
-	assert_true("0 turno" in text, "nunca deveria mostrar contagem negativa")
-
-func test_world_event_panel_is_hidden_by_default():
-	assert_false(hud.world_event_panel.visible)
-
-func test_world_event_panel_appears_when_a_dragon_is_in_preparation():
-	var human := PlayerData.new(CivilizationData.new())
-	GameManager.human_player = human
-	GameManager.players = [human]
-	var event := DragonEvent.new()
-	event.phase = WorldEvent.PHASE_PREPARATION
-	WorldEventManager.register_event(event)
-
-	hud._refresh_world_event_panel()
-
-	assert_true(hud.world_event_panel.visible)
-
-func test_world_event_panel_hides_once_the_human_has_already_decided():
-	var human := PlayerData.new(CivilizationData.new())
-	GameManager.human_player = human
-	GameManager.players = [human]
-	var event := DragonEvent.new()
-	event.phase = WorldEvent.PHASE_PREPARATION
-	event.participants[0] = {"decision": true}
-	WorldEventManager.register_event(event)
-
-	hud._refresh_world_event_panel()
-
-	assert_false(hud.world_event_panel.visible)
-
-func test_world_event_panel_hides_when_no_event_is_in_preparation():
-	var human := PlayerData.new(CivilizationData.new())
-	GameManager.human_player = human
-	GameManager.players = [human]
-
-	hud._refresh_world_event_panel()
-
-	assert_false(hud.world_event_panel.visible)
-
-func test_pressing_participate_records_the_decision_and_hides_the_panel():
-	var human := PlayerData.new(CivilizationData.new())
-	GameManager.human_player = human
-	GameManager.players = [human]
-	var event := DragonEvent.new()
-	event.phase = WorldEvent.PHASE_PREPARATION
-	WorldEventManager.register_event(event)
-	hud._refresh_world_event_panel()
-	assert_true(hud.world_event_panel.visible, "pre-condicao")
-
-	hud._on_world_event_participate_pressed()
-
-	assert_eq(event.participants.get(0), {"decision": true})
-	assert_false(hud.world_event_panel.visible)
-
-func test_pressing_decline_records_the_decision_and_hides_the_panel():
-	var human := PlayerData.new(CivilizationData.new())
-	GameManager.human_player = human
-	GameManager.players = [human]
-	var event := DragonEvent.new()
-	event.phase = WorldEvent.PHASE_PREPARATION
-	WorldEventManager.register_event(event)
-	hud._refresh_world_event_panel()
-
-	hud._on_world_event_decline_pressed()
-
-	assert_eq(event.participants.get(0), {"decision": false})
-	assert_false(hud.world_event_panel.visible)
+	EventBus.notify.disconnect(capture)
+	assert_eq(notices.size(), 1)
+	var text := String(notices[0])
+	assert_string_contains(text, "O Dragão se aproxima")
+	assert_string_contains(text, "Reino dos Anões")
+	assert_string_contains(text, "Prepare suas defesas")
+	assert_false(text.contains("?"), "é um aviso, não uma pergunta")
+	assert_false(text.to_lower().contains("particip"))
 
 ## --- Roadmap "Fase Macro" 5B.3-C: Dragon Event UX ---------------------------
 ## Pedido explicito do usuario apos o playtest visual de 5B.3-B: o Dragao ja
@@ -762,25 +736,6 @@ func _make_hud_test_hex_grid() -> HexGrid:
 		for y in range(-2, 3):
 			grid.tiles[Vector2i(x, y)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	return grid
-
-func test_format_world_event_title_for_dragon():
-	assert_eq(hud.format_world_event_title(DragonEvent.new()), "A Caçada ao Dragão")
-
-func test_format_world_event_title_generic_fallback():
-	assert_eq(hud.format_world_event_title(WorldEvent.new()), "Evento Mundial")
-
-func test_format_world_event_prompt_explains_what_participating_means():
-	var target := PlayerData.new(CivilizationData.new())
-	target.civ.civ_name = "Reino dos Anões"
-	var players: Array[PlayerData] = [target]
-	var event := DragonEvent.new()
-	event.target_civ_index = 0
-
-	var text: String = hud.format_world_event_prompt(event, players, 10)
-
-	assert_true("Guilda" in text, "precisa explicar QUEM esta convocando, nao so perguntar sim/nao")
-	assert_true("recompensas" in text, "precisa sinalizar que ha uma consequencia de participar")
-	assert_false("tropas de aventureiros" in text, "nao deveria prometer uma recompensa CONCRETA ainda -- isso e' escopo de 5B.4, ainda nao decidido")
 
 ## --- Modal bloqueante de Announced -------------------------------------
 
@@ -1134,7 +1089,7 @@ func test_research_button_shows_the_active_research_progress():
 	GameManager.human_player = player
 	hud._refresh_stats()
 	assert_eq(hud.research_button.text, "Pesquisa")
-	assert_true(player.v2_research.select_research("v2_doctrine_guardian_1"))
+	assert_true(player.v2_research.select_research("v2_doctrine_guardian_2"))
 	hud._refresh_stats()
 	assert_true(hud.research_button.text.begins_with("Pesquisa: "), hud.research_button.text)
 	assert_true(hud.research_button.text.ends_with("(0%)"), hud.research_button.text)
@@ -1150,7 +1105,7 @@ func test_research_button_opens_the_research_panel_as_a_single_overlay_without_d
 	assert_true(hud.v2_research_panel.visible)
 	assert_false(hud.debug_panel.visible, "so um overlay por vez")
 	assert_true(hud.overlay_backdrop.visible)
-	assert_eq(hud.v2_research_board.card_count(), 55, "abre na aba Doutrinas")
+	assert_eq(hud.v2_research_board.card_count(), 49, "abre na aba Doutrinas")
 
 func test_no_v1_research_or_magic_ui_remains_in_the_hud():
 	for node_name in ["TechPanel", "MagicPanel", "GrimoirePanel", "TechButton", "MagicButton", "GrimoireButton", "RushBuyButton", "EmbarkButton", "DebugV2TreesButton", "WorkedTiles"]:
@@ -1179,15 +1134,15 @@ func test_v2_board_close_button_and_other_overlays_hide_the_v2_panel():
 func test_v2_panel_is_bound_to_the_human_civilization_state():
 	var player := PlayerData.new(CivilizationData.new())
 	GameManager.human_player = player
-	player.v2_research.complete_research("v2_doctrine_guardian_1")
+	player.v2_research.complete_research("v2_doctrine_guardian_2")
 
 	hud._on_research_pressed()
 
 	assert_same(hud.v2_research_board.get_state(), player.v2_research)
-	assert_eq(hud.v2_research_board.node_state_of("v2_doctrine_guardian_1"), V2ResearchDatabase.NodeState.COMPLETED)
-	hud.v2_research_board.select_node("v2_doctrine_guardian_2")
+	assert_eq(hud.v2_research_board.node_state_of("v2_doctrine_guardian_2"), V2ResearchDatabase.NodeState.COMPLETED)
+	hud.v2_research_board.select_node("v2_doctrine_guardian_3")
 	hud.v2_research_board.press_action()
-	assert_eq(player.v2_research.active_id, "v2_doctrine_guardian_2", "a UI escreve pela API no estado do jogador")
+	assert_eq(player.v2_research.active_id, "v2_doctrine_guardian_3", "a UI escreve pela API no estado do jogador")
 
 func test_reopening_the_v2_panel_after_a_new_game_binds_the_new_human_state():
 	var first := PlayerData.new(CivilizationData.new())
@@ -1205,7 +1160,7 @@ func test_v2_panel_without_a_human_player_uses_a_fallback_state():
 	GameManager.human_player = null
 	hud._on_research_pressed()
 	assert_not_null(hud.v2_research_board.get_state())
-	assert_eq(hud.v2_research_board.card_count(), 55)
+	assert_eq(hud.v2_research_board.card_count(), 49)
 
 # --- Aetherlands V2, Fase 3: Salão dos Guardiões / Escudeiro na cidade -------------------------------------------
 
@@ -1241,7 +1196,7 @@ func _v2_city_scene() -> Dictionary:
 ## Fase 4: N4/N5 mudam a produção (o Guardião substitui o Escudeiro), então estes testes de
 ## Escudeiro completam só até o N3 em vez da linha inteira.
 func _v2_complete_guardian(player: PlayerData, through_tier: int) -> void:
-	for n in range(1, through_tier + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through_tier + 1):
 		player.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 
 func _v2_city_scene_cleanup(scene: Dictionary) -> void:
@@ -1256,13 +1211,9 @@ func test_v2_hall_button_only_shows_after_n2_and_uses_the_normal_building_button
 	var hall_button: Button = hud._building_buttons[V2_HALL]
 	assert_false(hall_button.visible, "sem a pesquisa V2 o Salão não aparece")
 
-	scene.human.v2_research.complete_research("v2_doctrine_guardian_1")
-	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
-	assert_false(hall_button.visible, "N1 ainda não libera o Salão")
-
 	scene.human.v2_research.complete_research("v2_doctrine_guardian_2")
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
-	assert_true(hall_button.visible, "N2 libera o Salão")
+	assert_true(hall_button.visible, "pesquisar o Salão (primeiro nó da linha) o libera")
 	assert_false(hall_button.disabled)
 	assert_true(hall_button.text.begins_with("Salão dos Guardiões"), hall_button.text)
 	assert_true(hall_button.text.contains("%d PP" % int(BuildingDatabase.get_building(V2_HALL).production_cost)), hall_button.text)
@@ -1307,7 +1258,6 @@ func test_v2_shieldbearer_button_needs_n3_and_a_hall_in_the_city():
 
 func test_v2_shieldbearer_button_hidden_with_the_hall_but_without_n3():
 	var scene := _v2_city_scene()
-	scene.human.v2_research.complete_research("v2_doctrine_guardian_1")
 	scene.human.v2_research.complete_research("v2_doctrine_guardian_2")
 	scene.city.buildings[V2_HALL] = true
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
@@ -1339,7 +1289,6 @@ func test_city_panel_refreshes_when_a_v2_unlock_lands_with_the_city_open():
 	var hall_button: Button = hud._building_buttons[V2_HALL]
 	assert_false(hall_button.visible)
 
-	scene.human.v2_research.complete_research("v2_doctrine_guardian_1")
 	scene.human.v2_research.complete_research("v2_doctrine_guardian_2")
 
 	assert_true(hall_button.visible, "o botão apareceu na hora, sem reselecionar a cidade")
@@ -1352,7 +1301,6 @@ func test_city_panel_refresh_waits_for_the_v2_panel_to_close():
 	hud._on_research_pressed()
 	assert_true(hud.v2_research_panel.visible)
 
-	scene.human.v2_research.complete_research("v2_doctrine_guardian_1")
 	scene.human.v2_research.complete_research("v2_doctrine_guardian_2")
 	assert_false(hall_button.visible, "ainda não reabriu o painel de cidade por cima do overlay")
 	assert_true(hud._v2_city_refresh_pending)
@@ -1365,7 +1313,6 @@ func test_city_panel_refresh_waits_for_the_v2_panel_to_close():
 func test_a_rival_unlock_does_not_touch_the_human_city_panel():
 	var scene := _v2_city_scene()
 	var rival := PlayerData.new(CivilizationData.new())
-	rival.v2_research.complete_research("v2_doctrine_guardian_1")
 	rival.v2_research.complete_research("v2_doctrine_guardian_2")
 	assert_false(hud._building_buttons[V2_HALL].visible)
 	rival.release_relations()
@@ -1389,7 +1336,7 @@ func _v2_unit_scene(through: int = 4, kind: String = V2_SHIELDBEARER) -> Diction
 				hex_grid.tiles[Vector2i(q, r)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	var human := PlayerData.new(CivilizationData.new())
 	human.gold = 100.0
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	GameManager.human_player = human
 	GameManager.hex_grid = hex_grid
@@ -1524,7 +1471,7 @@ func test_pressing_the_upgrade_button_evolves_the_unit_and_charges_gold():
 	assert_eq(scene.human.gold, 100.0 - 24.0)
 	assert_null(_v2_action("UpgradeButton"), "o Guardião não tem a próxima forma conectada")
 	assert_true(hud.unit_info_label.text.begins_with("Guardião"), hud.unit_info_label.text)
-	assert_true(hud.unit_info_label.text.contains("HP 24/24"), hud.unit_info_label.text)
+	assert_true(hud.unit_info_label.text.contains("HP 26/26"), hud.unit_info_label.text)
 	# A Muralha continua disponível pro Guardião (mesma linha).
 	assert_not_null(_v2_action("Technique_" + V2_WALL))
 	_v2_unit_scene_cleanup(scene)
@@ -1590,7 +1537,7 @@ func test_the_sentinel_panel_shows_the_wall_button_and_the_passive_and_no_upgrad
 	var scene := _v2_unit_scene(7, V2_SENTINEL)
 	assert_not_null(_v2_action("Technique_" + V2_WALL))
 	assert_true(hud.unit_info_label.text.contains("Sentinela"), hud.unit_info_label.text)
-	assert_true(hud.unit_info_label.text.contains("HP 32/32"), hud.unit_info_label.text)
+	assert_true(hud.unit_info_label.text.contains("HP 34/34"), hud.unit_info_label.text)
 	assert_true(hud.unit_info_label.text.contains("Passiva — Preparar Lanças"))
 	assert_null(_v2_action("UpgradeButton"), "a Sentinela é a última forma")
 	_v2_unit_scene_cleanup(scene)
@@ -1621,7 +1568,7 @@ func test_the_guardian_has_no_upgrade_button_before_n7_and_explains_when_it_cann
 func test_production_row_walks_shieldbearer_guardian_sentinel_never_two_at_once():
 	var scene := _v2_city_scene()
 	scene.city.buildings[V2_HALL] = true
-	for n in range(1, 8):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 8):
 		scene.human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 		hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 		if n < 3:
@@ -1638,7 +1585,7 @@ func test_production_row_walks_shieldbearer_guardian_sentinel_never_two_at_once(
 func test_pressing_the_sentinel_button_uses_the_normal_production_and_the_old_forms_do_not_enter():
 	var scene := _v2_city_scene()
 	scene.city.buildings[V2_HALL] = true
-	for n in range(1, 8):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 8):
 		scene.human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	hud._on_produce_pressed(V2_SENTINEL)
@@ -1782,9 +1729,9 @@ func test_the_champion_panel_shows_legendary_the_command_aura_and_the_normal_tec
 	var text: String = hud.unit_info_label.text
 	assert_true(text.begins_with("LENDÁRIO"), text)
 	assert_true(text.contains("Campeão Guardião"), text)
-	assert_true(text.contains("HP 44/44"), text)
-	assert_true(text.contains("Ataque 6.5"), text)
-	assert_true(text.contains("Defesa 10.0"), text)
+	assert_true(text.contains("HP 46/46"), text)
+	assert_true(text.contains("Ataque 11.0"), text)
+	assert_true(text.contains("Defesa 15.5"), text)
 	assert_true(text.contains("Passiva Lendária — Comando Defensivo\nAliados em raio 2 recebem +20% de Defesa."), text)
 	assert_true(text.contains("Passiva — Preparar Lanças"), text)
 	assert_not_null(_v2_action("Technique_" + V2_WALL), "a Muralha continua disponível")
@@ -1822,7 +1769,7 @@ func _v2_warrior_scene(through: int = 4, kind: String = W_WARRIOR, with_enemy: b
 				hex_grid.tiles[Vector2i(q, r)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	var human := PlayerData.new(CivilizationData.new())
 	human.gold = 100.0
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 	GameManager.human_player = human
 	GameManager.hex_grid = hex_grid
@@ -1857,7 +1804,7 @@ func test_the_weapons_hall_and_arena_buttons_follow_n2_and_n8():
 	assert_false(hall_button.visible, "sem a pesquisa o Salão de Armas não aparece")
 	assert_false(arena_button.visible)
 
-	for n in range(1, 3):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 3):
 		scene.human.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	assert_true(hall_button.visible, "N2 libera o Salão de Armas")
@@ -1875,7 +1822,7 @@ func test_the_weapons_hall_and_arena_buttons_follow_n2_and_n8():
 
 func test_the_arena_button_is_disabled_with_the_reason_when_the_weapons_hall_is_missing():
 	var scene := _v2_city_scene()
-	for n in range(1, 9):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 9):
 		scene.human.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	var arena_button: Button = hud._building_buttons[W_ARENA]
@@ -1887,7 +1834,7 @@ func test_the_arena_button_is_disabled_with_the_reason_when_the_weapons_hall_is_
 func test_the_warrior_production_shows_exactly_one_form_at_each_research_level():
 	var scene := _v2_city_scene()
 	scene.city.buildings[W_HALL] = true
-	for n in range(1, 3):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 3):
 		scene.human.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 	var expected := {3: [W_WARRIOR, "Guerreiro  —  20 PP"], 5: [W_SWORDSMAN, "Espadachim  —  32 PP"], 7: [W_MASTER, "Mestre de Armas  —  48 PP"]}
 	var done := 2
@@ -1903,7 +1850,7 @@ func test_the_warrior_production_shows_exactly_one_form_at_each_research_level()
 
 func test_the_hero_button_shows_in_the_arena_city_and_is_disabled_with_the_slot_reason_while_a_champion_lives():
 	var scene := _v2_city_scene()
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		scene.human.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 		scene.human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	scene.city.buildings[W_HALL] = true
@@ -2005,8 +1952,8 @@ func test_the_hero_panel_shows_legendary_the_execution_passive_and_both_techniqu
 	assert_true(text.begins_with("LENDÁRIO"), text)
 	assert_true(text.contains("Herói da Lâmina"), text)
 	assert_true(text.contains("HP 38/38"), text)
-	assert_true(text.contains("Ataque 12.0"), text)
-	assert_true(text.contains("Defesa 7.0"), text)
+	assert_true(text.contains("Ataque 18.0"), text)
+	assert_true(text.contains("Defesa 10.0"), text)
 	assert_true(text.contains("Passiva Lendária — Execução\n+30% de Ataque contra unidades com 50% de HP ou menos."), text)
 	assert_false(text.contains("Comando Defensivo"), "a aura é do Campeão Guardião")
 	assert_not_null(_v2_action("Technique_" + W_POWER))
@@ -2045,7 +1992,7 @@ func _v2_ranger_scene(through: int = 4, kind: String = R_ARCHER, enemy_distance:
 				hex_grid.tiles[Vector2i(q, r)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	var human := PlayerData.new(CivilizationData.new())
 	human.gold = 100.0
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
 	GameManager.human_player = human
 	GameManager.hex_grid = hex_grid
@@ -2079,7 +2026,7 @@ func test_the_camp_and_tower_buttons_follow_n2_and_n8():
 	var tower_button: Button = hud._building_buttons[R_TOWER]
 	assert_false(camp_button.visible, "sem a pesquisa o Campo não aparece")
 	assert_false(tower_button.visible)
-	for n in range(1, 3):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 3):
 		scene.human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	assert_true(camp_button.visible, "N2 libera o Campo dos Patrulheiros")
@@ -2096,7 +2043,7 @@ func test_the_camp_and_tower_buttons_follow_n2_and_n8():
 
 func test_the_tower_button_is_disabled_with_the_reason_when_the_camp_is_missing():
 	var scene := _v2_city_scene()
-	for n in range(1, 9):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 9):
 		scene.human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	var tower_button: Button = hud._building_buttons[R_TOWER]
@@ -2108,7 +2055,7 @@ func test_the_tower_button_is_disabled_with_the_reason_when_the_camp_is_missing(
 func test_the_ranger_production_shows_exactly_one_form_at_each_research_level():
 	var scene := _v2_city_scene()
 	scene.city.buildings[R_CAMP] = true
-	for n in range(1, 3):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 3):
 		scene.human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
 	var expected := {3: [R_ARCHER, "Arqueiro  —  20 PP"], 5: [R_HUNTER, "Caçador  —  32 PP"], 7: [R_MARKSMAN, "Atirador de Elite  —  48 PP"]}
 	var done := 2
@@ -2124,7 +2071,7 @@ func test_the_ranger_production_shows_exactly_one_form_at_each_research_level():
 
 func test_the_legend_hunter_button_shows_in_the_tower_city_and_is_disabled_by_any_other_legendary():
 	var scene := _v2_city_scene()
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		scene.human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
 		scene.human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 		scene.human.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
@@ -2240,8 +2187,8 @@ func test_the_legend_hunter_panel_shows_legendary_the_hunt_passive_the_range_and
 	assert_true(text.begins_with("LENDÁRIO"), text)
 	assert_true(text.contains("Caçador de Lendas"), text)
 	assert_true(text.contains("HP 30/30"), text)
-	assert_true(text.contains("Ataque 11.0"), text)
-	assert_true(text.contains("Defesa 4.5"), text)
+	assert_true(text.contains("Ataque 16.5"), text)
+	assert_true(text.contains("Defesa 7.0"), text)
 	assert_true(text.contains("Alcance de ataque: 3"), text)
 	assert_true(text.contains("Passiva Lendária — Caçada Lendária\n+40% de Ataque contra Unidades Lendárias."), text)
 	assert_false(text.contains("Execução"), "a Execução é do Herói da Lâmina")
@@ -2284,7 +2231,7 @@ func _v2_cavalry_scene(through: int = 4, kind: String = C_CAVALIER, enemy_distan
 				hex_grid.tiles[Vector2i(q, r)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	var human := PlayerData.new(CivilizationData.new())
 	human.gold = 100.0
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
 	GameManager.human_player = human
 	GameManager.hex_grid = hex_grid
@@ -2318,7 +2265,7 @@ func test_the_stable_and_order_buttons_follow_n2_and_n8():
 	var order_button: Button = hud._building_buttons[C_ORDER]
 	assert_false(stable_button.visible, "sem a pesquisa o Estábulo de Guerra não aparece")
 	assert_false(order_button.visible)
-	for n in range(1, 3):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 3):
 		scene.human.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	assert_true(stable_button.visible, "N2 libera o Estábulo de Guerra")
@@ -2335,7 +2282,7 @@ func test_the_stable_and_order_buttons_follow_n2_and_n8():
 
 func test_the_order_button_is_disabled_with_the_reason_when_the_stable_is_missing():
 	var scene := _v2_city_scene()
-	for n in range(1, 9):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 9):
 		scene.human.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	var order_button: Button = hud._building_buttons[C_ORDER]
@@ -2347,9 +2294,9 @@ func test_the_order_button_is_disabled_with_the_reason_when_the_stable_is_missin
 func test_the_cavalry_production_shows_exactly_one_form_at_each_research_level():
 	var scene := _v2_city_scene()
 	scene.city.buildings[C_STABLE] = true
-	for n in range(1, 3):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 3):
 		scene.human.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
-	var expected := {3: [C_CAVALIER, "Cavaleiro  —  24 PP"], 5: [C_SHOCK, "Cavaleiro de Choque  —  38 PP"], 7: [C_ARMORED, "Cavaleiro Blindado  —  56 PP"]}
+	var expected := {3: [C_CAVALIER, "Cavaleiro  —  26 PP"], 5: [C_SHOCK, "Cavaleiro de Choque  —  42 PP"], 7: [C_ARMORED, "Cavaleiro Blindado  —  60 PP"]}
 	var done := 2
 	for through in expected:
 		for n in range(done + 1, through + 1):
@@ -2363,7 +2310,7 @@ func test_the_cavalry_production_shows_exactly_one_form_at_each_research_level()
 
 func test_the_griffon_button_shows_in_the_order_city_and_is_disabled_by_any_other_legendary():
 	var scene := _v2_city_scene()
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		scene.human.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
 		scene.human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
 		scene.human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
@@ -2376,7 +2323,7 @@ func test_the_griffon_button_shows_in_the_order_city_and_is_disabled_by_any_othe
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	assert_true(button.visible)
 	assert_false(button.disabled)
-	assert_eq(button.text, "Cavaleiro de Grifo  —  100 PP")
+	assert_eq(button.text, "Cavaleiro de Grifo  —  95 PP")
 	assert_true((hud._production_buttons[C_ARMORED] as Button).visible, "o Cavaleiro Blindado segue ao lado")
 	for other_kind in ["v2_legendary_guardian_champion", "v2_legendary_blade_hero", "v2_legendary_legend_hunter"]:
 		var other: Unit = scene.hex_grid.spawn_unit(Vector2i(0, 0), UnitDatabase.create_unit(other_kind), scene.human)
@@ -2476,11 +2423,11 @@ func test_the_upgrade_buttons_show_the_generic_formula_cost_for_the_shock_and_th
 	var scene := _v2_cavalry_scene(5, C_CAVALIER, 0)
 	var button := _v2_action("UpgradeButton")
 	assert_not_null(button)
-	assert_eq(button.text, "Evoluir para Cavaleiro de Choque — 28 Ouro")
+	assert_eq(button.text, "Evoluir para Cavaleiro de Choque — 32 Ouro")
 	assert_false(button.disabled)
 	button.pressed.emit()
 	assert_eq((scene.unit as Unit).unit_data.visual_kind, C_SHOCK)
-	assert_eq(scene.human.gold, 72.0)
+	assert_eq(scene.human.gold, 68.0)
 	_v2_cavalry_scene_cleanup(scene)
 	var second := _v2_cavalry_scene(7, C_SHOCK, 0)
 	var next_button := _v2_action("UpgradeButton")
@@ -2501,11 +2448,11 @@ func test_the_griffon_panel_shows_legendary_the_ranged_vulnerability_and_both_te
 	var text: String = hud.unit_info_label.text
 	assert_true(text.begins_with("LENDÁRIO"), text)
 	assert_true(text.contains("Cavaleiro de Grifo"), text)
-	assert_true(text.contains("HP 36/36"), text)
-	assert_true(text.contains("Ataque 10.0"), text)
-	assert_true(text.contains("Defesa 6.5"), text)
+	assert_true(text.contains("HP 40/40"), text)
+	assert_true(text.contains("Ataque 16.0"), text)
+	assert_true(text.contains("Defesa 10.0"), text)
 	assert_true(text.contains("Vulnerável a ataques à distância: +25% de dano recebido."), text)
-	assert_true(text.contains("Voo tático: atravessa terreno e unidades; pousa só em terra livre."), "o painel diz que voa: %s" % text)
+	assert_false(text.contains("Voo tático"), "2026-10-10: o Grifo não voa, o painel não diz que voa: %s" % text)
 	assert_false(text.contains("Execução"), "a Execução é do Herói da Lâmina")
 	assert_false(text.contains("Caçada"), "a Caçada é do Caçador de Lendas")
 	assert_not_null(_v2_action("Technique_" + C_CHARGE))
@@ -2513,12 +2460,17 @@ func test_the_griffon_panel_shows_legendary_the_ranged_vulnerability_and_both_te
 	assert_null(_v2_action("UpgradeButton"), "o Cavaleiro de Grifo não evolui")
 	_v2_cavalry_scene_cleanup(scene)
 
-func test_the_flying_units_selection_shows_the_flight_reach_not_the_ground_reach():
+func test_the_griffon_selection_shows_the_ground_reach_and_a_flyer_shows_the_flight_reach():
 	var scene := _v2_cavalry_scene(9, C_GRIFFON, 0)
 	_set_mountain_ring(scene.hex_grid, Vector2i(1, 0))
 	SelectionManager._select_unit(scene.unit)
-	assert_eq(SelectionManager.reachable, scene.hex_grid.flight_reachable(scene.unit, scene.unit.movement_left), "o alcance destacado é o do voo")
-	assert_true(SelectionManager.reachable.size() > 0, "cercado de montanhas, o Grifo ainda tem por onde ir")
+	assert_eq(SelectionManager.reachable, scene.hex_grid.compute_reachable(scene.unit.coord, scene.unit.movement_left, scene.unit.owner_player, false, false), "o Grifo (terrestre desde 2026-10-10) destaca o alcance do chão")
+	assert_false(SelectionManager.reachable.keys().any(func(c): return scene.hex_grid.get_tile(c).blocks_land_units()), "sem montanha nem mar no alcance")
+	# A seleção de uma unidade FLYING continua destacando o voo tático (o sistema segue valendo para as Manifestações).
+	scene.unit.unit_data.movement_profile = UnitData.MovementProfile.FLYING
+	SelectionManager._select_unit(scene.unit)
+	assert_eq(SelectionManager.reachable, scene.hex_grid.flight_reachable(scene.unit, scene.unit.movement_left), "voador: alcance do voo")
+	assert_true(SelectionManager.reachable.size() > 0, "cercado de montanhas, o voador ainda tem por onde ir")
 	_v2_cavalry_scene_cleanup(scene)
 
 func _set_mountain_ring(grid: HexGrid, center: Vector2i) -> void:
@@ -2559,7 +2511,7 @@ func _v2_rogue_scene(through: int = 4, kind: String = RG_ROGUE, enemy_distance: 
 				hex_grid.tiles[Vector2i(q, r)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	var human := PlayerData.new(CivilizationData.new())
 	human.gold = 100.0
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_rogue_%d" % n)
 	GameManager.human_player = human
 	GameManager.hex_grid = hex_grid
@@ -2593,7 +2545,7 @@ func test_the_guild_and_refuge_buttons_follow_n2_and_n8():
 	var refuge_button: Button = hud._building_buttons[RG_MASTERY]
 	assert_false(guild_button.visible, "sem a pesquisa a Guilda dos Ladinos não aparece")
 	assert_false(refuge_button.visible)
-	for n in range(1, 3):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 3):
 		scene.human.v2_research.complete_research("v2_doctrine_rogue_%d" % n)
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	assert_true(guild_button.visible, "N2 libera a Guilda dos Ladinos")
@@ -2610,7 +2562,7 @@ func test_the_guild_and_refuge_buttons_follow_n2_and_n8():
 
 func test_the_refuge_button_is_disabled_with_the_reason_when_the_guild_is_missing():
 	var scene := _v2_city_scene()
-	for n in range(1, 9):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 9):
 		scene.human.v2_research.complete_research("v2_doctrine_rogue_%d" % n)
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	var refuge_button: Button = hud._building_buttons[RG_MASTERY]
@@ -2622,7 +2574,7 @@ func test_the_refuge_button_is_disabled_with_the_reason_when_the_guild_is_missin
 func test_the_rogue_production_shows_exactly_one_form_at_each_research_level():
 	var scene := _v2_city_scene()
 	scene.city.buildings[RG_GUILD] = true
-	for n in range(1, 3):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 3):
 		scene.human.v2_research.complete_research("v2_doctrine_rogue_%d" % n)
 	var expected := {3: [RG_ROGUE, "Ladino  —  20 PP"], 5: [RG_SABOTEUR, "Sabotador  —  32 PP"], 7: [RG_ASSASSIN, "Assassino  —  48 PP"]}
 	var done := 2
@@ -2638,7 +2590,7 @@ func test_the_rogue_production_shows_exactly_one_form_at_each_research_level():
 
 func test_the_shadow_master_button_shows_in_the_refuge_city_and_is_disabled_by_any_other_legendary():
 	var scene := _v2_city_scene()
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		scene.human.v2_research.complete_research("v2_doctrine_rogue_%d" % n)
 		scene.human.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
 		scene.human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
@@ -2652,7 +2604,7 @@ func test_the_shadow_master_button_shows_in_the_refuge_city_and_is_disabled_by_a
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	assert_true(button.visible)
 	assert_false(button.disabled)
-	assert_eq(button.text, "Mestre das Sombras  —  95 PP")
+	assert_eq(button.text, "Mestre das Sombras  —  90 PP")
 	assert_true((hud._production_buttons[RG_ASSASSIN] as Button).visible, "o Assassino segue ao lado")
 	for other_kind in ["v2_legendary_guardian_champion", "v2_legendary_blade_hero", "v2_legendary_legend_hunter", "v2_legendary_griffon_rider"]:
 		var other: Unit = scene.hex_grid.spawn_unit(Vector2i(0, 0), UnitDatabase.create_unit(other_kind), scene.human)
@@ -2745,9 +2697,9 @@ func test_the_shadow_master_panel_shows_legendary_the_infiltration_text_and_both
 	var text: String = hud.unit_info_label.text
 	assert_true(text.begins_with("LENDÁRIO"), text)
 	assert_true(text.contains("Mestre das Sombras"), text)
-	assert_true(text.contains("HP 30/30"), text)
-	assert_true(text.contains("Ataque 10.5"), text)
-	assert_true(text.contains("Defesa 4.5"), text)
+	assert_true(text.contains("HP 34/34"), text)
+	assert_true(text.contains("Ataque 17.5"), text)
+	assert_true(text.contains("Defesa 8.0"), text)
 	assert_true(text.contains("Passo Sombrio: atravessa unidades e ignora custo extra de terreno terrestre; não atravessa terreno impassável."), text)
 	assert_false(text.to_lower().contains("voo"), "nunca menciona voo")
 	assert_true(text.contains("Passiva — Desmantelar"), "herda Desmantelar (N6 pesquisado no cenário)")
@@ -2800,7 +2752,7 @@ func _v2_siege_scene(through: int = 4, kind: String = SG_CATAPULT, enemy_city_di
 				hex_grid.tiles[Vector2i(q, r)] = TerrainDatabase.create_tile(HexTileData.TerrainType.GRASSLAND)
 	var human := PlayerData.new(CivilizationData.new())
 	human.gold = 100.0
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_siege_%d" % n)
 	GameManager.human_player = human
 	GameManager.hex_grid = hex_grid
@@ -2839,7 +2791,7 @@ func test_the_arsenal_and_grand_arsenal_buttons_follow_n2_and_n8():
 	var grand_button: Button = hud._building_buttons[SG_GRAND]
 	assert_false(arsenal_button.visible, "sem a pesquisa o Arsenal de Cerco não aparece")
 	assert_false(grand_button.visible)
-	for n in range(1, 3):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 3):
 		scene.human.v2_research.complete_research("v2_doctrine_siege_%d" % n)
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	assert_true(arsenal_button.visible, "N2 libera o Arsenal de Cerco")
@@ -2856,7 +2808,7 @@ func test_the_arsenal_and_grand_arsenal_buttons_follow_n2_and_n8():
 
 func test_the_grand_arsenal_button_is_disabled_with_the_reason_when_the_arsenal_is_missing():
 	var scene := _v2_city_scene()
-	for n in range(1, 9):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 9):
 		scene.human.v2_research.complete_research("v2_doctrine_siege_%d" % n)
 	hud._on_tile_selected(scene.coord, scene.hex_grid.get_tile(scene.coord))
 	var grand_button: Button = hud._building_buttons[SG_GRAND]
@@ -2868,7 +2820,7 @@ func test_the_grand_arsenal_button_is_disabled_with_the_reason_when_the_arsenal_
 func test_the_siege_production_shows_exactly_one_form_at_each_research_level():
 	var scene := _v2_city_scene()
 	scene.city.buildings[SG_ARSENAL] = true
-	for n in range(1, 3):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 3):
 		scene.human.v2_research.complete_research("v2_doctrine_siege_%d" % n)
 	var expected := {3: [SG_CATAPULT, "Catapulta  —  28 PP"], 5: [SG_TREBUCHET, "Trebuchet  —  44 PP"], 7: [SG_BOMBARD, "Bombarda  —  64 PP"]}
 	var done := 2
@@ -2884,7 +2836,7 @@ func test_the_siege_production_shows_exactly_one_form_at_each_research_level():
 
 func test_the_colossus_button_shows_in_the_grand_arsenal_city_and_is_disabled_by_any_other_legendary():
 	var scene := _v2_city_scene()
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		scene.human.v2_research.complete_research("v2_doctrine_siege_%d" % n)
 		scene.human.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
 		scene.human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
@@ -3003,8 +2955,8 @@ func test_the_colossus_panel_shows_legendary_the_artillery_march_text_and_both_t
 	assert_true(text.begins_with("LENDÁRIO"), text)
 	assert_true(text.contains("Colosso de Cerco"), text)
 	assert_true(text.contains("HP 44/44"), text)
-	assert_true(text.contains("Ataque 9.0"), text)
-	assert_true(text.contains("Defesa 8.0"), text)
+	assert_true(text.contains("Ataque 12.0"), text)
+	assert_true(text.contains("Defesa 10.0"), text)
 	assert_true(text.contains("Passiva — Munição Demolidora"), "herda Munição Demolidora (N4 pesquisado no cenário)")
 	assert_true(text.contains("Passiva Lendária — Artilharia Andante"), text)
 	assert_true(text.contains("Pode usar Bombardeio Preparado mesmo depois de se mover."), text)
@@ -3063,7 +3015,7 @@ func _phase23_free_coord(grid: HexGrid) -> Vector2i:
 
 func _phase23_unlock(player: PlayerData) -> void:
 	for branch in ["sacred", "infernal"]:
-		for tier in range(1, 10):
+		for tier in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 			player.v2_research.complete_research("v2_magic_%s_%d" % [branch, tier])
 	player.v2_research.complete_research("v2_transcendence")
 
@@ -3213,3 +3165,137 @@ func test_ui4_game_over_main_menu_action_is_routed_to_main():
 	hud.game_over_main_menu_requested.connect(func(): requested[0] = true)
 	hud.game_over_main_menu_button.pressed.emit()
 	assert_true(requested[0])
+
+func test_game_over_elimination_without_a_winner_keeps_a_complete_defeat_message():
+	hud._on_game_over(false)
+	hud._on_victory_achieved(null, "eliminated")
+	assert_eq(hud.game_over_label.text, "DERROTA")
+	assert_eq(hud.game_over_title_label.text, "Seu reino caiu")
+	assert_eq(hud.game_over_summary_label.text, "Seu reino perdeu todas as cidades e unidades.")
+
+func test_game_over_keeps_statistics_and_progress_frozen_after_a_theme_change():
+	var hex_grid := HexGrid.new()
+	hex_grid._ready()
+	GameManager.hex_grid = hex_grid
+	var human := PlayerData.new(CivilizationData.new())
+	human.gold = 123
+	GameManager.human_player = human
+	GameManager.rival_players = [PlayerData.new(CivilizationData.new())]
+	hud._on_game_over(true)
+	hud._on_victory_achieved(human, VictoryConditions.VICTORY_TYPE_DOMINANCE)
+	var frozen_row: HBoxContainer = hud.game_over_snapshot_rows.get_child(1)
+	var original_scale := Settings.ui_scale_percent
+	human.gold = 999
+	Settings.ui_scale_percent = 150
+	Settings.accessibility_changed.emit()
+	for frame in 5: await get_tree().process_frame
+	var stats: HBoxContainer = hud.game_over_panel.get_node("%ResultStats")
+	assert_eq(stats.get_child(3).get_child(0).text, "123", "Theme updates cannot replace the final treasury with live data")
+	assert_eq(frozen_row.get_child(2).text, "100%")
+	assert_eq(hud.game_over_snapshot_rows.get_child(1), frozen_row, "Accessibility changes preserve the original snapshot nodes")
+	assert_gte(frozen_row.get_child(1).size.y, 9.0, "The progress meter remains visible at 150%")
+	Settings.ui_scale_percent = original_scale
+	Settings.accessibility_changed.emit()
+	for frame in 5: await get_tree().process_frame
+	hex_grid.queue_free()
+	await get_tree().process_frame
+
+## Debug de clima e dia/noite (pedido do usuário para testar): liga/desliga a chuva, pula para o dia/noite, acelera o
+## ciclo — e respeita as Configurações (desligado avisa, não força).
+func _ambience() -> Array:
+	var rig := Node3D.new()
+	var camera := Camera3D.new()
+	camera.name = "Camera3D"
+	camera.position = Vector3(0.0, 15.0, 12.0)
+	rig.add_child(camera)
+	add_child_autofree(rig)
+	var sun := DirectionalLight3D.new()
+	var world := WorldEnvironment.new()
+	world.environment = Environment.new()
+	world.environment.sky = Sky.new()
+	world.environment.sky.sky_material = ProceduralSkyMaterial.new()
+	add_child_autofree(sun)
+	add_child_autofree(world)
+	var day_night := DayNightController.new()
+	add_child_autofree(day_night)
+	day_night.setup(sun, world)
+	var weather := WeatherController.new()
+	add_child_autofree(weather)
+	weather.setup(rig, day_night)
+	GameManager.day_night = day_night
+	GameManager.weather = weather
+	return [day_night, weather]
+
+func test_debug_toggles_rain_and_day_night():
+	var parts := _ambience()
+	var day_night: DayNightController = parts[0]
+	var weather: WeatherController = parts[1]
+	day_night.start_match()
+	weather.start_match()
+	hud._on_debug_pressed()
+	assert_eq(hud._debug_rain_button.text, "Começar chuva")
+	hud._on_debug_rain_pressed()
+	assert_true(weather.schedule.is_raining(), "começou a chover")
+	assert_eq(hud._debug_rain_button.text, "Parar chuva")
+	weather.advance(40.0)
+	hud._on_debug_rain_pressed()
+	assert_eq(weather.schedule.state, WeatherSchedule.State.FALLING, "parar = saída suave, não corte")
+	weather.advance(WeatherController.DISABLE_FADE_SECONDS + 0.5)
+	assert_false(weather.schedule.is_raining())
+
+	assert_eq(hud._debug_day_night_button.text, "Ir para a noite", "partida começa de manhã")
+	hud._on_debug_day_night_pressed()
+	assert_true(DayNightCycle.is_dark_phase(day_night.shown_phase()), "foi para a noite")
+	assert_eq(hud._debug_day_night_button.text, "Ir para o dia")
+	hud._on_debug_day_night_pressed()
+	assert_almost_eq(day_night.shown_phase(), DayNightCycle.noon_phase(), 0.0001, "voltou ao meio-dia")
+
+	hud._on_debug_fast_cycle_pressed()
+	assert_eq(day_night.debug_time_scale, DayNightController.DEBUG_FAST_TIME_SCALE)
+	var before := day_night.phase
+	day_night._process(1.0)
+	assert_almost_eq(day_night.phase - before, DayNightController.DEBUG_FAST_TIME_SCALE / DayNightCycle.CYCLE_SECONDS, 0.0001, "1 s vale 20 s de ciclo")
+	hud._on_debug_fast_cycle_pressed()
+	assert_eq(day_night.debug_time_scale, 1.0)
+	day_night.debug_time_scale = DayNightController.DEBUG_FAST_TIME_SCALE
+	day_night.start_match()
+	assert_eq(day_night.debug_time_scale, 1.0, "partida nova volta à velocidade normal")
+	GameManager.day_night = null
+	GameManager.weather = null
+
+func test_debug_respects_the_settings_when_weather_or_cycle_are_off():
+	var parts := _ambience()
+	var day_night: DayNightController = parts[0]
+	var weather: WeatherController = parts[1]
+	day_night.start_match()
+	weather.start_match()
+	weather.set_enabled(false)
+	day_night.set_enabled(false)
+	hud._on_debug_pressed()
+	hud._on_debug_rain_pressed()
+	assert_false(weather.schedule.is_raining(), "clima desligado: o debug não força chuva")
+	hud._on_debug_day_night_pressed()
+	assert_almost_eq(day_night.shown_phase(), DayNightCycle.noon_phase(), 0.0001, "ciclo desligado: continua meio-dia")
+	GameManager.day_night = null
+	GameManager.weather = null
+
+func test_debug_toggles_snow_and_switches_smoothly_from_rain():
+	var parts := _ambience()
+	var weather: WeatherController = parts[1]
+	parts[0].start_match()
+	weather.start_match()
+	hud._on_debug_pressed()
+	assert_eq(hud._debug_snow_button.text, "Começar neve")
+	hud._on_debug_rain_pressed()
+	weather.advance(40.0)
+	hud._on_debug_snow_pressed()
+	assert_eq(weather.schedule.kind, WeatherKinds.RAIN, "a chuva sai primeiro (sem corte seco)")
+	weather.advance(WeatherSchedule.SWITCH_FADE_SECONDS + 1.0)
+	assert_true(weather.schedule.is_snowing(), "depois começa a neve")
+	hud._refresh_ambience_debug_buttons()
+	assert_eq(hud._debug_snow_button.text, "Parar neve")
+	assert_eq(hud._debug_rain_button.text, "Começar chuva")
+	hud._on_debug_snow_pressed()
+	assert_eq(weather.schedule.state, WeatherSchedule.State.FALLING, "parar neve = saída suave")
+	GameManager.day_night = null
+	GameManager.weather = null

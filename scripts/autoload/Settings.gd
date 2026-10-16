@@ -39,6 +39,19 @@ var reduced_motion: bool = false
 ## V3 / Etapa 4 — opções gráficas reais (GraphicsQuality): preferência do jogador, aplicada ao vivo.
 var anti_aliasing: String = GraphicsQuality.DEFAULT_ANTI_ALIASING
 var shadow_quality: String = GraphicsQuality.DEFAULT_SHADOW_QUALITY
+## Ciclo de dia e noite (só visual, DayNightController). Desligado = o meio-dia aprovado o tempo todo.
+var day_night_cycle_enabled: bool = true
+## Efeitos de clima cosméticos (chuva e neve, WeatherController) — um interruptor para todo clima. Desligado = nenhum.
+var weather_enabled: bool = true
+## Luzes do brilho do mundo (WorldGlow), uma opção por camada. "Do mapa": a luz que Gemas e Nódulos Arcanos jogam no
+## terreno. "Das criaturas": a dos núcleos das Grandes Manifestações. Desligar apaga só as LUZES; o brilho do próprio
+## modelo continua.
+var map_lighting_enabled: bool = true
+var creature_lighting_enabled: bool = true
+## Máquinas fracas (2026-10-14, docs/GRAPHICS_SETTINGS.md): resolução 3D em % da janela (FSR 1.0 abaixo de 100) e
+## oclusão de ambiente + reflexos de tela. Os padrões (100 %, ligados) são exatamente o visual de sempre.
+var render_scale_percent: int = GraphicsQuality.DEFAULT_RENDER_SCALE
+var screen_effects_enabled: bool = true
 
 func _ready() -> void:
 	load_settings()
@@ -82,10 +95,46 @@ func set_shadow_quality(value: String) -> void:
 	graphics_changed.emit()
 	save_settings()
 
+func set_weather_enabled(value: bool) -> void:
+	weather_enabled = value
+	graphics_changed.emit()
+	save_settings()
+
+func set_day_night_cycle_enabled(value: bool) -> void:
+	day_night_cycle_enabled = value
+	graphics_changed.emit()
+	save_settings()
+
+func set_map_lighting_enabled(value: bool) -> void:
+	map_lighting_enabled = value
+	graphics_changed.emit()
+	save_settings()
+
+func set_creature_lighting_enabled(value: bool) -> void:
+	creature_lighting_enabled = value
+	graphics_changed.emit()
+	save_settings()
+
+func set_render_scale_percent(value: int) -> void:
+	render_scale_percent = GraphicsQuality.valid_render_scale(value)
+	graphics_changed.emit()
+	save_settings()
+
+func set_screen_effects_enabled(value: bool) -> void:
+	screen_effects_enabled = value
+	graphics_changed.emit()
+	save_settings()
+
 ## "Restaurar padrões" da página Vídeo: só as opções gráficas (janela/resolução/V-Sync ficam como o jogador deixou).
 func reset_graphics_to_defaults() -> void:
 	anti_aliasing = GraphicsQuality.DEFAULT_ANTI_ALIASING
 	shadow_quality = GraphicsQuality.DEFAULT_SHADOW_QUALITY
+	day_night_cycle_enabled = true
+	weather_enabled = true
+	map_lighting_enabled = true
+	creature_lighting_enabled = true
+	render_scale_percent = GraphicsQuality.DEFAULT_RENDER_SCALE
+	screen_effects_enabled = true
 	graphics_changed.emit()
 	save_settings()
 
@@ -155,6 +204,12 @@ func save_settings(path: String = SETTINGS_PATH) -> void:
 	cfg.set_value("video", "resolution_height", window_resolution.y)
 	cfg.set_value("graphics", "anti_aliasing", anti_aliasing)
 	cfg.set_value("graphics", "shadow_quality", shadow_quality)
+	cfg.set_value("graphics", "day_night_cycle", day_night_cycle_enabled)
+	cfg.set_value("graphics", "weather", weather_enabled)
+	cfg.set_value("graphics", "map_lighting", map_lighting_enabled)
+	cfg.set_value("graphics", "creature_lighting", creature_lighting_enabled)
+	cfg.set_value("graphics", "render_scale", render_scale_percent)
+	cfg.set_value("graphics", "screen_effects", screen_effects_enabled)
 	cfg.set_value("accessibility", "ui_scale_percent", ui_scale_percent)
 	cfg.set_value("accessibility", "reduced_motion", reduced_motion)
 	cfg.save(path)
@@ -180,3 +235,9 @@ func load_settings(path: String = SETTINGS_PATH) -> void:
 	# Valor inválido/corrompido volta ao padrão (nunca uma opção inexistente).
 	anti_aliasing = GraphicsQuality.valid_anti_aliasing(str(cfg.get_value("graphics", "anti_aliasing", anti_aliasing)))
 	shadow_quality = GraphicsQuality.valid_shadow_quality(str(cfg.get_value("graphics", "shadow_quality", shadow_quality)))
+	day_night_cycle_enabled = bool(cfg.get_value("graphics", "day_night_cycle", day_night_cycle_enabled))
+	weather_enabled = bool(cfg.get_value("graphics", "weather", weather_enabled))
+	map_lighting_enabled = bool(cfg.get_value("graphics", "map_lighting", map_lighting_enabled))
+	creature_lighting_enabled = bool(cfg.get_value("graphics", "creature_lighting", creature_lighting_enabled))
+	render_scale_percent = GraphicsQuality.valid_render_scale(int(cfg.get_value("graphics", "render_scale", render_scale_percent)))
+	screen_effects_enabled = bool(cfg.get_value("graphics", "screen_effects", screen_effects_enabled))

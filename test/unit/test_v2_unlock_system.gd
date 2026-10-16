@@ -27,7 +27,7 @@ func _new_player() -> PlayerData:
 	return player
 
 func _complete_through(player: PlayerData, tier: int) -> void:
-	for n in range(1, tier + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		assert_true(player.v2_research.complete_research("v2_doctrine_guardian_%d" % n), "N%d" % n)
 
 # --- Disponibilidade derivada -------------------------------------------------------------------
@@ -40,10 +40,10 @@ func test_nothing_is_unlocked_for_a_fresh_civilization():
 
 func test_each_connected_unlock_follows_its_own_research_node():
 	var player := _new_player()
-	player.v2_research.complete_research("v2_doctrine_guardian_1")
-	assert_true(V2UnlockSystem.is_unlocked(player, "v2_doctrine_guardian"))
 	assert_false(V2UnlockSystem.is_unlocked(player, "v2_building_guardian_hall"))
 	assert_false(V2UnlockSystem.is_unlocked(player, "v2_unit_shieldbearer"))
+	# O antigo N1 ("Doutrina do Guardião") saiu: o primeiro nó da linha já é o Salão.
+	assert_false(V2UnlockSystem.is_unlocked(player, "v2_doctrine_guardian"), "o id do portão retirado não é mais um unlock")
 
 	player.v2_research.complete_research("v2_doctrine_guardian_2")
 	assert_true(V2UnlockSystem.is_unlocked(player, "v2_building_guardian_hall"))
@@ -51,7 +51,7 @@ func test_each_connected_unlock_follows_its_own_research_node():
 
 	player.v2_research.complete_research("v2_doctrine_guardian_3")
 	assert_true(V2UnlockSystem.is_unlocked(player, "v2_unit_shieldbearer"))
-	assert_eq(V2UnlockSystem.unlocked_ids(player), ["v2_doctrine_guardian", "v2_building_guardian_hall", "v2_unit_shieldbearer"])
+	assert_eq(V2UnlockSystem.unlocked_ids(player), ["v2_building_guardian_hall", "v2_unit_shieldbearer"])
 
 func test_ids_that_are_not_v2_have_no_v2_gate():
 	var player := _new_player()
@@ -94,19 +94,18 @@ func test_player_has_unlocked_is_fail_closed_for_v2_units_and_v1_kinds():
 
 # --- Pipeline: research_completed -> unlock_applied ------------------------------------------------
 
-func test_completing_n1_to_n3_emits_unlock_applied_with_the_node_own_unlock_data():
+func test_completing_the_first_two_nodes_emits_unlock_applied_with_the_node_own_unlock_data():
 	var player := _new_player()
 	watch_signals(player.v2_unlocks)
 	_complete_through(player, 3)
 
-	assert_signal_emit_count(player.v2_unlocks, "unlock_applied", 3)
-	assert_signal_emitted_with_parameters(player.v2_unlocks, "unlock_applied", ["v2_doctrine_guardian_1", "doctrine", "v2_doctrine_guardian"], 0)
-	assert_signal_emitted_with_parameters(player.v2_unlocks, "unlock_applied", ["v2_doctrine_guardian_2", "building", "v2_building_guardian_hall"], 1)
-	assert_signal_emitted_with_parameters(player.v2_unlocks, "unlock_applied", ["v2_doctrine_guardian_3", "unit", "v2_unit_shieldbearer"], 2)
+	assert_signal_emit_count(player.v2_unlocks, "unlock_applied", 2)
+	assert_signal_emitted_with_parameters(player.v2_unlocks, "unlock_applied", ["v2_doctrine_guardian_2", "building", "v2_building_guardian_hall"], 0)
+	assert_signal_emitted_with_parameters(player.v2_unlocks, "unlock_applied", ["v2_doctrine_guardian_3", "unit", "v2_unit_shieldbearer"], 1)
 
-func test_unknown_nodes_apply_nothing_now_that_all_128_are_connected():
+func test_unknown_nodes_apply_nothing_now_that_all_116_are_connected():
 	var player := _new_player()
-	_complete_through(player, 9) # a Doutrina do Guardião (N1-N9) já é toda conectada
+	_complete_through(player, 9) # a Doutrina do Guardião já é toda conectada
 	watch_signals(player.v2_unlocks)
 	assert_false(player.v2_unlocks.apply_unlock("v2_nao_existe"))
 	assert_signal_not_emitted(player.v2_unlocks, "unlock_applied")
@@ -125,17 +124,17 @@ func test_apply_unlock_is_idempotent_and_ignores_unknown_or_unconnected_nodes():
 
 func test_completing_an_already_completed_node_does_not_apply_again():
 	var player := _new_player()
-	player.v2_research.complete_research("v2_doctrine_guardian_1")
+	player.v2_research.complete_research("v2_doctrine_guardian_2")
 	watch_signals(player.v2_unlocks)
-	assert_false(player.v2_research.complete_research("v2_doctrine_guardian_1"))
-	player.v2_research.select_research("v2_doctrine_guardian_2")
+	assert_false(player.v2_research.complete_research("v2_doctrine_guardian_2"))
+	player.v2_research.select_research("v2_doctrine_guardian_3")
 	assert_signal_not_emitted(player.v2_unlocks, "unlock_applied")
 
 func test_research_paid_with_knowledge_applies_the_unlock_too():
 	var player := _new_player()
 	watch_signals(player.v2_unlocks)
-	assert_true(player.v2_research.select_research("v2_doctrine_guardian_1"))
-	player.v2_research.add_knowledge(10.0)
+	assert_true(player.v2_research.select_research("v2_doctrine_guardian_2"))
+	player.v2_research.add_knowledge(16.0)
 	assert_signal_emit_count(player.v2_unlocks, "unlock_applied", 1)
 
 func test_reset_lets_the_unlock_be_announced_again_but_the_state_is_the_only_truth():
@@ -144,7 +143,7 @@ func test_reset_lets_the_unlock_be_announced_again_but_the_state_is_the_only_tru
 	player.v2_research.reset()
 	assert_false(V2UnlockSystem.is_unlocked(player, "v2_unit_shieldbearer"), "reset da pesquisa remove o unlock")
 	watch_signals(player.v2_unlocks)
-	player.v2_research.complete_research("v2_doctrine_guardian_1")
+	player.v2_research.complete_research("v2_doctrine_guardian_2")
 	assert_signal_emit_count(player.v2_unlocks, "unlock_applied", 1)
 
 func test_there_is_no_polling_hook_on_the_unlock_system():
@@ -158,15 +157,13 @@ func test_human_player_gets_a_toast_and_a_bus_event_when_an_unlock_lands():
 	var human := _new_player()
 	GameManager.human_player = human
 	watch_signals(EventBus)
-	human.v2_research.complete_research("v2_doctrine_guardian_1")
 	human.v2_research.complete_research("v2_doctrine_guardian_2")
 	human.v2_research.complete_research("v2_doctrine_guardian_3")
 
-	assert_signal_emitted_with_parameters(EventBus, "notify", ["Doutrina desbloqueada: Doutrina do Guardião", "confirm"], 0)
-	assert_signal_emitted_with_parameters(EventBus, "notify", ["Novo prédio disponível: Salão dos Guardiões", "confirm"], 1)
-	assert_signal_emitted_with_parameters(EventBus, "notify", ["Nova unidade disponível: Escudeiro", "confirm"], 2)
-	assert_signal_emit_count(EventBus, "v2_unlock_applied", 3)
-	assert_signal_emitted_with_parameters(EventBus, "v2_unlock_applied", [human, "unit", "v2_unit_shieldbearer"], 2)
+	assert_signal_emitted_with_parameters(EventBus, "notify", ["Novo prédio disponível: Salão dos Guardiões", "confirm"], 0)
+	assert_signal_emitted_with_parameters(EventBus, "notify", ["Nova unidade disponível: Escudeiro", "confirm"], 1)
+	assert_signal_emit_count(EventBus, "v2_unlock_applied", 2)
+	assert_signal_emitted_with_parameters(EventBus, "v2_unlock_applied", [human, "unit", "v2_unit_shieldbearer"], 1)
 
 func test_a_rival_civilization_never_triggers_a_toast():
 	var human := _new_player()
@@ -179,7 +176,8 @@ func test_a_rival_civilization_never_triggers_a_toast():
 	assert_true(V2UnlockSystem.is_unlocked(rival, "v2_unit_shieldbearer"), "o rival ganha o unlock, só não avisa a HUD")
 
 func test_announcement_text_per_unlock_type():
-	assert_eq(V2UnlockSystem.announcement_text("doctrine", "X"), "Doutrina desbloqueada: X")
+	assert_false("doctrine" in V2UnlockSystem.CONNECTED_TYPES, "o tipo do portão retirado não é mais conectado")
+	assert_false("school" in V2UnlockSystem.CONNECTED_TYPES)
 	assert_eq(V2UnlockSystem.announcement_text("building", "X"), "Novo prédio disponível: X")
 	assert_eq(V2UnlockSystem.announcement_text("unit", "X"), "Nova unidade disponível: X")
 	assert_eq(V2UnlockSystem.announcement_text("technique", "X"), "Nova técnica disponível: X")

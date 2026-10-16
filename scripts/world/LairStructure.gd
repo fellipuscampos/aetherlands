@@ -8,35 +8,13 @@ extends Node3D
 ## mesmo que ele continuasse de pe gerando reforco (HexGrid.lair_coords
 ## nunca perdia a entrada). Agora o covil e uma entidade de terreno de
 ## verdade: sobrevive ao chefao e so some quando HexGrid.destroy_lair()
-## e chamado de verdade (jogador entra no tile vazio, ver HexGrid.
-## move_unit/_grant_lair_clear_reward).
+## e chamado por um ataque válido à estrutura depois da derrota do líder.
 
 var kind: String = "goblin"
 var _hex_grid: HexGrid
 
-## COVIS DE MONSTROS -- DESTRUICAO (pedido do usuario: "quero transformar
-## covis em alvos reais... avalie uma estrutura como HP; defesa; ataque ao
-## covil; destruicao; recompensa"). Antes, a estrutura nao tinha stat
-## nenhum — bastava uma unidade "visitar" o tile vazio pra destruir de
-## graca (ver antigo HexGrid._grant_lair_clear_reward, chamado por
-## move_unit). Agora a estrutura em si precisa ser ATACADA (ver
-## CombatResolver.resolve_lair_attack) ate zerar o proprio HP.
-## Fracao do max_hp que o kind ja teria como criatura (MonsterDatabase.
-## KIND_DATA) -- reusa o numero ja balanceado por tipo (Goblin 8, Troll 20,
-## Vivern 16, Esqueleto 6, Dragao 50) em vez de inventar uma tabela nova
-## ("tipo do monstro" / "forca do covil" ja estao embutidos ali, incluindo
-## indiretamente a distancia/ameaca que decidiu qual kind podia nascer
-## aqui). 0.3 (nao o valor cheio) e' o que mantem a promessa de "nao
-## precisa virar dez turnos" -- calculado contra CombatResolver.
-## resolve_lair_attack de verdade (dano = ataque - defesa*0.5, defesa
-## tambem vem do kind): um Guerreiro comum (ataque 4) derruba a tenda de
-## Goblin OU o ossario de Esqueleto num UNICO golpe extra depois de limpar
-## o guardiao (structure_hp 2.4/1.8, dano 3/3.5); a caverna de Troll e o
-## ninho de Vivern pedem 2-3 golpes de verdade (structure_hp 6/4.8, dano
-## 2/2.5); o covil de Dragao (structure_hp 15, defesa 8) e' deliberadamente
-## quase imune a um Guerreiro basico (dano cai pro minimo de 1) — precisa
-## de cerco/unidade forte de verdade, coerente com ser o encontro mais raro
-## e ameacador do jogo.
+## HP histórico mantido para compatibilidade dos saves. A regra atual é um golpe após a derrota
+## do líder (CombatResolver.resolve_lair_attack); não existe outra luta de desgaste contra a estrutura.
 const STRUCTURE_HP_FRACTION_OF_KIND_MAX_HP := 0.3
 var hp: float = 0.0
 var max_hp: float = 0.0
@@ -53,6 +31,8 @@ func build(for_kind: String, hex_grid: HexGrid) -> void:
 	var kind_max_hp: float = MonsterDatabase.KIND_DATA.get(kind, {}).get("max_hp", 8.0)
 	max_hp = kind_max_hp * STRUCTURE_HP_FRACTION_OF_KIND_MAX_HP
 	hp = max_hp
+	if _build_generated_lair():
+		return
 	match kind:
 		"troll":
 			_build_cave()
@@ -64,6 +44,35 @@ func build(for_kind: String, hex_grid: HexGrid) -> void:
 			_build_hoard()
 		_: # "goblin" e qualquer kind desconhecido caem na Tenda padrao
 			_build_tent()
+
+## Publicação enxuta da arte aprovada: só GLBs de runtime (uma malha/material por espécie).
+## Texturas/malha ficam compartilhadas; só a cor de névoa exige material por instância.
+func _build_generated_lair() -> bool:
+	if not MonsterEcologyData.is_ecology_species(kind):
+		return false
+	var path := "res://assets/generated/monster_lairs_runtime/%s_lair_v2.glb" % kind
+	if not ResourceLoader.exists(path):
+		return false
+	var scene := load(path) as PackedScene
+	if scene == null:
+		return false
+	var model := scene.instantiate() as Node3D
+	add_child(model)
+	model.scale = Vector3.ONE * _hex_grid.hex_size
+	_register_model_meshes(model)
+	return true
+
+func _register_model_meshes(node: Node) -> void:
+	if node is MeshInstance3D:
+		var instance := node as MeshInstance3D
+		var source := instance.get_active_material(0) as StandardMaterial3D
+		if source != null:
+			var material := source.duplicate() as StandardMaterial3D
+			material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+			instance.material_override = material
+			_tinted_meshes.append({"mesh": instance, "base_color": material.albedo_color})
+	for child in node.get_children():
+		_register_model_meshes(child)
 
 func _add_mesh(mesh: Mesh, color: Color, position: Vector3, rotation_degrees: Vector3 = Vector3.ZERO) -> void:
 	var instance := MeshInstance3D.new()
@@ -151,10 +160,9 @@ func _build_hoard() -> void:
 		var offset = Vector3(cos(angle) * 0.4, 0.45, sin(angle) * 0.4)
 		_add_mesh(gem, HOARD_GEM_COLOR, offset)
 
-## UNSEEN esconde de vez (mesmo tratamento binario de alfa 0 que os props
-## de HexGrid usam via TRANSPARENCY_ALPHA_SCISSOR); EXPLORED tinge sepia
-## (HexGrid._sepia_prop_color, reusado — nao duplicado, mesmo padrao que
-## ResourcePropsManager.apply_fog ja usa); VISIBLE volta a cor original.
+## UNSEEN esconde de vez (o covil e alto demais pra camada de nevoa cobrir);
+## EXPLORED fica sob o filtro de memoria (HexGrid._memory_prop_color, o
+## mesmo de ResourcePropsManager.apply_fog); VISIBLE volta a cor original.
 func apply_fog_state(vis: int) -> void:
 	visible = vis != HexGrid.Visibility.UNSEEN
 	if not visible or _hex_grid == null:
@@ -165,6 +173,6 @@ func apply_fog_state(vis: int) -> void:
 		if mat == null:
 			continue
 		if vis == HexGrid.Visibility.EXPLORED:
-			mat.albedo_color = _hex_grid._sepia_prop_color(entry.base_color)
+			mat.albedo_color = _hex_grid._memory_prop_color(entry.base_color)
 		else:
 			mat.albedo_color = entry.base_color

@@ -182,7 +182,7 @@ func _short_setup(through: int = 4) -> Dictionary:
 	var grid := _new_game()
 	var human := GameManager.human_player
 	var city := _found_human_city(grid)
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 	city.buildings[HALL] = true
 	# Aetherlands V2, Fase 15 — vários testes deste arquivo constroem Salão/Bastião (upkeep de
@@ -248,7 +248,7 @@ func test_guardian_n8_n9_flow_from_the_mastery_building_to_a_legendary_champion_
 	# fluxo ainda constrói o Salão e o Bastião (upkeep 1+2) -- Ouro de sobra evita que isso sozinho
 	# derrube a cidade em Déficit sem nenhum Mercado.
 	human.gold = 1000.0
-	for id in ["v2_doctrine_guardian_1", "v2_doctrine_guardian_2"]:
+	for id in ["v2_doctrine_guardian_2"]:
 		_research(state, id)
 	_build(grid, city, HALL)
 	for n in range(3, 8):
@@ -274,7 +274,7 @@ func test_guardian_n8_n9_flow_from_the_mastery_building_to_a_legendary_champion_
 	assert_eq(V2ResearchDatabase.capstone_progress("v2_supreme_army", state.completed_ids), Vector2i(1, 2), "9. Doutrinas completas: 1 / 2")
 	assert_true(V2ResearchDatabase.get_node("v2_supreme_army").gameplay_connected, "Fase 12: o Exército Supremo está conectado (estrutural, vale mesmo com 1/2)")
 	assert_true("v2_military_supremacy_access" in V2DoctrineContent.CONNECTED_UNLOCK_IDS)
-	assert_true(V2ResearchDatabase.get_node("v2_magic_elementalism_1").gameplay_connected, "Fase 22: as seis Escolas de Magia estão conectadas")
+	assert_true(V2ResearchDatabase.get_node("v2_magic_elementalism_2").gameplay_connected, "Fase 22: as seis Escolas de Magia estão conectadas")
 
 	# 10-12. O Bastião oferece o Campeão; a cidade A inicia; a cidade B (também com Bastião) não pode.
 	assert_true(city.can_train(CHAMPION), "10. o Bastião oferece o Campeão")
@@ -311,8 +311,7 @@ func test_guardian_n8_n9_flow_from_the_mastery_building_to_a_legendary_champion_
 	var striker := _striker_next_to(grid, rival, ally.coord)
 	assert_almost_eq(V2UnitAuras.defense_multiplier(ally), 1.2, 0.0001, "18. aliado a distância 2")
 	var predicted: float = CombatResolver.predict(striker, ally, grid).damage_to_defender
-	var terrain := 1.0 + grid.get_tile(ally.coord).defense_bonus
-	assert_almost_eq(predicted, maxf(1.0, 15.0 - ally.unit_data.defense * terrain * 1.2 * CombatResolver.DEFENSE_MITIGATION_FACTOR), 0.0001, "19-20. a previsão inclui +20%")
+	assert_almost_eq(predicted, maxf(1.0, 15.0 - ally.unit_data.defense * 1.2 * CombatResolver.DEFENSE_MITIGATION_FACTOR), 0.0001, "19-20. a previsão inclui +20%")
 	var ally_hp := ally.hp
 	CombatResolver.resolve(striker, ally, grid)
 	assert_almost_eq(ally_hp - ally.hp, predicted, 0.0001, "o HP real bate com a previsão")
@@ -323,7 +322,7 @@ func test_guardian_n8_n9_flow_from_the_mastery_building_to_a_legendary_champion_
 	var champion_coord := champion.coord
 	var loaded_grid := _save_and_reload()
 	var loaded_human := GameManager.human_player
-	assert_eq(loaded_human.v2_research.get_completed_ids().size(), 9)
+	assert_eq(loaded_human.v2_research.get_completed_ids().size(), 8)
 	var loaded_city: City = loaded_human.cities[0]
 	assert_true(loaded_city.buildings.has(MASTERY), "Bastião restaurado")
 	assert_true(loaded_city.buildings.has(HALL))
@@ -331,7 +330,7 @@ func test_guardian_n8_n9_flow_from_the_mastery_building_to_a_legendary_champion_
 	assert_eq(loaded_champions.size(), 1)
 	var loaded_champion: Unit = loaded_champions[0]
 	assert_eq(loaded_champion.coord, champion_coord)
-	assert_eq(loaded_champion.unit_data.max_hp, 44.0)
+	assert_eq(loaded_champion.unit_data.max_hp, 46.0)
 	assert_true(V2LegendarySystem.is_legendary_unit(loaded_champion), "o status Lendário é derivado do tipo")
 	assert_true(V2LegendarySystem.has_active_legendary(loaded_human), "22. o slot continua ocupado depois do load")
 	assert_false(loaded_city.can_train(CHAMPION), "23. outra Lendária bloqueada")

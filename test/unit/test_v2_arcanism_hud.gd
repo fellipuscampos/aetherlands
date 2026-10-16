@@ -50,7 +50,7 @@ func after_each():
 	grid.queue_free()
 
 func _learn(tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		player.v2_research.complete_research("v2_magic_arcanism_%d" % i)
 
 func _unit(kind: String, owner: PlayerData, coord: Vector2i) -> Unit:
@@ -72,9 +72,9 @@ func test_arcanist_panel_lists_four_spells_with_costs_and_targeting_hints():
 	var row := _actions()
 	assert_eq(row.get_node("MagicHeader").text, "Magia — Escola do Arcanismo")
 	assert_eq(row.get_node("Spell_v2_spell_arcane_step").text, "Passo Arcano — 6 Mana")
-	assert_eq(row.get_node("Spell_v2_spell_silence").text, "Silêncio — 8 Mana")
-	assert_eq(row.get_node("Spell_v2_spell_dispel").text, "Dissipar — 7 Mana")
-	assert_eq(row.get_node("Spell_v2_spell_veil_portal").text, "Portal do Véu — 18 Mana")
+	assert_eq(row.get_node("Spell_v2_spell_silence").text, "Silêncio — 10 Mana")
+	assert_eq(row.get_node("Spell_v2_spell_dispel").text, "Dissipar — 9 Mana")
+	assert_eq(row.get_node("Spell_v2_spell_veil_portal").text, "Portal do Véu — 26 Mana")
 	assert_string_contains(row.get_node("Spell_v2_spell_arcane_step").tooltip_text, "Teleporta")
 	assert_string_contains(row.get_node("Spell_v2_spell_silence").tooltip_text, "impedir um conjurador hostil")
 	assert_string_contains(row.get_node("Spell_v2_spell_dispel").tooltip_text, "dissipar")

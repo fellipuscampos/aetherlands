@@ -17,7 +17,6 @@ extends RefCounted
 ## Unlock ids com gameplay REAL (Fase 17: os nove da Escola Sagrada). Um unlock mágico passa a existir
 ## acrescentando o id aqui E criando o objeto (UnitDatabase/BuildingDatabase/V2SpellDatabase).
 const CONNECTED_UNLOCK_IDS: Array[String] = [
-	"v2_magic_school_sacred",
 	"v2_building_sacred_temple",
 	"v2_unit_sacred_cleric",
 	"v2_spell_restoring_light",
@@ -26,7 +25,6 @@ const CONNECTED_UNLOCK_IDS: Array[String] = [
 	"v2_spell_miracle",
 	"v2_building_sacred_ritual",
 	"v2_manifestation_seraph",
-	"v2_magic_school_infernal",
 	"v2_building_infernal_sanctum",
 	"v2_unit_infernal_warlock",
 	"v2_spell_infernal_flame",
@@ -35,7 +33,6 @@ const CONNECTED_UNLOCK_IDS: Array[String] = [
 	"v2_spell_damnation",
 	"v2_building_infernal_ritual",
 	"v2_manifestation_archdemon",
-	"v2_magic_school_necromancy",
 	"v2_building_necromancy_ossuary",
 	"v2_unit_necromancer",
 	"v2_spell_raise_dead",
@@ -44,7 +41,6 @@ const CONNECTED_UNLOCK_IDS: Array[String] = [
 	"v2_spell_raise_legion",
 	"v2_building_necromancy_ritual",
 	"v2_manifestation_lich_sovereign",
-	"v2_magic_school_druidism",
 	"v2_building_druidic_circle",
 	"v2_unit_druid",
 	"v2_spell_grow_grove",
@@ -53,7 +49,6 @@ const CONNECTED_UNLOCK_IDS: Array[String] = [
 	"v2_spell_awaken_forest",
 	"v2_building_druidic_ritual",
 	"v2_manifestation_nature_avatar",
-	"v2_magic_school_arcanism",
 	"v2_building_arcane_conclave",
 	"v2_unit_arcanist",
 	"v2_spell_arcane_step",
@@ -62,7 +57,6 @@ const CONNECTED_UNLOCK_IDS: Array[String] = [
 	"v2_spell_veil_portal",
 	"v2_building_arcane_ritual",
 	"v2_manifestation_veil_archon",
-	"v2_magic_school_elementalism",
 	"v2_building_elemental_observatory",
 	"v2_unit_elementalist",
 	"v2_spell_dense_mist",
@@ -80,7 +74,7 @@ const TRANSCENDENCE_INTENT := "Desbloquear a via de vitória mágica por meio do
 const TRANSCENDENCE_DESCRIPTION := "O domínio completo de duas Escolas permite acessar a via de vitória por Transcendência. O Ritual Final exige duas Grandes Manifestações ativas de Escolas distintas, uma cidade com Estrutura Ritual utilizável, 120 Mana e quatro rodadas de sustentação."
 
 ## Regra do slot de Grande Manifestação (V2ManifestationSystem), anexada à descrição de cada N9 conectado.
-const MANIFESTATION_RULE := "Cada civilização só pode ter UMA Grande Manifestação por Escola, ativa ou em produção."
+const MANIFESTATION_RULE := "Cada civilização só pode ter UMA Grande Manifestação por Escola, ativa ou em produção. Entidade vinculada: recebe ordens persistentes de atacar ou proteger cidades/unidades e age autonomamente na passagem do turno. Feitiços comuns não gastam Mana; invocar Hostes mantém o custo. Recargas e sacrifícios de Vida continuam valendo."
 
 ## Apresentação das escolas V2 (dado de UI: emblema e cor do conjurador no mapa). A chave é o id da
 ## linha de pesquisa, que é também o valor de UnitData.v2_magic_school dos conjuradores V2 — nunca os ids
@@ -98,9 +92,6 @@ const SCHOOL_PRESENTATION := {
 
 const BRANCHES := {
 	"sacred": [
-		{"name": "Escola Sagrada", "unlock_id": "v2_magic_school_sacred",
-			"intent": "Abrir a tradição mágica de sustentação: cura e proteção.",
-			"description": "Marco da Escola Sagrada: abre a tradição de sustentação do exército. Não concede bônus passivo — libera a pesquisa do Templo Sagrado."},
 		{"name": "Templo Sagrado", "unlock_id": "v2_building_sacred_temple",
 			"intent": "Estrutura de treinamento dos conjuradores Sagrados.",
 			"description": "Prédio da Escola Sagrada. Treina Clérigos depois da pesquisa correspondente. Não produz Mana: a Mana vem da infraestrutura Arcana."},
@@ -124,12 +115,9 @@ const BRANCHES := {
 			"description": "Estrutura ritual da Escola Sagrada. Exige o Templo Sagrado na mesma cidade e permite produzir o Serafim depois da pesquisa correspondente."},
 		{"name": "Serafim", "unlock_id": "v2_manifestation_seraph",
 			"intent": "Grande Manifestação Sagrada: entidade persistente, voadora e protetora.",
-			"description": "Grande Manifestação da Escola Sagrada: uma entidade mágica voadora que conhece o repertório Sagrado da civilização e protege os aliados próximos. Não ataca."},
+			"description": "Grande Manifestação da Escola Sagrada: uma entidade mágica voadora que conhece o repertório Sagrado da civilização e protege os aliados próximos. Ataca e usa habilidades autonomamente conforme a ordem de seu invocador."},
 	],
 	"infernal": [
-		{"name": "Escola Infernal", "unlock_id": "v2_magic_school_infernal",
-			"intent": "Abrir a tradição de dano mágico direto.",
-			"description": "Marco da Escola Infernal: abre a tradição de dano mágico e libera a pesquisa do Santuário Infernal. Não concede bônus passivo."},
 		{"name": "Santuário Infernal", "unlock_id": "v2_building_infernal_sanctum",
 			"intent": "Estrutura de treinamento dos conjuradores Infernais.",
 			"description": "Prédio da Escola Infernal. Treina Bruxos Infernais depois da pesquisa correspondente. Não produz Mana: a Mana vem da infraestrutura Arcana."},
@@ -153,12 +141,9 @@ const BRANCHES := {
 			"description": "Estrutura ritual da Escola Infernal. Exige o Santuário Infernal na mesma cidade e permite produzir o Arquidemônio depois da pesquisa correspondente."},
 		{"name": "Arquidemônio", "unlock_id": "v2_manifestation_archdemon",
 			"intent": "Grande Manifestação Infernal: entidade voadora que amplifica dano de feitiços.",
-			"description": "Grande Manifestação da Escola Infernal: entidade mágica voadora que conhece o repertório Infernal e causa mais dano com feitiços. Não ataca."},
+			"description": "Grande Manifestação da Escola Infernal: entidade mágica voadora que conhece o repertório Infernal e causa mais dano com feitiços. Ataca e usa habilidades autonomamente conforme a ordem de seu invocador."},
 	],
 	"necromancy": [
-		{"name": "Escola da Necromancia", "unlock_id": "v2_magic_school_necromancy",
-			"intent": "Abrir a tradição de invocação e comando de mortos-vivos.",
-			"description": "Marco da Escola de Necromancia: abre a tradição de invocação e comando de mortos-vivos e libera a pesquisa do Ossuário. Não concede bônus passivo."},
 		{"name": "Ossuário", "unlock_id": "v2_building_necromancy_ossuary",
 			"intent": "Estrutura de treinamento dos conjuradores Necromânticos.",
 			"description": "Prédio da Escola de Necromancia. Treina Necromantes depois da pesquisa correspondente. Não produz Mana: a Mana vem da infraestrutura Arcana."},
@@ -182,12 +167,9 @@ const BRANCHES := {
 			"description": "Estrutura ritual da Escola de Necromancia. Exige o Ossuário na mesma cidade e permite produzir o Lich Soberano depois da pesquisa correspondente."},
 		{"name": "Lich Soberano", "unlock_id": "v2_manifestation_lich_sovereign",
 			"intent": "Grande Manifestação Necromântica: soberano morto-vivo que amplia o comando das Hostes.",
-			"description": "Grande Manifestação da Escola de Necromancia: um soberano morto-vivo que conhece o repertório Necromântico e amplia a capacidade de Comando Necromântico (Soberania dos Mortos). Não ataca."},
+			"description": "Grande Manifestação da Escola de Necromancia: um soberano morto-vivo que conhece o repertório Necromântico e amplia a capacidade de Comando Necromântico (Soberania dos Mortos). Ataca e usa habilidades autonomamente conforme a ordem de seu invocador."},
 	],
 	"druidism": [
-		{"name": "Escola Druídica", "unlock_id": "v2_magic_school_druidism",
-			"intent": "Abrir a tradição de manipulação física do terreno.",
-			"description": "Marco da Escola Druídica: abre a tradição de transformar fisicamente o campo de batalha e libera a pesquisa do Círculo Druídico. Não concede bônus passivo."},
 		{"name": "Círculo Druídico", "unlock_id": "v2_building_druidic_circle",
 			"intent": "Estrutura de treinamento dos conjuradores Druídicos.",
 			"description": "Prédio da Escola Druídica. Treina Druidas depois da pesquisa correspondente. Não produz Mana: a Mana vem da infraestrutura Arcana."},
@@ -211,12 +193,9 @@ const BRANCHES := {
 			"description": "Estrutura ritual da Escola Druídica. Exige o Círculo Druídico na mesma cidade e permite produzir o Avatar da Natureza depois da pesquisa correspondente."},
 		{"name": "Avatar da Natureza", "unlock_id": "v2_manifestation_nature_avatar",
 			"intent": "Grande Manifestação Druídica: entidade natural resistente que remodela o mapa de mais longe.",
-			"description": "Grande Manifestação da Escola Druídica: uma entidade natural resistente que conhece o repertório Druídico e alcança mais longe com ele (Domínio Natural). Não ataca."},
+			"description": "Grande Manifestação da Escola Druídica: uma entidade natural resistente que conhece o repertório Druídico e alcança mais longe com ele (Domínio Natural). Ataca e usa habilidades autonomamente conforme a ordem de seu invocador."},
 	],
 	"arcanism": [
-		{"name": "Escola do Arcanismo", "unlock_id": "v2_magic_school_arcanism",
-			"intent": "Abrir a tradição de mobilidade e utilidade mágicas.",
-			"description": "Marco do Arcanismo: abre a tradição de reposicionamento e interferência sobre feitiços. Não concede bônus passivo."},
 		{"name": "Conclave Arcano", "unlock_id": "v2_building_arcane_conclave",
 			"intent": "Estrutura de treinamento dos Arcanistas.",
 			"description": "Prédio da Escola do Arcanismo. Treina Arcanistas depois da pesquisa correspondente. Não produz Mana: a Mana vem da infraestrutura Arcana."},
@@ -240,12 +219,9 @@ const BRANCHES := {
 			"description": "Estrutura ritual do Arcanismo. Exige o Conclave Arcano na mesma cidade e permite produzir o Arconte do Véu depois da pesquisa correspondente."},
 		{"name": "Arconte do Véu", "unlock_id": "v2_manifestation_veil_archon",
 			"intent": "Grande Manifestação do Arcanismo: entidade voadora que acelera seu repertório.",
-			"description": "Grande Manifestação do Arcanismo: entidade mágica voadora que conhece o repertório Arcano e reduz em um turno a recarga aplicada por seus feitiços. Não ataca."},
+			"description": "Grande Manifestação do Arcanismo: entidade mágica voadora que conhece o repertório Arcano e reduz em um turno a recarga aplicada por seus feitiços. Ataca e usa habilidades autonomamente conforme a ordem de seu invocador."},
 	],
 	"elementalism": [
-		{"name": "Escola do Elementalismo", "unlock_id": "v2_magic_school_elementalism",
-			"intent": "Abrir a tradição de controle ambiental temporário.",
-			"description": "Marco do Elementalismo: abre a tradição de zonas ambientais temporárias e libera a pesquisa do Observatório Elemental. Não concede bônus passivo."},
 		{"name": "Observatório Elemental", "unlock_id": "v2_building_elemental_observatory",
 			"intent": "Estrutura de treinamento dos Elementalistas.",
 			"description": "Prédio da Escola do Elementalismo. Treina Elementalistas depois da pesquisa correspondente. Não produz Mana."},
@@ -269,7 +245,7 @@ const BRANCHES := {
 			"description": "Estrutura ritual do Elementalismo. Exige o Observatório Elemental na mesma cidade e permite produzir o Primordial dos Elementos."},
 		{"name": "Primordial dos Elementos", "unlock_id": "v2_manifestation_elemental_primordial",
 			"intent": "Grande Manifestação que prolonga as zonas ambientais que cria.",
-			"description": "Grande Manifestação do Elementalismo: entidade voadora que conhece o repertório Elemental e prolonga em uma rodada as zonas que cria (Coração Elemental). Não ataca."},
+			"description": "Grande Manifestação do Elementalismo: entidade voadora que conhece o repertório Elemental e prolonga em uma rodada as zonas que cria (Coração Elemental). Ataca e usa habilidades autonomamente conforme a ordem de seu invocador."},
 	],
 }
 

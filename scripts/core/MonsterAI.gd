@@ -132,21 +132,27 @@ static func begin_turn(hex_grid: HexGrid) -> void:
 ## cobre Announced/Preparation/Active/Resolution (existe na lista ate'
 ## Completed remover), nao so' o Dragao fisicamente presente.
 static func act_for_unit(unit: Unit, hex_grid: HexGrid, turn: int) -> void:
+	if not is_instance_valid(unit) or unit.get_meta("feedback_retired", false): return
+	if int(unit.ability_state.get("lair_arrival_turn", -1)) == turn:
+		return
 	# V3 / Etapa 2: o Dragão NÃO pausa o ecossistema — só o selvagem LEGADO (covil da seed sem papel, fora da
-	# ecologia) mantém a regra antiga de recolher; ecologia, ameaça regional, Guardião e guardiões de evento seguem.
+	# ecologia) mantém a regra antiga de recolher; ecologia, ameaça regional e Guardião seguem.
 	if _is_dragon_event_active() and _recalled_by_dragon(unit, hex_grid):
 		_take_recalled_turn(unit, hex_grid)
 		return
-	# Fase 33D3: guardião de evento mundial (Relicário) guarda o próprio local; nunca vira invasor.
-	if unit.source_event_id >= 0:
-		var event := WorldEventManager.event_by_id(unit.source_event_id)
-		if event is ReliquaryEvent:
-			_take_anchored_guard_turn(unit, hex_grid, (event as ReliquaryEvent).site_coord, GUARD_RADIUS)
-			return
+	if MonsterAbilitySystem.skips_turn(unit, turn):
+		return
+	# Um único início de ação para todos os papéis, inclusive Troll guardião e covil dormente.
+	MonsterAbilitySystem.on_turn_start(unit, hex_grid)
 	# V3 / Combat Ecology: monstro de sítio ecológico segue o perfil de atividade da Era (tier × era).
 	var ecology := MonsterEcologySystem.monster_directive(unit)
+	if _take_retaliation_turn(unit, hex_grid, turn):
+		return
 	if not ecology.is_empty():
-		_take_ecology_turn(unit, hex_grid, turn, ecology)
+		if String(ecology.mode) == "ecology":
+			_take_ecology_turn(unit, hex_grid, turn, ecology)
+		else:
+			_take_directed_turn(unit, hex_grid, turn, ecology)
 		return
 	# Fase 33D2: monstro de covil com PAPEL (ameaça regional / Guardião Troll) segue a diretiva do papel.
 	var directive := RegionalThreatSystem.monster_directive(unit, hex_grid)
@@ -165,7 +171,95 @@ static func act_for_unit(unit: Unit, hex_grid: HexGrid, turn: int) -> void:
 			_take_guardian_turn(unit, hex_grid, turn)
 
 static func _recalled_by_dragon(unit: Unit, hex_grid: HexGrid) -> bool:
-	return unit.ecology_site_id < 0 and unit.source_event_id < 0 and not hex_grid.is_bound_to_role_lair(unit)
+	return unit.ecology_site_id < 0 and not hex_grid.is_bound_to_role_lair(unit)
+
+## Defesa provocada não depende da era. Estado serializável; nenhuma referência a Node no save.
+## O centro/raio são fixados no primeiro golpe, impedindo puxar o monstro pelo mapa renovando o alerta.
+const RETALIATION_TURNS := 6
+const RETALIATION_MIN_RADIUS := 4
+const RETALIATION_MAX_RADIUS := 6
+const DEFEND_COMPANION_RADIUS := 2
+
+static func note_attacked(victim: Unit, attacker: Unit, grid: HexGrid, turn: int) -> void:
+	if victim.world_event_managed or attacker.owner_player == null:
+		return
+	if victim.source_lair_coord != HexGrid.NO_LAIR and grid.lairs_by_coord.has(victim.source_lair_coord):
+		grid.alert_lair_near(victim.source_lair_coord, turn)
+	if victim.hp > 0.0:
+		_provoke(victim, attacker, turn)
+	# Só vizinhos do MESMO sítio/covil; sem transmissão recursiva, inclusive se a vítima morreu no golpe.
+	for coord in HexMetrics.coords_within(victim.coord, DEFEND_COMPANION_RADIUS):
+		var other := grid.get_unit_at(coord)
+		if other == null or other == victim or other.owner_player != null or other.hp <= 0.0 or other.world_event_managed:
+			continue
+		var same_site := victim.ecology_site_id >= 0 and other.ecology_site_id == victim.ecology_site_id
+		var same_lair := victim.source_lair_coord != HexGrid.NO_LAIR and other.source_lair_coord == victim.source_lair_coord
+		if same_site or same_lair:
+			_provoke(other, attacker, turn)
+
+static func _provoke(unit: Unit, attacker: Unit, turn: int) -> void:
+	var state: Dictionary = unit.ability_state.get("retaliation", {})
+	if state.is_empty():
+		state = {"home": [unit.coord.x, unit.coord.y], "radius": clampi(HexMetrics.axial_distance(unit.coord, attacker.coord) + 1, RETALIATION_MIN_RADIUS, RETALIATION_MAX_RADIUS)}
+	state.target = attacker.serial_id
+	state.coord = [attacker.coord.x, attacker.coord.y]
+	state.last_hit = turn
+	state.returning = false
+	state.stuck = 0
+	unit.ability_state.retaliation = state
+	unit.ability_state.erase("returning")
+	unit.ability_state.erase("raid_target")
+	unit.ability_state.erase("pursuit_stuck")
+	unit.ability_state.aggro_target = attacker.serial_id
+	unit.ability_state.aggro_coord = state.coord
+	MonsterEcologySystem.emit_unit_event("provoked", unit, {"target": GameManager.players.find(attacker.owner_player)})
+
+## Usa o orçamento normal de movimento/ação e as habilidades existentes. Não ganha turnos extras nem
+## imunidade durante o retorno. A busca pelo serial é local; um agressor que escapou não exige varrer unidades.
+static func _take_retaliation_turn(unit: Unit, grid: HexGrid, turn: int) -> bool:
+	var state: Dictionary = unit.ability_state.get("retaliation", {})
+	if state.is_empty():
+		return false
+	var home := MonsterAbilitySystem._coord(state.home)
+	var radius := int(state.radius)
+	var target: Unit = null
+	if not bool(state.returning) and turn <= int(state.last_hit) + RETALIATION_TURNS:
+		target = _ecology_find_by_serial(grid, int(state.target), MonsterAbilitySystem._coord(state.coord), RETALIATION_MAX_RADIUS)
+		if target != null and (target.owner_player == null or target.hp <= 0.0 or grid.get_city_at(target.coord) != null or HexMetrics.axial_distance(home, target.coord) > radius):
+			target = null
+	if target == null:
+		state.returning = true
+		unit.ability_state.erase("aggro_target")
+		unit.ability_state.erase("aggro_coord")
+		if HexMetrics.axial_distance(unit.coord, home) <= RETURN_HOME_RADIUS:
+			unit.ability_state.erase("retaliation")
+			return false
+	var behavior := MonsterEcologyData.behavior(unit.unit_data.visual_kind)
+	if target == null:
+		var immediate := _hostile_in_attack_range(unit, grid)
+		if immediate != null:
+			_ecology_attack(unit, grid, immediate, turn, behavior)
+		else:
+			_ecology_move(unit, grid, home, home, maxi(radius, HexMetrics.axial_distance(unit.coord, home)), "return")
+		return true
+	state.coord = [target.coord.x, target.coord.y]
+	unit.ability_state.aggro_target = target.serial_id
+	unit.ability_state.aggro_coord = state.coord
+	MonsterAbilitySystem.engage_reach = 0 # habilidades ofensivas focam o agressor, não um passante distante
+	var used := MonsterAbilitySystem.try_active(unit, grid, home, radius)
+	MonsterAbilitySystem.engage_reach = -1
+	if used:
+		return true
+	if HexMetrics.axial_distance(unit.coord, target.coord) <= unit.unit_data.attack_range:
+		_ecology_attack(unit, grid, target, turn, behavior)
+	else:
+		var before := HexMetrics.axial_distance(unit.coord, target.coord)
+		_ecology_hunt(unit, grid, target, home, radius, behavior, turn)
+		if is_instance_valid(unit):
+			state.stuck = int(state.stuck) + 1 if HexMetrics.axial_distance(unit.coord, target.coord) >= before else 0
+			if int(state.stuck) >= PURSUIT_STUCK_TURNS:
+				state.returning = true
+	return true
 
 static func _is_dragon_event_active() -> bool:
 	for event in WorldEventManager.active_events:
@@ -509,6 +603,8 @@ static func _nearest_threat_within(anchor: Vector2i, radius: int, hex_grid: HexG
 ## Guardiao de perseguir um alvo pra fora do proprio territorio (RivalAI.
 ## move_unit_toward puro nao tem esse conceito, por isso nao e reusado aqui).
 static func _move_toward_within_radius(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i, anchor: Vector2i, radius: int) -> void:
+	if unit.movement_left <= 0.0:
+		return
 	var reachable = hex_grid.compute_reachable(unit.coord, unit.movement_left, unit.owner_player, unit.unit_data.flies)
 	var best_coord = null
 	var best_dist = HexMetrics.axial_distance(unit.coord, target_coord)
@@ -529,6 +625,8 @@ static func _move_toward_within_radius(unit: Unit, hex_grid: HexGrid, target_coo
 ## o Movimento do turno permite dentro do raio. Só roda nesse caso travado — antes o monstro ficava parado (ex.: Goblin
 ## "voltando para casa" ao lado de uma cidade por 9 turnos). Só criaturas da ecologia.
 static func _ecology_detour_step(unit: Unit, hex_grid: HexGrid, target_coord: Vector2i, anchor: Vector2i, radius: int, reachable: Dictionary):
+	if unit.ability_state.has("retaliation"):
+		return _retaliation_detour_step(unit, hex_grid, target_coord, anchor, radius, reachable)
 	var goals: Array[Vector2i] = [target_coord]
 	goals.append_array(MonsterEcologyPlanner.sorted_coords(hex_grid.get_neighbors(target_coord)))
 	for goal in goals.slice(0, DETOUR_GOALS):
@@ -544,6 +642,47 @@ static func _ecology_detour_step(unit: Unit, hex_grid: HexGrid, target_coord: Ve
 			return step
 		if not path.is_empty():
 			return null # caminho existe, mas o primeiro passo sai do raio: fica
+	return null
+
+## Desvio de defesa limitado à arena do confronto (até 127 tiles), usando os custos canônicos.
+## Nunca tenta uma rota pelo continente inteiro para contornar um obstáculo fora do leash.
+static func _retaliation_detour_step(unit: Unit, grid: HexGrid, target: Vector2i, anchor: Vector2i, radius: int, reachable: Dictionary):
+	var limit := mini(radius, RETALIATION_MAX_RADIUS)
+	var frontier: Array[Vector2i] = [unit.coord]
+	var costs := {unit.coord: 0.0}
+	var previous := {}
+	var index := 0
+	while index < frontier.size():
+		var current := frontier[index]
+		index += 1
+		for coord in grid.get_neighbors(current):
+			if HexMetrics.axial_distance(anchor, coord) > limit:
+				continue
+			var enter := grid._route_enter_cost(coord, null, unit.unit_data.flies, false, unit.unit_data.flies, false, false)
+			if enter < 0.0:
+				continue
+			var cost := float(costs[current]) + enter
+			if not costs.has(coord) or cost < float(costs[coord]):
+				costs[coord] = cost
+				previous[coord] = current
+				frontier.append(coord)
+	var goals: Array[Vector2i] = [target]
+	goals.append_array(MonsterEcologyPlanner.sorted_coords(grid.get_neighbors(target)))
+	for goal in goals:
+		if goal == unit.coord or not previous.has(goal):
+			continue
+		var path: Array[Vector2i] = []
+		var cursor := goal
+		while cursor != unit.coord:
+			path.push_front(cursor)
+			cursor = previous[cursor]
+		var step = null
+		for coord in path:
+			if not reachable.has(coord):
+				break
+			step = coord
+		if step != null:
+			return step
 	return null
 
 ## Destinos tentados pelo desvio (o alvo e até 3 vizinhos dele) — limita o custo do A* no caso travado.
@@ -628,9 +767,6 @@ const ECOLOGY_CITY_RAID_FRACTION := 0.25
 ## 6. fora do território → volta; ocioso → ronda (RNG da ecologia).
 ## Alvos por distância/estado com desempate por coordenada — nunca por ordem de jogador/identidade humana.
 static func _take_ecology_turn(unit: Unit, hex_grid: HexGrid, turn: int, directive: Dictionary) -> void:
-	if MonsterAbilitySystem.skips_turn(unit, turn):
-		return
-	MonsterAbilitySystem.on_turn_start(unit, hex_grid)
 	var anchor: Vector2i = directive.anchor
 	var profile: Dictionary = directive.profile
 	var kind := unit.unit_data.visual_kind

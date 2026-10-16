@@ -1,6 +1,11 @@
 ﻿class_name HexGrid
 extends Node3D
 
+const HUMAN_CONSTRUCTION_SITE := preload("res://assets/generated/humans/buildings/human_construction_site_hex_v1/human_construction_site_hex_v1.tscn")
+const ELF_CONSTRUCTION_SITE := preload("res://assets/generated/elves/buildings/elf_construction_site_hex_v1/elf_construction_site_hex_v1.tscn")
+const ORC_CONSTRUCTION_SITE := preload("res://assets/generated/orcs/buildings/orc_construction_site_hex_v1/orc_construction_site_hex_v1.tscn")
+const DWARF_CONSTRUCTION_SITE := preload("res://assets/generated/dwarves/buildings/dwarf_construction_site_hex_v1/dwarf_construction_site_hex_v1.tscn")
+
 ## Gera um mapa hexagonal 3D real (prismas gerados por codigo, sem depender
 ## de modelos externos) usando MultiMeshInstance3D para desenhar milhares
 ## de tiles com uma unica draw call. Tambem administra ocupacao (unidades e
@@ -23,36 +28,14 @@ enum Visibility { UNSEEN, EXPLORED, VISIBLE }
 ## liquida gelada por baixo.
 const ICE_FLOE_BASE_COLOR := Color(0.75, 0.88, 0.95)
 
-## Refatoracao de nevoa de guerra (pedido do usuario: 3 estados visuais
-## distintos em vez de escurecimento direto) — props (arvores/pedras/picos)
-## usam StandardMaterial3D simples sem shader custom, entao o tom sepia/
-## dessaturado do estado EXPLORED e calculado aqui em GDScript (ver
-## _sepia_prop_color), espelhando o mesmo tratamento que terrain.gdshader
-## aplica por pixel pro terreno solido (fog_explored_tint/desaturate/darken).
-const PROP_SEPIA_TINT := Color(0.55, 0.48, 0.36)
-const PROP_SEPIA_DESATURATE := 0.6
-## Pedido do usuario ("nevoa... diferenciar melhor nunca-explorado e
-## explorado-mas-sem-visao"): 0.4 deixava EXPLORADO quase indistinguivel de
-## VISIVEL pra prop colorido (arvore, cavalo, icone de recurso). Causa: o
-## tom sepia AQUI so entra como MULTIPLICADOR de instancia (StandardMaterial3D.
-## vertex_color_use_as_albedo / Sprite3D.modulate / albedo_color, ver
-## _sepia_prop_color abaixo e os 4 chamadores: HexGrid._tint_props,
-## ResourcePropsManager.apply_fog/_precompute_horse_sepia_overrides,
-## ResourceIconManager.apply_fog) — multiplicar por (0.5, 0.46, 0.41) so
-## ESCURECE um pouco, nunca MUDA A MATIZ de uma textura verde saturada
-## (multiplicacao nao "puxa" pra marrom, so escala cada canal pra baixo na
-## MESMA proporcao relativa) — confirmado isolando o material numa cena a
-## parte (2 arvores lado a lado, cor de instancia branca vs a sepia
-## calculada: quase identicas). O terreno solido nao tem este problema
-## porque terrain.gdshader faz um BLEND/mix() de verdade pro tom sepia, nao
-## multiplicacao — mudar os props pro mesmo esquema exigiria um shader
-## proprio pra cada tipo de prop (arvore/recurso/cavalo), refatoracao ampla
-## desproporcional a um ajuste de nevoa. Escurecer bem mais forte (0.72, nao
-## so 0.4) e' a alavanca que SOBRA dentro do multiplicador: nao vira marrom
-## de verdade, mas fica visivelmente sombrio/apagado — silhueta escura
-## "lembrada", nitidamente diferente tanto de Visivel (cor plena) quanto de
-## Nao-explorado (alfa 0, prop some por completo).
-const PROP_SEPIA_DARKEN := 0.72
+## FILTRO DE MEMÓRIA — a cara de tudo que está em tile EXPLORADO (já visto, fora da visão agora). Pedido do usuário
+## 2026-10-12: "a região que passamos fica diferente, o chão fica cinza... eu quero que dê pra ver o chão, as árvores,
+## recursos do mapa... pode ter um filtro mais escuro pra simbolizar que não é uma visão atualizada". É um
+## multiplicador de cor (mais escuro, levemente frio), o MESMO em todo lugar: terreno e água recebem por uniform
+## (fog_memory_tint em terrain.gdshader / water_shader.gdshader, ver _apply_memory_tint_uniform) e árvores, recursos,
+## gelo, covis e contorno de território por cor de instância (_memory_prop_color). Antes o explorado era um chão
+## sépia/cinza achatado, sem relevo e sem as cores do bioma.
+const MEMORY_TINT := Color(0.4, 0.44, 0.54)
 
 ## Espelha peak_height de terrain.gdshader (default do uniform) — usado por
 ## _tile_surface_height pra saber a altura VISUAL real do centro de uma
@@ -60,10 +43,26 @@ const PROP_SEPIA_DARKEN := 0.72
 ## pixel-perfeito (o shader ainda soma um ruido de quebra por cima que o
 ## GDScript nao replica aqui — so precisa ficar proximo o bastante).
 const MOUNTAIN_PEAK_HEIGHT := 0.9
-## Espelha hill_height de terrain.gdshader (mesmo motivo do par acima) —
-## usado por _tile_surface_height pra saber a altura VISUAL real do centro
-## de uma Colina, nao so base_height cru.
-const HILL_HEIGHT := 0.35
+## Espelha o default de `peak_sharpness` em terrain.gdshader (perfil do pico para surface_height_at; o ruído de cordilheira
+## do shader não é reproduzido).
+const MOUNTAIN_PEAK_SHARPNESS := 1.6
+
+## RELEVO DO TOPO DOS TILES (pedido do usuario, 2026-10-09: "verifique se todos os tiles sao planos... com excessao da
+## montanha e dos mares, lava e etc, deixe plano"). So Montanhas (normal, Vulcanica e de Cristal) tem volume no topo
+## (pico). Todo outro tile de terra — inclusive Colinas e Colinas Vulcanicas, que antes tinham uma cupula de 0.35, e
+## sem o antigo micro-relevo de ±0.04 em todo tile — tem o topo PLANO na sua base_height; a diferenca entre biomas e o
+## degrau de base_height (TerrainDatabase), nunca uma curva dentro do tile. Agua/lava sao desenhadas pelo
+## water_shader, fora deste canal. FONTE UNICA: elevation_kind_for() alimenta o shader (INSTANCE_CUSTOM.g, na geracao
+## e na troca de terreno por magia) e as alturas de superficie (_tile_surface_height/surface_height_at) usadas por
+## unidades, props, icones, vegetacao e contorno de territorio — nada mais classifica relevo por conta propria.
+const ELEVATION_FLAT := 0.0
+const ELEVATION_PEAK := 2.0 # terrain.gdshader testa v_elevation_kind > 1.5
+const PEAK_TERRAINS: Array[int] = [
+	HexTileData.TerrainType.MOUNTAINS, HexTileData.TerrainType.VOLCANIC_PEAKS, HexTileData.TerrainType.CRYSTAL_PEAKS,
+]
+
+static func elevation_kind_for(terrain_type: int) -> float:
+	return ELEVATION_PEAK if terrain_type in PEAK_TERRAINS else ELEVATION_FLAT
 
 ## Mapa retangular (pedido do usuario, com numeros exatos de referencia:
 ## "Pequeno: 74x46... Medio: 84x54... Grande: 96x60"), nao mais um
@@ -180,7 +179,6 @@ var added_lairs: Dictionary = {} # Vector2i -> String
 var removed_seed_lairs: Array[Vector2i] = []
 
 var _hex_mesh: ArrayMesh
-var _tree_mesh: ArrayMesh
 var _ice_floe_mesh: ArrayMesh # pedaco de gelo baixo/chato flutuando no Mar Gelado, ver _build_ice_floe_mesh
 var _multimesh_instance: MultiMeshInstance3D # terreno solido (terrain.gdshader) — continua 1 instancia de prisma por tile
 ## Agua (Oceano/Mar Gelado) E Mar de Lava agora dividem UM UNICO PlaneMesh
@@ -191,7 +189,6 @@ var _multimesh_instance: MultiMeshInstance3D # terreno solido (terrain.gdshader)
 ## antes). Qual bioma cada pixel do plano mostra vem de uma textura de
 ## mascara, ver _rebuild_water_overlay/_build_liquid_plane.
 var _liquid_plane_instance: MeshInstance3D
-var _props_tree_instance: MultiMeshInstance3D
 var _props_ice_floe_instance: MultiMeshInstance3D
 var _ground_body: StaticBody3D
 var _selection_marker: MeshInstance3D
@@ -207,7 +204,6 @@ var _coast_distance_tiles: Dictionary = {}
 ## Textura de 1 texel-por-tile pra classificacao EXATA de Mar de Lava — ver
 ## _rebuild_lava_tile_mask.
 var _lava_tile_mask_texture: ImageTexture
-var _tree_coord_to_index: Dictionary = {}
 var _ice_floe_coord_to_index: Dictionary = {}
 ## Props 3D de recurso (minerio/cavalos/gemas/seda, ver ResourceDatabase) —
 ## classe separada (nao mais campos soltos aqui) porque cada recurso
@@ -215,8 +211,31 @@ var _ice_floe_coord_to_index: Dictionary = {}
 ## pedra/pico), entao ResourcePropsManager encapsula essa colecao inteira
 ## em vez de HexGrid crescer mais 4 pares de MultiMeshInstance3D/Dictionary.
 var _resource_props_manager: ResourcePropsManager
+## Vegetação do mapa (kit temperate_forest_v1): composição ecológica por bioma (NatureComposer) desenhada por
+## NatureDecorManager — substitui a árvore KayKit única repetida por escala/rotação.
+var nature_decor: NatureDecorManager
 var ability_feedback: MonsterAbilityFeedback
 var visual_focus: VisualFocusSystem
+## Brilho do mundo (só visual): as luzes e a emissão de tudo que brilha no mapa, seguindo a escuridão da cena —
+## ver WorldGlow. Hoje quem pede são os recursos Gemas e Nódulo Arcano (ResourcePropsManager).
+var world_glow: WorldGlow
+## Camada física de névoa sobre os tiles NUNCA VISTOS (só visual) — ver FogLayer.
+var fog_layer: FogLayer
+## Rota visível das marchas do jogador (ordem de marcha pendente), só para o dono — ver MarchRouteOverlay.
+var march_routes: MarchRouteOverlay
+## ESTADO DE NÉVOA EXATO POR TILE para os shaders (shaders/fog_state.gdshaderinc): 1 texel por tile, sem filtro —
+## 0 nunca visto, 128 explorado, 255 visível. A camada de névoa cobre os tiles em 0 e o terreno não desenha o que está
+## embaixo dela. A grade é a caixa (coluna, linha) "odd-r" dos tiles que existem, então vale para qualquer mapa (do
+## gerador ou montado à mão em teste). Reenviada inteira a cada mudança de névoa: são map_width × map_height BYTES.
+var _fog_state_texture: ImageTexture
+var _fog_state_bytes: PackedByteArray = PackedByteArray()
+var _fog_grid_min := Vector2i.ZERO
+var _fog_grid_size := Vector2i.ZERO
+## Destaque (alcance/ataque/trajeto/obra) dos tiles NUNCA VISTOS, desenhado pela camada de névoa: o terreno deles não
+## é desenhado, então o tingimento por instância de _highlight_coords não aparece ali. Mesma grade da textura de estado.
+var _fog_highlight_texture: ImageTexture
+var _fog_highlight_bytes: PackedByteArray = PackedByteArray()
+var _fog_highlighted: Array[Vector2i] = []
 
 ## V3 / Etapa 3: algo mudou de lugar num tile (unidade, prédio, cidade, covil, melhoria, névoa) — o foco visual
 ## recalcula no fim do frame (deferred, uma vez por lote).
@@ -253,8 +272,17 @@ var _biome_overlay_coord_cache: Array[Vector2i] = []
 var _liquid_fog_bytes := PackedByteArray()
 var _biome_fog_bytes := PackedByteArray()
 var _last_fog_visibility: Dictionary = {}
+## Tiles VISÍVEIS depois do último recompute_fog (conjunto) e se o `changed` daquele recálculo cobre TODA diferença entre
+## `visibility` e `_last_fog_visibility` (caminho rápido): aí a cópia é atualizada só nesses tiles, sem duplicar o
+## dicionário do mapa inteiro. Otimização de 2026-10-14, docs/PERFORMANCE_GUIDE.md §6.
+var _fog_visible_coords: Dictionary = {}
+var _fog_changes_complete := false
 var _land_components: Dictionary = {}
 var _land_component_tile_count := -1
+## Embarque automático (2026-10-10): componentes conexos de terra + água embarcável — a rejeição rápida de
+## compute_path para quem atravessa água (ver _route_possible). Mesma invalidação de _land_components.
+var _amphibious_components: Dictionary = {}
+var _amphibious_component_tile_count := -1
 var _land_component_sizes: Dictionary = {} # Fase 33D2: id de componente -> nº de tiles (preguiçoso)
 ## Ver compute_path/_destination_walled_in: nos expandidos pelo A* antes de
 ## checar de novo se o destino esta emparedado, e tamanho maximo da regiao que
@@ -314,26 +342,16 @@ var _cities_root: Node3D
 var _buildings_root: Node3D
 var _construction_root: Node3D
 var _lairs_root: Node3D
-var _tints_root: Node3D
-var _changed_tree_props: Dictionary = {}
+var _borders_root: Node3D
 var _dirty_terrain_visuals: Dictionary = {}
-var _city_tints: Dictionary = {} # City -> MeshInstance3D, tingimento do chao do territorio (ver _update_city_tint)
-## Cache do shader de tingimento — evita um load() do disco por CIDADE a
-## CADA turno (_update_city_tint roda pra toda cidade toda vez que a nevoa
-## muda). load() em si tem cache interno do Godot por caminho, mas ainda
-## paga overhead de lookup/validacao a cada chamada; carregar uma vez so e
-## estritamente mais barato e o Shader e imutavel (nunca precisa recarregar).
-var _territory_tint_shader: Shader
-var _construction_markers: Dictionary = {} # Vector2i -> Node3D, marcador animado de "em construcao" (ver refresh_construction_markers)
-## Vector2i -> true, predios que ACABARAM de ser concluidos e cujo marcador
-## esta na "volta de graca" (bara travada em 100%, ver refresh_construction_
-## markers) antes de sumir de vez no PROXIMO refresh — pedido do usuario:
-## "quando a barra chega em 90% a construção acaba", ou seja o marcador
-## sumia no MESMO turno em que a producao empurrava alem do custo, entao o
-## jogador nunca chegava a VER a barra cheia, so o ultimo valor do turno
-## anterior (podia ser bem menos que 100%, dependendo do ritmo de producao
-## vs custo do predio).
-var _construction_markers_pending_removal: Dictionary = {}
+var _city_borders: Dictionary = {} # City -> MeshInstance3D, contorno do territorio (ver refresh_territory_borders)
+## Material ÚNICO do contorno (shaders/territory_border_shader.gdshader), compartilhado por todas as cidades — a cor
+## vem por vértice (cor da civ / sépia da névoa), então não há motivo para um material por cidade.
+var _territory_border_material: ShaderMaterial
+## Vector2i -> Node3D: canteiro (modelo animado + barra de progresso) de cada obra EM ANDAMENTO. Invariante: um tile
+## nunca tem canteiro e prédio ao mesmo tempo — place_building retira o canteiro no instante em que o prédio nasce
+## (_retire_construction_marker) e refresh_construction_markers nunca cria um onde já há prédio.
+var _construction_markers: Dictionary = {}
 ## Vector2i -> turno em que a pilhagem expira (ver pillage_tile/
 ## is_tile_pillaged) — Invasor saqueando uma melhoria de recurso V2
 ## (MonsterAI._maybe_pillage_tile) zera o rendimento dela por um tempo
@@ -343,6 +361,9 @@ var _construction_markers_pending_removal: Dictionary = {}
 var _pillaged_tiles: Dictionary = {}
 ## Alterações feitas durante a partida, reaplicadas sobre o mapa do seed.
 var terrain_changes: Dictionary = {} # Vector2i -> TerrainType
+## Recursos de mapa DESTRUÍDOS durante a partida (coord -> id do recurso que existia ali), reaplicados sobre o mapa do
+## seed no load. Só destroy_resource_at escreve aqui — ver lá quem destrói (hoje: construir um prédio em cima).
+var destroyed_resources: Dictionary = {}
 ## Aetherlands V2, Fase 20 — MODIFICAÇÕES FÍSICAS de terreno (coord -> id de V2TerrainModificationData), uma camada
 ## sobre o terreno-base (que nunca é reescrito). Estado canônico por COORDENADA (não no HexTileData: a magia V1
 ## transform_tile_terrain troca o objeto do tile). Lido em O(1) pelo custo de passo e pela Defesa; salvo esparso.
@@ -367,7 +388,6 @@ var next_unit_id: int = 1
 var _selection_time := 0.0
 var _construction_time := 0.0 # sempre roda, diferente de _selection_time (so anda com unidade selecionada)
 var _hover_label: Label3D
-var _last_came_from: Dictionary = {} # Vector2i -> Vector2i, da ultima compute_reachable
 var _moisture_noise := FastNoiseLite.new() # biomas: seco x umido
 var _temp_jitter_noise := FastNoiseLite.new() # biomas: variacao local na faixa de temperatura
 var _volcanic_noise := FastNoiseLite.new() # bioma raro: Lava substituindo Montanhas
@@ -386,42 +406,25 @@ var _arcane_noise := FastNoiseLite.new() # bioma raro: Campos de Cristal
 ## plano de agua, margem confortavel.
 const LAND_PRISM_DEPTH_FACTOR := 1.0
 
-## Arvore real (KayKit Forest Nature Pack, mesmo criador/ecossistema do
-## KAYKIT_SCALE usado em Building.gd) substituindo o cone/cilindro
-## procedural — pedido do usuario: "por que nao substituiu assets da
-## natureza... arvores, e etc". A malha nativa mede ~4.16 de altura (Y);
-## a arvore procedural antiga (_build_tree_mesh, removida) tinha ~0.88 de
-## altura (tronco 0.3 + copa ate 0.22+0.55). 0.2 e o fator que aproxima a
-## altura nova da antiga (0.2*4.16=~0.83), preservando a escala relativa
-## ja calibrada entre arvore/predio/unidade no mapa.
-const TREE_MODEL_SCENE := "res://assets/models/kaykit/nature/Tree_1_A_Color1.gltf"
-const TREE_MODEL_SCALE := 0.2
-
-## Pedido do usuario ("ARVORES/FLORESTAS": "praticamente todos os tiles do
-## bioma de selva recebem arvores... visualmente deixa o mapa muito
-## carregado, pode aumentar custo de renderizacao/objetos/ruido visual").
-## Antes, todo tile elegivel (Floresta/Taiga/Selva sem recurso) SEMPRE
-## ganhava 3-5 arvores — cobertura 100%, sem clareira nenhuma, grade densa
-## repetitiva tile-a-tile. Esta chance decide, POR TILE, se ele recebe
-## arvores ou fica como clareira (pedido explicito: "nao quero que vire uma
-## planicie com meia duzia de arvores" — o bioma ainda precisa ler como
-## floresta/selva). 0.6 e' a propria hipotese inicial do usuario, mas so
-## virou o valor final depois de testado visualmente (screenshot in-game
-## real, Selva e Floresta, mapa Grande) — nao foi aceito de olhos fechados:
-## nos dois biomas as clareiras ficaram legiveis (tiles de terreno nu
-## intercalados) sem o aglomerado perder cara de floresta/selva. NAO e' lei
-## permanente, so o que passou nesse teste: se um mapa real voltar a parecer
-## denso demais ou vazio demais, ajustar aqui e revalidar visualmente de novo.
-const TREE_TILE_COVERAGE_CHANCE := 0.6
+## VEGETAÇÃO: a árvore KayKit única (TREE_MODEL_SCENE/TREE_MODEL_SCALE/TREE_TILE_COVERAGE_CHANCE) saiu em 2026-10-09.
+## O mapa é composto com o kit temperate_forest_v1 por bioma, densidade regional, talhões de espécie e ecótono
+## (NatureBiomeProfiles + NatureComposer) e desenhado por NatureDecorManager (`nature_decor`).
 
 func _ready() -> void:
 	if _units_root != null:
 		return
 	add_to_group("hex_grid")
 	_hex_mesh = _build_hex_prism_mesh(hex_size, LAND_PRISM_DEPTH_FACTOR)
-	_tree_mesh = _load_tree_mesh()
 	_ice_floe_mesh = _build_ice_floe_mesh()
+	world_glow = WorldGlow.new()
+	add_child(world_glow)
+	fog_layer = FogLayer.new(self)
+	add_child(fog_layer)
+	# Rota das marchas do jogador: visível até a tropa chegar, só para o dono (MarchRouteOverlay).
+	march_routes = MarchRouteOverlay.new(self)
+	add_child(march_routes)
 	_resource_props_manager = ResourcePropsManager.new(self)
+	nature_decor = NatureDecorManager.new(self)
 	_resource_icon_manager = ResourceIconManager.new(self)
 	# V3 / Etapa 3: camada de apresentação de habilidades/ecologia (só reage a eventos; nunca altera gameplay).
 	ability_feedback = MonsterAbilityFeedback.new(self)
@@ -451,9 +454,9 @@ func _ready() -> void:
 	_lairs_root.name = "Lairs"
 	add_child(_lairs_root)
 
-	_tints_root = Node3D.new()
-	_tints_root.name = "TerritoryTints"
-	add_child(_tints_root)
+	_borders_root = Node3D.new()
+	_borders_root.name = "TerritoryBorders"
+	add_child(_borders_root)
 
 	_portals_root = Node3D.new()
 	_portals_root.name = "V2Portals"
@@ -476,15 +479,16 @@ func _process(delta: float) -> void:
 	if _construction_markers.size() > 0:
 		_construction_time += delta
 		for marker in _construction_markers.values():
-			# So a geometria do guindaste (sub-no "Crane") gira — `marker` em
-			# si (pai da barra de progresso tambem, ver _build_construction_
-			# marker) so balança em Y, senao a barra giraria junto.
-			marker.get_node("Crane").rotate_y(delta * 1.5)
-			marker.position.y = marker.get_meta("base_y") + sin(_construction_time * 2.0 + marker.get_meta("phase")) * 0.05
+			# Only the placeholder crane moves. Built construction sites stay grounded.
+			var crane := marker.get_node_or_null("Crane") as Node3D
+			if crane:
+				crane.rotate_y(delta * 1.5)
+				marker.position.y = marker.get_meta("base_y") + sin(_construction_time * 2.0 + marker.get_meta("phase")) * 0.05
 
 ## seed_value < 0 sorteia uma semente nova (jogo novo); Salvar/Carregar passa
 ## a semente guardada pra recriar exatamente o mesmo terreno.
 func generate_map(width: int, height: int, seed_value: int = -1, progress_callback: Callable = Callable()) -> void:
+	preload("res://scripts/vfx/CombatFeedback.gd").clear_grid(self)
 	map_width = width
 	map_height = height
 	# V3 / Etapa 3: o PERFIL de mundo sai das dimensões (WorldProfile) — padrão 1.0 = só o continente principal.
@@ -493,10 +497,13 @@ func generate_map(width: int, height: int, seed_value: int = -1, progress_callba
 	tiles.clear()
 	visibility.clear()
 	_last_fog_visibility.clear()
+	_fog_viewer = null
 	_liquid_fog_bytes = PackedByteArray()
 	_biome_fog_bytes = PackedByteArray()
 	_land_components.clear()
 	_land_component_tile_count = -1
+	_amphibious_components.clear()
+	_amphibious_component_tile_count = -1
 	# Geometria da grade (half_extents) muda com map_width/map_height —
 	# invalida os caches de pixel->coord (ver _water_overlay_coord_cache),
 	# senao um novo jogo/mapa reusaria o mapeamento antigo, errado.
@@ -511,23 +518,28 @@ func generate_map(width: int, height: int, seed_value: int = -1, progress_callba
 	# REGIAO coerente em vez de "sal e pimenta" tile a tile. As mesmas 5
 	# octavas continuam dando detalhe fino nas BORDAS (litoral irregular,
 	# nao um circulo perfeito) — quem decide a FORMA geral e a octava base.
+	# Tamanhos de mapa (2026-10-10): "o mesmo continente, menor" — as frequências do ruído são multiplicadas por
+	# noise_scale (= 96 / largura da área reservada; 1 no Grande e nos legados) e a força da distorção do litoral é
+	# dividida por ela (_warp_world). Equivale a amostrar o continente do Grande numa escala reduzida: mesma seed, mesmo
+	# desenho e mesma distribuição de biomas, só que menor (ver WorldProfile).
+	_noise_scale = WorldProfile.noise_scale(world_profile)
 	_noise.seed = map_seed
-	_noise.frequency = continent_noise_frequency
+	_noise.frequency = continent_noise_frequency * _noise_scale
 	# Offsets fixos (nao randi() de novo) pra continuar 100% deterministico a
 	# partir da mesma map_seed — Salvar/Carregar depende disso pra recriar o
 	# terreno identico so com a semente (ver SaveManager.gd).
 	_warp_noise.seed = map_seed + 500
-	_warp_noise.frequency = warp_frequency
+	_warp_noise.frequency = warp_frequency * _noise_scale
 	_moisture_noise.seed = map_seed + 1000
-	_moisture_noise.frequency = moisture_noise_frequency
+	_moisture_noise.frequency = moisture_noise_frequency * _noise_scale
 	_temp_jitter_noise.seed = map_seed + 2000
-	_temp_jitter_noise.frequency = temperature_jitter_frequency
+	_temp_jitter_noise.frequency = temperature_jitter_frequency * _noise_scale
 	# +3000 (antigo canal de _resource_noise) fica deliberadamente livre —
 	# recursos agora usam +8000, ver _assign_resources().
 	_volcanic_noise.seed = map_seed + 5000
-	_volcanic_noise.frequency = volcanic_noise_frequency
+	_volcanic_noise.frequency = volcanic_noise_frequency * _noise_scale
 	_arcane_noise.seed = map_seed + 6000
-	_arcane_noise.frequency = arcane_noise_frequency # Campos de Cristal em CAMPO, nao tile solto
+	_arcane_noise.frequency = arcane_noise_frequency * _noise_scale # Campos de Cristal em CAMPO, nao tile solto
 	# Canal DEDICADO pra reforco/patrulha de covil turno a turno (ver
 	# monster_turn_rng acima) — semeado aqui igual todo outro canal, mas
 	# SaveManager pode sobrescrever `.state` logo em seguida (apos um load)
@@ -698,9 +710,13 @@ func _report_generation_progress(callback: Callable, fraction: float, phase: Str
 ## nodes antigos ficariam orfaos dentro das raizes, ainda ocupando tiles
 ## do mapa novo.
 func _clear_entities() -> void:
-	for prop in _changed_tree_props.values():
-		prop.free()
-	_changed_tree_props.clear()
+	_closed_border_cache.clear() # jogadores e cidades da partida anterior
+	if world_glow != null:
+		world_glow.clear_group(IMPROVEMENT_GLOW_GROUP)
+	if march_routes != null:
+		march_routes.clear()
+	if nature_decor != null:
+		nature_decor.clear_all()
 	_dirty_terrain_visuals.clear()
 	if _units_root:
 		for child in _units_root.get_children():
@@ -717,8 +733,8 @@ func _clear_entities() -> void:
 	if _lairs_root:
 		for child in _lairs_root.get_children():
 			child.queue_free()
-	if _tints_root:
-		for child in _tints_root.get_children():
+	if _borders_root:
+		for child in _borders_root.get_children():
 			child.queue_free()
 	if _portals_root:
 		for child in _portals_root.get_children():
@@ -734,19 +750,14 @@ func _clear_entities() -> void:
 	if hazards != null:
 		for child in hazards.get_children():
 			child.queue_free()
-	# Fase 33D-R: marcadores visuais de eventos mundiais (Relicário) são filhos diretos do grid.
-	for child in get_children():
-		if child.is_in_group(WORLD_EVENT_MARKER_GROUP):
-			child.queue_free()
 	if visual_focus != null:
 		visual_focus.reset()
 	units_by_coord.clear()
 	cities_by_coord.clear()
 	buildings_by_coord.clear()
 	improvement_markers_by_coord.clear()
-	_city_tints.clear()
+	_city_borders.clear()
 	_construction_markers.clear()
-	_construction_markers_pending_removal.clear()
 	# lairs_by_coord/cleared_lair_coords tambem resetam aqui: generate_map()
 	# (unico chamador de _clear_entities) sempre recria os covis do zero
 	# deterministicamente, logo em seguida (_spawn_monster_lairs). Quem
@@ -761,6 +772,7 @@ func _clear_entities() -> void:
 	removed_seed_lairs.clear()
 	_pillaged_tiles.clear()
 	terrain_changes.clear()
+	destroyed_resources.clear()
 	v2_terrain_modifications.clear()
 	for marker in _terrain_modification_markers.values():
 		if is_instance_valid(marker):
@@ -780,7 +792,6 @@ func _clear_entities() -> void:
 ## proxima partida/load, ver linha ~358) -- reusa o MESMO teardown que ja
 ## roda no inicio de toda geracao de mapa, agora exposto publico pra poder
 ## ser chamado sem gerar um mapa novo em seguida.
-const WORLD_EVENT_MARKER_GROUP := "world_event_marker"
 
 func reset_to_empty() -> void:
 	_clear_entities()
@@ -797,14 +808,12 @@ func get_city_at(coord: Vector2i) -> City:
 func get_building_at(coord: Vector2i) -> Building:
 	return buildings_by_coord.get(coord, null)
 
-## Aetherlands V2, Fase 15 (§78/§118 do pedido) — indicação visual de "recurso melhorado": o modelo
-## KayKit JÁ EXISTENTE que V2ResourceImprovementData declara pra aquele recurso (mina/mercado/torre/
-## moinho), em escala reduzida (é uma melhoria, não um prédio de slot), com um pequeno cone dourado
-## procedural por cima que diferencia "melhoria" de "prédio" num relance. Sem asset novo; se o modelo
-## faltar, fica só o cone. Idempotente (uma melhoria nunca é substituída, ver
-## V2ConstructorRuntime.unavailable_reason). Chamado tanto na hora de melhorar (V2ConstructorRuntime)
-## quanto ao reconstruir um save (SaveManager).
+## Shared resource-improvement art. Native assets are authored in tile units;
+## legacy KayKit entries retain their small scale and fallback badge. Complete
+## installations can include the resource, replacing its prop without deleting
+## its data or icon. Called on construction and save restoration, never per frame.
 const IMPROVEMENT_MODEL_SCALE := 0.55
+const IMPROVEMENT_GLOW_GROUP := &"resource_improvements"
 
 func refresh_resource_improvement_marker(coord: Vector2i) -> void:
 	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
@@ -818,25 +827,81 @@ func refresh_resource_improvement_marker(coord: Vector2i) -> void:
 		if city.resource_improvements.has(coord):
 			improvement_id = city.resource_improvements[coord]
 			break
-	var model_path := V2ResourceImprovementData.model_scene_path_for_resource(V2ResourceImprovementData.resource_for_improvement(improvement_id))
+	var resource_id := V2ResourceImprovementData.resource_for_improvement(improvement_id)
+	var entry := V2ResourceImprovementData.entry_for_resource(resource_id)
+	var model_path := V2ResourceImprovementData.model_scene_path_for_resource(resource_id)
+	var native := BuildingArtCatalog.is_generated(model_path)
+	var replaces_prop := bool(entry.get("replaces_resource_prop", false)) and ResourceLoader.exists(model_path)
+	if replaces_prop:
+		_clear_tree_props_at(coord) # release focus overlays before zeroing resource instances
+		_resource_props_manager.clear_prop_at(coord)
+	marker.set_meta("replaces_resource_prop", replaces_prop)
+	var glow_profile := StringName(entry.get("glow_profile", &""))
 	if model_path != "" and ResourceLoader.exists(model_path):
 		var model: Node3D = (load(model_path) as PackedScene).instantiate()
-		model.scale = Vector3.ONE * Building.KAYKIT_SCALE * IMPROVEMENT_MODEL_SCALE
+		model.scale = Vector3.ONE * (hex_size if native else Building.KAYKIT_SCALE * IMPROVEMENT_MODEL_SCALE)
 		marker.add_child(model)
-	var badge := MeshInstance3D.new()
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = 0.02
-	mesh.bottom_radius = 0.1
-	mesh.height = 0.22
-	badge.mesh = mesh
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.95, 0.78, 0.15)
-	badge.material_override = material
-	badge.position = Vector3(0, 0.75, 0)
-	marker.add_child(badge)
+		if world_glow != null and GlowProfiles.has_profile(glow_profile):
+			for child in model.find_children("*", "MeshInstance3D", true, false):
+				var part := child as MeshInstance3D
+				for surface in part.mesh.get_surface_count():
+					world_glow.track_emission(part.get_active_material(surface) as BaseMaterial3D, glow_profile)
+	if not native or not ResourceLoader.exists(model_path):
+		var badge := MeshInstance3D.new()
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 0.02
+		mesh.bottom_radius = 0.1
+		mesh.height = 0.22
+		badge.mesh = mesh
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color(0.95, 0.78, 0.15)
+		badge.material_override = material
+		badge.position = Vector3(0, 0.75, 0)
+		marker.add_child(badge)
 	_buildings_root.add_child(marker)
 	marker.position = world_for_coord(coord)
+	if native:
+		marker.position.y = _tile_surface_height(coord)
+	marker.visible = shown_through_fog(coord, _improvement_owner(coord))
 	improvement_markers_by_coord[coord] = marker
+	if world_glow != null and replaces_prop and GlowProfiles.has_profile(glow_profile):
+		marker.set_meta("glow_profile", glow_profile)
+		world_glow.attach_light(IMPROVEMENT_GLOW_GROUP, coord, marker, glow_profile)
+		world_glow.set_light_shown(IMPROVEMENT_GLOW_GROUP, coord, visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE)
+
+## Destrói DE VEZ o recurso de mapa de `coord` e tudo que dependia dele: a melhoria do Construtor (rendimento,
+## marcador e pilhagem pendente), o prop 3D e o ícone. Devolve o id do recurso destruído ("" se o tile não tinha
+## nenhum — idempotente). Pedido do usuário: "se tiver algum recurso de mapa e eu construir algo em cima... o recurso
+## daquele tile some". ÚNICO ponto que apaga `HexTileData.resource` em jogo: quem inicia uma obra (City.start_building,
+## jogador e IA) e place_building (rede de segurança: prédio de pé nunca tem recurso embaixo) passam por aqui, e o
+## load reaplica `destroyed_resources` sobre o mapa do seed. Antes o prédio só escondia o prop/ícone e o recurso
+## continuava nos dados — inaproveitável (Construtor não melhora tile com prédio) mas ainda listado no inspetor.
+func destroy_resource_at(coord: Vector2i) -> String:
+	var tile := get_tile(coord)
+	if tile == null or tile.resource == "":
+		return ""
+	if visual_focus != null:
+		# Restore cached transforms BEFORE removing their indices, so a later
+		# inspection fade cannot put a destroyed prop back inside the site.
+		visual_focus.release_props(coord)
+	var resource_id := tile.resource
+	tile.resource = ""
+	destroyed_resources[coord] = resource_id
+	for city in cities_by_coord.values():
+		city.resource_improvements.erase(coord)
+	var improvement_marker = improvement_markers_by_coord.get(coord)
+	if is_instance_valid(improvement_marker):
+		improvement_marker.queue_free()
+	improvement_markers_by_coord.erase(coord)
+	if world_glow != null:
+		world_glow.remove_light(IMPROVEMENT_GLOW_GROUP, coord)
+	_pillaged_tiles.erase(coord)
+	if _resource_props_manager:
+		_resource_props_manager.clear_prop_at(coord)
+	if _resource_icon_manager:
+		_resource_icon_manager.clear_icon_at(coord)
+	mark_visual_focus_dirty()
+	return resource_id
 
 ## Algum predio (de qualquer cidade) ja ocupa este tile? Evita duas cidades
 ## vizinhas (ou a mesma cidade duas vezes) disputarem o mesmo tile pra construcao.
@@ -856,9 +921,12 @@ func place_building(coord: Vector2i, building_id: String, owner_player: PlayerDa
 	_buildings_root.add_child(building)
 	building.setup(building_id, coord, owner_player)
 	building.position = world_for_coord(coord)
+	building.visible = shown_through_fog(coord, owner_player)
 	_clear_tile_decor_at(coord) # ver ARVORES E RECURSOS -- mesma logica de found_city acima
+	destroy_resource_at(coord) # prédio de pé nunca tem recurso embaixo (normalmente já destruído ao INICIAR a obra)
 	V2TerrainRuntime.clear_for_construction(self, coord) # Fase 20: a estrutura permanente ocupa o tile — a modificação sai
 	buildings_by_coord[coord] = building
+	_retire_construction_marker(coord) # o prédio substitui o canteiro NO MESMO instante, nunca os dois no tile
 	if clear_portal:
 		V2PortalSystem.close_pair_at(coord, self) # Fase 21: só construção efetivamente concluída fecha o par
 	return building
@@ -882,8 +950,8 @@ func world_for_coord(coord: Vector2i) -> Vector3:
 ## acabam com os pes dentro do terreno... crie uma solucao robusta, nao uma
 ## correcao especifica pra um unico modelo"). Investigado antes de mexer:
 ## world_for_coord() acima so devolve base_height (a base CRUA/plana do
-## prisma) -- Colina/Montanha (e as variantes Vulcanica/Cristal) ganham um
-## domo/pico VISUAL por cima disso so no shader (terrain.gdshader), que o
+## prisma) -- Montanha (e as variantes Vulcanica/Cristal) ganha um
+## pico VISUAL por cima disso so no shader (terrain.gdshader), que o
 ## GDScript nunca via. ResourcePropsManager ja tinha essa MESMA causa raiz
 ## (relatada como "recurso sem nada na celula") e ja resolvia com
 ## _tile_surface_height() -- esta funcao e' so o mesmo calculo reaproveitado
@@ -896,10 +964,15 @@ func world_for_coord(coord: Vector2i) -> Vector3:
 ## unidade for reposicionada aqui ja pega a altura ATUAL, nao uma antiga.
 ## Fora do escopo desta tarefa (nao pedido, nao mexido): Cidade/Predio/
 ## covil continuam em world_for_coord puro -- ver Claude_updates.md.
+##
+## Embarque automático (2026-10-10): em água embarcável (Oceano/Mar Gelado/Costa) a "superfície" de quem está ali é o
+## PLANO D'ÁGUA visível (LIQUID_LEVEL_Y), não o fundo do prisma (base_height −0,3/−0,28) — o barco flutua na linha
+## d'água e os marcadores de tile ficam por cima da água em vez de afundados.
 func world_surface_for_coord(coord: Vector2i) -> Vector3:
 	var pos = world_for_coord(coord)
 	if tiles.has(coord):
-		pos.y = _tile_surface_height(coord)
+		var data: HexTileData = tiles[coord]
+		pos.y = maxf(_tile_surface_height(coord), LIQUID_LEVEL_Y) if data.can_be_embarked_on() else _tile_surface_height(coord)
 	return pos
 
 ## Metade da largura/profundidade (eixos X/Z) que o mapa retangular ocupa
@@ -922,31 +995,24 @@ func get_world_half_extents() -> Vector2:
 ## (SelectionManager/RivalAI), nunca "andando" pra dentro dela. `flies`
 ## (Grifo, UnitData.flies) ignora custo de terreno (sempre 1 por tile) E
 ## atravessa oceano — voa por cima de tudo, so unidade/cidade inimiga
-## ainda bloqueiam. `embarked` (Roadmap 2.0 Parte 1, C — Unit.embarked)
-## permite cruzar agua (HexTileData.can_be_embarked_on()) SEM ignorar custo
-## de terreno nem cruzar Lava (diferente de `flies`) — e terra firme so e
-## permitida como DESTINO FINAL enquanto embarcado (ver check logo apos o
-## pop_front() abaixo): um tile de terra alcancado NO MEIO do trajeto vira
-## no-folha, nunca expande vizinhos dali, entao nenhum caminho computado
-## atravessa terra->agua->terra de novo dentro do MESMO comando (achado na
-## revisao do plano — sem essa regra, continue_move_order executaria um
-## trajeto multi-trecho sem revalidar terreno a cada passo).
-func compute_reachable(start: Vector2i, movement_points: float, owner: PlayerData, flies: bool = false, embarked: bool = false, flat_cost: bool = false) -> Dictionary:
+## ainda bloqueiam. `amphibious` (EMBARQUE AUTOMÁTICO, 2026-10-10 — Unit.can_embark()) permite atravessar água
+## embarcável (HexTileData.can_be_embarked_on()) ao custo NORMAL do tile, sem cruzar Lava/Montanha (diferente de
+## `flies`). Um mesmo trajeto pode ir terra -> água -> terra: quem embarca/desembarca é move_unit, passo a passo, a partir
+## do tile (HexGrid.sync_embarked), então não há "modo" a revalidar no meio do caminho.
+func compute_reachable(start: Vector2i, movement_points: float, owner: PlayerData, flies: bool = false, amphibious: bool = false, flat_cost: bool = false) -> Dictionary:
 	var cost_so_far := {start: 0.0}
-	var came_from := {start: start}
 	var frontier: Array[Vector2i] = [start]
+	var closed := closed_tiles_for(owner) # fronteiras fechadas: território alheio onde `owner` não entra
 	while frontier.size() > 0:
 		var current: Vector2i = frontier.pop_front()
-		if embarked and current != start and not flies and not get_tile(current).can_be_embarked_on():
-			continue
 		for n in get_neighbors(current):
-			if get_unit_at(n) != null or _is_lair_structure_at(n):
+			if get_unit_at(n) != null or _is_lair_structure_at(n) or closed.has(n):
 				continue
 			var city_here = get_city_at(n)
 			if city_here != null and city_here.owner_player != owner:
 				continue
 			var terrain: HexTileData = get_tile(n)
-			if not flies and terrain.blocks_land_units() and not (embarked and terrain.can_be_embarked_on()):
+			if not flies and not _passable_for_ground(terrain, amphibious):
 				continue
 			var step_cost = 1.0 if (flies or flat_cost) else terrain_step_cost(n, terrain, owner != null) # flat_cost (Fase 9): cada passo custa 1, o resto das regras é o mesmo
 			var new_cost = cost_so_far[current] + step_cost
@@ -957,10 +1023,8 @@ func compute_reachable(start: Vector2i, movement_points: float, owner: PlayerDat
 				new_cost = movement_points
 			if new_cost <= movement_points and (not cost_so_far.has(n) or new_cost < cost_so_far[n]):
 				cost_so_far[n] = new_cost
-				came_from[n] = current
 				frontier.append(n)
 	cost_so_far.erase(start)
-	_last_came_from = came_from
 	return cost_so_far
 
 ## PERFIL DE VOO TÁTICO (UnitData.MovementProfile.FLYING, Aetherlands V2 Fase 9): os tiles que `unit` pode alcançar com `budget` pontos
@@ -974,9 +1038,10 @@ func flight_reachable(unit: Unit, budget: float) -> Dictionary:
 	var steps := int(floor(budget))
 	if steps <= 0:
 		return result
+	var closed := closed_tiles_for(unit.owner_player) # fronteiras fechadas: sobrevoa, mas não pousa
 	for coord in HexMetrics.coords_within(unit.coord, steps):
 		var terrain: HexTileData = tiles.get(coord, null)
-		if terrain == null or terrain.blocks_land_units() or get_unit_at(coord) != null or _is_lair_structure_at(coord):
+		if terrain == null or terrain.blocks_land_units() or get_unit_at(coord) != null or _is_lair_structure_at(coord) or closed.has(coord):
 			continue
 		var city_here = get_city_at(coord)
 		if city_here != null and city_here.owner_player != unit.owner_player:
@@ -988,19 +1053,21 @@ func flight_reachable(unit: Unit, budget: float) -> Dictionary:
 ## alcança com `budget` pontos de movimento (1 por passo, ignorando o custo do terreno) pela conectividade TERRESTRE normal — nunca atravessa água,
 ## lava ou montanha (`blocks_land_units()`), nunca uma cidade inimiga — mas UNIDADES no meio do caminho (aliadas OU inimigas) NÃO bloqueiam a
 ## passagem: só o tile onde a unidade TERMINA precisa estar livre (de unidade e de estrutura de covil). Diferente de flight_reachable: nunca sobre
-## terreno impassável, então nunca precisa da regra de "pouso legal" — o destino já é qualquer tile de terra normal e livre. Dijkstra real (como
-## compute_reachable), então grava `_last_came_from` do mesmo jeito — reconstruct_path/_animation_waypoints funcionam sem saber qual perfil rodou.
+## terreno impassável, então nunca precisa da regra de "pouso legal" — o destino já é qualquer tile de terra normal e livre. A ROTA até um destino
+## (pré-visualização e animação) vem de unit_route, que aplica estas mesmas regras de passagem (ROUTE_THROUGH_UNITS | ROUTE_FLAT_COST).
+## Embarque automático (2026-10-10): o Mestre das Sombras também embarca — atravessa água embarcável como qualquer tropa.
 func infiltrate_reachable(unit: Unit, budget: float) -> Dictionary:
 	var start := unit.coord
+	var amphibious := unit.can_embark()
 	var cost_so_far := {start: 0.0}
-	var came_from := {start: start}
 	var frontier: Array[Vector2i] = [start]
 	var result := {}
+	var closed := closed_tiles_for(unit.owner_player) # fronteiras fechadas valem para quem se infiltra também
 	while frontier.size() > 0:
 		var current: Vector2i = frontier.pop_front()
 		for n in get_neighbors(current):
 			var terrain: HexTileData = tiles.get(n, null)
-			if terrain == null or terrain.blocks_land_units():
+			if terrain == null or not _passable_for_ground(terrain, amphibious) or closed.has(n):
 				continue # terreno realmente impassável nunca é atravessado, nem só de passagem
 			var city_here = get_city_at(n)
 			if city_here != null and city_here.owner_player != unit.owner_player:
@@ -1010,17 +1077,16 @@ func infiltrate_reachable(unit: Unit, budget: float) -> Dictionary:
 			var new_cost = cost_so_far[current] + 1.0 # cada passo atravessável custa 1, ignorando o custo do terreno
 			if new_cost <= budget and (not cost_so_far.has(n) or new_cost < cost_so_far[n]):
 				cost_so_far[n] = new_cost
-				came_from[n] = current
 				frontier.append(n)
 				if get_unit_at(n) == null: # atravessa por cima de uma unidade, mas ela não vira um destino válido
 					result[n] = new_cost
-	_last_came_from = came_from
 	return result
 
 ## Os tiles que `unit` alcança pelo PERFIL de movimento dela: voo tático (flight_reachable), infiltração (infiltrate_reachable) ou o Dijkstra de
-## sempre (compute_reachable, com o `flies`/`embarked` V1 da unidade) — pra unidade terrestre é exatamente a chamada que a HUD já fazia. `budget` < 0
-## = o movimento que resta; `flat_cost` (só terrestre GROUND) = cada passo custa 1, ignorando o custo de terreno (Retirada Tática).
-func unit_reachable(unit: Unit, budget: float = -1.0, flat_cost: bool = false) -> Dictionary:
+## sempre (compute_reachable, com o `flies` da unidade e a água embarcável de Unit.can_embark()). `budget` < 0 = o movimento que resta;
+## `flat_cost` (só terrestre GROUND) = cada passo custa 1, ignorando o custo de terreno (Retirada Tática). `allow_water` = false (Técnicas de
+## deslocamento: Carga, Retirada) = só por terra, como antes do embarque — combate não muda.
+func unit_reachable(unit: Unit, budget: float = -1.0, flat_cost: bool = false, allow_water: bool = true) -> Dictionary:
 	if not unit.can_receive_orders(): # Fase 19: retinue sem comando não tem destino (o gate real é move_unit)
 		return {}
 	var points := unit.movement_left if budget < 0.0 else budget
@@ -1030,7 +1096,66 @@ func unit_reachable(unit: Unit, budget: float = -1.0, flat_cost: bool = false) -
 		UnitData.MovementProfile.INFILTRATOR:
 			return infiltrate_reachable(unit, points)
 		_:
-			return compute_reachable(unit.coord, points, unit.owner_player, unit.unit_data.flies, unit.embarked, flat_cost)
+			return compute_reachable(unit.coord, points, unit.owner_player, unit.unit_data.flies, allow_water and unit.can_embark(), flat_cost)
+
+## EMBARQUE AUTOMÁTICO (2026-10-10) — destinos para as escolhas "gulosas" da IA (o melhor tile alcançável por pontuação,
+## sem rota até um objetivo: construtor, conjurador, guarda do ritual, exploração, avanço sem caminho). A água é
+## TRAVESSIA, não lugar de estacionar: a rota pode passar por ela, mas o destino escolhido é terra. Exceção: quem já está
+## embarcado pode terminar na água (travessia longa que não chega à terra neste turno), senão ficaria parado no mar.
+func unit_landing_reachable(unit: Unit, budget: float = -1.0) -> Dictionary:
+	var reach := unit_reachable(unit, budget)
+	if unit.embarked or not unit.can_embark():
+		return reach
+	var landing := {}
+	for coord in reach:
+		var terrain: HexTileData = tiles.get(coord)
+		if terrain != null and not terrain.can_be_embarked_on():
+			landing[coord] = reach[coord]
+	return landing
+
+## Rota de `unit` até `end` pelas regras de passagem DELA (voo legado, água embarcável), SEM teto de movimento — o
+## PLANO de quem anda passo a passo por vários turnos (marcha, explorar, IA, sítio de cidade). Pesa a infecção micótica
+## conhecida e parte do rumo atual da unidade (Unit.travel_dir), então replanejar a cada turno continua a mesma rota em
+## vez de trocar de perna.
+func unit_path(unit: Unit, end: Vector2i) -> Array[Vector2i]:
+	return compute_path(unit.coord, end, unit.owner_player, unit.unit_data.flies, unit.can_embark(), unit.travel_dir)
+
+## A rota de UM deslocamento de `unit` até `dest` — a que a pré-visualização mostra e a que a animação percorre (mesma
+## função, mesmo estado: nunca divergem). `dest` vem de unit_reachable chamado com os MESMOS `flat_cost`/`allow_water`,
+## então o custo da rota é o custo que validou o destino: voo tático em linha reta, infiltração por dentro das unidades,
+## e o resto pelo roteador (_find_route). Vazia se não houver rota.
+func unit_route(unit: Unit, dest: Vector2i, flat_cost: bool = false, allow_water: bool = true) -> Array[Vector2i]:
+	return _route_from(unit.coord, dest, unit, flat_cost, allow_water)
+
+func _route_from(origin: Vector2i, dest: Vector2i, unit: Unit, flat_cost: bool = false, allow_water: bool = true) -> Array[Vector2i]:
+	var flags := ROUTE_AMPHIBIOUS if allow_water and unit.can_embark() else 0
+	match unit.unit_data.movement_profile:
+		UnitData.MovementProfile.FLYING:
+			return flight_path(origin, dest)
+		UnitData.MovementProfile.INFILTRATOR:
+			flags |= ROUTE_THROUGH_UNITS | ROUTE_FLAT_COST
+		_:
+			if unit.unit_data.flies:
+				flags |= ROUTE_FLIES
+			if flat_cost:
+				flags |= ROUTE_FLAT_COST
+	return _find_route(origin, dest, unit.owner_player, flags, unit.travel_dir)
+
+## Passagem terrestre: terra que não bloqueia (água/lava/montanha bloqueiam) ou, para quem embarca, água embarcável.
+static func _passable_for_ground(terrain: HexTileData, amphibious: bool) -> bool:
+	return not terrain.blocks_land_units() or (amphibious and terrain.can_be_embarked_on())
+
+## Estado EMBARCADO derivado do tile — o ÚNICO ponto que liga/desliga Unit.embarked (move_unit, teleporte, spawn, load
+## do save, empurrão). Unidade que embarca (Unit.can_embark) num tile de água embarcável está embarcada; em terra, não.
+## Atualiza o visual do barco (Unit.set_boat_visual) sem animar — a troca animada de quem anda acontece no meio do passo,
+## em Unit._advance_walk_queue.
+func sync_embarked(unit: Unit, animate_visual: bool = false) -> void:
+	var terrain: HexTileData = tiles.get(unit.coord)
+	unit.embarked = unit.can_embark() and terrain != null and terrain.can_be_embarked_on()
+	if unit.embarked:
+		# Unidade em trânsito: Fortificar/Explorar não valem na água (mesmas guardas de SelectionManager/HUD).
+		unit.fortified = false
+	unit.set_boat_visual(unit.embarked, animate_visual)
 
 ## Fase 21 — fonte única de “esta unidade pode TERMINAR neste tile?” para deslocamentos diretos
 ## (teleporte e Portal). Não calcula caminho nem custo. O perfil FLYING V2 preserva sua regra de
@@ -1070,31 +1195,16 @@ func refresh_v2_portal_markers() -> void:
 			marker.name = "PortalEndpoint_%d_%d" % [coord.x, coord.y]
 			marker.set_meta("owner_index", int(pair.owner_index))
 			marker.set_meta("school", String(pair.school))
-			var ring := MeshInstance3D.new()
-			var mesh := TorusMesh.new()
-			mesh.inner_radius = 0.34
-			mesh.outer_radius = 0.48
-			mesh.rings = 24
-			mesh.ring_segments = 8
-			ring.mesh = mesh
-			var material := StandardMaterial3D.new()
-			var color := V2MagicContent.school_color(String(pair.school))
-			material.albedo_color = Color(color.r, color.g, color.b, 0.88)
-			material.emission_enabled = true
-			material.emission = color
-			material.emission_energy_multiplier = 2.2
-			material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-			ring.material_override = material
-			marker.add_child(ring)
+			var gate: Node3D = preload("res://scripts/vfx/PortalEndpointFX.gd").new()
+			marker.add_child(gate)
+			gate.setup(self,coord)
 			_portals_root.add_child(marker)
 			marker.position = world_surface_for_coord(coord) + Vector3(0.0, 0.08, 0.0)
 			marker.visible = visibility.is_empty() or visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
 			_v2_portal_markers[coord] = marker
 
-## Marcador ambiental estático, sem colisão e sem `_process`: aro baixo + disco
-## translúcido que deixa unidade/terreno legíveis. A cor deriva dos EFEITOS do
-## dado (visão/ranged/dano), nunca de id/nome de Elementalismo.
+## Atmosfera estilizada, sem colisão: contorno aberto e oito blocos instanciados.
+## O visual segue V2EnvironmentalZoneData; a duração continua no sistema de zonas.
 func refresh_environmental_zone_marker(coord: Vector2i) -> void:
 	var old: Node3D = _v2_environmental_zone_markers.get(coord, null)
 	if old != null:
@@ -1106,43 +1216,11 @@ func refresh_environmental_zone_marker(coord: Vector2i) -> void:
 	var data := V2EnvironmentalZoneSystem.zone_at(coord, self)
 	if data == null:
 		return
-	var color := Color(0.70, 0.78, 0.82)
-	if data.round_tick_magic_damage > 0.0:
-		color = Color(0.38, 0.48, 1.0)
-	if data.vision_delta != 0 and data.physical_ranged_attack_multiplier < 1.0:
-		color = Color(0.72, 0.38, 0.92)
-	elif data.physical_ranged_attack_multiplier < 1.0:
-		color = Color(0.30, 0.92, 0.90)
 	var marker := Node3D.new()
 	marker.name = "EnvironmentalZone_%d_%d" % [coord.x, coord.y]
-	var ring := MeshInstance3D.new()
-	var torus := TorusMesh.new()
-	torus.inner_radius = 0.50
-	torus.outer_radius = 0.60
-	torus.rings = 24
-	torus.ring_segments = 6
-	ring.mesh = torus
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(color.r, color.g, color.b, 0.72)
-	material.emission_enabled = true
-	material.emission = color
-	material.emission_energy_multiplier = 1.35
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	ring.material_override = material
-	marker.add_child(ring)
-	var veil := MeshInstance3D.new()
-	var cylinder := CylinderMesh.new()
-	cylinder.top_radius = 0.48
-	cylinder.bottom_radius = 0.48
-	cylinder.height = 0.035
-	cylinder.radial_segments = 24
-	veil.mesh = cylinder
-	var veil_material := material.duplicate() as StandardMaterial3D
-	veil_material.albedo_color.a = 0.18
-	veil_material.emission_energy_multiplier = 0.45
-	veil.material_override = veil_material
-	marker.add_child(veil)
+	var field: Node3D = preload("res://scripts/vfx/EnvironmentalZoneFX.gd").new()
+	marker.add_child(field)
+	field.setup(self,coord,data.visual_kind)
 	_environmental_zones_root.add_child(marker)
 	marker.position = world_surface_for_coord(coord) + Vector3(0.0, 0.055, 0.0)
 	marker.visible = visibility.is_empty() or visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
@@ -1248,13 +1326,13 @@ static func affordable_step_cost(step_cost: float, movement_left: float, first_s
 		return step_cost
 	return movement_left if first_step and movement_left > 0.0 else -1.0
 
-## Fase 20 — marcador visual PERSISTENTE da modificação de terreno do tile (reaproveita árvores KayKit / primitivas de
+## Fase 20 — marcador visual PERSISTENTE da modificação de terreno do tile (vegetação do kit de natureza / primitivas de
 ## rocha; nenhum asset novo). Idempotente: recria só este tile. Nunca bloqueia clique (sem colisão) nem cobre a unidade
 ## (corpos na borda do hexágono). Some/aparece com a neblina como os prédios (ver _apply_fog_to_entities).
-const TERRAIN_MOD_TREE_SCALE := 0.13
 const TERRAIN_MOD_RIM := 0.62
 
 func refresh_terrain_modification_marker(coord: Vector2i) -> void:
+	if preload("res://scripts/vfx/CombatFeedback.gd").defer_call(self, &"refresh_terrain_modification_marker", [coord], true): return
 	var existing: Node3D = _terrain_modification_markers.get(coord, null)
 	if existing != null:
 		if is_instance_valid(existing):
@@ -1276,26 +1354,24 @@ func refresh_terrain_modification_marker(coord: Vector2i) -> void:
 		marker.visible = visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
 	_terrain_modification_markers[coord] = marker
 
+## Bosque Denso (Druidismo): anel de árvores jovens e aveleiras do kit de natureza na borda do tile — mata nova, mais
+## baixa que a floresta adulta, sem cobrir a unidade no centro.
+const GROVE_RING := ["tree_oak_young", "shrub_hazel", "tree_oak_young", "shrub_bracken", "tree_oak_young", "shrub_hazel"]
+
 func _build_grove_marker(marker: Node3D) -> void:
-	if _tree_mesh == null:
-		return
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = _tree_mesh
-	mm.instance_count = 5
-	for index in range(5):
-		var angle := index * TAU / 5.0 + 0.3
-		var pos := Vector3(cos(angle), 0.0, sin(angle)) * hex_size * TERRAIN_MOD_RIM
-		mm.set_instance_transform(index, Transform3D(Basis(Vector3.UP, angle).scaled(Vector3.ONE * TERRAIN_MOD_TREE_SCALE * (1.0 + 0.15 * (index % 2))), pos))
-	var instance := MultiMeshInstance3D.new()
-	instance.multimesh = mm
-	var material := StandardMaterial3D.new()
-	material.albedo_texture = load("res://assets/models/kaykit/nature/forest_texture.png")
-	material.albedo_color = Color(0.72, 0.95, 0.62)
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-	instance.material_override = material
-	marker.add_child(instance)
+	for index in GROVE_RING.size():
+		var asset: String = GROVE_RING[index]
+		var mesh := NatureKitCatalog.mesh(asset)
+		if mesh == null:
+			continue
+		var angle := index * TAU / GROVE_RING.size() + 0.3
+		var radius := (NatureComposer.SQRT3_HALF - NatureComposer.EDGE_MARGIN - NatureKitCatalog.footprint(asset)) * hex_size
+		var body := MeshInstance3D.new()
+		body.mesh = mesh
+		body.material_override = NatureKitCatalog.map_material()
+		body.position = Vector3(cos(angle), 0.0, sin(angle)) * minf(radius, hex_size * TERRAIN_MOD_RIM)
+		body.rotation.y = angle * 1.7
+		marker.add_child(body)
 
 func _build_raised_marker(marker: Node3D) -> void:
 	var material := StandardMaterial3D.new()
@@ -1325,23 +1401,6 @@ func _build_raised_marker(marker: Node3D) -> void:
 ## O trajeto do voo: a linha reta (sem `start`, com `end`). Só animação/pré-visualização — a legalidade vem de flight_reachable.
 func flight_path(start: Vector2i, end: Vector2i) -> Array[Vector2i]:
 	return HexMetrics.axial_line(start, end)
-
-## Reconstroi a sequencia de tiles ate `end`, usando os predecessores
-## calculados na ULTIMA chamada de compute_reachable — so faz sentido
-## logo em seguida, pro mesmo `start` (SelectionManager garante isso: so
-## chama isso enquanto um unit continua selecionado).
-func reconstruct_path(start: Vector2i, end: Vector2i) -> Array[Vector2i]:
-	var path: Array[Vector2i] = []
-	if not _last_came_from.has(end):
-		return path
-	var current = end
-	var safety = 0
-	while current != start and safety < 64:
-		path.append(current)
-		current = _last_came_from.get(current, start)
-		safety += 1
-	path.reverse()
-	return path
 
 ## Caminho de custo minimo entre `start` e `end`, SEM teto de movement_points
 ## (diferente de compute_reachable, que so acha tiles alcancaveis NO turno
@@ -1383,86 +1442,144 @@ func reconstruct_path(start: Vector2i, end: Vector2i) -> Array[Vector2i]:
 ## nos. O heap guarda [f = g + h, coord]; g fica em cost_so_far, e um
 ## `closed` set descarta pops repetidos (com heuristica consistente, a
 ## primeira vez que um no sai do heap ja e definitiva).
-func compute_path(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool = false, embarked: bool = false) -> Array[Vector2i]:
+## ROTA CANONICA (2026-10-10, relato do usuario: "as vezes ele faz rodopios estranhos, gira e faz movimentos meio
+## aleatorios"). Todo terreno custa 1, entao entre dois tiles existem MUITAS rotas de mesmo custo — e o desempate era
+## a ordem do heap: a rota saia em zigue-zague (medido em campo aberto: 8,5 curvas de 60 graus numa rota de 33 passos,
+## onde 1 basta) e a unidade virava o corpo a cada tile. Pior: a previa vinha de uma arvore (compute_reachable) e a
+## animacao de outra busca (este A*), entao 29% dos movimentos andavam por um caminho diferente do mostrado.
+## Agora a ordem e LEXICOGRAFICA e deterministica: (1) menor custo, o mesmo de sempre; (2) entre os de menor custo, o
+## de MENOS CURVAS, contando a curva em relacao ao rumo atual (`heading`, um NEIGHBOR_DIRS; ZERO = sem rumo) — campo
+## aberto da no maximo uma curva, e replanejar no turno seguinte continua a perna em vez de troca-la; (3) empate
+## restante: o no mais perto do destino sai primeiro (a perna longa antes da curta).
+## Como: o estado do A* e (tile, direcao de chegada) e cada curva soma ROUTE_TURN_COST ao g — pequeno o bastante para
+## nunca somar um passo (custos sao inteiros; 1024 curvas < 1), entao o CUSTO devolvido nao muda. Dois cortes mantem a
+## busca enxuta: o heap desempata por h (segue a rota em vez de inundar o paralelogramo de empates) e um estado que
+## chega num tile com uma curva a mais que o melhor ja expandido ali e descartado (dominado: o melhor vira para a
+## mesma direcao pagando a mesma curva). Numeros em docs/PERFORMANCE_GUIDE.md.
+const ROUTE_TURN_COST := 1.0 / 1024.0
+const ROUTE_FLIES := 1 # voo legado (UnitData.flies): passa por cima de qualquer terreno, 1 por passo
+const ROUTE_AMPHIBIOUS := 2 # atravessa agua embarcavel (Unit.can_embark)
+const ROUTE_FLAT_COST := 4 # cada passo custa 1, ignorando o custo do terreno (Retirada Tatica, Passo Sombrio)
+const ROUTE_THROUGH_UNITS := 8 # unidades no meio do caminho nao bloqueiam (Passo Sombrio); o destino continua livre
+const ROUTE_KNOWN_HAZARDS := 16 # pesa a infeccao micotica conhecida (so planejamento; nunca vira muro nem custo real)
+
+func compute_path(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool = false, amphibious: bool = false, heading: Vector2i = Vector2i.ZERO) -> Array[Vector2i]:
+	return _find_route(start, end, owner, (ROUTE_FLIES if flies else 0) | (ROUTE_AMPHIBIOUS if amphibious else 0) | ROUTE_KNOWN_HAZARDS, heading)
+
+func _find_route(start: Vector2i, end: Vector2i, owner: PlayerData, flags: int, heading: Vector2i = Vector2i.ZERO) -> Array[Vector2i]:
 	var path: Array[Vector2i] = []
 	if start == end:
 		return path
+	var flies := flags & ROUTE_FLIES != 0
+	var amphibious := flags & ROUTE_AMPHIBIOUS != 0
+	var flat_cost := flies or flags & ROUTE_FLAT_COST != 0
+	var through_units := flags & ROUTE_THROUGH_UNITS != 0
+	var known_hazards := flags & ROUTE_KNOWN_HAZARDS != 0
 	# O destino passa pelas mesmas regras que cada aresta do A*. Se não
 	# pode ser ocupado, nenhuma busca pelo continente inteiro dará caminho.
 	var destination := get_tile(end)
 	var destination_city := get_city_at(end)
 	if destination == null or get_unit_at(end) != null or _is_lair_structure_at(end) or (destination_city != null and destination_city.owner_player != owner):
 		return path
-	if not flies and destination.blocks_land_units() and not (embarked and destination.can_be_embarked_on()):
+	# Fronteiras fechadas: destino em território alheio fechado não tem rota (rejeitado antes de qualquer busca), e
+	# nenhuma aresta do A* entra num tile desses — a rota contorna.
+	var closed_border := closed_tiles_for(owner)
+	if closed_border.has(end):
 		return path
-	# Busca impossível entre ilhas: não explorar o continente inteiro para
-	# cada fronteira que a IA tenta. Ocupantes/cidades/covis continuam no A*.
-	if not flies and not embarked and not _land_route_possible(start, end):
+	if not flies and not _passable_for_ground(destination, amphibious):
 		return path
-	if _destination_walled_in(start, end, owner, flies, embarked, PATH_POCKET_QUICK_LIMIT):
+	# Busca impossível entre ilhas (ou entre mares separados por terra, para quem embarca): não explorar o mapa inteiro
+	# para cada fronteira que a IA tenta. Ocupantes/cidades/covis continuam no A*.
+	if not flies and not _route_possible(start, end, amphibious):
 		return path
-	var cost_so_far := {start: 0.0}
-	var came_from := {start: start}
+	if _destination_walled_in(start, end, owner, flies, amphibious, PATH_POCKET_QUICK_LIMIT, through_units, closed_border):
+		return path
+	# Estado = Vector3i(q, r, direcao de chegada); -1 = partida sem rumo (o primeiro passo nao conta curva).
+	var start_state := Vector3i(start.x, start.y, NEIGHBOR_DIRS.find(heading))
+	var cost_so_far := {start_state: 0.0}
+	var came_from := {}
 	var closed := {}
+	var settled := {} # tile -> g do primeiro estado expandido nele (o menor entre todas as direcoes de chegada)
+	var enter_costs := {} # tile -> _route_enter_cost, uma vez por busca (cada tile e visto de ate 6 vizinhos)
 	var pocket_checked := false
-	var heap: Array = [[float(HexMetrics.axial_distance(start, end)), start]]
+	var goal = null
+	var heap: Array = []
+	var start_distance := float(HexMetrics.axial_distance(start, end))
+	_heap_push(heap, start_distance, start_state, start_distance)
 	while heap.size() > 0:
-		var entry = _heap_pop_min(heap)
-		var current: Vector2i = entry[1]
-		if closed.has(current):
+		var state: Vector3i = _heap_pop_min(heap)[1]
+		if closed.has(state):
 			continue
-		closed[current] = true
-		var current_cost: float = cost_so_far[current]
+		closed[state] = true
+		var current := Vector2i(state.x, state.y)
+		var current_cost: float = cost_so_far[state]
 		if current == end:
+			goal = state
 			break
-		# Destino emparedado (ex.: cidade cercada pelas proprias unidades,
-		# que o A* trata como parede): sem entrada, a busca varreria o
-		# continente inteiro (~65ms) so pra falhar. Checado uma vez, so'
-		# depois de a busca provar que nao e' um caminho curto.
-		if not pocket_checked and closed.size() > PATH_POCKET_CHECK_AFTER:
-			pocket_checked = true
-			if _destination_walled_in(start, end, owner, flies, embarked, PATH_POCKET_LIMIT):
-				return path
-		# Mesma regra de compute_reachable acima: terra so e permitida como
-		# DESTINO FINAL enquanto embarcado. O check `current == end` ja
-		# rodou/deu break antes deste ponto, entao um `end` em terra
-		# continua funcionando normalmente — so uma terra QUE NAO e `end`
-		# vira beco sem saida aqui.
-		if embarked and current != start and not flies and not get_tile(current).can_be_embarked_on():
-			continue
-		for n in get_neighbors(current):
-			if get_unit_at(n) != null or _is_lair_structure_at(n):
+		if settled.has(current):
+			if current_cost >= settled[current] + ROUTE_TURN_COST:
 				continue
-			var city_here = get_city_at(n)
-			if city_here != null and city_here.owner_player != owner:
+		else:
+			settled[current] = current_cost
+			# Destino emparedado (ex.: cidade cercada pelas proprias unidades,
+			# que o A* trata como parede): sem entrada, a busca varreria o
+			# continente inteiro (~65ms) so pra falhar. Checado uma vez, so'
+			# depois de a busca provar que nao e' um caminho curto.
+			if not pocket_checked and settled.size() > PATH_POCKET_CHECK_AFTER:
+				pocket_checked = true
+				if _destination_walled_in(start, end, owner, flies, amphibious, PATH_POCKET_LIMIT, through_units, closed_border):
+					return path
+		for dir_index in NEIGHBOR_DIRS.size():
+			var n: Vector2i = current + NEIGHBOR_DIRS[dir_index]
+			var enter_cost: float = enter_costs.get(n, 0.0)
+			if enter_cost == 0.0: # ainda nao avaliado nesta busca (todo custo real e >= 1)
+				enter_cost = -1.0 if closed_border.has(n) else _route_enter_cost(n, owner, flies, amphibious, flat_cost, through_units, known_hazards)
+				enter_costs[n] = enter_cost
+			if enter_cost < 0.0:
 				continue
-			var terrain: HexTileData = get_tile(n)
-			if not flies and terrain.blocks_land_units() and not (embarked and terrain.can_be_embarked_on()):
+			var new_cost := current_cost + enter_cost
+			if state.z >= 0 and state.z != dir_index:
+				new_cost += ROUTE_TURN_COST
+			if settled.has(n) and new_cost >= settled[n] + ROUTE_TURN_COST:
 				continue
-			var step_cost = 1.0 if flies else terrain_step_cost(n, terrain, owner != null)
-			# V3 / Etapa 2: infecção micótica CONHECIDA pesa só na escolha de rota (nunca vira muro nem custo real).
-			step_cost += MonsterHazardSystem.path_penalty(n, owner)
-			var new_cost = current_cost + step_cost
-			if not cost_so_far.has(n) or new_cost < cost_so_far[n]:
-				cost_so_far[n] = new_cost
-				came_from[n] = current
-				_heap_push(heap, new_cost + float(HexMetrics.axial_distance(n, end)), n)
-	if not came_from.has(end):
+			var next := Vector3i(n.x, n.y, dir_index)
+			if not cost_so_far.has(next) or new_cost < cost_so_far[next]:
+				cost_so_far[next] = new_cost
+				came_from[next] = state
+				var distance := float((absi(end.x - n.x) + absi(end.y - n.y) + absi(end.x - n.x + end.y - n.y)) / 2) # HexMetrics.axial_distance, sem a chamada
+				_heap_push(heap, new_cost + distance, next, distance)
+	if goal == null:
 		return path
-	var step = end
-	while step != start:
-		path.push_front(step)
+	var step: Vector3i = goal
+	while step != start_state:
+		path.push_front(Vector2i(step.x, step.y))
 		step = came_from[step]
 	return path
 
-## Procura a regiao alcancavel A PARTIR DO DESTINO (mesmas regras de passagem do A*,
-## sem a excecao de embarque -- so' pode SUPERESTIMAR o alcance, nunca dar
-## falso "inalcancavel"). Se essa regiao acaba antes de `limit` nos e nao
+## Custo de ENTRAR em `coord` numa rota (as regras de passagem de compute_reachable/infiltrate_reachable, num lugar so),
+## ou -1 se a rota nao pode passar por ali.
+func _route_enter_cost(coord: Vector2i, owner: PlayerData, flies: bool, amphibious: bool, flat_cost: bool, through_units: bool, known_hazards: bool) -> float:
+	var terrain: HexTileData = tiles.get(coord)
+	if terrain == null or lairs_by_coord.has(coord) or (not through_units and units_by_coord.has(coord)):
+		return -1.0
+	var city_here: City = cities_by_coord.get(coord)
+	if city_here != null and city_here.owner_player != owner:
+		return -1.0
+	if not flies and not _passable_for_ground(terrain, amphibious):
+		return -1.0
+	var cost := 1.0 if flat_cost else terrain_step_cost(coord, terrain, owner != null)
+	# V3 / Etapa 2: infecção micótica CONHECIDA pesa só na escolha de rota (nunca vira muro nem custo real).
+	if known_hazards:
+		cost += MonsterHazardSystem.path_penalty(coord, owner)
+	return cost
+
+## Procura a regiao alcancavel A PARTIR DO DESTINO (mesmas regras de passagem do A*
+## -- so' pode SUPERESTIMAR o alcance, nunca dar falso "inalcancavel"). Se essa regiao acaba antes de `limit` nos e nao
 ## encosta em `start`, nenhum caminho existe. Chamada com um limite pequeno
 ## antes do A* e com um maior depois de PATH_POCKET_CHECK_AFTER nos expandidos.
 ## Medido numa campanha de 80 turnos: 39 buscas falhas de ~65ms, todas com
 ## regiao de 1 a 59 tiles.
-func _destination_walled_in(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool, embarked: bool, limit: int) -> bool:
+func _destination_walled_in(start: Vector2i, end: Vector2i, owner: PlayerData, flies: bool, amphibious: bool, limit: int, through_units: bool = false, closed: Dictionary = {}) -> bool:
 	var seen := {end: true}
 	var frontier: Array[Vector2i] = [end]
 	var index := 0
@@ -1472,13 +1589,13 @@ func _destination_walled_in(start: Vector2i, end: Vector2i, owner: PlayerData, f
 		for n in get_neighbors(current):
 			if n == start:
 				return false
-			if seen.has(n) or get_unit_at(n) != null or _is_lair_structure_at(n):
+			if seen.has(n) or _is_lair_structure_at(n) or (not through_units and get_unit_at(n) != null) or closed.has(n):
 				continue
 			var city_here = get_city_at(n)
 			if city_here != null and city_here.owner_player != owner:
 				continue
 			var terrain: HexTileData = get_tile(n)
-			if not flies and terrain.blocks_land_units() and not (embarked and terrain.can_be_embarked_on()):
+			if not flies and not _passable_for_ground(terrain, amphibious):
 				continue
 			seen[n] = true
 			if seen.size() > limit:
@@ -1492,24 +1609,34 @@ func _destination_walled_in(start: Vector2i, end: Vector2i, owner: PlayerData, f
 func _ensure_land_components() -> void:
 	if _land_component_tile_count == tiles.size():
 		return
-	_land_components.clear()
+	_fill_components(_land_components, false)
+	_land_component_tile_count = tiles.size()
+	_land_component_sizes.clear()
+
+## Embarque automático: o mesmo para terra + água embarcável (quem atravessa água). Mesma invalidação.
+func _ensure_amphibious_components() -> void:
+	if _amphibious_component_tile_count == tiles.size():
+		return
+	_fill_components(_amphibious_components, true)
+	_amphibious_component_tile_count = tiles.size()
+
+func _fill_components(components: Dictionary, amphibious: bool) -> void:
+	components.clear()
 	var component := 0
 	for coord in tiles:
-		if _land_components.has(coord) or tiles[coord].blocks_land_units():
+		if components.has(coord) or not _passable_for_ground(tiles[coord], amphibious):
 			continue
 		component += 1
 		var frontier: Array[Vector2i] = [coord]
-		_land_components[coord] = component
+		components[coord] = component
 		var index := 0
 		while index < frontier.size():
 			var current := frontier[index]
 			index += 1
 			for neighbor in get_neighbors(current):
-				if not _land_components.has(neighbor) and not tiles[neighbor].blocks_land_units():
-					_land_components[neighbor] = component
+				if not components.has(neighbor) and _passable_for_ground(tiles[neighbor], amphibious):
+					components[neighbor] = component
 					frontier.append(neighbor)
-	_land_component_tile_count = tiles.size()
-	_land_component_sizes.clear()
 
 ## Fase 33D2 — tamanho (tiles) da massa de terra contínua de `coord` (0 = água/fora do mapa).
 func land_component_size(coord: Vector2i) -> int:
@@ -1521,28 +1648,35 @@ func land_component_size(coord: Vector2i) -> int:
 	return int(_land_component_sizes.get(_land_components.get(coord, -1), 0))
 
 func _land_route_possible(start: Vector2i, end: Vector2i) -> bool:
-	_ensure_land_components()
-	var target: int = _land_components.get(end, -1)
+	return _route_possible(start, end, false)
+
+func _route_possible(start: Vector2i, end: Vector2i, amphibious: bool) -> bool:
+	var components := _amphibious_components if amphibious else _land_components
+	if amphibious:
+		_ensure_amphibious_components()
+	else:
+		_ensure_land_components()
+	var target: int = components.get(end, -1)
 	if target < 0:
 		return false
-	if _land_components.has(start):
-		return _land_components[start] == target
+	if components.has(start):
+		return components[start] == target
 	# Uma transformação pode deixar a unidade sobre terreno bloqueado.
 	# O A* permite sair desse ponto inicial; manter a mesma possibilidade.
 	for neighbor in get_neighbors(start):
-		if _land_components.get(neighbor, -1) == target:
+		if components.get(neighbor, -1) == target:
 			return true
 	return false
 
-## Heap binario minimo generico sobre um Array de pares [cost, coord] —
-## usado so por compute_path acima. Implementacao classica (sift-up/
+## Heap binario minimo generico sobre um Array de [cost, item, tie] — a ordem e (cost, tie): `tie` so desempata custos
+## IGUAIS (_find_route passa a distancia ate o destino; explore_step nao usa). Implementacao classica (sift-up/
 ## sift-down por indice de arvore binaria empacotada num Array).
-func _heap_push(heap: Array, cost: float, coord: Vector2i) -> void:
-	heap.append([cost, coord])
+func _heap_push(heap: Array, cost: float, item: Variant, tie: float = 0.0) -> void:
+	heap.append([cost, item, tie])
 	var i = heap.size() - 1
 	while i > 0:
 		var parent = (i - 1) / 2
-		if heap[parent][0] <= heap[i][0]:
+		if heap[parent][0] < heap[i][0] or (heap[parent][0] == heap[i][0] and heap[parent][2] <= heap[i][2]):
 			break
 		var tmp = heap[parent]
 		heap[parent] = heap[i]
@@ -1559,9 +1693,9 @@ func _heap_pop_min(heap: Array) -> Array:
 			var left = 2 * i + 1
 			var right = 2 * i + 2
 			var smallest = i
-			if left < heap.size() and heap[left][0] < heap[smallest][0]:
+			if left < heap.size() and (heap[left][0] < heap[smallest][0] or (heap[left][0] == heap[smallest][0] and heap[left][2] < heap[smallest][2])):
 				smallest = left
-			if right < heap.size() and heap[right][0] < heap[smallest][0]:
+			if right < heap.size() and (heap[right][0] < heap[smallest][0] or (heap[right][0] == heap[smallest][0] and heap[right][2] < heap[smallest][2])):
 				smallest = right
 			if smallest == i:
 				break
@@ -1579,10 +1713,14 @@ func spawn_unit(coord: Vector2i, unit_data: UnitData, player: PlayerData) -> Uni
 	_units_root.add_child(unit)
 	unit.setup(unit_data, player, coord)
 	unit.serial_id = next_unit_id
+	if V2ManifestationOrders.is_bound(unit):
+		unit.manifestation_ready_turn = TurnManager.turn_number + 1
 	next_unit_id += 1
 	unit.position = world_surface_for_coord(coord)
+	unit.visible = shown_through_fog(coord, player) # já nasce escondida se o jogador não vê o tile agora
 	units_by_coord[coord] = unit
 	player.units.append(unit)
+	sync_embarked(unit) # invocação/treino numa costa: já nasce de barco
 	_clear_tile_decor_at(coord) # ver MAGIAS, SPAWNS E ARVORES -- mesma politica de found_city/place_building, agora tambem pra unidade criada (treino, invocacao, etc)
 	V2RetinueSystem.notify_roster_changed(unit, player) # Fase 19: comandante/retinue nova re-deriva o anel "sem comando" (no-op p/ o resto)
 	return unit
@@ -1590,26 +1728,30 @@ func spawn_unit(coord: Vector2i, unit_data: UnitData, player: PlayerData) -> Uni
 ## O estado LOGICO (coord/ocupacao/movimento) muda na hora — so a posicao
 ## visual desliza suavemente ate la. Fog, combate e IA usam unit.coord, que
 ## ja esta correto mesmo enquanto a animacao ainda esta rolando.
-func move_unit(unit: Unit, dest: Vector2i, cost: float) -> void:
+## `route` = os tiles do trajeto (o ultimo e `dest`), para quem validou o destino com regras proprias (Tecnicas: so por
+## terra, custo plano — passe unit_route com as mesmas opcoes de unit_reachable). Vazio = unit_route(unit, dest).
+func move_unit(unit: Unit, dest: Vector2i, cost: float, animation_override: String = "", route: Array[Vector2i] = []) -> void:
 	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	# Fase 19 — GATE CENTRAL de movimento: retinue sem comando não se move, venha a ordem de onde vier (seleção,
 	# marcha, explorar, IA). Não mexe em movement_left: se o comando voltar no mesmo turno, o resto do movimento vale.
 	if not unit.can_receive_orders():
 		return
 	var origin := unit.coord
-	var was_embarked := unit.embarked
 	units_by_coord.erase(unit.coord)
 	unit.coord = dest
 	unit.movement_left = max(0.0, unit.movement_left - cost)
-	# Roadmap 2.0 Parte 1 (C) — desembarque automatico: assim que `dest`
-	# deixa de ser um terreno de can_be_embarked_on(), a unidade volta a
-	# ser terrestre normal. Sempre dispara corretamente porque compute_
-	# reachable/compute_path com embarked=true so alcancam terra como o
-	# ULTIMO passo de qualquer caminho computado (ver comentario deles) —
-	# nunca no meio, entao nao ha risco de "desembarcar" preso em terra
-	# sem conseguir voltar a agua no mesmo trajeto.
-	if unit.embarked and not get_tile(dest).can_be_embarked_on():
-		unit.embarked = false
+	# EMBARQUE AUTOMÁTICO (2026-10-10): entrar na água embarca, pisar em terra desembarca — estado derivado do tile
+	# (sync_embarked). Quem está na tela troca tropa <-> barco no MEIO do passo que cruza a margem (walk_path recebe a
+	# flag de água de cada waypoint); fora da tela, a troca é imediata.
+	# Névoa decidida NESTE passo, pelo tile de destino (ver shown_through_fog): quem entra na visão do jogador aparece
+	# saindo da névoa; quem sai dela some na hora, sem denunciar para onde foi.
+	unit.visible = shown_through_fog(dest, unit.owner_player, unit.always_visible)
+	var animate := unit.visible and unit.is_inside_tree()
+	unit.embarked = unit.can_embark() and get_tile(dest).can_be_embarked_on()
+	if unit.embarked:
+		unit.fortified = false
+	if not animate:
+		unit.set_boat_visual(unit.embarked, false)
 	# Unidade fora da nevoa (unit.visible == false, ver _apply_fog_to_entities)
 	# nao aparece na tela — animar o deslize dela com Tween e trabalho jogado
 	# fora (o Tween continua processando todo frame por MOVE_DURATION mesmo
@@ -1619,10 +1761,23 @@ func move_unit(unit: Unit, dest: Vector2i, cost: float) -> void:
 	# unidades de rival/monstro fora de visao, exatamente a rajada de
 	# unidades de IA se movendo/agindo de uma vez que o usuario reportou como
 	# "muito travado" ao passar o turno.
+	var steps: Array[Vector2i] = [dest]
 	if unit.visible:
-		unit.walk_path(_animation_waypoints(origin, dest, unit, was_embarked))
+		if not route.is_empty() and route[-1] == dest:
+			steps = route
+		else:
+			steps = _animation_steps(origin, dest, unit)
+		var water: Array[bool] = []
+		for step in steps:
+			var step_tile := get_tile(step)
+			water.append(unit.can_embark() and step_tile != null and step_tile.can_be_embarked_on())
+		unit.walk_path(_step_world_points(origin, steps, unit), animation_override, water)
 	else:
-		unit.position = world_surface_for_coord(dest)
+		unit.place_at(world_surface_for_coord(dest))
+	# Rumo com que a unidade chegou: a proxima rota (unit_path/unit_route) continua reto a partir dele. Sem rota
+	# conhecida (salto de varios tiles fora da tela), fica sem rumo.
+	var last_step: Vector2i = dest - (steps[-2] if steps.size() > 1 else origin)
+	unit.travel_dir = last_step if last_step in NEIGHBOR_DIRS else Vector2i.ZERO
 	units_by_coord[dest] = unit
 	MonsterHazardSystem.on_unit_entered(unit, self) # V3 / Etapa 2: entrar em infecção micótica
 	# COVIS DE MONSTROS -- DESTRUICAO (rodada seguinte): "andar em cima do
@@ -1635,47 +1790,41 @@ func move_unit(unit: Unit, dest: Vector2i, cost: float) -> void:
 	# bloqueiam `dest` enquanto lairs_by_coord.has(dest), entao move_unit
 	# nunca mais e chamado com um lair ainda de pe como destino.
 
-## Sequencia de posicoes de mundo pra ANIMAR um deslocamento de `origin` ate
-## `dest` (usado por move_unit acima) — resolve o bug reportado pelo
-## usuario ("se ele vai andar 3 tiles ele desliza pro terceiro [direto]"):
-## move_unit e chamado com um `dest` que pode estar a VARIOS tiles de
-## distancia numa unica tacada (clique num tile alcancavel do turno em
-## SelectionManager._move_selected_to, ou a IA escolhendo o melhor tile
-## reachable em MonsterAI/RivalAI) — sem isto, so animava um salto reto
-## direto ate `dest`, pulando os tiles do meio visualmente (mesmo a logica
-## ja passando por eles). Vizinhos (o caso comum: um passo por vez em
-## qualquer loop de movimento, ver continue_move_order abaixo) usam o
-## atalho `[world_for_coord(dest)]` sem gastar um Dijkstra inteiro a toa —
-## Unit.walk_path ja encadeia chamadas separadas certinho (ver seu proprio
-## comentario), entao nao faz diferenca pra animacao final se o caminho de
-## varios tiles chega aqui como UMA chamada com N pontos ou como N chamadas
-## de 1 ponto. So tiles NAO-vizinhos reconstroem o caminho de verdade
-## (compute_path, mesmas regras de passagem de sempre, com o `embarked` de
-## ANTES desta chamada mudar o estado — a legalidade da travessia foi
-## decidida com esse valor). Se o caminho nao existir mais (ex: outra
-## unidade ocupou um tile do meio depois que este destino foi validado como
-## reachable, em outro momento do mesmo turno) cai de volta no salto
-## direto — isto e SO a animacao, nunca deveria bloquear o movimento em si
-## (a legalidade ja foi decidida por quem chamou move_unit).
-func _animation_waypoints(origin: Vector2i, dest: Vector2i, unit: Unit, embarked: bool) -> Array[Vector3]:
+## Os TILES que a animacao de um deslocamento de `origin` ate `dest` percorre (o ultimo e `dest`) — move_unit converte
+## em posicoes e na flag de agua de cada passo. move_unit e chamado com um `dest` que pode estar a VARIOS tiles numa
+## unica tacada (clique num tile alcancavel, IA escolhendo o melhor tile do alcance): sem isto a unidade deslizaria
+## reto ate `dest`, por cima do que houvesse no meio. Vizinhos (um passo por vez: marcha, explorar, IA) nao gastam
+## busca nenhuma. O resto e unit_route — a MESMA rota da pre-visualizacao, pelo perfil da unidade.
+## Sem rota (so acontece se quem chamou validou o destino por regras que unit_route nao conhece e nao passou `route`):
+## a linha reta de hexagonos, tile a tile — nunca um salto direto. Isto e SO a animacao: a legalidade do movimento ja
+## foi decidida por quem chamou move_unit.
+func _animation_steps(origin: Vector2i, dest: Vector2i, unit: Unit) -> Array[Vector2i]:
 	if HexMetrics.axial_distance(origin, dest) <= 1:
-		return [world_surface_for_coord(dest)]
-	var path: Array[Vector2i]
-	match unit.unit_data.movement_profile:
-		UnitData.MovementProfile.FLYING:
-			path = flight_path(origin, dest)
-		UnitData.MovementProfile.INFILTRATOR:
-			# A rota real pode atravessar tiles ocupados (Passo Sombrio) — compute_path (que bloqueia unidade no meio) não serve aqui; reconstruct_path
-			# usa os predecessores gravados pela ÚLTIMA infiltrate_reachable (unit_reachable chamado antes de move_unit, mesma convenção do voo/chão).
-			path = reconstruct_path(origin, dest)
-		_:
-			path = compute_path(origin, dest, unit.owner_player, unit.unit_data.flies, embarked)
-	if path.is_empty():
-		return [world_surface_for_coord(dest)]
-	var waypoints: Array[Vector3] = []
-	for coord in path:
-		waypoints.append(world_surface_for_coord(coord))
-	return waypoints
+		return [dest]
+	var path := _route_from(origin, dest, unit)
+	return path if not path.is_empty() else HexMetrics.axial_line(origin, dest)
+
+## As posicoes de mundo de cada passo de `steps` (o que Unit.walk_path anima), partindo de `origin`. Voo tatico
+## (MovementProfile.FLYING) nao segue o centro de cada hexagono da linha (que serpenteia e faria o corpo virar 60
+## graus a cada tile): voa na reta de verdade entre a origem e o destino, um ponto por tile — mesma duracao, rumo
+## constante — so a ALTURA acompanha o tile que esta embaixo.
+func _step_world_points(origin: Vector2i, steps: Array[Vector2i], unit: Unit) -> Array[Vector3]:
+	var points: Array[Vector3] = []
+	var straight := unit.unit_data.movement_profile == UnitData.MovementProfile.FLYING and steps.size() > 1
+	var from := world_surface_for_coord(origin)
+	var to := world_surface_for_coord(steps[-1])
+	for i in steps.size():
+		var point := world_surface_for_coord(steps[i])
+		if straight:
+			var along := from.lerp(to, float(i + 1) / float(steps.size()))
+			point.x = along.x
+			point.z = along.z
+		points.append(point)
+	return points
+
+## As posições de mundo de _animation_steps (o que Unit.walk_path anima).
+func _animation_waypoints(origin: Vector2i, dest: Vector2i, unit: Unit) -> Array[Vector3]:
+	return _step_world_points(origin, _animation_steps(origin, dest, unit), unit)
 
 ## SO MODO DEBUG (GameManager.debug_mode, ver SelectionManager.
 ## handle_world_click) — pedido do usuario: "eu nao tenho limite de andar
@@ -1690,15 +1839,78 @@ func teleport_unit(unit: Unit, dest: Vector2i) -> void:
 	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	units_by_coord.erase(unit.coord)
 	unit.coord = dest
-	unit.position = world_surface_for_coord(dest)
+	unit.travel_dir = Vector2i.ZERO
+	unit.place_at(world_surface_for_coord(dest))
+	unit.visible = shown_through_fog(dest, unit.owner_player, unit.always_visible)
 	units_by_coord[dest] = unit
+	sync_embarked(unit)
 	MonsterHazardSystem.on_unit_entered(unit, self) # V3 / Etapa 2: empurrão/teleporte para dentro da infecção
+
+## ORDENS PERMANENTES (marcha "mover ate" e Explorar) — QUANDO andam (2026-10-10, relato do usuario: "ele fica preso
+## nessa rota sem eu poder atacar; as vezes ele parou do lado de um inimigo, mas o proximo turno ja ta marcando pra
+## andar"). Antes a troca de turno recarregava o movimento e ja o gastava na ordem, ANTES de o jogador ter controle:
+## a unidade com ordem pendente chegava em todo turno do jogador com 0 de movimento — sem poder atacar, usar Tecnica
+## nem ser redirecionada sem perder o turno. Agora a ordem gasta o movimento que SOBROU do turno que esta acabando:
+## GameManager._on_turn_changed chama isto ANTES de unit.reset_movement(). No turno do jogador a unidade esta inteira;
+## se ele nao fizer nada com ela, ela anda ao encerrar o turno (mesmo momento em que andava antes — logo depois do
+## "Encerrar Turno", antes da IA — e o mesmo numero de tiles por turno). Qualquer ordem manual (mover, atacar,
+## Tecnica, feitico, Fortificar...) continua cancelando a ordem permanente, como sempre.
+func run_standing_orders(unit: Unit) -> void:
+	if V2ManifestationOrders.is_bound(unit):
+		return # Bound entities use their own once-per-round command queue.
+	continue_move_order(unit)
+	# Mutuamente exclusivo com move_order_target por construcao (ligar um desliga o outro), entao chamar os dois
+	# sempre e seguro.
+	explore_step(unit)
+
+## O passo a passo comum da marcha e do Explorar: anda por `path` (unit_path) o quanto o movimento ATUAL permitir.
+## CONTATO COM INIMIGO: devolve true se parou porque um passo pos um inimigo NOVO ao alcance (_hostiles_in_reach) —
+## a ordem continua pendente, mas a unidade nao segue andando as cegas por dentro (ou para longe) de um inimigo que
+## acabou de aparecer; o jogador decide no turno dele com a unidade inteira. So contato NOVO interrompe: um inimigo
+## que ja estava ao alcance quando a unidade comecou a andar e uma situacao que o jogador viu e escolheu ignorar, entao
+## a ordem nunca fica travada ao lado de um inimigo parado.
+func _advance_along_path(unit: Unit, path: Array[Vector2i]) -> bool:
+	var known := _hostiles_in_reach(unit)
+	var first_step := true
+	for step in path:
+		var terrain: HexTileData = get_tile(step)
+		var step_cost = affordable_step_cost(1.0 if unit.unit_data.flies else terrain_step_cost(step, terrain), unit.movement_left, first_step)
+		if step_cost < 0.0:
+			break
+		first_step = false
+		move_unit(unit, step, step_cost)
+		if unit.coord != step:
+			break # move_unit recusou (sem comando): nada a continuar
+		for hostile in _hostiles_in_reach(unit):
+			if not known.has(hostile):
+				return true
+		if unit.movement_left <= 0.0:
+			break
+	return false
+
+## As unidades hostis a `unit` (monstro neutro ou civilizacao em guerra — CombatResolver.is_hostile_unit_target) no
+## alcance de ataque dela, no minimo as vizinhas: quem ela pode atacar daqui, ou quem esta colado nela (unidade que
+## nao ataca tambem para ao encostar num inimigo). {Unit: true}. So aritmetica de hexagono + ocupacao, sem neblina
+## nem busca (o alcance de ataque esta sempre dentro da visao da propria unidade).
+func _hostiles_in_reach(unit: Unit) -> Dictionary:
+	var hostiles := {}
+	if unit.owner_player == null:
+		return hostiles
+	for coord in HexMetrics.coords_within(unit.coord, maxi(1, unit.unit_data.attack_range)):
+		var other: Unit = units_by_coord.get(coord)
+		if other != null and CombatResolver.is_hostile_unit_target(unit.owner_player, other, self):
+			hostiles[other] = true
+	return hostiles
+
+func _notify_standing_order_interrupted(unit: Unit, order_name: String) -> void:
+	if unit.owner_player != null and unit.owner_player == GameManager.human_player:
+		EventBus.notify.emit("%s interrompeu %s: inimigo ao alcance." % [unit.unit_data.unit_name, order_name], "")
 
 ## Consome um pedido de "mover ate" pendente (Unit.move_order_target) o
 ## quanto o movimento ATUAL da unidade permitir — chamado tanto na hora
 ## (SelectionManager._try_queue_move_order, o quanto der ja neste turno)
-## quanto em toda troca de turno seguinte (GameManager._on_turn_changed,
-## logo apos unit.reset_movement() recarregar movement_left). Recalcula o
+## quanto em toda troca de turno seguinte (run_standing_orders acima, com o
+## movimento que sobrou do turno que esta acabando). Recalcula o
 ## caminho INTEIRO do zero a cada chamada (nao anda por um Array salvo) —
 ## se um obstaculo novo aparecer no meio do trajeto (outra unidade
 ## entrando no caminho, guerra declarada bloqueando uma cidade...) a rota
@@ -1727,7 +1939,7 @@ func continue_move_order(unit: Unit) -> void:
 	if unit.coord == unit.move_order_target:
 		unit.move_order_target = Unit.NO_MOVE_ORDER
 		return
-	var path = compute_path(unit.coord, unit.move_order_target, unit.owner_player, unit.unit_data.flies, unit.embarked)
+	var path = unit_path(unit, unit.move_order_target)
 	if path.is_empty():
 		unit.move_order_target = Unit.NO_MOVE_ORDER
 		return
@@ -1736,18 +1948,11 @@ func continue_move_order(unit: Unit) -> void:
 	if first_step_cost > unit.unit_data.movement_points:
 		unit.move_order_target = Unit.NO_MOVE_ORDER
 		return
-	var first_step := true
-	for step in path:
-		var terrain: HexTileData = get_tile(step)
-		var step_cost = affordable_step_cost(1.0 if unit.unit_data.flies else terrain_step_cost(step, terrain), unit.movement_left, first_step)
-		if step_cost < 0.0:
-			break
-		first_step = false
-		move_unit(unit, step, step_cost)
-		if unit.movement_left <= 0.0:
-			break
+	var interrupted := _advance_along_path(unit, path)
 	if unit.coord == unit.move_order_target:
 		unit.move_order_target = Unit.NO_MOVE_ORDER
+	elif interrupted:
+		_notify_standing_order_interrupted(unit, "a marcha")
 
 ## Consome "Explorar" (Unit.exploring) por um turno — pedido do usuario:
 ## "uma função que fica ativada... que se baseie em ficar andando por
@@ -1773,16 +1978,27 @@ func explore_step(unit: Unit) -> void:
 		return
 	if unit.exploring and not unit.can_receive_orders(): # Fase 19: sem comando não explora (o modo fica ligado)
 		return
-	# Roadmap 2.0 Parte 1 (C2) — unidade embarcada nao pode explorar (mesma
-	# rede de seguranca do fortificado acima). Na pratica SelectionManager.
-	# toggle_embark_selected ja cancela Explorar ao ligar embarque, entao
-	# isto normalmente nunca dispara — existe so como segunda camada de
-	# defesa.
-	if unit.embarked:
-		unit.exploring = false
-		return
+	# Embarque automático (2026-10-10): a rota de Explorar pode cruzar água e terminar o turno embarcada — o modo segue
+	# ligado (na água o botão permite cancelar, mas não iniciar outra exploração, SelectionManager/HUD).
 	if not unit.exploring:
 		return
+	if unit.movement_left <= 0.0:
+		return # ordem futura: não busca rota nem desliga por falta de movimento neste turno
+	var path := _exploration_path(unit)
+	if path.is_empty():
+		unit.exploring = false
+		return
+	var interrupted: bool
+	if unit.unit_data.movement_profile == UnitData.MovementProfile.GROUND:
+		interrupted = _advance_along_path(unit, path)
+	else:
+		interrupted = preload("res://scripts/world/ExplorationPlanner.gd").advance(self, unit, path)
+	if interrupted:
+		_notify_standing_order_interrupted(unit, "a exploração")
+
+func _exploration_path(unit: Unit) -> Array[Vector2i]:
+	if unit.unit_data.movement_profile != UnitData.MovementProfile.GROUND:
+		return preload("res://scripts/world/ExplorationPlanner.gd").path(self, unit)
 	# So mantem os EXPLORE_CANDIDATE_LIMIT tiles UNSEEN mais pertos JA VISTOS
 	# durante a varredura (heap limitado, reaproveitando _heap_push/
 	# _heap_pop_min de compute_path com custo negativo — mesmo truque de
@@ -1807,31 +2023,20 @@ func explore_step(unit: Unit) -> void:
 			_heap_pop_min(heap)
 			_heap_push(heap, -dist, coord)
 	if heap.is_empty():
-		unit.exploring = false
-		return
+		return []
 	var candidates: Array[Vector2i] = []
 	while heap.size() > 0:
 		candidates.push_front(_heap_pop_min(heap)[1])
 
 	var path: Array[Vector2i] = []
 	for candidate in candidates:
-		path = compute_path(unit.coord, candidate, unit.owner_player, unit.unit_data.flies)
+		path = unit_path(unit, candidate) # alvo sempre em terra; a rota pode cruzar água (embarque automático)
 		if not path.is_empty():
 			break
 	if path.is_empty():
-		unit.exploring = false
-		return
-
-	var first_step := true
-	for step in path:
-		var terrain: HexTileData = get_tile(step)
-		var step_cost = affordable_step_cost(1.0 if unit.unit_data.flies else terrain_step_cost(step, terrain), unit.movement_left, first_step)
-		if step_cost < 0.0:
-			break
-		first_step = false
-		move_unit(unit, step, step_cost)
-		if unit.movement_left <= 0.0:
-			break
+		# O limite de candidatos é uma otimização, não prova de que a região inteira é inacessível.
+		return preload("res://scripts/world/ExplorationPlanner.gd").path(self, unit)
+	return path
 
 ## Remove TODO estado de um covil (reforco, estrutura 3D, marca de
 ## "ativo") sem conceder ouro nem notificar — usado tanto pela recompensa
@@ -1843,12 +2048,14 @@ func destroy_lair(coord: Vector2i) -> void:
 	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	if not coord in lair_coords:
 		return
+	MonsterEcologySystem.on_lair_destroyed(coord, TurnManager.turn_number)
 	lair_coords.erase(coord)
 	lair_kind_by_coord.erase(coord)
 	lair_roles.erase(coord) # Fase 33D2: o papel morre com o covil (o registro regional guarda a história)
 	lair_alert_until_turn.erase(coord) # ver alert_lair_near -- covil destruido nao fica "alertado" pra sempre
 	if lairs_by_coord.has(coord):
-		lairs_by_coord[coord].queue_free()
+		if not preload("res://scripts/vfx/CombatFeedback.gd").hold_removed(lairs_by_coord[coord], coord):
+			lairs_by_coord[coord].queue_free()
 		lairs_by_coord.erase(coord)
 	if not coord in cleared_lair_coords:
 		cleared_lair_coords.append(coord)
@@ -1867,9 +2074,9 @@ func destroy_lair(coord: Vector2i) -> void:
 ## de proposito -- eles so existem como YIELD de tile trabalhado, nao tem
 ## estoque nenhum pra depositar; inventar um banco de recurso novo so pra
 ## isso contradiria "coerente com os sistemas atuais". Nunca vira "farm
-## infinita": cada covil so paga isto UMA VEZ (destroy_lair remove o
-## covil de cleared_lair_coords pra sempre, nunca respawna, ver
-## SaveManager) -- diferente do gold_reward por kill individual (esse sim
+## infinita": cada estrutura só paga UMA VEZ. Uma região destruída fica
+## sem novos spawns por 20 rodadas; reocupação futura cria outra estrutura
+## pelo controlador unificado -- diferente do gold_reward por kill individual (esse sim
 ## repetivel via reforco, mas e' um sistema JA existente, fora do escopo
 ## desta tarefa).
 func _grant_lair_clear_reward(unit: Unit, coord: Vector2i) -> void:
@@ -1894,6 +2101,7 @@ func _grant_lair_clear_reward(unit: Unit, coord: Vector2i) -> void:
 
 func remove_unit(unit: Unit) -> void:
 	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
+	MonsterEcologySystem.on_unit_removed(unit, TurnManager.turn_number)
 	var former_owner := unit.owner_player
 	var was_manifestation := V2ManifestationSystem.is_manifestation_unit(unit)
 	units_by_coord.erase(unit.coord)
@@ -1903,7 +2111,8 @@ func remove_unit(unit: Unit) -> void:
 		if was_manifestation: # Fase 23: todas as fontes de morte convergem aqui.
 			V2TranscendenceSystem.validate_active_ritual(former_owner)
 	EventBus.unit_removed.emit(former_owner, unit) # Fase 33B: observabilidade do balance lab
-	unit.queue_free()
+	if not preload("res://scripts/vfx/CombatFeedback.gd").hold_removed(unit):
+		unit.queue_free()
 
 ## silent=true evita o toast "Cidade fundada" — usado por SaveManager ao
 ## reconstruir cidades de uma partida carregada (nao e um evento novo).
@@ -1914,6 +2123,7 @@ func found_city(coord: Vector2i, player: PlayerData, city_name: String, silent: 
 	city.setup(player, coord, city_name, hex_size)
 	city.original_owner_index = GameManager.players.find(player)
 	city.position = world_for_coord(coord)
+	city.visible = shown_through_fog(coord, player)
 	_clear_tile_decor_at(coord) # ver ARVORES E RECURSOS -- modelo da cidade nao pode nascer enterrado em arvore/recurso
 	V2TerrainRuntime.clear_for_construction(self, coord) # Fase 20: o centro da cidade limpa a modificação de terreno
 	cities_by_coord[coord] = city
@@ -1923,7 +2133,7 @@ func found_city(coord: Vector2i, player: PlayerData, city_name: String, silent: 
 	# anexação manual (City.annex_tile, Fase 13).
 	city.owned_tiles = [coord]
 	city.owned_tiles.append_array(get_neighbors(coord))
-	_update_city_tint(city)
+	refresh_territory_borders() # a cidade nova também muda as linhas das vizinhas (borda cheia <-> divisão interna)
 	if player == GameManager.human_player and not silent:
 		EventBus.notify.emit("Cidade fundada: %s" % city_name, "city")
 	if not silent:
@@ -1971,7 +2181,9 @@ func capture_city(city: City, new_owner: PlayerData) -> void:
 	var already_satisfied := qualified and V2VictoryConditions.rival_satisfied_by_conquest(new_owner, old_owner)
 	city.v2_supremacy_captured_from = GameManager.players.find(old_owner) if qualified else -1
 	city.change_owner(new_owner)
+	city.visible = shown_through_fog(city.coord, new_owner)
 	new_owner.cities.append(city)
+	_withdraw_garrison(city, new_owner)
 	# Fase 33D1: a fila herdada só continua se for legítima para o NOVO dono (pesquisa, prédio, slots);
 	# senão a cidade fica ociosa sem transferir os PP acumulados.
 	city.revalidate_production_for_owner()
@@ -1989,7 +2201,10 @@ func capture_city(city: City, new_owner: PlayerData) -> void:
 			var building := get_building_at(building_coord)
 			if building and building.owner_player != new_owner:
 				place_building(building_coord, building.building_id, new_owner, false) # captura não é construção nova; Portal persiste
-	_update_city_tint(city) # tingimento do territorio precisa seguir o novo dono
+	refresh_territory_borders() # contorno segue o novo dono — e as vizinhas trocam borda cheia/divisão interna
+	# A obra em andamento mudou de dono junto com a cidade, ou caiu na revalidação acima: o canteiro acompanha na
+	# hora (some, ou vira o canteiro do novo dono), sem esperar o fim da rodada.
+	refresh_construction_markers()
 	EventBus.city_captured.emit(old_owner, new_owner, city_display_name, city.coord)
 	if new_owner == GameManager.human_player:
 		EventBus.notify.emit("Voce capturou %s!" % city_display_name, "city")
@@ -1997,6 +2212,90 @@ func capture_city(city: City, new_owner: PlayerData) -> void:
 			EventBus.notify.emit("Supremacia: conquista válida contra %s." % old_owner.civ.civ_name, "city")
 	elif old_owner == GameManager.human_player:
 		EventBus.notify.emit("Voce perdeu %s para o inimigo!" % city_display_name, "city")
+	# A cidade capturada continua com o nível (e a fronteira fechada) que tinha: quem não está em guerra com o NOVO
+	# dono e ficou dentro do território é retirado.
+	enforce_closed_borders()
+	# Perder a ÚLTIMA cidade encerra a civilização (ver eliminate_civilization).
+	if old_owner != null and old_owner.cities.is_empty():
+		eliminate_civilization(old_owner, new_owner)
+
+## A GUARNIÇÃO de uma cidade que caiu. Desde 2026-10-13 a cidade pode ser atacada diretamente mesmo com uma tropa em
+## cima (o jogador escolhe o alvo — SelectionManager.attack_targets_at; a IA também — RivalAI._engage; o Bombardeio de
+## Cerco já podia), então ela pode ser capturada com a guarnição viva dentro. Uma tropa inimiga não fica no tile de uma
+## cidade que mudou de dono: recua para o tile livre mais próximo (a mesma busca da retirada das fronteiras fechadas);
+## sem tile livre no raio, cai junto com a cidade.
+func _withdraw_garrison(city: City, new_owner: PlayerData) -> void:
+	var garrison := get_unit_at(city.coord)
+	if garrison == null or garrison.owner_player == new_owner:
+		return
+	var was_human := garrison.owner_player != null and garrison.owner_player == GameManager.human_player
+	var unit_name: String = garrison.unit_data.unit_name
+	var destination := _expulsion_tile(garrison, closed_tiles_for(garrison.owner_player))
+	if destination == NO_EXPULSION_TILE:
+		remove_unit(garrison)
+		if was_human:
+			EventBus.notify.emit("%s caiu junto com %s: não havia para onde recuar." % [unit_name, city.city_name], "combat")
+		return
+	teleport_unit(garrison, destination)
+	garrison.move_order_target = Unit.NO_MOVE_ORDER
+	garrison.fortified = false
+	if was_human:
+		EventBus.notify.emit("%s recuou de %s." % [unit_name, city.city_name], "combat")
+
+## ELIMINAÇÃO: uma civilização que perde a ÚLTIMA cidade sai da partida — as unidades que restavam debandam (somem do
+## mapa) e as relações diplomáticas dela acabam. Relato do usuário 2026-10-12: "se eu derrotar uma civilização
+## conquistando todas as cidades dela, as tropas dela continuam vivas, faça desaparecerem". Antes a eliminação exigia
+## perder as cidades E matar a última unidade: uma civilização sem cidade nenhuma seguia "viva" com tropas soltas,
+## a Dominação não fechava e o conquistador continuava em guerra com um reino que já não existia.
+##
+## A regra vale para QUALQUER civilização (rival ou a do jogador) e dispara na captura da última cidade (capture_city)
+## — ou, para quem já chegou caída por outro caminho (save antigo), em reconcile_eliminations, abaixo. Quem ainda não
+## fundou a primeira — todo mundo no turno 1, só com o Colono — não está eliminado.
+## Depois daqui `V2VictoryConditions.is_eliminated` (sem cidades e sem unidades) já vale para ela, então Dominação,
+## Supremacia ("rival eliminado também conta") e a derrota do jogador (GameManager.check_victories) seguem sem regra nova.
+func eliminate_civilization(player: PlayerData, conqueror: PlayerData = null) -> void:
+	if player == null:
+		return
+	# remove_unit é o caminho único de saída de uma unidade (comando/retinue, Manifestação e Ritual, telemetria).
+	for unit in player.units.duplicate():
+		if is_instance_valid(unit):
+			remove_unit(unit)
+	Diplomacy.dissolve_relations(player, GameManager.players)
+	# O aviso ao jogador é o evento estruturado (UIEventService._on_civilization_eliminated): toast + histórico.
+	EventBus.civilization_eliminated.emit(player, conqueror)
+	EventBus.ui_state_changed.emit("civilization_eliminated")
+
+## A eliminação como REGRA DE ESTADO, não só como evento da captura. Relato do usuário 2026-10-12: "quando uma
+## civilização que tava em guerra comigo é eliminada, a gente continua em guerra e mesmo após estar morta e
+## eliminada, ela pede paz". capture_city elimina no instante em que a última cidade cai, mas uma partida SALVA antes
+## dessa regra traz a civilização já sem cidade nenhuma, com as tropas no mapa, ainda em guerra e propondo paz todo
+## turno — nenhuma captura futura passaria por ela para acertar isso.
+## Aqui toda civilização caída (V2VictoryConditions.has_fallen: já teve cidade, não tem mais) que ainda tenha unidades
+## ou relações é eliminada pelo MESMO caminho. Idempotente (civilização já acertada não gera evento de novo) e barata
+## (uma passada pelas cidades da partida): roda ao carregar um save (SaveManager.load_game) e a cada virada de rodada
+## (GameManager._on_turn_changed), nunca por quadro. Devolve quem foi eliminada agora.
+func reconcile_eliminations() -> Array[PlayerData]:
+	var eliminated: Array[PlayerData] = []
+	for player in GameManager.players:
+		if player == null or not V2VictoryConditions.has_fallen(player):
+			continue
+		if player.units.is_empty() and not Diplomacy.has_relations(player, GameManager.players):
+			continue
+		eliminate_civilization(player, _holder_of_original_city(player))
+		eliminated.append(player)
+	return eliminated
+
+## Quem tem hoje uma cidade fundada por `player` — o conquistador a creditar quando a eliminação é acertada depois do
+## fato (reconcile_eliminations). A primeira na ordem de GameManager.players; null se nenhuma.
+func _holder_of_original_city(player: PlayerData) -> PlayerData:
+	var index := GameManager.players.find(player)
+	for other in GameManager.players:
+		if other == null or other == player:
+			continue
+		for city in other.cities:
+			if city.original_owner_index == index:
+				return other
+	return null
 
 func show_selection_marker(coord: Vector2i) -> void:
 	if not tiles.has(coord):
@@ -2005,6 +2304,9 @@ func show_selection_marker(coord: Vector2i) -> void:
 	var data: HexTileData = tiles[coord]
 	var pos = HexMetrics.axial_to_world(coord.x, coord.y, hex_size)
 	pos.y = data.base_height + 0.05
+	# Tile nunca visto: o chão dele não é desenhado — o marcador fica em cima da camada de névoa, não dentro dela.
+	if fog_layer != null and fog_layer.covers(coord):
+		pos.y = FogLayer.TOP_Y + 0.05
 	_selection_marker.position = pos
 	_selection_marker.visible = true
 
@@ -2021,14 +2323,15 @@ func show_selection_marker(coord: Vector2i) -> void:
 ## cresce aos poucos com populacao, ver City._claim_frontier_tile) mais uma
 ## margem de alerta contra ameacas se aproximando, sem chegar a "enxergar o
 ## mapa inteiro" (mapa Grande real: 96x60 = 5.760 hexagonos so' o
-## continente principal, ver TitleScreen.MAIN_ZONE_SIZE). Custo medido
+## continente principal, ver WorldProfile.main_frame). Custo medido
 ## (script descartavel, ver PERFORMANCE_GUIDE.md secao 1): compute_
 ## visible_tiles isolado custa ~1ms mesmo com 40+ unidades/6 cidades num
 ## mapa Grande — recompute_fog() inteiro custa ~42-46ms nesse mesmo cenario,
 ## dominado quase todo pelo scan de fog/entidades sobre os 26880 tiles do
 ## mapa (ja otimizado, ver secao 2.2/2.3), nao pelo raio de visao. Dobrar o
 ## raio de cada unidade/cidade e' custo desprezivel perto disso.
-const CITY_VISION_RANGE := 4
+## 2026-10-09: o 4 virou a visao do City Level I e cresce +1 por nivel (II = 5, III = 6, IV = 7) — fonte unica em
+## V2CityLevelData.vision_range (via City.vision_range()); nao existe mais constante de visao de cidade aqui.
 
 ## Uniao do raio de visao de todas as unidades/cidades de um jogador —
 ## calculo puro, sem tocar no dict `visibility` (que e so pra render/fog do
@@ -2040,7 +2343,7 @@ func compute_visible_tiles(player: PlayerData) -> Dictionary:
 	for unit in player.units:
 		_mark_visible(unit.coord, V2EnvironmentalZoneSystem.effective_unit_vision(unit, self), visible_now)
 	for city in player.cities:
-		_mark_visible(city.coord, CITY_VISION_RANGE, visible_now)
+		_mark_visible(city.coord, city.vision_range(), visible_now)
 	return visible_now
 
 ## Debug: com isso ligado, recompute_fog() (chamada normalmente a cada
@@ -2068,13 +2371,16 @@ var last_fog_was_full := false
 ## visao de todas as unidades e cidades dele). Tiles que ja foram vistos mas
 ## nao estao mais visiveis ficam "explorados" (escurecidos, nao pretos).
 func recompute_fog(player: PlayerData) -> void:
+	_fog_viewer = player
 	var changed: Array[Vector2i] = []
 	last_fog_was_full = _last_fog_visibility.is_empty()
+	_fog_changes_complete = false
 	if debug_fog_disabled:
 		for coord in tiles.keys():
 			if _last_fog_visibility.get(coord, Visibility.UNSEEN) != Visibility.VISIBLE:
 				changed.append(coord)
 			visibility[coord] = Visibility.VISIBLE
+			_fog_visible_coords[coord] = true
 	else:
 		var visible_now := compute_visible_tiles(player)
 		# Fase 33D2: o conhecimento individual (PlayerData.explored_tiles) vale para QUALQUER assento — o da
@@ -2084,13 +2390,33 @@ func recompute_fog(player: PlayerData) -> void:
 		for foreign_city in cities_by_coord.values():
 			if foreign_city.owner_player != player and visible_now.has(foreign_city.coord):
 				player.remember_enemy_city(foreign_city)
-		for coord in tiles.keys():
-			if visible_now.has(coord):
-				visibility[coord] = Visibility.VISIBLE
-			elif visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE:
-				visibility[coord] = Visibility.EXPLORED
-			if visibility.get(coord, Visibility.UNSEEN) != _last_fog_visibility.get(coord, Visibility.UNSEEN):
-				changed.append(coord)
+		# Otimização 2026-10-14 (docs/PERFORMANCE_GUIDE.md §6): depois de um recálculo, os tiles VISÍVEIS são
+		# exatamente os vistos naquele recálculo (_fog_visible_coords). Se ninguém escreveu em `visibility` desde então
+		# (comparação nativa com a cópia do último recálculo), só esses e os vistos agora podem mudar — o resto do mapa
+		# não é percorrido. Escrita externa (load, Debug, testes): o laço completo de sempre.
+		var fast := not _last_fog_visibility.is_empty() and visibility == _last_fog_visibility
+		if fast:
+			for coord in _fog_visible_coords:
+				if not visible_now.has(coord):
+					visibility[coord] = Visibility.EXPLORED
+					changed.append(coord)
+			for coord in visible_now:
+				if tiles.has(coord) and visibility.get(coord, Visibility.UNSEEN) != Visibility.VISIBLE:
+					visibility[coord] = Visibility.VISIBLE
+					changed.append(coord)
+		else:
+			for coord in tiles.keys():
+				if visible_now.has(coord):
+					visibility[coord] = Visibility.VISIBLE
+				elif visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE:
+					visibility[coord] = Visibility.EXPLORED
+				if visibility.get(coord, Visibility.UNSEEN) != _last_fog_visibility.get(coord, Visibility.UNSEEN):
+					changed.append(coord)
+		_fog_visible_coords.clear()
+		for coord in visible_now:
+			if tiles.has(coord):
+				_fog_visible_coords[coord] = true
+		_fog_changes_complete = fast
 
 	last_fog_changed = changed
 	_apply_fog_colors(changed)
@@ -2098,29 +2424,52 @@ func recompute_fog(player: PlayerData) -> void:
 	RegionalThreatSystem.note_observation(self, player)
 	EventBus.fog_updated.emit()
 
-## Unidades/cidades/predios do proprio jogador sempre aparecem; os de
-## outros so aparecem em tiles ATUALMENTE visiveis (nao basta ja ter
-## explorado).
+## Jogador para quem a névoa está sendo desenhada (o do último recompute_fog). null = sem névoa ainda (teste, mapa
+## recém-gerado): tudo aparece.
+var _fog_viewer: PlayerData
+
+## REGRA ÚNICA de "uma entidade de `entity_owner` em `coord` aparece agora?" — unidade, cidade, prédio, melhoria. As
+## do próprio jogador sempre; as dos outros (e os monstros, dono null) só em tile VISÍVEL agora: tile explorado é
+## memória do terreno, não mostra quem está lá nem o que foi construído depois.
+##
+## Vale no INSTANTE em que a entidade nasce ou muda de tile (spawn_unit, spawn_monster_at, move_unit, teleport_unit,
+## place_building, found_city, capture_city), não só no recálculo de névoa do fim da rodada. Relato do usuário
+## 2026-10-12: "tem coisas que aparecem rapidamente entre as viradas de turno pela fog, que deviam estar ocultas".
+## Antes só _apply_fog_to_entities decidia isso, uma vez por rodada: tudo que nascia ou andava durante a fase da IA
+## (tropa treinada, reforço de covil, monstro saindo da sua visão) ficava com o estado antigo até o fim dela —
+## visível onde devia estar oculto, ou oculto dentro da sua visão.
+func shown_through_fog(coord: Vector2i, entity_owner: PlayerData, always: bool = false) -> bool:
+	if always or _fog_viewer == null or visibility.is_empty() or entity_owner == _fog_viewer:
+		return true
+	return visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
+
+## Dono de uma melhoria de recurso = dono da cidade que tem o tile (a melhoria vive em City.resource_improvements).
+func _improvement_owner(coord: Vector2i) -> PlayerData:
+	for city in cities_by_coord.values():
+		if city.resource_improvements.has(coord):
+			return city.owner_player
+	return null
+
+## Reaplica a regra acima a tudo que existe, depois que `visibility` mudou (recompute_fog).
 func _apply_fog_to_entities(player: PlayerData) -> void:
+	preload("res://scripts/vfx/CombatFeedback.gd").refresh_fog(self)
 	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
+	_fog_viewer = player
 	for coord in units_by_coord.keys():
 		var unit: Unit = units_by_coord[coord]
-		if unit.owner_player == player or unit.always_visible:
-			unit.visible = true
-		else:
-			unit.visible = visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
+		unit.visible = shown_through_fog(coord, unit.owner_player, unit.always_visible) and not unit.has_meta("feedback_spawn_pending")
 	for coord in cities_by_coord.keys():
 		var city: City = cities_by_coord[coord]
-		if city.owner_player == player:
-			city.visible = true
-		else:
-			city.visible = visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
+		city.visible = shown_through_fog(coord, city.owner_player)
 	for coord in buildings_by_coord.keys():
 		var building: Building = buildings_by_coord[coord]
-		if building.owner_player == player:
-			building.visible = true
-		else:
-			building.visible = visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
+		building.visible = shown_through_fog(coord, building.owner_player)
+	for coord in improvement_markers_by_coord.keys():
+		var improvement_marker: Node3D = improvement_markers_by_coord[coord]
+		if is_instance_valid(improvement_marker):
+			improvement_marker.visible = shown_through_fog(coord, _improvement_owner(coord))
+			if world_glow != null and improvement_marker.has_meta("glow_profile"):
+				world_glow.set_light_shown(IMPROVEMENT_GLOW_GROUP, coord, visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE)
 	# marcador de obra (guindaste + barra) tem que seguir a MESMA regra —
 	# senao a obra de uma cidade inimiga aparecia mesmo em tile nunca visto,
 	# entregando de graca "essa cidade esta construindo algo ali" por baixo
@@ -2144,12 +2493,7 @@ func _apply_fog_to_entities(player: PlayerData) -> void:
 			environmental_marker.visible = visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
 	MonsterHazardSystem.apply_fog(self) # V3 / Etapa 2: raízes, infecção e Rastro Subterrâneo seguem a visão atual
 	for coord in _construction_markers.keys():
-		var marker: Node3D = _construction_markers[coord]
-		var owner = marker.get_meta("owner_player", null)
-		if owner == null or owner == player:
-			marker.visible = true
-		else:
-			marker.visible = visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
+		(_construction_markers[coord] as Node3D).visible = _construction_marker_shown(_construction_markers[coord], coord, player)
 	# O site do Ritual Final é informação pública inclusive sob fog. Isto só
 	# afeta o Node visual; não escreve em visibility nem revela tiles vizinhos.
 	for ritual_marker in _v2_transcendence_markers.values():
@@ -2187,6 +2531,7 @@ func set_highlight(reachable_coords: Array, attackable_coords: Array, path_coord
 	_highlight_coords(buildable_coords, Color(0.35, 0.7, 1.0), 0.55)
 	_last_highlighted_land_coords = reachable_coords + attackable_coords + path_coords + buildable_coords
 	_rebuild_water_overlay(reachable_coords, attackable_coords, path_coords, buildable_coords)
+	_apply_fog_highlight(_highlight_tints(reachable_coords, attackable_coords, path_coords, buildable_coords))
 
 ## Tinge `coords` por cima da cor ja aplicada (fog) no terreno SOLIDO —
 ## agua/lava (sem instancia por tile) sao tratados por _rebuild_water_overlay.
@@ -2203,10 +2548,10 @@ func _highlight_coords(coords: Array, tint: Color, weight: float) -> void:
 
 ## Desfaz o tingimento de highlight de `coords`, devolvendo a cor CRUA do
 ## bioma (tiles[coord].color) — mesmo valor que _apply_terrain_fog aplicaria
-## pra esses tiles especificos, so que sem varrer o mapa inteiro. Fog-of-war
-## em si (escurecimento/sepia) nunca viveu na cor da instancia (isso e
-## sempre shader-side via biome_overlay_texture, ver _apply_terrain_fog) —
-## entao resetar pra cor crua aqui e sempre correto, nao so uma aproximacao.
+## pra esses tiles especificos, so que sem varrer o mapa inteiro. A nevoa de
+## guerra nunca viveu na cor da instancia (o filtro de memoria e do shader,
+## via biome_overlay_texture; o nunca-visto e a camada FogLayer) — entao
+## resetar pra cor crua aqui e sempre correto, nao so uma aproximacao.
 func _reset_highlighted_terrain(coords: Array) -> void:
 	if _multimesh_instance == null or coords.is_empty():
 		return
@@ -2233,8 +2578,10 @@ func transform_tile_terrain(coord: Vector2i, new_terrain_type: int) -> void:
 		return
 	var new_tile: HexTileData = TerrainDatabase.create_tile(new_terrain_type)
 	var blocked_before: bool = tiles[coord].blocks_land_units()
+	var navigable_before: bool = _passable_for_ground(tiles[coord], true)
 	tiles[coord] = new_tile
 	terrain_changes[coord] = new_terrain_type
+	_invalidate_territory_border_keys()
 	# ALTURA DOS TILES E POSICAO DAS UNIDADES: "mudancas temporarias de
 	# terreno, quando aplicavel" -- se alguma unidade ja estava PARADA neste
 	# coord (ex: andou pra dentro de uma Floresta criada por magia, semanas
@@ -2244,7 +2591,8 @@ func transform_tile_terrain(coord: Vector2i, new_terrain_type: int) -> void:
 	# hora pra nunca ficar flutuando/afundada apos a troca.
 	var occupant := get_unit_at(coord)
 	if occupant:
-		occupant.position = world_surface_for_coord(coord)
+		occupant.place_at(world_surface_for_coord(coord))
+		sync_embarked(occupant) # terra virou água (ou o contrário) embaixo dela: embarca/desembarca na hora
 	if _multimesh_instance and _coord_to_index.has(coord):
 		_multimesh_instance.multimesh.set_instance_color(_coord_to_index[coord], new_tile.color)
 		var mm := _multimesh_instance.multimesh
@@ -2253,7 +2601,8 @@ func transform_tile_terrain(coord: Vector2i, new_terrain_type: int) -> void:
 		transform.origin.y = new_tile.base_height
 		mm.set_instance_transform(index, transform)
 		var custom := mm.get_instance_custom_data(index)
-		custom.g = 2.0 if new_terrain_type == HexTileData.TerrainType.MOUNTAINS else (1.0 if new_terrain_type == HexTileData.TerrainType.HILLS else 0.0)
+		custom.g = elevation_kind_for(new_terrain_type)
+		custom.b = TerrainTextureCatalog.surface_for(new_terrain_type)
 		custom.a = _material_kind_for(new_terrain_type)
 		mm.set_instance_custom_data(index, custom)
 	# Os componentes terrestres (_ensure_land_components) so' dependem de
@@ -2261,6 +2610,8 @@ func transform_tile_terrain(coord: Vector2i, new_terrain_type: int) -> void:
 	# terreno que nao muda isso seria desperdicio.
 	if blocked_before != new_tile.blocks_land_units():
 		_land_component_tile_count = -1
+	if navigable_before != _passable_for_ground(new_tile, true):
+		_amphibious_component_tile_count = -1
 	if _dirty_terrain_visuals.is_empty():
 		_refresh_changed_terrain_visuals.call_deferred()
 	_dirty_terrain_visuals[coord] = true
@@ -2280,13 +2631,8 @@ func transform_tile_terrain(coord: Vector2i, new_terrain_type: int) -> void:
 func _clear_tree_props_at(coord: Vector2i) -> void:
 	if visual_focus != null:
 		visual_focus.release_props(coord) # devolve antes de limpar (senão o foco "ressuscitaria" a árvore)
-	if _props_tree_instance and _tree_coord_to_index.has(coord):
-		for index in _tree_coord_to_index[coord]:
-			_props_tree_instance.multimesh.set_instance_transform(index, Transform3D(Basis().scaled(Vector3.ZERO), Vector3.ZERO))
-		_tree_coord_to_index.erase(coord)
-	if _changed_tree_props.has(coord):
-		_changed_tree_props[coord].free()
-		_changed_tree_props.erase(coord)
+	if nature_decor != null:
+		nature_decor.clear_at(coord)
 
 ## Ver ARVORES E RECURSOS -- envelope de _clear_tree_props_at acima que
 ## TAMBEM limpa o prop 3D e o icone billboard de recurso do tile (ver
@@ -2325,33 +2671,9 @@ func _refresh_changed_terrain_visuals() -> void:
 		if not tiles.has(coord):
 			continue
 		_clear_tree_props_at(coord)
-		var tile: HexTileData = tiles[coord]
-		# Sem a chance de cobertura aqui (ver TREE_TILE_COVERAGE_CHANCE) de
-		# proposito -- este caminho e' UM tile por vez, resultado de um efeito
-		# magico deliberado (Metamorfose de Gaia/MagicRuntime), nao a geracao
-		# em massa do mapa que motivou a reducao de densidade. Um efeito unico
-		# e raro sempre mostrar arvore reforca a leitura "aqui aconteceu
-		# magia", em vez de arriscar renderizar como se nada tivesse mudado.
-		if tile.resource == "" and tile.terrain_type in [HexTileData.TerrainType.FOREST, HexTileData.TerrainType.TAIGA, HexTileData.TerrainType.JUNGLE] and _tree_mesh:
-			var mm := MultiMesh.new()
-			mm.transform_format = MultiMesh.TRANSFORM_3D
-			mm.use_colors = true
-			mm.mesh = _tree_mesh
-			mm.instance_count = 3
-			for index in range(3):
-				var angle := index * TAU / 3
-				var pos := world_for_coord(coord) + Vector3(cos(angle), 0, sin(angle)) * hex_size * 0.35
-				mm.set_instance_transform(index, Transform3D(Basis(Vector3.UP, angle).scaled(Vector3.ONE * TREE_MODEL_SCALE), pos))
-			var instance := MultiMeshInstance3D.new()
-			instance.multimesh = mm
-			var material := StandardMaterial3D.new()
-			material.albedo_texture = load("res://assets/models/kaykit/nature/forest_texture.png")
-			material.vertex_color_use_as_albedo = true
-			material.cull_mode = BaseMaterial3D.CULL_DISABLED
-			material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-			instance.material_override = material
-			add_child(instance)
-			_changed_tree_props[coord] = instance
+		# A vegetação passa a ser a composição do terreno ATUAL (determinística por seed + tile, ver NatureDecorManager).
+		if nature_decor != null:
+			nature_decor.refresh_tile(coord)
 		if _resource_props_manager:
 			_resource_props_manager.refresh_height(coord)
 		if _resource_icon_manager:
@@ -2363,11 +2685,12 @@ func clear_highlight() -> void:
 	_reset_highlighted_terrain(_last_highlighted_land_coords)
 	_last_highlighted_land_coords = []
 	_rebuild_water_overlay()
+	_apply_fog_highlight({})
 	hide_hover_label()
 
 ## Territorio de uma cidade = City.owned_tiles (posse dinamica, cresce com
 ## a populacao — ver City._claim_frontier_tile) — usado pro tingimento
-## visual (_build_city_tint_mesh). Diferente de worked_tiles (rendimento)
+## visual (contorno, _build_city_border_mesh). Diferente de worked_tiles (rendimento)
 ## e do raio de posicionamento de predio, que continuam fixos em "vizinho
 ## direto da propria celula", fora do escopo desta mudanca.
 func city_territory_tiles(city: City) -> Dictionary:
@@ -2387,6 +2710,143 @@ func city_owning_tile(coord: Vector2i, excluding: City = null) -> City:
 		if coord in city.owned_tiles:
 			return city
 	return null
+
+# --- FRONTEIRAS FECHADAS ------------------------------------------------------------------------------------------------
+## Pedido do usuário 2026-10-13: "após a primeira evolução da cidade, uma mecânica de fronteiras fechadas seja iniciada,
+## você não pode mais entrar nas cidades alheias, nem eles nas suas, com exceção dos países que estão em guerra".
+##
+## REGRA: o território (City.owned_tiles) de uma cidade que já evoluiu ao menos uma vez (City Level >=
+## CLOSED_BORDERS_FROM_LEVEL) é FECHADO a toda civilização que não seja a dona, não esteja em guerra com ela e não
+## tenha com ela um acordo de fronteiras abertas (Diplomacy.request_open_borders / PlayerData.open_borders). Fechado
+## = nenhuma unidade dela ENTRA num tile desses: não anda para dentro, não atravessa, não pousa, não termina uma
+## infiltração ali. Quem está dentro só pode dar o passo para FORA (nunca andar por dentro); na prática ninguém fica
+## dentro, porque enforce_closed_borders retira. Em guerra a fronteira não existe para os dois lados. Monstros (sem dono)
+## nunca são barrados — a ameaça do mundo não respeita fronteira. Vale igual para o jogador e para a IA: a regra mora
+## nas funções de passagem que os dois usam (compute_reachable, flight_reachable, infiltrate_reachable, _find_route).
+##
+## Nada é salvo: tudo deriva do nível da cidade, do território e das guerras, então save antigo, captura de cidade,
+## anexação e paz/guerra valem na hora. O mapa de tiles fechados por civilização é montado sob demanda e guardado com
+## um carimbo barato (cidades fechadas a ela + quantos tiles cada uma tem): a consulta por busca custa uma passada
+## pelas cidades, e o mapa só é remontado quando algo de fato muda.
+const CLOSED_BORDERS_FROM_LEVEL := 2
+## Até onde procurar um tile livre para retirar uma unidade que ficou dentro de uma fronteira que fechou.
+const EXPULSION_SEARCH_RADIUS := 24
+const NO_EXPULSION_TILE := Vector2i(999999, 999999)
+const _NO_CLOSED_TILES := {}
+var _closed_border_cache: Dictionary = {} # PlayerData -> {"stamp": Array, "tiles": {coord: City}}
+
+func city_has_closed_borders(city: City) -> bool:
+	return city != null and city.owner_player != null and city.city_level >= CLOSED_BORDERS_FROM_LEVEL
+
+## Os tiles onde as unidades de `owner` NÃO podem entrar agora: {coord: City dona}. Só leitura — não alterar o
+## dicionário devolvido. Vazio para monstros (owner null).
+func closed_tiles_for(owner: PlayerData) -> Dictionary:
+	if owner == null or cities_by_coord.is_empty():
+		return _NO_CLOSED_TILES
+	var stamp: Array = []
+	for city in cities_by_coord.values():
+		if city.city_level >= CLOSED_BORDERS_FROM_LEVEL and city.owner_player != null and city.owner_player != owner and not owner.is_at_war_with(city.owner_player) and not owner.open_borders.has(city.owner_player):
+			stamp.append(city)
+			stamp.append(city.owned_tiles.size())
+	if stamp.is_empty():
+		return _NO_CLOSED_TILES
+	var cached: Dictionary = _closed_border_cache.get(owner, {})
+	if not cached.is_empty() and cached.stamp == stamp:
+		return cached.tiles
+	var closed := {}
+	for index in range(0, stamp.size(), 2):
+		var city: City = stamp[index]
+		closed[city.coord] = city
+		for coord in city.owned_tiles:
+			closed[coord] = city
+	_closed_border_cache[owner] = {"stamp": stamp, "tiles": closed}
+	return closed
+
+## A cidade cuja fronteira fechada impede `owner` de entrar em `coord` (null se ele pode entrar).
+func closed_border_city(coord: Vector2i, owner: PlayerData) -> City:
+	return closed_tiles_for(owner).get(coord)
+
+func is_border_closed_to(coord: Vector2i, owner: PlayerData) -> bool:
+	return closed_tiles_for(owner).has(coord)
+
+## RETIRADA: toda unidade que está DENTRO de uma fronteira fechada a ela é levada ao tile livre mais próximo fora dela.
+## Acontece quando a fronteira fecha com gente dentro: a cidade evoluiu, a guerra acabou, o território cresceu por cima
+## da unidade, a cidade mudou de dono. Sem isto a unidade ficaria onde a regra diz que ela não pode estar (e a paz
+## deixaria um exército estacionado dentro do reino alheio). Idempotente e barata — sem fronteira fechada no mapa não
+## faz nada — e chamada nos pontos em que a situação pode mudar (virada de rodada, depois das cidades, fim da fase da
+## IA, paz, anexação, captura, load); nunca por quadro. Devolve as unidades retiradas.
+func enforce_closed_borders() -> Array[Unit]:
+	var expelled: Array[Unit] = []
+	var any_closed := false
+	for city in cities_by_coord.values():
+		if city_has_closed_borders(city):
+			any_closed = true
+			break
+	if not any_closed:
+		return expelled
+	var human := GameManager.human_player
+	for player in GameManager.players:
+		if player == null:
+			continue
+		var closed := closed_tiles_for(player)
+		if closed.is_empty():
+			continue
+		var from_realm := {} # PlayerData dono do território -> quantas unidades saíram
+		for unit in player.units.duplicate():
+			if not is_instance_valid(unit) or unit.is_queued_for_deletion() or not closed.has(unit.coord):
+				continue
+			var holder: PlayerData = (closed[unit.coord] as City).owner_player
+			var destination := _expulsion_tile(unit, closed)
+			if destination == NO_EXPULSION_TILE:
+				continue # sem tile livre a EXPULSION_SEARCH_RADIUS: fica onde está até abrir espaço (tenta de novo na próxima passada)
+			teleport_unit(unit, destination)
+			unit.move_order_target = Unit.NO_MOVE_ORDER
+			expelled.append(unit)
+			from_realm[holder] = int(from_realm.get(holder, 0)) + 1
+		if player == human and GameManager.is_human_controlled(player):
+			for holder in from_realm:
+				var count: int = from_realm[holder]
+				var realm: String = holder.civ.civ_name if holder != null and holder.civ != null else "outro reino"
+				EventBus.notify.emit("Fronteiras fechadas: %s do território de %s." % ["1 unidade sua foi retirada" if count == 1 else "%d unidades suas foram retiradas" % count, realm], "")
+	if not expelled.is_empty() and human != null:
+		recompute_fog(human)
+		EventBus.ui_state_changed.emit("closed_borders")
+	return expelled
+
+## O tile livre mais próximo de `unit` fora das fronteiras fechadas a ela (busca em largura a partir da unidade, sem
+## olhar passagem no caminho: é uma retirada, não um movimento). Terra primeiro; água embarcável só se não houver
+## terra no raio — ou de saída, para quem já está embarcado.
+func _expulsion_tile(unit: Unit, closed: Dictionary) -> Vector2i:
+	var seen := {unit.coord: 0}
+	var frontier: Array[Vector2i] = [unit.coord]
+	var index := 0
+	var water := NO_EXPULSION_TILE
+	var amphibious := unit.can_embark()
+	while index < frontier.size():
+		var current := frontier[index]
+		index += 1
+		var distance: int = seen[current]
+		if distance >= EXPULSION_SEARCH_RADIUS:
+			continue
+		for n in get_neighbors(current):
+			if seen.has(n):
+				continue
+			seen[n] = distance + 1
+			frontier.append(n)
+			var terrain: HexTileData = tiles.get(n)
+			if terrain == null or closed.has(n) or get_unit_at(n) != null or _is_lair_structure_at(n):
+				continue
+			var city_here: City = cities_by_coord.get(n)
+			if city_here != null and city_here.owner_player != unit.owner_player:
+				continue
+			if not terrain.blocks_land_units():
+				return n
+			if amphibious and terrain.can_be_embarked_on():
+				if unit.embarked:
+					return n
+				if water == NO_EXPULSION_TILE:
+					water = n
+	return water
 
 ## Roadmap 2.0 Parte 1 (A2) — proxy MINIMO de "tile sob pressao de cidade
 ## rival", sem nenhuma camada de cultura/influencia por tras: so distancia
@@ -2450,14 +2910,10 @@ func get_lair_danger_at(coord: Vector2i, known: Variant = null) -> float:
 			max_danger = danger
 	return max_danger
 
-## Roadmap 2.0 Parte 1 (C3) — pre-condicao espacial pro modo "Embarcar" (ver
-## SelectionManager.toggle_embark_selected): `coord` tem pelo menos um
-## vizinho de agua (HexTileData.can_be_embarked_on()). Nao da pra exigir
-## "estar EM CIMA de um tile de Costa" — confirmado que blocks_land_units()
-## = is_water() or is_lava() e is_water() inclui COAST, ou seja, uma
-## unidade terrestre NUNCA consegue fisicamente ocupar um tile de Costa
-## hoje (so trabalha-lo a distancia) — "adjacente a agua" e a regra
-## equivalente fisicamente possivel.
+## `coord` tem pelo menos um vizinho de agua (HexTileData.can_be_embarked_on())
+## — tile litoraneo (CitySite pontua cidade costeira). Nasceu como a
+## pre-condicao do antigo modo "Embarcar" manual (Roadmap 2.0 Parte 1, C3);
+## desde 2026-10-10 o embarque e automatico (sync_embarked) e nao depende disto.
 func is_coastal_tile(coord: Vector2i) -> bool:
 	for n in get_neighbors(coord):
 		var data := get_tile(n)
@@ -2465,152 +2921,206 @@ func is_coastal_tile(coord: Vector2i) -> bool:
 			return true
 	return false
 
-## Deslocamento vertical do tingimento de territorio acima do chao. O
-## tingimento e um leque preenchendo o hexagono INTEIRO, quase
-## perfeitamente COPLANAR com o topo do terreno, entao qualquer folga
-## pequena sofre z-fighting/oclusao na area toda — 0.04 da margem de
-## verdade contra isso.
-const TINT_ABOVE_OFFSET := 0.04
-## Opacidade do tingimento pra um trecho VISIBLE — pedido do usuario apos
-## abandonar o sistema de linha de contorno (repetidos problemas de
-## renderizacao/juncao de geometria, ver historico de border_shader.
-## gdshader/_build_player_border_mesh, removidos): "faça apenas com que o
-## territorio de uma nacao tenha uma cor especifica... colorir o topo de
-## cada celula com essa cor". Sem NENHUMA linha de contorno agora, o
-## tingimento e o UNICO sinal visual de posse territorial — subido bem
-## acima do "8%-12%" original (que era so um acabamento complementar a
-## borda) pra ficar claramente reconhecivel sozinho.
-const TERRITORY_TINT_ALPHA := 0.35
-## EXPLORED (nao VISIBLE agora) fica com uma FRACAO da opacidade normal —
-## memoria mais fraca que visao ativa de verdade, mesmo espirito de
-## _sepia_prop_color pros outros props/estruturas deste arquivo.
-const TERRITORY_TINT_EXPLORED_ALPHA_MULT := 0.5
+## CONTORNO DE TERRITÓRIO estilo Civilization (pedido do usuário 2026-10-10): a área de cada cidade é circulada por uma
+## faixa na cor da civ, seguindo as arestas retas dos hexágonos — substitui o antigo tingimento que pintava o hexágono
+## INTEIRO (escondia o terreno e ficava "fluorescente" à noite). Geometria em TerritoryBorder (junções exatas, borda
+## cheia x divisão interna entre cidades da mesma civ); aqui só a malha, a altura e a névoa.
+##
+## Altura: cada vértice na superfície REAL do próprio tile (surface_height_at — plano em quase tudo, pico na Montanha)
+## + BORDER_ABOVE_OFFSET. Nunca a altura do vizinho (o contorno antigo, removido, usava a do vizinho mais alto e
+## flutuava sobre tiles mais baixos).
+const BORDER_ABOVE_OFFSET := 0.03
+## Tile só EXPLORADO (não visível agora): contorno em sépia e mais fraco — memória, não visão. UNSEEN: nada.
+const TERRITORY_BORDER_EXPLORED_ALPHA := 0.5
+const TERRITORY_BORDER_SHADER_PATH := "res://shaders/territory_border_shader.gdshader"
 
-## Camada visual SEPARADA (nao um material do proprio terreno — mesmo
-## principio de todo outro overlay deste arquivo: rio, contorno, props de
-## recurso) que tinge o chao de cada tile do territorio da cidade na cor
-## da civ (pedido do usuario, requisito 3: "tingimento suave no chao dos
-## hexagonos dominados"). Reconstruida no MESMO ciclo que o contorno (ver
-## _apply_land_and_prop_fog/found_city/capture_city).
-## Reaproveita o MeshInstance3D/ShaderMaterial da cidade entre chamadas (em
-## vez de queue_free() + instanciar tudo de novo do zero toda vez) — cidade
-## nunca e destruida individualmente fora de um reset de mapa inteiro
-## (_clear_entities, que ja libera _tints_root inteiro e limpa _city_tints),
-## entao e sempre seguro so trocar o `.mesh` de uma instancia existente. So
-## a malha (SurfaceTool) em si ainda e reconstruida — territorio/nevoa podem
-## ter mudado — mas sem o custo de alocar Node/Material novos e agendar
-## queue_free() todo turno pra toda cidade.
-func _update_city_tint(city: City) -> void:
-	var mesh_instance: MeshInstance3D
-	if _city_tints.has(city):
-		mesh_instance = _city_tints[city]
-	else:
+## coord -> City dona (todas as cidades), base do tipo de cada aresta (TerritoryBorder.edge_type).
+func territory_owner_map() -> Dictionary:
+	var owners := {}
+	for city in cities_by_coord.values():
+		for coord in city.owned_tiles:
+			owners[coord] = city
+	return owners
+
+## Reconstrói o contorno de TODAS as cidades (o tipo de uma aresta depende do dono do vizinho, então fundar, capturar
+## ou anexar mexe nas linhas das cidades vizinhas também). Evento discreto — névoa recalculada, fundação, captura —,
+## nunca por quadro; ~20–40 tiles por cidade.
+func refresh_territory_borders() -> void:
+	var owners := territory_owner_map()
+	for city in cities_by_coord.values():
+		_update_city_border(city, owners)
+
+func _update_city_border(city: City, owners: Dictionary) -> void:
+	var mesh_instance: MeshInstance3D = _city_borders.get(city)
+	if mesh_instance == null:
 		mesh_instance = MeshInstance3D.new()
-		var mat := ShaderMaterial.new()
-		if _territory_tint_shader == null:
-			_territory_tint_shader = load("res://shaders/territory_tint_shader.gdshader")
-			if _territory_tint_shader == null:
-				push_error("HexGrid: falha ao carregar res://shaders/territory_tint_shader.gdshader — tingimento de territorio ficara sem material (invisivel)")
-		mat.shader = _territory_tint_shader
-		mesh_instance.material_override = mat
-		_tints_root.add_child(mesh_instance)
-		_city_tints[city] = mesh_instance
-	var mesh := _build_city_tint_mesh(city)
+		mesh_instance.name = "Border_%s" % city.city_name.validate_node_name()
+		mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mesh_instance.material_override = _border_material()
+		_borders_root.add_child(mesh_instance)
+		_city_borders[city] = mesh_instance
+	# Otimização 2026-10-14 (docs/PERFORMANCE_GUIDE.md §6): a malha só depende do território, do tipo de cada aresta,
+	# da névoa de cada tile e da cor da civ (e das alturas, que só mudam em transform_tile_terrain — que apaga as
+	# assinaturas). Igual à última: a malha montada continua valendo e o SurfaceTool não roda (a cada passo de unidade,
+	# para todas as cidades, era o custo de refresh_territory_borders).
+	var key := _city_border_key(city, owners)
+	if mesh_instance.has_meta(BORDER_KEY_META) and mesh_instance.get_meta(BORDER_KEY_META) == key:
+		return
+	var mesh := _build_city_border_mesh(city, owners)
 	mesh_instance.mesh = mesh if mesh.get_surface_count() > 0 else null
+	mesh_instance.set_meta(BORDER_KEY_META, key)
 
-## Leque de triangulos (centro + 6 cantos) por tile do territorio — um
-## "tampo" plano cobrindo o hexagono INTEIRO. Altura: centro na altura VISUAL real
-## (_tile_surface_height, com pico/domo de Montanha/Colina) e os 6 cantos
-## em base_height puro — mesmo fato geometrico usado no resto do arquivo
-## (no canto de verdade o pico/domo ja caiu pra zero) — entao o leque
-## aproxima a curva real do dominio do tile em vez de flutuar acima dos
-## cantos (Montanha/Colina) ou afundar no pico. Nevoa POR TILE (mesma fonte
-## que o contorno usa, _fog_level_for): UNSEEN nao gera geometria, EXPLORED
-## fica sepia + mais transparente ainda, VISIBLE cor/opacidade cheias.
-func _build_city_tint_mesh(city: City) -> ArrayMesh:
-	var territory := city_territory_tiles(city)
+const BORDER_KEY_META := "border_key"
+
+func _city_border_key(city: City, owners: Dictionary) -> int:
 	var civ: CivilizationData = city.owner_player.civ if city.owner_player else null
-	var base_color = civ.color if civ else Color.WHITE
+	var key: Array = [civ.color if civ else Color.WHITE, hex_size, city.owned_tiles.size()]
+	for coord in city.owned_tiles:
+		key.append(coord)
+		key.append(_fog_level_for(coord))
+		for d in NEIGHBOR_DIRS.size():
+			key.append(TerritoryBorder.edge_type(city, coord + NEIGHBOR_DIRS[d], owners))
+	return hash(key)
 
+## Alturas mudaram (transformação de terreno): toda malha de contorno é refeita no próximo refresh.
+func _invalidate_territory_border_keys() -> void:
+	for mesh_instance in _city_borders.values():
+		if is_instance_valid(mesh_instance):
+			(mesh_instance as Node).remove_meta(BORDER_KEY_META)
+
+func _border_material() -> ShaderMaterial:
+	if _territory_border_material == null:
+		_territory_border_material = ShaderMaterial.new()
+		_territory_border_material.shader = load(TERRITORY_BORDER_SHADER_PATH)
+		if _territory_border_material.shader == null:
+			push_error("HexGrid: falha ao carregar %s — contorno de território ficará invisível" % TERRITORY_BORDER_SHADER_PATH)
+	return _territory_border_material
+
+## Malha do contorno de `city`: um trapézio por aresta de TerritoryBorder.segments (lado de fora UV.x = 0, de dentro
+## UV.x = 1; UV.y = 0 borda cheia, 1 divisão interna). Névoa POR TILE: UNSEEN não gera geometria, EXPLORED fica sépia e
+## mais fraco, VISIBLE na cor cheia da civ.
+func _build_city_border_mesh(city: City, owners: Dictionary = {}) -> ArrayMesh:
+	if owners.is_empty():
+		owners = territory_owner_map()
+	var civ: CivilizationData = city.owner_player.civ if city.owner_player else null
+	var base_color: Color = civ.color if civ else Color.WHITE
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for tile_coord in territory.keys():
+	var any := false
+	for segment in TerritoryBorder.segments(city, city.owned_tiles, owners, hex_size):
+		var tile_coord: Vector2i = segment.coord
 		var fog_level = _fog_level_for(tile_coord)
 		if fog_level <= 0.0:
-			continue # UNSEEN: tile sem tingimento nenhum sob a nevoa
+			continue
 		var explored: bool = fog_level < 1.0
-		var color = base_color if not explored else _sepia_prop_color(base_color)
-		var alpha = TERRITORY_TINT_ALPHA * (TERRITORY_TINT_EXPLORED_ALPHA_MULT if explored else 1.0)
-		var col := Color(color.r, color.g, color.b, alpha)
-		var w = world_for_coord(tile_coord)
-		var center_point = Vector3(w.x, _tile_surface_height(tile_coord) + TINT_ABOVE_OFFSET, w.z)
-		var corner_y = w.y + TINT_ABOVE_OFFSET
-		var corners: Array[Vector3] = []
-		for i in range(6):
-			var c = HexMetrics.corner(hex_size, i)
-			corners.append(Vector3(w.x + c.x, corner_y, w.z + c.z))
-		for i in range(6):
-			st.set_color(col); st.set_uv(Vector2.ZERO); st.add_vertex(center_point)
-			st.set_color(col); st.set_uv(Vector2.ZERO); st.add_vertex(corners[i])
-			st.set_color(col); st.set_uv(Vector2.ZERO); st.add_vertex(corners[(i + 1) % 6])
-	return st.commit()
+		var tint: Color = base_color if not explored else _memory_prop_color(base_color)
+		var col := Color(tint.r, tint.g, tint.b, TERRITORY_BORDER_EXPLORED_ALPHA if explored else 1.0)
+		var kind := 1.0 if int(segment.type) == TerritoryBorder.Edge.INTERNAL else 0.0
+		var center := HexMetrics.axial_to_world(tile_coord.x, tile_coord.y, hex_size)
+		var points: Array[Vector3] = []
+		for local in [segment.outer[0], segment.outer[1], segment.inner[1], segment.inner[0]]:
+			var l: Vector2 = local
+			points.append(Vector3(center.x + l.x, surface_height_at(tile_coord, l) + BORDER_ABOVE_OFFSET, center.z + l.y))
+		var uvs := [Vector2(0.0, kind), Vector2(0.0, kind), Vector2(1.0, kind), Vector2(1.0, kind)]
+		for index in [0, 1, 2, 0, 2, 3]:
+			st.set_color(col)
+			st.set_uv(uvs[index])
+			st.set_normal(Vector3.UP)
+			st.add_vertex(points[index])
+		any = true
+	return st.commit() if any else ArrayMesh.new()
 
-## Marcador animado (girando + balancando) sobre um tile com um predio EM
-## PRODUCAO — sem isso, um predio sendo construido nao tinha NENHUMA
-## diferenca visual de um tile vazio ate a producao completar. Reconciliado
-## a cada mudanca de estado relevante (ver refresh_construction_markers):
-## mais simples e menos propenso a erro do que caçar manualmente todo lugar
-## que pending_building_coord pode mudar (concluido, trocado, cancelado).
-## wanted agora mapeia coord -> City (nao so um bool) — pedido do usuario:
-## "a barra de progresso nao esta avançando... faça ficar acima da
-## construção nao da cidade" — o marcador ja fica na posicao certa
-## (world_for_coord do TILE do predio, ver _build_construction_marker), so
-## faltava ATUALIZAR a barra a cada refresh (antes so existia visualmente
-## presa em City.gd, flutuando sobre a CIDADE, nao sobre o predio de
-## verdade sendo construido — o usuario nunca via ela se mexer porque
-## olhava pro lugar errado). Precisa da City dona pra ler stored_production/
-## production_cost() na hora de atualizar.
+## CANTEIRO DE OBRA: o modelo animado + a barra de progresso sobre o tile de um prédio EM PRODUÇÃO. Reconciliação
+## pura com o estado das cidades — existe canteiro exatamente onde alguma cidade tem `pending_building_coord` e ainda
+## não há prédio — em vez de caçar cada lugar onde esse campo muda (obra iniciada, trocada, cancelada, cidade
+## capturada). Chamar a qualquer momento é seguro e barato (só recria a textura de uma barra cujo valor mudou).
 ##
-## just_completed: coords cujo predio ACABOU de ficar pronto NESTE turno
-## (ver GameManager._on_turn_changed/_finish_turn, result.built_coord) — sem
-## isso, wanted.has(coord) ja da false no MESMO refresh em que a producao
-## cruzou o custo (City.process_turn ja limpou pending_building_coord antes
-## de refresh_construction_markers ser chamado), entao o marcador sumia
-## sem NUNCA renderizar 100%, so o ultimo valor do turno anterior. Agora,
-## pra esses coords, a barra fica travada em 100% por UM refresh extra
-## antes de sumir de vez — cancelamento (jogador trocou a producao antes de
-## completar) continua removendo na hora, sem essa "volta de graca".
-func refresh_construction_markers(just_completed: Array[Vector2i] = []) -> void:
+## CONCLUSÃO não passa por aqui: place_building retira o canteiro no instante em que o prédio nasce
+## (_retire_construction_marker). Relato do usuário 2026-10-12: "a construção supostamente termina, aparece o prédio,
+## mas a barra de progresso está tipo em 80%, aí uns 2 turnos depois a barra some... ficam 2 construções ocupando o
+## mesmo espaço, a animação da construção e o prédio pronto". Causa: o prédio era criado na hora (GameManager, no
+## Encerrar Turno), mas o canteiro só era avisado depois, em duas etapas atrasadas — a 1ª no fim da fase da IA (até lá,
+## prédio + canteiro animado + barra no valor do turno anterior no mesmo tile) e a 2ª um turno inteiro depois (a
+## "volta de graça": barra parada em 100% sobre o prédio já pronto). Quem cria o prédio e quem remove o canteiro eram
+## dois pontos diferentes do código, ligados por uma lista de coordenadas passada de mão em mão; agora é um ponto só.
+##
+## NÉVOA: o canteiro já nasce com a visibilidade certa (_construction_marker_shown), então pode ser criado a qualquer
+## momento do turno sem vazar a obra de uma cidade inimiga até o próximo recompute_fog.
+func refresh_construction_markers() -> void:
 	mark_visual_focus_dirty() # V3 / Etapa 3: foco visual recalcula UMA vez no fim do frame
 	var wanted := {} # coord -> City
 	for city in cities_by_coord.values():
-		if city.pending_building_coord != City.NO_PENDING_COORD:
+		if city.pending_building_coord != City.NO_PENDING_COORD and not buildings_by_coord.has(city.pending_building_coord):
 			wanted[city.pending_building_coord] = city
+	# Obra que deixou de existir sem prédio pronto (produção trocada, cidade capturada): some na hora, sem cerimônia.
 	for coord in _construction_markers.keys().duplicate():
-		if wanted.has(coord):
-			continue
-		if _construction_markers_pending_removal.has(coord):
+		if not wanted.has(coord):
 			_construction_markers[coord].queue_free()
 			_construction_markers.erase(coord)
-			_construction_markers_pending_removal.erase(coord)
-		elif coord in just_completed:
-			_update_construction_marker_progress_full(_construction_markers[coord])
-			_construction_markers_pending_removal[coord] = true
-		else:
-			_construction_markers[coord].queue_free()
-			_construction_markers.erase(coord)
+	var fog_viewer: PlayerData = GameManager.human_player if not visibility.is_empty() else null
 	for coord in wanted.keys():
-		if not _construction_markers.has(coord):
-			_construction_markers[coord] = _build_construction_marker(coord)
 		var city: City = wanted[coord]
-		# owner_player fica de meta (nao da pra ler da City depois que o
-		# marcador sai de "wanted" — ver volta de graca acima) pra
-		# _apply_fog_to_entities saber gatear visibilidade igual unidade/
-		# cidade/predio: dono sempre ve, resto so com o tile ATUALMENTE
-		# visivel (nao so explorado) — sem isso a obra de uma cidade
-		# inimiga vazava por baixo da nevoa, nunca escondida.
-		_construction_markers[coord].set_meta("owner_player", city.owner_player)
-		_update_construction_marker_progress(_construction_markers[coord], city)
+		# Obra que trocou de dono (cidade capturada): o canteiro é o da raça do dono, então é refeito.
+		var existing: Node3D = _construction_markers.get(coord)
+		if existing != null and existing.has_meta("owner_player") and existing.get_meta("owner_player") != city.owner_player:
+			existing.queue_free()
+			_construction_markers.erase(coord)
+		if not _construction_markers.has(coord):
+			# The site occupies the tile from its first frame, including restored
+			# saves. Clear only this coordinate, once when creating the model.
+			_clear_tile_decor_at(coord)
+			_construction_markers[coord] = _build_construction_marker(coord, city)
+			_construction_markers[coord].set_meta("owner_player", city.owner_player)
+		var marker: Node3D = _construction_markers[coord]
+		# Dono em meta: a névoa gateia igual unidade/cidade/prédio (dono sempre vê; o resto só com o tile visível agora).
+		marker.set_meta("owner_player", city.owner_player)
+		if fog_viewer != null:
+			marker.visible = _construction_marker_shown(marker, coord, fog_viewer)
+		_update_construction_marker_progress(marker, city)
+
+## O canteiro em `coord` aparece para `viewer`? O dono sempre vê a própria obra; os outros só com o tile VISÍVEL agora
+## (senão a obra de uma cidade inimiga entregaria "estão construindo ali" por baixo da névoa). Marcador sem dono
+## registrado (só em teste) fica visível.
+func _construction_marker_shown(marker: Node3D, coord: Vector2i, viewer: PlayerData) -> bool:
+	var marker_owner: PlayerData = marker.get_meta("owner_player") if marker.has_meta("owner_player") else null
+	return marker_owner == null or marker_owner == viewer or visibility.get(coord, Visibility.UNSEEN) == Visibility.VISIBLE
+
+## O prédio de `coord` acabou de nascer (place_building): o canteiro sai do tile NESTE instante — deixa de existir para
+## o jogo (foco visual, inspetor, névoa e o próximo refresh não o veem mais) e o modelo animado da obra é destruído.
+## O que sobra é só um aceno de conclusão: a barra pula para 100% e some sozinha em menos de um segundo — o jogador vê
+## a obra FECHAR (pedido antigo: "quando a barra chega em 90% a construção acaba", nunca se via o 100%) sem que um
+## resto de obra fique parado em cima do prédio. Sem animação (Reduced Motion, ou fora da árvore em teste) some na hora.
+const CONSTRUCTION_COMPLETED_HOLD := 0.35
+const CONSTRUCTION_COMPLETED_FADE := 0.45
+const CONSTRUCTION_COMPLETED_RISE := 0.35
+
+func _retire_construction_marker(coord: Vector2i) -> void:
+	if not _construction_markers.has(coord):
+		return
+	var marker: Node3D = _construction_markers[coord]
+	_construction_markers.erase(coord)
+	mark_visual_focus_dirty()
+	if not is_instance_valid(marker):
+		return
+	for child in marker.get_children():
+		if child.name != "ProgressBar":
+			(child as Node3D).visible = false
+			child.queue_free()
+	var bar := marker.get_node_or_null("ProgressBar") as Sprite3D
+	if bar == null or not marker.visible or not is_inside_tree() or Settings.reduced_motion:
+		marker.queue_free()
+		return
+	marker.name = "ConstructionCompleted_%d_%d" % [coord.x, coord.y]
+	# A barra pode estar subindo/descendo por causa de uma tropa no tile (VisualFocusSystem): daqui em diante é nossa.
+	var lift: Tween = bar.get_meta("lift_tween") if bar.has_meta("lift_tween") else null
+	if lift != null and lift.is_valid():
+		lift.kill()
+	bar.texture = _build_construction_progress_bar_texture(1.0)
+	var tween := marker.create_tween()
+	tween.tween_interval(CONSTRUCTION_COMPLETED_HOLD)
+	tween.tween_property(bar, "modulate:a", 0.0, CONSTRUCTION_COMPLETED_FADE)
+	tween.parallel().tween_property(bar, "position:y", bar.position.y + CONSTRUCTION_COMPLETED_RISE, CONSTRUCTION_COMPLETED_FADE)
+	tween.tween_callback(marker.queue_free)
 
 ## Guindaste bem simples (base + braco) — nao precisa ser bonito, so
 ## precisa ser obviamente DIFERENTE de um predio pronto (por isso
@@ -2623,12 +3133,28 @@ func refresh_construction_markers(just_completed: Array[Vector2i] = []) -> void:
 ## ta duas barras girando diferente" — o bg/fg quase coincidentes, ambos
 ## com billboard, brigando com a rotacao do pai a cada frame e alternando
 ## qual ficava na frente).
-func _build_construction_marker(coord: Vector2i) -> Node3D:
+func _build_construction_marker(coord: Vector2i, city: City = null) -> Node3D:
 	var marker := Node3D.new()
 	var base_pos = world_for_coord(coord)
 	marker.position = base_pos
 	marker.set_meta("base_y", base_pos.y)
 	marker.set_meta("phase", randf() * TAU)
+	var construction_scene: PackedScene
+	if city and city.owner_player and city.owner_player.civ:
+		match city.owner_player.civ.race:
+			"human": construction_scene = HUMAN_CONSTRUCTION_SITE
+			"elf": construction_scene = ELF_CONSTRUCTION_SITE
+			"orc": construction_scene = ORC_CONSTRUCTION_SITE
+			"dwarf": construction_scene = DWARF_CONSTRUCTION_SITE
+	if construction_scene:
+		var site := construction_scene.instantiate() as Node3D
+		site.name = "ConstructionSite"
+		site.scale = Vector3.ONE * hex_size
+		marker.add_child(site)
+		_build_construction_progress_bar(marker)
+		(marker.get_node("ProgressBar") as Sprite3D).position.y = 1.02 * hex_size
+		_construction_root.add_child(marker)
+		return marker
 
 	var crane := Node3D.new()
 	crane.name = "Crane"
@@ -2741,29 +3267,19 @@ func _build_construction_progress_bar_texture(frac: float) -> ImageTexture:
 			img.set_pixel(x, y, color)
 	return ImageTexture.create_from_image(img)
 
-## Chamado a cada refresh_construction_markers() (uma vez por turno, ja
-## depois de City.process_turn() ter acumulado producao — ver comentario
-## de refresh_construction_markers) — so troca a TEXTURA do sprite pela
-## fracao atual (stored_production/production_cost() da cidade DONA deste
-## predio); nunca mexe em tamanho/posicao (ver comentario da const
-## CONSTRUCTION_PROGRESS_BAR_Y acima pro motivo).
+## Barra do canteiro = stored_production / production_cost() da cidade DONA da obra. Só troca a TEXTURA do sprite,
+## nunca tamanho/posição (ver CONSTRUCTION_PROGRESS_BAR_Y), e só quando o valor mudou — refresh_construction_markers
+## roda mais de uma vez por turno.
 func _update_construction_marker_progress(marker: Node3D, city: City) -> void:
 	var bar := marker.get_node_or_null("ProgressBar") as Sprite3D
 	if bar == null:
 		return
 	var cost = city.production_cost()
-	var frac = clamp(city.stored_production / cost, 0.0, 1.0) if cost > 0.0 else 1.0
-	bar.texture = _build_construction_progress_bar_texture(frac)
-
-## Trava a barra do marcador em 100% sem precisar da City dona — usada na
-## "volta de graca" de um predio recem-concluido (ver refresh_construction_
-## markers/just_completed), onde a City ja resetou production_item/
-## pending_building_coord e nao tem mais como calcular a fracao de novo.
-func _update_construction_marker_progress_full(marker: Node3D) -> void:
-	var bar := marker.get_node_or_null("ProgressBar") as Sprite3D
-	if bar == null:
+	var frac: float = clampf(city.stored_production / cost, 0.0, 1.0) if cost > 0.0 else 1.0
+	if bar.has_meta("progress") and is_equal_approx(float(bar.get_meta("progress")), frac):
 		return
-	bar.texture = _build_construction_progress_bar_texture(1.0)
+	bar.set_meta("progress", frac)
+	bar.texture = _build_construction_progress_bar_texture(frac)
 
 ## Mostra um rotulo flutuante sobre um tile — usado pra indicar custo de
 ## movimento (previa de trajeto) ou "ATACAR" ao passar o mouse sobre um
@@ -2787,59 +3303,58 @@ func hide_hover_label() -> void:
 ## (_coord_to_index/_water_coord_to_index/_lava_coord_to_index), entao
 ## cada tile e escurecido exatamente uma vez, na malha certa.
 func _apply_fog_colors(changed: Variant = null) -> void:
+	_rebuild_fog_state(changed)
 	_apply_land_and_prop_fog(changed)
 	_rebuild_liquid_type_texture(changed)
 	_rebuild_water_overlay()
-	_last_fog_visibility = visibility.duplicate()
+	if _fog_changes_complete and changed is Array:
+		for coord in changed:
+			_last_fog_visibility[coord] = visibility[coord]
+	else:
+		_last_fog_visibility = visibility.duplicate()
+	_fog_changes_complete = false
 
 func _apply_land_and_prop_fog(changed: Variant = null) -> void:
 	if _multimesh_instance:
 		_apply_terrain_fog(_multimesh_instance.multimesh, _coord_to_index)
-	_apply_prop_fog()
+	_apply_prop_fog(changed)
 	_rebuild_biome_overlay(changed)
-	# Tingimento de territorio: reconstruido no MESMO ciclo, mesmo custo ja
+	# Contorno de territorio: reconstruido no MESMO ciclo, mesmo custo ja
 	# aceito hoje (evento discreto: turno/hover/selecao, nunca por frame) —
-	# cobre TANTO fog mudando (nevoa por tile, ver _build_city_tint_mesh)
+	# cobre TANTO fog mudando (nevoa por tile, ver _build_city_border_mesh)
 	# QUANTO territorio crescendo (City.owned_tiles, ver City.
 	# _claim_frontier_tile chamado todo turno em process_turn), sem
 	# precisar de um gancho separado em GameManager/City pra cada caso.
-	for city in cities_by_coord.values():
-		_update_city_tint(city)
+	refresh_territory_borders()
 
-## Refatoracao de nevoa de guerra (pedido do usuario: "escurecimento direto
-## nos tiles... corte seco no formato do hexagono" virando 3 estados visuais
-## refinados com borda suave). O terreno solido NAO dimeriza mais a cor por
-## instancia aqui — so reseta pra cor CRUA do bioma (desfazendo qualquer
-## destaque de _highlight_coords de uma chamada anterior). O tingimento de
-## nevoa em si (nuvem/sepia/cor plena, com fade suave entre eles) agora vive
-## inteiramente em terrain.gdshader, amostrando fog_level continuo da MESMA
-## mascara global de biome_overlay_texture com filtro linear (ver
-## _rebuild_biome_overlay/_fog_level_for) — dai a mistura suave "de graca"
-## entre tiles vizinhos em vez do corte reto por instancia de antes.
-func _apply_terrain_fog(mm: MultiMesh, coord_to_index: Dictionary) -> void:
-	for coord in coord_to_index.keys():
-		var data: HexTileData = tiles[coord]
-		var idx = coord_to_index[coord]
-		mm.set_instance_color(idx, data.color)
-	# Mapa inteiro ja esta na cor crua agora — nenhum highlight residual pra
-	# _reset_highlighted_terrain desfazer na proxima set_highlight/
-	# clear_highlight (ver _last_highlighted_land_coords).
+## O terreno solido nao guarda nevoa na cor da instancia: aqui so volta pra
+## cor CRUA do bioma (desfazendo qualquer destaque de _highlight_coords de
+## uma chamada anterior). O filtro escuro da area explorada vive em
+## terrain.gdshader, pelo fog_level continuo da mascara biome_overlay_texture
+## (_rebuild_biome_overlay/_fog_level_for) — dai a passagem suave entre
+## visivel e explorado; o tile nunca visto nem e desenhado (fica sob a
+## FogLayer, pelo estado exato de _rebuild_fog_state).
+##
+## Otimização 2026-10-14 (docs/PERFORMANCE_GUIDE.md §6): a cor de instância do terreno só sai da cor crua por
+## _highlight_coords (transform_tile_terrain já grava a cor nova na hora), e todo tile tingido fica registrado em
+## _last_highlighted_land_coords — desfazer só esses dá o MESMO buffer que repintar as ~5 mil instâncias do mapa a cada
+## passo de unidade (2,5 ms no mapa padrão).
+func _apply_terrain_fog(_mm: MultiMesh, _coord_to_index: Dictionary) -> void:
+	_reset_highlighted_terrain(_last_highlighted_land_coords)
+	# Nenhum highlight residual pra _reset_highlighted_terrain desfazer na proxima set_highlight/clear_highlight.
 	_last_highlighted_land_coords = []
 
-## Props (arvores/pedras/picos) nao passam por terrain.gdshader (material
-## simples, sem shader custom) — entao continuam tingidos por INSTANCIA,
-## mas agora com 3 tratamentos distintos em vez do escurecimento linear de
-## antes: UNSEEN vira alfa 0 (escondido de verdade, pedido do usuario
-## "visibilidade/alfa zerados" — ver _rebuild_props, materiais com
-## TRANSPARENCY_ALPHA_SCISSOR pra alfa 0 realmente sumir sem custo de
-## blending/ordenacao, ja que aqui alfa e sempre binario 0 ou 1, nunca
-## fracionario), EXPLORED vira sepia/dessaturado (_sepia_prop_color, mesmo
-## espirito do tratamento de terreno), VISIBLE fica com a cor original.
-func _apply_prop_fog() -> void:
-	for coord in _changed_tree_props:
-		_tint_props(_changed_tree_props[coord].multimesh, {coord: [0, 1, 2]}, Color.WHITE)
-	if _props_tree_instance:
-		_tint_props(_props_tree_instance.multimesh, _tree_coord_to_index, Color.WHITE)
+## Props (arvores, gelo, recursos, covis) nao passam por terrain.gdshader —
+## a nevoa deles e por INSTANCIA: UNSEEN vira alfa 0 (nao e desenhado: os
+## materiais usam TRANSPARENCY_ALPHA_SCISSOR, alfa sempre binario 0 ou 1) —
+## e o que e alto demais pra camada de nevoa cobrir, por isso precisa sumir
+## de verdade; EXPLORED fica sob o filtro de memoria (_memory_prop_color, a
+## mesma cor do terreno); VISIBLE fica com a cor original. Icone de recurso
+## so em tile visivel agora.
+## `changed` (opcional): tiles cuja visibilidade mudou neste recompute_fog — a vegetação só repinta esses.
+func _apply_prop_fog(changed: Variant = null) -> void:
+	if nature_decor != null:
+		nature_decor.apply_fog(visibility, changed)
 	if _props_ice_floe_instance:
 		_tint_props(_props_ice_floe_instance.multimesh, _ice_floe_coord_to_index, ICE_FLOE_BASE_COLOR)
 	_resource_props_manager.apply_fog(visibility)
@@ -2856,23 +3371,19 @@ func _tint_props(mm: MultiMesh, coord_to_index: Dictionary, base_color: Color) -
 			Visibility.UNSEEN:
 				color = Color(base_color.r, base_color.g, base_color.b, 0.0)
 			Visibility.EXPLORED:
-				color = _sepia_prop_color(base_color)
+				color = _memory_prop_color(base_color)
 			Visibility.VISIBLE:
 				pass
 		for idx in indices:
 			mm.set_instance_color(idx, color)
 
-## Sepia/dessaturado a partir da luminancia de `base_color` — mesma formula
-## de luminancia perceptual (0.299/0.587/0.114) usada em terrain.gdshader
-## pro terreno solido, pra os dois tratamentos lerem como a MESMA "familia"
-## visual de nevoa mesmo sendo calculados em lugares diferentes (shader vs
-## GDScript, ver comentario de _apply_prop_fog acima).
-func _sepia_prop_color(base_color: Color) -> Color:
-	var luminance = base_color.r * 0.299 + base_color.g * 0.587 + base_color.b * 0.114
-	var toned_r = lerp(luminance, PROP_SEPIA_TINT.r * (luminance + 0.3), PROP_SEPIA_DESATURATE)
-	var toned_g = lerp(luminance, PROP_SEPIA_TINT.g * (luminance + 0.3), PROP_SEPIA_DESATURATE)
-	var toned_b = lerp(luminance, PROP_SEPIA_TINT.b * (luminance + 0.3), PROP_SEPIA_DESATURATE)
-	return Color(toned_r * (1.0 - PROP_SEPIA_DARKEN), toned_g * (1.0 - PROP_SEPIA_DARKEN), toned_b * (1.0 - PROP_SEPIA_DARKEN), 1.0)
+## `base_color` como aparece em tile EXPLORADO: sob o filtro de memória (MEMORY_TINT), opaco.
+func _memory_prop_color(base_color: Color) -> Color:
+	return Color(base_color.r * MEMORY_TINT.r, base_color.g * MEMORY_TINT.g, base_color.b * MEMORY_TINT.b, 1.0)
+
+## Entrega o filtro de memória a um material de terreno/água (um ponto só define a cor: MEMORY_TINT).
+func _apply_memory_tint_uniform(material: ShaderMaterial) -> void:
+	material.set_shader_parameter("fog_memory_tint", Vector3(MEMORY_TINT.r, MEMORY_TINT.g, MEMORY_TINT.b))
 
 ## Todos os tiles a ate `range_dist` passos de `center` (sem contar o
 ## proprio center). Usado pro alcance de ataque de unidades a distancia
@@ -2926,8 +3437,9 @@ func _neighbor_coords(coord: Vector2i) -> Array[Vector2i]:
 ## fixo grande o bastante pra nao correlacionar com a primeira) — padrao
 ## usual de "domain warping".
 func _warp_world(world: Vector3) -> Vector2:
-	var dx = _warp_noise.get_noise_2d(world.x, world.z) * warp_strength
-	var dz = _warp_noise.get_noise_2d(world.x + 1000.0, world.z - 1000.0) * warp_strength
+	var strength := warp_strength / _noise_scale # mapa menor: distorção proporcionalmente menor (mesmo desenho)
+	var dx = _warp_noise.get_noise_2d(world.x, world.z) * strength
+	var dz = _warp_noise.get_noise_2d(world.x + 1000.0, world.z - 1000.0) * strength
 	return Vector2(world.x + dx, world.z + dz)
 
 ## 0 no centro DA ZONA (nao mais do mapa inteiro — ver nota de _zone_for
@@ -2968,9 +3480,10 @@ func _edge_falloff(coord: Vector2i) -> float:
 	# 41x41) mal aciona o falloff (que so faria sentido pra um retangulo
 	# de 96x60) e gera terra demais/agua de menos. So o tamanho Grande de
 	# verdade trava a zona Principal na pegada FIXA historica.
-	if not _is_large_map_or_bigger():
-		return _edge_falloff_for_zone(coord, MAIN_ZONE_CENTER, float(map_width) / 2.0, float(map_height) / 2.0)
-	return _edge_falloff_for_zone(coord, MAIN_ZONE_CENTER, MAIN_ZONE_HALF_WIDTH, MAIN_ZONE_HALF_HEIGHT)
+	# 2026-10-10: a área reservada vem do PERFIL do tamanho (WorldProfile.main_half_extents) — 72×44, 84×52 ou 96×60;
+	# fixture de teste = o mapa inteiro, como sempre.
+	var half := _main_half_extents()
+	return _edge_falloff_for_zone(coord, MAIN_ZONE_CENTER, half.x, half.y)
 
 ## Elevacao "de verdade" usada por TUDO (agua/plano/colina/montanha, ver
 ## _generate_tile_data/_tier_for_elevation): ruido de continente de baixa
@@ -3195,7 +3708,7 @@ const MOUNTAINS_ELEVATION_THRESHOLD := 0.32
 ## continentes especiais... utilizando estritamente os tipos de terreno
 ## que JA EXISTEM"). O mapa Grande passa a ter 3 "zonas" fixas em
 ## coordenadas axiais — Principal (a pegada historica 96x60, centro na
-## origem, ver TitleScreen.MAIN_ZONE_SIZE), Vulcanica e de Cristal (novas,
+## origem, ver WorldProfile.main_frame), Vulcanica e de Cristal (novas,
 ## centradas longe da origem) — mais uma margem de oceano GARANTIDO fora
 ## de toda zona (ver _elevation_for). Layout lado a lado no eixo largo (Q),
 ## nao na diagonal, pra crescer o canvas so em largura em vez de largura E
@@ -3204,8 +3717,8 @@ const MOUNTAINS_ELEVATION_THRESHOLD := 0.32
 ## escolhido abaixo — gap sempre >= 36 tiles de oceano garantido por
 ## construcao (nunca "provavelmente oceano" por sorte de ruido).
 const MAIN_ZONE_CENTER := Vector2i(0, 0)
-const MAIN_ZONE_HALF_WIDTH := 48.0 # TitleScreen.MAIN_ZONE_SIZE.width / 2
-const MAIN_ZONE_HALF_HEIGHT := 30.0 # TitleScreen.MAIN_ZONE_SIZE.height / 2
+## A meia-largura/meia-altura da zona Principal NÃO é mais constante: vem do perfil do tamanho (_main_half_extents,
+## WorldProfile.main_frame). No 320×84 ela continua 48 × 30, a referência do gap acima.
 
 const VOLCANIC_ZONE_CENTER := Vector2i(-116, 0)
 const VOLCANIC_ZONE_HALF_WIDTH := 32.0
@@ -3235,11 +3748,12 @@ func _zone_for(coord: Vector2i) -> int:
 	# MAP_SIZES.large) usa a classificacao por retangulo fixo abaixo.
 	if not _is_large_map_or_bigger():
 		return _Zone.MAIN
-	if _in_zone_bounds(coord, MAIN_ZONE_CENTER, MAIN_ZONE_HALF_WIDTH, MAIN_ZONE_HALF_HEIGHT):
+	var half := _main_half_extents()
+	if _in_zone_bounds(coord, MAIN_ZONE_CENTER, half.x, half.y):
 		return _Zone.MAIN
 	# V3 / Etapa 3: os continentes especiais só existem quando o perfil do mundo os liga (desativados no padrão 1.0,
 	# preservados para conteúdo futuro — ver WorldProfile).
-	var profile := WorldProfile.for_dimensions(map_width, map_height)
+	var profile := _current_profile()
 	if bool(profile.volcanic_continent) and _in_zone_bounds(coord, VOLCANIC_ZONE_CENTER, VOLCANIC_ZONE_HALF_WIDTH, VOLCANIC_ZONE_HALF_HEIGHT):
 		return _Zone.VOLCANIC
 	if bool(profile.crystal_continent) and _in_zone_bounds(coord, CRYSTAL_ZONE_CENTER, CRYSTAL_ZONE_HALF_WIDTH, CRYSTAL_ZONE_HALF_HEIGHT):
@@ -4319,15 +4833,14 @@ const LAIR_MIN_DISTANCE_FROM_CENTER_FRACTION := 0.25 # nunca perto do (0,0), ond
 ## precisam continuar excluindo so uma fatia pequena e proporcional ao
 ## PROPRIO tamanho, senao a exclusao vira maior que o mapa inteiro e
 ## nenhum covil consegue nascer). So o tamanho Grande de verdade trava na
-## pegada FIXA do continente Principal (TitleScreen.MAIN_ZONE_SIZE) — essa
+## AREA RESERVADA do continente Principal (WorldProfile.main_frame) — essa
 ## exclusao existe pra manter covil longe de onde o humano SEMPRE comeca
 ## ((0,0), dentro da zona Principal), entao la sim trava no tamanho
 ## historico em vez de variar com o canvas total (agora maior, pra caber
 ## os continentes Vulcanico/de Cristal).
 func _min_distance_from_center() -> float:
-	if _is_large_map_or_bigger():
-		return float(min(TitleScreen.MAIN_ZONE_SIZE.width, TitleScreen.MAIN_ZONE_SIZE.height)) / 2.0 * LAIR_MIN_DISTANCE_FROM_CENTER_FRACTION
-	return float(min(map_width, map_height)) / 2.0 * LAIR_MIN_DISTANCE_FROM_CENTER_FRACTION
+	var half := _main_half_extents() # área reservada do tamanho (ou o mapa inteiro, em fixture)
+	return minf(half.x, half.y) * LAIR_MIN_DISTANCE_FROM_CENTER_FRACTION
 
 ## Verdadeiro so no tamanho Grande (TitleScreen.MAP_SIZES.large) ou maior
 ## — usado pra ligar as garantias de cobertura de bioma/Mar de Lava so em
@@ -4340,10 +4853,31 @@ func _min_distance_from_center() -> float:
 ## o perfil com continentes especiais (o continente principal usa a pegada histórica fixa nos dois); falso só para
 ## mapas pequenos de teste. Lido das dimensões ATUAIS (fixtures ajustam map_width/height sem gerar mapa).
 func _is_large_map_or_bigger() -> bool:
-	return bool(WorldProfile.for_dimensions(map_width, map_height).fixed_main_frame)
+	return bool(_current_profile().fixed_main_frame)
 
 ## V3 / Etapa 3: perfil do mundo gerado (STANDARD_1_0 / SPECIAL_CONTINENTS / SMALL).
-var world_profile: Dictionary = WorldProfile.SMALL
+var world_profile: Dictionary = WorldProfile.TEST_FIXTURE
+## Escala do ruído da geração para este tamanho (WorldProfile.noise_scale): 1 no Grande e nos legados.
+var _noise_scale := 1.0
+
+## Meia-largura/meia-altura da área reservada ao continente principal, do perfil das dimensões ATUAIS (fixtures ajustam
+## map_width/map_height sem gerar mapa, como _is_large_map_or_bigger). Chamada várias vezes POR TILE na geração
+## (borda, zona, clima): o perfil fica em cache e só é recalculado quando as dimensões mudam.
+var _profile_cache_dims := Vector2i(-1, -1)
+var _profile_cache: Dictionary = {}
+var _main_half_cache := Vector2.ZERO
+
+func _current_profile() -> Dictionary:
+	var dims := Vector2i(map_width, map_height)
+	if dims != _profile_cache_dims:
+		_profile_cache_dims = dims
+		_profile_cache = WorldProfile.for_dimensions(map_width, map_height)
+		_main_half_cache = WorldProfile.main_half_extents(_profile_cache, map_width, map_height)
+	return _profile_cache
+
+func _main_half_extents() -> Vector2:
+	_current_profile()
+	return _main_half_cache
 
 ## Espalha alguns Covis de Monstro (Unit neutra, owner_player == null — ver
 ## MonsterDatabase) em terra firme longe do centro do mapa, deterministico
@@ -4447,10 +4981,13 @@ func _spawn_monster_lairs() -> void:
 
 ## Fase 33D2 — o prop 3D de um covil (seed, planner regional ou guardião): mesma construção de sempre.
 func _build_lair_structure(coord: Vector2i, kind: String) -> void:
+	_clear_tile_decor_at(coord) # também cobre os covis da seed, criados depois da vegetação
 	var structure := LairStructure.new()
 	_lairs_root.add_child(structure)
-	structure.position = world_for_coord(coord)
+	structure.position = world_surface_for_coord(coord)
 	structure.build(kind, self)
+	if _fog_viewer != null and not visibility.is_empty():
+		structure.apply_fog_state(visibility.get(coord, Visibility.UNSEEN)) # covil criado no meio da partida: névoa na hora
 	lairs_by_coord[coord] = structure
 
 ## Distancia ate a origem de jogador (humano ou rival) mais proxima — usada
@@ -4468,7 +5005,7 @@ func _build_lair_structure(coord: Vector2i, kind: String) -> void:
 ## antes de chamar generate_map, de proposito).
 func _nearest_player_origin_distance(coord: Vector2i) -> float:
 	var best = HexMetrics.axial_distance(coord, Vector2i.ZERO)
-	var count = clamp(GameManager.rival_count, 1, GameManager.RIVAL_CIVS.size())
+	var count = clamp(GameManager.rival_count, 1, GameManager.MAX_RIVALS)
 	for i in range(count):
 		var d = HexMetrics.axial_distance(coord, GameManager._rival_origin(i, count))
 		best = min(best, d)
@@ -4577,6 +5114,8 @@ func process_monster_lairs(turn: int = 0) -> void:
 		var kind = lair_kind_by_coord.get(lair_coord, "")
 		if kind == "":
 			continue
+		if MonsterEcologySystem.enabled and MonsterEcologyData.is_ecology_species(kind):
+			continue # As 12 espécies compartilham o controlador acima, inclusive fora de MAIN.
 		match lair_role(lair_coord):
 			LAIR_ROLE_GUARDIAN:
 				continue # Guardião: população fixa (o Troll original), nunca reforça nem patrulha
@@ -4740,9 +5279,8 @@ func lair_role(coord: Vector2i) -> String:
 ## fica fora do teto global por tipo (que continua valendo para os selvagens). Depois que o covil é
 ## destruído o papel some e os sobreviventes voltam a contar como selvagens.
 func is_bound_to_role_lair(unit: Unit) -> bool:
-	# Fase 33D3: guardião de evento mundial (Relicário) também fica fora do teto dos selvagens.
 	# V3: monstro de sítio ecológico conta na população da ecologia, nunca no teto global dos selvagens.
-	return unit.source_event_id >= 0 or unit.ecology_site_id >= 0 or (unit.source_lair_coord != NO_LAIR and lair_roles.has(unit.source_lair_coord))
+	return unit.ecology_site_id >= 0 or (unit.source_lair_coord != NO_LAIR and lair_roles.has(unit.source_lair_coord))
 
 ## Monstros vivos gerados por `lair_coord` (chefe original + reforços), onde quer que estejam.
 func lair_population(lair_coord: Vector2i) -> int:
@@ -4775,12 +5313,12 @@ func lair_clear_rewards(coord: Vector2i) -> Dictionary:
 func create_lair(coord: Vector2i, kind: String, role: String, boss_coord: Vector2i = NO_LAIR) -> Unit:
 	if lairs_by_coord.has(coord) or coord in lair_coords:
 		return null
+	cleared_lair_coords.erase(coord) # reocupação futura não pode ser apagada pelo histórico no próximo load
 	lair_coords.append(coord)
 	lair_kind_by_coord[coord] = kind
 	added_lairs[coord] = kind
 	if role != LAIR_ROLE_WILD:
 		lair_roles[coord] = role
-	_clear_tile_decor_at(coord)
 	_build_lair_structure(coord, kind)
 	if boss_coord == NO_LAIR:
 		return null
@@ -4913,14 +5451,17 @@ func _maybe_roam_lair(lair_coord: Vector2i) -> void:
 		return
 	var wanderer: Unit = occupants[monster_turn_rng.randi() % occupants.size()]
 	var dest: Vector2i = free_coords[monster_turn_rng.randi() % free_coords.size()]
-	units_by_coord.erase(wanderer.coord)
+	var origin := wanderer.coord
+	units_by_coord.erase(origin)
 	wanderer.coord = dest
 	# Mesmo motivo de move_unit acima: sem nevoa cobrindo o covil, o
-	# guardiao nem aparece na tela — nao vale animar.
+	# guardiao nem aparece na tela — nao vale animar. Na tela, anda tile a tile pela rota (o destino sorteado pode
+	# estar a varios tiles: um slide_to direto atravessava o que houvesse no meio).
 	if wanderer.visible:
-		wanderer.slide_to(world_surface_for_coord(dest))
+		wanderer.walk_path(_animation_waypoints(origin, dest, wanderer))
 	else:
-		wanderer.position = world_surface_for_coord(dest)
+		wanderer.place_at(world_surface_for_coord(dest))
+	wanderer.travel_dir = Vector2i.ZERO
 	units_by_coord[dest] = wanderer
 
 ## Unica funcao que cria um monstro neutro de verdade (guardiao original OU
@@ -4938,6 +5479,7 @@ func spawn_monster_at(coord: Vector2i, kind: String, is_camp_boss: bool = false)
 	_units_root.add_child(unit)
 	unit.setup(MonsterDatabase.create_monster(kind, is_camp_boss), null, coord, is_camp_boss)
 	unit.position = world_surface_for_coord(coord)
+	unit.visible = shown_through_fog(coord, null) # reforço de covil fora da visão não pisca no mapa
 	units_by_coord[coord] = unit
 	_clear_tile_decor_at(coord) # ver MAGIAS, SPAWNS E ARVORES -- mesma politica de spawn_unit acima
 	return unit
@@ -4977,7 +5519,7 @@ func clear_neutral_units() -> void:
 ## 0 = polo (frio), 1 = equador (quente) — gradiente linear pela distancia
 ## de `r` ao "equador" (r=0), com uma pitada de ruido pra a fronteira entre
 ## faixas climaticas nao ficar reta demais. Latitude normalizada pela
-## pegada FIXA do continente Principal (TitleScreen.MAIN_ZONE_SIZE, nao
+## AREA RESERVADA do continente Principal (WorldProfile.main_frame, nao
 ## map_height ao vivo) — senao o gradiente climatico do continente
 ## Principal se comprimiria conforme o canvas total cresce pra caber os
 ## continentes Vulcanico/Cristal, redistribuindo deserto/neve/selva sem
@@ -4989,7 +5531,7 @@ func _temperature_for(coord: Vector2i) -> float:
 	# propria altura ao vivo (comportamento historico, senao um mapa de
 	# teste pequeno normaliza a latitude errado e todo o clima muda);
 	# so o tamanho Grande de verdade trava na pegada FIXA da zona Principal.
-	var half_height = float(TitleScreen.MAIN_ZONE_SIZE.height) / 2.0 if _is_large_map_or_bigger() else float(map_height) / 2.0
+	var half_height = _main_half_extents().y # faixas climáticas proporcionais à área reservada de cada tamanho
 	var latitude = float(abs(coord.y)) / max(half_height, 1.0)
 	var jitter = _temp_jitter_noise.get_noise_2d(float(coord.x), float(coord.y)) * 0.15
 	return clamp(1.0 - latitude + jitter, 0.0, 1.0)
@@ -5125,8 +5667,8 @@ func _material_kind_for(terrain_type: int) -> float:
 			# a MESMA textura de rocha negra real — so' `color` muda por
 			# tipo (ver TerrainDatabase, cores recalibradas pra sobrar
 			# contraste depois do escurecimento ×0.6 que este mat_kind
-			# aplica). elevation_kind separado (ver mais abaixo) e quem da a
-			# cupula/relevo de Colinas/Montanhas Vulcanicas; o shader ja
+			# aplica). elevation_kind separado (elevation_kind_for) e quem da o
+			# pico das Montanhas Vulcanicas (Colinas sao planas); o shader ja
 			# exclui neve pra mat_kind 3 especificamente (ver
 			# terrain.gdshader).
 			return 3.0
@@ -5210,6 +5752,10 @@ func _rebuild_multimesh() -> void:
 	_rebuild_lava_tile_mask()
 
 	_rebuild_props()
+	# Camada de névoa e estado exato por tile: o mapa recém-criado está inteiro nunca visto.
+	if fog_layer != null:
+		fog_layer.rebuild(tiles, hex_size)
+	_rebuild_fog_state()
 	_rebuild_liquid_type_texture() # fog inicial (tudo UNSEEN, ver visibility) no plano recem-criado
 	_rebuild_water_overlay() # destaque inicial (nenhum) no mesmo plano
 	_rebuild_biome_overlay() # idem, mascara inicial pro terreno solido
@@ -5251,6 +5797,8 @@ func _build_liquid_plane() -> MeshInstance3D:
 	var material := ShaderMaterial.new()
 	material.shader = load("res://shaders/water_shader.gdshader")
 	material.set_shader_parameter("overlay_half_extents", half_extents)
+	TerrainTextureCatalog.apply_liquid(material)
+	_apply_memory_tint_uniform(material)
 	mesh_instance.material_override = material
 	return mesh_instance
 
@@ -5334,8 +5882,8 @@ func _rebuild_lava_tile_mask() -> void:
 ##   fog_level continuo (_fog_level_for, MESMA semantica 0/0.5/1 do canal
 ##   alfa de biome_overlay_texture em terrain.gdshader) — canal que antes
 ##   ficava sempre 1.0 sem uso, reaproveitado pra water_shader.gdshader
-##   aplicar a MESMA nuvem/sepia/cor-plena da terra (pedido do usuario:
-##   "a transicao terra/mar homogenea na area coberta pela Terra Incognita").
+##   aplicar o MESMO filtro de memoria da terra na agua explorada (a agua
+##   nunca vista fica sob a FogLayer, que cobre terra e mar por igual).
 ## Custo: ~WATER_OVERLAY_RESOLUTION² consultas de coordenada por chamada —
 ## so roda em eventos discretos (turno, hover, selecao), nunca por frame.
 ## Constroi (so na primeira vez — memoizado pelo tamanho do array) o
@@ -5474,17 +6022,7 @@ func _rebuild_water_overlay(reachable: Array = [], attackable: Array = [], path:
 	if reachable.is_empty() and attackable.is_empty() and path.is_empty() and buildable.is_empty():
 		_water_overlay_texture = _water_overlay_baseline_texture
 	else:
-		var tints := {}
-		# Mesma ordem de aplicacao do loop antigo: um tile em mais de um
-		# conjunto acumula os lerps na mesma sequencia de antes.
-		for c in buildable:
-			tints[c] = tints.get(c, Color.WHITE).lerp(Color(0.35, 0.7, 1.0), 0.55)
-		for c in path:
-			tints[c] = tints.get(c, Color.WHITE).lerp(Color(1.0, 1.0, 0.4), 0.7)
-		for c in attackable:
-			tints[c] = tints.get(c, Color.WHITE).lerp(Color(1.0, 0.2, 0.2), 0.5)
-		for c in reachable:
-			tints[c] = tints.get(c, Color.WHITE).lerp(Color(0.3, 1.0, 0.3), 0.5)
+		var tints := _highlight_tints(reachable, attackable, path, buildable)
 
 		var overlay_data := _water_overlay_baseline_bytes.duplicate()
 		for coord in tints.keys():
@@ -5505,6 +6043,56 @@ func _rebuild_water_overlay(reachable: Array = [], attackable: Array = [], path:
 
 	var material: ShaderMaterial = _liquid_plane_instance.material_override
 	material.set_shader_parameter("overlay_texture", _water_overlay_texture)
+
+## Cor de destaque de cada tile (multiplicador sobre branco) a partir dos 4 conjuntos — um tile em mais de um acumula
+## os lerps sempre nesta ordem. Usado pela água (_rebuild_water_overlay) e pela camada de névoa (_apply_fog_highlight).
+func _highlight_tints(reachable: Array, attackable: Array, path: Array, buildable: Array) -> Dictionary:
+	var tints := {}
+	for c in buildable:
+		tints[c] = tints.get(c, Color.WHITE).lerp(Color(0.35, 0.7, 1.0), 0.55)
+	for c in path:
+		tints[c] = tints.get(c, Color.WHITE).lerp(Color(1.0, 1.0, 0.4), 0.7)
+	for c in attackable:
+		tints[c] = tints.get(c, Color.WHITE).lerp(Color(1.0, 0.2, 0.2), 0.5)
+	for c in reachable:
+		tints[c] = tints.get(c, Color.WHITE).lerp(Color(0.3, 1.0, 0.3), 0.5)
+	return tints
+
+## Destaque dos tiles NUNCA VISTOS, por cima da camada de névoa (ver _fog_highlight_texture). Só reenvia a textura
+## quando há (ou havia) algum tile nunca visto destacado — o hover dentro da área conhecida não toca em nada aqui.
+const FOG_HIGHLIGHT_STRENGTH := 0.3
+
+func _apply_fog_highlight(tints: Dictionary) -> void:
+	if fog_layer == null or _fog_state_bytes.is_empty():
+		return
+	var wanted: Array[Vector2i] = []
+	for coord in tints:
+		if visibility.get(coord, Visibility.UNSEEN) == Visibility.UNSEEN and _fog_state_pixel(coord) >= 0:
+			wanted.append(coord)
+	if wanted.is_empty() and _fog_highlighted.is_empty():
+		return
+	if _fog_highlight_bytes.size() != _fog_state_bytes.size() * 4:
+		_fog_highlight_bytes = PackedByteArray()
+		_fog_highlight_bytes.resize(_fog_state_bytes.size() * 4) # zerado = sem destaque
+		_fog_highlight_texture = null
+	for coord in _fog_highlighted:
+		var old_pixel := _fog_state_pixel(coord)
+		if old_pixel >= 0:
+			_fog_highlight_bytes[old_pixel * 4 + 3] = 0
+	for coord in wanted:
+		var tint: Color = tints[coord]
+		var pixel := _fog_state_pixel(coord) * 4
+		_fog_highlight_bytes[pixel] = int(round(clampf(tint.r, 0.0, 1.0) * 255.0))
+		_fog_highlight_bytes[pixel + 1] = int(round(clampf(tint.g, 0.0, 1.0) * 255.0))
+		_fog_highlight_bytes[pixel + 2] = int(round(clampf(tint.b, 0.0, 1.0) * 255.0))
+		_fog_highlight_bytes[pixel + 3] = int(round(FOG_HIGHLIGHT_STRENGTH * 255.0))
+	_fog_highlighted = wanted
+	var image := Image.create_from_data(_fog_grid_size.x, _fog_grid_size.y, false, Image.FORMAT_RGBA8, _fog_highlight_bytes)
+	if _fog_highlight_texture != null:
+		_fog_highlight_texture.update(image)
+	else:
+		_fog_highlight_texture = ImageTexture.create_from_image(image)
+		fog_layer.material().set_shader_parameter("fog_highlight_texture", _fog_highlight_texture)
 
 ## Canal A (fog_level) de liquid_type_texture -- R/G/B (lava/coast) vem
 ## prontos do template estatico. Chamada SO quando `visibility` muda
@@ -5552,6 +6140,69 @@ func _rebuild_liquid_type_texture(changed: Variant = null) -> void:
 ## identidade do bioma no centro do tile.
 const BIOME_OVERLAY_RESOLUTION := 128
 
+## Índice do texel de `coord` na textura de estado de névoa, ou -1 se o tile está fora da grade. Mesmo esquema
+## "odd-r" do shader (fog_state.gdshaderinc: col = q + (r - (r & 1)) / 2).
+func _fog_state_pixel(coord: Vector2i) -> int:
+	var col := coord.x + (coord.y - (coord.y & 1)) / 2 - _fog_grid_min.x
+	var row := coord.y - _fog_grid_min.y
+	if col < 0 or row < 0 or col >= _fog_grid_size.x or row >= _fog_grid_size.y:
+		return -1
+	return row * _fog_grid_size.x + col
+
+## Reescreve o estado exato por tile (ver _fog_state_texture) e avisa a camada de névoa. `changed` = tiles que
+## mudaram; null = tudo (mapa novo/carregado: a grade é refeita para os tiles que existem).
+func _rebuild_fog_state(changed: Variant = null) -> void:
+	if tiles.is_empty():
+		return
+	var full := changed == null or _fog_state_bytes.is_empty()
+	if full:
+		var low := Vector2i(999999, 999999)
+		var high := Vector2i(-999999, -999999)
+		for coord in tiles:
+			var col: int = coord.x + (coord.y - (coord.y & 1)) / 2
+			low = Vector2i(mini(low.x, col), mini(low.y, coord.y))
+			high = Vector2i(maxi(high.x, col), maxi(high.y, coord.y))
+		_fog_grid_min = low
+		_fog_grid_size = high - low + Vector2i.ONE
+		_fog_state_bytes = PackedByteArray()
+		_fog_state_bytes.resize(_fog_grid_size.x * _fog_grid_size.y) # zerado = nunca visto
+		_fog_highlight_bytes = PackedByteArray()
+		_fog_highlight_texture = null
+		_fog_highlighted = []
+		if fog_layer != null:
+			fog_layer.material().set_shader_parameter("fog_highlight_texture", null)
+	elif changed.is_empty():
+		return
+	# Mapa recém-gerado (visibility vazio): tudo nunca visto, que é exatamente o zero do buffer e o estado inicial da
+	# camada — nada a percorrer (num mapa de 27 mil tiles isto poupava ~100 ms da geração).
+	var nothing_seen := full and visibility.is_empty()
+	if not nothing_seen:
+		for coord in (tiles.keys() if full else changed):
+			var pixel := _fog_state_pixel(coord)
+			if pixel >= 0:
+				_fog_state_bytes[pixel] = int(round(_fog_level_for(coord) * 255.0))
+	var image := Image.create_from_data(_fog_grid_size.x, _fog_grid_size.y, false, Image.FORMAT_R8, _fog_state_bytes)
+	if _fog_state_texture != null and not full:
+		_fog_state_texture.update(image)
+	else:
+		_fog_state_texture = ImageTexture.create_from_image(image)
+		_sync_fog_state_uniforms()
+	if fog_layer != null and not nothing_seen:
+		fog_layer.apply(visibility, null if full else changed)
+
+## Entrega a textura de estado e a geometria da grade a quem lê fog_state.gdshaderinc: o terreno e a camada de névoa.
+func _sync_fog_state_uniforms() -> void:
+	var materials: Array = []
+	if _multimesh_instance != null and _multimesh_instance.material_override is ShaderMaterial:
+		materials.append(_multimesh_instance.material_override)
+	if fog_layer != null:
+		materials.append(fog_layer.material())
+	for material: ShaderMaterial in materials:
+		material.set_shader_parameter("fog_state_texture", _fog_state_texture)
+		material.set_shader_parameter("fog_grid_size", Vector2(_fog_grid_size))
+		material.set_shader_parameter("fog_grid_half", Vector2(-_fog_grid_min))
+		material.set_shader_parameter("fog_hex_size", hex_size)
+
 ## Nivel de visibilidade CONTINUO (0=Unexplored, 0.5=Explored, 1=Visible) —
 ## fonte unica de verdade pro canal alfa de _rebuild_biome_overlay, evitando
 ## que a mascara amostrada por pixel em terrain.gdshader algum dia
@@ -5570,12 +6221,10 @@ func _fog_level_for(coord: Vector2i) -> float:
 ## Amostrada por posicao-mundo com filtro linear em terrain.gdshader, pra
 ## suavizar a transicao de cor entre hexagonos vizinhos de biomas
 ## diferentes em vez do contorno reto de favo de mel. RGB guarda a cor CRUA
-## do bioma (sem escurecimento — a nevoa de guerra, pedido do usuario de
-## "3 estados visuais refinados" em vez de escurecimento direto, agora e
-## responsabilidade inteira do shader); o canal ALFA guarda o fog_level
-## continuo (_fog_level_for) — a MESMA textura, amostrada com filtro
-## linear, da de graca tanto a mistura suave de cor de bioma na borda
-## QUANTO a mistura suave entre nuvem/sepia/cor-plena da nevoa (ver
+## do bioma (sem escurecimento); o canal ALFA guarda o fog_level continuo
+## (_fog_level_for) — a MESMA textura, amostrada com filtro linear, da de
+## graca tanto a mistura suave de cor de bioma na borda QUANTO a passagem
+## suave entre visivel e explorado do filtro de memoria (ver
 ## terrain.gdshader fragment(), fog_level). Tiles de agua/lava entram so
 ## pelo alfa (a cor RGB fica neutra, ja que esse pixel so e amostrado pelas
 ## bordas de terra vizinhas) — sem isso um tile de terra bem na costa
@@ -5640,23 +6289,10 @@ func _build_terrain_multimesh(coords: Array[Vector2i], coord_to_index: Dictionar
 		# ver shaders/terrain.gdshader), g = volumetria (elevation_kind: 0
 		# plano, 1 Colina, 2 Montanha — pedido do usuario, ver terrain.gdshader
 		# elevation_height), a = tratamento visual especial
-		# (_material_kind_for) — sem isso todo bioma so mudava de cor sob a
-		# MESMA textura de chao generica, reportado pelo usuario ("os biomas
-		# nao parecem bem trabalhados"). b fica sem uso (0.0).
+		# (_material_kind_for). b = superficie pixel art do TerrainTextureCatalog.
 		var material_kind = _material_kind_for(data.terrain_type)
-		var elevation_kind := 0.0
-		if data.terrain_type == HexTileData.TerrainType.MOUNTAINS or data.terrain_type == HexTileData.TerrainType.VOLCANIC_PEAKS or data.terrain_type == HexTileData.TerrainType.CRYSTAL_PEAKS:
-			# Montanhas Vulcanicas/Picos de Cristal (continentes especiais)
-			# ganham a MESMA cupula/pico visual de Montanhas normal — mesmo
-			# canal, so mais tipos reconhecidos (ver _material_kind_for pra
-			# textura/brilho, canal independente deste).
-			elevation_kind = 2.0
-		elif data.terrain_type == HexTileData.TerrainType.HILLS or data.terrain_type == HexTileData.TerrainType.VOLCANIC_HILLS:
-			# Colinas Vulcanicas (pedido do usuario: "adicione variacao de
-			# altura 3D para colinas vulcanicas") ganham a MESMA cupula de
-			# Colina normal.
-			elevation_kind = 1.0
-		multimesh.set_instance_custom_data(i, Color(randf(), elevation_kind, 0.0, material_kind))
+		# Relevo: so Montanhas tem pico; o resto e plano (ver elevation_kind_for/PEAK_TERRAINS).
+		multimesh.set_instance_custom_data(i, Color(randf(), elevation_kind_for(data.terrain_type), TerrainTextureCatalog.surface_for(data.terrain_type), material_kind))
 		coord_to_index[coord] = i
 		i += 1
 
@@ -5667,24 +6303,10 @@ func _build_terrain_multimesh(coords: Array[Vector2i], coord_to_index: Dictionar
 	material.set_shader_parameter("prism_depth", hex_size * LAND_PRISM_DEPTH_FACTOR) # bate com _build_hex_prism_mesh(hex_size, LAND_PRISM_DEPTH_FACTOR), nunca dessincroniza se qualquer um dos dois mudar
 	material.set_shader_parameter("hex_radius", hex_size) # normaliza a distancia ao centro do tile pra 0..1 na transicao organica de bioma (ver terrain.gdshader)
 	material.set_shader_parameter("biome_overlay_half_extents", get_world_half_extents()) # setup unico, igual overlay_half_extents da agua em _build_liquid_plane — o TEXTURE em si (que muda com fog) e atualizado a parte por _rebuild_biome_overlay
-	const ALBEDO_TEX_PATH := "res://assets/textures/terrain/ground_albedo.jpg"
-	if ResourceLoader.exists(ALBEDO_TEX_PATH):
-		material.set_shader_parameter("albedo_tex", load(ALBEDO_TEX_PATH))
-	else:
-		# Sem a textura (CC0, ambientCG "Ground037") o shader ainda funciona
-		# — texture() com sampler vazio devolve preto, entao zeramos a
-		# influencia dela pra nao pintar o mapa inteiro de preto.
-		material.set_shader_parameter("texture_strength", 0.0)
-	# Texturas reais dos 4 biomas com tratamento visual proprio (ver
-	# _material_kind_for) — pedido do usuario: "baixe as texturas corretas
-	# de assets pra isso". Cada uma so e amostrada dentro do branch do
-	# proprio mat_kind no shader; se o arquivo faltar, o uniform fica no
-	# branco padrao (`hint_default_white` no shader), a tint sozinha ainda
-	# funciona — mesma filosofia de fallback do resto do projeto.
-	_set_optional_texture(material, "snow_tex", "res://assets/textures/terrain/snow_albedo.jpg")
-	_set_optional_texture(material, "desert_tex", "res://assets/textures/terrain/desert_albedo.jpg")
-	_set_optional_texture(material, "lava_tex", "res://assets/textures/terrain/lava_albedo.jpg")
-	_set_optional_texture(material, "crystal_tex", "res://assets/textures/terrain/crystal_albedo.jpg")
+	# One reusable array, with the same world-space pixel density on every
+	# surface. The photographic JPEGs are retained as historical sources.
+	TerrainTextureCatalog.apply_terrain(material)
+	_apply_memory_tint_uniform(material)
 	mm_instance.material_override = material
 	return mm_instance
 
@@ -5738,39 +6360,21 @@ func _build_hex_prism_mesh(size: float, depth_factor: float = 0.4) -> ArrayMesh:
 
 	return st.commit()
 
-## Espalha arvores (modelo real KayKit, ver _load_tree_mesh) em tiles de
-## floresta e gelo flutuante em tiles de Mar Gelado, dando cara de bioma ao
-## mapa. As instancias reaproveitam MultiMesh (como o terreno) e respeitam a
-## mesma neblina de guerra via _apply_prop_fog().
+## Reconstrói a decoração do mapa: a vegetação composta por bioma (NatureDecorManager / kit temperate_forest_v1), o gelo
+## flutuante do Mar Gelado e os props/ícones de recurso. Tudo em MultiMesh e com a mesma névoa de guerra (_apply_prop_fog).
 func _rebuild_props() -> void:
 	if visual_focus != null:
 		visual_focus.reset() # os MultiMesh de origem vão ser recriados
-	if _props_tree_instance:
-		_props_tree_instance.queue_free()
-		_props_tree_instance = null
 	if _props_ice_floe_instance:
 		_props_ice_floe_instance.queue_free()
 		_props_ice_floe_instance = null
 
-	const TREE_TERRAINS := [
-		HexTileData.TerrainType.FOREST, HexTileData.TerrainType.TAIGA, HexTileData.TerrainType.JUNGLE,
-	]
-	var tree_coords: Array[Vector2i] = []
 	var ice_floe_coords: Array[Vector2i] = []
 	for coord in tiles.keys():
 		var data: HexTileData = tiles[coord]
-		# Tile com recurso especial (ver ResourceDatabase/ResourcePropsManager)
-		# nunca ganha arvore decorativa — pedido do usuario: 3-5 arvores
-		# empilhadas enterravam visualmente o prop pequeno do recurso (e o
-		# icone billboard some atras da copa da arvore), tornando o tile
-		# ilegivel como "tem recurso aqui".
-		if data.terrain_type in TREE_TERRAINS:
-			# Cobertura < 100% (ver TREE_TILE_COVERAGE_CHANCE) cria clareiras —
-			# pedido do usuario: bioma inteiro coberto de arvore-a-arvore lia
-			# como grade repetitiva/carregada, alem do custo de objetos extra.
-			if data.resource == "" and randf() < TREE_TILE_COVERAGE_CHANCE:
-				tree_coords.append(coord)
-		elif data.terrain_type == HexTileData.TerrainType.FROZEN_OCEAN:
+		# Vegetação: NatureDecorManager.rebuild abaixo (tile com recurso nunca ganha vegetação — o prop do recurso
+		# precisa continuar legível, regra preservada em NatureComposer.compose_tile).
+		if data.terrain_type == HexTileData.TerrainType.FROZEN_OCEAN:
 			# Nem todo tile de Mar Gelado ganha gelo flutuante (pedido do
 			# usuario: "nao precisam ter em todas as celulas") — um mar de
 			# gelo real tem trechos de agua aberta entre os blocos, nao
@@ -5778,65 +6382,7 @@ func _rebuild_props() -> void:
 			if randf() < 0.55:
 				ice_floe_coords.append(coord)
 
-	_tree_coord_to_index.clear()
-	if tree_coords.size() > 0:
-		# 3 a 5 arvores menores por tile de floresta, cada uma com offset
-		# radial/rotacao/escala proprios (pedido do usuario: "em vez de 1
-		# arvore centralizada" — o padrao antigo, 1 instancia sempre no
-		# centro do tile e sempre do mesmo tamanho, lia como grade rigida
-		# de repeticao). _tree_coord_to_index guarda um Array de indices
-		# por coord agora (nao mais 1 int), ver _tint_props abaixo.
-		var placements: Array[Dictionary] = []
-		for coord in tree_coords:
-			var center = world_for_coord(coord)
-			var count = randi_range(3, 5)
-			for j in range(count):
-				# Offset RADIAL (angulo + distancia aleatorios), nao X/Z
-				# uniforme independente — X/Z uniforme tende a agrupar mais
-				# perto dos cantos do quadrado de amostragem; radial da uma
-				# dispersao mais organica dentro do hexagono. 0.62*hex_size
-				# fica bem dentro do raio do tile (corners ficam a 1.0*
-				# hex_size), pra nao invadir visualmente o tile vizinho.
-				var offset_dist = randf_range(0.1, hex_size * 0.62)
-				var offset_angle = randf() * TAU
-				var pos = center
-				pos.x += cos(offset_angle) * offset_dist
-				pos.z += sin(offset_angle) * offset_dist
-				var tree_scale = randf_range(0.8, 1.2) * TREE_MODEL_SCALE
-				var basis = Basis(Vector3.UP, randf() * TAU).scaled(Vector3.ONE * tree_scale)
-				placements.append({"coord": coord, "pos": pos, "basis": basis})
-
-		var mm := MultiMesh.new()
-		mm.transform_format = MultiMesh.TRANSFORM_3D
-		mm.use_colors = true
-		mm.mesh = _tree_mesh
-		mm.instance_count = placements.size()
-		for i in range(placements.size()):
-			var p = placements[i]
-			mm.set_instance_transform(i, Transform3D(p.basis, p.pos))
-			mm.set_instance_color(i, Color.WHITE)
-			if not _tree_coord_to_index.has(p.coord):
-				_tree_coord_to_index[p.coord] = []
-			_tree_coord_to_index[p.coord].append(i)
-		_props_tree_instance = MultiMeshInstance3D.new()
-		_props_tree_instance.multimesh = mm
-		var tree_mat := StandardMaterial3D.new()
-		# Textura pintada real da arvore KayKit (a malha em si nao carrega
-		# vertex color nenhum — confirmado no glTF, so POSITION/UV/NORMAL —
-		# entao a cor de instancia do MultiMesh abaixo so multiplica por
-		# branco/nevoa, nunca lava a textura).
-		tree_mat.albedo_texture = load("res://assets/models/kaykit/nature/forest_texture.png")
-		tree_mat.vertex_color_use_as_albedo = true
-		tree_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		# Nevoa de guerra (pedido do usuario: props escondidos em tiles nao
-		# explorados) — _tint_props zera o ALFA da cor de instancia pra
-		# Unseen; SCISSOR (em vez de ALPHA normal) porque o alfa aqui e
-		# sempre binario (0 ou 1, nunca fracionario), evitando o custo/
-		# artefato de ordenacao de blending que TRANSPARENCY_ALPHA teria.
-		tree_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-		tree_mat.alpha_scissor_threshold = 0.5
-		_props_tree_instance.material_override = tree_mat
-		add_child(_props_tree_instance)
+	nature_decor.rebuild(tiles)
 
 	_ice_floe_coord_to_index.clear()
 	if ice_floe_coords.size() > 0:
@@ -5909,27 +6455,27 @@ func _rebuild_props() -> void:
 	_resource_props_manager.rebuild(tiles)
 	_resource_icon_manager.rebuild(tiles)
 
-## Altura VISUAL real do CENTRO de um tile (base_height + o pico/domo do
-## terrain.gdshader no seu ponto mais alto, r=0) — usado pelo contorno de
-## territorio da cidade (_build_city_tint_mesh) pra encaixar no relevo em
-## vez de afundar dentro de um pico de Montanha/domo de Colina.
+## Altura VISUAL real do CENTRO de um tile (base_height + o pico do terrain.gdshader no seu ponto mais alto, r=0, so
+## em Montanha) — usado por unidades, props, icones e pelo contorno de territorio da cidade (_build_city_border_mesh)
+## pra encaixar no relevo em vez de afundar dentro de um pico.
 func _tile_surface_height(coord: Vector2i) -> float:
-	var data: HexTileData = tiles[coord]
-	var h = data.base_height
-	# VOLCANIC_PEAKS/CRYSTAL_PEAKS (continentes especiais) e VOLCANIC_HILLS
-	# faltavam aqui (bug latente pego revisando a regressao de relevo 3D:
-	# props/tingimento de territorio nesses tiles ficavam na altura CRUA de
-	# base_height, sem a cupula/pico — mesmo canal elevation_kind que
-	# _build_terrain_multimesh ja usa pro relevo visual de verdade).
-	if data.terrain_type == HexTileData.TerrainType.MOUNTAINS or data.terrain_type == HexTileData.TerrainType.VOLCANIC_PEAKS or data.terrain_type == HexTileData.TerrainType.CRYSTAL_PEAKS:
-		h += MOUNTAIN_PEAK_HEIGHT
-	elif data.terrain_type == HexTileData.TerrainType.HILLS or data.terrain_type == HexTileData.TerrainType.VOLCANIC_HILLS:
-		h += HILL_HEIGHT
-	return h
+	return surface_height_at(coord, Vector2.ZERO)
+
+## Altura VISUAL da superfície num ponto `local` (XZ relativo ao centro) do tile — o mesmo perfil de
+## terrain.gdshader (elevation_height): pico pow(1-r, sharpness) na Montanha, topo plano em base_height nos demais.
+## Sem o ruído de quebra do pico (peak_noise/cordilheira): vegetação/props acompanham o relevo sem flutuar ou afundar.
+func surface_height_at(coord: Vector2i, local: Vector2) -> float:
+	var data: HexTileData = tiles.get(coord)
+	if data == null:
+		return 0.0
+	if elevation_kind_for(data.terrain_type) < ELEVATION_PEAK:
+		return data.base_height
+	var r := clampf(local.length() / maxf(hex_size, 0.001), 0.0, 1.0)
+	return data.base_height + MOUNTAIN_PEAK_HEIGHT * pow(1.0 - r, MOUNTAIN_PEAK_SHARPNESS)
 
 ## Pack ice/iceberg pequeno (pedido do usuario, Ponto 2: "micro-icebergs
 ## flutuantes... pequenas formacoes de gelo 3D/procedurais") — contorno
-## jitterado (mesma tecnica de _build_tree_mesh), so BAIXO e CHATO em vez de
+## jitterado (mesma tecnica da antiga arvore procedural), so BAIXO e CHATO em vez de
 ## pontudo (gelo flutuando na superficie, nao uma montanha) e com a base
 ## mais ESTREITA que o topo (afunila pra baixo, como um pedaco de gelo real
 ## que fica mais fino debaixo d'agua). Escala/posicao/rotacao por instancia
@@ -5973,31 +6519,6 @@ func _build_ice_floe_mesh() -> ArrayMesh:
 
 	return st.commit()
 
-## Extrai a malha (so geometria/UV, sem material — o material real vem do
-## StandardMaterial3D montado em _rebuild_props via material_override, que
-## precisa MISTURAR a textura da arvore com a cor de instancia do MultiMesh
-## pra nevoa de guerra continuar funcionando) da cena importada da KayKit.
-## Uma unica instancia temporaria e criada so pra alcancar o MeshInstance3D
-## dentro dela; o recurso ArrayMesh em si sobrevive a instancia ser
-## descartada (fica compartilhado por todas as copias via MultiMesh, igual
-## a malha procedural antiga).
-func _load_tree_mesh() -> Mesh:
-	var scene: PackedScene = load(TREE_MODEL_SCENE)
-	var inst := scene.instantiate()
-	var mesh_instance := _find_mesh_instance(inst)
-	var mesh: Mesh = mesh_instance.mesh
-	inst.free()
-	return mesh
-
-func _find_mesh_instance(node: Node) -> MeshInstance3D:
-	if node is MeshInstance3D:
-		return node
-	for child in node.get_children():
-		var found := _find_mesh_instance(child)
-		if found:
-			return found
-	return null
-
 ## Numero de dano flutuante que sobe e some — sem isso, tomar dano so
 ## aparece como uma notificacao de texto no topo da tela, longe de onde a
 ## acao realmente aconteceu no mundo.
@@ -6008,7 +6529,10 @@ func spawn_damage_popup(coord: Vector2i, amount: float) -> void:
 func spawn_heal_popup(coord: Vector2i, amount: float) -> void:
 	_spawn_number_popup(coord, "+%d" % int(round(amount)), Color(0.45, 1.0, 0.5))
 
-func _spawn_number_popup(coord: Vector2i, text: String, color: Color) -> void:
+func _spawn_number_popup(coord: Vector2i, text: String, color: Color, jitter: Variant = null) -> void:
+	# Consume cosmetic RNG at the original call, never later among AI decisions.
+	var offset := randf_range(-0.15, 0.15) if jitter == null else float(jitter)
+	if preload("res://scripts/vfx/CombatFeedback.gd").defer_call(self, &"_spawn_number_popup", [coord, text, color, offset]): return
 	var label := Label3D.new()
 	label.text = text
 	label.font_size = 48
@@ -6018,7 +6542,7 @@ func _spawn_number_popup(coord: Vector2i, text: String, color: Color) -> void:
 	label.no_depth_test = true
 	var pos = world_for_coord(coord)
 	pos.y += 0.9
-	pos.x += randf_range(-0.15, 0.15)
+	pos.x += offset
 	label.position = pos
 	add_child(label)
 

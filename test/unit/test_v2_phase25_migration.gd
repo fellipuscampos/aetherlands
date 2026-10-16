@@ -93,7 +93,10 @@ func test_races_keep_shared_costs_and_units_after_mechanical_identity_returns():
 	for race in RACES:
 		var player := _player(race)
 		var city := grid.found_city(Vector2i(RACES.find(race) * 3 - 5, -5), player, "Cidade %s" % race)
-		assert_eq([city.max_hp(), city.max_building_slots(), city.production_cost(), UnitDatabase.create_unit("settler").production_cost], [24.0, 4, 0.0, 25.0], race)
+		assert_eq([city.max_hp(), city.max_building_slots(), city.production_cost(), UnitDatabase.create_unit("settler").production_cost], [30.0, 4, 0.0, 25.0], race)
+		for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
+			assert_false(city.can_train(kind), "%s/%s: sem pesquisa nada é treinável, nem o Colono (2026-10-09)" % [race, kind])
+		player.v2_research.complete_research("v2_infrastructure_colonization_1")
 		for kind in UnitDatabase.PLAYER_TRAINABLE_KINDS:
 			assert_eq(city.can_train(kind), kind == "settler", "%s/%s: sem tropa racial nem atalho de raça" % [race, kind])
 
@@ -198,8 +201,11 @@ func test_new_game_starting_forces_are_the_shared_core():
 	for m in RegEx.create_from_string("create_unit\\(\"(\\w+)\"\\)").search_all(body):
 		if not m.get_string(1) in kinds:
 			kinds.append(m.get_string(1))
-	kinds.sort()
-	assert_eq(kinds, ["settler", "warrior"])
+	assert_eq(kinds, ["settler"], "única unidade literal: o Colonizador; a escolta vem de STARTING_ESCORT_KINDS")
+	assert_eq(UnitDatabase.STARTING_ESCORT_KINDS, ["v2_unit_shieldbearer", "v2_unit_warrior"] as Array[String])
+	for kind in UnitDatabase.STARTING_ESCORT_KINDS:
+		assert_true(UnitDatabase.is_known_kind(kind), kind)
+		assert_false(kind in UnitDatabase.CORE_TRAINABLE_KINDS, "%s continua exigindo pesquisa + prédio" % kind)
 
 func test_legacy_production_items_are_rejected_by_the_central_sanitizer():
 	for item in ["granary", "barracks", "walls", "warrior", "archer", "mercador", "human_knight"]:

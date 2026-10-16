@@ -79,7 +79,7 @@ func _found_city() -> City:
 	return null
 
 func _learn(player: PlayerData, tier: int) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		var id := "v2_magic_%s_%d" % [SCHOOL, i]
 		if not player.v2_research.is_completed(id):
 			assert_true(player.v2_research.complete_research(id), id)
@@ -139,9 +139,9 @@ func test_arcanism_n1_to_n9_portals_interference_and_archon_across_save_load():
 	assert_not_null(city)
 	city.city_level = 3
 	var mana_before := human.mana
-	assert_true(human.v2_research.select_research("v2_magic_arcanism_1"))
+	assert_true(human.v2_research.select_research("v2_magic_arcanism_2"))
 	_end_turn()
-	assert_gt(human.v2_research.get_progress("v2_magic_arcanism_1"), 0.0, "Conhecimento real")
+	assert_gt(human.v2_research.get_progress("v2_magic_arcanism_2"), 0.0, "Conhecimento real")
 	assert_gt(human.mana, mana_before, "Mana real")
 
 	# N1–N3, Conclave e Arcanista pela fila normal.
@@ -275,11 +275,11 @@ func test_arcanism_n1_to_n9_portals_interference_and_archon_across_save_load():
 	city.stored_production = UnitDatabase.create_unit(ARCHON).production_cost
 	_end_turn()
 	assert_null(_find(ARCHON), "produção pronta espera Mana")
-	human.mana = 100.0
+	human.mana = 170.0
 	_end_turn()
 	var archon := _find(ARCHON)
 	assert_not_null(archon)
-	assert_eq(human.mana, 31.0, "70 Mana cobrados uma vez depois do +1 da economia do turno")
+	assert_eq(human.mana, 31.0, "140 Mana cobrados uma vez depois do +1 da economia do turno")
 	assert_true(archon.unit_data.is_flying())
 	assert_true(V2ManifestationSystem.is_manifestation_unit(archon))
 	assert_false(V2ManifestationSystem.spawn_allowed(human, ARCHON), "segundo Arconte fail-closed")
@@ -310,8 +310,8 @@ func test_arcanism_n1_to_n9_portals_interference_and_archon_across_save_load():
 	assert_true(V2LegendarySystem.legendary_slot_available(human))
 	for school in ["sacred", "infernal", "necromancy", "druidism"]:
 		assert_eq(V2SpellDatabase.for_school(school).size(), 4, school)
-	assert_eq(V2DoctrineContent.CONNECTED_UNLOCK_IDS.size(), 55)
-	assert_eq(V2InfrastructureContent.CONNECTED_UNLOCK_IDS.size(), 18)
+	assert_eq(V2DoctrineContent.CONNECTED_UNLOCK_IDS.size(), 49)
+	assert_eq(V2InfrastructureContent.CONNECTED_UNLOCK_IDS.size(), 21)
 	assert_true(V2ResearchDatabase.get_node(V2ResearchDatabase.TRANSCENDENCE_ID).gameplay_connected)
 	GameManager.check_victories()
 	assert_ne(GameManager.state, GameManager.GameState.GAME_OVER)

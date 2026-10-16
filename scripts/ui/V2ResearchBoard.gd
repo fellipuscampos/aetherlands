@@ -37,35 +37,41 @@ signal tree_shown(tree_type: int)
 const TreeType := V2ResearchNode.TreeType
 const NodeState := V2ResearchDatabase.NodeState
 
-const CARD_SIZE := Vector2(168, 76) # larga o bastante pra "Doutrina do Patrulheiro" / "Torre dos Patrulheiros" em uma linha (fonte 12)
-const CAPSTONE_CARD_SIZE := Vector2(440, 86)
-const CONNECTOR_WIDTH := 16.0
-const ROW_LABEL_WIDTH := 190.0
-const ROW_SPACING := 6
+const MENU_THEME := preload("res://scripts/ui/ResearchMenuTheme.gd")
+const CARD_DECORATION := preload("res://scripts/ui/ResearchCardDecoration.gd")
+const CARD_SIZE := Vector2(180, 84)
+const CAPSTONE_CARD_SIZE := Vector2(440, 94)
+const CONNECTOR_WIDTH := 14.0
+const ROW_LABEL_WIDTH := 184.0
+const ROW_SPACING := 8
+const CARD_PADDING := 8.0
 ## Fase 30: largura de viewport abaixo da qual o quadro entra em modo compacto.
 const COMPACT_BREAKPOINT := 1440.0
-const COMPACT_CARD_SIZE := Vector2(144, 72)
-const COMPACT_CONNECTOR_WIDTH := 10.0
-const COMPACT_ROW_LABEL_WIDTH := 156.0
-const TIER_HEADER_HEIGHT := 50.0
+const COMPACT_CARD_SIZE := Vector2(164, 80)
+const COMPACT_CONNECTOR_WIDTH := 12.0
+const COMPACT_ROW_LABEL_WIDTH := 164.0
+const TIER_HEADER_HEIGHT := 44.0
 const SECTION_LABEL_HEIGHT := 22.0
 const ZOOM_LEVELS := [0.8, 1.0]
 const ROMAN_LEVELS := ["I", "II", "III"]
 
 ## Paleta do quadro de pesquisa (Fase 25: era emprestada do tabuleiro de Tecnologia V1, removido).
-const BG_LEVEL := Color(0.071, 0.078, 0.102, 1.0)
-const BG_CARD := Color(0.114, 0.125, 0.157, 1.0)
-const BORDER_STEEL := Color(0.38, 0.42, 0.48, 1.0)
-const BORDER_STEEL_BRIGHT := Color(0.62, 0.67, 0.74, 1.0)
-const ACCENT_GOLD := Color(0.83, 0.68, 0.32, 1.0)
-const COLOR_RESEARCHED := Color(0.36, 0.62, 0.52, 1.0)
-const TEXT_PRIMARY := Color(0.88, 0.89, 0.92, 1.0)
-const TEXT_MUTED := Color(0.55, 0.58, 0.63, 1.0)
-const TEXT_LOCKED := Color(0.30, 0.31, 0.34, 1.0)
+const BG_LEVEL := Color("0a1b22")
+const BG_CARD := Color("193138")
+const BORDER_STEEL := Color("5b706b")
+const BORDER_STEEL_BRIGHT := Color("c5b48a")
+const ACCENT_GOLD := Color("e6bc77")
+const COLOR_RESEARCHED := Color("8dccaa")
+const TEXT_PRIMARY := Color("f4e9d3")
+const TEXT_MUTED := Color("b0bfb4")
+const TEXT_LOCKED := Color("a2b0aa")
+## Conhecimento GUARDADO (sem projeto ativo, ou sobra de uma pesquisa concluída): cor própria no chip do cabeçalho e
+## na prévia dos cards — distinta do dourado de "pesquisando" e do verde de "concluído".
+const COLOR_BANKED := Color(0.42, 0.68, 0.86, 1.0)
 
 static func heading_font(embolden: float = 0.6, spacing: int = 1) -> FontVariation:
 	var variation := FontVariation.new()
-	variation.base_font = ThemeDB.fallback_font
+	variation.base_font = MENU_THEME.PIXEL_FONT
 	variation.variation_embolden = embolden
 	variation.spacing_glyph = spacing
 	return variation
@@ -94,6 +100,7 @@ const BRANCH_COLORS := {
 	"economy": Color(0.83, 0.68, 0.32), "logistics": Color(0.70, 0.60, 0.45),
 	"industry": Color(0.80, 0.52, 0.30), "academy": Color(0.45, 0.62, 0.90),
 	"arcane": Color(0.62, 0.45, 0.75), "urbanization": Color(0.55, 0.62, 0.70),
+	"colonization": Color(0.52, 0.72, 0.48),
 }
 
 ## Ferramentas de desenvolvimento (+Conhecimento, completar, resetar): SÓ existem
@@ -113,6 +120,8 @@ var _cards: Dictionary = {} # node id -> card Control (só da aba montada)
 
 var _tab_buttons: Dictionary = {}
 var _status_label: Label
+var _banked_chip: PanelContainer
+var _banked_label: Label
 var _debug_buttons: Dictionary = {} # "add_10" "add_100" "complete_active" "complete_branch" "reset"
 var _scroll: ScrollContainer
 var _content: VBoxContainer
@@ -139,10 +148,18 @@ var _jump_active_button: Button
 var _jump_available_button: Button
 var _syncing := false
 var _label_pad: Control
+var _toolbar: BoxContainer
+var _navigation: HBoxContainer
+var _navigation_menu: MenuButton
+var _footer_scroll: ScrollContainer
+var _footer_description: Label
+var _scale := 1.0
 
 func _ready() -> void:
-	theme = _tooltip_theme()
-	add_theme_constant_override("separation", 10)
+	_scale = Settings.ui_scale_percent / 100.0
+	theme = MENU_THEME.build(_scale)
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	add_theme_constant_override("separation", roundi(6 * _scale))
 	_build_header()
 	if debug_tools_enabled:
 		_build_debug_row()
@@ -157,6 +174,7 @@ func _ready() -> void:
 	_sync_tab_buttons()
 	visibility_changed.connect(_on_visibility_changed)
 	resized.connect(_on_resized)
+	Settings.accessibility_changed.connect(_on_accessibility_changed)
 	_update_layout_mode()
 	_rebuild_if_needed()
 	_refresh_chrome()
@@ -167,9 +185,57 @@ func _on_visibility_changed() -> void:
 		_rebuild_if_needed()
 
 func _on_resized() -> void:
+	if _toolbar != null:
+		_update_chrome_layout()
 	if _update_layout_mode() and is_visible_in_tree():
 		_rebuild_if_needed()
 	_update_scroll_affordance()
+
+func _update_chrome_layout() -> void:
+	var narrow := get_viewport_rect().size.x / _scale < 1350
+	add_theme_constant_override("separation", roundi(6 * _scale))
+	_toolbar.vertical = false
+	_navigation_menu.visible = narrow
+	for child in _navigation.get_children():
+		if child != _navigation_menu: child.visible = not narrow
+	if _heading_box != null:
+		# The selected tab already names the tree. Keep the board space for nodes.
+		_heading_box.visible = false
+
+func _on_navigation_menu(id: int) -> void:
+	match id:
+		0: jump_to_active()
+		1: jump_to_available()
+		2: set_zoom(.8)
+		3: set_zoom(1.0)
+		4: _toggle_debug_row()
+
+func _on_accessibility_changed() -> void:
+	var factor := Settings.ui_scale_percent / 100.0
+	if is_equal_approx(factor, _scale):
+		return
+	# Rebuild only presentation controls; research state and current zoom survive.
+	_scale = factor
+	theme = MENU_THEME.build(_scale)
+	for child in get_children():
+		remove_child(child)
+		child.queue_free()
+	_tab_buttons.clear()
+	_zoom_buttons.clear()
+	_debug_buttons.clear()
+	_dirty = true
+	_build_header()
+	if debug_tools_enabled: _build_debug_row()
+	_heading_box = VBoxContainer.new()
+	_heading_box.name = "TreeHeading"
+	add_child(_heading_box)
+	_build_board_grid()
+	_build_footer()
+	add_theme_constant_override("separation", roundi(6 * _scale))
+	_sync_tab_buttons()
+	_on_resized()
+	_rebuild_if_needed()
+	_refresh_chrome()
 
 ## Grade de 4 regiões: canto | cabeçalho de tiers (rola só na horizontal, junto com o
 ## conteúdo) / coluna de linhas (rola só na vertical) | conteúdo principal.
@@ -208,7 +274,7 @@ func _build_board_grid() -> void:
 	bottom.add_child(_label_scroll)
 	_label_column = VBoxContainer.new()
 	_label_column.name = "BranchLabels"
-	_label_column.add_theme_constant_override("separation", ROW_SPACING)
+	_label_column.add_theme_constant_override("separation", roundi(ROW_SPACING * _scale))
 	_label_scroll.add_child(_label_column)
 	_main_area = Control.new()
 	_main_area.name = "MainArea"
@@ -223,7 +289,7 @@ func _build_board_grid() -> void:
 	_main_area.add_child(_scroll)
 	_content = VBoxContainer.new()
 	_content.name = "Cards"
-	_content.add_theme_constant_override("separation", ROW_SPACING)
+	_content.add_theme_constant_override("separation", roundi(ROW_SPACING * _scale))
 	_scroll.add_child(_content)
 	_left_fade = _make_fade(true)
 	_main_area.add_child(_left_fade)
@@ -232,7 +298,7 @@ func _build_board_grid() -> void:
 	_more_hint = PanelContainer.new()
 	_more_hint.name = "MoreTiersHint"
 	_more_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var hint_style := UITheme.panel_style(BG_LEVEL, ACCENT_GOLD.darkened(0.2), 1, 12, false)
+	var hint_style := UITheme.panel_style(BG_LEVEL, ACCENT_GOLD.darkened(0.2), 2, 0, false)
 	hint_style.content_margin_left = 10
 	hint_style.content_margin_right = 10
 	hint_style.content_margin_top = 4
@@ -241,15 +307,16 @@ func _build_board_grid() -> void:
 	var hint_label := Label.new()
 	hint_label.text = "Mais níveis  ›"
 	hint_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hint_label.add_theme_font_size_override("font_size", 12)
+	hint_label.add_theme_font_override("font", MENU_THEME.PIXEL_FONT)
+	hint_label.add_theme_font_size_override("font_size", roundi(14 * _scale))
 	hint_label.add_theme_color_override("font_color", ACCENT_GOLD)
 	_more_hint.add_child(hint_label)
-	_more_hint.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
-	_more_hint.offset_left = -128
-	_more_hint.offset_right = -20
-	_more_hint.offset_top = -14
-	_more_hint.offset_bottom = 14
-	_main_area.add_child(_more_hint)
+	_corner.add_child(_more_hint)
+	_more_hint.set_anchors_preset(Control.PRESET_CENTER_LEFT)
+	_more_hint.offset_left = 8 * _scale
+	_more_hint.offset_right = metrics().label_width - 12 * _scale
+	_more_hint.offset_top = -16 * _scale
+	_more_hint.offset_bottom = 16 * _scale
 	# Sincronização bidirecional por sinal (roda, arraste ou código): nunca offsets por frame.
 	_scroll.get_h_scroll_bar().value_changed.connect(_on_main_h_scrolled)
 	_scroll.get_v_scroll_bar().value_changed.connect(_on_main_v_scrolled)
@@ -328,7 +395,7 @@ func _align_label_column() -> void:
 			continue
 		labels_height += (child as Control).get_combined_minimum_size().y
 		count += 1
-	labels_height += float(ROW_SPACING) * float(count)
+	labels_height += float(roundi(ROW_SPACING * _scale)) * float(count)
 	var wanted := maxf(0.0, _content.size.y - labels_height) + _scroll.get_h_scroll_bar().get_combined_minimum_size().y + 4.0
 	if not is_equal_approx(_label_pad.custom_minimum_size.y, wanted):
 		_label_pad.custom_minimum_size.y = wanted
@@ -342,7 +409,7 @@ func has_hidden_content_right() -> bool:
 func _update_layout_mode() -> bool:
 	if not is_inside_tree():
 		return false
-	var wanted := get_viewport_rect().size.x < COMPACT_BREAKPOINT
+	var wanted := get_viewport_rect().size.x / _scale < COMPACT_BREAKPOINT
 	if wanted == compact:
 		return false
 	set_compact(wanted)
@@ -364,28 +431,31 @@ func set_zoom(value: float) -> void:
 		(_zoom_buttons[level] as Button).set_pressed_no_signal(is_equal_approx(float(level), zoom))
 	_dirty = true
 	_rebuild_if_needed()
+	if _navigation_menu != null:
+		var popup := _navigation_menu.get_popup()
+		popup.set_item_checked(popup.get_item_index(2), is_equal_approx(zoom, .8))
+		popup.set_item_checked(popup.get_item_index(3), is_equal_approx(zoom, 1.0))
 
 ## Medidas efetivas (modo + zoom). O nome nunca desce de 11 px; metadado nunca de 10.
 func metrics() -> Dictionary:
 	var card := COMPACT_CARD_SIZE if compact else CARD_SIZE
 	var connector := COMPACT_CONNECTOR_WIDTH if compact else CONNECTOR_WIDTH
 	var label_width := COMPACT_ROW_LABEL_WIDTH if compact else ROW_LABEL_WIDTH
-	var name_font := 12
-	var meta_font := 10 if compact else 11
+	var name_font := 12 if compact else 13
+	var meta_font := 11
 	if zoom < 1.0:
-		card = Vector2(maxf(116.0, round(card.x * 0.82)), round(card.y * 0.88))
+		card = Vector2(round(card.x * 0.86), round(card.y * 0.94))
 		connector = round(connector * 0.7)
 		label_width = round(label_width * 0.86)
 		name_font = 11
-		meta_font = 10
 	return {
-		"card": card,
-		"capstone": Vector2(maxf(card.x * 2.4, 300.0), CAPSTONE_CARD_SIZE.y * (0.9 if zoom < 1.0 else 1.0)),
-		"connector": connector,
-		"label_width": label_width,
+		"card": card * _scale,
+		"capstone": Vector2(maxf(card.x * 2.4, 360.0), CAPSTONE_CARD_SIZE.y) * _scale,
+		"connector": connector * _scale,
+		"label_width": label_width * _scale,
 		"name_font": name_font,
 		"meta_font": meta_font,
-		"role_font": 10 if compact or zoom < 1.0 else 11,
+		"role_font": 11,
 	}
 
 # --- Navegação: ir para ativo / disponível ------------------------------------------------
@@ -522,6 +592,13 @@ func footer_text() -> String:
 func status_text() -> String:
 	return _status_label.text if _status_label != null else ""
 
+## Texto do chip "Guardado" do cabeçalho ("" enquanto não há Conhecimento guardado).
+func banked_text() -> String:
+	return _banked_label.text if _banked_chip != null and _banked_chip.visible else ""
+
+func banked_tooltip() -> String:
+	return _banked_chip.tooltip_text if _banked_chip != null else ""
+
 func debug_button(button_id: String) -> Button:
 	return _debug_buttons.get(button_id, null)
 
@@ -568,7 +645,13 @@ func _on_research_progress_changed(id: String, _progress: float, _cost: float) -
 	_refresh_cards([id])
 	_refresh_chrome()
 
+## O guardado mudou: a prévia "com o guardado" de todo nó que ainda pode ser escolhido muda junto.
 func _on_overflow_changed(_amount: float) -> void:
+	var selectable: Array = []
+	for id in _cards:
+		if _state.node_state(id) in [NodeState.AVAILABLE, NodeState.PARTIAL]:
+			selectable.append(id)
+	_refresh_cards(selectable)
 	_refresh_chrome()
 
 ## Conclusão/reset/load: conexões e disponibilidade mudam — a aba é reconstruída,
@@ -590,62 +673,117 @@ func _flush_rebuild() -> void:
 
 func _build_header() -> void:
 	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 8)
+	header.name = "ResearchHeader"
+	header.add_theme_constant_override("separation", roundi(10 * _scale))
 	add_child(header)
+	var crest := TextureRect.new()
+	crest.texture = load("res://assets/ui/title_menu/crest.svg")
+	crest.custom_minimum_size = Vector2(32, 32) * _scale
+	crest.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	crest.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	crest.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header.add_child(crest)
+	var title := Label.new()
+	title.text = "PESQUISAS"
+	title.add_theme_font_override("font", MENU_THEME.PIXEL_FONT)
+	title.add_theme_font_size_override("font_size", roundi(28 * _scale))
+	title.add_theme_color_override("font_color", ACCENT_GOLD)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title)
+	_banked_chip = PanelContainer.new()
+	_banked_chip.name = "BankedKnowledge"
+	_banked_chip.visible = false
+	_banked_chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_banked_chip.mouse_filter = Control.MOUSE_FILTER_STOP
+	var banked_style := UITheme.panel_style(BG_CARD, COLOR_BANKED, 2, 0, false)
+	banked_style.set_content_margin_all(5 * _scale)
+	_banked_chip.add_theme_stylebox_override("panel", banked_style)
+	_banked_label = _card_label("", 12, COLOR_BANKED.lightened(.25), false)
+	_banked_chip.add_child(_banked_label)
+	header.add_child(_banked_chip)
+	var close_button := _header_button("X", "CloseResearch", close_requested.emit)
+	close_button.custom_minimum_size = Vector2(36, 32) * _scale
+	close_button.tooltip_text = "Fechar pesquisas (Esc)"
+	header.add_child(close_button)
+	_toolbar = BoxContainer.new()
+	_toolbar.name = "ResearchToolbar"
+	_toolbar.vertical = false
+	_toolbar.add_theme_constant_override("separation", roundi(12 * _scale))
+	add_child(_toolbar)
+	var tabs := HBoxContainer.new()
+	tabs.name = "ResearchTabs"
+	tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tabs.add_theme_constant_override("separation", roundi(8 * _scale))
+	_toolbar.add_child(tabs)
 	var group := ButtonGroup.new()
 	for tree_type in V2ResearchDatabase.tree_types():
-		var tab := Button.new()
-		tab.text = TAB_LABELS[tree_type]
+		var tab := _header_button(TAB_LABELS[tree_type], "ResearchTab%d" % tree_type, show_tree.bind(tree_type))
 		tab.toggle_mode = true
 		tab.button_group = group
-		tab.custom_minimum_size = Vector2(130, 34)
-		_style_chip(tab, ACCENT_GOLD)
-		tab.pressed.connect(show_tree.bind(tree_type))
-		header.add_child(tab)
+		tab.custom_minimum_size = Vector2(132, 34) * _scale
+		tab.add_theme_font_size_override("font_size", roundi(18 * _scale))
+		tab.icon = MENU_THEME.icon(["warrior", "arcanism", "urbanization"][tree_type])
+		tab.add_theme_constant_override("icon_max_width", roundi(16 * _scale))
+		tab.add_theme_constant_override("h_separation", roundi(8 * _scale))
+		tabs.add_child(tab)
 		_tab_buttons[tree_type] = tab
-	_status_label = Label.new()
-	_status_label.add_theme_color_override("font_color", TEXT_PRIMARY)
-	_status_label.add_theme_font_size_override("font_size", 14)
-	_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_status_label.clip_text = true
-	_status_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	header.add_child(_status_label)
+	var tools := HBoxContainer.new()
+	_navigation = tools
+	tools.name = "ResearchNavigation"
+	tools.add_theme_constant_override("separation", roundi(6 * _scale))
+	_toolbar.add_child(tools)
 	_jump_active_button = _header_button("Ir para ativo", "JumpActive", jump_to_active)
-	header.add_child(_jump_active_button)
+	tools.add_child(_jump_active_button)
 	_jump_available_button = _header_button("Ir para disponível", "JumpAvailable", jump_to_available)
-	header.add_child(_jump_available_button)
+	tools.add_child(_jump_available_button)
 	var zoom_group := ButtonGroup.new()
 	for level in ZOOM_LEVELS:
-		var zoom_button := _header_button("%d%%" % int(round(level * 100.0)), "Zoom%d" % int(round(level * 100.0)), set_zoom.bind(level))
+		var zoom_button := _header_button("%d%%" % int(round(level * 100)), "Zoom%d" % int(round(level * 100)), set_zoom.bind(level))
 		zoom_button.toggle_mode = true
 		zoom_button.button_group = zoom_group
 		zoom_button.set_pressed_no_signal(is_equal_approx(level, zoom))
-		zoom_button.tooltip_text = "Escala do quadro"
-		zoom_button.custom_minimum_size.x = 52
-		header.add_child(zoom_button)
+		zoom_button.tooltip_text = "Escala do quadro; os textos continuam legíveis."
+		tools.add_child(zoom_button)
 		_zoom_buttons[level] = zoom_button
 	if debug_tools_enabled:
 		_debug_toggle = _header_button("Dev", "DevToggle", _toggle_debug_row)
 		_debug_toggle.toggle_mode = true
 		_debug_toggle.tooltip_text = "Ferramentas de desenvolvimento (só em build de debug)"
-		_debug_toggle.custom_minimum_size.x = 48
-		header.add_child(_debug_toggle)
-	var close_button := Button.new()
-	close_button.text = "X"
-	close_button.custom_minimum_size = Vector2(32, 32)
-	_style_chip(close_button, TEXT_PRIMARY)
-	close_button.pressed.connect(close_requested.emit)
-	header.add_child(close_button)
+		tools.add_child(_debug_toggle)
+	_navigation_menu = MenuButton.new()
+	_navigation_menu.name = "ResearchNavigationMenu"
+	_navigation_menu.text = "Navegar / zoom"
+	_navigation_menu.flat = false
+	_navigation_menu.focus_mode = Control.FOCUS_ALL
+	_navigation_menu.custom_minimum_size.y = 34 * _scale
+	_navigation_menu.add_theme_font_size_override("font_size", roundi(14 * _scale))
+	_style_chip(_navigation_menu, ACCENT_GOLD)
+	tools.add_child(_navigation_menu)
+	var popup := _navigation_menu.get_popup()
+	popup.add_item("Ir para ativo", 0)
+	popup.add_item("Ir para disponível", 1)
+	popup.add_separator()
+	popup.add_radio_check_item("Zoom: 80%", 2)
+	popup.add_radio_check_item("Zoom: 100%", 3)
+	if debug_tools_enabled:
+		popup.add_separator()
+		popup.add_item("Ferramentas de desenvolvimento", 4)
+	popup.id_pressed.connect(_on_navigation_menu)
+	_update_chrome_layout()
+	_status_label = _card_label("", 12, TEXT_PRIMARY, false)
+	_status_label.name = "ActiveResearchStatus"
+	_status_label.clip_text = true
+	_status_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	add_child(_status_label)
 
 func _header_button(text: String, node_name: String, callback: Callable) -> Button:
 	var button := Button.new()
 	button.name = node_name
 	button.text = text
-	button.custom_minimum_size = Vector2(0, 32)
+	button.custom_minimum_size = Vector2(0, 32) * _scale
 	button.focus_mode = Control.FOCUS_ALL
-	button.add_theme_font_size_override("font_size", 12)
-	_style_chip(button, BORDER_STEEL_BRIGHT)
+	button.add_theme_font_size_override("font_size", roundi(14 * _scale))
+	_style_chip(button, ACCENT_GOLD)
 	button.pressed.connect(func(): callback.call())
 	return button
 
@@ -695,29 +833,42 @@ func _debug_complete_selected_branch() -> void:
 
 func _build_footer() -> void:
 	var footer := PanelContainer.new()
-	footer.add_theme_stylebox_override("panel", UITheme.panel_style(BG_CARD, BORDER_STEEL, 1, 6, false))
+	footer.name = "ResearchDetails"
+	var frame := MENU_THEME.panel(_scale)
+	frame.set_content_margin_all(16 * _scale)
+	footer.add_theme_stylebox_override("panel", frame)
 	add_child(footer)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", roundi(12 * _scale))
 	footer.add_child(row)
+	_footer_scroll = ScrollContainer.new()
+	_footer_scroll.name = "DetailsScroll"
+	_footer_scroll.custom_minimum_size.y = minf(56 * _scale, 84)
+	_footer_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_footer_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_footer_scroll.follow_focus = true
+	row.add_child(_footer_scroll)
 	var texts := VBoxContainer.new()
 	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	texts.add_theme_constant_override("separation", 2)
-	row.add_child(texts)
-	_footer_title = Label.new()
-	_footer_title.add_theme_font_override("font", heading_font(0.5, 0))
-	_footer_title.add_theme_font_size_override("font_size", 16)
-	_footer_title.add_theme_color_override("font_color", TEXT_PRIMARY)
+	texts.add_theme_constant_override("separation", roundi(2 * _scale))
+	_footer_scroll.add_child(texts)
+	_footer_title = _card_label("", 18, ACCENT_GOLD, false)
+	_footer_title.clip_text = true
+	_footer_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_footer_title.add_theme_font_override("font", MENU_THEME.PIXEL_FONT)
 	texts.add_child(_footer_title)
-	_footer_detail = Label.new()
-	_footer_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_footer_detail.add_theme_font_size_override("font_size", 13)
-	_footer_detail.add_theme_color_override("font_color", TEXT_MUTED)
+	_footer_description = _card_label("", 14, TEXT_PRIMARY, true)
+	texts.add_child(_footer_description)
+	_footer_detail = _card_label("", 11, TEXT_MUTED, true)
 	texts.add_child(_footer_detail)
 	_action_button = Button.new()
-	_action_button.custom_minimum_size = Vector2(190, 40)
+	_action_button.name = "ResearchAction"
+	_action_button.custom_minimum_size = Vector2(190, 38) * _scale
 	_action_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_action_button.add_theme_font_size_override("font_size", roundi(18 * _scale))
 	_style_chip(_action_button, ACCENT_GOLD)
+	_action_button.add_theme_stylebox_override("normal", MENU_THEME.BASE.BASE._button("button_bronze", _scale))
+	_action_button.add_theme_stylebox_override("hover", MENU_THEME.BASE.BASE._button("button_bronze_hover", _scale))
 	_action_button.pressed.connect(press_action)
 	row.add_child(_action_button)
 
@@ -741,6 +892,7 @@ func _rebuild_if_needed() -> void:
 			child.queue_free()
 	_heading_box.add_child(_tree_heading())
 	_corner.custom_minimum_size = Vector2(m.label_width, 0)
+	_more_hint.offset_right = m.label_width - 12 * _scale
 	_label_scroll.custom_minimum_size.x = m.label_width
 	_header_row.add_child(_column_header_row())
 	for line in V2ResearchDatabase.branches_for_tree(_tree_type):
@@ -786,11 +938,18 @@ func _replace_card(id: String) -> void:
 		return
 	var parent := old.get_parent()
 	var index := old.get_index()
+	var had_focus := old.has_focus()
+	var previous_rect := old.get_rect()
 	parent.remove_child(old)
 	old.queue_free()
 	var fresh := _build_card(node)
 	parent.add_child(fresh)
 	parent.move_child(fresh, index)
+	# Preserve geometry until the container sorts its replacement, so a focus
+	# event cannot scroll to an unlaid-out card at the origin.
+	fresh.position = previous_rect.position
+	fresh.size = previous_rect.size
+	if had_focus: _restore_card_focus.call_deferred(id)
 
 func _tree_heading() -> Control:
 	var box := VBoxContainer.new()
@@ -798,12 +957,13 @@ func _tree_heading() -> Control:
 	var title := Label.new()
 	title.text = V2ResearchDatabase.tree_label(_tree_type).to_upper()
 	title.add_theme_font_override("font", heading_font())
-	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_font_size_override("font_size", roundi(24 * _scale))
 	title.add_theme_color_override("font_color", TEXT_PRIMARY)
 	box.add_child(title)
 	var question := Label.new()
 	question.text = TREE_QUESTIONS[_tree_type]
-	question.add_theme_font_size_override("font_size", 13)
+	question.add_theme_font_size_override("font_size", roundi(14 * _scale))
+	question.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	question.add_theme_color_override("font_color", TEXT_MUTED)
 	box.add_child(question)
 	return box
@@ -815,7 +975,7 @@ func _section_label(text: String) -> Label:
 	label.add_theme_color_override("font_color", TEXT_MUTED)
 	return label
 
-## Cabeçalho de colunas: "N1 / Doutrina", "N2 / Estrutura de treinamento"...
+## Cabeçalho de colunas: "N1 / Estrutura de treinamento", "N2 / Unidade-base"... (nível exibido, ver V2ResearchDatabase.display_tier)
 ## Os papéis dos tiers são idênticos em todas as linhas da árvore, então ficam
 ## aqui uma vez só em vez de repetidos em cada card.
 func _column_header_row() -> Control:
@@ -830,12 +990,13 @@ func _column_header_row() -> Control:
 			row.add_child(_spacer(m.connector))
 		var cell := VBoxContainer.new()
 		cell.name = "Tier%d" % (i + 1)
-		cell.custom_minimum_size = Vector2(m.card.x, TIER_HEADER_HEIGHT if _tree_type != TreeType.INFRASTRUCTURE else 22.0)
+		cell.custom_minimum_size = Vector2(m.card.x, TIER_HEADER_HEIGHT * _scale if _tree_type != TreeType.INFRASTRUCTURE else 28.0 * _scale)
 		cell.add_theme_constant_override("separation", 0)
 		var level := Label.new()
-		level.text = "N%d" % nodes[i].tier if _tree_type != TreeType.INFRASTRUCTURE else ROMAN_LEVELS[i]
+		level.text = V2ResearchDatabase.tier_label(_tree_type, nodes[i].tier) if _tree_type != TreeType.INFRASTRUCTURE else ROMAN_LEVELS[i]
 		level.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		level.add_theme_font_size_override("font_size", 13)
+		level.add_theme_font_override("font", MENU_THEME.PIXEL_FONT)
+		level.add_theme_font_size_override("font_size", roundi(16 * _scale))
 		level.add_theme_color_override("font_color", ACCENT_GOLD)
 		cell.add_child(level)
 		if _tree_type != TreeType.INFRASTRUCTURE:
@@ -845,7 +1006,7 @@ func _column_header_row() -> Control:
 			role.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			role.max_lines_visible = 2
 			role.custom_minimum_size = Vector2(m.card.x, 0)
-			role.add_theme_font_size_override("font_size", m.role_font)
+			role.add_theme_font_size_override("font_size", roundi(m.role_font * _scale))
 			role.add_theme_color_override("font_color", TEXT_MUTED)
 			cell.add_child(role)
 		row.add_child(cell)
@@ -876,18 +1037,32 @@ func _branch_label(line: Dictionary) -> Control:
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.clip_contents = true
 	box.add_theme_constant_override("separation", 0)
+	var identity := HBoxContainer.new()
+	identity.add_theme_constant_override("separation", roundi(4 * _scale))
+	box.add_child(identity)
+	var symbol := TextureRect.new()
+	symbol.texture = MENU_THEME.icon(String(line.id))
+	symbol.custom_minimum_size = Vector2(16, 16) * _scale
+	symbol.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	symbol.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	symbol.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	symbol.modulate = BRANCH_COLORS.get(line.id, ACCENT_GOLD).lightened(.25)
+	symbol.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	identity.add_child(symbol)
 	var name_label := Label.new()
 	name_label.text = line.name
 	name_label.add_theme_font_override("font", heading_font(0.5, 0))
-	name_label.add_theme_font_size_override("font_size", 16)
+	name_label.add_theme_font_size_override("font_size", roundi(17 * _scale))
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.add_theme_color_override("font_color", BRANCH_COLORS.get(line.id, TEXT_PRIMARY))
-	box.add_child(name_label)
+	identity.add_child(name_label)
 	var summary := Label.new()
 	summary.text = line.summary
 	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	summary.max_lines_visible = 2 if compact or zoom < 1.0 else 3
 	summary.custom_minimum_size = Vector2(m.label_width - 12, 0)
-	summary.add_theme_font_size_override("font_size", 10 if compact or zoom < 1.0 else 11)
+	summary.add_theme_font_size_override("font_size", roundi(11 * _scale))
 	summary.add_theme_color_override("font_color", TEXT_MUTED)
 	box.add_child(summary)
 	return box
@@ -917,13 +1092,26 @@ func _card_shell(node: V2ResearchNode, state: int, min_size: Vector2, separation
 	var card := PanelContainer.new()
 	card.custom_minimum_size = min_size
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.focus_mode = Control.FOCUS_ALL
 	card.tooltip_text = "%s\n\n%s" % [V2ResearchDatabase.node_tooltip(node, _state.is_completed(node.id)), _state.status_text(node.id, false)]
+	var banked := _banked_sentence(node.id)
+	if banked != "":
+		card.tooltip_text += "\n" + banked
 	var supremacy := _supremacy_lines(node)
 	if not supremacy.is_empty():
 		card.tooltip_text += "\n\n" + "\n".join(supremacy)
 	card.set_meta("node_id", node.id)
 	card.add_theme_stylebox_override("panel", _card_style(state, node.id == _selected_id))
 	card.gui_input.connect(_on_card_gui_input.bind(node.id))
+	card.focus_entered.connect(_scroll_to_card.bind(node.id))
+	var grain := MENU_THEME.grain()
+	card.add_child(grain)
+	var decoration := CARD_DECORATION.new()
+	decoration.accent = _state_accent(state)
+	decoration.factor = _scale
+	decoration.padding = CARD_PADDING
+	decoration.emphasized = state == NodeState.RESEARCHING or node.id == _selected_id
+	card.add_child(decoration)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", separation)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -932,28 +1120,74 @@ func _card_shell(node: V2ResearchNode, state: int, min_size: Vector2, separation
 	return [card, box]
 
 func _on_card_gui_input(event: InputEvent, node_id: String) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	if (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT) or event.is_action_pressed("ui_accept"):
+		var card := card_for(node_id)
+		if is_instance_valid(card): card.accept_event()
 		select_node(node_id)
+		_restore_card_focus.call_deferred(node_id)
+
+func _restore_card_focus(node_id: String) -> void:
+	var card := card_for(node_id)
+	if is_instance_valid(card) and is_visible_in_tree(): card.grab_focus()
 
 func _node_card(node: V2ResearchNode) -> Control:
 	var m := metrics()
 	var state := _state.node_state(node.id)
 	var parts := _card_shell(node, state, m.card, 1)
 	var box: VBoxContainer = parts[1]
+	var identity := HBoxContainer.new()
+	identity.add_theme_constant_override("separation", roundi(4 * _scale))
+	identity.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var glyph := TextureRect.new()
+	glyph.texture = MENU_THEME.icon(node.branch)
+	glyph.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	glyph.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	glyph.custom_minimum_size = Vector2(14, 14) * _scale
+	glyph.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	glyph.modulate = _state_accent(state)
+	glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	identity.add_child(glyph)
 	var title := _card_label(node.display_name, m.name_font, _state_text_color(state), true)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.max_lines_visible = 2
-	box.add_child(title)
+	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	identity.add_child(title)
+	var marker := _card_label({NodeState.LOCKED:"×", NodeState.AVAILABLE:"◇", NodeState.PARTIAL:"◐", NodeState.RESEARCHING:"▶", NodeState.COMPLETED:"✓"}.get(state, ""), 11, _state_accent(state), false)
+	marker.tooltip_text = _card_state_label(state)
+	marker.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	identity.add_child(marker)
+	box.add_child(identity)
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(spacer)
 	var in_progress := state == NodeState.RESEARCHING or state == NodeState.PARTIAL
-	if in_progress:
+	var preview := _banked_preview(node.id)
+	var metadata := HBoxContainer.new()
+	metadata.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	metadata.add_theme_constant_override("separation", roundi(4 * _scale))
+	var amount: Label
+	if bool(preview.applies):
+		# Prévia: até onde o Conhecimento guardado leva esta pesquisa no instante em que for escolhida.
+		box.add_child(_progress_bar(float(preview.ratio_after), COLOR_BANKED))
+		amount = _card_label(_banked_card_text(preview), m.meta_font, COLOR_BANKED.lightened(0.25), false)
+		amount.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		amount.clip_text = true
+		amount.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	elif in_progress:
 		box.add_child(_progress_bar(_state.get_progress_ratio(node.id), _state_accent(state)))
-		box.add_child(_card_label("%s / %s" % [V2ResearchState.format_amount(_state.get_progress(node.id)), V2ResearchState.format_amount(node.cost)], m.meta_font, TEXT_PRIMARY, false))
+		amount = _card_label("%s / %s" % [V2ResearchState.format_amount(_state.get_progress(node.id)), V2ResearchState.format_amount(node.cost)], m.meta_font, TEXT_PRIMARY, false)
 	else:
-		box.add_child(_card_label("Custo %s" % V2ResearchState.format_amount(node.cost), m.meta_font, TEXT_MUTED, false))
-	box.add_child(_card_label(_card_state_label(state), m.meta_font, _state_accent(state), false))
+		amount = _card_label("Custo %s" % V2ResearchState.format_amount(node.cost), m.meta_font, TEXT_MUTED, false)
+	metadata.add_child(amount)
+	if not bool(preview.applies):
+		var status := _card_label(_card_state_label(state), m.meta_font, _state_accent(state), false)
+		status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		status.clip_text = true
+		status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		metadata.add_child(status)
+	box.add_child(metadata)
 	return parts[0]
 
 ## V3 / Etapa 2: antes da primeira cidade, nó pesquisável mostra "Requer uma cidade" (a árvore continua visível).
@@ -971,21 +1205,79 @@ func _capstone_card(node: V2ResearchNode) -> Control:
 	var box: VBoxContainer = parts[1]
 	box.add_child(_card_label(node.display_name, 17, _state_text_color(state), true))
 	box.add_child(_card_label(V2ResearchDatabase.role_label(node.tier_role), 11, TEXT_MUTED, false))
-	box.add_child(_card_label("%s completas: %d / %d (N%d)" % [V2ResearchDatabase.capstone_unit_word(node), progress.x, progress.y, node.requirement.at_tier], 12, TEXT_PRIMARY if state != NodeState.LOCKED else TEXT_LOCKED, false))
+	box.add_child(_card_label("%s completas: %d / %d (%s)" % [V2ResearchDatabase.capstone_unit_word(node), progress.x, progress.y, V2ResearchDatabase.tier_label(node.tree_type, node.requirement.at_tier)], 12, TEXT_PRIMARY if state != NodeState.LOCKED else TEXT_LOCKED, false))
 	var in_progress := state == NodeState.RESEARCHING or state == NodeState.PARTIAL
-	if in_progress:
+	var preview := _banked_preview(node.id)
+	if bool(preview.applies):
+		box.add_child(_progress_bar(float(preview.ratio_after), COLOR_BANKED))
+	elif in_progress:
 		box.add_child(_progress_bar(_state.get_progress_ratio(node.id), _state_accent(state)))
 	var cost_text := "Custo %s · %s" % [V2ResearchState.format_amount(node.cost), V2ResearchDatabase.state_label(state)]
 	if in_progress:
 		cost_text = "%s / %s · %s" % [V2ResearchState.format_amount(_state.get_progress(node.id)), V2ResearchState.format_amount(node.cost), V2ResearchDatabase.state_label(state)]
-	box.add_child(_card_label(cost_text, 11, _state_accent(state), false))
+	if bool(preview.applies):
+		cost_text = "Custo %s · %s" % [V2ResearchState.format_amount(node.cost), _banked_card_text(preview)]
+	box.add_child(_card_label(cost_text, 11, COLOR_BANKED.lightened(0.25) if bool(preview.applies) else _state_accent(state), false))
 	return card
+
+# --- Conhecimento guardado: o que ele faz pela pesquisa que for escolhida -------------------------------------------
+
+## V2ResearchState.banked_preview, com a regra da tela por cima: antes da primeira cidade nenhuma pesquisa começa
+## (V2ResearchAccess), então não há prévia a mostrar.
+func _banked_preview(node_id: String) -> Dictionary:
+	var preview := _state.banked_preview(node_id)
+	if bool(preview.applies) and V2ResearchAccess.state_blocked_reason(_state) != "":
+		preview.applies = false
+	return preview
+
+## Linha curta do card: "Com guardado: 40 / 50" ou "Com guardado: conclui".
+func _banked_card_text(preview: Dictionary) -> String:
+	if bool(preview.completes):
+		return "Com guardado: conclui"
+	return "Com guardado: %s / %s" % [V2ResearchState.format_amount(float(preview.progress_after)), V2ResearchState.format_amount(float(preview.cost))]
+
+## Frase completa (rodapé e tooltip do card) do efeito do guardado sobre `node_id`; "" se não se aplica.
+func _banked_sentence(node_id: String) -> String:
+	var preview := _banked_preview(node_id)
+	if not bool(preview.applies):
+		return ""
+	var banked := V2ResearchState.format_amount(float(preview.banked))
+	if bool(preview.completes):
+		var leftover := float(preview.leftover)
+		return "Conhecimento guardado: %s — iniciar conclui esta pesquisa na hora%s." % [banked, " e sobram %s guardados" % V2ResearchState.format_amount(leftover) if leftover > 0.0 else ""]
+	var remaining := float(preview.cost) - float(preview.progress_after)
+	var income := _knowledge_income()
+	var eta := " (≈%d turnos)" % maxi(int(ceil(remaining / income)), 1) if income > 0.0 else ""
+	return "Conhecimento guardado: %s — ao iniciar, esta pesquisa vai direto a %s / %s (%d%%); faltam %s%s." % [banked,
+		V2ResearchState.format_amount(float(preview.progress_after)), V2ResearchState.format_amount(float(preview.cost)),
+		int(round(float(preview.ratio_after) * 100.0)), V2ResearchState.format_amount(remaining), eta]
+
+## Conhecimento por turno da civilização dona deste estado (0 se o estado não pertence a nenhuma — ex.: teste).
+func _knowledge_income() -> float:
+	for player in GameManager.players:
+		if player != null and player.v2_research == _state:
+			return V2EconomyRuntime.player_knowledge_income(player)
+	return 0.0
+
+func _refresh_banked_chip() -> void:
+	if _banked_chip == null:
+		return
+	var banked := _state.research_overflow
+	_banked_chip.visible = banked > 0.0
+	if banked <= 0.0:
+		return
+	var income := _knowledge_income()
+	_banked_label.text = "Guardado: %s" % V2ResearchState.format_amount(banked)
+	if income > 0.0:
+		_banked_label.text += "  ·  +%s por turno" % V2ResearchState.format_amount(snappedf(income, 0.1))
+	_banked_chip.tooltip_text = "Conhecimento guardado: %s\nÉ o Conhecimento que entrou enquanto nenhuma pesquisa estava ativa, ou que sobrou de uma pesquisa concluída.\nA próxima pesquisa que você iniciar recebe tudo de uma vez, na hora — pode avançar bastante ou concluir no mesmo instante. O que passar do custo continua guardado.%s" % [
+		V2ResearchState.format_amount(banked), "\nRenda atual: +%s Conhecimento por turno." % V2ResearchState.format_amount(snappedf(income, 0.1)) if income > 0.0 else ""]
 
 func _card_label(text: String, font_size: int, color: Color, wrap: bool) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_font_size_override("font_size", roundi(font_size * _scale))
 	label.add_theme_color_override("font_color", color)
 	if wrap:
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -997,14 +1289,14 @@ func _progress_bar(ratio: float, fill: Color) -> ProgressBar:
 	bar.max_value = 1.0
 	bar.value = ratio
 	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(0, 5)
+	bar.custom_minimum_size = Vector2(0, 4 * _scale)
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var back := StyleBoxFlat.new()
 	back.bg_color = BG_LEVEL
-	back.set_corner_radius_all(2)
+	back.set_corner_radius_all(0)
 	var front := StyleBoxFlat.new()
 	front.bg_color = fill
-	front.set_corner_radius_all(2)
+	front.set_corner_radius_all(0)
 	bar.add_theme_stylebox_override("background", back)
 	bar.add_theme_stylebox_override("fill", front)
 	return bar
@@ -1012,7 +1304,7 @@ func _progress_bar(ratio: float, fill: Color) -> ProgressBar:
 func _card_style(state: int, selected: bool) -> StyleBoxFlat:
 	var background := BG_CARD
 	var border := BORDER_STEEL
-	var border_width := 1
+	var border_width := 2
 	match state:
 		NodeState.LOCKED:
 			background = BG_CARD.darkened(0.35)
@@ -1032,8 +1324,8 @@ func _card_style(state: int, selected: bool) -> StyleBoxFlat:
 	if selected:
 		border = TEXT_PRIMARY
 		border_width = 2
-	var style := UITheme.panel_style(background, border, border_width, 5, false)
-	style.set_content_margin_all(6)
+	var style := UITheme.panel_style(background, border, border_width * roundi(_scale), 0, false)
+	style.set_content_margin_all(CARD_PADDING * _scale)
 	return style
 
 func _state_text_color(state: int) -> Color:
@@ -1064,13 +1356,18 @@ func _refresh_chrome() -> void:
 		parts.append("Pesquisando: %s — %s / %s (%d%%)" % [active.display_name, V2ResearchState.format_amount(_state.get_progress(active.id)), V2ResearchState.format_amount(active.cost), int(round(_state.get_progress_ratio(active.id) * 100.0))])
 	else:
 		parts.append("Nenhum projeto ativo")
-	if _state.research_overflow > 0.0:
-		parts.append("Conhecimento guardado: %s" % V2ResearchState.format_amount(_state.research_overflow))
+	# O Conhecimento guardado tem indicador próprio ao lado (_refresh_banked_chip): esta linha é cortada com reticências.
 	_status_label.text = "  ·  ".join(parts)
 	_status_label.tooltip_text = _status_label.text
+	_refresh_banked_chip()
 	if _jump_active_button != null:
 		_jump_active_button.disabled = _state.active_id == ""
 		_jump_available_button.disabled = first_available_id() == ""
+		var popup := _navigation_menu.get_popup()
+		popup.set_item_disabled(popup.get_item_index(0), _jump_active_button.disabled)
+		popup.set_item_disabled(popup.get_item_index(1), _jump_available_button.disabled)
+		popup.set_item_checked(popup.get_item_index(2), is_equal_approx(zoom, .8))
+		popup.set_item_checked(popup.get_item_index(3), is_equal_approx(zoom, 1.0))
 	_refresh_footer()
 	if debug_tools_enabled and not _debug_buttons.is_empty():
 		var selected := V2ResearchDatabase.get_node(_selected_id)
@@ -1094,23 +1391,31 @@ func _refresh_footer() -> void:
 	var node := V2ResearchDatabase.get_node(_selected_id)
 	if node == null:
 		_footer_title.text = "Nenhum nó selecionado"
+		_footer_description.text = ""
+		_footer_description.visible = false
 		_footer_detail.text = "Clique em um nó para ver detalhes e pesquisar."
 		_action_button.text = "—"
 		_action_button.disabled = true
 		return
 	var state := _state.node_state(node.id)
+	_footer_description.text = node.intent if node.intent != "" else node.description
+	_footer_description.visible = false
+	_footer_title.tooltip_text = "%s\n%s" % [node.display_name, _footer_description.text]
 	_footer_title.text = "%s · %s" % [node.display_name, V2ResearchDatabase.role_label(node.tier_role)]
 	var identity: String
 	if node.is_universal:
 		var progress := V2ResearchDatabase.capstone_progress(node.id, _state.completed_ids)
-		identity = "Nó universal · %s completas: %d / %d (N%d)" % [V2ResearchDatabase.capstone_unit_word(node), progress.x, progress.y, node.requirement.at_tier]
+		identity = "Nó universal · %s completas: %d / %d (%s)" % [V2ResearchDatabase.capstone_unit_word(node), progress.x, progress.y, V2ResearchDatabase.tier_label(node.tree_type, node.requirement.at_tier)]
 	else:
-		identity = "%s · Nível %d" % [V2ResearchDatabase.line_label(node), node.tier]
+		identity = "%s · Nível %d" % [V2ResearchDatabase.line_label(node), V2ResearchDatabase.display_tier(node.tree_type, node.tier)]
 	# Duas linhas (identidade + custo / estado, progresso e motivo) pra caber sem rolar.
 	_footer_detail.text = "%s  ·  Custo: %s\n%s" % [identity, V2ResearchState.format_amount(node.cost), _state.status_text(node.id).replace("\n", "  ·  ")]
 	var supremacy := _supremacy_lines(node)
 	if not supremacy.is_empty():
 		_footer_detail.text += "\n" + "  ·  ".join(supremacy)
+	var banked := _banked_sentence(node.id)
+	if banked != "":
+		_footer_detail.text += "\n" + banked
 	match state:
 		NodeState.AVAILABLE:
 			_action_button.text = "Pesquisar"
@@ -1134,13 +1439,12 @@ func _refresh_footer() -> void:
 		_action_button.tooltip_text = ""
 
 ## Mesmo estilo "chip" dos botões das árvores V1 (HUD._style_doutrina_chip_button).
-func _style_chip(button: Button, accent: Color) -> void:
-	var rest_border := accent.lerp(BORDER_STEEL, 0.65)
-	button.add_theme_stylebox_override("normal", UITheme.panel_style(BG_CARD, rest_border, 1, 6, false))
-	button.add_theme_stylebox_override("hover", UITheme.panel_style(BG_CARD.lightened(0.08), accent, 1, 6, false))
-	button.add_theme_stylebox_override("pressed", UITheme.panel_style(BG_LEVEL, accent, 1, 6, false))
-	button.add_theme_stylebox_override("disabled", UITheme.panel_style(BG_CARD.darkened(0.3), BORDER_STEEL.darkened(0.5), 1, 6, false))
-	button.add_theme_color_override("font_color", TEXT_MUTED)
-	button.add_theme_color_override("font_pressed_color", accent)
-	button.add_theme_color_override("font_hover_color", TEXT_PRIMARY)
-	button.add_theme_color_override("font_disabled_color", TEXT_LOCKED)
+func _style_chip(button: Button, _accent: Color) -> void:
+	# Reuse the actual menu sprites and focus outline, scoped to research.
+	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
+		var frame := theme.get_stylebox(state, "SetupSmallButton").duplicate() as StyleBox
+		frame.content_margin_left = 8 * _scale
+		frame.content_margin_right = 8 * _scale
+		frame.content_margin_top = 6 * _scale
+		frame.content_margin_bottom = 6 * _scale
+		button.add_theme_stylebox_override(state, frame)

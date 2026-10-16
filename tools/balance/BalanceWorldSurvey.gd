@@ -153,7 +153,7 @@ static func survey_ecology(grid: HexGrid, capitals: Array) -> Dictionary:
 		if unit.ecology_site_id >= 0:
 			units.append(unit)
 	var violations := {}
-	var invalid := {"water": 0, "city": 0, "territory_or_building": 0, "resource": 0, "lair_tile": 0, "event_marker": 0, "outside_main": 0}
+	var invalid := {"water": 0, "city": 0, "territory_or_building": 0, "resource": 0, "lair_tile": 0, "outside_main": 0}
 	var min_advanced := 999999
 	for tier in MonsterEcologyData.TIERS:
 		violations[tier] = 0
@@ -177,8 +177,6 @@ static func survey_ecology(grid: HexGrid, capitals: Array) -> Dictionary:
 			invalid.resource += 1
 		if grid.lairs_by_coord.has(unit.coord):
 			invalid.lair_tile += 1
-		if MonsterEcologyPlanner._near_world_event_site(unit.coord):
-			invalid.event_marker += 1
 		if grid._zone_for(unit.coord) != HexGrid._Zone.MAIN:
 			invalid.outside_main += 1
 	var seats: Array = []

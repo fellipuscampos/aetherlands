@@ -9,28 +9,32 @@ func _apply_signals(player: PlayerData) -> Array:
 	player.v2_unlocks.unlock_applied.connect(func(node_id, unlock_type, unlock_id): seen.append([node_id, unlock_type, unlock_id]))
 	return seen
 
-# --- N1: a Doutrina ---------------------------------------------------------------------------------------------------
+# --- Início da linha: o prédio de treino ---------------------------------------------------------------------------------------------------
 
-func test_n1_only_establishes_the_line_and_opens_n2_with_no_bonus_of_its_own():
+## O antigo N1 ("Doutrina") era um portão sem efeito e saiu: a linha começa no prédio de treino, que não exige
+## pesquisa anterior, e concluí-lo aplica o desbloqueio do prédio direto — sem bônus global.
+func test_the_line_starts_at_the_training_building_without_a_doctrine_gate():
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
 	var before := [player.gold, player.mana, player.units.size()]
 	var seen := _apply_signals(player)
-	player.v2_research.complete_research("v2_doctrine_cavalry_1")
-	assert_eq(seen, [["v2_doctrine_cavalry_1", "doctrine", "v2_doctrine_cavalry"]])
-	assert_eq(V2UnlockSystem.unlocked_ids(player), ["v2_doctrine_cavalry"], "nenhum prédio, unidade ou técnica")
+	assert_null(V2ResearchDatabase.get_node("v2_doctrine_cavalry_1"), "o N1 de portão não existe mais")
+	assert_true(player.v2_research.is_available("v2_doctrine_cavalry_2"), "o prédio não exige pesquisa anterior")
+	assert_true(player.v2_research.complete_research("v2_doctrine_cavalry_2"))
+	assert_eq(seen.size(), 1)
+	assert_eq(seen[0][0], "v2_doctrine_cavalry_2")
+	assert_eq(seen[0][1], "building")
+	assert_false(V2UnlockSystem.is_unlocked(player, "v2_doctrine_cavalry"), "o id da Doutrina não é mais um unlock")
 	assert_eq([player.gold, player.mana, player.units.size()], before, "sem bônus global")
-	assert_true(player.v2_research.is_available("v2_doctrine_cavalry_2"))
-	assert_false(player.v2_research.is_available("v2_doctrine_cavalry_3"))
+	assert_true(player.v2_research.is_available("v2_doctrine_cavalry_3"))
 
 func test_every_cavalry_node_applies_its_unlock_once_with_the_generic_type_table():
 	var player := PlayerData.new(CivilizationData.new())
 	_players.append(player)
 	var seen := _apply_signals(player)
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		player.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
 	assert_eq(seen, [
-		["v2_doctrine_cavalry_1", "doctrine", "v2_doctrine_cavalry"],
 		["v2_doctrine_cavalry_2", "building", C_STABLE],
 		["v2_doctrine_cavalry_3", "unit", CAVALIER],
 		["v2_doctrine_cavalry_4", "technique", CHARGE],
@@ -88,10 +92,10 @@ func test_the_stable_uses_a_normal_slot_is_built_once_and_belongs_to_the_researc
 func test_the_cavalier_has_the_specified_baseline():
 	var data := UnitDatabase.create_unit(CAVALIER)
 	assert_eq(data.unit_name, "Cavaleiro")
-	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points], [17.0, 5.0, 3.0, 4.0])
+	assert_eq([data.max_hp, data.attack, data.defense, data.movement_points], [17.0, 7.5, 4.0, 4.0])
 	assert_eq(data.vision_range, 4)
 	assert_eq(data.attack_range, 1, "melee")
-	assert_eq(data.production_cost, 24.0)
+	assert_eq(data.production_cost, 26.0)
 	assert_eq(data.visual_kind, CAVALIER, "o SaveManager recria a unidade por ele")
 	assert_true(data.has_trait(UnitData.TRAIT_MOUNTED))
 	assert_false(data.has_trait(UnitData.TRAIT_LEGENDARY) or data.has_trait(UnitData.TRAIT_FLYING))
@@ -153,7 +157,7 @@ func test_the_cavalier_needs_n3_and_the_stable_and_goes_through_the_normal_queue
 	assert_false(_standalone_city(player).can_train(CAVALIER), "sem o Estábulo")
 	city.set_production(CAVALIER)
 	assert_eq(city.production_item, CAVALIER)
-	assert_eq(city.production_cost(), 24.0)
+	assert_eq(city.production_cost(), 26.0)
 
 func test_the_cavalier_needs_the_war_stable_not_the_v1_stable_barracks_or_other_halls():
 	var player := _player(3, 3, 3, 3)
@@ -227,8 +231,8 @@ func test_the_counter_works_in_real_combat_prediction_equals_the_real_hp_loss():
 	var guardian := _unit(grid, me, "v2_unit_guardian", Vector2i(0, 0))
 	var cavalier := _unit(grid, rival, CAVALIER, Vector2i(1, 0))
 	var brace := V2DoctrineTechniqueDatabase.get_technique(BRACE)
-	var plain := _formula_damage(grid, 4.0, 1.0, cavalier)
-	var countered := _formula_damage(grid, 4.0, 1.0 + brace.basic_attack_bonus, cavalier)
+	var plain := _formula_damage(grid, 6.0, 1.0, cavalier)
+	var countered := _formula_damage(grid, 6.0, 1.0 + brace.basic_attack_bonus, cavalier)
 	assert_gt(countered, plain)
 	var predicted: float = CombatResolver.predict(guardian, cavalier, grid).damage_to_defender
 	assert_almost_eq(predicted, countered, 0.0001)

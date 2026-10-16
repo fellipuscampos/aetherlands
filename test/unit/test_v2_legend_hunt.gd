@@ -104,16 +104,16 @@ func test_the_basic_attack_gets_the_bonus_and_prediction_matches_the_real_resolu
 	var d := _hunt(2, CHAMPION)
 	var hunter: Unit = d.hunter
 	var target: Unit = d.target
-	var expected := _formula_damage(d.grid, 11.0, 1.4, target)
+	var expected := _formula_damage(d.grid, 16.5, 1.4, target)
 	assert_almost_eq(CombatResolver.predict(hunter, target, d.grid).damage_to_defender, expected, 0.0001)
-	assert_gt(expected, _formula_damage(d.grid, 11.0, 1.0, target))
+	assert_gt(expected, _formula_damage(d.grid, 16.5, 1.0, target))
 	var hp := target.hp
 	CombatResolver.resolve(hunter, target, d.grid)
 	assert_almost_eq(hp - target.hp, expected, 0.0001, "predict == resolve")
 
 func test_a_normal_target_takes_the_plain_basic_attack():
 	var d := _hunt(2)
-	assert_almost_eq(CombatResolver.predict(d.hunter, d.target, d.grid).damage_to_defender, _formula_damage(d.grid, 11.0, 1.0, d.target), 0.0001)
+	assert_almost_eq(CombatResolver.predict(d.hunter, d.target, d.grid).damage_to_defender, _formula_damage(d.grid, 16.5, 1.0, d.target), 0.0001)
 
 func test_the_precise_shot_combines_with_the_hunt_multiplicatively():
 	var d := _hunt(4, HERO) # a 4 tiles: só o Disparo Preciso (alcance básico 3 + 1) chega
@@ -121,12 +121,12 @@ func test_the_precise_shot_combines_with_the_hunt_multiplicatively():
 	var target: Unit = d.target
 	var shot := _technique(PRECISE).strike_multiplier
 	var hunt := 1.0 + hunter.unit_data.trait_attack_bonus # lido do dado
-	var combined := _formula_damage(d.grid, 11.0, shot * hunt, target)
+	var combined := _formula_damage(d.grid, 16.5, shot * hunt, target)
 	assert_almost_eq(CombatResolver.predict(hunter, target, d.grid, shot).damage_to_defender, combined, 0.0001)
 	var hp := target.hp
 	assert_true(V2TechniqueRuntime.perform_strike(hunter, PRECISE, target, d.grid))
 	assert_almost_eq(hp - target.hp, combined, 0.0001, "o disparo real usa os dois")
-	assert_almost_eq(combined, 11.0 * 1.4 * 1.4 - target.unit_data.defense * 0.5, 0.0001, "11 x 1,4 x 1,4 - Def/2 (valor não escrito em lugar nenhum)")
+	assert_almost_eq(combined, 16.5 * 1.4 * 1.4 - target.unit_data.defense * 0.5, 0.0001, "16,5 x 1,4 x 1,4 - Def/2 (valor não escrito em lugar nenhum)")
 
 func test_the_volley_evaluates_the_hunt_per_victim():
 	var grid := _world()
@@ -140,9 +140,9 @@ func test_the_volley_evaluates_the_hunt_per_victim():
 	var hunt := 1.0 + hunter.unit_data.trait_attack_bonus
 	# A aura do Campeão (raio 2) protege os aliados a <= 2 dele: o Sentinela (1) e o Herói (1); o próprio Campeão não.
 	var aura: float = 1.0 + UnitDatabase.create_unit(CHAMPION).aura_defense_bonus
-	var expected_champion := _formula_damage(grid, 11.0, volley * hunt, champion)
-	var expected_sentinel := _formula_damage(grid, 11.0, volley, sentinel, aura)
-	var expected_hero := _formula_damage(grid, 11.0, volley * hunt, hero, aura)
+	var expected_champion := _formula_damage(grid, 16.5, volley * hunt, champion)
+	var expected_sentinel := _formula_damage(grid, 16.5, volley, sentinel, aura)
+	var expected_hero := _formula_damage(grid, 16.5, volley * hunt, hero, aura)
 	var hp := {champion: champion.hp, sentinel: sentinel.hp, hero: hero.hp}
 	assert_true(V2TechniqueRuntime.perform_strike(hunter, VOLLEY, champion, grid))
 	assert_almost_eq(hp[champion] - champion.hp, expected_champion, 0.0001, "Campeão Guardião: bônus")
@@ -184,7 +184,7 @@ func test_a_rival_civilization_with_a_legend_hunter_works_the_same():
 	var rival := _rival_of(me)
 	var enemy_hunter := _unit(grid, rival, LEGEND_HUNTER, Vector2i(0, 0))
 	var my_champion := _unit(grid, me, CHAMPION, Vector2i(2, 0))
-	var expected := _formula_damage(grid, 11.0, 1.4, my_champion)
+	var expected := _formula_damage(grid, 16.5, 1.4, my_champion)
 	assert_almost_eq(CombatResolver.predict(enemy_hunter, my_champion, grid).damage_to_defender, expected, 0.0001)
 	var hp := my_champion.hp
 	CombatResolver.resolve(enemy_hunter, my_champion, grid)

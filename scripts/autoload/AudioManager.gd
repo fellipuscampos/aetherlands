@@ -23,6 +23,9 @@ const SFX_POOL_SIZE := 4
 var _music_player: AudioStreamPlayer
 var _sfx_players: Array[AudioStreamPlayer] = []
 var _sfx_cache: Dictionary = {}
+## Sons de ambiente que vivem fora daqui (a chuva do WeatherController): param junto com a partida e são drenados no
+## encerramento como os nossos (Godot #76745).
+var _ambient_players: Array[AudioStreamPlayer] = []
 var _quitting := false
 
 func _ready() -> void:
@@ -104,11 +107,19 @@ func _on_game_over(victory: bool) -> void:
 	_music_player.stop()
 	play_sfx("victory" if victory else "defeat")
 
+func register_ambient_player(player: AudioStreamPlayer) -> void:
+	if player != null and not _ambient_players.has(player):
+		_ambient_players.append(player)
+
 func stop_match_audio() -> void:
 	_music_player.stop()
 	for player in _sfx_players:
 		player.stop()
 		player.stream = null
+	for player in _ambient_players:
+		if is_instance_valid(player):
+			player.stop()
+	_ambient_players.assign(_ambient_players.filter(func(p): return is_instance_valid(p)))
 
 func drain_audio() -> void:
 	stop_match_audio()

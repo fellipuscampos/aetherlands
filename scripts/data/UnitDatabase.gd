@@ -1,10 +1,16 @@
 class_name UnitDatabase
 extends RefCounted
 
-## Núcleo civil compartilhado treinável fora da progressão V2 (Fase 25): só o Colonizador. O Guarda
-## ("warrior") continua existindo como unidade INICIAL de toda civilização, mas não abre fila de
-## produção; as tropas V1 continuam como dado só para recriar unidades de saves antigos.
+## Núcleo civil compartilhado treinável fora da progressão V2 (Fase 25): só o Colonizador. O antigo Guarda
+## ("warrior") só existe em saves antigos (a escolta inicial agora é STARTING_ESCORT_KINDS) e nunca abre fila
+## de produção; as tropas V1 continuam como dado só para recriar unidades de saves antigos.
 const CORE_TRAINABLE_KINDS: Array[String] = ["settler"]
+
+## Escolta inicial de TODA civilização (GameManager._spawn_starting_escort), além do Colonizador: as formas
+## básicas das Doutrinas do Guardião e do Guerreiro. Mesmos stats para todas as raças; o modelo é o da raça do
+## dono (UnitArtCatalog, aplicado em Unit.setup). Ganhá-las no início não libera o treino: produzir mais continua
+## exigindo pesquisa + prédio (City.can_train). Substituem o antigo Guarda ("warrior"), mantido só para saves antigos.
+const STARTING_ESCORT_KINDS: Array[String] = ["v2_unit_shieldbearer", "v2_unit_warrior"]
 
 ## Roster de kinds que uma cidade pode produzir via producao normal (ver City.can_train,
 ## HUD._build_production_buttons e V2StrategicAI) — fonte UNICA usada pra montar os botoes de
@@ -106,6 +112,63 @@ static func _apply_guardian_line_model(data: UnitData, folder: String, prefix: S
 	data.shield_wall_animation_override = prefix + "_ShieldWall"
 	data.shield_wall_hold_animation_override = prefix + "_ShieldWallHold"
 
+## GRANDES MANIFESTAÇÕES (2026-10-13): os seis modelos animados de assets/generated/grand_manifestations, os MESMOS para
+## as quatro raças (UnitArtCatalog não tem entrada para elas, de propósito). Todos com 3 m na escala nativa (1:1, nunca
+## normalizar pela caixa: asas e faixas abertas dobrariam a "altura"), frente em +Z (yaw 0) e quatro clipes que animam
+## o mesmo conjunto de ossos — Idle e Walk em ciclo, Attack e Spell uma vez. As trocas de estado usam a transição por
+## captura de pose (UnitData.pose_transition_time), não o crossfade linear das tropas: são corpos grandes e lentos
+## (Idle de até 24 s), e 0,2 s de mistura linear lia como tranco. Spell toca em todo feitiço (Unit.play_cast_visual);
+## Attack fica ligado para o dia em que uma delas tiver ataque básico (hoje nenhuma tem) e para o debug.
+const MANIFESTATION_MODEL_DIR := "res://assets/generated/grand_manifestations/"
+const MANIFESTATION_TRANSITION_TIME := 0.5
+## Primordial dos Elementos: os tempos aprovados com o modelo (README dele) — o corpo muda de postura para andar.
+const PRIMORDIAL_TRANSITION_TIME := 0.6
+const PRIMORDIAL_WALK_TRANSITION_TIME := 0.9
+## kind -> pasta/arquivo do modelo. Fonte única para o cadastro, o debug e os testes.
+const MANIFESTATION_MODELS := {
+	"v2_manifestation_seraph": "seraph_blocky_v4_animated",
+	"v2_manifestation_archdemon": "archdemon_blocky_v5_animated",
+	"v2_manifestation_lich_sovereign": "elder_lich_blocky_v3_animated",
+	"v2_manifestation_nature_avatar": "nature_avatar_blocky_v5_animated",
+	"v2_manifestation_veil_archon": "veil_archon_blocky_v9_animated",
+	"v2_manifestation_elemental_primordial": "elemental_dragon_v10_animated",
+}
+
+## kind -> [perfil de brilho do núcleo (GlowProfiles), osso onde a luz fica]. O Lich não tem núcleo: o que brilha
+## nele é o foco do cajado.
+const MANIFESTATION_CORES := {
+	"v2_manifestation_seraph": [GlowProfiles.SERAPH_CORE, "core"],
+	"v2_manifestation_archdemon": [GlowProfiles.ARCHDEMON_CORE, "core"],
+	"v2_manifestation_lich_sovereign": [GlowProfiles.LICH_FOCUS, "staff_focus"],
+	"v2_manifestation_nature_avatar": [GlowProfiles.NATURE_CORE, "core"],
+	"v2_manifestation_veil_archon": [GlowProfiles.VEIL_CORE, "core"],
+	"v2_manifestation_elemental_primordial": [GlowProfiles.PRIMORDIAL_CORE, "core"],
+}
+
+static func manifestation_model_path(kind: String) -> String:
+	var folder := String(MANIFESTATION_MODELS.get(kind, ""))
+	return "" if folder == "" else "%s%s/%s.glb" % [MANIFESTATION_MODEL_DIR, folder, folder]
+
+## `lowercase_clips`: o Primordial exporta idle/walk/attack/spell em minúsculas; os outros cinco, com inicial maiúscula.
+static func _apply_manifestation_model(data: UnitData, kind: String, lowercase_clips: bool = false) -> void:
+	var path := manifestation_model_path(kind)
+	data.model_scene_path = path
+	data.animation_scene_path = path
+	data.merge_shared_walk_animation = false
+	data.idle_animation_override = "idle" if lowercase_clips else "Idle"
+	data.walk_animation_override = "walk" if lowercase_clips else "Walk"
+	data.attack_animation_override = "attack" if lowercase_clips else "Attack"
+	data.cast_animation_override = "spell" if lowercase_clips else "Spell"
+	data.animation_blend_time = 0.0
+	data.pose_transition_time = MANIFESTATION_TRANSITION_TIME
+	data.pose_transition_walk_time = 0.0
+	data.model_scale_multiplier = 1.0
+	data.model_yaw_offset_degrees = 0.0
+	var core: Array = MANIFESTATION_CORES.get(kind, [])
+	if core.size() == 2:
+		data.glow_profile = core[0]
+		data.glow_bone = core[1]
+
 ## Modelos próprios das tropas humanas (Blender MCP, assets/generated/humans/<pasta>/<pasta>.glb): GLB com os próprios
 ## clipes `<prefixo>_Idle/_Walk/_Attack`, crossfade de 0,2 s, escala 1:1 (a altura já está no modelo: 1,80 m as tropas,
 ## 2,00 m as lendárias) e yaw 0. `techniques` (id da técnica -> sufixo do clipe) liga as técnicas de ATAQUE da linha aos
@@ -130,6 +193,42 @@ const WARRIOR_LINE_CLIPS := {V2DoctrineTechniqueDatabase.POWER_STRIKE: "_PowerSt
 const RANGER_FIRST_CLIPS := {V2DoctrineTechniqueDatabase.PRECISE_SHOT: "_PreciseShot"}
 const RANGER_LINE_CLIPS := {V2DoctrineTechniqueDatabase.PRECISE_SHOT: "_PreciseShot", V2DoctrineTechniqueDatabase.VOLLEY: "_Volley"}
 
+## Arte humana Ladino/Cerco: clipes anteriores presentes em todas as evoluções.
+## Desmantelar e Munição Demolidora continuam passivas, com clipes disponíveis.
+const ROGUE_FIRST_CLIPS := {V2DoctrineTechniqueDatabase.SNEAK_ATTACK: "_SneakAttack"}
+const ROGUE_LINE_CLIPS := {V2DoctrineTechniqueDatabase.SNEAK_ATTACK: "_SneakAttack", V2DoctrineTechniqueDatabase.DISMANTLE: "_Dismantle"}
+const SIEGE_FIRST_CLIPS := {V2DoctrineTechniqueDatabase.DEMOLITION_AMMO: "_DemolitionAmmo"}
+const SIEGE_LINE_CLIPS := {V2DoctrineTechniqueDatabase.DEMOLITION_AMMO: "_DemolitionAmmo", V2DoctrineTechniqueDatabase.PREPARED_BOMBARDMENT: "_PreparedBombardment"}
+## Cavalaria (cavalo + cavaleiro, rig de 28 ossos): a Carga tem clipe próprio em toda a linha (chegada da carga, tocada
+## ao fim do galope — ver Unit._advance_walk_queue); a Retirada Tática galopa com o Walk normal (sem clipe humano).
+const CAVALRY_LINE_CLIPS := {V2DoctrineTechniqueDatabase.CHARGE: "_Charge"}
+
+## Colonizadores com modelo próprio (2026-10-09, Blender MCP): `<raça>_settler_v1`, clipes `idle`/`walk` em loop, sem
+## ataque (o Colonizador nunca ataca). Mesmo crossfade das tropas — parado <-> andando sem salto de pose.
+const SETTLER_MODEL_PATH := "res://assets/generated/humans/human_settler_v1/human_settler_v1.glb"
+
+## Magos (2026-10-10, Blender MCP): um modelo por Escola e por raça (assets/generated/<raça>/<raça>_<escola>_v1), todos com
+## os MESMOS três clipes — `idle` e `walk` em loop e `spell`, a conjuração, que serve para TODOS os feitiços
+## (cast_animation_override; tocado por V2MagicRuntime.cast -> Unit.play_cast_visual). Mago não tem ataque básico, então
+## sem attack_animation. Crossfade de 0,2 s entre os estados (parado <-> andando <-> conjurando), escala 1:1 (a altura já
+## está no modelo), frente em +Z. Humanos aqui; anões/elfos/orcs trocam pela própria arte em UnitArtCatalog.
+const MAGE_IDLE_CLIP := "idle"
+const MAGE_WALK_CLIP := "walk"
+const MAGE_CAST_CLIP := "spell"
+
+static func _apply_mage_model(data: UnitData, folder: String) -> void:
+	var path := "res://assets/generated/humans/%s/%s.glb" % [folder, folder]
+	data.model_scene_path = path
+	data.animation_scene_path = path
+	data.merge_shared_walk_animation = false
+	data.idle_animation_override = MAGE_IDLE_CLIP
+	data.walk_animation_override = MAGE_WALK_CLIP
+	data.attack_animation_override = ""
+	data.cast_animation_override = MAGE_CAST_CLIP
+	data.animation_blend_time = GUARDIAN_LINE_BLEND_TIME
+	data.model_scale_multiplier = 1.0
+	data.model_yaw_offset_degrees = 0.0
+
 static func create_unit(kind: String) -> UnitData:
 	var data := UnitData.new()
 	match kind:
@@ -137,47 +236,23 @@ static func create_unit(kind: String) -> UnitData:
 			data.unit_name = "Colonizador"
 			data.movement_points = 2.0
 			data.attack = 0.0
-			data.defense = 1.0
+			data.defense = 1.5
 			data.max_hp = 8.0
 			data.vision_range = 3
 			data.can_found_city = true
 			data.visual_kind = "settler"
 			data.production_cost = 25.0
-			# Identidade visual: mesma 3D Asset Factory procedural do Guarda
-			# (tools/asset_factory, engine "blocky"), reaproveitando o mesmo
-			# corpo/proporcao (ver memoria feedback_blocky_humanoid_
-			# baseline), so equipamento/textura de manga diferentes (sem
-			# armadura/elmo/luvas, mangas de pano em vez de cota de malha,
-			# ver preset human_settler_blocky.json) -- um colonizador nao e
-			# combatente, entao a silhueta precisa deixar isso claro de
-			# longe (nada de metal). Cajado no lugar de arma e uma trouxa
-			# de viagem nas costas em vez de escudo/lanca.
-			data.model_scene_path = "res://assets/generated/humans/settler_blocky/human_settler_blocky.glb"
-			data.animation_scene_path = "res://assets/generated/humans/settler_blocky/human_settler_blocky.glb"
+			# Modelo próprio (2026-10-09): Colonizador V1 humano (Blender MCP) — sem armadura nem arma de combate,
+			# clipes `idle`/`walk`. As outras raças trocam pela própria arte em UnitArtCatalog (anão/elfo/orc).
+			data.model_scene_path = SETTLER_MODEL_PATH
+			data.animation_scene_path = SETTLER_MODEL_PATH
 			data.merge_shared_walk_animation = false
-			data.idle_animation_override = "Idle"
-			data.walk_animation_override = "Walk"
-			# Sem attack_animation_override de proposito -- o Colonizador
-			# nunca ataca (attack 0.0 acima), "nao precisa de animacao de
-			# ataque" (usuario). O clipe "Attack" ainda existe no .glb (a
-			# pipeline gera os 4 sempre, ver tools/asset_factory/animation/
-			# clips.py) mas nunca e tocado: attack_animation fica "" em
-			# Unit.gd, e CombatResolver.resolve() so chama _play_animation
-			# quando esse campo nao e vazio.
-			# Modelos da 3D Asset Factory (tools/asset_factory) usam escala
-			# 1:1 direta agora, nao mais normalizacao por MODEL_TARGET_
-			# HEIGHT (ver Unit.gd _build_model_body's ASSET_FACTORY_PATH_
-			# PREFIX check) -- a altura de cada personagem ja e o proprio
-			# parametro "height" do preset JSON, na mesma convencao de
-			# unidade do jogo, entao model_scale_multiplier volta a ser
-			# 1.0 (ajuste fino manual, nao mais "quanto preciso multiplicar
-			# pra compensar uma bounding box normalizada"). O antigo 2.35
-			# so existia pra compensar justamente essa normalizacao pela
-			# bounding box (corpo + arma) -- ver comentario historico do
-			# Esqueleto em MonsterDatabase.gd pra a saga completa de por
-			# que esse sistema foi abandonado pros personagens proprios.
+			data.idle_animation_override = "idle"
+			data.walk_animation_override = "walk"
+			data.animation_blend_time = GUARDIAN_LINE_BLEND_TIME
 			data.model_scale_multiplier = 1.0
-			data.model_yaw_offset_degrees = 180.0
+			data.model_yaw_offset_degrees = 0.0
+			# Sem attack_animation_override de proposito: o Colonizador nunca ataca (attack 0.0) e o modelo nao tem clipe de ataque.
 		"warrior":
 			data.unit_name = "Guarda"
 			data.movement_points = 2.0
@@ -188,32 +263,11 @@ static func create_unit(kind: String) -> UnitData:
 			data.can_found_city = false
 			data.visual_kind = "warrior"
 			data.production_cost = 15.0
-			# Identidade visual: guarda gerado pela 3D Asset Factory
-			# procedural (tools/asset_factory, engine "blocky") em vez do
-			# Barbaro do KayKit — esqueleto proprio (18 ossos, nomes
-			# distintos do rig KayKit). O proprio .glb ja exporta os 4
-			# clipes prontos (Idle/Walk/Attack/Death, ver tools/
-			# asset_factory/animation/clips.py), entao animation_scene_path
-			# aponta pro MESMO arquivo do modelo — e merge_shared_walk_
-			# animation fica false pra NAO somar o "Walking_A" do
-			# WALK_ANIMATION_SCENE (rig KayKit, esqueleto incompativel) por
-			# cima. idle/walk_animation_override usam os nomes reais dos
-			# clipes (sem o sufixo "_A" da convencao KayKit).
-			data.model_scene_path = "res://assets/generated/humans/guard_blocky/human_guard_blocky.glb"
-			data.animation_scene_path = "res://assets/generated/humans/guard_blocky/human_guard_blocky.glb"
-			data.merge_shared_walk_animation = false
-			data.idle_animation_override = "Idle"
-			data.walk_animation_override = "Walk"
-			data.attack_animation_override = "Attack"
-			# Escala 1:1 direta agora (ver Unit.gd _build_model_body's
-			# ASSET_FACTORY_PATH_PREFIX check e o comentario longo do
-			# Colonizador acima) -- o preset ja modela o Guarda com 1.8m de
-			# altura, sem precisar de multiplicador nenhum. yaw_offset
-			# continua necessario: a unidade aparecia de costas ao andar,
-			# ja que a "frente" exportada por tools/asset_factory nao bate
-			# com a convencao que slide_to() usa pra girar a unidade.
-			data.model_scale_multiplier = 1.0
-			data.model_yaw_offset_degrees = 180.0
+			# O Guarda saiu das forças iniciais (agora Escudeiro + Guerreiro V2 da raça, ver
+			# UnitDatabase.STARTING_ESCORT_KINDS) e só existe em saves antigos. O modelo próprio dele
+			# (guard_blocky) foi removido: usa o modelo humano do Guerreiro (warrior_v1), e UnitArtCatalog.KIND_ALIASES
+			# dá a ele o Guerreiro da raça do dono.
+			_apply_human_troop_model(data, "warrior_v1", "Warrior")
 		# Segunda tropa humana comum, so treinavel no Quartel apos pesquisar
 		# a tech "Quartel" (ver TechDatabase) — infantaria profissional,
 		# estatisticas acima do Guarda em troca do investimento em pesquisa
@@ -367,7 +421,7 @@ static func create_unit(kind: String) -> UnitData:
 		# Tropas raciais exclusivas (ver RACE_UNIQUE_KIND acima) — cada
 		# civilizacao de fantasia (CivilizationData.race, escolhida pelo
 		# jogador na tela de titulo ou sorteada pra rival em
-		# GameManager.RIVAL_CIVS) tem uma, alem do elenco comum acima.
+		# GameManager.AI_CIVS) tem uma, alem do elenco comum acima.
 		"human_knight":
 			data.unit_name = "Cavaleiro Real"
 			data.movement_points = 3.0 # mais agil que Cavalaria comum, mas nao tao rapido quanto o Arqueiro Solar
@@ -483,7 +537,7 @@ static func create_unit(kind: String) -> UnitData:
 		# (nó v2_doctrine_guardian_3). Só existe pra civilização que pesquisou o
 		# nó (V2UnlockSystem) E só treina no Salão dos Guardiões
 		# (v2_building_guardian_hall, trains_unit = este kind).
-		# BALANCE PLACEHOLDER: todos os números abaixo são provisórios, escolhidos
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): todos os números abaixo são provisórios, escolhidos
 		# só pra encaixar entre as tropas V1 já existentes — mais resistente que o
 		# Guarda (vida 18 > 12, defesa 4.5 > 3.0) porém com ataque menor (3.0 < 4.0),
 		# movimento normal (2) e custo entre Guarda (15) e Homem de Armas (22).
@@ -495,9 +549,9 @@ static func create_unit(kind: String) -> UnitData:
 		"v2_unit_shieldbearer":
 			data.unit_name = "Escudeiro"
 			data.movement_points = 2.0
-			data.attack = 3.0
-			data.defense = 4.5
-			data.max_hp = 18.0
+			data.attack = 4.5
+			data.defense = 7.0
+			data.max_hp = 20.0
 			data.vision_range = 3
 			data.can_found_city = false
 			data.visual_kind = "v2_unit_shieldbearer"
@@ -509,7 +563,7 @@ static func create_unit(kind: String) -> UnitData:
 		# tank/frontline (não é DPS nem ganha mobilidade). Cidades com o Salão dos
 		# Guardiões passam a treiná-lo NO LUGAR do Escudeiro, e um Escudeiro existente
 		# vira Guardião por upgrade físico (V2UnitUpgrade). Sem upkeep.
-		# BALANCE PLACEHOLDER: todos os números são provisórios — contra o Escudeiro
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): todos os números são provisórios — contra o Escudeiro
 		# (18 / 3,0 / 4,5 / mov. 2 / 20 PP): mais vida (24), mais defesa (6,0), ataque só
 		# um pouco maior (4,0), MESMO movimento e custo 32 PP (upgrade = 2 x 12 = 24 Ouro).
 		# `visual_kind` == id (SaveManager recria a unidade por ele).
@@ -517,9 +571,9 @@ static func create_unit(kind: String) -> UnitData:
 		"v2_unit_guardian":
 			data.unit_name = "Guardião"
 			data.movement_points = 2.0
-			data.attack = 4.0
-			data.defense = 6.0
-			data.max_hp = 24.0
+			data.attack = 6.0
+			data.defense = 10.0
+			data.max_hp = 26.0
 			data.vision_range = 3
 			data.can_found_city = false
 			data.visual_kind = "v2_unit_guardian"
@@ -533,15 +587,15 @@ static func create_unit(kind: String) -> UnitData:
 		# `branch_of == guardian`, sem código próprio. Treinada no Salão dos Guardiões (o
 		# Bastião de Maestria, N8, NÃO é requisito) e alcançável por upgrade físico de um
 		# Guardião (V2UnitUpgrade). Sem upkeep.
-		# BALANCE PLACEHOLDER: vida 32 / ataque 5,0 / defesa 8,0 / mov. 2 / 48 PP (upgrade
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): vida 32 / ataque 5,0 / defesa 8,0 / mov. 2 / 48 PP (upgrade
 		# Guardião -> Sentinela = 2 x (48 - 32) = 32 Ouro, pela fórmula genérica).
 		# Modelo próprio (2026-10-04): Sentinela V1 — placas completas, elmo fechado.
 		"v2_unit_sentinel":
 			data.unit_name = "Sentinela"
 			data.movement_points = 2.0
-			data.attack = 5.0
-			data.defense = 8.0
-			data.max_hp = 32.0
+			data.attack = 7.5
+			data.defense = 12.5
+			data.max_hp = 34.0
 			data.vision_range = 3
 			data.can_found_city = false
 			data.visual_kind = "v2_unit_sentinel"
@@ -556,14 +610,14 @@ static func create_unit(kind: String) -> UnitData:
 		# Lanças pela linha (doctrine_branch_of == guardian), sem duplicar técnica no dado. Aura própria:
 		# Comando Defensivo (V2UnitAuras) — aliados em raio 2 recebem +20% de Defesa, nunca ele mesmo.
 		# O traço `legendary` é semeado no fim de create_unit (metadata do N9). Sem upkeep.
-		# BALANCE PLACEHOLDER: vida 44 / ataque 6,5 / defesa 10,0 / mov. 2 / 90 PP; aura raio 2, +20%.
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): vida 44 / ataque 6,5 / defesa 10,0 / mov. 2 / 90 PP; aura raio 2, +20%.
 		# Modelo próprio (2026-10-04): Campeão Guardião V1 — placas douradas, capa, penacho; 1,90 m.
 		"v2_legendary_guardian_champion":
 			data.unit_name = "Campeão Guardião"
 			data.movement_points = 2.0
-			data.attack = 6.5
-			data.defense = 10.0
-			data.max_hp = 44.0
+			data.attack = 11.0
+			data.defense = 15.5
+			data.max_hp = 46.0
 			data.vision_range = 3
 			data.can_found_city = false
 			data.visual_kind = "v2_legendary_guardian_champion"
@@ -578,13 +632,13 @@ static func create_unit(kind: String) -> UnitData:
 		# melee DPS básico. Treinado no Salão de Armas. Contra o Escudeiro (18 / 3,0 / 4,5): MENOS vida (16) e
 		# defesa (3,5), MUITO mais ataque (5,0) — o Guardião vence em resistência, o Guerreiro em dano.
 		# Mesmo movimento (2), visão 3, alcance corpo a corpo, 20 PP. Sem upkeep.
-		# BALANCE PLACEHOLDER: todos os números são provisórios. `visual_kind` == id (SaveManager recria por ele).
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): todos os números são provisórios. `visual_kind` == id (SaveManager recria por ele).
 		# Modelo próprio (2026-10-04): Guerreiro V1 (machadinha; Golpe Poderoso com clipe próprio), ver _apply_human_troop_model.
 		"v2_unit_warrior":
 			data.unit_name = "Guerreiro"
 			data.movement_points = 2.0
-			data.attack = 5.0
-			data.defense = 3.5
+			data.attack = 7.5
+			data.defense = 4.5
 			data.max_hp = 16.0
 			data.vision_range = 3
 			data.can_found_city = false
@@ -594,13 +648,13 @@ static func create_unit(kind: String) -> UnitData:
 			_apply_human_troop_model(data, "warrior_v1", "Warrior", WARRIOR_FIRST_CLIPS)
 		# Fase 7 — Espadachim, primeira evolução da linha do Guerreiro (nó v2_doctrine_warrior_5): mesma função
 		# (melee ofensivo), mais poder por tile. Treinado no lugar do Guerreiro depois do N5; um Guerreiro existente
-		# vira Espadachim por V2UnitUpgrade (2 x (32 - 20) = 24 Ouro, fórmula genérica). BALANCE PLACEHOLDER:
+		# vira Espadachim por V2UnitUpgrade (2 x (32 - 20) = 24 Ouro, fórmula genérica). HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md):
 		# 21 / 7,0 / 4,5 / mov. 2 / 32 PP. Modelo próprio (2026-10-04): Espadachim V1 (espada; Golpe Poderoso + Ataque em Arco).
 		"v2_unit_swordsman":
 			data.unit_name = "Espadachim"
 			data.movement_points = 2.0
-			data.attack = 7.0
-			data.defense = 4.5
+			data.attack = 10.5
+			data.defense = 6.5
 			data.max_hp = 21.0
 			data.vision_range = 3
 			data.can_found_city = false
@@ -611,13 +665,13 @@ static func create_unit(kind: String) -> UnitData:
 		# Fase 7 — Mestre de Armas, forma Elite CONVENCIONAL da linha do Guerreiro (nó v2_doctrine_warrior_7; NÃO é
 		# Lendária). Melee avançado: mais Ataque que a Sentinela (9,5 > 5,0) e menos Defesa (5,5 < 8,0) — dano
 		# substancial sem virar glass cannon. Herda Golpe Poderoso e Ataque em Arco por `branch == warrior`.
-		# Upgrade Espadachim -> Mestre = 2 x (48 - 32) = 32 Ouro. BALANCE PLACEHOLDER: 28 / 9,5 / 5,5 / mov. 2 / 48 PP.
+		# Upgrade Espadachim -> Mestre = 2 x (48 - 32) = 32 Ouro. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 28 / 9,5 / 5,5 / mov. 2 / 48 PP.
 		# Modelo próprio (2026-10-04): Mestre de Armas V1 (espada longa; sem dourado), ver _apply_human_troop_model.
 		"v2_unit_weapon_master":
 			data.unit_name = "Mestre de Armas"
 			data.movement_points = 2.0
-			data.attack = 9.5
-			data.defense = 5.5
+			data.attack = 14.5
+			data.defense = 7.5
 			data.max_hp = 28.0
 			data.vision_range = 3
 			data.can_found_city = false
@@ -631,13 +685,13 @@ static func create_unit(kind: String) -> UnitData:
 		# create_unit). Identidade oposta à do Campeão: 38 HP / 12,0 ataque / 7,0 defesa (Campeão: 44 / 6,5 / 10,0) —
 		# finalizador, não âncora. Herda as duas Técnicas da Doutrina pela linha (doctrine_branch_of == warrior).
 		# Passiva intrínseca EXECUÇÃO (dado `low_hp_attack_*`, sem `if` de id): +30% de Ataque contra unidades com 50%
-		# de HP ou menos. BALANCE PLACEHOLDER: mov. 2, visão 3, 90 PP. Modelo próprio (2026-10-04): Herói da Lâmina V1,
+		# de HP ou menos. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): mov. 2, visão 3, 90 PP. Modelo próprio (2026-10-04): Herói da Lâmina V1,
 		# 2,00 m de corpo (lendário, como o Campeão Guardião), frisos de ouro, ver _apply_human_troop_model.
 		"v2_legendary_blade_hero":
 			data.unit_name = "Herói da Lâmina"
 			data.movement_points = 2.0
-			data.attack = 12.0
-			data.defense = 7.0
+			data.attack = 18.0
+			data.defense = 10.0
 			data.max_hp = 38.0
 			data.vision_range = 3
 			data.can_found_city = false
@@ -651,14 +705,14 @@ static func create_unit(kind: String) -> UnitData:
 		# AETHERLANDS V2, Fase 8 — Arqueiro, unidade-base da Doutrina do Patrulheiro (nó v2_doctrine_ranger_3): ranged DPS básico. Treinado
 		# no Campo dos Patrulheiros. Ataque à distância pelo sistema V1 (`attack_range` 2: atira de fora do alcance de melee e não sofre revide).
 		# Frágil de propósito: menos HP e Defesa que o Guerreiro (16 / 3,5) e o Escudeiro (18 / 4,5). Sem upkeep.
-		# BALANCE PLACEHOLDER: 13 HP / 4,5 / 2,5 / mov. 2 / visão 3 / alcance 2 / 20 PP. `visual_kind` == id (SaveManager recria por ele).
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 13 HP / 4,5 / 2,5 / mov. 2 / visão 3 / alcance 2 / 20 PP. `visual_kind` == id (SaveManager recria por ele).
 		# Modelo próprio (2026-10-04): Arqueiro V1 (arco com corda em duas metades e flecha com ossos próprios; Disparo
 		# Preciso com clipe próprio), ver _apply_human_troop_model.
 		"v2_unit_archer":
 			data.unit_name = "Arqueiro"
 			data.movement_points = 2.0
-			data.attack = 4.5
-			data.defense = 2.5
+			data.attack = 6.5
+			data.defense = 3.5
 			data.attack_range = 2
 			data.max_hp = 13.0
 			data.vision_range = 3
@@ -668,13 +722,13 @@ static func create_unit(kind: String) -> UnitData:
 			data.production_cost = 20.0
 			_apply_human_troop_model(data, "archer_v1", "Archer", RANGER_FIRST_CLIPS)
 		# Fase 8 — Caçador, 1ª evolução do Arqueiro (nó v2_doctrine_ranger_5): mesma função, mais dano e sobrevivência, MESMO alcance (2).
-		# Upgrade Arqueiro -> Caçador = 2 x (32 - 20) = 24 Ouro (fórmula genérica). BALANCE PLACEHOLDER: 17 / 6,5 / 3,0 / mov. 2 / alcance 2 / 32 PP.
+		# Upgrade Arqueiro -> Caçador = 2 x (32 - 20) = 24 Ouro (fórmula genérica). HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 17 / 6,5 / 3,0 / mov. 2 / alcance 2 / 32 PP.
 		# Modelo próprio (2026-10-04): Caçador V1 (arco recurvo; Disparo Preciso + Saraivada), ver _apply_human_troop_model.
 		"v2_unit_hunter":
 			data.unit_name = "Caçador"
 			data.movement_points = 2.0
-			data.attack = 6.5
-			data.defense = 3.0
+			data.attack = 9.5
+			data.defense = 4.5
 			data.attack_range = 2
 			data.max_hp = 17.0
 			data.vision_range = 3
@@ -686,14 +740,14 @@ static func create_unit(kind: String) -> UnitData:
 		# Fase 8 — Atirador de Elite, forma Elite CONVENCIONAL (nó v2_doctrine_ranger_7; NÃO é Lendária). A mudança estratégica do N7 é o ALCANCE
 		# BÁSICO 3 (domínio avançado de ranged) — sem mais movimento e sem Defesa que o proteja em melee. O Disparo Preciso (alcance básico + 1) chega
 		# a 4 tiles sem exceção nenhuma; a Saraivada usa o alcance básico (3). Upgrade Caçador -> Atirador = 2 x (48 - 32) = 32 Ouro.
-		# BALANCE PLACEHOLDER: 22 / 8,5 / 3,5 / mov. 2 / alcance 3 / 48 PP. VISÃO 4 (o pedido só fixa visão 3 pro Arqueiro): o Disparo Preciso do N7
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 22 / 8,5 / 3,5 / mov. 2 / alcance 3 / 48 PP. VISÃO 4 (o pedido só fixa visão 3 pro Arqueiro): o Disparo Preciso do N7
 		# alcança 4 tiles e um alvo precisa estar VISÍVEL pro jogador humano — com visão 3 o alcance extra só valeria com observador de fora.
 		# Modelo próprio (2026-10-04): Atirador de Elite V1 (arco longo, malha + peitoral de ferro, sem dourado).
 		"v2_unit_elite_marksman":
 			data.unit_name = "Atirador de Elite"
 			data.movement_points = 2.0
-			data.attack = 8.5
-			data.defense = 3.5
+			data.attack = 12.5
+			data.defense = 5.0
 			data.attack_range = 3
 			data.max_hp = 22.0
 			data.vision_range = 4
@@ -707,13 +761,13 @@ static func create_unit(kind: String) -> UnitData:
 		# Herói da Lâmina...; o traço `legendary` é semeado no fim de create_unit). Extremamente perigoso à distância e muito mais frágil que o Campeão
 		# Guardião (30 HP / 4,5 de Defesa contra 44 / 10,0). Herda Disparo Preciso e Saraivada pela linha (doctrine_branch_of == ranger).
 		# Passiva intrínseca CAÇADA LENDÁRIA (dado `trait_attack_*`, sem `if` de id): +40% de Ataque contra alvos com o TRAÇO `legendary`.
-		# BALANCE PLACEHOLDER: 30 / 11,0 / 4,5 / mov. 2 / alcance 3 / 90 PP. Modelo próprio (2026-10-04): Caçador de Lendas V1, 2,00 m de corpo
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 30 / 11,0 / 4,5 / mov. 2 / alcance 3 / 90 PP. Modelo próprio (2026-10-04): Caçador de Lendas V1, 2,00 m de corpo
 		# (lendário), pele branca de fera lendária e frisos de ouro, ver _apply_human_troop_model.
 		"v2_legendary_legend_hunter":
 			data.unit_name = "Caçador de Lendas"
 			data.movement_points = 2.0
-			data.attack = 11.0
-			data.defense = 4.5
+			data.attack = 16.5
+			data.defense = 7.0
 			data.attack_range = 3
 			data.max_hp = 30.0
 			data.vision_range = 4 # como o Atirador de Elite: o Disparo Preciso alcança 4 tiles
@@ -728,152 +782,146 @@ static func create_unit(kind: String) -> UnitData:
 		# AETHERLANDS V2, Fase 9 — Cavaleiro, unidade-base da Doutrina da Cavalaria (nó v2_doctrine_cavalry_3): mobilidade + flanco + choque inicial.
 		# Contra o Guerreiro (16 / 5,0 / 3,5 / mov. 2 / 20 PP): MOVIMENTO 4 (o dobro), visão 4, resistência parecida (17 HP, defesa 3,0 um pouco menor), o
 		# MESMO ataque (5,0) e mais caro (24 PP) — não vence o Guerreiro de frente pelos números; o valor dele é MOVIMENTO + POSICIONAMENTO. Traço `mounted`
-		# declarado no dado (o Preparar Lanças do Guardião o reconhece por ele, sem integração entre as Doutrinas). Sem upkeep. BALANCE PLACEHOLDER.
-		# Visual PROVISÓRIO: o corpo procedural "cavalry" do V1 (cavalo + cavaleiro na cor da civilização) na escala 1,0. Sem arte nova.
+		# declarado no dado (o Preparar Lanças do Guardião o reconhece por ele, sem integração entre as Doutrinas). Sem upkeep. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md).
+		# Arte própria (Cavaleiro V1, cavalo + cavaleiro, 28 ossos): ver _apply_human_troop_model/CAVALRY_LINE_CLIPS.
 		"v2_unit_cavalier":
 			data.unit_name = "Cavaleiro"
 			data.movement_points = 4.0
-			data.attack = 5.0
-			data.defense = 3.0
+			data.attack = 7.5
+			data.defense = 4.0
 			data.max_hp = 17.0
 			data.vision_range = 4
 			data.can_found_city = false
 			data.visual_kind = "v2_unit_cavalier"
 			data.supply_cost = 1
-			data.production_cost = 24.0
+			data.production_cost = 26.0
 			data.traits.append(UnitData.TRAIT_MOUNTED)
-			data.visual_template = "cavalry"
+			data.visual_template = "cavalry" # corpo procedural só se o GLB faltar
+			_apply_human_troop_model(data, "cavalier_v1", "Cavalier", CAVALRY_LINE_CLIPS)
 		# Fase 9 — Cavaleiro de Choque, 1ª evolução (nó v2_doctrine_cavalry_5): a especialização mais agressiva do Cavaleiro (mais Ataque e vida), MESMO movimento.
-		# Upgrade Cavaleiro -> Choque = 2 x (38 - 24) = 28 Ouro (fórmula genérica). BALANCE PLACEHOLDER: 22 / 7,0 / 4,0 / mov. 4 / 38 PP. Visual: cavalo ×1,15.
+		# Upgrade Cavaleiro -> Choque = 2 x (38 - 24) = 28 Ouro (fórmula genérica). HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 22 / 7,0 / 4,0 / mov. 4 / 38 PP. Visual: cavalo ×1,15.
 		"v2_unit_shock_cavalier":
 			data.unit_name = "Cavaleiro de Choque"
 			data.movement_points = 4.0
-			data.attack = 7.0
-			data.defense = 4.0
+			data.attack = 10.5
+			data.defense = 6.0
 			data.max_hp = 22.0
 			data.vision_range = 4
 			data.can_found_city = false
 			data.visual_kind = "v2_unit_shock_cavalier"
 			data.supply_cost = 2
-			data.production_cost = 38.0
+			data.production_cost = 42.0
 			data.traits.append(UnitData.TRAIT_MOUNTED)
-			data.visual_template = "cavalry"
-			data.model_scale_multiplier = 1.15
+			data.visual_template = "cavalry" # corpo procedural só se o GLB faltar
+			_apply_human_troop_model(data, "shock_cavalier_v1", "ShockCavalier", CAVALRY_LINE_CLIPS)
 		# Fase 9 — Cavaleiro Blindado, forma Elite CONVENCIONAL (nó v2_doctrine_cavalry_7; NÃO é Lendária): mais capacidade de ficar em combate, boa pressão,
 		# mobilidade PRESERVADA (4) — mas nunca supera a Sentinela na função defensiva (30 HP / 6,0 contra 32 / 8,0): continua MOBILIDADE / CHOQUE.
-		# Upgrade Choque -> Blindado = 2 x (56 - 38) = 36 Ouro. BALANCE PLACEHOLDER: 30 / 8,5 / 6,0 / mov. 4 / 56 PP. Visual: cavalo ×1,3.
+		# Upgrade Choque -> Blindado = 2 x (56 - 38) = 36 Ouro. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 30 / 8,5 / 6,0 / mov. 4 / 56 PP. Visual: cavalo ×1,3.
 		"v2_unit_armored_cavalier":
 			data.unit_name = "Cavaleiro Blindado"
 			data.movement_points = 4.0
-			data.attack = 8.5
-			data.defense = 6.0
+			data.attack = 12.5
+			data.defense = 9.0
 			data.max_hp = 30.0
 			data.vision_range = 4
 			data.can_found_city = false
 			data.visual_kind = "v2_unit_armored_cavalier"
 			data.supply_cost = 3
-			data.production_cost = 56.0
+			data.production_cost = 60.0
 			data.traits.append(UnitData.TRAIT_MOUNTED)
-			data.visual_template = "cavalry"
-			data.model_scale_multiplier = 1.3
+			data.visual_template = "cavalry" # corpo procedural só se o GLB faltar
+			_apply_human_troop_model(data, "armored_cavalier_v1", "ArmoredCavalier", CAVALRY_LINE_CLIPS)
 		# Fase 9 — Cavaleiro de Grifo, candidato a Unidade LENDÁRIA da Cavalaria (nó v2_doctrine_cavalry_9, `legendary_candidate`). NÃO é upgrade do Cavaleiro
 		# Blindado: unidade separada, produzida na Ordem da Cavalaria, sob o MESMO slot global de V2LegendarySystem (`legendary` semeado no fim de create_unit).
-		# A singularidade NÃO é o número, é a REGRA DE MOVIMENTO: perfil FLYING (voo tático — atravessa terreno e unidades, termina só em tile de terra livre;
-		# ver HexGrid.flight_reachable) e herda Carga e Retirada Tática pela linha (doctrine_branch_of == cavalry), agora pelo perfil aéreo. Traços: `mounted`
-		# (o Preparar Lanças a reconhece: dois counters — anti-montado e a vulnerabilidade), `flying` (semeado do perfil; clima futuro pode consultar) e `legendary`.
+		# 2026-10-10 (pedido do usuário): SEM VOO, nas 4 raças — perfil de movimento terrestre comum, como o resto da cavalaria (o modelo é o Blindado
+		# enobrecido num cavalo, sem grifo). Herda Carga e Retirada Tática pela linha (doctrine_branch_of == cavalry) pelas regras terrestres. Traços:
+		# `mounted` (o Preparar Lanças a reconhece) e `legendary`. Antes era FLYING (voo tático, HexGrid.flight_reachable), que hoje só as Manifestações têm.
 		# COUNTER por dado: +25% de dano recebido de ataques físicos à distância (`ranged_damage_taken_bonus`). Não supera as outras Lendárias em número (36 HP / 6,5
 		# defesa contra o Campeão 44 / 10,0; Ataque 10,0 contra o Herói 12,0): o valor é o acesso ao mapa e à backline.
-		# BALANCE PLACEHOLDER: 36 / 10,0 / 6,5 / mov. 5 / visão 5 / 100 PP. Visual PROVISÓRIO: o corpo procedural "griffin" do V1 (asas + corpo) na escala 1,4.
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 36 / 10,0 / 6,5 / mov. 5 / visão 5 / 100 PP. Visual PROVISÓRIO: o corpo procedural "griffin" do V1 (asas + corpo) na escala 1,4.
 		"v2_legendary_griffon_rider":
 			data.unit_name = "Cavaleiro de Grifo"
 			data.movement_points = 5.0
-			data.attack = 10.0
-			data.defense = 6.5
-			data.max_hp = 36.0
+			data.attack = 16.0
+			data.defense = 10.0
+			data.max_hp = 40.0
 			data.vision_range = 5
 			data.can_found_city = false
 			data.visual_kind = "v2_legendary_griffon_rider"
 			data.supply_cost = 5
-			data.production_cost = 100.0
+			data.production_cost = 95.0
 			data.traits.append(UnitData.TRAIT_MOUNTED)
-			data.movement_profile = UnitData.MovementProfile.FLYING
 			data.ranged_damage_taken_bonus = 0.25
-			data.visual_template = "griffin"
-			data.model_scale_multiplier = 1.4
+			data.visual_template = "griffin" # corpo procedural só se o GLB faltar
+			# Arte (2026-10-05): o Cavaleiro de Grifo V1 é o Blindado enobrecido numa montaria escalada a 2,00 m (SEM grifo,
+			# decisão do usuário). Movimento terrestre (sem voo) desde 2026-10-10.
+			_apply_human_troop_model(data, "griffon_rider_v1", "GriffonRider", CAVALRY_LINE_CLIPS)
 		# AETHERLANDS V2, Fase 10 — Ladino, unidade-base da Doutrina do Ladino (nó v2_doctrine_rogue_3): melee frágil e móvel, especializado em
 		# assassinato de alvos prioritários. Contra o Guerreiro (16 / 5,0 / 3,5 / mov. 2): MENOS Ataque (4,5), MUITO menos Defesa (2,5) e vida (14),
 		# mais Movimento (3) — não troca golpes de frente, depende de escolher o alvo certo e do Ataque Furtivo (N4). Alcance corpo a corpo, visão 4
-		# (para enxergar antes de se aproximar), 20 PP. Sem upkeep. BALANCE PLACEHOLDER. Modelo PROVISÓRIO: o Rogue do KayKit (o mesmo do Batedor V1)
-		# na escala 1,0. Sem arte V2.
+		# (para enxergar antes de se aproximar), 20 PP. Sem upkeep. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md). Arte humana própria: Ladino, 1,8 m; rig e clipes nativos.
 		"v2_unit_rogue":
 			data.unit_name = "Ladino"
 			data.movement_points = 3.0
-			data.attack = 4.5
-			data.defense = 2.5
-			data.max_hp = 14.0
+			data.attack = 7.0
+			data.defense = 4.0
+			data.max_hp = 15.0
 			data.vision_range = 4
 			data.can_found_city = false
 			data.visual_kind = "v2_unit_rogue"
 			data.supply_cost = 1
 			data.production_cost = 20.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Rogue.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
+			_apply_human_troop_model(data, "rogue_v1", "Rogue", ROGUE_FIRST_CLIPS)
 		# Fase 10 — Sabotador, primeira evolução da linha do Ladino (nó v2_doctrine_rogue_5): mesma função (assassinato móvel), mais poder por tile,
-		# MESMO movimento (3). Upgrade Ladino -> Sabotador = 2 x (32 - 20) = 24 Ouro (fórmula genérica). BALANCE PLACEHOLDER: 18 / 6,0 / 3,0 / mov. 3 /
-		# 32 PP. Modelo PROVISÓRIO: Rogue 15% maior.
+		# MESMO movimento (3). Upgrade Ladino -> Sabotador = 2 x (32 - 20) = 24 Ouro (fórmula genérica). HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 18 / 6,0 / 3,0 / mov. 3 /
+		# 32 PP. Arte humana própria: Sabotador, 1,8 m; rig e clipes nativos.
 		"v2_unit_saboteur":
 			data.unit_name = "Sabotador"
 			data.movement_points = 3.0
-			data.attack = 6.0
-			data.defense = 3.0
-			data.max_hp = 18.0
+			data.attack = 10.0
+			data.defense = 5.0
+			data.max_hp = 20.0
 			data.vision_range = 4
 			data.can_found_city = false
 			data.visual_kind = "v2_unit_saboteur"
 			data.supply_cost = 2
 			data.production_cost = 32.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Rogue.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.15
+			_apply_human_troop_model(data, "saboteur_v1", "Saboteur", ROGUE_LINE_CLIPS)
 		# Fase 10 — Assassino, forma Elite CONVENCIONAL da linha do Ladino (nó v2_doctrine_rogue_7; NÃO é Lendária): bom burst e mobilidade terrestre
 		# alta, Defesa baixa, HP moderado — excelente contra alvos prioritários, nunca um tanque. Não deve superar o Mestre de Armas (9,5 Ataque / 5,5
 		# Defesa) em confronto frontal sustentado: Ataque um pouco menor e MUITO menos Defesa. Upgrade Sabotador -> Assassino = 2 x (48 - 32) = 32 Ouro.
-		# BALANCE PLACEHOLDER: 23 / 8,0 / 3,5 / mov. 3 / 48 PP. Modelo PROVISÓRIO: Rogue 30% maior.
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 23 / 8,0 / 3,5 / mov. 3 / 48 PP. Arte humana própria: Assassino, 1,8 m; rig e clipes nativos.
 		"v2_unit_assassin":
 			data.unit_name = "Assassino"
 			data.movement_points = 3.0
-			data.attack = 8.0
-			data.defense = 3.5
-			data.max_hp = 23.0
+			data.attack = 14.0
+			data.defense = 5.5
+			data.max_hp = 26.0
 			data.vision_range = 4
 			data.can_found_city = false
 			data.visual_kind = "v2_unit_assassin"
 			data.supply_cost = 3
 			data.production_cost = 48.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Rogue.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.3
+			_apply_human_troop_model(data, "assassin_v1", "Assassin", ROGUE_LINE_CLIPS)
 		# Fase 10 — Mestre das Sombras, candidato a Unidade LENDÁRIA da linha do Ladino (nó v2_doctrine_rogue_9, `legendary_candidate`). NÃO é upgrade
 		# do Assassino: unidade separada, produzida no Refúgio das Sombras, sob o MESMO slot global de V2LegendarySystem das outras quatro Lendárias
 		# (traço `legendary` semeado no fim de create_unit). A singularidade NÃO é o número — é a REGRA DE MOVIMENTO: perfil INFILTRATOR (Passo
 		# Sombrio: atravessa unidades, nunca terreno impassável; ver HexGrid.infiltrate_reachable). Herda Ataque Furtivo e Desmantelar pela linha
 		# (doctrine_branch_of == rogue). Não supera as outras Lendárias em número (36 HP / 6,5 defesa contra o Campeão 44 / 10,0; Ataque 10,5 contra
-		# o Herói 12,0): o valor é atravessar formações inteiras, não os stats. BALANCE PLACEHOLDER: 30 / 10,5 / 4,5 / mov. 4 / visão 5 / 95 PP.
-		# Modelo PROVISÓRIO: o Rogue do KayKit na escala 1,45.
+		# o Herói 12,0): o valor é atravessar formações inteiras, não os stats. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 30 / 10,5 / 4,5 / mov. 4 / visão 5 / 95 PP.
+		# Arte humana própria: Mestre das Sombras, 2,0 m; rig e clipes nativos.
 		"v2_legendary_shadow_master":
 			data.unit_name = "Mestre das Sombras"
 			data.movement_points = 4.0
-			data.attack = 10.5
-			data.defense = 4.5
-			data.max_hp = 30.0
+			data.attack = 17.5
+			data.defense = 8.0
+			data.max_hp = 34.0
 			data.vision_range = 5
 			data.can_found_city = false
 			data.visual_kind = "v2_legendary_shadow_master"
 			data.supply_cost = 5
-			data.production_cost = 95.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Rogue.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.45
+			data.production_cost = 90.0
+			_apply_human_troop_model(data, "shadow_master_v1", "ShadowMaster", ROGUE_LINE_CLIPS)
 			data.movement_profile = UnitData.MovementProfile.INFILTRATOR
 		# AETHERLANDS V2, Fase 11 — Catapulta, unidade-base da Doutrina de Cerco (nó v2_doctrine_siege_3): o primeiro
 		# instrumento realmente eficiente contra cidades. Ataque básico ranged (alcance 2) pelo combate normal —
@@ -883,14 +931,12 @@ static func create_unit(kind: String) -> UnitData:
 		# Demolidora (N4, +40% adicional). Contra o Arqueiro (13 / 4,5 / 2,5 / mov. 2 / alcance 2 / 20 PP): custo maior
 		# (28 PP), HP um pouco maior, Defesa igual — não é feita pra vencer unidades, é feita pra derrubar cidades.
 		# Traço `siege` declarado no dado (Desmantelar do Ladino já a reconhece, nenhuma integração entre Doutrinas).
-		# Sem upkeep. BALANCE PLACEHOLDER. Modelo PROVISÓRIO: o corpo procedural "catapult" já existente do V1 — mesmo
-		# NOME de exibição da Catapulta V1 (`kind` diferente; ver a mesma limitação já documentada nas Fases 7-8 para
-		# Espadachim/Arqueiro) na escala 1,0.
+		# Sem upkeep. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md). Arte humana própria: Catapulta, 1,8 m; rig e clipes nativos.
 		"v2_unit_catapult":
 			data.unit_name = "Catapulta"
 			data.movement_points = 2.0
-			data.attack = 3.5
-			data.defense = 2.5
+			data.attack = 5.0
+			data.defense = 3.5
 			data.attack_range = 2
 			data.max_hp = 16.0
 			data.vision_range = 3
@@ -898,18 +944,18 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_unit_catapult"
 			data.supply_cost = 1
 			data.production_cost = 28.0
+			_apply_human_troop_model(data, "catapult_v1", "Catapult", SIEGE_FIRST_CLIPS)
 			data.traits.append(UnitData.TRAIT_SIEGE)
 			data.visual_template = "catapult"
 		# Fase 11 — Trebuchet, primeira evolução da linha de Cerco (nó v2_doctrine_siege_5): o ganho principal é
 		# ALCANCE (3, +1 sobre a Catapulta) e mais poder por tile de Cerco — o MOVIMENTO permanece 2 (não é uma
 		# evolução de mobilidade). Upgrade Catapulta -> Trebuchet = 2 x (44 - 28) = 32 Ouro (fórmula genérica).
-		# BALANCE PLACEHOLDER: 20 / 5,0 / 3,0 / mov. 2 / alcance 3 / 44 PP. Modelo PROVISÓRIO: o mesmo corpo
-		# "catapult" 15% maior.
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 20 / 5,0 / 3,0 / mov. 2 / alcance 3 / 44 PP. Arte humana própria: Trebuchet, 1,8 m; rig e clipes nativos.
 		"v2_unit_trebuchet":
 			data.unit_name = "Trebuchet"
 			data.movement_points = 2.0
-			data.attack = 5.0
-			data.defense = 3.0
+			data.attack = 7.5
+			data.defense = 4.5
 			data.attack_range = 3
 			data.max_hp = 20.0
 			data.vision_range = 3
@@ -917,19 +963,18 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_unit_trebuchet"
 			data.supply_cost = 2
 			data.production_cost = 44.0
+			_apply_human_troop_model(data, "trebuchet_v1", "Trebuchet", SIEGE_LINE_CLIPS)
 			data.traits.append(UnitData.TRAIT_SIEGE)
 			data.visual_template = "catapult"
-			data.model_scale_multiplier = 1.15
 		# Fase 11 — Bombarda, forma Elite CONVENCIONAL da linha de Cerco (nó v2_doctrine_siege_7; NÃO é Lendária):
 		# sobrevive melhor e pressiona mais, continua precisando de proteção e continua inferior ao Patrulheiro
 		# equivalente em combate ranged anti-unidade — nunca vira um tanque. Upgrade Trebuchet -> Bombarda =
-		# 2 x (64 - 44) = 40 Ouro. BALANCE PLACEHOLDER: 26 / 6,5 / 4,0 / mov. 2 / alcance 3 / 64 PP. Modelo
-		# PROVISÓRIO: o mesmo corpo "catapult" 30% maior.
+		# 2 x (64 - 44) = 40 Ouro. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 26 / 6,5 / 4,0 / mov. 2 / alcance 3 / 64 PP. Arte humana própria: Bombarda, 1,8 m; rig e clipes nativos.
 		"v2_unit_bombard":
 			data.unit_name = "Bombarda"
 			data.movement_points = 2.0
-			data.attack = 6.5
-			data.defense = 4.0
+			data.attack = 10.0
+			data.defense = 6.0
 			data.attack_range = 3
 			data.max_hp = 26.0
 			data.vision_range = 3
@@ -937,9 +982,9 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_unit_bombard"
 			data.supply_cost = 3
 			data.production_cost = 64.0
+			_apply_human_troop_model(data, "bombard_v1", "Bombard", SIEGE_LINE_CLIPS)
 			data.traits.append(UnitData.TRAIT_SIEGE)
 			data.visual_template = "catapult"
-			data.model_scale_multiplier = 1.3
 		# Fase 11 — Colosso de Cerco, candidato a Unidade LENDÁRIA da linha de Cerco (nó v2_doctrine_siege_9,
 		# `legendary_candidate`). NÃO é upgrade da Bombarda: unidade separada, produzida no Grande Arsenal, sob o
 		# MESMO slot global de V2LegendarySystem das outras cinco Lendárias (traço `legendary` semeado no fim de
@@ -950,14 +995,12 @@ static func create_unit(kind: String) -> UnitData:
 		# convencionais continuam exigindo posição parada. Herda Munição Demolidora e Bombardeio Preparado pela linha
 		# (doctrine_branch_of == siege). DOIS traços de origens diferentes, nenhum substitui o outro: `siege`
 		# (Desmantelar do Ladino o reconhece) E `legendary` (Caçada Lendária do Caçador de Lendas também o reconhece).
-		# BALANCE PLACEHOLDER: 44 / 9,0 / 8,0 / mov. 2 / visão 4 / alcance 3 / 110 PP. Modelo PROVISÓRIO: o mesmo
-		# corpo "catapult" 50% maior (sem prédio/criatura de "colosso" nos pacotes gratuitos — o mais coerente com
-		# "grande máquina de Cerco" disponível).
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 44 / 9,0 / 8,0 / mov. 2 / visão 4 / alcance 3 / 110 PP. Arte humana própria: Colosso de Cerco, 2,0 m; rig e clipes nativos.
 		"v2_legendary_siege_colossus":
 			data.unit_name = "Colosso de Cerco"
 			data.movement_points = 2.0
-			data.attack = 9.0
-			data.defense = 8.0
+			data.attack = 12.0
+			data.defense = 10.0
 			data.attack_range = 3
 			data.max_hp = 44.0
 			data.vision_range = 4
@@ -965,9 +1008,9 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_legendary_siege_colossus"
 			data.supply_cost = 5
 			data.production_cost = 110.0
+			_apply_human_troop_model(data, "siege_colossus_v1", "SiegeColossus", SIEGE_LINE_CLIPS)
 			data.traits.append(UnitData.TRAIT_SIEGE)
 			data.visual_template = "catapult"
-			data.model_scale_multiplier = 1.5
 			data.ignores_technique_stationary_requirement = true
 		# AETHERLANDS V2, Fase 15 — Construtor: unidade CIVIL, melhora recursos do mapa
 		# (V2ConstructorRuntime). Sem Ataque, sem participar de composição militar/Doutrina/
@@ -976,14 +1019,14 @@ static func create_unit(kind: String) -> UnitData:
 		# `required_v2_unlock_id = "v2_building_workshop"` — pesquisar Oficinas já libera, sem
 		# um segundo unlock artificial no mesmo nó (§53 do pedido). work_charges_remaining
 		# (Unit.gd) é setado no nascimento pelo tier de Indústria do dono (GameManager),
-		# nunca aqui. BALANCE PLACEHOLDER. Modelo PROVISÓRIO: Rogue do KayKit (silhueta civil,
+		# nunca aqui. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md). Modelo PROVISÓRIO: Rogue do KayKit (silhueta civil,
 		# sem armadura pesada — já usado pelo Batedor V1/Ladino V2, mas nenhuma arma visível
 		# nesta escala reduzida).
 		"v2_unit_builder":
 			data.unit_name = "Construtor"
 			data.movement_points = 2.0
 			data.attack = 0.0
-			data.defense = 1.0
+			data.defense = 1.5
 			data.max_hp = 8.0
 			data.vision_range = 3
 			data.can_found_city = false
@@ -998,12 +1041,12 @@ static func create_unit(kind: String) -> UnitData:
 		# (consome 2 Suprimentos, sofre a Tensão Logística na Defesa), mas SEM ATAQUE BÁSICO (can_basic_attack = false: nunca
 		# inicia ataque nem revida; Ataque 0 sozinho não bastaria por causa do piso de dano). `v2_magic_school` "sacred" semeia o
 		# traço `caster` (Desmantelar do Ladino vale sozinho) e define o repertório (V2MagicRuntime.spells_for_unit). Treinado no
-		# Templo Sagrado. BALANCE PLACEHOLDER: 12 / 0 / 2,0 / mov. 2 / visão 3 / 24 PP. Modelo PROVISÓRIO: o Mage do KayKit.
+		# Templo Sagrado. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 12 / 0 / 2,0 / mov. 2 / visão 3 / 24 PP. Modelo PROVISÓRIO: o Mage do KayKit.
 		"v2_unit_sacred_cleric":
 			data.unit_name = "Clérigo"
 			data.movement_points = 2.0
 			data.attack = 0.0
-			data.defense = 2.0
+			data.defense = 3.0
 			data.max_hp = 12.0
 			data.vision_range = 3
 			data.attack_range = 0
@@ -1013,21 +1056,20 @@ static func create_unit(kind: String) -> UnitData:
 			data.v2_magic_school = "sacred"
 			data.supply_cost = 2
 			data.production_cost = 24.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Mage.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.0
+			_apply_mage_model(data, "human_sacred_cleric_v1")
 		# AETHERLANDS V2, Fase 17 — Serafim, Grande Manifestação da Escola Sagrada (nó v2_magic_sacred_9). Entidade mágica
 		# persistente: voa pelo MESMO perfil FLYING da Fase 9 (sem a vulnerabilidade à distância do Grifo — ser voador não
 		# implica ser vulnerável), não consome Suprimentos (é sustentada por magia), não ataca, conhece o repertório Sagrado do
 		# dono (v2_magic_school) e emite a Presença Sagrada pela MESMA infraestrutura de aura do Comando Defensivo (V2UnitAuras).
 		# Traços: caster (qualquer namespace de Escola), flying (perfil) e grand_manifestation (metadata do nó) — NUNCA legendary.
-		# Produção: 100 PP + 60 Mana cobrada na conclusão (production_mana_cost). BALANCE PLACEHOLDER: 38 / 0 / 7,0 / mov. 3 /
-		# visão 4. Modelo PROVISÓRIO: o Mage do KayKit em escala 1,5 (nenhum modelo de anjo nos pacotes gratuitos).
+		# Produção: 100 PP + 60 Mana cobrada na conclusão (production_mana_cost). HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 38 / 0 / 7,0 / mov. 3 /
+		# visão 4. Modelo blocky próprio, compartilhado entre raças: 3 m, seis asas, núcleo e auréolas (ver
+		# _apply_manifestation_model: Idle/Walk em ciclo, Spell em todo feitiço, transição por captura de pose).
 		"v2_manifestation_seraph":
 			data.unit_name = "Serafim"
 			data.movement_points = 3.0
 			data.attack = 0.0
-			data.defense = 7.0
+			data.defense = 10.5
 			data.max_hp = 38.0
 			data.vision_range = 4
 			data.attack_range = 0
@@ -1036,7 +1078,7 @@ static func create_unit(kind: String) -> UnitData:
 			data.visual_kind = "v2_manifestation_seraph"
 			data.v2_magic_school = "sacred"
 			data.supply_cost = 0
-			data.production_cost = 100.0
+			data.production_cost = 84.0
 			data.production_mana_cost = 60.0
 			data.movement_profile = UnitData.MovementProfile.FLYING
 			data.ranged_damage_taken_bonus = 0.0
@@ -1044,16 +1086,14 @@ static func create_unit(kind: String) -> UnitData:
 			data.aura_name = "Presença Sagrada"
 			data.aura_radius = 2
 			data.aura_defense_bonus = 0.15
-			data.model_scene_path = "res://assets/models/kaykit/characters/Mage.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.5
+			_apply_manifestation_model(data, kind)
 		# AETHERLANDS V2, Fase 18 — Bruxo Infernal: caster ofensivo frágil, sem ataque básico.
 		# `v2_magic_school` separa semanticamente o id "infernal" da Escola V1 de mesmo id.
 		"v2_unit_infernal_warlock":
 			data.unit_name = "Bruxo Infernal"
 			data.movement_points = 2.0
 			data.attack = 0.0
-			data.defense = 1.5
+			data.defense = 2.5
 			data.max_hp = 10.0
 			data.vision_range = 3
 			data.attack_range = 0
@@ -1064,16 +1104,14 @@ static func create_unit(kind: String) -> UnitData:
 			data.spell_damage_multiplier = 1.0
 			data.supply_cost = 2
 			data.production_cost = 24.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Mage.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 0.9
-		# AETHERLANDS V2, Fase 18 — Arquidemônio: Grande Manifestação Infernal. O modelo
-		# monstruoso existente é reaproveitado; nenhum runtime específico da Escola.
+			_apply_mage_model(data, "human_infernal_warlock_v1")
+		# AETHERLANDS V2, Fase 18 — Arquidemônio: Grande Manifestação Infernal; nenhum runtime específico da Escola.
+		# Modelo próprio (2026-10-13): 3 m, mãos flutuantes e faixas articuladas, núcleo emissivo no peito.
 		"v2_manifestation_archdemon":
 			data.unit_name = "Arquidemônio"
 			data.movement_points = 3.0
 			data.attack = 0.0
-			data.defense = 6.0
+			data.defense = 9.0
 			data.max_hp = 36.0
 			data.vision_range = 4
 			data.attack_range = 0
@@ -1084,17 +1122,11 @@ static func create_unit(kind: String) -> UnitData:
 			data.spell_damage_multiplier = 1.25
 			data.spell_damage_multiplier_name = "Chama Primordial"
 			data.supply_cost = 0
-			data.production_cost = 105.0
+			data.production_cost = 88.0
 			data.production_mana_cost = 70.0
 			data.movement_profile = UnitData.MovementProfile.FLYING
 			data.ranged_damage_taken_bonus = 0.0
-			data.model_scene_path = "res://assets/generated/magic/archdemon/archdemon.glb"
-			data.animation_scene_path = data.model_scene_path
-			data.merge_shared_walk_animation = false
-			data.idle_animation_override = "Idle"
-			data.walk_animation_override = "Walk"
-			data.attack_animation_override = "Attack"
-			data.model_scale_multiplier = 1.0
+			_apply_manifestation_model(data, kind)
 		# AETHERLANDS V2, Fase 19 — Necromante: conjurador da Escola de Necromancia e COMANDANTE de retinues
 		# (retinue_command_capacity 2, somado por civilização em V2RetinueSystem). Humano vivo: não é undead nem
 		# retinue. Consome 2 Suprimentos (os comandantes usam a logística normal; as Hostes, não). BALANCE
@@ -1103,7 +1135,7 @@ static func create_unit(kind: String) -> UnitData:
 			data.unit_name = "Necromante"
 			data.movement_points = 2.0
 			data.attack = 0.0
-			data.defense = 1.5
+			data.defense = 2.5
 			data.max_hp = 10.0
 			data.vision_range = 3
 			data.attack_range = 0
@@ -1114,18 +1146,16 @@ static func create_unit(kind: String) -> UnitData:
 			data.retinue_command_capacity = 2
 			data.supply_cost = 2
 			data.production_cost = 24.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Mage.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 0.95
+			_apply_mage_model(data, "human_necromancer_v1")
 		# Fase 19 — Hoste Esquelética: UM token que representa um GRUPO de esqueletos (nunca N Units). Retinue da
 		# Necromancia de custo de comando 1, combate físico normal, 0 Suprimentos, só nasce por feitiço (fora de
-		# PLAYER_TRAINABLE_KINDS, nenhum prédio a treina). BALANCE PLACEHOLDER: 18 / 4,0 / 3,0 / mov. 2 / visão 2.
+		# PLAYER_TRAINABLE_KINDS, nenhum prédio a treina). HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 18 / 4,0 / 3,0 / mov. 2 / visão 2.
 		# Visual PROVISÓRIO: três corpos do esqueleto da Asset Factory dentro da MESMA Unit (model_formation_count).
 		"v2_unit_skeleton_host":
 			data.unit_name = "Hoste Esquelética"
 			data.movement_points = 2.0
-			data.attack = 4.0
-			data.defense = 3.0
+			data.attack = 6.0
+			data.defense = 4.5
 			data.max_hp = 18.0
 			data.vision_range = 2
 			data.attack_range = 1
@@ -1139,12 +1169,12 @@ static func create_unit(kind: String) -> UnitData:
 			data.production_cost = 0.0
 			_apply_skeleton_formation(data, 3)
 		# Fase 19 — Hoste Macabra: formação MAIOR de mortos-vivos, custo de comando 2. Não é upgrade da Esquelética:
-		# as duas coexistem como opções de custo. BALANCE PLACEHOLDER: 30 / 7,0 / 5,0 / mov. 2 / visão 3.
+		# as duas coexistem como opções de custo. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 30 / 7,0 / 5,0 / mov. 2 / visão 3.
 		"v2_unit_macabre_host":
 			data.unit_name = "Hoste Macabra"
 			data.movement_points = 2.0
-			data.attack = 7.0
-			data.defense = 5.0
+			data.attack = 10.5
+			data.defense = 7.5
 			data.max_hp = 30.0
 			data.vision_range = 3
 			data.attack_range = 1
@@ -1160,12 +1190,13 @@ static func create_unit(kind: String) -> UnitData:
 		# Fase 19 — Lich Soberano: Grande Manifestação da Necromancia. Conjurador (repertório por v2_magic_school),
 		# undead (declarado), grand_manifestation (metadata do nó) — nunca legendary nem retinue (custo de comando 0:
 		# cria capacidade, não a consome). Soberania dos Mortos = retinue_command_capacity 4, só dado. 100 PP + 65 Mana
-		# na conclusão. BALANCE PLACEHOLDER: 34 / 0 / 6,0 / mov. 2 / visão 4. Modelo PROVISÓRIO: o Lich Ancião V1.
+		# na conclusão. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 34 / 0 / 6,0 / mov. 2 / visão 4. Modelo próprio (2026-10-13): Lich Ancião de 3 m,
+		# com cajado, grimório e manto articulado.
 		"v2_manifestation_lich_sovereign":
 			data.unit_name = "Lich Soberano"
 			data.movement_points = 2.0
 			data.attack = 0.0
-			data.defense = 6.0
+			data.defense = 9.0
 			data.max_hp = 34.0
 			data.vision_range = 4
 			data.attack_range = 0
@@ -1177,24 +1208,18 @@ static func create_unit(kind: String) -> UnitData:
 			data.retinue_command_capacity_name = "Soberania dos Mortos"
 			data.traits.append(UnitData.TRAIT_UNDEAD)
 			data.supply_cost = 0
-			data.production_cost = 100.0
+			data.production_cost = 84.0
 			data.production_mana_cost = 65.0
-			data.model_scene_path = "res://assets/generated/magic/elder_lich/elder_lich.glb"
-			data.animation_scene_path = data.model_scene_path
-			data.merge_shared_walk_animation = false
-			data.idle_animation_override = "Idle"
-			data.walk_animation_override = "Walk"
-			data.attack_animation_override = "Attack"
-			data.model_scale_multiplier = 1.0
+			_apply_manifestation_model(data, kind)
 		# AETHERLANDS V2, Fase 20 — Druida: conjurador da Escola Druídica (modificação física persistente de terreno, via
 		# V2TerrainRuntime pelos feitiços). Mortal: 2 Suprimentos (a Tensão reduz a Defesa dele, nunca os feitiços), sem
-		# ataque básico. Não é undead/retinue/legendary/manifestation. BALANCE PLACEHOLDER: 12 / 0 / 2,0 / mov. 2 / visão 3 /
+		# ataque básico. Não é undead/retinue/legendary/manifestation. HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 12 / 0 / 2,0 / mov. 2 / visão 3 /
 		# 24 PP. Modelo PROVISÓRIO: o Mage do KayKit (a identidade vem do emblema "DR" da Escola).
 		"v2_unit_druid":
 			data.unit_name = "Druida"
 			data.movement_points = 2.0
 			data.attack = 0.0
-			data.defense = 2.0
+			data.defense = 3.0
 			data.max_hp = 12.0
 			data.vision_range = 3
 			data.attack_range = 0
@@ -1204,40 +1229,37 @@ static func create_unit(kind: String) -> UnitData:
 			data.v2_magic_school = "druidism"
 			data.supply_cost = 2
 			data.production_cost = 24.0
-			data.model_scene_path = "res://assets/models/kaykit/characters/Mage.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.05
+			_apply_mage_model(data, "human_druid_v1")
 		# Fase 20 — Avatar da Natureza: Grande Manifestação Druídica. Conjurador (repertório por v2_magic_school), traço
 		# grand_manifestation pela metadata do nó — nunca legendary/retinue/undead. Domínio Natural = spell_range_bonus 1 por
 		# dado (V2MagicRuntime.effective_range, genérico). 105 PP + 65 Mana na conclusão, 0 Suprimentos, terrestre, sem ataque.
-		# BALANCE PLACEHOLDER: 42 / 0 / 8,0 / mov. 3 / visão 4. Visual PROVISÓRIO: o corpo procedural do Ent V1 ("treant"),
-		# ampliado (visual_template) — não há modelo de avatar natural nos pacotes.
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 42 / 0 / 8,0 / mov. 3 / visão 4. Modelo próprio (2026-10-13): avatar flutuante de 3 m, com
+		# núcleo giratório e raízes suspensas (o Ent procedural ampliado 1,7x saiu).
 		"v2_manifestation_nature_avatar":
 			data.unit_name = "Avatar da Natureza"
 			data.movement_points = 3.0
 			data.attack = 0.0
-			data.defense = 8.0
+			data.defense = 12.0
 			data.max_hp = 42.0
 			data.vision_range = 4
 			data.attack_range = 0
 			data.can_basic_attack = false
 			data.can_found_city = false
 			data.visual_kind = "v2_manifestation_nature_avatar"
-			data.visual_template = "treant"
-			data.model_scale_multiplier = 1.7
 			data.v2_magic_school = "druidism"
 			data.spell_range_bonus = 1
 			data.spell_range_bonus_name = "Domínio Natural"
 			data.supply_cost = 0
-			data.production_cost = 105.0
+			data.production_cost = 88.0
 			data.production_mana_cost = 65.0
+			_apply_manifestation_model(data, kind)
 		# AETHERLANDS V2, Fase 21 — Arcanista: caster frágil de mobilidade/utilidade, sem ataque básico.
-		# BALANCE PLACEHOLDER: 10 / 0 / 1,5 / mov. 2 / visão 4 / 24 PP / Supply 2.
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 10 / 0 / 1,5 / mov. 2 / visão 4 / 24 PP / Supply 2.
 		"v2_unit_arcanist":
 			data.unit_name = "Arcanista"
 			data.movement_points = 2.0
 			data.attack = 0.0
-			data.defense = 1.5
+			data.defense = 2.5
 			data.max_hp = 10.0
 			data.vision_range = 4
 			data.attack_range = 0
@@ -1248,16 +1270,15 @@ static func create_unit(kind: String) -> UnitData:
 			data.supply_cost = 2
 			data.production_cost = 24.0
 			data.movement_profile = UnitData.MovementProfile.GROUND
-			data.model_scene_path = "res://assets/models/kaykit/characters/Mage.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.1
+			_apply_mage_model(data, "human_arcanist_v1")
 		# Fase 21 — Arconte do Véu: Grande Manifestação voadora do Arcanismo. Fluxo do Véu reduz
 		# a recarga aplicada pelos feitiços em 1, inteiramente por dado. Nunca legendary/retinue/undead.
+		# Modelo próprio (2026-10-13): casca rúnica de 3 m com placas e núcleo giratórios (o conjurador arcano 1,45x saiu).
 		"v2_manifestation_veil_archon":
 			data.unit_name = "Arconte do Véu"
 			data.movement_points = 4.0
 			data.attack = 0.0
-			data.defense = 5.5
+			data.defense = 8.5
 			data.max_hp = 34.0
 			data.vision_range = 5
 			data.attack_range = 0
@@ -1268,24 +1289,18 @@ static func create_unit(kind: String) -> UnitData:
 			data.spell_cooldown_reduction = 1
 			data.spell_cooldown_reduction_name = "Fluxo do Véu"
 			data.supply_cost = 0
-			data.production_cost = 105.0
+			data.production_cost = 88.0
 			data.production_mana_cost = 70.0
 			data.movement_profile = UnitData.MovementProfile.FLYING
 			data.ranged_damage_taken_bonus = 0.0
-			data.model_scene_path = "res://assets/generated/magic/arcane_caster/arcane_caster.glb"
-			data.animation_scene_path = data.model_scene_path
-			data.merge_shared_walk_animation = false
-			data.idle_animation_override = "Idle"
-			data.walk_animation_override = "Walk"
-			data.attack_animation_override = "Attack"
-			data.model_scale_multiplier = 1.45
+			_apply_manifestation_model(data, kind)
 		# AETHERLANDS V2, Fase 22 — Elementalista: caster frágil de controle ambiental.
-		# BALANCE PLACEHOLDER: 11 / 0 / 1,5 / mov. 2 / visão 4 / 24 PP / Supply 2.
+		# HISTÓRICO (números de antes do balanceamento de 2026-10-14 — os atuais estão no código abaixo e em docs/BALANCE_PASS_2026-10-14.md): 11 / 0 / 1,5 / mov. 2 / visão 4 / 24 PP / Supply 2.
 		"v2_unit_elementalist":
 			data.unit_name = "Elementalista"
 			data.movement_points = 2.0
 			data.attack = 0.0
-			data.defense = 1.5
+			data.defense = 2.5
 			data.max_hp = 11.0
 			data.vision_range = 4
 			data.attack_range = 0
@@ -1296,16 +1311,14 @@ static func create_unit(kind: String) -> UnitData:
 			data.supply_cost = 2
 			data.production_cost = 24.0
 			data.movement_profile = UnitData.MovementProfile.GROUND
-			data.model_scene_path = "res://assets/models/kaykit/characters/Mage.glb"
-			data.animation_scene_path = "res://assets/models/kaykit/animations/Rig_Medium_General.glb"
-			data.model_scale_multiplier = 1.0
+			_apply_mage_model(data, "human_elementalist_v1")
 		# Fase 22 — Primordial dos Elementos: Grande Manifestação voadora. Coração
 		# Elemental materializa +1 rodada somente nas zonas criadas por ela.
 		"v2_manifestation_elemental_primordial":
 			data.unit_name = "Primordial dos Elementos"
 			data.movement_points = 4.0
 			data.attack = 0.0
-			data.defense = 6.5
+			data.defense = 10.0
 			data.max_hp = 40.0
 			data.vision_range = 5
 			data.attack_range = 0
@@ -1316,12 +1329,15 @@ static func create_unit(kind: String) -> UnitData:
 			data.environmental_zone_duration_bonus = 1
 			data.environmental_zone_duration_bonus_name = "Coração Elemental"
 			data.supply_cost = 0
-			data.production_cost = 110.0
+			data.production_cost = 92.0
 			data.production_mana_cost = 75.0
 			data.movement_profile = UnitData.MovementProfile.FLYING
 			data.ranged_damage_taken_bonus = 0.0
 			data.visual_template = "storm_elemental"
-			data.model_scale_multiplier = 1.7
+			# Dragão elemental de 3 m, sem patas, em curvas ao redor do núcleo.
+			_apply_manifestation_model(data, kind, true)
+			data.pose_transition_time = PRIMORDIAL_TRANSITION_TIME
+			data.pose_transition_walk_time = PRIMORDIAL_WALK_TRANSITION_TIME
 		# Nivel 5 — tanque da infantaria, HP/defesa altos, dano baixo.
 		"homem_de_escudo":
 			data.unit_name = "Homem de Escudo"
@@ -1566,4 +1582,6 @@ static func _seed_traits(data: UnitData, kind: String) -> UnitData:
 	# Traço "retinue" (Fase 19): toda unidade que ocupa comando mágico pelo DADO (retinue_school + custo) — sem lista de ids.
 	if data.is_retinue() and not data.has_trait(UnitData.TRAIT_RETINUE):
 		data.traits.append(UnitData.TRAIT_RETINUE)
+	# Final HP/attack/Mana profiles for the six bound N9 entities supersede their legacy caster-only defaults above.
+	V2ManifestationBalance.apply(data)
 	return data

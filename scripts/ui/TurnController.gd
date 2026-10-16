@@ -10,10 +10,20 @@ var primary_button: AEButton
 var override_button: AEButton
 var warning_badge: AEBadge
 var _processing := false
+const CHROME := preload("res://scripts/ui/HUDChromeTheme.gd")
 
 func _ready() -> void:
 	theme_type_variation = &"ElevatedPanel"
 	_build()
+	_apply_theme()
+	Settings.accessibility_changed.connect(_apply_theme)
+
+func _apply_theme() -> void:
+	theme = CHROME.build(CHROME.factor())
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	primary_button.custom_minimum_size = Vector2(210,40) * CHROME.factor()
+	override_button.custom_minimum_size = Vector2(112,40) * CHROME.factor()
+	CHROME.badge(warning_badge)
 
 func bind(value: AttentionService, manager: ModalManager) -> void:
 	if service != null and service.items_changed.is_connected(_on_items_changed):
@@ -49,6 +59,7 @@ func refresh() -> void:
 		_build()
 	if _processing:
 		primary_button.text = "Processando Turno…"
+		primary_button.tooltip_text = "Aguarde o processamento do turno."
 		primary_button.disabled = true
 		override_button.visible = false
 		warning_badge.visible = false
@@ -58,10 +69,12 @@ func refresh() -> void:
 	var warnings := service.warning_items().size() if service != null else 0
 	if next != null:
 		primary_button.text = next.title
+		primary_button.tooltip_text = "%s\n%s" % [next.title,next.description]
 		override_button.visible = true
 		warning_badge.visible = false
 	else:
 		primary_button.text = "Finalizar Turno"
+		primary_button.tooltip_text = "Finalizar turno (Espaço). Avisos não impedem esta ação."
 		override_button.visible = false
 		warning_badge.visible = warnings > 0
 		warning_badge.text = str(warnings)
@@ -74,7 +87,10 @@ func _build() -> void:
 	add_child(row)
 	primary_button = AEButton.new()
 	primary_button.kind = AEButton.Kind.PRIMARY
-	primary_button.custom_minimum_size.x = 220
+	primary_button.custom_minimum_size.x = 210
+	primary_button.clip_text = true
+	primary_button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	primary_button.icon = CHROME.icon("turn")
 	primary_button.pressed.connect(request_primary_action)
 	row.add_child(primary_button)
 	warning_badge = AEBadge.new()
@@ -82,7 +98,9 @@ func _build() -> void:
 	row.add_child(warning_badge)
 	override_button = AEButton.new()
 	override_button.kind = AEButton.Kind.GHOST
-	override_button.text = "Encerrar mesmo assim"
+	override_button.text = "Pular turno"
+	override_button.tooltip_text = "Encerrar com decisões pendentes. Você poderá conferir a lista antes de confirmar."
+	override_button.icon = CHROME.icon("skip")
 	override_button.pressed.connect(request_override)
 	row.add_child(override_button)
 
@@ -93,6 +111,8 @@ func _show_override_modal(required: Array[AttentionItem]) -> void:
 	if modal_manager == null or modal_manager.is_modal_open():
 		return
 	var frame := AEModalFrame.new()
+	frame.theme = CHROME.build(CHROME.factor())
+	frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	frame.name = "EndTurnOverrideDialog"
 	frame.set_title("Decisões pendentes")
 	var description := Label.new()
@@ -120,3 +140,5 @@ func _show_override_modal(required: Array[AttentionItem]) -> void:
 	frame.body_host.add_child(actions)
 	frame.close_requested.connect(func(): modal_manager.dismiss_top(true))
 	modal_manager.present(frame, true, true)
+	# Returning to pending decisions is the initial keyboard action.
+	back.call_deferred("grab_focus")

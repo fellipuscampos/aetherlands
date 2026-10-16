@@ -249,7 +249,7 @@ func test_the_active_unit_takes_less_damage_through_the_normal_defense_chain():
 	var foe := _foe(d.grid, d.rival, Vector2i(-3, 0), 40.0, 3.0)
 	foe.unit_data.attack = 10.0
 	var plain: float = CombatResolver.predict(foe, d.unit, d.grid).damage_to_defender
-	assert_almost_eq(plain, maxf(1.0, 10.0 - 3.0 * 0.5), 0.0001, "pré-condição: Cavaleiro Defesa 3,0")
+	assert_almost_eq(plain, maxf(1.0, 10.0 - 4.0 * 0.5), 0.0001, "pré-condição: Cavaleiro Defesa 4,0")
 	assert_true(V2TechniqueRuntime.relocate(d.unit, RETREAT, Vector2i(-1, 0), d.grid))
 	var with_retreat: float = CombatResolver.predict(foe, d.unit, d.grid).damage_to_defender
 	assert_almost_eq(with_retreat, _formula_damage(d.grid, 10.0, 1.0, d.unit, 1.2), 0.0001, "+20% de Defesa")

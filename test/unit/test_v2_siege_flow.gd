@@ -60,6 +60,8 @@ var _original_current_save_slot: String
 var _original_kingdom_name: String
 
 func before_each():
+	# Conta unidades/Suprimentos exatos da linha: sem a escolta inicial (fixture, ver GameManager).
+	GameManager.starting_escort_on_new_match = false
 	_original_state = GameManager.state
 	_original_players = GameManager.players
 	_original_human_player = GameManager.human_player
@@ -88,6 +90,7 @@ func before_each():
 	GameManager.debug_mode = true
 
 func after_each():
+	GameManager.starting_escort_on_new_match = true
 	SelectionManager.reset()
 	for player in GameManager.players:
 		player.release_relations()
@@ -255,7 +258,7 @@ func _short_setup(through: int = 4, kind: String = CATAPULT) -> Dictionary:
 	var rival: PlayerData = GameManager.rival_players[0]
 	Diplomacy.declare_war(human, rival)
 	var city := _found_human_city(grid)
-	for n in range(1, through + 1):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, through + 1):
 		human.v2_research.complete_research("v2_doctrine_siege_%d" % n)
 	city.buildings[ARSENAL] = true
 	# Aetherlands V2, Fase 15 — vários testes deste arquivo constroem Arsenal/Grande Arsenal
@@ -300,8 +303,6 @@ func test_siege_n1_to_n9_flow_from_the_arsenal_to_the_colossus_across_save_and_l
 	assert_false(V2UnlockSystem.is_unlocked(human, "v2_doctrine_siege"))
 
 	# N1: estabelece a linha, sem bônus; só o N2 fica disponível.
-	_research(state, "v2_doctrine_siege_1")
-	assert_eq(V2UnlockSystem.unlocked_ids(human), ["v2_doctrine_siege"], "o N1 não libera nada além da Doutrina")
 	assert_false(city.can_build(ARSENAL))
 	assert_true(state.is_available("v2_doctrine_siege_2"))
 
@@ -317,7 +318,7 @@ func test_siege_n1_to_n9_flow_from_the_arsenal_to_the_colossus_across_save_and_l
 	var catapults := _units_of_kind(human, CATAPULT)
 	assert_eq(catapults.size(), 1)
 	var unit: Unit = catapults[0]
-	assert_eq([unit.unit_data.max_hp, unit.unit_data.attack, unit.unit_data.defense, unit.unit_data.movement_points, unit.unit_data.attack_range], [16.0, 3.5, 2.5, 2.0, 2])
+	assert_eq([unit.unit_data.max_hp, unit.unit_data.attack, unit.unit_data.defense, unit.unit_data.movement_points, unit.unit_data.attack_range], [16.0, 5.0, 3.5, 2.0, 2])
 	unit.movement_left = unit.unit_data.movement_points
 	grid.recompute_fog(human)
 
@@ -365,7 +366,7 @@ func test_siege_n1_to_n9_flow_from_the_arsenal_to_the_colossus_across_save_and_l
 	SelectionManager.upgrade_selected()
 	assert_eq(unit.unit_data.visual_kind, TREBUCHET, "evoluiu para Trebuchet")
 	assert_eq(human.gold, 100.0 - 32.0, "2 x (44 - 28) = 32 Ouro")
-	assert_eq([unit.unit_data.max_hp, unit.unit_data.attack, unit.unit_data.attack_range], [20.0, 5.0, 3], "mais alcance (o ganho principal) e poder")
+	assert_eq([unit.unit_data.max_hp, unit.unit_data.attack, unit.unit_data.attack_range], [20.0, 7.5, 3], "mais alcance (o ganho principal) e poder")
 
 	# N6: Bombardeio Preparado — mira de CIDADE, ESC sem gastar nada, exige não ter se movido, ×1.5 + Munição.
 	_research(state, "v2_doctrine_siege_6")
@@ -404,9 +405,12 @@ func test_siege_n1_to_n9_flow_from_the_arsenal_to_the_colossus_across_save_and_l
 	assert_lt(unit.movement_left, unit.unit_data.movement_points, "pré-condição: moveu uma parte")
 	assert_eq(V2TechniqueRuntime.unavailable_reason(unit, BOMBARDMENT, grid), "Bombardeio Preparado exige que a unidade não tenha se movido neste turno.")
 	if HexMetrics.axial_distance(unit.coord, enemy_city.coord) <= unit.unit_data.attack_range and CombatResolver.can_attack_city(unit, enemy_city):
-		var basic_hp_before := enemy_city.hp
+		# Vida + escudo: com a cidade mais resistente (2026-10-14) o golpe pode ficar todo no escudo das Muralhas.
+		# O golpe pode capturar a cidade já enfraquecida (a Vida volta com o novo dono): dano OU captura provam o ataque.
+		var basic_hp_before := enemy_city.hp + enemy_city.shield
+		var owner_before := enemy_city.owner_player
 		CombatResolver.resolve_city_attack(unit, enemy_city, grid)
-		assert_lt(enemy_city.hp, basic_hp_before, "o ataque básico normal continua disponível mesmo com o Bombardeio indisponível")
+		assert_true(enemy_city.owner_player != owner_before or enemy_city.hp + enemy_city.shield < basic_hp_before, "o ataque básico normal continua disponível mesmo com o Bombardeio indisponível")
 	GameManager.hex_grid = original_hex_grid_for_selection
 
 	# N7 e a Bombarda: a produção oferece só ela e o Trebuchet evolui (40 Ouro).
@@ -421,15 +425,17 @@ func test_siege_n1_to_n9_flow_from_the_arsenal_to_the_colossus_across_save_and_l
 	SelectionManager.upgrade_selected()
 	assert_eq(unit.unit_data.visual_kind, BOMBARD, "evoluiu para Bombarda")
 	assert_eq(human.gold, 100.0 - 40.0, "2 x (64 - 44) = 40 Ouro")
-	assert_eq([unit.unit_data.max_hp, unit.unit_data.defense], [26.0, 4.0])
+	assert_eq([unit.unit_data.max_hp, unit.unit_data.defense], [26.0, 6.0])
 	assert_lt(unit.unit_data.attack, UnitDatabase.create_unit("v2_unit_elite_marksman").attack, "continua inferior ao Patrulheiro equivalente em anti-unidade")
 
 	# N8 e o Grande Arsenal (exige o Arsenal de Cerco).
 	assert_false(city.can_build(GRAND_ARSENAL), "antes do N8 não constrói")
 	_research(state, "v2_doctrine_siege_8")
 	assert_true(city.can_build(GRAND_ARSENAL), "N8 libera o Grande Arsenal")
-	_clear_disc(grid, city.coord, 2) # o mapa GERADO pode ter posto um monstro/batedor rival adjacente nos turnos que já se passaram
+	# A Bombarda sai do disco ANTES da limpeza (que remove qualquer unidade a até 2 tiles): senão, conforme o
+	# layout inicial, ela mesma era apagada e a checagem pós-load não a encontrava.
 	_place(grid, unit, _free_at(grid, city.coord, 3))
+	_clear_disc(grid, city.coord, 2) # o mapa GERADO pode ter posto um monstro/batedor rival adjacente nos turnos que já se passaram
 	_build(grid, city, GRAND_ARSENAL)
 	assert_true(city.buildings.has(ARSENAL), "o Grande Arsenal não substitui o Arsenal")
 	assert_false(city.can_train(COLOSSUS), "sem N9 o Colosso ainda não treina")
@@ -477,12 +483,10 @@ func test_siege_n1_to_n9_flow_from_the_arsenal_to_the_colossus_across_save_and_l
 
 	# Desmantelar (Ladino, N6) e Caçada Lendária (Caçador de Lendas, N9) contra o Colosso: origens DIFERENTES (siege x legendary).
 	var ladino := UnitDatabase.create_unit(ROGUE)
-	human.v2_research.complete_research("v2_doctrine_rogue_1")
 	for n in range(2, 7):
 		human.v2_research.complete_research("v2_doctrine_rogue_%d" % n)
 	var ladino_unit := grid.spawn_unit(_free_at(grid, colossus.coord, 1), ladino, human)
 	assert_almost_eq(UnitAbilities.attack_multiplier(ladino_unit, colossus), 1.5, 0.0001, "Desmantelar reconhece o traço siege")
-	human.v2_research.complete_research("v2_doctrine_ranger_1")
 	for n in range(2, 10):
 		human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
 	var hunter_unit := grid.spawn_unit(_free_at(grid, colossus.coord, 2), UnitDatabase.create_unit(LEGEND_HUNTER), human)
@@ -499,7 +503,7 @@ func test_siege_n1_to_n9_flow_from_the_arsenal_to_the_colossus_across_save_and_l
 	assert_gt(colossus_bombardment_left, 0, "pré-condição: o Bombardeio do Colosso está em recarga")
 	var loaded_grid := _save_and_reload()
 	var loaded := GameManager.human_player
-	assert_eq(loaded.v2_research.get_completed_ids().size(), 9 + 6 + 9, "as 9 pesquisas do Cerco + 6 do Ladino + 9 do Patrulheiro")
+	assert_eq(loaded.v2_research.get_completed_ids().size(), 8 + 5 + 8, "as 8 pesquisas do Cerco + 5 do Ladino + 8 do Patrulheiro")
 	var loaded_city: City = loaded.cities[0]
 	assert_true(loaded_city.buildings.has(ARSENAL) and loaded_city.buildings.has(GRAND_ARSENAL), "Arsenal e Grande Arsenal restaurados")
 	var loaded_bombards := _units_of_kind(loaded, BOMBARD)
@@ -517,7 +521,7 @@ func test_siege_n1_to_n9_flow_from_the_arsenal_to_the_colossus_across_save_and_l
 	assert_eq(V2TechniqueRuntime.techniques_for_unit(loaded_colossus).map(func(t): return t.id), [DEMOLITION, BOMBARDMENT])
 	# Slot global: com o Colosso vivo, as outras cinco Lendárias estão bloqueadas, mesmo com os prédios e as pesquisas das outras Doutrinas.
 	assert_true(V2LegendarySystem.has_active_legendary(loaded), "o slot continua ocupado")
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		loaded.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 		loaded.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 		loaded.v2_research.complete_research("v2_doctrine_cavalry_%d" % n)
@@ -615,7 +619,7 @@ func test_the_cooldown_and_the_demolition_bonus_survive_save_and_load():
 func test_a_colossus_in_production_survives_save_and_load_and_blocks_the_others_in_another_city():
 	var c := _short_setup(9)
 	var human: PlayerData = c.human
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		human.v2_research.complete_research("v2_doctrine_guardian_%d" % n)
 		human.v2_research.complete_research("v2_doctrine_warrior_%d" % n)
 		human.v2_research.complete_research("v2_doctrine_ranger_%d" % n)
@@ -674,7 +678,7 @@ func test_ai_civilizations_keep_playing_with_the_siege_content_present():
 func test_an_ai_civilization_given_the_research_by_debug_builds_bombards_and_respects_the_slot():
 	var c := _short_setup(3)
 	var rival: PlayerData = c.rival
-	for n in range(1, 10):
+	for n in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 10):
 		rival.v2_research.complete_research("v2_doctrine_siege_%d" % n)
 	var rival_city: City = rival.cities[0]
 	rival_city.city_level = 3

@@ -122,12 +122,12 @@ func test_apply_keeps_base_terrain_and_resource_and_remove_restores():
 	var tile := grid.get_tile(coord)
 	tile.resource = "gems"
 	var type_before := tile.terrain_type
-	var yields_before := [tile.food_yield, tile.production_yield, tile.gold_yield, tile.movement_cost, tile.defense_bonus]
+	var yields_before := [tile.food_yield, tile.production_yield, tile.gold_yield, tile.movement_cost]
 	_apply(coord, RAISED)
 	assert_eq(grid.get_tile(coord), tile, "o objeto do tile nunca é trocado")
 	assert_eq(tile.terrain_type, type_before)
 	assert_eq(tile.resource, "gems", "recurso intacto")
-	assert_eq([tile.food_yield, tile.production_yield, tile.gold_yield, tile.movement_cost, tile.defense_bonus], yields_before)
+	assert_eq([tile.food_yield, tile.production_yield, tile.gold_yield, tile.movement_cost], yields_before)
 	assert_true(V2TerrainRuntime.remove(grid, coord))
 	assert_eq(V2TerrainRuntime.modification_id_at(grid, coord), "")
 	assert_false(V2TerrainRuntime.remove(grid, coord), "remover nada = false")
@@ -212,6 +212,7 @@ func test_flying_v1_flies_infiltrator_and_retreat_flat_cost_ignore_the_delta_lik
 	for coord in [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, -1)]:
 		_apply(coord, RAISED)
 	var griffon := _unit("v2_legendary_griffon_rider", human, Vector2i.ZERO)
+	griffon.unit_data.movement_profile = UnitData.MovementProfile.FLYING # voador de teste (o Grifo é terrestre desde 2026-10-10)
 	assert_eq(grid.unit_reachable(griffon).get(Vector2i(1, 0)), 1.0, "voo tático: distância geométrica")
 	var v1_griffin := _unit("griffin", human, Vector2i(-3, 0))
 	_apply(Vector2i(-2, 0), RAISED)
@@ -235,15 +236,17 @@ func test_ai_step_movement_pays_the_central_cost():
 
 func test_physical_defense_factor_predict_equals_resolve():
 	var attacker := _unit("v2_unit_weapon_master", rival, Vector2i(-1, 0))
-	var defender := _unit("warrior", human, Vector2i.ZERO)
+	# Defensor de Defesa alta (Guardião, 10): o revide (Defesa - Ataque/2) precisa existir para crescer com o terreno.
+	var defender := _unit("v2_unit_guardian", human, Vector2i.ZERO)
+	var defense := defender.unit_data.defense * V2LogisticsRuntime.combat_multiplier(defender) # sem cidade: Tensão Logística (×0,85)
 	var base := CombatResolver.predict(attacker, defender, grid)
 	_apply(Vector2i.ZERO)
 	var grove := CombatResolver.predict(attacker, defender, grid)
-	assert_almost_eq(base.damage_to_defender - grove.damage_to_defender, 0.5 * 3.0 * 0.20, 0.0001, "+20% da Defesa 3 mitigada pela metade")
+	assert_almost_eq(base.damage_to_defender - grove.damage_to_defender, 0.5 * defense * 0.20, 0.0001, "+20% da Defesa mitigada pela metade")
 	V2TerrainRuntime.remove(grid, Vector2i.ZERO)
 	_apply(Vector2i.ZERO, RAISED)
 	var raised := CombatResolver.predict(attacker, defender, grid)
-	assert_almost_eq(base.damage_to_defender - raised.damage_to_defender, 0.5 * 3.0 * 0.35, 0.0001)
+	assert_almost_eq(base.damage_to_defender - raised.damage_to_defender, 0.5 * defense * 0.35, 0.0001)
 	assert_gt(raised.damage_to_attacker, base.damage_to_attacker, "o revide sai da Defesa: cresce junto, sem exceção")
 	var hp := defender.hp
 	var attacker_hp := attacker.hp
@@ -267,7 +270,7 @@ func test_flying_defender_gets_the_bonus_like_base_terrain():
 	assert_lt(CombatResolver.predict(attacker, seraph, grid).damage_to_defender, base.damage_to_defender, "o terreno-base também protege voadores neste motor")
 
 func test_magic_damage_ignores_the_modification():
-	for i in range(1, 5):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, 5):
 		human.v2_research.complete_research("v2_magic_infernal_%d" % i)
 	human.mana = 100.0
 	var warlock := _unit("v2_unit_infernal_warlock", human, Vector2i.ZERO)
@@ -276,11 +279,11 @@ func test_magic_damage_ignores_the_modification():
 	_apply(targets[2].coord, RAISED)
 	var flame := V2SpellDatabase.get_spell("v2_spell_infernal_flame")
 	for target in targets:
-		assert_eq(V2MagicRuntime.predict_damage(warlock, target, flame), 6.0)
+		assert_eq(V2MagicRuntime.predict_damage(warlock, target, flame), 9.0)
 		warlock.movement_left = 2.0
 		var hp: float = target.hp
 		assert_true(V2MagicRuntime.cast(warlock, flame.id, target.coord))
-		assert_eq(hp - target.hp, 6.0, "sem, Bosque, Elevado: dano idêntico")
+		assert_eq(hp - target.hp, 9.0, "sem, Bosque, Elevado: dano idêntico")
 
 # --- Construção limpa -----------------------------------------------------------------------------------------------
 

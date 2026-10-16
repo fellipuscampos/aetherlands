@@ -68,7 +68,7 @@ func _player(civ_name: String) -> PlayerData:
 	return player
 
 func _learn(player: PlayerData, branch: String = "druidism", tier: int = 7) -> void:
-	for i in range(1, tier + 1):
+	for i in range(V2ResearchDatabase.BRANCH_FIRST_TIER, tier + 1):
 		if not player.v2_research.is_completed("v2_magic_%s_%d" % [branch, i]):
 			assert_true(player.v2_research.complete_research("v2_magic_%s_%d" % [branch, i]))
 
@@ -111,7 +111,7 @@ func test_grow_grove_applies_the_grove_charges_once_and_spends_the_action():
 	var mana := human.mana
 	assert_true(V2MagicRuntime.cast(druid, GROW, Vector2i(2, 0)))
 	assert_eq(_mod(Vector2i(2, 0)), GROVE)
-	assert_eq(human.mana, mana - 6.0)
+	assert_eq(human.mana, mana - 5.0)
 	assert_eq(V2MagicRuntime.cooldown_remaining(druid, GROW), 1)
 	assert_eq(druid.movement_left, 0.0)
 	assert_eq(grid.terrain_step_cost(Vector2i(2, 0)), 2.0, "movimento")
@@ -178,7 +178,7 @@ func test_restore_terrain_removes_any_modification_even_under_units_and_on_the_c
 	var mana := human.mana
 	assert_true(V2MagicRuntime.cast(druid, RESTORE, Vector2i.ZERO))
 	assert_eq(_mod(Vector2i.ZERO), "")
-	assert_eq(human.mana, mana - 5.0)
+	assert_eq(human.mana, mana - 4.0)
 	assert_eq(V2MagicRuntime.cooldown_remaining(druid, RESTORE), 1)
 	_ready_caster(druid)
 	var coord_before := guest.coord
@@ -215,7 +215,7 @@ func test_raise_ground_applies_raised():
 	var mana := human.mana
 	assert_true(V2MagicRuntime.cast(druid, RAISE, Vector2i(0, 2)))
 	assert_eq(_mod(Vector2i(0, 2)), RAISED)
-	assert_eq(human.mana, mana - 9.0)
+	assert_eq(human.mana, mana - 12.0)
 	assert_eq(V2MagicRuntime.cooldown_remaining(druid, RAISE), 3)
 	assert_eq(grid.terrain_step_cost(Vector2i(0, 2)), 3.0)
 	assert_eq(V2TerrainRuntime.defense_multiplier_at(grid, Vector2i(0, 2)), 1.35)
@@ -240,7 +240,7 @@ func test_awaken_forest_free_area_makes_exactly_seven_groves_for_one_charge():
 	for coord in expected:
 		assert_eq(_mod(coord), GROVE, str(coord))
 	assert_eq(grid.v2_terrain_modifications.size(), 7, "nem 6 nem 8")
-	assert_eq(human.mana, mana - 16.0, "Mana uma vez")
+	assert_eq(human.mana, mana - 24.0, "Mana uma vez")
 	assert_eq(V2MagicRuntime.cooldown_remaining(druid, AWAKEN), 5)
 
 func test_awaken_forest_skips_ineligible_secondaries_and_modifies_under_units():
@@ -319,7 +319,7 @@ func test_spell_range_bonus_is_generic_and_only_moves_the_primary_range():
 	assert_eq(V2MagicRuntime.tile_reason(avatar, V2SpellDatabase.get_spell(RESTORE), Vector2i.ZERO), "Não há modificação de terreno para restaurar.", "TILE inclui o próprio tile")
 	var mana := human.mana
 	assert_true(V2MagicRuntime.cast(avatar, AWAKEN, Vector2i(5, 0)), "Despertar a 5")
-	assert_eq(human.mana, mana - 16.0, "mesma Mana")
+	assert_eq(human.mana, mana - 24.0, "mesma Mana")
 	assert_eq(V2MagicRuntime.cooldown_remaining(avatar, AWAKEN), 5, "mesma recarga")
 	assert_eq(grid.v2_terrain_modifications.size(), 7, "raio da área continua 1")
 	var spots := {"v2_unit_sacred_cleric": Vector2i(-6, 4), "v2_unit_infernal_warlock": Vector2i(-6, 5), "v2_unit_necromancer": Vector2i(-6, 6)}
@@ -369,7 +369,7 @@ func test_infernal_flame_ignores_raised_plus_aegis():
 	var warlock := _unit("v2_unit_infernal_warlock", human, Vector2i.ZERO)
 	var hp := target.hp
 	assert_true(V2MagicRuntime.cast(warlock, "v2_spell_infernal_flame", target.coord))
-	assert_eq(hp - target.hp, 6.0)
+	assert_eq(hp - target.hp, 9.0)
 
 func test_necromancy_hosts_pay_the_cost_get_the_defense_and_uncommanded_still_cannot_move():
 	var host := _unit("v2_unit_skeleton_host", human, Vector2i.ZERO)

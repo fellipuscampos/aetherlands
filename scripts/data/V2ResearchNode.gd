@@ -29,7 +29,8 @@ const UNIVERSAL_BRANCH := "universal"
 ## Linha dentro da árvore (ex.: "guardian", "sacred", "economy") ou
 ## UNIVERSAL_BRANCH.
 @export var branch: String = ""
-## 1..9 nas Doutrinas/Escolas, 1..3 na Infraestrutura, 10 nos nós universais.
+## 2..9 nas Doutrinas/Escolas (o N1 de portão saiu, ver V2ResearchDatabase.BRANCH_FIRST_TIER), 1..3 na
+## Infraestrutura, 10 nos nós universais. Chave estrutural estável — a UI mostra display_tier().
 @export var tier: int = 1
 ## Papel estrutural do tier (ex.: "base_unit", "grand_manifestation"). Faz
 ## parte do design oficial da V2, NÃO é placeholder — ver as tabelas
@@ -39,7 +40,7 @@ const UNIVERSAL_BRANCH := "universal"
 ## BALANCE PLACEHOLDER: valores provisórios de progressão, nunca balanceados.
 @export var cost: float = 0.0
 
-## Pré-requisitos lineares (o tier anterior da mesma linha). Vazio no N1 e nos
+## Pré-requisitos lineares (o tier anterior da mesma linha). Vazio no primeiro nó da linha e nos
 ## nós universais — estes usam `requirement`.
 @export var prerequisites: Array[String] = []
 

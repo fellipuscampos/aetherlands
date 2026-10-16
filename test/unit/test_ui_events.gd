@@ -58,12 +58,12 @@ func test_war_declared_by_ai_against_human_is_structured_critical():
 
 func test_research_completion_is_important_and_names_the_research():
 	var human := _human()
-	assert_true(human.v2_research.complete_research("v2_doctrine_guardian_1"))
+	assert_true(human.v2_research.complete_research("v2_doctrine_guardian_2"))
 	var matching := UIEvents.get_history().filter(func(event): return event.event_type == "research_completed")
 	assert_eq(matching.size(), 1)
 	assert_eq(matching[0].severity, UIEventData.Severity.IMPORTANT)
-	assert_true(matching[0].message.contains("Doutrina do Guardião"))
-	assert_eq(matching[0].target_entity, "v2_doctrine_guardian_1")
+	assert_true(matching[0].message.contains("Salão dos Guardiões"))
+	assert_eq(matching[0].target_entity, "v2_doctrine_guardian_2")
 
 func test_production_completion_has_city_item_and_coordinate():
 	var human := _human()
@@ -89,11 +89,13 @@ func test_dedup_coalesces_visible_toast_but_never_discards_history():
 	for i in range(3):
 		var event := UIEventData.create("same", UIEventData.Category.SYSTEM, UIEventData.Severity.INFO, "Repetido")
 		event.dedup_key = "same"
+		event.message = "Latest message %d" % i
 		UIEvents.publish(event)
 	assert_eq(UIEvents.get_history().size(), 3)
 	assert_eq(presenter.visible_toast_count(), 1)
-	var label: Label = presenter.get_child(0).get_child(0)
-	assert_true(label.text.contains("×3"))
+	var titles: Array[Node] = presenter.get_child(0).find_children("*", "Label", true, false)
+	assert_true(titles.any(func(label: Label): return label.text.contains("×3")), "Repeated events update the visible notification title")
+	assert_true(titles.any(func(label: Label): return label.text == "Latest message 2"), "Repeated events retain the latest message")
 
 func test_event_service_has_no_serialization_contract():
 	assert_false(UIEvents.has_method("to_dict"))

@@ -7,10 +7,10 @@ func test_all_twelve_long_research_lines_are_strictly_monotonic():
 	for tree in [V2ResearchNode.TreeType.MILITARY_DOCTRINE, V2ResearchNode.TreeType.MAGIC_SCHOOL]:
 		for info in V2ResearchDatabase.branches_for_tree(tree):
 			var nodes := V2ResearchDatabase.nodes_for_branch(tree, info.id)
-			assert_eq(nodes.size(), 9)
+			assert_eq(nodes.size(), 8)
 			for i in range(1, nodes.size()):
 				assert_gt(nodes[i].cost, nodes[i - 1].cost, "%s N%d > N%d" % [info.id, i + 1, i])
-			assert_gt(nodes[8].cost, nodes[6].cost, "%s N9 > N7" % info.id)
+			assert_gt(nodes[-1].cost, nodes[-3].cost, "%s: o Lendário (tier 9) > a Elite (tier 7)" % info.id)
 	assert_gt(V2ResearchDatabase.CAPSTONE_COST, V2ResearchDatabase.BRANCH_TIER_COSTS.back())
 
 func test_all_six_infrastructure_lines_are_strictly_monotonic():
@@ -30,7 +30,7 @@ func test_six_doctrine_unit_lines_gain_cost_and_power_density_without_free_suppl
 		assert_lte(forms[1].supply_cost, forms[2].supply_cost, info.id)
 		assert_gt(forms[1].max_hp + forms[1].attack + forms[1].defense, forms[0].max_hp + forms[0].attack + forms[0].defense, info.id)
 		assert_gt(forms[2].max_hp + forms[2].attack + forms[2].defense, forms[1].max_hp + forms[1].attack + forms[1].defense, info.id)
-		var legendary_node: V2ResearchNode = V2ResearchDatabase.nodes_for_branch(V2ResearchNode.TreeType.MILITARY_DOCTRINE, info.id)[8]
+		var legendary_node: V2ResearchNode = V2ResearchDatabase.nodes_for_branch(V2ResearchNode.TreeType.MILITARY_DOCTRINE, info.id)[-1]
 		var legendary := UnitDatabase.create_unit(legendary_node.unlock_id)
 		assert_gte(legendary.production_cost, forms[2].production_cost, info.id)
 		assert_gt(legendary.production_cost, 0.0, info.id)

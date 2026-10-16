@@ -75,16 +75,6 @@ var v2_supply_label: Label
 @onready var diplomacy_button: Button = $TopBar/TopBarRow/IconGroup/DiplomacyButton
 ## Roadmap "Fase F" F1/F2/F5 -- mesmo padrao de overlay do Diplomacy acima.
 @onready var victory_button: Button = $TopBar/TopBarRow/IconGroup/VictoryButton
-## Roadmap "Fase Macro" 5B.2 -- prompt minimo de Preparation (docs/DRAGON_
-## EVENT_DESIGN.md): so aparece enquanto existir um WorldEvent em
-## Preparation que o humano ainda nao respondeu (ver _refresh_world_event_
-## panel). Nao e' um overlay bloqueante como os outros paineis -- fica
-## visivel/escondido sozinho conforme o estado do evento muda a cada turno.
-@onready var world_event_panel: PanelContainer = $WorldEventPanel
-@onready var world_event_title_label: Label = $WorldEventPanel/WorldEventBox/WorldEventTitleLabel
-@onready var world_event_text_label: Label = $WorldEventPanel/WorldEventBox/WorldEventTextLabel
-@onready var world_event_participate_button: Button = $WorldEventPanel/WorldEventBox/WorldEventButtons/WorldEventParticipateButton
-@onready var world_event_decline_button: Button = $WorldEventPanel/WorldEventBox/WorldEventButtons/WorldEventDeclineButton
 ## Roadmap "Fase Macro" 5B.3-C (Dragon Event UX) -- pedido explicito do
 ## usuario apos o playtest visual de 5B.3-B: "o Dragão já funciona como
 ## entidade de jogo, porém o evento ainda não funciona como evento de jogo
@@ -145,16 +135,16 @@ var v2_supply_label: Label
 @onready var explore_button: Button = $UnitPanel/UnitBox/UnitActionsRow/ExploreButton
 @onready var found_city_button: Button = $UnitPanel/UnitBox/FoundCityButton
 @onready var game_over_panel: PanelContainer = $GameOverPanel
-@onready var game_over_label: Label = $GameOverPanel/GameOverBox/GameOverLabel
+@onready var game_over_label: Label = game_over_panel.get_node("%GameOverLabel")
 ## Roadmap "Fase F" F6 -- titulo/resumo/snapshot CONGELADOS no momento da
 ## vitoria (ver _on_victory_achieved), separados do game_over_label
-## legado acima (que continua so com o veredito basico + estatisticas).
-@onready var game_over_title_label: Label = $GameOverPanel/GameOverBox/GameOverTitleLabel
-@onready var game_over_summary_label: Label = $GameOverPanel/GameOverBox/GameOverSummaryLabel
-@onready var game_over_snapshot_rows: VBoxContainer = $GameOverPanel/GameOverBox/GameOverSnapshotScroll/GameOverSnapshotRows
-@onready var restart_button: Button = $GameOverPanel/GameOverBox/RestartButton
-@onready var game_over_load_button: Button = $GameOverPanel/GameOverBox/LoadButton
-@onready var game_over_main_menu_button: Button = $GameOverPanel/GameOverBox/MainMenuButton
+## acima (que mostra apenas o veredito; estatísticas têm suas próprias colunas).
+@onready var game_over_title_label: Label = game_over_panel.get_node("%GameOverTitleLabel")
+@onready var game_over_summary_label: Label = game_over_panel.get_node("%GameOverSummaryLabel")
+@onready var game_over_snapshot_rows: VBoxContainer = game_over_panel.get_node("%GameOverSnapshotRows")
+@onready var restart_button: Button = game_over_panel.get_node("%RestartButton")
+@onready var game_over_load_button: Button = game_over_panel.get_node("%LoadButton")
+@onready var game_over_main_menu_button: Button = game_over_panel.get_node("%MainMenuButton")
 @onready var overlay_backdrop: ColorRect = $OverlayBackdrop
 ## Roadmap "reorganizar barra lateral": o botao que ABRE o debug_panel
 ## saiu da HUD por completo e foi pro menu de pausa (pedido explicito: "o
@@ -218,7 +208,7 @@ var _unit_panel_was_visible := false
 var _tile_info_panel_was_visible := false
 
 func _ready() -> void:
-	theme = Settings.build_ui_theme()
+	_apply_accessibility_theme()
 	Settings.accessibility_changed.connect(_apply_accessibility_theme)
 	_style_end_turn_button()
 	_build_v2_economy_status_labels()
@@ -234,8 +224,6 @@ func _ready() -> void:
 	research_button.pressed.connect(_on_research_pressed)
 	diplomacy_button.pressed.connect(_on_diplomacy_pressed)
 	victory_button.pressed.connect(_on_victory_pressed)
-	world_event_participate_button.pressed.connect(_on_world_event_participate_pressed)
-	world_event_decline_button.pressed.connect(_on_world_event_decline_pressed)
 	dragon_announcement_continue_button.pressed.connect(_on_dragon_announcement_continue_pressed)
 	dragon_resolution_continue_button.pressed.connect(_on_dragon_resolution_continue_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
@@ -250,6 +238,10 @@ func _ready() -> void:
 	debug_lose_button.pressed.connect(_on_debug_lose_pressed)
 	debug_force_dragon_button.pressed.connect(_on_debug_force_dragon_pressed)
 	_build_ecology_debug_button()
+	_build_ambience_debug_buttons()
+	_build_summon_debug_section()
+	_build_mage_debug_section()
+	_make_debug_panel_scrollable()
 	_build_v2_research_panel()
 	_integrate_ui_shell()
 	TurnManager.turn_changed.connect(_on_turn_changed)
@@ -307,7 +299,12 @@ func _ready() -> void:
 	_on_turn_changed(TurnManager.turn_number, TurnManager.current_player_index)
 
 func _apply_accessibility_theme() -> void:
-	theme = Settings.build_ui_theme()
+	var chrome := preload("res://scripts/ui/HUDChromeTheme.gd")
+	theme = chrome.build(Settings.ui_scale_percent / 100.0)
+	world_event_tracker.add_theme_stylebox_override("panel", chrome.panel(Settings.ui_scale_percent / 100.0, "warning", 12))
+	dragon_boss_bar.add_theme_stylebox_override("panel", chrome.panel(Settings.ui_scale_percent / 100.0, "critical", 12))
+	dragon_boss_bar_health_bar.add_theme_stylebox_override("background", chrome.meter(Color("091c23")))
+	dragon_boss_bar_health_bar.add_theme_stylebox_override("fill", chrome.meter(UIThemeTokens.COLOR_CRITICAL))
 
 func _integrate_ui_shell() -> void:
 	ui_shell.destination_requested.connect(_on_shell_destination_requested)
@@ -371,8 +368,7 @@ func _on_attention_action_requested(action: String, item: AttentionItem) -> void
 		"retinue":
 			_focus_first_uncommanded_retinue()
 		"world_event":
-			_refresh_world_event_panel()
-			world_event_panel.visible = true
+			_refresh_world_event_tracker() # o acompanhamento do evento (não há mais decisão a tomar)
 
 func _on_event_action_requested(event: UIEventData) -> void:
 	ui_shell.close_auxiliary_drawer()
@@ -575,7 +571,7 @@ func _process(_delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# V3 / Etapa 2: F = Fundar Cidade com o Colonizador selecionado (mesmo caminho do botão; tile inválido = no-op,
-	# o motivo já está no tooltip). Sem conflito: a câmera usa WASD/QE/setas e Espaço é o fim de turno.
+	# o motivo já está no tooltip). Sem conflito: a câmera usa WASD/setas e Espaço é o fim de turno.
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F:
 		if GameManager.state == GameManager.GameState.PLAYING and not overlay_backdrop.visible and not ui_shell.modal_manager.is_modal_open() and not ui_shell.navigation_manager.is_overlay_open():
 			var selected := SelectionManager.selected_unit
@@ -812,7 +808,8 @@ func _add_victory_progress_row(target: VBoxContainer, label_text: String, progre
 	bar.min_value = 0.0
 	bar.max_value = 100.0
 	bar.value = clamp(progress, 0.0, 1.0) * 100.0
-	bar.custom_minimum_size = Vector2(120, 0)
+	bar.custom_minimum_size = Vector2(120, 6) * Settings.ui_scale_factor()
+	bar.size_flags_vertical = SIZE_SHRINK_CENTER
 	bar.show_percentage = false
 	row.add_child(bar)
 
@@ -874,13 +871,13 @@ static func format_victory_summary(victory_type: String) -> String:
 ## depois (partida ja acabou, mas os nodes worldwide/PlayerData podem
 ## teoricamente continuar existindo/mudando ate a cena ser trocada).
 func _on_victory_achieved(winner: PlayerData, victory_type: String) -> void:
-	if winner == GameManager.human_player:
+	if winner != null and winner == GameManager.human_player:
 		game_over_title_label.text = format_victory_title(winner, victory_type)
 		game_over_summary_label.text = format_victory_summary(victory_type)
 	else:
-		game_over_title_label.text = "Derrota — %s venceu" % winner.civ.civ_name
+		game_over_title_label.text = "Derrota — %s venceu" % winner.civ.civ_name if winner != null else "Seu reino caiu"
 		var reason := format_victory_summary(victory_type)
-		game_over_summary_label.text = reason if not reason.is_empty() else "Outro reino cumpriu uma condicao de vitoria."
+		game_over_summary_label.text = reason if not reason.is_empty() else "Outro reino cumpriu uma condição de vitória."
 	_build_victory_progress_rows(game_over_snapshot_rows)
 
 ## Painel de Debug (botao so visivel em OS.is_debug_build(), ver _ready())
@@ -894,6 +891,7 @@ func _on_debug_pressed() -> void:
 		return
 	_show_overlay(debug_panel)
 	_refresh_debug_panel()
+	_fit_debug_panel()
 
 func _on_debug_close_pressed() -> void:
 	_close_overlay_panels()
@@ -907,31 +905,18 @@ func _build_v2_research_panel() -> void:
 	v2_research_panel.visible = false
 	add_child(v2_research_panel)
 	v2_research_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var panel_sb := UITheme.panel_style(V2ResearchBoard.BG_LEVEL, V2ResearchBoard.BORDER_STEEL, 1, 0, false)
-	panel_sb.set_content_margin_all(28)
+	var panel_sb := preload("res://scripts/ui/ResearchMenuTheme.gd").panel(1.0)
+	panel_sb.set_content_margin_all(24)
 	v2_research_panel.add_theme_stylebox_override("panel", panel_sb)
-	_add_panel_background_gradient(v2_research_panel)
+	_add_research_background(v2_research_panel)
 	v2_research_board = V2ResearchBoard.new()
 	v2_research_board.close_requested.connect(_close_overlay_panels)
 	v2_research_panel.add_child(v2_research_board)
 
-## Gradiente radial sutil de fundo (recurso nativo do Godot, gerado em código) inserido como PRIMEIRO
-## filho do painel — o conteúdo continua desenhando por cima.
-func _add_panel_background_gradient(panel: PanelContainer) -> void:
-	var gradient := Gradient.new()
-	gradient.set_color(0, V2ResearchBoard.BG_LEVEL.lightened(0.035))
-	gradient.set_color(1, V2ResearchBoard.BG_LEVEL.darkened(0.2))
-	var texture := GradientTexture2D.new()
-	texture.gradient = gradient
-	texture.fill = GradientTexture2D.FILL_RADIAL
-	texture.fill_from = Vector2(0.5, 0.12)
-	texture.fill_to = Vector2(0.5, 1.05)
-	texture.width = 128
-	texture.height = 128
-	var bg_rect := TextureRect.new()
+## Tiled pixel texture underneath the research content; ignores pointer input.
+func _add_research_background(panel: PanelContainer) -> void:
+	var bg_rect := preload("res://scripts/ui/ResearchMenuTheme.gd").grain()
 	bg_rect.name = "PanelBackground"
-	bg_rect.texture = texture
-	bg_rect.stretch_mode = TextureRect.STRETCH_SCALE
 	bg_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(bg_rect)
@@ -952,10 +937,12 @@ func _refresh_debug_panel() -> void:
 	var hex_grid = GameManager.hex_grid
 	var fog_disabled = hex_grid != null and hex_grid.debug_fog_disabled
 	debug_mode_button.button_pressed = GameManager.debug_mode
-	debug_mode_button.text = "Desativar Modo Debug" if GameManager.debug_mode else "Ativar Modo Debug (producao instantanea)"
+	debug_mode_button.text = "Desativar Modo Debug" if GameManager.debug_mode else "Ativar Modo Debug"
 	debug_reveal_map_button.button_pressed = fog_disabled
-	debug_reveal_map_button.text = "Restaurar Neblina" if fog_disabled else "Revelar Mapa (sem neblina)"
+	debug_reveal_map_button.text = "Restaurar neblina" if fog_disabled else "Revelar mapa"
 	debug_complete_research_button.disabled = GameManager.human_player == null or GameManager.human_player.v2_research.active_id == ""
+	_refresh_ambience_debug_buttons()
+	_refresh_debug_mages()
 
 ## Modo debug: produção da cidade humana em 1 turno (GameManager.set_debug_mode). A pesquisa tem as
 ## próprias ferramentas de debug dentro do quadro de Pesquisa.
@@ -990,9 +977,315 @@ func _on_debug_lose_pressed() -> void:
 func _on_debug_force_dragon_pressed() -> void:
 	WorldEventManager.debug_force_dragon_event(GameManager.hex_grid)
 
+## Clima e dia/noite — DEV-ONLY (painel de Debug), pedido do usuário para testar: liga/desliga a chuva e a neve, pula
+## para o dia ou a noite e acelera o ciclo (×20) para ver o fade acontecendo. Só visual, como os próprios sistemas.
+## Respeita as Configurações: com o clima ou o ciclo desligados, o botão avisa em vez de forçar. Começar um clima com
+## o outro acontecendo troca com saída suave (WeatherSchedule.start_event).
+var _debug_rain_button: Button
+var _debug_snow_button: Button
+var _debug_day_night_button: Button
+var _debug_fast_cycle_button: Button
+
+func _build_ambience_debug_buttons() -> void:
+	var box := debug_force_dragon_button.get_parent()
+	_debug_rain_button = Button.new()
+	_debug_rain_button.name = "DebugRainButton"
+	_debug_rain_button.pressed.connect(_on_debug_rain_pressed)
+	box.add_child(_debug_rain_button)
+	_debug_snow_button = Button.new()
+	_debug_snow_button.name = "DebugSnowButton"
+	_debug_snow_button.pressed.connect(_on_debug_snow_pressed)
+	box.add_child(_debug_snow_button)
+	_debug_day_night_button = Button.new()
+	_debug_day_night_button.name = "DebugDayNightButton"
+	_debug_day_night_button.pressed.connect(_on_debug_day_night_pressed)
+	box.add_child(_debug_day_night_button)
+	_debug_fast_cycle_button = Button.new()
+	_debug_fast_cycle_button.name = "DebugFastCycleButton"
+	_debug_fast_cycle_button.pressed.connect(_on_debug_fast_cycle_pressed)
+	box.add_child(_debug_fast_cycle_button)
+	_refresh_ambience_debug_buttons()
+
+func _refresh_ambience_debug_buttons() -> void:
+	if _debug_rain_button == null:
+		return
+	var weather := GameManager.weather
+	var raining := weather != null and weather.schedule.is_running(WeatherKinds.RAIN)
+	_debug_rain_button.text = "Parar chuva" if raining else "Começar chuva"
+	var snowing := weather != null and weather.schedule.is_running(WeatherKinds.SNOW)
+	_debug_snow_button.text = "Parar neve" if snowing else "Começar neve"
+	var day_night := GameManager.day_night
+	var dark := day_night != null and DayNightCycle.is_dark_phase(day_night.shown_phase())
+	_debug_day_night_button.text = "Ir para o dia" if dark else "Ir para a noite"
+	var fast := day_night != null and day_night.debug_time_scale > 1.0
+	_debug_fast_cycle_button.text = "Velocidade normal" if fast else "Acelerar ciclo ×%d" % int(DayNightController.DEBUG_FAST_TIME_SCALE)
+
+func _on_debug_rain_pressed() -> void:
+	_debug_toggle_weather(WeatherKinds.RAIN)
+
+func _on_debug_snow_pressed() -> void:
+	_debug_toggle_weather(WeatherKinds.SNOW)
+
+func _debug_toggle_weather(kind: String) -> void:
+	var weather := GameManager.weather
+	if weather == null:
+		return
+	if not weather.enabled:
+		EventBus.notify.emit("[Debug] Efeitos de clima estão desligados em Configurações → Vídeo.", "")
+	else:
+		weather.debug_toggle(kind)
+	_refresh_ambience_debug_buttons()
+
+func _on_debug_day_night_pressed() -> void:
+	var day_night := GameManager.day_night
+	if day_night == null:
+		return
+	if not day_night.is_cycling():
+		EventBus.notify.emit("[Debug] Ciclo de dia e noite está desligado em Configurações → Vídeo.", "")
+		return
+	day_night.debug_jump_to(not DayNightCycle.is_dark_phase(day_night.shown_phase()))
+	_refresh_ambience_debug_buttons()
+
+func _on_debug_fast_cycle_pressed() -> void:
+	var day_night := GameManager.day_night
+	if day_night == null:
+		return
+	if not day_night.is_cycling():
+		EventBus.notify.emit("[Debug] Ciclo de dia e noite está desligado em Configurações → Vídeo.", "")
+		return
+	day_night.debug_time_scale = 1.0 if day_night.debug_time_scale > 1.0 else DayNightController.DEBUG_FAST_TIME_SCALE
+	_refresh_ambience_debug_buttons()
+
 ## V3 / Combat Ecology — DEV-ONLY (painel de Debug, nunca UI de jogo): cada clique mostra as contagens por
 ## tier/espécie e leva a câmera até um exemplar vivo da PRÓXIMA espécie do bestiário (ciclo das 12).
 var _ecology_debug_index := -1
+
+## DEBUG — Grandes Manifestações (2026-10-13, pedido do usuário: "adicione no debug a opção de eu simplesmente invocar
+## qualquer um que eu quiser e quantos eu quiser pra eu poder testar"). Um botão por Manifestação + a quantidade:
+## nascem para o jogador ao lado da unidade selecionada (ou da primeira cidade), sem custo, sem pesquisa e sem o limite
+## de uma por Escola (DebugSummon). Embaixo, quatro botões tocam Parado/Andar/Atacar/Conjurar na unidade selecionada
+## com a transição normal dela — o Ataque das Manifestações não toca em jogo (nenhuma tem ataque básico) e a Conjuração
+## exigiria pesquisar a Escola e ter Mana.
+const DEBUG_ANIMATION_STATES := [["idle", "Parado"], ["walk", "Andar"], ["attack", "Atacar"], ["cast", "Conjurar"]]
+var _debug_summon_count: SpinBox
+var _debug_summon_buttons: Dictionary = {} # kind -> Button
+var _debug_animation_buttons: Dictionary = {} # estado -> Button
+var _debug_mage_buttons: Dictionary = {}
+var _debug_mage_count: SpinBox
+var _debug_prepare_magic: CheckBox
+var _debug_renew_magic_button: Button
+var _debug_wound_button: Button
+var _debug_selection_label: Label
+var _debug_spawn_label: Label
+var _debug_menu: Dictionary = {}
+
+func _build_mage_debug_section() -> void:
+	var box := debug_force_dragon_button.get_parent()
+	var controls := HBoxContainer.new()
+	controls.name = "DebugMageCountRow"
+	var label := Label.new()
+	label.text = "Quantidade por invocação"
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	controls.add_child(label)
+	_debug_mage_count = SpinBox.new()
+	_debug_mage_count.name = "DebugMageCount"
+	_debug_mage_count.min_value = 1
+	_debug_mage_count.max_value = DebugSummon.MAX_COUNT
+	_debug_mage_count.value = 1
+	controls.add_child(_debug_mage_count)
+	box.add_child(controls)
+	_debug_prepare_magic = CheckBox.new()
+	_debug_prepare_magic.name = "DebugPrepareMagic"
+	_debug_prepare_magic.text = "Preparar escola e mana para VFX"
+	_debug_prepare_magic.button_pressed = true
+	_debug_prepare_magic.tooltip_text = "Conclui as pesquisas até a quarta magia desta escola e garante pelo menos 1.000 mana. Não exige construções."
+	box.add_child(_debug_prepare_magic)
+	var grid := GridContainer.new()
+	grid.name = "DebugMageGrid"
+	grid.columns = 2
+	for kind in DebugSummon.mage_kinds():
+		var data := UnitDatabase.create_unit(kind)
+		var button := Button.new()
+		button.name = "DebugMage_"+kind
+		button.text = data.unit_name
+		button.icon = IconCatalog.glyph_texture(IconCatalog.glyph_for_kind(kind,false,data.v2_magic_school))
+		button.add_theme_color_override("font_color",V2MagicContent.school_color(data.v2_magic_school).lightened(.18))
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.tooltip_text = "Invocar %s da sua civilização, perto da seleção ou da primeira cidade. Sem custo e sem edifícios." % data.unit_name
+		button.pressed.connect(_on_debug_mage_pressed.bind(kind))
+		grid.add_child(button)
+		_debug_mage_buttons[kind] = button
+	box.add_child(grid)
+	_debug_renew_magic_button = Button.new()
+	_debug_renew_magic_button.name = "DebugRenewMagicButton"
+	_debug_renew_magic_button.text = "Renovar ação e recargas"
+	_debug_renew_magic_button.tooltip_text = "Restaura a ação do conjurador selecionado, limpa as recargas de magia e garante 1.000 mana."
+	_debug_renew_magic_button.pressed.connect(_on_debug_renew_magic_pressed)
+	box.add_child(_debug_renew_magic_button)
+	_debug_wound_button = Button.new()
+	_debug_wound_button.name = "DebugWoundButton"
+	_debug_wound_button.text = "Deixar seleção com 50% de vida"
+	_debug_wound_button.tooltip_text = "Prepara uma unidade própria para testar magias de cura."
+	_debug_wound_button.pressed.connect(_on_debug_wound_pressed)
+	box.add_child(_debug_wound_button)
+	_debug_selection_label = Label.new()
+	_debug_selection_label.text = "Nenhuma unidade selecionada"
+	_debug_selection_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_debug_selection_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_debug_spawn_label = Label.new()
+	_debug_spawn_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_debug_spawn_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_child(_debug_selection_label)
+	box.add_child(_debug_spawn_label)
+	EventBus.unit_selected.connect(func(_unit): _refresh_debug_mages())
+	_refresh_debug_mages()
+
+func _refresh_debug_mages() -> void:
+	if _debug_renew_magic_button==null: return
+	var unit := SelectionManager.selected_unit
+	var own: bool = is_instance_valid(unit) and unit.owner_player==GameManager.human_player and unit.hp>0
+	_debug_renew_magic_button.disabled = not own or not V2MagicRuntime.is_v2_caster(unit)
+	_debug_wound_button.disabled = not own
+	_debug_selection_label.text = "Seleção: "+unit.unit_data.unit_name if is_instance_valid(unit) else "Selecione uma unidade no mapa para testar animações."
+	var player := GameManager.human_player
+	_debug_spawn_label.text = "Invocações nascem perto da seleção ou da primeira cidade, usando a raça da sua civilização."
+	for button in _debug_mage_buttons.values(): button.disabled = player==null or GameManager.hex_grid==null
+	if not _debug_menu.is_empty(): _debug_menu.status.text = "Modo debug ativo" if GameManager.debug_mode else "Ferramentas de desenvolvimento"
+
+func _on_debug_mage_pressed(kind: String) -> void:
+	var grid := GameManager.hex_grid
+	var player := GameManager.human_player
+	if grid==null or player==null: return
+	var origin := DebugSummon.default_origin(grid,player,SelectionManager.selected_unit)
+	var count := int(_debug_mage_count.value)
+	var units := DebugSummon.summon(grid,player,kind,count,origin)
+	if units.is_empty():
+		EventBus.notify.emit("[Debug] Nenhum tile livre para invocar o mago perto de %s." % str(origin),"")
+		return
+	if _debug_prepare_magic.button_pressed:
+		DebugSummon.prepare_magic_test(units[0])
+		for unit in units: DebugSummon.renew_magic_test(unit)
+	SelectionManager.select_unit(units[0])
+	_focus_camera(units[0].coord)
+	_refresh_debug_panel()
+	_refresh_stats()
+	_debug_feedback("%d × %s invocado%s.%s" % [units.size(),units[0].unit_data.unit_name,"" if units.size()==1 else "s"," Magias liberadas; mana preparada." if _debug_prepare_magic.button_pressed else ""])
+
+func _debug_feedback(message: String) -> void:
+	if not _debug_menu.is_empty():
+		_debug_menu.status.text = message
+		_debug_menu.status.tooltip_text = message
+	else: EventBus.notify.emit("[Debug] "+message,"")
+
+func _on_debug_renew_magic_pressed() -> void:
+	var unit := SelectionManager.selected_unit
+	if not is_instance_valid(unit) or unit.owner_player!=GameManager.human_player: return
+	if DebugSummon.renew_magic_test(unit):
+		_refresh_selected_unit_panel()
+		_refresh_debug_mages()
+		_refresh_stats()
+		_debug_feedback("Ação e recargas renovadas. Pelo menos 1.000 mana disponível.")
+
+func _on_debug_wound_pressed() -> void:
+	var unit := SelectionManager.selected_unit
+	if not is_instance_valid(unit) or unit.owner_player!=GameManager.human_player or unit.hp<=0: return
+	unit.hp = unit.unit_data.max_hp*.5
+	_refresh_selected_unit_panel()
+	_debug_feedback("%s preparado com 50%% de vida para testar cura." % unit.unit_data.unit_name)
+
+func _build_summon_debug_section() -> void:
+	var box := debug_force_dragon_button.get_parent()
+	var title := Label.new()
+	title.name = "DebugSummonTitle"
+	title.text = "Invocar Grande Manifestação"
+	box.add_child(title)
+	var count_row := HBoxContainer.new()
+	count_row.name = "DebugSummonCountRow"
+	var count_label := Label.new()
+	count_label.text = "Quantidade"
+	count_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	count_row.add_child(count_label)
+	_debug_summon_count = SpinBox.new()
+	_debug_summon_count.name = "DebugSummonCount"
+	_debug_summon_count.min_value = 1
+	_debug_summon_count.max_value = DebugSummon.MAX_COUNT
+	_debug_summon_count.step = 1
+	_debug_summon_count.value = 1
+	count_row.add_child(_debug_summon_count)
+	box.add_child(count_row)
+	var grid := GridContainer.new()
+	grid.name = "DebugSummonGrid"
+	grid.columns = 2
+	for kind in DebugSummon.summonable_kinds():
+		var button := Button.new()
+		button.name = "DebugSummon_" + kind
+		button.text = UnitDatabase.create_unit(kind).unit_name
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.pressed.connect(_on_debug_summon_pressed.bind(kind))
+		grid.add_child(button)
+		_debug_summon_buttons[kind] = button
+	box.add_child(grid)
+	var animation_title := Label.new()
+	animation_title.name = "DebugAnimationTitle"
+	animation_title.text = "Animação da unidade selecionada"
+	box.add_child(animation_title)
+	var animation_row := HBoxContainer.new()
+	animation_row.name = "DebugAnimationRow"
+	for entry in DEBUG_ANIMATION_STATES:
+		var button := Button.new()
+		button.name = "DebugAnimation_" + String(entry[0])
+		button.text = String(entry[1])
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.pressed.connect(_on_debug_animation_pressed.bind(String(entry[0])))
+		animation_row.add_child(button)
+		_debug_animation_buttons[entry[0]] = button
+	box.add_child(animation_row)
+
+## O painel de Debug passou da altura de uma janela 900p quando ganhou a seção das Manifestações: a lista mora num
+## ScrollContainer com a altura do conteúdo, limitada à janela (sobra DEBUG_PANEL_SCREEN_MARGIN para a barra superior).
+const DEBUG_PANEL_SCREEN_MARGIN := 110.0
+const DEBUG_PANEL_MIN_LIST_HEIGHT := 200.0
+var _debug_scroll: ScrollContainer
+
+func _make_debug_panel_scrollable() -> void:
+	_debug_menu = preload("res://scripts/ui/DebugMenuLayout.gd").build(self)
+	_debug_scroll = _debug_menu.scroll
+	get_viewport().size_changed.connect(_fit_debug_panel)
+	Settings.accessibility_changed.connect(_fit_debug_panel)
+	_fit_debug_panel()
+
+## Altura da lista do painel de Debug: a do conteúdo, até onde a janela deixa (com um piso para janelas minúsculas).
+static func debug_list_height(content_height: float, screen_height: float) -> float:
+	return minf(content_height, maxf(screen_height - DEBUG_PANEL_SCREEN_MARGIN, DEBUG_PANEL_MIN_LIST_HEIGHT))
+
+func _fit_debug_panel() -> void:
+	if _debug_menu.is_empty() or not is_inside_tree():
+		return
+	preload("res://scripts/ui/DebugMenuLayout.gd").fit(_debug_menu,get_viewport_rect().size,Settings.ui_scale_percent/100.0)
+
+func _on_debug_summon_pressed(kind: String) -> void:
+	var grid := GameManager.hex_grid
+	var player := GameManager.human_player
+	if grid == null or player == null:
+		return
+	var count := int(_debug_summon_count.value)
+	var origin := DebugSummon.default_origin(grid, player, SelectionManager.selected_unit)
+	var summoned := DebugSummon.summon(grid, player, kind, count, origin)
+	var unit_name := UnitDatabase.create_unit(kind).unit_name
+	if summoned.is_empty():
+		EventBus.notify.emit("[Debug] Nenhum tile livre perto de %s para invocar %s." % [str(origin), unit_name], "")
+		return
+	_focus_camera(summoned[0].coord)
+	EventBus.notify.emit("[Debug] %d× %s em volta de %s%s." % [summoned.size(), unit_name, str(origin), "" if summoned.size() == count else " (pedidos %d: faltou tile livre)" % count], "")
+	_refresh_stats()
+
+func _on_debug_animation_pressed(state: String) -> void:
+	var unit := SelectionManager.selected_unit
+	if unit == null or not is_instance_valid(unit):
+		EventBus.notify.emit("[Debug] Selecione uma unidade para tocar a animação.", "")
+		return
+	if not unit.debug_play_state(state):
+		EventBus.notify.emit("[Debug] %s não tem clipe para este estado." % unit.unit_data.unit_name, "")
 
 func _build_ecology_debug_button() -> void:
 	var button := Button.new()
@@ -1044,14 +1337,8 @@ func _on_restart_pressed() -> void:
 func _on_turn_changed(turn_number: int, _player_index: int) -> void:
 	turn_label.text = "Turno %d" % turn_number
 	_refresh_stats()
-	# Roadmap "Fase Macro" 5B.2 -- NAO condicionado a world_event_panel.
-	# visible (diferente dos paineis acima): precisa rodar todo turno pra
-	# o texto de contagem regressiva ("faltam N turnos") ficar correto
-	# mesmo enquanto a fase nao muda (Preparation dura varios turnos sem
-	# emitir phase_changed nenhum nesse meio-tempo). Mesma razao pro Tracker/
-	# Boss Bar abaixo (5B.3-C) -- o HP do Dragao muda todo turno em Active
-	# sem necessariamente disparar phase_changed nenhum.
-	_refresh_world_event_panel()
+	# Todo turno, mesmo sem mudança de fase: a contagem regressiva da Preparação ("chega em N turnos") e a Vida do
+	# Dragão em Atividade mudam sem emitir phase_changed nenhum.
 	_refresh_world_event_tracker()
 	_refresh_dragon_boss_bar()
 	_refresh_selected_unit_panel()
@@ -1157,12 +1444,10 @@ func _on_notify(text: String, _sfx_kind: String) -> void:
 ## na transicao de fase em si -- nunca por um refresh de turno, senao
 ## reapareceria a cada turno enquanto o evento continuasse Announced.
 func _on_world_event_changed(_event: WorldEvent) -> void:
-	_refresh_world_event_panel()
 	_refresh_world_event_tracker()
 	_refresh_dragon_boss_bar()
 
 func _on_world_event_phase_changed(event: WorldEvent, _old_phase: String, new_phase: String) -> void:
-	_refresh_world_event_panel()
 	_refresh_world_event_tracker()
 	_refresh_dragon_boss_bar()
 	# Pedido explicito do usuario: "não misturar esse anúncio com o canal
@@ -1182,52 +1467,13 @@ func _on_dragon_announcement_continue_pressed() -> void:
 func _on_dragon_resolution_continue_pressed() -> void:
 	_close_overlay_panels()
 
-func _refresh_world_event_panel() -> void:
-	var event := _find_preparation_event_awaiting_human_decision()
-	if event == null:
-		world_event_panel.visible = false
-		return
-	world_event_panel.visible = true
-	world_event_title_label.text = format_world_event_title(event)
-	world_event_text_label.text = format_world_event_prompt(event, GameManager.players, TurnManager.turn_number)
-	# Fase 33D3: o mesmo painel oferece a escolha de recompensa do Relicário (dois botões existentes).
-	var reliquary := event is ReliquaryEvent
-	world_event_participate_button.text = "%d Ouro" % int(ReliquaryEvent.REWARD_GOLD) if reliquary else "Participar"
-	world_event_decline_button.text = "%d Mana" % int(ReliquaryEvent.REWARD_MANA) if reliquary else "Não participar"
-
-## Civilizacao-alvo travada (Blocker #3/5B.2) -- extraido de format_world_
-## event_prompt pra ser reusado tambem pelo Tracker (mesma info, fase
-## diferente).
+## Civilizacao-alvo travada (Blocker #3/5B.2), mostrada pelo Tracker.
 static func _dragon_target_civ_name(dragon: DragonEvent, players: Array[PlayerData]) -> String:
 	if dragon.target_civ_index >= 0 and dragon.target_civ_index < players.size():
 		return players[dragon.target_civ_index].civ.civ_name
 	return "uma civilização desconhecida"
 
-static func format_world_event_title(event: WorldEvent) -> String:
-	if event is DragonEvent:
-		return "A Caçada ao Dragão"
-	if event is ReliquaryEvent:
-		return "Relicário reivindicado"
-	return "Evento Mundial"
-
-## Puro/testavel -- so formata texto, nunca calcula fase/alvo/prazo (esses
-## continuam vivendo so em WorldEvent/DragonEvent). Texto reescrito em
-## 5B.3-C (pedido do usuario): explica O QUE participar significa, mas de
-## proposito NAO promete uma recompensa especifica ainda ("poderá receber
-## recompensas pela contribuição") -- a recompensa concreta e' escopo de
-## 5B.4, ainda nao decidida.
-static func format_world_event_prompt(event: WorldEvent, players: Array[PlayerData], current_turn: int) -> String:
-	if event is DragonEvent:
-		var dragon := event as DragonEvent
-		var target_name := _dragon_target_civ_name(dragon, players)
-		var turns_left: int = max(event.turn_deadline - current_turn, 0)
-		return "A Guilda dos Aventureiros confirmou a ameaça. Um Dragão poderoso está avançando pelo continente e eventualmente atacará %s em seu caminho. A Guilda convocou todos os reinos para ajudar a derrotá-lo. Faltam %d turno(s) para decidir.\n\nParticipar: seu reino se junta à expedição; quem causar dano ao Dragão divide as recompensas pela contribuição.\nNão participar: nenhuma penalidade — o Dragão continua sua marcha normalmente." % [target_name, turns_left]
-	if event is ReliquaryEvent:
-		return "Seu reino reivindicou o Relicário Desperto. Escolha a recompensa: %d Ouro ou %d Mana." % [int(ReliquaryEvent.REWARD_GOLD), int(ReliquaryEvent.REWARD_MANA)]
-	return "Um evento mundial está em preparação. Deseja participar?"
-
-## Texto do modal BLOQUEANTE de Announced (etapa "alerta", separada da
-## etapa "chamado" acima) -- pedido explicito do usuario: "o objetivo é
+## Texto do modal BLOQUEANTE de Announced (o "alerta") -- pedido explicito do usuario: "o objetivo é
 ## simplesmente garantir: 'Pare. Isso é importante.'". Generico o
 ## suficiente pra nao repetir _dragon_target_civ_name (o alvo so trava
 ## na transicao SEGUINTE, Announced->Preparation -- Blocker #3).
@@ -1281,15 +1527,6 @@ static func format_dragon_resolution_text(outcome: String) -> String:
 static func format_dragon_damage_ranking(damage_by_civ: Dictionary, players: Array[PlayerData]) -> Array[String]:
 	return DragonEvent.damage_ranking_lines(damage_by_civ, players) # Fase 33D3: fonte única (também usada pelo Event Center)
 
-func _find_preparation_event_awaiting_human_decision() -> WorldEvent:
-	var human_index: int = GameManager.players.find(GameManager.human_player)
-	for event in WorldEventManager.active_events:
-		if event.phase == WorldEvent.PHASE_PREPARATION and not event.participants.has(human_index):
-			return event
-		if event is ReliquaryEvent and (event as ReliquaryEvent).awaiting_choice_from(human_index):
-			return event
-	return null
-
 ## Responde "o que esta acontecendo e o que eu devo fazer" (pedido do
 ## usuario: distincao deliberada da Boss Bar, que responde "como esta o
 ## Dragao"). Visivel em Preparation/Active/Resolution, escondido em
@@ -1301,6 +1538,12 @@ func _find_active_dragon_event() -> WorldEvent:
 			return event
 	return null
 
+## Preparação: não há decisão a tomar (o Dragão ataca os reinos por onde passa, queira o jogador ou não) — o Tracker
+## só diz quanto falta. O Dragão nasce no processamento do turno SEGUINTE ao prazo (DragonEvent.advance_turn).
+static func preparation_objective(event: WorldEvent) -> String:
+	var turns_left: int = maxi(event.turn_deadline - TurnManager.turn_number + 1, 1)
+	return "Prepare suas defesas: o Dragão chega em %d turno%s." % [turns_left, "" if turns_left == 1 else "s"]
+
 ## Puro/testavel -- {} quando a fase nao deveria mostrar tracker nenhum.
 static func format_world_event_tracker(event: WorldEvent, players: Array[PlayerData]) -> Dictionary:
 	if not (event is DragonEvent):
@@ -1310,7 +1553,7 @@ static func format_world_event_tracker(event: WorldEvent, players: Array[PlayerD
 		WorldEvent.PHASE_PREPARATION:
 			return {
 				"status": "Preparação",
-				"objective": "Decida se seu reino participará.",
+				"objective": preparation_objective(event),
 				"target": _dragon_target_civ_name(dragon, players),
 			}
 		WorldEvent.PHASE_ACTIVE:
@@ -1387,22 +1630,6 @@ func _refresh_dragon_boss_bar() -> void:
 	dragon_boss_bar_health_bar.value = info.hp
 	dragon_boss_bar_health_label.text = "%d / %d HP" % [int(info.hp), int(info.max_hp)]
 	dragon_boss_bar_target_label.text = "Alvo: %s" % info.target
-
-func _on_world_event_participate_pressed() -> void:
-	if _find_preparation_event_awaiting_human_decision() is ReliquaryEvent:
-		WorldEventManager.choose_reliquary_reward(GameManager.human_player, ReliquaryEvent.CHOICE_GOLD)
-	else:
-		GameManager.respond_to_world_event(true)
-	_refresh_world_event_panel()
-	ui_shell.refresh_live_state()
-
-func _on_world_event_decline_pressed() -> void:
-	if _find_preparation_event_awaiting_human_decision() is ReliquaryEvent:
-		WorldEventManager.choose_reliquary_reward(GameManager.human_player, ReliquaryEvent.CHOICE_MANA)
-	else:
-		GameManager.respond_to_world_event(false)
-	_refresh_world_event_panel()
-	ui_shell.refresh_live_state()
 
 ## Task 23 -- monta (uma vez) o que o painel de inspecao precisa alem do .tscn:
 ## uma barra de abas (uma por entidade do tile, so' aparece com 2+) e um
@@ -1585,6 +1812,8 @@ func _on_tile_selected(coord: Vector2i, data: HexTileData) -> void:
 				slot_reason = V2LogisticsRuntime.training_soft_reason(GameManager.human_player, _viewed_city, kind)
 			if slot_reason == "" and not can_start: # Fase 17: slot da Escola ocupado / Mana para iniciar
 				slot_reason = V2ManifestationSystem.training_soft_reason(GameManager.human_player, _viewed_city, kind)
+			if slot_reason == "" and not can_start: # 2026-10-09: limite da linha de Colonização
+				slot_reason = V2ColonizationRuntime.training_soft_reason(GameManager.human_player, _viewed_city, kind)
 			_production_buttons[kind].visible = can_start or slot_reason != ""
 			_production_buttons[kind].disabled = slot_reason != ""
 		_update_production_tooltips()
@@ -1642,6 +1871,9 @@ func _production_lock_reason(kind: String) -> String:
 		var manifestation_reason := V2ManifestationSystem.training_soft_reason(GameManager.human_player, _viewed_city, kind)
 		if manifestation_reason != "":
 			return manifestation_reason
+		var settler_reason := V2ColonizationRuntime.training_soft_reason(GameManager.human_player, _viewed_city, kind)
+		if settler_reason != "":
+			return settler_reason
 	return _estimated_turns_tooltip(UnitDatabase.create_unit(kind).production_cost)
 
 ## "custo de producao/tempo" no card (pedido do usuario) — o NOME/custo
@@ -1761,13 +1993,13 @@ func _on_unit_selected(unit: Unit) -> void:
 	if unit.veterancy_level > 0:
 		text += "\n+%d%% ataque/defesa (%d abates)" % [int(unit.veterancy_level * Unit.VETERANCY_BONUS_PER_LEVEL * 100), unit.kills]
 	if unit.embarked:
-		text += "\nEmbarcada (em trânsito pelo mar — não pode atacar/fortificar/explorar)"
+		text += "\nEmbarcada (de barco — não ataca, não fortifica, não funda cidade nem conjura; desembarca ao pisar em terra)"
 	elif unit.fortified:
 		text += "\nFortificada (+%d%% defesa, cura passiva)" % int(CombatResolver.FORTIFY_DEFENSE_BONUS * 100)
 	elif unit.exploring:
-		text += "\nExplorando automaticamente"
+		text += "\nExplorando automaticamente (anda ao encerrar o turno)"
 	elif unit.move_order_target != Unit.NO_MOVE_ORDER:
-		text += "\nEm marcha ate (%d, %d)" % [unit.move_order_target.x, unit.move_order_target.y]
+		text += "\nEm marcha ate (%d, %d) (anda ao encerrar o turno)" % [unit.move_order_target.x, unit.move_order_target.y]
 	if SelectionManager.move_mode:
 		text += "\n» Clique no mapa pra mover «"
 	if SelectionManager.technique_targeting_id != "" and SelectionManager.technique_targeting_unit == unit:
@@ -1803,7 +2035,13 @@ func _on_unit_selected(unit: Unit) -> void:
 	unit_info_label.text = text
 	if V2LegendarySystem.is_legendary_unit(unit):
 		unit_info_label.text = "LENDÁRIO\n" + unit_info_label.text # Unidade Lendária (Fase 6)
-	var orders_locked := GameManager.is_turn_processing or not unit.can_receive_orders() # Fase 19: retinue sem comando
+	var bound := V2ManifestationOrders.is_bound(unit)
+	var orders_locked := GameManager.is_turn_processing or not unit.can_receive_orders() or bound
+	if bound:
+		unit_info_label.text += "\n" + V2ManifestationOrders.describe(unit)
+	move_button.visible = not bound
+	fortify_button.visible = not bound
+	explore_button.visible = not bound
 	# Task 23 -- mesmos fatos do painel de inspecao: classe/escola, efeitos
 	# ativos, acao/recarga do conjurador e o que mais existe neste tile
 	# (terreno continua consultavel mesmo com a unidade em cima).
@@ -1859,10 +2097,9 @@ func _on_unit_selected(unit: Unit) -> void:
 	move_button.tooltip_text = unit.order_block_reason() # Fase 19: "Hoste sem comando necromântico." (vazio para o resto)
 	fortify_button.disabled = unit.embarked or orders_locked
 	explore_button.button_pressed = unit.exploring
-	explore_button.disabled = unit.embarked or orders_locked
-	# Embarcar foi desligado na Fase 25 (a trava era a tecnologia V1 "Navegação"; a navegação V2 é uma
-	# decisão futura). Uma unidade que já estava embarcada num save continua se movendo e desembarca
-	# sozinha ao chegar em terra (HexGrid.move_unit).
+	explore_button.disabled = (unit.embarked and not unit.exploring) or orders_locked
+	# Embarque AUTOMÁTICO (2026-10-10): não há botão — mover para a água embarca (vira o barco da raça), pisar em terra
+	# desembarca (HexGrid.move_unit/sync_embarked). Água custa o movimento normal do tile.
 
 ## Aetherlands V2 (Fase 13): botão de upgrade urbano ("Evoluir para Cidade N — X PP + Y Ouro") e
 ## de anexação ("Anexar território (N)") no painel de cidade — mesmo padrão de
@@ -2024,6 +2261,14 @@ func _refresh_v2_unit_actions(unit: Unit) -> void:
 	var row := HFlowContainer.new()
 	row.name = "V2Actions"
 	box.add_child(row)
+	if V2ManifestationOrders.is_bound(unit):
+		for mode in V2ManifestationOrders.MODES:
+			var order_button := Button.new()
+			order_button.name = "Order_" + mode
+			order_button.text = V2ManifestationOrders.LABELS[mode]
+			order_button.disabled = GameManager.is_turn_processing
+			order_button.pressed.connect(SelectionManager.start_manifestation_targeting.bind(mode))
+			row.add_child(order_button)
 	if show_magic:
 		var header := Label.new()
 		header.name = "MagicHeader"
@@ -2041,6 +2286,9 @@ func _refresh_v2_unit_actions(unit: Unit) -> void:
 			spell_button.text = V2MagicRuntime.button_text(unit, spell)
 			var spell_reason := V2MagicRuntime.unavailable_reason(unit, spell.id)
 			var effect := V2SpellDatabase.effect_text(spell)
+			if V2ManifestationOrders.is_bound(unit):
+				spell_reason = "A entidade escolhe suas habilidades ao cumprir a ordem."
+				effect = effect.replace("%d Mana" % int(spell.mana_cost), "%d Mana" % int(V2ManifestationBalance.mana_cost(unit,spell)))
 			var command_line := V2MagicRuntime.command_tooltip_line(unit, spell) # Fase 19: "Comando disponível: N." (só invocação)
 			if command_line != "":
 				effect += "\n" + command_line
@@ -2050,7 +2298,7 @@ func _refresh_v2_unit_actions(unit: Unit) -> void:
 			spell_button.disabled = spell_reason != "" or GameManager.is_turn_processing
 			spell_button.pressed.connect(SelectionManager.use_v2_spell_selected.bind(spell.id))
 			row.add_child(spell_button)
-	if show_portal:
+	if show_portal and not V2ManifestationOrders.is_bound(unit):
 		var portal_button := Button.new()
 		portal_button.name = "TraversePortalButton"
 		var portal_reason := V2PortalSystem.traversal_reason(unit, GameManager.hex_grid)
@@ -2135,12 +2383,13 @@ func _on_game_over(victory: bool) -> void:
 	victory_button.disabled = true
 	game_over_load_button.disabled = not SaveManager.has_any_slots()
 
-	var summary = ""
+	var stats: Array = []
 	if GameManager.human_player:
-		summary = "\n\nTurnos: %d | Cidades: %d | Unidades: %d | Ouro: %d" % [
+		stats = [
 			TurnManager.turn_number, GameManager.human_player.cities.size(),
 			GameManager.human_player.units.size(), int(GameManager.human_player.gold)
 		]
+	game_over_panel.present(victory, stats)
 
 	# Roadmap "Fase F" F6 -- texto generico de proposito: um fim de jogo (Supremacia Militar,
 	## Transcendência) pode nao ter eliminacao nenhuma envolvida, e este handler nao sabe QUAL
@@ -2149,10 +2398,8 @@ func _on_game_over(victory: bool) -> void:
 	## (quem, como) fica com _on_victory_achieved logo abaixo, que roda em
 	## seguida pra toda vitoria de verdade.
 	if victory:
-		game_over_label.text = "VITÓRIA!" + summary
-		game_over_title_label.text = "Vitoria confirmada"
-		game_over_summary_label.text = "O resultado final esta sendo consolidado."
+		game_over_title_label.text = "Vitória confirmada"
+		game_over_summary_label.text = "Seu reino venceu a partida."
 	else:
-		game_over_label.text = "DERROTA..." + summary
 		game_over_title_label.text = "Seu reino caiu"
 		game_over_summary_label.text = format_victory_summary("eliminated")

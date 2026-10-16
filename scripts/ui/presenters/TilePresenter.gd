@@ -25,6 +25,7 @@ static func build(hex_grid: HexGrid, coord: Vector2i, viewer: PlayerData) -> Dic
 		"modification": {},
 		"environment": {},
 		"features": [],
+		"highlight": {},
 		"occupants": [],
 		"remembered": state == TileInspector.STATE_EXPLORED,
 	}
@@ -37,9 +38,8 @@ static func build(hex_grid: HexGrid, coord: Vector2i, viewer: PlayerData) -> Dic
 	view.terrain = {
 		"name": tile.display_name,
 		"movement_cost": tile.movement_cost,
-		"defense_pct": int(round(tile.defense_bonus * 100.0)),
 		"territory": territory_name,
-		"tooltip": AETooltip.compose("Terreno-base: %s" % tile.display_name, "Custo de movimento %d · Defesa física +%d%%." % [tile.movement_cost, int(round(tile.defense_bonus * 100.0))], ["Território: %s" % territory_name] if territory_name != "" else []),
+		"tooltip": AETooltip.compose("Terreno-base: %s" % tile.display_name, "Custo de movimento %d. O terreno-base não dá Defesa." % tile.movement_cost, ["Território: %s" % territory_name] if territory_name != "" else []),
 	}
 	if state == TileInspector.STATE_VISIBLE:
 		var modification := V2TerrainRuntime.modification_at(hex_grid, coord)
@@ -63,8 +63,12 @@ static func build(hex_grid: HexGrid, coord: Vector2i, viewer: PlayerData) -> Dic
 					view.features.append(_feature(entry, "portal"))
 			TileInspector.KIND_RESOURCE:
 				view.features.append(_feature(entry, "resource"))
+				view.highlight = {"title": entry.tag, "caption": "Recurso", "accent": UIThemeTokens.COLOR_SUCCESS,
+					"icon": IconCatalog.resource_badge(tile.resource) if state == TileInspector.STATE_VISIBLE else null}
 			TileInspector.KIND_LAIR:
 				view.features.append(_feature(entry, "lair"))
+				if view.highlight.is_empty():
+					view.highlight = {"title": entry.title, "caption": "Covil", "accent": UIThemeTokens.COLOR_CRITICAL, "icon": null}
 			TileInspector.KIND_BUILDING, TileInspector.KIND_SITE:
 				view.features.append(_feature(entry, "building"))
 			TileInspector.KIND_HAZARD:

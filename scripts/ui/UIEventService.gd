@@ -57,6 +57,7 @@ func _connect_domain_signals() -> void:
 	_connect_once(EventBus.diplomacy_changed, _on_diplomacy_changed)
 	_connect_once(EventBus.city_founded, _on_city_founded)
 	_connect_once(EventBus.city_captured, _on_city_captured)
+	_connect_once(EventBus.civilization_eliminated, _on_civilization_eliminated)
 	_connect_once(EventBus.city_threatened, _on_city_threatened)
 	_connect_once(EventBus.v2_transcendence_started, _on_ritual_started)
 	_connect_once(EventBus.v2_transcendence_progressed, _on_ritual_progressed)
@@ -138,6 +139,36 @@ func _on_diplomacy_changed(change_type: String, source: PlayerData, target: Play
 		peace.dedup_key = "peace:%s:%s" % [_player_name(source), _player_name(target)]
 		peace.focus_action = "diplomacy"
 		publish(peace)
+	elif change_type == "peace_refused":
+		# `source` propôs, `target` recusou (Diplomacy.answer_peace_offer) — fica no histórico diplomático.
+		var refused := UIEventData.create("peace_refused", UIEventData.Category.DIPLOMACY, UIEventData.Severity.IMPORTANT, "Paz recusada", "%s recusou a proposta de paz de %s. A guerra continua." % [_player_name(target), _player_name(source)])
+		refused.source_player = _player_name(source)
+		refused.target_entity = _player_name(target)
+		refused.dedup_key = "peace_refused:%s:%s:%d" % [_player_name(source), _player_name(target), TurnManager.turn_number]
+		refused.focus_action = "diplomacy"
+		publish(refused)
+	elif change_type == "open_borders":
+		var opened := UIEventData.create("open_borders", UIEventData.Category.DIPLOMACY, UIEventData.Severity.IMPORTANT, "Fronteiras abertas", "%s e %s abriram as fronteiras entre si." % [_player_name(source), _player_name(target)])
+		opened.source_player = _player_name(source)
+		opened.target_entity = _player_name(target)
+		opened.dedup_key = "open_borders:%s:%s:%d" % [_player_name(source), _player_name(target), TurnManager.turn_number]
+		opened.focus_action = "diplomacy"
+		publish(opened)
+	elif change_type == "open_borders_refused":
+		# `source` pediu, `target` recusou; `reason` é o motivo da IA (ou "Pedido recusado" quando foi o jogador).
+		var denied := UIEventData.create("open_borders_refused", UIEventData.Category.DIPLOMACY, UIEventData.Severity.INFO, "Fronteiras abertas recusadas", "%s recusou o pedido de %s%s." % [_player_name(target), _player_name(source), "" if _is_human(target) else ": %s" % reason])
+		denied.source_player = _player_name(source)
+		denied.target_entity = _player_name(target)
+		denied.dedup_key = "open_borders_refused:%s:%s:%d" % [_player_name(source), _player_name(target), TurnManager.turn_number]
+		denied.focus_action = "diplomacy"
+		publish(denied)
+	elif change_type == "open_borders_ended":
+		var ended := UIEventData.create("open_borders_ended", UIEventData.Category.DIPLOMACY, UIEventData.Severity.IMPORTANT, "Fronteiras abertas encerradas", "%s encerrou o acordo com %s. As fronteiras fechadas voltam a valer." % [_player_name(source), _player_name(target)])
+		ended.source_player = _player_name(source)
+		ended.target_entity = _player_name(target)
+		ended.dedup_key = "open_borders_ended:%s:%s:%d" % [_player_name(source), _player_name(target), TurnManager.turn_number]
+		ended.focus_action = "diplomacy"
+		publish(ended)
 
 func _on_city_founded(player: PlayerData, city_name: String, coord: Vector2i) -> void:
 	if not _is_human(player):
@@ -158,6 +189,17 @@ func _on_city_captured(old_owner: PlayerData, new_owner: PlayerData, city_name: 
 	event.dedup_key = "city_capture:%s:%d" % [city_name, TurnManager.turn_number]
 	event.focus_action = "focus_city"
 	event.with_target(coord, city_name)
+	publish(event)
+
+## Civilização eliminada (perdeu a última cidade): entra no histórico de todo mundo — muda o tabuleiro da partida.
+func _on_civilization_eliminated(player: PlayerData, conqueror: PlayerData) -> void:
+	var own := _is_human(player)
+	var detail := "Sua última cidade caiu." if own else "%s perdeu a última cidade%s." % [_player_name(player), " para %s" % _player_name(conqueror) if conqueror != null else ""]
+	var event := UIEventData.create("civilization_eliminated", UIEventData.Category.WAR, UIEventData.Severity.CRITICAL if own else UIEventData.Severity.IMPORTANT, "Seu reino foi eliminado" if own else "Civilização eliminada", detail)
+	event.source_player = _player_name(conqueror) if conqueror != null else ""
+	event.target_entity = _player_name(player)
+	event.dedup_key = "eliminated:%s" % _player_name(player)
+	event.focus_action = "diplomacy"
 	publish(event)
 
 func _on_city_threatened(player: PlayerData, city_name: String, coord: Vector2i, threat_description: String) -> void:
@@ -207,9 +249,6 @@ func _on_world_event_announced(event_source: WorldEvent) -> void:
 	var event := UIEventData.create("world_event_announced", UIEventData.Category.WORLD, UIEventData.Severity.IMPORTANT, event_source.display_name(), event_source.public_summary())
 	event.target_entity = str(event_source.event_id) if "event_id" in event_source else "world_event"
 	event.dedup_key = "world:%s" % event.target_entity
-	# Fase 33D3: o local do Relicário é público por definição (é a finalidade do anúncio) — foco no tile.
-	if event_source is ReliquaryEvent:
-		event.with_target((event_source as ReliquaryEvent).site_coord, "reliquary")
 	publish(event)
 
 ## Fase 33D3 — marco público: publicado para o jogador desta tela, de qualquer reino (fato público do mundo),
@@ -240,12 +279,6 @@ func _on_world_event_phase_changed_d3(event_source: WorldEvent, _old_phase: Stri
 		var event := UIEventData.create("dragon_resolved", UIEventData.Category.WORLD, UIEventData.Severity.IMPORTANT, "O Dragão foi derrotado" if outcome == "defeated" else "O Dragão partiu", body)
 		event.dedup_key = "dragon_resolved:%d" % dragon.event_id
 		publish(event)
-	elif event_source is ReliquaryEvent:
-		var reliquary := event_source as ReliquaryEvent
-		if new_phase == WorldEvent.PHASE_ACTIVE:
-			_publish_threat("reliquary_active", "Relicário Desperto", "Os guardiões do Relicário se ergueram. Derrote-os e mantenha o local por %d rodadas." % ReliquaryEvent.CONTROL_ROUNDS_REQUIRED, reliquary.site_coord, "reliquary:active:%d" % reliquary.event_id)
-		elif new_phase == WorldEvent.PHASE_RESOLUTION and reliquary.winner_index >= 0 and reliquary.winner_index < GameManager.players.size():
-			_publish_threat("reliquary_resolved", "Relicário Desperto", "O Relicário foi reivindicado por %s." % _player_name(GameManager.players[reliquary.winner_index]), reliquary.site_coord, "reliquary:resolved:%d" % reliquary.event_id)
 
 ## Fase 33D1 — mudança de era do mundo: um evento WORLD/IMPORTANT (Toast + Event Center), nunca Attention.
 ## A causa interna (PROGRESS/FALLBACK) não aparece: a apresentação é a mesma.
