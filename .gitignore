@@ -32,3 +32,9 @@ Thumbs.db
 art_source/
 *.blend1
 assets/generated/**/previews/animations/*.gif
+
+# Previews/renders de revisão (PNG/GIF/MP4 gerados pelo art pipeline e screenshots de UI) não são carregados pelo
+# jogo e já somavam ~1,7 GB não versionados em 2026-10-16. Novos previews ficam fora do git; os que já estavam
+# versionados continuam rastreados (o ignore não afeta arquivos já no índice).
+previews/
+docs/previews/
